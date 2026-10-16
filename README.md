@@ -1,9 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/fusescope-logo-white.svg" width="420">
-    <source media="(prefers-color-scheme: light)" srcset="docs/brand/fusescope-logo.svg" width="420">
-    <img alt="FuseScope" src="docs/brand/fusescope-logo.svg" width="420">
-  </picture>
+  <img alt="FuseScope" src="docs/brand/fusescope-logo-universal.svg" width="440">
 </p>
 
 <p align="center">
