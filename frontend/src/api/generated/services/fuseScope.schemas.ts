@@ -3014,6 +3014,10 @@ export interface AuthtypesOIDCConfigDTO {
 	 * @type string
 	 */
 	issuerAlias?: string;
+	/**
+	 * @type array
+	 */
+	scopes?: string[];
 }
 
 export interface AuthtypesAuthDomainConfigOIDCDTO {
