@@ -18,7 +18,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emersion/go-smtp v0.24.0
 	github.com/evanphx/json-patch/v5 v5.9.11
-	github.com/fuseone-io/fusescope-otel-collector v0.0.0-20261016204056-0824a861b5bb
+	github.com/fuseone-io/fusescope-otel-collector v0.145.0
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-openapi/runtime v0.29.2
 	github.com/go-openapi/strfmt v0.26.1

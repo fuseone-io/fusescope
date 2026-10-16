@@ -306,8 +306,8 @@ github.com/fsnotify/fsnotify v1.5.4/go.mod h1:OVB6XrOHzAwXMpEM7uPOzcehqUV2UqJxmV
 github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
 github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
-github.com/fuseone-io/fusescope-otel-collector v0.0.0-20261016204056-0824a861b5bb h1:cqqRpo0JotDQ0caB7gsfPnGDSsEfvRIhrLhCRaST9gg=
-github.com/fuseone-io/fusescope-otel-collector v0.0.0-20261016204056-0824a861b5bb/go.mod h1:FuaX/pXXiIy9e2U+e+YmMrwudPhpr3hBA5tp9hRyA+g=
+github.com/fuseone-io/fusescope-otel-collector v0.145.0 h1:m2PpRO0P/oQrViFnTADmeWxceJFVeR5xIh7pvAzLtc0=
+github.com/fuseone-io/fusescope-otel-collector v0.145.0/go.mod h1:FuaX/pXXiIy9e2U+e+YmMrwudPhpr3hBA5tp9hRyA+g=
 github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sapM=
 github.com/fxamacker/cbor/v2 v2.9.0/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gabriel-vasile/mimetype v1.4.8 h1:FfZ3gj38NjllZIeJAmMhr+qKL8Wu+nOoI3GqacKw1NM=
