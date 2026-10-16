@@ -98,7 +98,7 @@ export const InstanceUrlCopiedToast: Story = {
 		await userEvent.click(
 			await within(canvasElement).findByRole(
 				'button',
-				{ name: /copy signoz instance url/i },
+				{ name: /copy fusescope instance url/i },
 				untilLoaded,
 			),
 		);

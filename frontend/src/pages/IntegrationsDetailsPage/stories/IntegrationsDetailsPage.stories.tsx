@@ -118,7 +118,7 @@ export const RemoveIntegration: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(
 			await within(canvasElement).findByText(
-				/remove from signoz/i,
+				/remove from fusescope/i,
 				undefined,
 				untilLoaded,
 			),
