@@ -1,6 +1,6 @@
 ---
 name: Performance issue report
-about: Long response times, high resource usage? Ensuring that SigNoz is scalable
+about: Long response times, high resource usage? Ensuring that FuseScope is scalable
   is our top priority
 title: ''
 labels: ''
@@ -30,4 +30,4 @@ Please provide details of OS version etc.
 
 
 
-#### *Thank you* for your performance issue report – we want SigNoz to be blazing fast!
+#### *Thank you* for your performance issue report – we want FuseScope to be blazing fast!

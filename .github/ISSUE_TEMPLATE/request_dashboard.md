@@ -1,13 +1,13 @@
 ---
 name: Request Dashboard
-about: Request a new dashboard for the SigNoz Dashboards repository
+about: Request a new dashboard for the FuseScope Dashboards repository
 title: '[Dashboard Request] '
 labels: 'dashboard-template'
 assignees: ''
 
 ---
 
-<!-- Use this template to request a new dashboard for the SigNoz Dashboards repository. Providing detailed information will help us understand your needs better and speed up the dashboard creation process. -->
+<!-- Use this template to request a new dashboard for the FuseScope Dashboards repository. Providing detailed information will help us understand your needs better and speed up the dashboard creation process. -->
 
 ## Dashboard Name
 

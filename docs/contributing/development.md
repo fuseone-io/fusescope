@@ -30,11 +30,11 @@ Before diving in, make sure you have these tools installed:
 1. Open your terminal
 2. Clone the repository:
    ```bash
-   git clone https://github.com/SigNoz/signoz.git
+   git clone https://github.com/fuseone-io/fusescope.git
    ```
 3. Navigate to the project:
    ```bash
-   cd signoz
+   cd fusescope
    ```
 
 ## How do I run it locally?
