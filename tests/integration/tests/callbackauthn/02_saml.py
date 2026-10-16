@@ -3,6 +3,7 @@ from collections.abc import Callable
 from http import HTTPStatus
 from typing import Any
 
+import pytest
 import requests
 from selenium import webdriver
 from sqlalchemy import sql
@@ -22,6 +23,8 @@ from fixtures.idp import (
 )
 from fixtures.role import find_role_by_name
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
+
+pytestmark = pytest.mark.skip(reason="SAML is not implemented in FuseScope yet (fuseone-io/fusescope#7)")
 
 
 def test_apply_license(

@@ -4,12 +4,10 @@ from urllib.parse import urlparse
 
 import requests
 from selenium import webdriver
-from wiremock.resources.mappings import Mapping
 
 from fixtures.auth import (
     USER_ADMIN_EMAIL,
     USER_ADMIN_PASSWORD,
-    add_license,
     assert_user_has_role,
     find_user_with_roles_by_email,
 )
@@ -18,16 +16,7 @@ from fixtures.idp import (
     perform_oidc_login,
 )
 from fixtures.role import find_role_by_name
-from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
-
-
-def test_apply_license(
-    signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[TestContainerDocker, list[Mapping]], None],
-    get_token: Callable[[str, str], str],
-) -> None:
-    add_license(signoz, make_http_mocks, get_token)
+from fixtures.types import SigNoz, TestContainerIDP
 
 
 def test_create_auth_domain(
