@@ -17,45 +17,85 @@ jobs:
       github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
-    uses: signoz/primus.workflows/.github/workflows/js-tsc.yaml@main
-    secrets: inherit
-    with:
-      PRIMUS_REF: main
-      JS_SRC: frontend
-      JS_PKG_MANAGER: pnpm
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: install-frontend
+        run: cd frontend && pnpm install --frozen-lockfile
+      - name: tsc
+        run: cd frontend && pnpm tsgo --noEmit
   test:
     if: |
       github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
-    uses: signoz/primus.workflows/.github/workflows/js-test.yaml@main
-    secrets: inherit
-    with:
-      PRIMUS_REF: main
-      JS_SRC: frontend
-      JS_PKG_MANAGER: pnpm
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: install-frontend
+        run: cd frontend && pnpm install --frozen-lockfile
+      - name: test
+        run: cd frontend && pnpm test --silent
   fmt:
     if: |
       github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
-    uses: signoz/primus.workflows/.github/workflows/js-fmt.yaml@main
-    secrets: inherit
-    with:
-      PRIMUS_REF: main
-      JS_SRC: frontend
-      JS_PKG_MANAGER: pnpm
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: install-frontend
+        run: cd frontend && pnpm install --frozen-lockfile
+      - name: fmt
+        run: cd frontend && pnpm fmt
   lint:
     if: |
       github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
-    uses: signoz/primus.workflows/.github/workflows/js-lint.yaml@main
-    secrets: inherit
-    with:
-      PRIMUS_REF: main
-      JS_SRC: frontend
-      JS_PKG_MANAGER: pnpm
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: install-frontend
+        run: cd frontend && pnpm install --frozen-lockfile
+      - name: lint
+        run: cd frontend && pnpm lint
   openapi:
     if: |
       github.event_name == 'merge_group' ||
