@@ -5,6 +5,7 @@ import (
 
 	"github.com/fuseone-io/fusescope/pkg/authn"
 	"github.com/fuseone-io/fusescope/pkg/authn/callbackauthn/googlecallbackauthn"
+	"github.com/fuseone-io/fusescope/pkg/authn/callbackauthn/oidccallbackauthn"
 	"github.com/fuseone-io/fusescope/pkg/authn/passwordauthn/emailpasswordauthn"
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/global"
@@ -20,8 +21,14 @@ func NewAuthNs(ctx context.Context, providerSettings factory.ProviderSettings, s
 		return nil, err
 	}
 
+	oidcCallbackAuthN, err := oidccallbackauthn.New(ctx, store, providerSettings, globalConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return map[authtypes.AuthNProvider]authn.AuthN{
 		authtypes.AuthNProviderEmailPassword: emailPasswordAuthN,
 		authtypes.AuthNProviderGoogle:        googleCallbackAuthN,
+		authtypes.AuthNProviderOIDC:          oidcCallbackAuthN,
 	}, nil
 }

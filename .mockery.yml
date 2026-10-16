@@ -23,3 +23,11 @@ packages:
       filename: "tokenizer.go"
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
+  github.com/fuseone-io/fusescope/pkg/types/authtypes:
+    interfaces:
+      AuthNStore:
+    config:
+      dir: '{{.InterfaceDir}}/authtypestest'
+      filename: "authnstore.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'

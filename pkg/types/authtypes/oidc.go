@@ -29,6 +29,9 @@ type OIDCConfig struct {
 
 	// Uses the userinfo endpoint to get additional claims for the token. This is especially useful where upstreams return "thin" id tokens
 	GetUserInfo bool `json:"getUserInfo"`
+
+	// Scopes requested on top of openid, email and profile, e.g. "groups" for Okta.
+	Scopes []string `json:"scopes,omitempty"`
 }
 
 func (config *OIDCConfig) UnmarshalJSON(data []byte) error {
