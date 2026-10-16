@@ -91,7 +91,7 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--sqlstore-provider",
         action="store",
-        default="sqlite",
+        default="postgres",
         help="sqlstore provider",
     )
     parser.addoption(

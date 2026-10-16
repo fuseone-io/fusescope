@@ -119,7 +119,7 @@ cache:
 
 ##################### SQLStore #####################
 sqlstore:
-  # specifies the SQLStore provider to use.
+  # specifies the SQLStore provider to use. Supported values: sqlite, postgres.
   provider: sqlite
   # The maximum number of open connections to the database.
   max_open_conns: 100
@@ -135,6 +135,10 @@ sqlstore:
     busy_timeout: 10s
     # The default transaction locking behavior. Supported values: deferred, immediate, exclusive.
     transaction_mode: immediate
+  postgres:
+    # The PostgreSQL connection string, used when provider is postgres.
+    # Example: postgres://user:password@host:5432/fusescope?sslmode=disable
+    dsn: ""
 
 ##################### APIServer #####################
 apiserver:

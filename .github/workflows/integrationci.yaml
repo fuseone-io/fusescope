@@ -77,7 +77,7 @@ jobs:
           - metricreduction
         sqlstore-provider:
           - sqlite
-          - sqlite
+          - postgres
         sqlite-mode:
           - wal
         clickhouse-version:
