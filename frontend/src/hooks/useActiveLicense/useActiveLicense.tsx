@@ -1,29 +1,39 @@
-import { useQuery, UseQueryResult } from 'react-query';
-import {
-	getActiveLicense,
-	getGetActiveLicenseQueryKey,
-} from 'api/generated/services/licenses';
+import { useMemo } from 'react';
+import { StatusCodes } from 'http-status-codes';
 import APIError from 'types/api/error';
 import { LicenseResModel } from 'types/api/licensesV3/getActive';
-import { toAPIError } from 'utils/errorUtils';
 
-import { toLicenseResModel } from './utils';
+export interface ActiveLicenseResult {
+	data: LicenseResModel | undefined;
+	isFetching: boolean;
+	error: APIError | null;
+	refetch: () => void;
+}
 
-const useActiveLicense = (
-	isLoggedIn: boolean,
-): UseQueryResult<LicenseResModel, APIError> =>
-	useQuery({
-		queryFn: async (): Promise<LicenseResModel> => {
-			try {
-				const response = await getActiveLicense();
-				return toLicenseResModel(response.data);
-			} catch (error) {
-				throw toAPIError(error as Parameters<typeof toAPIError>[0]);
-			}
-		},
-		queryKey: getGetActiveLicenseQueryKey(),
-		enabled: !!isLoggedIn,
-		retry: false,
-	});
+// FuseScope has no licensing. Report the community edition the same way the
+// backend's 501 did, without the request: the browser logs every failed
+// request to the console, and the rest of the app keys off this status code.
+export const COMMUNITY_EDITION_LICENSE_ERROR = new APIError({
+	httpStatusCode: StatusCodes.NOT_IMPLEMENTED,
+	error: {
+		code: 'not_implemented',
+		message: 'licensing is not available in FuseScope',
+		url: '',
+		errors: [],
+	},
+});
+
+const noop = (): void => {};
+
+const useActiveLicense = (isLoggedIn: boolean): ActiveLicenseResult =>
+	useMemo(
+		() => ({
+			data: undefined,
+			isFetching: false,
+			error: isLoggedIn ? COMMUNITY_EDITION_LICENSE_ERROR : null,
+			refetch: noop,
+		}),
+		[isLoggedIn],
+	);
 
 export default useActiveLicense;
