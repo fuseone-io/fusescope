@@ -17,7 +17,7 @@ import {
 	MetricsexplorertypesTreemapRequestDTO,
 	Querybuildertypesv5OrderByDTO,
 	Querybuildertypesv5OrderDirectionDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import eyesEmojiUrl from 'assets/Images/eyesEmoji.svg';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';

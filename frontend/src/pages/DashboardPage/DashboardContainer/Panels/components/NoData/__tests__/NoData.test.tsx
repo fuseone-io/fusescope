@@ -1,7 +1,7 @@
 import {
 	DashboardtypesTimePreferenceDTO,
 	type DashboardtypesPanelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { useViewPanelStore } from '../../../../store/useViewPanelStore';

@@ -1,7 +1,7 @@
 import type {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 // Relative "updated within" windows offered by the Updated filter dropdown.
 export type UpdatedWindow = 'any' | 'today' | '7d' | '30d';

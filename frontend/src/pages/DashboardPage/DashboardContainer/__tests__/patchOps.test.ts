@@ -1,9 +1,9 @@
 import type {
 	DashboardGridItemDTO,
 	DashboardtypesLayoutDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
-import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/fuseScope.schemas';
 
 import {
 	bottomRowSlot,

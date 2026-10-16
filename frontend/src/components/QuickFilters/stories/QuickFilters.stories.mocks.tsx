@@ -7,7 +7,7 @@ import {
 	QuickfiltertypesSourceDTO,
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { rest, type RequestHandler } from 'msw';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 

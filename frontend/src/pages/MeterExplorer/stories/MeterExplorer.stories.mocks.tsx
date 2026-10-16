@@ -8,7 +8,7 @@ import set from 'api/browser/localstorage/set';
 import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';

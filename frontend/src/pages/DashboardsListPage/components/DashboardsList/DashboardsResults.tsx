@@ -1,7 +1,7 @@
 import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import type { DashboardListItem } from '../../utils/helpers';
 import { noResultsCopy } from '../../utils/views';

@@ -1,4 +1,4 @@
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTypeDTO } from 'api/generated/services/fuseScope.schemas';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { InspectMetricsSeries } from './types';

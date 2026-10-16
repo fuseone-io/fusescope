@@ -12,7 +12,7 @@ import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Tabs } from '@signozhq/ui/tabs';
 import { Form, Select, Spin } from 'antd';
 import { useGetAccount } from 'api/generated/services/cloudintegration';
-import { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesAccountDTO } from 'api/generated/services/fuseScope.schemas';
 import CodeBlock from 'components/CodeBlock/CodeBlock';
 import {
 	AZURE_REGIONS,
@@ -237,14 +237,14 @@ function CloudAccountSetupModal({
 					{isHowItWorksOpen && (
 						<div className="cloud-account-setup-how-it-works-accordion__description">
 							<div className="cloud-account-setup-how-it-works-accordion__description-item">
-								SigNoz will create new resource-group to manage the resources required
+								FuseScope will create new resource-group to manage the resources required
 								for this integration. The following steps will create a User-Assigned
 								Managed Identity with the necessary permissions and follows the
 								Principle of Least Privilege.
 							</div>
 							<div className="cloud-account-setup-how-it-works__description-item">
 								Once the Integration template is deployed, you can enable the services
-								you want to monitor right here in Signoz dashboard.
+								you want to monitor right here in the FuseScope dashboard.
 							</div>
 						</div>
 					)}
@@ -259,7 +259,7 @@ function CloudAccountSetupModal({
 					<div className="cloud-account-setup-form__content">
 						<div className="cloud-account-setup-form__form-group">
 							<div className="cloud-account-setup-form__title">
-								Where should we deploy the SigNoz collector resources?
+								Where should we deploy the FuseScope collector resources?
 							</div>
 							<div className="cloud-account-setup-form__description">
 								Choose the Azure region for deployment.

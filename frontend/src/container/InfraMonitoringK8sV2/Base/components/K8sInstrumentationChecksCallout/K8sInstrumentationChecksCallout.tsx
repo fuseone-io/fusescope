@@ -8,7 +8,7 @@ import {
 	invalidateGetChecks,
 	useGetChecks,
 } from 'api/generated/services/inframonitoring';
-import { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/fuseScope.schemas';
 import { InfraMonitoringEntity } from '../../../constants';
 
 import styles from './K8sInstrumentationChecksCallout.module.scss';

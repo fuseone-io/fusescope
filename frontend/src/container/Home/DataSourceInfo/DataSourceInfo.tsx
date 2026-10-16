@@ -60,13 +60,13 @@ function DataSourceInfo({
 	const renderNotSendingData = (): JSX.Element => (
 		<>
 			<h2 className="welcome-title">
-				Hello there, Welcome to your SigNoz workspace
+				Hello there, Welcome to your FuseScope workspace
 			</h2>
 
 			<p className="welcome-description">
 				You’re not sending any data yet. <br />
-				SigNoz is so much better with your data ⎯ start by sending your telemetry
-				data to SigNoz.
+				FuseScope is so much better with your data ⎯ start by sending your telemetry
+				data to FuseScope.
 			</p>
 
 			<Card className="welcome-card">
@@ -108,7 +108,7 @@ function DataSourceInfo({
 	const renderDataReceived = (): JSX.Element => (
 		<>
 			<h2 className="welcome-title">
-				Hello there, Welcome to your SigNoz workspace
+				Hello there, Welcome to your FuseScope workspace
 			</h2>
 
 			{!isError && hostsData && (

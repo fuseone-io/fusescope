@@ -189,7 +189,7 @@ function OptimiseSignozNeeds({
 		<div className="questions-container">
 			<OnboardingQuestionHeader
 				title="Set up your workspace"
-				subtitle="Tailor SigNoz to suit your observability needs."
+				subtitle="Tailor FuseScope to suit your observability needs."
 			/>
 
 			<div className="questions-form-container">

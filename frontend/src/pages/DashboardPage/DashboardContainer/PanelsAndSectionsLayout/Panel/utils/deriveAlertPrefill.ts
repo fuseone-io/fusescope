@@ -4,7 +4,7 @@ import type {
 	DashboardtypesComparisonOperatorDTO,
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelPluginDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { normalizeOperator } from 'container/CreateAlertV2/context/conditionNormalizers';
 import {
 	AlertThresholdMatchType,

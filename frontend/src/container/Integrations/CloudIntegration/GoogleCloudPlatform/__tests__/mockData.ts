@@ -1,4 +1,4 @@
-import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/fuseScope.schemas';
 import {
 	CloudAccount,
 	GCPCloudAccountConfig,
@@ -36,7 +36,7 @@ export const listAccountsResponse = {
 };
 
 /**
- * Credentials the backend hands out on SigNoz Cloud. When present the drawer
+ * Credentials the backend hands out on FuseScope Cloud. When present the drawer
  * renders them read-only and sends them back verbatim on submit.
  */
 export const connectionCredentials: CloudintegrationtypesCredentialsDTO = {

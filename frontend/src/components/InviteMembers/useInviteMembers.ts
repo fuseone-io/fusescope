@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { AxiosError } from 'axios';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { createUser } from 'api/generated/services/users';
 import { cloneDeep, debounce } from 'lodash-es';
 import { EMAIL_REGEX } from 'utils/app';

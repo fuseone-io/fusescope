@@ -8,7 +8,7 @@ import {
 import type {
 	DashboardtypesJSONPatchOperationDTO,
 	GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import APIError from 'types/api/error';
 
 import { applyJsonPatch } from '../optimistic/applyJsonPatch';

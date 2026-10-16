@@ -3,7 +3,7 @@ import type {
 	DashboardtypesDashboardSpecDTO,
 	DashboardtypesUpdatableDashboardV2DTO,
 	TagtypesPostableTagDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /**
  * Narrow a parsed (full Gettable-shaped) dashboard JSON down to the PUT-updatable

@@ -119,7 +119,7 @@ function SignUp(): JSX.Element {
 					</Typography.Title>
 					<Typography.Text className="signup-header-subtitle">
 						You&apos;re almost in. Create a password to start monitoring your
-						applications with SigNoz.
+						applications with FuseScope.
 					</Typography.Text>
 				</div>
 

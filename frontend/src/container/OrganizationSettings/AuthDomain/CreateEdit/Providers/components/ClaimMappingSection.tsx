@@ -67,7 +67,7 @@ function ClaimMappingSection({
 									Claim Mapping (Advanced)
 								</h4>
 								<p className="claim-mapping-section__section-description">
-									Configure how claims from your Identity Provider map to SigNoz user
+									Configure how claims from your Identity Provider map to FuseScope user
 									attributes. Leave empty to use default values.
 								</p>
 							</div>

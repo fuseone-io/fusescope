@@ -3,7 +3,7 @@ import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
-import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/fuseScope.schemas';
 import cx from 'classnames';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { Control, Controller } from 'react-hook-form';
@@ -27,17 +27,17 @@ interface FieldConfig {
 const FIELDS: FieldConfig[] = [
 	{
 		name: 'sigNozApiUrl',
-		label: 'SigNoz API URL',
-		tooltip: 'Base URL of your SigNoz instance the collector reports to',
+		label: 'FuseScope API URL',
+		tooltip: 'Base URL of your FuseScope instance the collector reports to',
 		placeholder: 'https://<tenant>.signoz.cloud',
 		testId: 'gcp-signoz-api-url-input',
 		type: 'url',
 	},
 	{
 		name: 'sigNozApiKey',
-		label: 'SigNoz API Key',
-		tooltip: 'API key used to authenticate with your SigNoz instance',
-		placeholder: 'Enter SigNoz API key',
+		label: 'FuseScope API Key',
+		tooltip: 'API key used to authenticate with your FuseScope instance',
+		placeholder: 'Enter FuseScope API key',
 		testId: 'gcp-signoz-api-key-input',
 		type: 'text',
 	},
@@ -52,7 +52,7 @@ const FIELDS: FieldConfig[] = [
 	{
 		name: 'ingestionKey',
 		label: 'Ingestion Key',
-		tooltip: 'Ingestion key that authorizes telemetry sent to SigNoz',
+		tooltip: 'Ingestion key that authorizes telemetry sent to FuseScope',
 		placeholder: 'Enter ingestion key',
 		testId: 'gcp-ingestion-key-input',
 		type: 'text',
@@ -84,7 +84,7 @@ function ConnectionSecretsFields({
 					<div className={styles.headLabel}>
 						<Lock size={12} />
 						<Typography.Text as="span" size="small" className={styles.headLabel}>
-							Auto-filled by SigNoz
+							Auto-filled by FuseScope
 						</Typography.Text>
 					</div>
 				)}

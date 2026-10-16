@@ -5,11 +5,11 @@ import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelPluginDTO,
 	DashboardtypesQueryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	DashboardtypesPanelKindDTO,
 	DashboardtypesPatchOpDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import type { PanelKind } from './Panels/types/panelKind';
 import type { SeededPluginSpec } from './Panels/utils/buildPluginSpec';

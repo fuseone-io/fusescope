@@ -5,7 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 
 import { SAVED_VIEWS_LIST_LOADING_ROWS } from './constants';

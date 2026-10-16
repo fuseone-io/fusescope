@@ -8,9 +8,9 @@ import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { checkListStepToPreferenceKeyMap } from 'container/Home/constants';
 import {
 	type ListSavedViews200,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal as LogsSignal,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal as TracesSignal,
+	Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal as LogsSignal,
+	Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
+	Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal as TracesSignal,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	type Querybuildertypesv5QueryEnvelopeDTO,
 	Querybuildertypesv5RequestTypeDTO,
@@ -18,7 +18,7 @@ import {
 	SavedviewtypesPanelTypeDTO,
 	SavedviewtypesSchemaVersionDTO,
 	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
 import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';

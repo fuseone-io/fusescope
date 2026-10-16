@@ -13,7 +13,7 @@ import type {
 	GetConnectionCredentials200,
 	ListAccounts200,
 	ListAccountServicesMetadata200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { monogramIcon } from '@/pages/IntegrationsModulePage/stories/__story_mockdata__/integrations';
 
@@ -452,7 +452,7 @@ const serviceDetail = (
 	overview: [
 		`### ${service.title}`,
 		'',
-		`SigNoz reads ${service.title} telemetry through the ${provider.toUpperCase()} integration agent: no collector to run, no credentials to rotate. Switch a signal on and the agent starts forwarding within a few minutes.`,
+		`FuseScope reads ${service.title} telemetry through the ${provider.toUpperCase()} integration agent: no collector to run, no credentials to rotate. Switch a signal on and the agent starts forwarding within a few minutes.`,
 	].join('\n'),
 	assets: {
 		dashboards: Array.from({ length: service.dashboards }, (_, index) => ({

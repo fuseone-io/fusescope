@@ -4,7 +4,7 @@ import { Container } from '@signozhq/icons';
 import {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { getGroupByEl } from 'container/InfraMonitoringK8sV2/Base/utils';
 import {

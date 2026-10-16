@@ -72,7 +72,7 @@ describe('OnboardingQuestionaire Component', () => {
 		it('renders organization questions on initial load', () => {
 			render(<OnboardingQuestionaire />);
 
-			expect(screen.getByText(/welcome to signoz cloud/i)).toBeInTheDocument();
+			expect(screen.getByText(/welcome to fusescope cloud/i)).toBeInTheDocument();
 
 			expect(
 				screen.getByText(/which observability tool do you currently use/i),
@@ -119,14 +119,14 @@ describe('OnboardingQuestionaire Component', () => {
 
 			// Initially not visible
 			expect(
-				screen.queryByText(/What is your timeline for migrating to SigNoz/i),
+				screen.queryByText(/What is your timeline for migrating to fusescope/i),
 			).not.toBeInTheDocument();
 
 			const datadogCheckbox = screen.getByRole('radio', { name: /datadog/i });
 			await user.click(datadogCheckbox);
 
 			await expect(
-				screen.findByText(/What is your timeline for migrating to SigNoz/i),
+				screen.findByText(/What is your timeline for migrating to fusescope/i),
 			).resolves.toBeInTheDocument();
 
 			// Not visible when None is selected
@@ -136,7 +136,7 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(noneCheckbox);
 
 			expect(
-				screen.queryByText(/What is your timeline for migrating to SigNoz/i),
+				screen.queryByText(/What is your timeline for migrating to fusescope/i),
 			).not.toBeInTheDocument();
 		});
 
@@ -152,12 +152,12 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(nextButton);
 
 			await expect(
-				screen.findByText(/how did you first come across signoz/i, {}),
+				screen.findByText(/how did you first come across fusescope/i, {}),
 			).resolves.toBeInTheDocument();
 		});
 	});
 
-	describe('Step 2: About SigNoz', () => {
+	describe('Step 2: About FuseScope', () => {
 		it('renders about signoz questions after step 1 completion', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(<OnboardingQuestionaire />);
@@ -173,7 +173,7 @@ describe('OnboardingQuestionaire Component', () => {
 				screen.findByText(/set up your workspace/i, {}),
 			).resolves.toBeInTheDocument();
 			await expect(
-				screen.findByText(/how did you first come across signoz/i, {}),
+				screen.findByText(/how did you first come across fusescope/i, {}),
 			).resolves.toBeInTheDocument();
 		});
 
@@ -235,19 +235,19 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
-				screen.findByText(/what got you interested in signoz/i, {}),
+				screen.findByText(/what got you interested in fusescope/i, {}),
 			).resolves.toBeInTheDocument();
 
 			const othersCheckbox = screen.getByRole('checkbox', { name: /^others$/i });
 			await user.click(othersCheckbox);
 
 			await expect(
-				screen.findByPlaceholderText(/what got you interested in signoz/i, {}),
+				screen.findByPlaceholderText(/what got you interested in fusescope/i, {}),
 			).resolves.toBeInTheDocument();
 		});
 	});
 
-	describe('Step 3: Optimize SigNoz Needs', () => {
+	describe('Step 3: Optimize FuseScope Needs', () => {
 		it('renders scale questions after step 2 completion', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(<OnboardingQuestionaire />);

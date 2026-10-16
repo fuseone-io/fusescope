@@ -97,7 +97,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		title = string(as[0].Labels[ruletypes.LabelAlertName])
 	}
 	if strings.TrimSpace(title) == "" {
-		title = "SigNoz alert"
+		title = "FuseScope alert"
 	}
 
 	var parts []string

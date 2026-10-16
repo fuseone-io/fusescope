@@ -1,6 +1,6 @@
 # AuthZ
 
-Permission-based authorization system for SigNoz frontend.
+Permission-based authorization system for FuseScope frontend.
 
 ## Supported Resources
 

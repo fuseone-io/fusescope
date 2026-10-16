@@ -171,7 +171,7 @@ import rustUrl from '@/assets/Logos/rust.svg';
 import s3Url from '@/assets/Logos/s3.svg';
 import scalaUrl from '@/assets/Logos/scala.svg';
 import sglangUrl from '@/assets/Logos/sglang.svg';
-import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+import fuseScopeBrandLogoUrl from '@/assets/Logos/fusescope-brand-logo.svg';
 import slogUrl from '@/assets/Logos/slog.svg';
 import slurmUrl from '@/assets/Logos/slurm.svg';
 import snowflakeUrl from '@/assets/Logos/snowflake.svg';
@@ -224,7 +224,7 @@ const onboardingConfigWithLinks = [
 	},
 	{
 		dataSource: 'signoz-mcp-server',
-		label: 'SigNoz MCP Server',
+		label: 'FuseScope MCP Server',
 		tags: ['quickstart'],
 		module: 'home',
 		relatedSearchKeywords: [
@@ -239,14 +239,14 @@ const onboardingConfigWithLinks = [
 			'signoz mcp server',
 			'setup',
 		],
-		imgUrl: signozBrandLogoUrl,
+		imgUrl: fuseScopeBrandLogoUrl,
 		link: '/settings/mcp-server',
 		internalRedirect: true,
 	},
 	{
 		dataSource: 'migrate-from-datadog',
 		label: 'From Datadog',
-		tags: ['migrate to SigNoz'],
+		tags: ['migrate to FuseScope'],
 		module: 'home',
 		relatedSearchKeywords: [
 			'datadog',
@@ -294,7 +294,7 @@ const onboardingConfigWithLinks = [
 	{
 		dataSource: 'migrate-from-grafana',
 		label: 'From Grafana',
-		tags: ['migrate to SigNoz'],
+		tags: ['migrate to FuseScope'],
 		module: 'home',
 		relatedSearchKeywords: [
 			'alloy',
@@ -341,7 +341,7 @@ const onboardingConfigWithLinks = [
 	{
 		dataSource: 'migrate-from-elk',
 		label: 'From ELK',
-		tags: ['migrate to SigNoz'],
+		tags: ['migrate to FuseScope'],
 		module: 'home',
 		relatedSearchKeywords: [
 			'elastic',
@@ -389,7 +389,7 @@ const onboardingConfigWithLinks = [
 	{
 		dataSource: 'migrate-from-newrelic',
 		label: 'From New Relic',
-		tags: ['migrate to SigNoz'],
+		tags: ['migrate to FuseScope'],
 		module: 'home',
 		relatedSearchKeywords: [
 			'apm migration',
@@ -437,7 +437,7 @@ const onboardingConfigWithLinks = [
 	{
 		dataSource: 'migrate-from-honeycomb',
 		label: 'From Honeycomb',
-		tags: ['migrate to SigNoz'],
+		tags: ['migrate to FuseScope'],
 		module: 'home',
 		relatedSearchKeywords: [
 			'apm migration',
@@ -458,8 +458,8 @@ const onboardingConfigWithLinks = [
 	},
 	{
 		dataSource: 'migrate-signoz-self-host-to-cloud',
-		label: 'From SigNoz Self-Host',
-		tags: ['migrate to SigNoz'],
+		label: 'From FuseScope Self-Host',
+		tags: ['migrate to FuseScope'],
 		module: 'home',
 		relatedSearchKeywords: [
 			'cloud',
@@ -479,13 +479,13 @@ const onboardingConfigWithLinks = [
 			'signoz cloud',
 			'signoz self-hosted',
 		],
-		imgUrl: signozBrandLogoUrl,
+		imgUrl: fuseScopeBrandLogoUrl,
 		link: '/docs/migration/migrate-from-signoz-self-host-to-signoz-cloud/',
 	},
 	{
 		dataSource: 'migrate-from-existing-opentelemetry',
 		label: 'From Existing OpenTelemetry',
-		tags: ['migrate to SigNoz'],
+		tags: ['migrate to FuseScope'],
 		module: 'home',
 		relatedSearchKeywords: [
 			'apm migration',

@@ -10,7 +10,7 @@ import {
 	type SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
 	type SavedviewtypesUpdatableSavedViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import {
 	AUTHZ_CHECK_URL,

@@ -3,7 +3,7 @@ import { ReactNode, useMemo } from 'react';
 import type {
 	DashboardtypesLayoutDTO,
 	DashboardtypesPanelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { layoutsToSections } from '../utils';
 import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';

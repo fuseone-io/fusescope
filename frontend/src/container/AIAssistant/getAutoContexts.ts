@@ -12,7 +12,7 @@ import { matchPath } from 'react-router-dom';
  * and this query").
  *
  * **URL-only.** All inputs come from `pathname` + `search`; we never reach
- * into Redux / context. SigNoz already encodes most page state into the URL
+ * into Redux / context. FuseScope already encodes most page state into the URL
  * (`compositeQuery`, `startTime`/`endTime`, `viewName`/`viewKey`,
  * `variables`, `expandedWidgetId`, `activeLogId`, …), so URL parsing is
  * sufficient. Anything not in the URL is simply omitted from `metadata` —
@@ -335,7 +335,7 @@ function collectSharedMetadata(
 ): Record<string, unknown> {
 	const out: Record<string, unknown> = {};
 
-	// Time range — emit only when both bounds are explicit. SigNoz writes
+	// Time range — emit only when both bounds are explicit. FuseScope writes
 	// `startTime` / `endTime` in milliseconds when the user picks a custom
 	// range; relative ranges (`relativeTime=15m`) are left out because the
 	// server applies its own freshly-anchored window.

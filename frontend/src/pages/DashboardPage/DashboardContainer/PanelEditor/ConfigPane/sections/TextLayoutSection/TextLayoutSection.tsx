@@ -1,7 +1,7 @@
 import {
 	DashboardtypesTextAlignDTO,
 	DashboardtypesVerticalAlignDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	resolveTextBackground,

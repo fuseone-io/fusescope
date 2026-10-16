@@ -1,7 +1,7 @@
 import {
 	SpantypesFieldContextDTO as FieldContext,
 	SpantypesSpanMapperOperationDTO as MapperOperation,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { toast } from '@signozhq/ui/sonner';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';

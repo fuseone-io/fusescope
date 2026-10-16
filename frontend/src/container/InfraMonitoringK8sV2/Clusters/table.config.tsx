@@ -3,7 +3,7 @@ import { Boxes } from '@signozhq/icons';
 import {
 	InframonitoringtypesClusterRecordDTO,
 	InframonitoringtypesNodeConditionDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';

@@ -9,7 +9,7 @@ import type {
 	SubscriptiontypesSubscriptionUsageBreakdownDTO,
 	SubscriptiontypesSubscriptionUsageDayWiseDataDTO,
 	SubscriptiontypesSubscriptionUsageTierDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { TrialInfo } from 'types/api/licensesV3/getActive';
 
 export const SUBSCRIPTION_STATUSES = ['active', 'past_due'] as const;

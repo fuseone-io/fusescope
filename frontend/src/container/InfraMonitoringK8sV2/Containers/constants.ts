@@ -1,4 +1,4 @@
-import { InframonitoringtypesContainerRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesContainerRecordDTO } from 'api/generated/services/fuseScope.schemas';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 
 import {

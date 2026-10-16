@@ -3,7 +3,7 @@ import type { BadgeColorType } from '@signozhq/ui/badge';
 import {
 	InframonitoringtypesPodCountsByStatusDTO,
 	InframonitoringtypesPodStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { StatusCountItem } from './components/GroupedStatusCounts';
 

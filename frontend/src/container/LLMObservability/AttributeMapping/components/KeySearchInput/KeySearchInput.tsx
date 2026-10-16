@@ -4,7 +4,7 @@ import { useGetFieldsKeys } from 'api/generated/services/fields';
 import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import cx from 'classnames';
 import Spinner from 'components/Spinner';
 import useDebounce from 'hooks/useDebounce';

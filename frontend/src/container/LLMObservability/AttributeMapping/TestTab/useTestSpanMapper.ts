@@ -3,7 +3,7 @@ import logEvent from 'api/common/logEvent';
 import {
 	RenderErrorResponseDTO,
 	SpantypesSpanMapperTestSpanDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useTestSpanMappers } from 'api/generated/services/spanmapper';
 import { AxiosError } from 'axios';
 import { debounce } from 'lodash-es';

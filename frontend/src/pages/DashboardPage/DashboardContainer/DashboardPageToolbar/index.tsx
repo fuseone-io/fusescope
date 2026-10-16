@@ -5,7 +5,7 @@ import logEvent from 'api/common/logEvent';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';

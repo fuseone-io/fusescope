@@ -1,4 +1,4 @@
-import type { LlmpricingruletypesUpdatableLLMPricingRulesDTO } from 'api/generated/services/sigNoz.schemas';
+import type { LlmpricingruletypesUpdatableLLMPricingRulesDTO } from 'api/generated/services/fuseScope.schemas';
 import {
 	LLM_PRICING_ENDPOINT,
 	LLM_UNMAPPED_ENDPOINT,

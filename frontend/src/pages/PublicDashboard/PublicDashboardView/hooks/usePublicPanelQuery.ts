@@ -2,7 +2,7 @@ import { getPublicDashboardPanelQueryRangeV2 } from 'api/generated/services/dash
 import type {
 	DashboardtypesPanelDTO,
 	GetPublicDashboardPanelQueryRangeV2200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { retryUnlessClientError } from 'pages/DashboardPage/DashboardContainer/hooks/useGetQueryRangeV5';
 import type { PanelQueryCapabilities } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';

@@ -70,7 +70,7 @@ describe('CancelSubscriptionBanner', () => {
 		).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				/When you cancel your SigNoz subscription, all your data will be deleted/i,
+				/When you cancel your FuseScope subscription, all your data will be deleted/i,
 			),
 		).toBeInTheDocument();
 	});

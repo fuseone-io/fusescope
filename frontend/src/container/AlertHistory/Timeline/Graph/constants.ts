@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertStateDTO } from 'api/generated/services/fuseScope.schemas';
 
 export const ALERT_STATUS: Record<RuletypesAlertStateDTO, number> & {
 	[key: string]: number;

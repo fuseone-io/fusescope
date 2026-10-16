@@ -129,9 +129,9 @@ const dataCollected = (
 
 const overview = (seed: IntegrationSeed): string =>
 	[
-		`### Monitor ${seed.title} with SigNoz`,
+		`### Monitor ${seed.title} with FuseScope`,
 		'',
-		`Ship ${seed.signals.metrics ? 'metrics and logs' : 'logs'} from your ${seed.title} instances to SigNoz through the OpenTelemetry Collector. The receiver scrapes the instance, the collector tags the records with the resource they came from, and this page reports when the last one arrived.`,
+		`Ship ${seed.signals.metrics ? 'metrics and logs' : 'logs'} from your ${seed.title} instances to FuseScope through the OpenTelemetry Collector. The receiver scrapes the instance, the collector tags the records with the resource they came from, and this page reports when the last one arrived.`,
 		'',
 		'#### What you get',
 		'',
@@ -151,7 +151,7 @@ const configurationSteps = (
 			instructions: [
 				`- ${seed.title} is reachable from the host running the collector`,
 				'- OpenTelemetry Collector v0.88.0 or newer',
-				'- A SigNoz ingestion key',
+				'- A FuseScope ingestion key',
 			].join('\n'),
 		},
 	];

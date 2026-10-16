@@ -4,7 +4,7 @@ import {
 	SpantypesSpanMapperGroupConditionKeyDTO,
 	SpantypesUpdatableSpanMapperDTO,
 	SpantypesUpdatableSpanMapperGroupDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { v4 as uuid } from 'uuid';
 
 import {

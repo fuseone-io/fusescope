@@ -1,4 +1,4 @@
-import { LicensetypesGettableActiveLicenseDTO } from 'api/generated/services/sigNoz.schemas';
+import { LicensetypesGettableActiveLicenseDTO } from 'api/generated/services/fuseScope.schemas';
 import {
 	LicenseEvent,
 	LicensePlatform,

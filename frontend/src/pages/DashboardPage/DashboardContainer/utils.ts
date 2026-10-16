@@ -1,7 +1,7 @@
 import type {
 	DashboardtypesLayoutDTO,
 	DashboardtypesPanelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 export interface GridItem {
 	id: string;

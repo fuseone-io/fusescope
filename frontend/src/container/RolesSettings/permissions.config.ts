@@ -20,7 +20,7 @@ import {
 	OBJECT_SCOPED_VERBS,
 	ObjectScopedVerb,
 } from 'lib/authz/hooks/useAuthZ/types';
-import { CoretypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { CoretypesTypeDTO } from 'api/generated/services/fuseScope.schemas';
 
 /** Shared shape of the icon components exported by `@signozhq/icons`. */
 type IconComponent = typeof Shield;

@@ -16,7 +16,7 @@ import {
 	type Querybuildertypesv5LabelDTO,
 	type Querybuildertypesv5TimeSeriesDTO,
 	type RulestatehistorytypesGettableRuleStateHistoryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 const MINUTE = 60 * 1000;
 

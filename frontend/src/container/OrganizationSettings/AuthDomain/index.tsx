@@ -11,7 +11,7 @@ import {
 import {
 	AuthtypesGettableAuthDomainDTO,
 	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';

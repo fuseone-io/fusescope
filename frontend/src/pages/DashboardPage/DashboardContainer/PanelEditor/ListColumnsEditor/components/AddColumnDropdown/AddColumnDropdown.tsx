@@ -15,7 +15,7 @@ import { Plus } from '@signozhq/icons';
 import type {
 	TelemetrytypesSignalDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { useListColumnSuggestions } from '../../hooks/useListColumnSuggestions';
 import styles from './AddColumnDropdown.module.scss';

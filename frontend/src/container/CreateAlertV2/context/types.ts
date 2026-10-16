@@ -6,7 +6,7 @@ import type {
 	RuletypesPostableRuleDTO,
 	TestRule200,
 	UpdateRuleByIDPathParameters,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { BodyType, ErrorType } from 'api/generatedAPIInstance';
 import { Dayjs } from 'dayjs';
 import { AlertTypes } from 'types/api/alerts/alertTypes';

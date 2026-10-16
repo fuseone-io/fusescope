@@ -1,4 +1,4 @@
-import { MetricreductionruletypesMatchTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetricreductionruletypesMatchTypeDTO } from 'api/generated/services/fuseScope.schemas';
 
 export function isKeepMode(
 	matchType: MetricreductionruletypesMatchTypeDTO,

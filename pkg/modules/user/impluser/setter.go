@@ -152,7 +152,7 @@ func (module *setter) CreatePendingInviteUser(ctx context.Context, identityID va
 	tokenLifetime := module.config.Password.Invite.MaxTokenLifetime
 	humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
 
-	if err := module.emailing.SendHTML(ctx, user.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
+	if err := module.emailing.SendHTML(ctx, user.Email.String(), "You're Invited to Join FuseScope", emailtypes.TemplateNameInvitationEmail, map[string]any{
 		"inviter_email": identityEmail.StringValue(),
 		"link":          resetLink,
 		"Expiry":        humanizedTokenLifetime,
@@ -379,7 +379,7 @@ func (module *setter) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 	if err := module.emailing.SendHTML(
 		ctx,
 		user.Email.String(),
-		"A Password Reset Was Requested for SigNoz",
+		"A Password Reset Was Requested for FuseScope",
 		emailtypes.TemplateNameResetPassword,
 		map[string]any{
 			"Link":   resetLink,

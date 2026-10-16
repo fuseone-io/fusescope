@@ -12,7 +12,7 @@ import {
 } from 'lib/uPlotV2/components/types';
 import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import type uPlot from 'uplot';
-import type { SubscriptiontypesGettableSubscriptionUsageDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SubscriptiontypesGettableSubscriptionUsageDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { BillingBarChartTooltip } from './BillingBarChartTooltip';
 import { prepareBillingBarConfig } from './prepareBillingBarConfig';

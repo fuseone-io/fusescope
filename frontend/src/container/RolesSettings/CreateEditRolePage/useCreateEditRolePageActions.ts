@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';

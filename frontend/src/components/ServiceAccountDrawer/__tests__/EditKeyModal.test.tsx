@@ -1,5 +1,5 @@
 import { toast } from '@signozhq/ui/sonner';
-import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/fuseScope.schemas';
 import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,

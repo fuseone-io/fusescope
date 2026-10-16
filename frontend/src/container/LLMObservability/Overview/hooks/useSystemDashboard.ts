@@ -9,7 +9,7 @@ import type { GetSystemDashboardQueryError } from 'api/generated/services/dashbo
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 const SYSTEM_DASHBOARD_NAME = 'ai-o11y-overview';
 

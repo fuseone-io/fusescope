@@ -4,7 +4,7 @@ import logEvent from 'api/common/logEvent';
 import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { SignalType } from 'components/QuickFilters/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';

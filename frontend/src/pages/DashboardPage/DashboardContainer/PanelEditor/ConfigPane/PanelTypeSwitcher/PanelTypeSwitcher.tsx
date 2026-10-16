@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { ArrowRightLeft, Undo2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/fuseScope.schemas';
 import type { EQueryType } from 'types/common/dashboard';
 
 import PanelTypeBrowser from '../../../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeBrowser';

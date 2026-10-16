@@ -10,7 +10,7 @@ import {
 import {
 	MetricreductionruletypesGettableReductionRuleDTO,
 	MetricreductionruletypesGettableReductionRulePreviewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useNotifications } from 'hooks/useNotifications';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';

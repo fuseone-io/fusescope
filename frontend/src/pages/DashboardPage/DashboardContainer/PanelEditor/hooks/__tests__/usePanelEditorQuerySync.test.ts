@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getIsQueryModified } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

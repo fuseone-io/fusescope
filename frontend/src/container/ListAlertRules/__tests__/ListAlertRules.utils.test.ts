@@ -1,5 +1,5 @@
 import { logEventMock } from '__tests__/logEventMock';
-import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertStateDTO } from 'api/generated/services/fuseScope.schemas';
 import type { SortState } from 'components/TanStackTableView/types';
 
 import type { AlertRule } from '../types';

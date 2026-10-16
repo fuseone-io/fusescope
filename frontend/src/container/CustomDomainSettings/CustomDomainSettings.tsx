@@ -17,7 +17,7 @@ import { Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,
 	ZeustypesHostDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useGetHosts, usePutHost } from 'api/generated/services/zeus';
 import { AxiosError } from 'axios';
 import { useAppContext } from 'providers/App/App';

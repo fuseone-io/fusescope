@@ -65,7 +65,7 @@ function RemoveIntegrationAccount({
 		modalDescription = (
 			<>
 				Removing this account will remove all components created for sending
-				telemetry to SigNoz in your AWS account within the next ~15 minutes
+				telemetry to FuseScope in your AWS account within the next ~15 minutes
 				(cloudformation stacks named signoz-integration-telemetry-collection in
 				enabled regions). <br />
 				<br />
@@ -76,7 +76,7 @@ function RemoveIntegrationAccount({
 	} else if (cloudProvider === INTEGRATION_TYPES.GCP) {
 		modalDescription = (
 			<>
-				Removing this account will stop SigNoz from monitoring it. <br />
+				Removing this account will stop FuseScope from monitoring it. <br />
 				<br />
 				Since you manage the GCP resources yourself, remember to manually tear down
 				the OTel collector and Pub/Sub resources you created for this integration if
@@ -87,7 +87,7 @@ function RemoveIntegrationAccount({
 		modalDescription = (
 			<>
 				Removing this account will remove all components created for sending
-				telemetry to SigNoz in your Azure subscription within the next ~15 minutes
+				telemetry to FuseScope in your Azure subscription within the next ~15 minutes
 				(deployment stack named signoz-integration-telemetry will be deleted
 				automatically). <br />
 				<br />

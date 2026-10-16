@@ -3,7 +3,7 @@ import {
 	DashboardtypesComparisonOperatorDTO,
 	type DashboardtypesComparisonThresholdDTO,
 	DashboardtypesThresholdFormatDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	ThresholdVariant,
 	type AnyThreshold,

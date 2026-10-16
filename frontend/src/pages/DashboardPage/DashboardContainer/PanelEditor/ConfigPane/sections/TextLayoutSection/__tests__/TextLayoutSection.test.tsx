@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 import {
 	DashboardtypesTextAlignDTO,
 	DashboardtypesVerticalAlignDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	TEXT_BACKGROUND_PAIRS,
 	TRANSPARENT_BACKGROUND,

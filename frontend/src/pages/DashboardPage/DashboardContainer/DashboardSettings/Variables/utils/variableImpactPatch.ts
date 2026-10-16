@@ -3,7 +3,7 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 	DashboardtypesQueryDTO,
 	Querybuildertypesv5CompositeQueryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { cloneDeep } from 'lodash-es';
 
 import { formModelToDto } from '../variableAdapters';

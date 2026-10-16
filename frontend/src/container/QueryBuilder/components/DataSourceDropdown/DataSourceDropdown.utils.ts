@@ -1,4 +1,4 @@
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/fuseScope.schemas';
 import { DataSource, SIGNAL_TO_DATA_SOURCE } from 'types/common/queryBuilder';
 
 export function signalsToDataSources(

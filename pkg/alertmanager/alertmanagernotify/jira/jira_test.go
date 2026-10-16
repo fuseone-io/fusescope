@@ -286,7 +286,7 @@ func TestNotifyRichDescriptionPanelAndLinks(t *testing.T) {
 	s := string(js)
 	assert.Contains(t, s, `"panel"`)                               // status panel present
 	assert.Contains(t, s, `"error"`)                               // firing → error panel
-	assert.Contains(t, s, "Open in SigNoz")                        // rule deep-link
+	assert.Contains(t, s, "Open in FuseScope")                     // rule deep-link
 	assert.Contains(t, s, "https://app.signoz.io/alerts?ruleId=1") // rule url
 	assert.Contains(t, s, "View Related Logs")                     // related-logs deep-link
 	assert.Contains(t, s, "Summary:")                              // labeled body section
@@ -329,7 +329,7 @@ func TestNotifyCustomTemplateAnnotationsOverrideDefaults(t *testing.T) {
 func TestNotifyUpdatePreservesUserAddedLabels(t *testing.T) {
 	m := newMockJira(t)
 	existing := openIssue()
-	existing.Fields.Labels = []string{"user-added-label", "signoz-alert"}
+	existing.Fields.Labels = []string{"user-added-label", "fusescope-alert"}
 	m.searchIssues = []issue{existing}
 
 	_, err := newNotifier(t, m).Notify(ctx(), alert(true))
@@ -347,8 +347,8 @@ func TestNotifyUpdatePreservesUserAddedLabels(t *testing.T) {
 	}
 	m.mu.Unlock()
 	assert.Contains(t, putLabels, "user-added-label")
-	assert.Contains(t, putLabels, "signoz-alert")
-	assert.Equal(t, 1, strings.Count(fmt.Sprint(putLabels), "signoz-alert")) // no duplicates
+	assert.Contains(t, putLabels, "fusescope-alert")
+	assert.Equal(t, 1, strings.Count(fmt.Sprint(putLabels), "fusescope-alert")) // no duplicates
 	// the dedup label is re-asserted
 	found := false
 	for _, l := range putLabels {

@@ -2,8 +2,8 @@ import type {
 	DashboardtypesQueryDTO,
 	Querybuildertypesv5CompositeQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
+import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/services/fuseScope.schemas';
 import {
 	initialQueriesMap,
 	initialQueryAIWithType,

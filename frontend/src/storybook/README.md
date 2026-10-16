@@ -1,6 +1,6 @@
 # Storybook
 
-Runs SigNoz pages and components with no backend: every request is answered by
+Runs FuseScope pages and components with no backend: every request is answered by
 msw, and the providers the app mounts at boot are replaced by story-controlled
 values.
 

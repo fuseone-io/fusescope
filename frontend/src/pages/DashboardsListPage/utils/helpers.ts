@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash-es';
 import type {
 	DashboardtypesListedDashboardForUserV2DTO,
 	TagtypesPostableTagDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 // The list is fetched via the per-user endpoint, so every row carries `pinned`.
 export type DashboardListItem = DashboardtypesListedDashboardForUserV2DTO;

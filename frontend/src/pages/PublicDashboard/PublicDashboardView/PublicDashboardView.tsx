@@ -1,4 +1,4 @@
-import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/fuseScope.schemas';
 import { Typography } from '@signozhq/ui/typography';
 import { refreshIntervalOptions } from 'container/TopNav/AutoRefreshV2/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -13,7 +13,7 @@ import { useMemo, useState } from 'react';
 import { useInterval } from 'react-use';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 
-import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+import fuseScopeBrandLogoUrl from '@/assets/Logos/fusescope-brand-logo.svg';
 
 import PublicAutoRefresh from './PublicAutoRefresh/PublicAutoRefresh';
 import PublicSectionGrid from './PublicSectionGrid/PublicSectionGrid';
@@ -99,8 +99,8 @@ function PublicDashboardView({
 			<div className={styles.header}>
 				<div className={styles.headerLeft}>
 					<div className={styles.brand}>
-						<img src={signozBrandLogoUrl} alt="SigNoz" className={styles.brandLogo} />
-						<Typography className={styles.brandName}>SigNoz</Typography>
+						<img src={fuseScopeBrandLogoUrl} alt="FuseScope" className={styles.brandLogo} />
+						<Typography className={styles.brandName}>FuseScope</Typography>
 					</div>
 					<Typography.Text className={styles.title}>
 						{dashboard?.spec?.display?.name}

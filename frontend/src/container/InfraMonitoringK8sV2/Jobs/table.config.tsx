@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { InframonitoringtypesJobRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesJobRecordDTO } from 'api/generated/services/fuseScope.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 

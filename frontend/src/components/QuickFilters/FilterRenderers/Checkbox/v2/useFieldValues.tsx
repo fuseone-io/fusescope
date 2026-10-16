@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import { FieldValuesConfig } from 'api/querySuggestions/types';
 import {
 	IQuickFiltersConfig,

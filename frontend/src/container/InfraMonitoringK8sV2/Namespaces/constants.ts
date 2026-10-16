@@ -1,4 +1,4 @@
-import { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/fuseScope.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

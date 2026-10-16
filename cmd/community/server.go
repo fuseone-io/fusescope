@@ -60,7 +60,7 @@ func registerServer(parentCmd *cobra.Command, logger *slog.Logger) {
 
 	serverCmd := &cobra.Command{
 		Use:                "server",
-		Short:              "Run the SigNoz server",
+		Short:              "Run the FuseScope server",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE: func(currCmd *cobra.Command, args []string) error {
 			config, err := cmd.NewSigNozConfig(currCmd.Context(), logger, configFiles)

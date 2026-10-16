@@ -4,7 +4,7 @@ import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';

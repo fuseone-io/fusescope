@@ -7,7 +7,7 @@ import type {
 	Querybuildertypesv5TimeSeriesDataDTO,
 	Querybuildertypesv5TimeSeriesDTO,
 	QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { isEmpty } from 'lodash-es';
 
 import type { PanelSeries, PanelSeriesKind } from './types';

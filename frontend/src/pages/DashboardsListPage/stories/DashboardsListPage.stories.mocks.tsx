@@ -10,7 +10,7 @@ import {
 	type RestRequest,
 } from 'msw';
 import logEvent from 'api/common/logEvent';
-import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetDashboardV2200 } from 'api/generated/services/fuseScope.schemas';
 import ROUTES from 'constants/routes';
 import {
 	expect,

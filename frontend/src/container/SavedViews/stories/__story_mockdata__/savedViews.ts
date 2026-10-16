@@ -8,11 +8,11 @@ import type {
 	ListSavedViews200,
 	RenderErrorResponseDTO,
 	SavedviewtypesSavedViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	SavedviewtypesSchemaVersionDTO,
 	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueriesMap,

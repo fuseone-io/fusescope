@@ -4,7 +4,7 @@ import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
 import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';

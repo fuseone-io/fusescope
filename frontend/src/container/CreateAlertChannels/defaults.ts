@@ -80,7 +80,7 @@ export const PagerInitialConfig: Partial<PagerChannel> = {
 	  )
 	{{- end }}`,
 	severity: '{{ (index .Alerts 0).Labels.severity }}',
-	client: 'SigNoz Alert Manager',
+	client: 'FuseScope Alert Manager',
 	client_url: 'https://enter-signoz-host-n-port-here/alerts',
 	details: JSON.stringify({
 		firing: `{{ .Alerts.Firing | toJson }}`,
@@ -133,7 +133,7 @@ export const JsmOpsInitialConfig: Partial<JsmOpsChannel> = {
 
 {{ end }}{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}
 
-{{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})
+{{ end }}{{ if .GeneratorURL }}[View in FuseScope]({{ .GeneratorURL }})
 
 {{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
 
@@ -159,7 +159,7 @@ export const IncidentIOInitialConfig: Partial<IncidentIOChannel> = {
 
 {{ end }}{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}
 
-{{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})
+{{ end }}{{ if .GeneratorURL }}[View in FuseScope]({{ .GeneratorURL }})
 
 {{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
 

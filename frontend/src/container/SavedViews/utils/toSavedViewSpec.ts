@@ -7,7 +7,7 @@ import {
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSignalDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { panelTypeToRequestType } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';

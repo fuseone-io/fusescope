@@ -1,4 +1,4 @@
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 

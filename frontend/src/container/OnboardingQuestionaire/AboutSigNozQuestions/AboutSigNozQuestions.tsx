@@ -103,12 +103,12 @@ export function AboutSigNozQuestions({
 
 	const getNextDisabledReason = (): string => {
 		if (discoverSignoz === '') {
-			return 'Tell us how you first came across SigNoz';
+			return 'Tell us how you first came across FuseScope';
 		}
 		if (interestInSignoz.length === 0) {
-			return 'Select what got you interested in SigNoz';
+			return 'Select what got you interested in FuseScope';
 		}
-		return 'Describe what got you interested in SigNoz';
+		return 'Describe what got you interested in FuseScope';
 	};
 
 	const handleOnNext = (): void => {
@@ -131,13 +131,13 @@ export function AboutSigNozQuestions({
 		<div className="questions-container">
 			<OnboardingQuestionHeader
 				title="Set up your workspace"
-				subtitle="Tailor SigNoz to suit your observability needs."
+				subtitle="Tailor FuseScope to suit your observability needs."
 			/>
 
 			<div className="questions-form-container">
 				<div className="questions-form">
 					<div className="form-group">
-						<div className="question">How did you first come across SigNoz?</div>
+						<div className="question">How did you first come across FuseScope?</div>
 
 						<AntdInput.TextArea
 							className="discover-signoz-input"
@@ -150,7 +150,7 @@ export function AboutSigNozQuestions({
 					</div>
 
 					<div className="form-group">
-						<div className="question">What got you interested in SigNoz?</div>
+						<div className="question">What got you interested in FuseScope?</div>
 						<div className="checkbox-grid">
 							{shuffledOptionKeys.map((option: string) => (
 								<div key={option} className="checkbox-item">
@@ -178,7 +178,7 @@ export function AboutSigNozQuestions({
 									<Input
 										type="text"
 										className="onboarding-questionaire-other-input"
-										placeholder="What got you interested in SigNoz?"
+										placeholder="What got you interested in FuseScope?"
 										value={otherInterestInSignoz}
 										autoFocus
 										onChange={(e): void => setOtherInterestInSignoz(e.target.value)}

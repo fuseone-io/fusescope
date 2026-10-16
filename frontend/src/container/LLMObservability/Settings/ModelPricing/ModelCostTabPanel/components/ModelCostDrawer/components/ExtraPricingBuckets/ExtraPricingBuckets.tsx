@@ -4,7 +4,7 @@ import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { Plus, Trash2 } from '@signozhq/icons';
-import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas';
+import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/fuseScope.schemas';
 import cx from 'classnames';
 
 import { CACHE_BUCKETS, CACHE_MODE_OPTIONS } from '../../../../../constants';

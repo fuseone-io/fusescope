@@ -1,4 +1,4 @@
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { useRestoreLastUsedView } from './hooks/useRestoreLastUsedView';
 import { useSavedViewActions } from './hooks/useSavedViewActions';

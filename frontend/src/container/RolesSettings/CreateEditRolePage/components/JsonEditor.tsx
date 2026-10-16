@@ -13,7 +13,7 @@ import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import type { AuthtypesTransactionGroupDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesTransactionGroupDTO } from 'api/generated/services/fuseScope.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import {

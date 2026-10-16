@@ -1,7 +1,7 @@
 import {
 	Querybuildertypesv5BucketOptionsDTO,
 	Querybuildertypesv5QueryTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { Format } from 'constants/formats/types';
 import { EQueryType } from 'types/common/dashboard';

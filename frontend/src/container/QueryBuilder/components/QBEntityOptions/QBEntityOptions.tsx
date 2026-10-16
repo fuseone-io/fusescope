@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { Button, Col, Tooltip } from 'antd';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/fuseScope.schemas';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

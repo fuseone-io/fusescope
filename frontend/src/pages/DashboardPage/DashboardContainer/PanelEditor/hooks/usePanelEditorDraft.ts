@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { isEqual } from 'lodash-es';
 
 import type { PanelEditorDraftApi } from '../types';

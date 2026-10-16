@@ -1,7 +1,7 @@
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSavedViewSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValuesMap,

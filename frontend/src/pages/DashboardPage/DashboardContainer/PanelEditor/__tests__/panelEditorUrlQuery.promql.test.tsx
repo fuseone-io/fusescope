@@ -9,7 +9,7 @@ import { CompatRouter } from 'react-router-dom-v5-compat';
 import {
 	type DashboardtypesPanelDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import configureStore from 'redux-mock-store';

@@ -8,7 +8,7 @@ import { ErrorType } from 'api/generatedAPIInstance';
 import {
 	RenderErrorResponseDTO,
 	TelemetrytypesTelemetryFieldValuesDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';

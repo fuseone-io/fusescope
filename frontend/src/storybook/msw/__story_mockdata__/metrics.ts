@@ -8,7 +8,7 @@ import {
 	MetrictypesTypeDTO,
 	type GetMetricMetadata200,
 	type ListMetrics200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /**
  * A metric as the catalogue endpoints describe it. Anywhere a metric name is

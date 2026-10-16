@@ -3,7 +3,7 @@ import {
 	LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO,
 	type ListLLMPricingRules200,
 	type ListUnmappedLLMModels200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import type { PricingRule, UnpricedModel } from '../types';
 

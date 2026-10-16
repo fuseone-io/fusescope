@@ -11,7 +11,7 @@ import {
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { RESERVED_PREVIEW_KEYS } from 'pages/TraceDetailsV3/SpanHoverCard/SpanHoverCard';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
-import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/fuseScope.schemas';
 
 import { EventRect, ITraceMetadata, SpanRect } from '../types';
 import {

@@ -14,7 +14,7 @@ import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { ResizeTable } from 'components/ResizeTable';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';

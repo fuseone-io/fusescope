@@ -3,7 +3,7 @@ import { useGetFieldsKeys } from 'api/generated/services/fields';
 import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 

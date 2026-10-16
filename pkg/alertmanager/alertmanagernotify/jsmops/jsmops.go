@@ -20,7 +20,7 @@ import (
 
 const (
 	Integration = "jsmops"
-	source      = "SigNoz"
+	source      = "FuseScope"
 )
 
 // New builds an Opsgenie notifier pointed at the JSM native endpoint.

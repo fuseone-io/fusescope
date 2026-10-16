@@ -1,4 +1,4 @@
-import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { getPanelTimeRange } from '../getPanelTimeRange';
 

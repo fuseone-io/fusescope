@@ -1,4 +1,4 @@
-// Dark theme — SigNoz design palette
+// Dark theme — FuseScope design palette
 export const darkTheme = {
 	scheme: 'signoz-dark',
 	author: 'signoz',

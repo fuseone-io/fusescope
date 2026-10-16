@@ -4,7 +4,7 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	DashboardtypesQueryDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { getIsQueryModified } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

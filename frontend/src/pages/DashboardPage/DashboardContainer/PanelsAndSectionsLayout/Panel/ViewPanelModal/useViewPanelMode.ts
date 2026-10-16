@@ -3,7 +3,7 @@ import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { QueryParams } from 'constants/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { usePanelEditSession } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelEditSession';

@@ -19,13 +19,13 @@ import type {
 	MetricreductionruletypesGettableReductionRuleDTO,
 	MetricsexplorertypesStatDTO,
 	MetricsexplorertypesTreemapEntryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	MetricreductionruletypesMatchTypeDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 	Querybuildertypesv5RequestTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import type { AllViewsProps, ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';

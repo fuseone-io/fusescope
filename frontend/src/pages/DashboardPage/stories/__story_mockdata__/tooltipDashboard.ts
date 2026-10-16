@@ -4,12 +4,12 @@
  */
 
 import {
-	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind as TimeSeriesKind,
+	DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind as TimeSeriesKind,
 	DashboardtypesTimePreferenceDTO as TimePreference,
 	type DashboardtypesDashboardSpecDTOPanels,
 	type DashboardtypesGettableDashboardV2DTO,
 	type GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { dashboardResponse, PANEL_IDS, VARIABLE_KINDS } from './dashboard';
 

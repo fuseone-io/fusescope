@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { DashboardtypesSpanGapsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesSpanGapsDTO } from 'api/generated/services/fuseScope.schemas';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';

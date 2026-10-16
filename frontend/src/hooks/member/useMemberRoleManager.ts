@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import type {
 	AuthtypesGettableRoleDTO,
 	AuthtypesUserRoleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	useCreateUserRole,
 	useDeleteUserRole,

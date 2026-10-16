@@ -13,7 +13,7 @@ import {
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesPostableAccountDTO,
 	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { ErrorType } from 'api/generatedAPIInstance';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';

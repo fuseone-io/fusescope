@@ -20,7 +20,7 @@ function RegionDeploymentSection({
 	return (
 		<div className="cloud-account-setup-form__form-group">
 			<div className="cloud-account-setup-form__title">
-				Where should we deploy the SigNoz Cloud stack?
+				Where should we deploy the FuseScope Cloud stack?
 			</div>
 			<div className="cloud-account-setup-form__description">
 				Choose the AWS region for CloudFormation stack deployment
@@ -66,7 +66,7 @@ function MonitoringRegionsSection({
 				Which regions do you want to monitor?
 			</div>
 			<div className="cloud-account-setup-form__description">
-				Choose only the regions you want SigNoz to monitor. You can enable all at
+				Choose only the regions you want FuseScope to monitor. You can enable all at
 				once, or pick specific ones:
 			</div>
 

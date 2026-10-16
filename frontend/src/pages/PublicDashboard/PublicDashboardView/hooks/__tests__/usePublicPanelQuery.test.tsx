@@ -3,7 +3,7 @@ import { getPublicDashboardPanelQueryRangeV2 } from 'api/generated/services/dash
 import {
 	type DashboardtypesPanelDTO,
 	Querybuildertypesv5RequestTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 

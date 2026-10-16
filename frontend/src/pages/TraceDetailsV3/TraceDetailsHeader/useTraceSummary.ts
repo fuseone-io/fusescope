@@ -1,5 +1,5 @@
 import { useGetTraceSummary } from 'api/generated/services/tracedetail';
-import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/fuseScope.schemas';
 
 interface UseTraceSummaryResult {
 	data: SpantypesGettableTraceSummaryDTO | undefined;

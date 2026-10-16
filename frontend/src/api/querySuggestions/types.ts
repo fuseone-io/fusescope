@@ -5,7 +5,7 @@ import type {
 	GetFieldsKeysParams,
 	GetFieldsValues200,
 	GetFieldsValuesParams,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 export type FieldKeysConfig = GetFieldsKeysParams;
 

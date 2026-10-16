@@ -2,7 +2,7 @@ import {
 	SpantypesPostableSpanMapperTestDTO,
 	SpantypesPostableSpanMapperTestGroupDTO,
 	SpantypesSpanMapperTestSpanDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { isEqual } from 'lodash-es';
 
 import { DraftGroup } from '../types';

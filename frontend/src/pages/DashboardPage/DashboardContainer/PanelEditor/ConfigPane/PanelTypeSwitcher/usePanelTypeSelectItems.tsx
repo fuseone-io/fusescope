@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/fuseScope.schemas';
 import type { EQueryType } from 'types/common/dashboard';
 
 import { PANEL_OPTIONS } from '../../../Panels/registry';

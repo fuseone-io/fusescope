@@ -42,7 +42,7 @@ const untilLoaded = { timeout: 15_000 };
 type Story = StoryObj<PublicDashboardArgs>;
 
 /**
- * A published dashboard as an outside viewer sees it: the SigNoz brand, the
+ * A published dashboard as an outside viewer sees it: the FuseScope brand, the
  * dashboard's sections and panels read-only, and the time picker the publisher
  * left enabled.
  */

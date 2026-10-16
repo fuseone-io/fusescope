@@ -200,10 +200,10 @@ describe('Create Alert Channel (Normal User)', () => {
 					helpText: 'help_pager_client',
 				});
 			});
-			it('Should check if Client input contains the default value "SigNoz Alert Manager"', () => {
+			it('Should check if Client input contains the default value "FuseScope Alert Manager"', () => {
 				const clientTextArea = screen.getByTestId('pager-client-textarea');
 
-				expect(clientTextArea).toHaveValue('SigNoz Alert Manager');
+				expect(clientTextArea).toHaveValue('FuseScope Alert Manager');
 			});
 			it('Should check if Client URL label, text area, and info (Shows up as event source link in Pagerduty) are displayed properly', () => {
 				testLabelInputAndHelpValue({

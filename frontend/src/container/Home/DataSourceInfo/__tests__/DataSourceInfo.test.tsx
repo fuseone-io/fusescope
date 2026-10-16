@@ -1,4 +1,4 @@
-import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
+import { GetHosts200 } from 'api/generated/services/fuseScope.schemas';
 import { rest, server } from 'mocks-server/server';
 import { render, screen } from 'tests/test-utils';
 

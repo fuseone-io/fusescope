@@ -1,7 +1,7 @@
 import {
 	CoretypesKindDTO,
 	CoretypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import * as roleApi from 'api/generated/services/role';
 import {
 	customRoleResponse,

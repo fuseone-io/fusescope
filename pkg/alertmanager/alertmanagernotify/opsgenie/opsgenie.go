@@ -270,7 +270,7 @@ func buildHTMLDescription(parts []string, budget int) (string, error) {
 		included++
 	}
 	if dropped := len(rendering) - included; dropped > 0 {
-		fmt.Fprintf(&b, "<hr><div><i>…and %d more alerts. Open in SigNoz for the full list.</i></div>", dropped)
+		fmt.Fprintf(&b, "<hr><div><i>…and %d more alerts. Open in FuseScope for the full list.</i></div>", dropped)
 	}
 	return b.String(), nil
 }

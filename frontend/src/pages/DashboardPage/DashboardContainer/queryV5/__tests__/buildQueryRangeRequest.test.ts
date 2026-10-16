@@ -1,7 +1,7 @@
 import {
 	type DashboardtypesQueryDTO,
 	Querybuildertypesv5RequestTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import {
 	buildQueryRangeRequest,

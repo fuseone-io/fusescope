@@ -2,7 +2,7 @@ import { Container } from '@signozhq/icons';
 import {
 	InframonitoringtypesPodRecordDTO,
 	InframonitoringtypesPodStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 

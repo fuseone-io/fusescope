@@ -4,7 +4,7 @@ import { ConfigProvider } from 'antd';
 import {
 	type DashboardtypesPanelDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';

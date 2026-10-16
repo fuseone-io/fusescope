@@ -5,7 +5,7 @@ import { AxiosError } from 'axios';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import getUserVersion from 'api/v1/version/get';
 import { verifyResetPasswordToken } from 'api/generated/services/users';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
 import ResetPasswordContainer from 'container/ResetPassword';

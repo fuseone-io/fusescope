@@ -1,7 +1,7 @@
 import type {
 	Querybuildertypesv5QueryRangeRequestDTO,
 	QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 // V5-native shapes the panel renderers consume, produced by the queryV5 prep utils from the raw
 // query-range response.

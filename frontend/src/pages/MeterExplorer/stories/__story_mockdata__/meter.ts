@@ -7,14 +7,14 @@ import type {
 	GetQuickFilters200,
 	ListMetrics200,
 	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 	QuickfiltertypesSourceDTO,
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import {
 	getLogCountWidgetData,

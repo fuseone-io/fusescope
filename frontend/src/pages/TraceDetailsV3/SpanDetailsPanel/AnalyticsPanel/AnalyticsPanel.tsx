@@ -9,7 +9,7 @@ import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import {
 	SpantypesSpanAggregationDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { useTraceStore } from '../../stores/traceStore';

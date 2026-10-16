@@ -63,7 +63,7 @@ describe('ResetPassword Component', () => {
 			expect(
 				screen.getByRole('button', { name: /reset password/i }),
 			).toBeInTheDocument();
-			expect(screen.getByText(/signoz 1\.0\.0/i)).toBeInTheDocument();
+			expect(screen.getByText(/fusescope 1\.0\.0/i)).toBeInTheDocument();
 		});
 	});
 

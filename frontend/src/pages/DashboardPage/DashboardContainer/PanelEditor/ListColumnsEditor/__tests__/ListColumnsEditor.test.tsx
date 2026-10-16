@@ -4,7 +4,7 @@ import {
 	TelemetrytypesSignalDTO,
 	type DashboardtypesPanelSpecDTO,
 	type TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import ListColumnsEditor from '../ListColumnsEditor';
 import { readSelectFields } from '../selectFields';

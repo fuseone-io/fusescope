@@ -2,7 +2,7 @@ import {
 	type Querybuildertypesv5RawDataDTO,
 	TelemetrytypesSignalDTO,
 	type TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { isPlainObject } from 'lodash-es';
 
 /** A raw record flattened for the antd Table: `data` keys + `timestamp` lifted, plus a synthetic antd `key`. */

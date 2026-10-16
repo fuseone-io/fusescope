@@ -1,5 +1,5 @@
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
-import { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/fuseScope.schemas';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';

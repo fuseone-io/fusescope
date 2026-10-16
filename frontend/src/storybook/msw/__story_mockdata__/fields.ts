@@ -6,11 +6,11 @@
 import type {
 	GetFieldsKeys200,
 	GetFieldsValues200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /** Typed builders for the `/fields/keys` and `/fields/values` responses. */
 

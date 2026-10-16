@@ -1,7 +1,7 @@
 import {
 	SpantypesSpanAggregationResultDTO,
 	SpantypesSpanAggregationTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 export const AGGREGATIONS = {
 	EXEC_TIME_PCT: SpantypesSpanAggregationTypeDTO.execution_time_percentage,

@@ -15,7 +15,7 @@ type AttributeMappingArgs = PageStoryArgs<typeof attributeMappingMocks>;
 const pageStory = storyMocks(attributeMappingMocks, { layout: 'app' });
 
 /**
- * Mapping groups that tell SigNoz which span attributes carry LLM data, and the
+ * Mapping groups that tell FuseScope which span attributes carry LLM data, and the
  * tab that tests a mapping against a sample span. Managing a group is gated on an
  * authz permission rather than a role.
  *

@@ -2,7 +2,7 @@ import { useMutation } from 'react-query';
 import { Button, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { createSubscription } from 'api/generated/services/subscriptions';
-import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas';
+import type { CreateSubscription201 } from 'api/generated/services/fuseScope.schemas';
 import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { SubscriptionCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
@@ -92,7 +92,7 @@ function AddCreditCardModal({
 		>
 			<Typography.Text className="add-credit-card-text">
 				You&apos;re currently on <span className="highlight-text">Trial plan</span>.
-				Add a credit card to access SigNoz chat support to your workspace.
+				Add a credit card to access FuseScope chat support to your workspace.
 			</Typography.Text>
 		</Modal>
 	);

@@ -15,7 +15,7 @@ export const AUTHN_MECHANISMS = ['password', 'sso'] as const;
 export type AuthNMechanism = (typeof AUTHN_MECHANISMS)[number];
 
 const ORGS = [
-	{ id: 'org-signoz', name: 'SigNoz' },
+	{ id: 'org-signoz', name: 'FuseScope' },
 	{ id: 'org-acme', name: 'Acme Corp' },
 	{ id: 'org-globex', name: 'Globex' },
 ];

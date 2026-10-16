@@ -5,7 +5,7 @@ import {
 	SpantypesSpanMapperOperationDTO as MapperOperation,
 	SpantypesSpanMapperOriginDTO as MapperOrigin,
 	SpantypesSpanMapperTestSpanDTO as TestSpan,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 // Endpoint globs used by MSW handlers. The generated client hits relative
 // `/api/v1/span_mapper_groups[...]`, so the `*` prefix matches regardless of

@@ -1,4 +1,4 @@
-import { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertTypeDTO } from 'api/generated/services/fuseScope.schemas';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { DataSource } from 'types/common/queryBuilder';
 

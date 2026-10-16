@@ -45,7 +45,7 @@ const CONVERSATIONS = 'AI assistant · conversations';
 
 /**
  * The assistant talks to its own backend, whose host comes from the global
- * config rather than being the SigNoz API. Pointing it at the same origin is
+ * config rather than being the FuseScope API. Pointing it at the same origin is
  * what puts its calls in front of the story's handlers.
  */
 const AI_BACKEND_URL = 'http://localhost';

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/fuseScope.schemas';
 
 import PublicDashboardView from '../PublicDashboardView';
 

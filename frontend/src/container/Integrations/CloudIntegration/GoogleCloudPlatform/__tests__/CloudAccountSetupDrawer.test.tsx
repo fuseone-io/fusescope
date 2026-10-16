@@ -77,7 +77,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		expect(screen.getByTestId('gcp-ingestion-key-input')).toHaveTextContent(
 			connectionCredentials.ingestionKey,
 		);
-		expect(screen.getByText('Auto-filled by SigNoz')).toBeInTheDocument();
+		expect(screen.getByText('Auto-filled by FuseScope')).toBeInTheDocument();
 	});
 
 	it('blocks submission and surfaces validation errors when the form is empty', async () => {

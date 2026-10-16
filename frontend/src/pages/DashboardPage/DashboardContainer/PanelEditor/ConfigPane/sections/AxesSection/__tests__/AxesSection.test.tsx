@@ -1,4 +1,4 @@
-import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/fuseScope.schemas';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import AxesSection from '../AxesSection';

@@ -103,7 +103,7 @@ type Story = StoryObj<OrgOnboardingArgs>;
 /** The first thing a new organisation sees, before any data is sent. */
 export const Default: Story = {};
 
-/** Why the workspace is here: how they found SigNoz, and what they came for. */
+/** Why the workspace is here: how they found FuseScope, and what they came for. */
 export const AboutSigNoz: Story = {
 	args: { page: 'about-signoz' },
 };

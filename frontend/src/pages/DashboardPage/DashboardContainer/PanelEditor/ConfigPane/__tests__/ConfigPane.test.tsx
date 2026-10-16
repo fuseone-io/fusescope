@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { EQueryType } from 'types/common/dashboard';
 

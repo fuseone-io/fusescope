@@ -7,7 +7,7 @@ import {
 	MetrictypesSpaceAggregationDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTimeAggregationDTO,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
+	Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5ReduceToDTO,
 	RuletypesAlertStateDTO,
@@ -26,7 +26,7 @@ import {
 	type RuletypesAlertCompositeQueryDTO,
 	type RuletypesRuleConditionDTO,
 	type RuletypesRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import type { Channels } from 'types/api/channels/getAll';
 
@@ -544,7 +544,7 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 				{
 					routing_key: 'story-routing-key',
 					send_resolved: true,
-					client: 'SigNoz',
+					client: 'FuseScope',
 					description: '{{ .CommonLabels.alertname }}',
 					severity: 'critical',
 					details: { firing: '{{ .Alerts.Firing | len }}' },
@@ -576,7 +576,7 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 					to: 'sre@signoz.io',
 					send_resolved: true,
 					html: '<p>{{ .CommonLabels.alertname }}</p>',
-					headers: { Subject: '[SigNoz] {{ .CommonLabels.alertname }}' },
+					headers: { Subject: '[FuseScope] {{ .CommonLabels.alertname }}' },
 				},
 			],
 		},

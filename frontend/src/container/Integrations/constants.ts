@@ -28,9 +28,9 @@ export const INTEGRATION_TYPES = {
 export const AWS_INTEGRATION = {
 	id: INTEGRATION_TYPES.AWS,
 	title: 'Amazon Web Services',
-	description: 'One click setup for AWS monitoring with SigNoz',
+	description: 'One click setup for AWS monitoring with FuseScope',
 	author: {
-		name: 'SigNoz',
+		name: 'FuseScope',
 		email: 'integrations@signoz.io',
 		homepage: 'https://signoz.io',
 	},
@@ -43,9 +43,9 @@ export const AWS_INTEGRATION = {
 export const AZURE_INTEGRATION = {
 	id: INTEGRATION_TYPES.AZURE,
 	title: 'Microsoft Azure',
-	description: 'One click setup for Azure monitoring with SigNoz',
+	description: 'One click setup for Azure monitoring with FuseScope',
 	author: {
-		name: 'SigNoz',
+		name: 'FuseScope',
 		email: 'integrations@signoz.io',
 		homepage: 'https://signoz.io',
 	},
@@ -58,9 +58,9 @@ export const AZURE_INTEGRATION = {
 export const GCP_INTEGRATION = {
 	id: INTEGRATION_TYPES.GCP,
 	title: 'Google Cloud Platform',
-	description: 'Setup for GCP monitoring with SigNoz',
+	description: 'Setup for GCP monitoring with FuseScope',
 	author: {
-		name: 'SigNoz',
+		name: 'FuseScope',
 		email: 'integrations@signoz.io',
 		homepage: 'https://signoz.io',
 	},

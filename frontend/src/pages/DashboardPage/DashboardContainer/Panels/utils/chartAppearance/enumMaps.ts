@@ -9,7 +9,7 @@ import {
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 	DashboardtypesStackModeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import omit from 'lodash-es/omit';
 import {

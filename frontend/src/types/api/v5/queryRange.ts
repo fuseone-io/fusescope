@@ -1,6 +1,6 @@
 // ===================== Base Types =====================
 
-import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/fuseScope.schemas';
 import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { Warning } from '..';

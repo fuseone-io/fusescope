@@ -4,11 +4,11 @@ import {
 	RuletypesPanelTypeDTO,
 	RuletypesQueryTypeDTO,
 	RuletypesRuleTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type {
 	RuletypesRuleConditionDTO,
 	RuletypesRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 const baseCondition: RuletypesRuleConditionDTO = {
 	compositeQuery: {

@@ -2,7 +2,7 @@ import getLocalStorage from 'api/browser/localstorage/get';
 import {
 	InframonitoringtypesChecksDTO,
 	InframonitoringtypesCheckTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { InfraMonitoringEntity } from '../../../constants';
 
 export const ENTITY_TO_CHECK_TYPE: Record<

@@ -114,7 +114,7 @@ export const slackSupportMenuItem = {
 
 export const trySignozCloudMenuItem: SidebarItem = {
 	key: 'trySignozCloud',
-	label: 'Try Signoz Cloud',
+	label: 'Try FuseScope Cloud',
 	icon: <Cloudy size={16} />,
 };
 

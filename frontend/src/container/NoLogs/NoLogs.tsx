@@ -55,7 +55,7 @@ export default function NoLogs({
 				</Typography>
 
 				<Typography.Link className="send-logs-link" onClick={handleLinkClick}>
-					Sending {dataSource} to SigNoz <ArrowUpRight size={16} />
+					Sending {dataSource} to FuseScope <ArrowUpRight size={16} />
 				</Typography.Link>
 			</div>
 		</div>

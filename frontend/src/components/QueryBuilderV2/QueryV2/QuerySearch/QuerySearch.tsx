@@ -49,7 +49,7 @@ import type {
 	TelemetrytypesGettableFieldKeysDTOKeysAnyOf,
 	TelemetrytypesSourceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import type { SignalType } from 'types/api/v5/queryRange';

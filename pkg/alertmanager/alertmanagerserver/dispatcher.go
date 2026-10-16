@@ -117,7 +117,7 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 			}
 			alert := alertWrapper.Data
 
-			d.logger.DebugContext(d.ctx, "SigNoz Custom Dispatcher: Received alert", slog.Any("alert", alert))
+			d.logger.DebugContext(d.ctx, "FuseScope Custom Dispatcher: Received alert", slog.Any("alert", alert))
 
 			// Log errors but keep trying.
 			if err := it.Err(); err != nil {

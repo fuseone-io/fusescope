@@ -1,5 +1,5 @@
 import { getPublicDashboardDataV2 } from 'api/generated/services/dashboard';
-import { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError, isAxiosError } from 'axios';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery, UseQueryResult } from 'react-query';

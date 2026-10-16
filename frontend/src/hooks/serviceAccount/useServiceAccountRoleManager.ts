@@ -7,7 +7,7 @@ import {
 import type {
 	AuthtypesGettableRoleDTO,
 	ServiceaccounttypesServiceAccountRoleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { retryOn429 } from 'utils/errorUtils';
 
 const enum PromiseStatus {

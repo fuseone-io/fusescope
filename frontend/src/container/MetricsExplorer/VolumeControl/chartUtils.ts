@@ -3,7 +3,7 @@ import {
 	Querybuildertypesv5TimeSeriesDataDTO,
 	Querybuildertypesv5TimeSeriesDTO,
 	Querybuildertypesv5TimeSeriesValueDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 

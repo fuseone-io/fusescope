@@ -40,11 +40,11 @@ var (
 	SigNozAnonymousRoleName        = coretypes.SigNozAnonymousRoleName
 	SigNozAnonymousRoleDescription = "Role assigned to anonymous users for access to public resources."
 	SigNozAdminRoleName            = coretypes.SigNozAdminRoleName
-	SigNozAdminRoleDescription     = "Role assigned to users who have full administrative access to SigNoz resources."
+	SigNozAdminRoleDescription     = "Role assigned to users who have full administrative access to FuseScope resources."
 	SigNozEditorRoleName           = coretypes.SigNozEditorRoleName
-	SigNozEditorRoleDescription    = "Role assigned to users who can create, edit, and manage SigNoz resources but do not have full administrative privileges."
+	SigNozEditorRoleDescription    = "Role assigned to users who can create, edit, and manage FuseScope resources but do not have full administrative privileges."
 	SigNozViewerRoleName           = coretypes.SigNozViewerRoleName
-	SigNozViewerRoleDescription    = "Role assigned to users who have read-only access to SigNoz resources."
+	SigNozViewerRoleDescription    = "Role assigned to users who have read-only access to FuseScope resources."
 )
 
 var (
@@ -183,7 +183,7 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 	}
 
 	if strings.HasPrefix(shadow.Name, managedRolePrefix) {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "role name cannot start with %q as it is reserved for SigNoz managed roles.", managedRolePrefix)
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "role name cannot start with %q as it is reserved for FuseScope managed roles.", managedRolePrefix)
 	}
 
 	var transactionGroups TransactionGroups

@@ -1,7 +1,7 @@
 import type {
 	DashboardtypesHeaderOptionsDTO,
 	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /**
  * Whether the panel opted out of its header strip (`headerOptions.hide`) —

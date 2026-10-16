@@ -1,7 +1,7 @@
 import type {
 	DashboardtypesPanelSpecDTO,
 	DashboardtypesTextPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /**
  * The spec with a new authored body. Two localized casts: the plugin-spec union

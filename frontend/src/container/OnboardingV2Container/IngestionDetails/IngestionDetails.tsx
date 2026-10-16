@@ -4,7 +4,7 @@ import { Button, Skeleton, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
-import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/fuseScope.schemas';
 import { DOCS_BASE_URL } from 'constants/app';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
@@ -92,7 +92,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						<Info size={14} />
 
 						<span>
-							Find your ingestion URL and learn more about sending data to SigNoz{' '}
+							Find your ingestion URL and learn more about sending data to FuseScope{' '}
 							<a
 								href={`${DOCS_BASE_URL}/docs/ingestion/signoz-cloud/overview/`}
 								target="_blank"
@@ -110,7 +110,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 				<>
 					<div className="ingestion-key-details-section">
 						<Typography.Text className="ingestion-key-details-section-text">
-							You can use this key to send your telemetry data to SigNoz.
+							You can use this key to send your telemetry data to FuseScope.
 						</Typography.Text>
 
 						<div className="ingestion-key-details-section-key">

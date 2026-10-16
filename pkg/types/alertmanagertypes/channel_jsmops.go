@@ -92,7 +92,7 @@ const (
 
 {{ end }}{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}
 
-{{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})
+{{ end }}{{ if .GeneratorURL }}[View in FuseScope]({{ .GeneratorURL }})
 
 {{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
 

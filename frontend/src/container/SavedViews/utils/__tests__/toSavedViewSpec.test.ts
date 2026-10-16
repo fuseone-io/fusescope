@@ -1,7 +1,7 @@
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	SavedviewtypesPanelTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';

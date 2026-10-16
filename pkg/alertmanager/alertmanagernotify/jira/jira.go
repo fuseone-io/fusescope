@@ -258,7 +258,7 @@ func deepLinks(alerts []*types.Alert) map[string]any {
 			"marks": []any{map[string]any{"type": "link", "attrs": map[string]any{"href": url}}},
 		})
 	}
-	add("Open in SigNoz", string(a.Labels[ruletypes.LabelRuleSource]))
+	add("Open in FuseScope", string(a.Labels[ruletypes.LabelRuleSource]))
 	add("View Related Logs", string(a.Annotations[ruletypes.AnnotationRelatedLogs]))
 	add("View Related Traces", string(a.Annotations[ruletypes.AnnotationRelatedTraces]))
 	if len(parts) == 0 {
@@ -269,7 +269,7 @@ func deepLinks(alerts []*types.Alert) map[string]any {
 
 func (n *Notifier) labels(groupID string) []string {
 	out := append([]string{}, n.conf.Labels...)
-	out = append(out, "signoz-alert", fmt.Sprintf("ALERT{%s}", groupID))
+	out = append(out, "fusescope-alert", fmt.Sprintf("ALERT{%s}", groupID))
 	sort.Strings(out)
 	return out
 }

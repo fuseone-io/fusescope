@@ -19,7 +19,7 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import AddColumnDropdown from './components/AddColumnDropdown/AddColumnDropdown';
 import SortableColumnChip from './components/SortableColumnChip/SortableColumnChip';

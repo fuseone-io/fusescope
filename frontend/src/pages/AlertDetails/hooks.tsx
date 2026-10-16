@@ -29,7 +29,7 @@ import {
 	type GetRuleHistoryTopContributors200,
 	type RenderErrorResponseDTO,
 	type RuletypesPostableRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';

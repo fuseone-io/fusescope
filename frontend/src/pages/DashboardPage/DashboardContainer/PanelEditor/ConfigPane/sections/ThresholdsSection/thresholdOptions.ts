@@ -1,7 +1,7 @@
 import {
 	DashboardtypesComparisonOperatorDTO,
 	DashboardtypesThresholdFormatDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { ThresholdColor } from 'pages/DashboardPage/DashboardContainer/Panels/types/threshold';
 
 import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';

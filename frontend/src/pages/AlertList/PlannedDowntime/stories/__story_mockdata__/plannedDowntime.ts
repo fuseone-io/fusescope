@@ -10,7 +10,7 @@ import {
 	AlertmanagertypesRepeatTypeDTO,
 	type AlertmanagertypesPlannedMaintenanceDTO,
 	type ListDowntimeSchedules200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;

@@ -1,7 +1,7 @@
 import {
 	GetService200,
 	ListAccounts200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 const CLOUD_ACCOUNT_ID = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';
 const PROVIDER_ACCOUNT_ID = '123456789012';

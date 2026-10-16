@@ -5,7 +5,7 @@ import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
-import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/fuseScope.schemas';
 
 import type { UrlParam, VariableItem } from './types';
 import {

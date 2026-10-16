@@ -387,7 +387,7 @@ describe('MySettings Flows', () => {
 		it('Should render license section content when license key exists', async () => {
 			expect(screen.getByText('License')).toBeInTheDocument();
 			await expect(screen.findByText('License key')).resolves.toBeInTheDocument();
-			expect(screen.getByText('Your SigNoz license key.')).toBeInTheDocument();
+			expect(screen.getByText('Your FuseScope license key.')).toBeInTheDocument();
 		});
 
 		it('Should not render license section when there is no active license', () => {
@@ -403,7 +403,7 @@ describe('MySettings Flows', () => {
 			expect(scoped.queryByText('License')).not.toBeInTheDocument();
 			expect(scoped.queryByText('License key')).not.toBeInTheDocument();
 			expect(
-				scoped.queryByText('Your SigNoz license key.'),
+				scoped.queryByText('Your FuseScope license key.'),
 			).not.toBeInTheDocument();
 		});
 

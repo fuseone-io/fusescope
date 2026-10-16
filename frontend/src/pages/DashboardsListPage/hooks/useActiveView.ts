@@ -3,7 +3,7 @@ import { type Options, parseAsString, useQueryState } from 'nuqs';
 import type {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { areQueriesEqual } from '../utils/filterQuery';
 import { BuiltinViewId } from '../types';

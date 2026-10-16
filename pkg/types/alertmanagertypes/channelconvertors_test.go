@@ -44,7 +44,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Footer:       valuer.MustNewUnsetOrNonEmptyString("slack footer"),
 				Fields:       []ChannelSlackField{{Title: "Severity", Value: "{{ .CommonLabels.severity }}", Short: &short}},
 				Actions: []ChannelSlackAction{
-					{Type: "button", Text: "Open in SigNoz", URL: "{{ .CommonLabels.ruleSource }}", Style: "primary"},
+					{Type: "button", Text: "Open in FuseScope", URL: "{{ .CommonLabels.ruleSource }}", Style: "primary"},
 					{Type: "button", Text: "Acknowledge", Name: "ack", Value: "ack", Confirm: &ChannelSlackConfirmation{Text: "Acknowledge this alert?", Title: "Confirm", OkText: "Yes", DismissText: "No"}},
 				},
 			},
@@ -61,7 +61,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Footer:       valuer.MustNewUnsetOrNonEmptyString("slack footer"),
 				Fields:       []ChannelSlackField{{Title: "Severity", Value: "{{ .CommonLabels.severity }}", Short: &short}},
 				Actions: []ChannelSlackAction{
-					{Type: "button", Text: "Open in SigNoz", URL: "{{ .CommonLabels.ruleSource }}", Style: "primary"},
+					{Type: "button", Text: "Open in FuseScope", URL: "{{ .CommonLabels.ruleSource }}", Style: "primary"},
 					{Type: "button", Text: "Acknowledge", Name: "ack", Value: "ack", Confirm: &ChannelSlackConfirmation{Text: "Acknowledge this alert?", Title: "Confirm", OkText: "Yes", DismissText: "No"}},
 				},
 			},

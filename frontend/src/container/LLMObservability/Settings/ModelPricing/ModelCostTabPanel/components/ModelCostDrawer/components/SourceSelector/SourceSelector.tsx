@@ -46,7 +46,7 @@ function SourceSelector({
 				{isReadOnly && (
 					<span className={styles.managedLabel} data-testid="drawer-managed-label">
 						<Lock size={12} />
-						Managed by SigNoz
+						Managed by FuseScope
 					</span>
 				)}
 			</div>
@@ -62,12 +62,12 @@ function SourceSelector({
 								testId: 'drawer-source-auto',
 								disabled: true,
 								disabledTooltip:
-									'Available once SigNoz has default pricing for this model.',
+									'Available once FuseScope has default pricing for this model.',
 								label: (
 									<>
 										<div className={styles.sourceRadioTitle}>Auto-populated</div>
 										<div className={styles.sourceRadioDesc}>
-											Available once SigNoz has default pricing for this model.
+											Available once FuseScope has default pricing for this model.
 										</div>
 									</>
 								),
@@ -79,7 +79,7 @@ function SourceSelector({
 									<>
 										<div className={styles.sourceRadioTitle}>Auto-populated</div>
 										<div className={styles.sourceRadioDesc}>
-											Default pricing from SigNoz.
+											Default pricing from FuseScope.
 										</div>
 									</>
 								),

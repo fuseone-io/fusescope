@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import {
 	DashboardtypesHeatmapColorModeDTO,
 	type DashboardtypesHeatmapColorsDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	createHeatmapColorResolver,

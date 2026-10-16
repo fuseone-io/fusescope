@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesRuleDTO } from 'api/generated/services/fuseScope.schemas';
 import CreateAlertV2Header from 'container/CreateAlertV2/CreateAlertHeader';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useAlertRule } from 'providers/Alert';

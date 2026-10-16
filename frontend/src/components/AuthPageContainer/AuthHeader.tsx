@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { LifeBuoy } from '@signozhq/icons';
 
-import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+import fuseScopeBrandLogoUrl from '@/assets/Logos/fusescope-brand-logo.svg';
 
 import './AuthHeader.styles.scss';
 
@@ -15,11 +15,11 @@ function AuthHeader(): JSX.Element {
 		<header className="auth-header">
 			<div className="auth-header-logo">
 				<img
-					src={signozBrandLogoUrl}
-					alt="SigNoz"
+					src={fuseScopeBrandLogoUrl}
+					alt="FuseScope"
 					className="auth-header-logo-icon"
 				/>
-				<span className="auth-header-logo-text">SigNoz</span>
+				<span className="auth-header-logo-text">FuseScope</span>
 			</div>
 			<Button
 				size="md"

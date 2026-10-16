@@ -4,7 +4,7 @@ import {
 	type DashboardtypesPanelDTO,
 	DashboardtypesThresholdFormatDTO,
 	type QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { render } from 'tests/test-utils';

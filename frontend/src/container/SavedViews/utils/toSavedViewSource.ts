@@ -1,4 +1,4 @@
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SavedViewSourcePage } from '../types';

@@ -4,7 +4,7 @@ import { ArrowUpToLine, List, Plus, Undo2, X } from '@signozhq/icons';
 import { Skeleton } from '@signozhq/ui/skeleton';
 import { toast } from '@signozhq/ui/sonner';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {

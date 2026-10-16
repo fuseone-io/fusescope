@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/fuseScope.schemas';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import { isEqual } from 'lodash-es';

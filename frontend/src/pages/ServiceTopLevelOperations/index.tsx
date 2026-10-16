@@ -51,7 +51,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 
 	const alertDesc = (): ReactNode => (
 		<div className="">
-			SigNoz calculates the RED metrics for a service using the entry-point spans.
+			FuseScope calculates the RED metrics for a service using the entry-point spans.
 			For more details, you can check out our
 			<a
 				href="https://signoz.io/docs/userguide/metrics/"

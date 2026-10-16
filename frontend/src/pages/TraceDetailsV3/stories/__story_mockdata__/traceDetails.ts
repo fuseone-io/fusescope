@@ -11,8 +11,8 @@ import type {
 	SpantypesFlamegraphSpanDTO,
 	SpantypesSpanAggregationDTO,
 	SpantypesWaterfallSpanDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { SpantypesSpanAggregationTypeDTO } from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
+import { SpantypesSpanAggregationTypeDTO } from 'api/generated/services/fuseScope.schemas';
 import type { GetSpanPercentilesResponseDataProps } from 'types/api/trace/getSpanPercentiles';
 import type { RawRow } from 'types/api/v5/queryRange';
 

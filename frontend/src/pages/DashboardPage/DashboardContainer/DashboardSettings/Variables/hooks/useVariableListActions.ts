@@ -10,7 +10,7 @@ import { toast } from '@signozhq/ui/sonner';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import { useDashboardStore } from '../../../store/useDashboardStore';

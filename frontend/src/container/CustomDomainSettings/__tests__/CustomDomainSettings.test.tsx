@@ -1,4 +1,4 @@
-import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
+import { GetHosts200 } from 'api/generated/services/fuseScope.schemas';
 import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';

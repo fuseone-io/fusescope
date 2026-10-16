@@ -1,4 +1,4 @@
-import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TypesUserDTO } from 'api/generated/services/fuseScope.schemas';
 import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
 import { fireEvent, render, screen } from 'tests/test-utils';

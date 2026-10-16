@@ -72,7 +72,7 @@ export default function IngestionSettings(): JSX.Element {
 				}}
 			>
 				You can use the following ingestion credentials to start sending your
-				telemetry data to SigNoz
+				telemetry data to FuseScope
 			</Typography>
 
 			<Table

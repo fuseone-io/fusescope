@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/fuseScope.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,

@@ -257,7 +257,7 @@ func relatedButtons(alert *types.Alert) []button {
 // label, which is per-rule (identical for every alert in the group).
 func sigNozButton(alert *types.Alert) *button {
 	if u := string(alert.Labels[ruletypes.LabelRuleSource]); u != "" {
-		return &button{Text: "Open in SigNoz", OnClick: onClick{OpenLink: openLink{URL: u}}}
+		return &button{Text: "Open in FuseScope", OnClick: onClick{OpenLink: openLink{URL: u}}}
 	}
 	return nil
 }
@@ -311,7 +311,7 @@ func buildMessage(title, statusHTML string, alerts []*types.Alert, bodies []stri
 	}
 
 	if remaining > 0 {
-		note := fmt.Sprintf("<i>…and %d more alerts. Open in SigNoz for the full list.</i>", remaining)
+		note := fmt.Sprintf("<i>…and %d more alerts. Open in FuseScope for the full list.</i>", remaining)
 		sections = append(sections, cardSection{Widgets: []widget{{TextParagraph: &textParagraph{Text: note}}}})
 	}
 
@@ -324,7 +324,7 @@ func buildMessage(title, statusHTML string, alerts []*types.Alert, bodies []stri
 	return Message{
 		Text: title,
 		CardsV2: []cardWithID{{
-			CardID: "signoz-alert",
+			CardID: "fusescope-alert",
 			Card:   card{Header: &cardHeader{Title: title}, Sections: sections},
 		}},
 	}

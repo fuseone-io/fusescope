@@ -338,7 +338,7 @@ func TestGoogleChatLinkButtons(t *testing.T) {
 				ruletypes.AnnotationRelatedTraces: "https://signoz.example/traces",
 			},
 			wantButtons: map[string]string{
-				"Open in SigNoz":      "https://signoz.example/alerts/1",
+				"Open in FuseScope":   "https://signoz.example/alerts/1",
 				"View Related Logs":   "https://signoz.example/logs",
 				"View Related Traces": "https://signoz.example/traces",
 			},
@@ -397,7 +397,7 @@ func TestGoogleChatFooterButtonSurvivesEmptyBody(t *testing.T) {
 
 	buttons := cardButtons(t, got)
 	require.Len(t, buttons, 1)
-	assert.Equal(t, "Open in SigNoz", buttons[0].Text)
+	assert.Equal(t, "Open in FuseScope", buttons[0].Text)
 	assert.Equal(t, "https://signoz.example/alerts/1", buttons[0].OnClick.OpenLink.URL)
 }
 
@@ -438,13 +438,13 @@ func TestGoogleChatMultiAlertSections(t *testing.T) {
 	logsURLs := map[string]bool{}
 	for _, b := range cardButtons(t, got) {
 		switch b.Text {
-		case "Open in SigNoz":
+		case "Open in FuseScope":
 			sigNoz++
 		case "View Related Logs":
 			logsURLs[b.OnClick.OpenLink.URL] = true
 		}
 	}
-	assert.Equal(t, 1, sigNoz, "SigNoz button must appear once (shared, per-rule)")
+	assert.Equal(t, 1, sigNoz, "FuseScope button must appear once (shared, per-rule)")
 	assert.True(t, logsURLs["https://signoz.example/logs?pod=pod-1"], "pod-1's logs button")
 	assert.True(t, logsURLs["https://signoz.example/logs?pod=pod-2"], "pod-2's logs button")
 }
@@ -523,11 +523,11 @@ func TestGoogleChatSectionCap(t *testing.T) {
 	// The SigNoz footer must survive after the note (last section).
 	sigNoz := 0
 	for _, b := range cardButtons(t, got) {
-		if b.Text == "Open in SigNoz" {
+		if b.Text == "Open in FuseScope" {
 			sigNoz++
 		}
 	}
-	assert.Equal(t, 1, sigNoz, "SigNoz footer must be present despite the cap")
+	assert.Equal(t, 1, sigNoz, "FuseScope footer must be present despite the cap")
 }
 
 func TestGoogleChatStatusLine(t *testing.T) {

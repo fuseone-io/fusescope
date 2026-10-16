@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import {
 	type DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { ChartLine } from '@signozhq/icons';
 
 import type { SectionConfig } from './sections';

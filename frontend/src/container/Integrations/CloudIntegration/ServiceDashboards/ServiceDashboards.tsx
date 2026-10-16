@@ -1,7 +1,7 @@
 import {
 	CloudintegrationtypesServiceDashboardDTO,
 	CloudintegrationtypesServiceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import DashboardCard from './DashboardCard';
 import './ServiceDashboards.styles.scss';

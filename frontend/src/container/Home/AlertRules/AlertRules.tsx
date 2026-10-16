@@ -4,7 +4,7 @@ import { Button, Skeleton } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import { useListRules } from 'api/generated/services/rules';
-import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesRuleDTO } from 'api/generated/services/fuseScope.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';

@@ -7,7 +7,7 @@ import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
 import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';

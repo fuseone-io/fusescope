@@ -2,7 +2,7 @@ import {
 	MetricsexplorertypesMetricMetadataDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 export const MOCK_METRIC_METADATA: MetricsexplorertypesMetricMetadataDTO = {
 	type: MetrictypesTypeDTO.sum,

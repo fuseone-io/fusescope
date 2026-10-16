@@ -37,7 +37,7 @@ export const MCP_CLIENTS: McpClient[] = [
 			),
 		installUrl: (endpoint): string => {
 			const config = b64url(JSON.stringify({ url: endpoint }));
-			return `cursor://anysphere.cursor-deeplink/mcp/install?name=SigNoz&config=${config}`;
+			return `cursor://anysphere.cursor-deeplink/mcp/install?name=FuseScope&config=${config}`;
 		},
 		installLabel: 'Add to Cursor',
 	},
@@ -96,7 +96,7 @@ export const MCP_CLIENTS: McpClient[] = [
 		docsPath: '/docs/ai/signoz-mcp-server/',
 		snippet: null,
 		instructions:
-			'Most MCP clients that support remote HTTP servers will accept the endpoint URL above. Add it as a new MCP server in your client and paste your SigNoz API key when the client prompts for authentication. See the docs for client-specific instructions.',
+			'Most MCP clients that support remote HTTP servers will accept the endpoint URL above. Add it as a new MCP server in your client and paste your FuseScope API key when the client prompts for authentication. See the docs for client-specific instructions.',
 	},
 ];
 

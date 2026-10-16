@@ -1,4 +1,4 @@
-import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/fuseScope.schemas';
 import {
 	buildBaseConfig,
 	type TimeAxisChromeArgs,

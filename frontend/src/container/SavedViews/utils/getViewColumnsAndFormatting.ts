@@ -1,4 +1,4 @@
-import { SavedviewtypesSavedViewSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSavedViewSpecDTO } from 'api/generated/services/fuseScope.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import {
 	defaultLogsSelectedColumns,

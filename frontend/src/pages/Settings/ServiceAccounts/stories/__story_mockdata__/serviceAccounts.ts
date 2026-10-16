@@ -12,7 +12,7 @@ import type {
 	RenderErrorResponseDTO,
 	ServiceaccounttypesServiceAccountDTO,
 	ServiceaccounttypesServiceAccountRoleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { ServiceAccountStatus } from 'container/ServiceAccountsSettings/utils';
 import { RoleType } from 'types/roles';
 

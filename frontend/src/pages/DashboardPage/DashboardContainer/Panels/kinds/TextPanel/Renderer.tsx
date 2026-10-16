@@ -4,7 +4,7 @@ import cx from 'classnames';
 import {
 	DashboardtypesTextAlignDTO,
 	DashboardtypesVerticalAlignDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 

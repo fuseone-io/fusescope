@@ -7,11 +7,11 @@ import type {
 	ListLLMPricingRules200,
 	ListUnmappedLLMModels200,
 	LlmpricingruletypesLLMPricingRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	LlmpricingruletypesLLMPricingRuleCacheModeDTO,
 	LlmpricingruletypesLLMPricingRuleUnitDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 const ORG_ID = 'org-signoz';
 
@@ -39,7 +39,7 @@ const CATALOGUE: ModelSeed[] = [
 export const PRICING_RULE_MAX = CATALOGUE.length;
 
 /**
- * A rule the org wrote itself is an override; the rest are the catalogue SigNoz
+ * A rule the org wrote itself is an override; the rest are the catalogue FuseScope
  * ships and syncs, which is what the source filter splits the table by.
  */
 const isOverride = (index: number): boolean => index % 4 === 0;

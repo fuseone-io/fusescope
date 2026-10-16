@@ -6,7 +6,7 @@ import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import type {
 	DashboardtypesDashboardSpecDTO,
 	DashboardtypesGettableDashboardV2DTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toAPIError } from 'utils/errorUtils';
 

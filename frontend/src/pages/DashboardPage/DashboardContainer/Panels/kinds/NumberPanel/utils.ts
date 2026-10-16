@@ -1,4 +1,4 @@
-import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/fuseScope.schemas';
 
 import type { PanelThreshold } from '../../types/threshold';
 import { toPanelThreshold } from '../../utils/mapComparisonThreshold';

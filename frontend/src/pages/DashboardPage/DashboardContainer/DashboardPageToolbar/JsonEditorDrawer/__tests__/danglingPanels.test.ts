@@ -1,4 +1,4 @@
-import type { DashboardtypesDashboardSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesDashboardSpecDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { findPanelLayoutIssues } from '../danglingPanels';
 

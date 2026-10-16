@@ -4,7 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { SectionKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';

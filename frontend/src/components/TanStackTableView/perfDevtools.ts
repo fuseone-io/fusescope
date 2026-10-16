@@ -4,7 +4,7 @@ import {
 	ChromePerformanceTrackEntryOptions,
 } from 'lib/chromePerformanceDevTools';
 
-const TABLE_TRACK_GROUP = 'SigNoz Table';
+const TABLE_TRACK_GROUP = 'FuseScope Table';
 
 export function chromePerformanceMeasureTanstackTable(
 	name: string,

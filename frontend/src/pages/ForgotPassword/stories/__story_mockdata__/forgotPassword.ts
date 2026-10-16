@@ -9,7 +9,7 @@ import type { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 export const FORGOT_PASSWORD_EMAIL = 'anna@signoz.io';
 
 const ORGS: OrgSessionContext[] = [
-	{ id: 'org-signoz', name: 'SigNoz' },
+	{ id: 'org-signoz', name: 'FuseScope' },
 	{ id: 'org-acme', name: 'Acme Corp' },
 	{ id: 'org-globex', name: 'Globex' },
 ].map((org) => ({

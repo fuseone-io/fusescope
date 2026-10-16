@@ -1,4 +1,4 @@
-import { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/fuseScope.schemas';
 
 import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';
 

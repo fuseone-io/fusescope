@@ -8,7 +8,7 @@ import { ChevronUp, Info } from '@signozhq/icons';
 import {
 	Querybuildertypesv5BucketOptionsDTO,
 	Querybuildertypesv5BucketsKindDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import {
 	BUCKET_KIND_HINTS,

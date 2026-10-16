@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type {
 	TelemetrytypesSignalDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useGetFieldsKeys } from 'api/generated/services/fields';
 import useDebounce from 'hooks/useDebounce';
 

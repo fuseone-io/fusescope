@@ -1,4 +1,4 @@
-import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/fuseScope.schemas';
 
 /** Minimal FlamegraphSpan for unit tests */
 export const MOCK_SPAN: FlamegraphSpan = {

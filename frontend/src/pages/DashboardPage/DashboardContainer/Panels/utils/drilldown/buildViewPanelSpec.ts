@@ -2,7 +2,7 @@ import type {
 	DashboardtypesPanelPluginDTO,
 	DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { getSwitchedPluginSpec } from 'pages/DashboardPage/DashboardContainer/PanelEditor/getSwitchedPluginSpec';
 import {

@@ -1,4 +1,4 @@
-import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas';
+import type { QueryRangeV5200 } from 'api/generated/services/fuseScope.schemas';
 
 import {
 	flattenTimeSeries,

@@ -7,7 +7,7 @@ import {
 	type DashboardtypesTableThresholdDTO,
 	DashboardtypesThresholdFormatDTO,
 	type DashboardtypesThresholdWithLabelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	AnyThreshold,
 	ThresholdVariant,

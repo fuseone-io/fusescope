@@ -2,7 +2,7 @@
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTypeDTO } from 'api/generated/services/fuseScope.schemas';
 import store from 'store';
 import { AlignedData } from 'uplot';
 

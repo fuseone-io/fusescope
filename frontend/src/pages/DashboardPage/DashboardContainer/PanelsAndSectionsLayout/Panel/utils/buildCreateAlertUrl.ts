@@ -1,7 +1,7 @@
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelPluginDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';

@@ -4,7 +4,7 @@ import { act, renderHook } from '@testing-library/react';
 import {
 	type DashboardtypesPanelDTO,
 	Querybuildertypesv5RequestTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { PanelQueryCapabilities } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import {
 	DASHBOARD_CACHE_TIME,

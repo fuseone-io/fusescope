@@ -2,11 +2,11 @@ import type {
 	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5TimeSeriesDataDTO,
 	Querybuildertypesv5TimeSeriesDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	Querybuildertypesv5BucketOptionsLinearDTOKind,
 	Querybuildertypesv5BucketOptionsLogDTOKind,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import {
 	FALLBACK_STEP_SECONDS,

@@ -11,7 +11,7 @@ import {
 	MetricreductionruletypesGettableReductionRuleDTO,
 	MetricreductionruletypesOrderDTO,
 	MetricreductionruletypesReductionRuleOrderByDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import dayjs from 'dayjs';
 import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
 import useDebounce from 'hooks/useDebounce';

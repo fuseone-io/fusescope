@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from 'react';
 import {
 	TelemetrytypesSignalDTO,
 	TelemetrytypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { Format } from 'constants/formats/types';

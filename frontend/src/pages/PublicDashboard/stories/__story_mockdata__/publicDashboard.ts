@@ -6,7 +6,7 @@
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	GetPublicDashboardDataV2200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /** The two shapes a published link can resolve to. */
 export const PUBLIC_SCHEMAS = ['v2', 'v1'] as const;

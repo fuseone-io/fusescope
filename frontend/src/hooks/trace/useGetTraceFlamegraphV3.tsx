@@ -2,7 +2,7 @@ import { getFlamegraph } from 'api/generated/services/tracedetail';
 import {
 	SpantypesGettableFlamegraphTraceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery, UseQueryResult } from 'react-query';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';

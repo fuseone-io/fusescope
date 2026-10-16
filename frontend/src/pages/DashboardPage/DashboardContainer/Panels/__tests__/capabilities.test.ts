@@ -1,7 +1,7 @@
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { EQueryType } from 'types/common/dashboard';
 import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -185,7 +185,7 @@ describe('panel capabilities guard', () => {
 		});
 	});
 
-	// A dashboard spec written by a newer SigNoz can name a kind this build has no
+	// A dashboard spec written by a newer FuseScope can name a kind this build has no
 	// definition for. The registry answers with UNSUPPORTED_PANEL rather than nothing, so
 	// every guard below reads it without first proving a definition exists.
 	describe('a kind this build cannot render', () => {

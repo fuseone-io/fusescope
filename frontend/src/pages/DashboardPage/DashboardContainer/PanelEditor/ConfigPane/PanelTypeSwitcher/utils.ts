@@ -1,4 +1,4 @@
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/fuseScope.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
 import {

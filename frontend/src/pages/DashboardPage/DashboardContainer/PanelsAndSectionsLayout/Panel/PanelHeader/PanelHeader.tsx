@@ -4,7 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 import type {
 	DashboardtypesPanelDTO,
 	Querybuildertypesv5QueryWarnDataDTO as WarningDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import cx from 'classnames';
 import type { PanelTimePreferenceLabel } from 'pages/DashboardPage/DashboardContainer/hooks/resolvePanelTimeWindow';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';

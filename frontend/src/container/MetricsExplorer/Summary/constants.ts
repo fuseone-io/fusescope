@@ -1,7 +1,7 @@
 import {
 	MetricsexplorertypesTreemapModeDTO,
 	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 export const METRICS_TABLE_PAGE_SIZE = 10;
 

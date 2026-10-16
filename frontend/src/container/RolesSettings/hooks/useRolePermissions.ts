@@ -5,12 +5,12 @@ import type {
 	AuthtypesRoleDTO,
 	AuthtypesTransactionGroupDTO,
 	AuthtypesUpdatableRoleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	AuthtypesRelationDTO,
 	CoretypesKindDTO,
 	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	invalidateGetRole,
 	invalidateListRoles,

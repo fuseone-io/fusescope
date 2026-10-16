@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/fuseScope.schemas';
 
 import JsonEditorDrawer from '../JsonEditorDrawer';
 import { useJsonEditor } from '../useJsonEditor';

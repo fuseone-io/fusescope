@@ -1,4 +1,4 @@
-import { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSavedViewDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { findSavedView } from '../findSavedView';
 

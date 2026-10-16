@@ -11,7 +11,7 @@ import {
 	RenderErrorResponseDTO,
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { ErrorType } from 'api/generatedAPIInstance';
 import { QueryParams } from 'constants/query';
 import { buildExplorerNavigationUrl } from 'container/AIAssistant/components/ActionsSection/utils/openSavedView';

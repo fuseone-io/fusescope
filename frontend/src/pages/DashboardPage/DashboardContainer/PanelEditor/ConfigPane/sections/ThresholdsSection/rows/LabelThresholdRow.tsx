@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
-import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/fuseScope.schemas';
 import { formatPanelValue } from 'pages/DashboardPage/DashboardContainer/Panels/utils/formatPanelValue';
 
 import ThresholdAmountField from './shared/ThresholdAmountField';

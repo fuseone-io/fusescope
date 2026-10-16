@@ -4,7 +4,7 @@ import { CircleAlert, CircleCheck, LoaderCircle } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 
@@ -170,7 +170,7 @@ export default function CustomDomainEditModal({
 					>
 						{hasError
 							? errorMessage
-							: "To help you easily explore SigNoz, we've selected a tenant sub domain name for you."}
+							: "To help you easily explore FuseScope, we've selected a tenant sub domain name for you."}
 					</span>
 				</div>
 

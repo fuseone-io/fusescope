@@ -1,4 +1,4 @@
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
 import { toQueryEnvelopes } from '../../queryV5/buildQueryRangeRequest';

@@ -133,11 +133,11 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 	}))
 
 	reflector.Spec.WithInfo(*(&openapi3.Info{}).
-		WithTitle("SigNoz").
+		WithTitle("FuseScope").
 		WithDescription("OpenTelemetry-Native Logs, Metrics and Traces in a single pane").
 		WithTermsOfService("https://signoz.io/terms-of-service/").
 		WithContact(*(&openapi3.Contact{}).
-			WithName("SigNoz Support").
+			WithName("FuseScope Support").
 			WithURL("https://signoz.io").
 			WithEmail("support@signoz.io")),
 	)
@@ -145,16 +145,16 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 	reflector.Spec.WithServers(
 		// Default server
 		*(&openapi3.Server{}).WithURL("https://{host}:{port}{base_path}").
-			WithDescription("The fully qualified URL to the SigNoz APIServer.").
+			WithDescription("The fully qualified URL to the FuseScope APIServer.").
 			WithVariablesItem("host", *(&openapi3.ServerVariable{}).
 				WithDefault("localhost").
-				WithDescription("The host of the SigNoz APIServer")).
+				WithDescription("The host of the FuseScope APIServer")).
 			WithVariablesItem("port", *(&openapi3.ServerVariable{}).
 				WithDefault("8080").
-				WithDescription("The port of the SigNoz APIServer")).
+				WithDescription("The port of the FuseScope APIServer")).
 			WithVariablesItem("base_path", *(&openapi3.ServerVariable{}).
 				WithDefault("/").
-				WithDescription("The base path of the SigNoz APIServer")),
+				WithDescription("The base path of the FuseScope APIServer")),
 	)
 
 	reflector.SpecSchema().SetAPIKeySecurity(authtypes.IdentNProviderAPIKey.StringValue(), "SigNoz-Api-Key", openapi.InHeader, "API Keys")

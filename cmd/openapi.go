@@ -13,7 +13,7 @@ import (
 func registerGenerateOpenAPI(parentCmd *cobra.Command) {
 	openapiCmd := &cobra.Command{
 		Use:   "openapi",
-		Short: "Generate OpenAPI schema for SigNoz",
+		Short: "Generate OpenAPI schema for FuseScope",
 		RunE: func(currCmd *cobra.Command, args []string) error {
 			return runGenerateOpenAPI(currCmd.Context())
 		},

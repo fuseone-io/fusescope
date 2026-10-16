@@ -7,7 +7,7 @@ import {
 	DashboardtypesStackModeDTO,
 	Querybuildertypesv5BucketOptionsLinearDTOKind,
 	Querybuildertypesv5BucketOptionsLogDTOKind,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { FillMode, StackMode } from 'lib/uPlotV2/config/types';
 import {
 	HeatmapAxisScale,

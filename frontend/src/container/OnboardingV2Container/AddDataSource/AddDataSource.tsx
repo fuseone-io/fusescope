@@ -26,7 +26,7 @@ import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { isModifierKeyPressed } from 'utils/app';
 
-import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+import fuseScopeBrandLogoUrl from '@/assets/Logos/fusescope-brand-logo.svg';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteMembers from 'components/InviteMembers/InviteMembers';
@@ -764,7 +764,7 @@ function OnboardingAddDataSource(): JSX.Element {
 												Select your data source
 											</Typography.Title>
 											<Typography.Text className="question-sub-title">
-												Select from a host of services to start sending data to SigNoz
+												Select from a host of services to start sending data to FuseScope
 											</Typography.Text>
 										</div>
 									</div>
@@ -947,7 +947,7 @@ function OnboardingAddDataSource(): JSX.Element {
 																	>
 																		{option.imgUrl && (
 																			<img
-																				src={option.imgUrl || signozBrandLogoUrl}
+																				src={option.imgUrl || fuseScopeBrandLogoUrl}
 																				alt={option.label}
 																				className="onboarding-data-source-button-img"
 																			/>
@@ -1010,7 +1010,7 @@ function OnboardingAddDataSource(): JSX.Element {
 																		}
 																	>
 																		<img
-																			src={option.imgUrl || signozBrandLogoUrl}
+																			src={option.imgUrl || fuseScopeBrandLogoUrl}
 																			alt={option.label}
 																			className="onboarding-data-source-button-img"
 																		/>

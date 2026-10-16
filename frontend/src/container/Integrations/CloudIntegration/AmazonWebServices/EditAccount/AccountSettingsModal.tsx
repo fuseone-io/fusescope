@@ -95,7 +95,7 @@ function AccountSettingsModal({
 							Which regions do you want to monitor?
 						</div>
 						<div className="account-settings-modal__body-region-selector-description">
-							Choose only the regions you want SigNoz to monitor.
+							Choose only the regions you want FuseScope to monitor.
 						</div>
 
 						<RegionSelector

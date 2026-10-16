@@ -5,7 +5,7 @@ import {
 	UseQueryResult,
 } from 'react-query';
 import { ErrorType } from 'api/generatedAPIInstance';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';

@@ -1,4 +1,4 @@
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import APIError from 'types/api/error';
 

@@ -1,7 +1,7 @@
 import type {
 	DashboardtypesPanelFormattingDTO,
 	DashboardtypesThresholdWithLabelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PanelMode } from 'lib/visualization/panels/types';
 import onClickPlugin, {

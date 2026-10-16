@@ -1,4 +1,4 @@
-import { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesAccountDTO } from 'api/generated/services/fuseScope.schemas';
 import { CloudAccount as IntegrationCloudAccount } from 'container/Integrations/types';
 
 import { CloudAccount as AwsCloudAccount } from './AmazonWebServices/types';

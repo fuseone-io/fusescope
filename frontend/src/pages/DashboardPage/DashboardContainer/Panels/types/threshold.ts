@@ -7,7 +7,7 @@
 import type {
 	DashboardtypesComparisonOperatorDTO,
 	DashboardtypesThresholdFormatDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /**
  * Comparison-shaped fields shared by every threshold DTO that recolors on an
@@ -22,7 +22,7 @@ export interface ComparisonThresholdShape {
 	format?: DashboardtypesThresholdFormatDTO;
 }
 
-/** SigNoz threshold palette; single source of truth for the hex values. */
+/** FuseScope threshold palette; single source of truth for the hex values. */
 export enum ThresholdColor {
 	RED = '#F1575F',
 	ORANGE = '#F5B225',

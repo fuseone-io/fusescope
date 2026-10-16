@@ -1,4 +1,4 @@
-import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/fuseScope.schemas';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';

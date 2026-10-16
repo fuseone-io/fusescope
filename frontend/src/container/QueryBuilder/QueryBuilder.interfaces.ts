@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/fuseScope.schemas';
 import { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DataSource } from 'types/common/queryBuilder';

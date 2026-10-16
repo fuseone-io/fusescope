@@ -1,5 +1,5 @@
 import { Typography } from '@signozhq/ui/typography';
-import { DashboardtypesThresholdFormatDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesThresholdFormatDTO } from 'api/generated/services/fuseScope.schemas';
 
 import ConfigTiles, {
 	type ConfigTileItem,

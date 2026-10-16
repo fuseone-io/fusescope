@@ -6,7 +6,7 @@
 import { rest } from 'msw';
 import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetPublicDashboard200 } from 'api/generated/services/fuseScope.schemas';
 import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';

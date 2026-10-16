@@ -1,6 +1,6 @@
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/fuseScope.schemas';
 import cx from 'classnames';
 
 import { getLabelVerb, getMatchTypeLabel } from '../../../ruleUtils';

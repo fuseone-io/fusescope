@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { generatePath } from 'react-router-dom';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/fuseScope.schemas';
 import { QueryParams } from 'constants/query';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';

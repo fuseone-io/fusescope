@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
-import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/fuseScope.schemas';
 
 import styles from './K8sPaginationWarning.module.scss';
 import TriangleAlert from '@signozhq/icons/TriangleAlert';

@@ -7,7 +7,7 @@ import type {
 	GetQuickFilters200,
 	QuickfiltertypesSourceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /** Typed builder for `/api/v2/quick_filters/{source}`. */
 export const quickFiltersResponse = (

@@ -1,4 +1,4 @@
-import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/fuseScope.schemas';
 
 import {
 	isAIBuilderEnvelope,

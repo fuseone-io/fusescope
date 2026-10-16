@@ -1,9 +1,9 @@
-import type { GetFieldsKeys200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetFieldsKeys200 } from 'api/generated/services/fuseScope.schemas';
 import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { rest } from 'msw';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource, SIGNAL_TO_DATA_SOURCE } from 'types/common/queryBuilder';

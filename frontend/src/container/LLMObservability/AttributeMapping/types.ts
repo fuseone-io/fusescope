@@ -6,7 +6,7 @@ import {
 	SpantypesSpanMapperOperationDTO,
 	SpantypesSpanMapperOriginDTO,
 	SpantypesSpanMapperSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 export type MapperGroup = SpantypesSpanMapperGroupDTO;
 export type Mapper = SpantypesSpanMapperDTO;

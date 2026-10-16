@@ -2,7 +2,7 @@ import {
 	DashboardtypesDashboardSpecDTO,
 	DashboardtypesPostableDashboardV2DTO,
 	TagtypesPostableTagDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 // Accept either a complete PostableDashboardV2 (flat shape with `spec` and
 // top-level `name` / `image` / `tags` / `schemaVersion`) or a bare spec — wrap

@@ -4,7 +4,7 @@ import {
 	type LlmpricingruletypesLLMPricingCacheCostsDTO,
 	type LlmpricingruletypesLLMRulePricingDTO,
 	type LlmpricingruletypesUpdatableLLMPricingRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 

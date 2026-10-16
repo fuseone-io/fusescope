@@ -14,7 +14,7 @@ import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 	type ListDashboardViews200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import type { SavedView, SavedViewInput } from '../types';
 

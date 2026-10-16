@@ -27,7 +27,7 @@ export const monogramIcon = (label: string, background: string): string => {
 };
 
 export const SIGNOZ_AUTHOR = {
-	name: 'SigNoz',
+	name: 'FuseScope',
 	email: 'integrations@signoz.io',
 	homepage: 'https://signoz.io',
 };

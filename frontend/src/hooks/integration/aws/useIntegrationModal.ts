@@ -19,7 +19,7 @@ import { useGetConnectionCredentials } from 'api/generated/services/cloudintegra
 import {
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesPostableAccountDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import {
 	ActiveViewEnum,

@@ -3,7 +3,7 @@ import { Typography } from '@signozhq/ui/typography';
 import {
 	MetricreductionruletypesAffectedAssetDTO,
 	MetricreductionruletypesAssetTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 

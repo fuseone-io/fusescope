@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import logEvent from 'api/common/logEvent';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import { Querybuildertypesv5VariableTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
+import { Querybuildertypesv5VariableTypeDTO } from 'api/generated/services/fuseScope.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 

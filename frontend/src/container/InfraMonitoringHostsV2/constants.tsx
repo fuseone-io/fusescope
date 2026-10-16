@@ -4,7 +4,7 @@ import { Progress } from '@signozhq/ui/progress';
 import {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/types';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTypeDTO } from 'api/generated/services/fuseScope.schemas';
 import { userEvent } from 'tests/test-utils';
 
 import ROUTES from '../../../../constants/routes';

@@ -7,7 +7,7 @@ import {
 } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import { ConfigProvider } from 'antd';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 import { useRef } from 'react';
 
 import ViewPanelModalContent from './ViewPanelModalContent';

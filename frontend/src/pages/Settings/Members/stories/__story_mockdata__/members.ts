@@ -10,7 +10,7 @@ import type {
 	GetUser200,
 	ListUsers200,
 	TypesUserDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { RoleType } from 'types/roles';
 import { UserApiStatus } from 'container/MembersSettings/utils';
 

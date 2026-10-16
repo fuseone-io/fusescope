@@ -54,7 +54,7 @@ function ModelCostDrawer({
 
 	// Metadata (model id / provider / patterns / source) is editable by any
 	// manager. Pricing fields are editable only once the user picks "User
-	// override" — auto-populated pricing is managed by SigNoz. Write APIs are
+	// override" — auto-populated pricing is managed by FuseScope. Write APIs are
 	// Admin-only, so non-managers can't edit anything.
 	const metadataReadOnly = !canManage;
 	const pricingReadOnly = !canManage || !isOverride;

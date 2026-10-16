@@ -2,7 +2,7 @@ import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelPluginDTO,
 	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,

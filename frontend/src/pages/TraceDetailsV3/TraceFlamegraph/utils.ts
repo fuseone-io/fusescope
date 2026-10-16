@@ -7,7 +7,7 @@ import {
 	generateColorPair,
 	RESERVED_ERROR,
 } from 'pages/TraceDetailsV3/utils/generateColorPair';
-import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/fuseScope.schemas';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import {

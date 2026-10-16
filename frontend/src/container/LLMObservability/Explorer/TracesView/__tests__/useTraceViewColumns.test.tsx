@@ -8,7 +8,7 @@ import { rest } from 'msw';
 import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useColumnStore } from 'components/TanStackTableView/useColumnStore';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';

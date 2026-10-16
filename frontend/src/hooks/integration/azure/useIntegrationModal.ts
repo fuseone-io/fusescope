@@ -12,7 +12,7 @@ import {
 import {
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesPostableAccountDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { ModalStateEnum } from 'container/Integrations/HeroSection/types';
 import useAxiosError from 'hooks/useAxiosError';

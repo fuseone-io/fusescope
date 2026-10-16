@@ -4,7 +4,7 @@ import type {
 	Querybuildertypesv5BuilderQuerySpecDTO,
 	Querybuildertypesv5CompositeQueryDTO,
 	Querybuildertypesv5QueryEnvelopeBuilderDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import {
 	isBuilderEnvelope,

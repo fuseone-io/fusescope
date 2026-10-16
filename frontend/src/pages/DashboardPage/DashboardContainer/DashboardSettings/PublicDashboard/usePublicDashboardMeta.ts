@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useGetPublicDashboard } from 'api/generated/services/dashboard';
-import type { DashboardtypesGettablePublicDasbhboardDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettablePublicDasbhboardDTO } from 'api/generated/services/fuseScope.schemas';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 export interface UsePublicDashboardMetaReturn {

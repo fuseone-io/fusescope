@@ -5,7 +5,7 @@ import {
 	MetricsexplorertypesStatDTO,
 	MetricsexplorertypesTreemapEntryDTO,
 	MetricsexplorertypesTreemapModeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 

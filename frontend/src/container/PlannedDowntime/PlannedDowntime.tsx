@@ -10,7 +10,7 @@ import {
 	useListDowntimeSchedules,
 } from 'api/generated/services/downtimeschedules';
 import { useListRules } from 'api/generated/services/rules';
-import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/fuseScope.schemas';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';

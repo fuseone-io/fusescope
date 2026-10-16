@@ -1,5 +1,5 @@
 import { FilePenLine } from '@signozhq/icons';
-import { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/fuseScope.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 

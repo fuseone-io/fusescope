@@ -53,7 +53,7 @@ function TimezoneAdaptation(): JSX.Element {
 			</div>
 
 			<p className="timezone-adaption__description">
-				Adapt the timestamps shown in the SigNoz console to my active timezone.
+				Adapt the timestamps shown in the FuseScope console to my active timezone.
 			</p>
 
 			<div className="timezone-adaption__note">

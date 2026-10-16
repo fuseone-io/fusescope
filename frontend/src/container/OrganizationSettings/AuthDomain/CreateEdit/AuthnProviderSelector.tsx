@@ -1,6 +1,6 @@
 import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas';
+import { AuthtypesAuthNProviderDTO } from 'api/generated/services/fuseScope.schemas';
 
 import './CreateEdit.styles.scss';
 import { Key, SolidGoogle } from '@signozhq/icons';
@@ -59,7 +59,7 @@ function AuthnProviderSelector({
 					Configure Authentication Method
 				</Typography.Title>
 				<Typography.Text italic>
-					SigNoz supports the following single sign-on services (SSO). Get started
+					FuseScope supports the following single sign-on services (SSO). Get started
 					with setting your project’s SSO below
 				</Typography.Text>
 			</section>

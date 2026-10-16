@@ -15,7 +15,7 @@ import {
 	testRule,
 	updateRuleByID,
 } from 'api/generated/services/rules';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';

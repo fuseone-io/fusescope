@@ -14,7 +14,7 @@ import {
 import type {
 	RenderErrorResponseDTO,
 	ServiceaccounttypesServiceAccountDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';

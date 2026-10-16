@@ -222,7 +222,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 		{
 			Name:        "metric_anomaly",
 			Summary:     "Metric anomaly rule (v1 only)",
-			Description: "Anomaly rules are not yet supported under schemaVersion v2alpha1, so this example uses the v1 shape. Wraps a builder query in the `anomaly` function with daily seasonality SigNoz compares each point against the forecast for that time of day. Fires when the anomaly score stays below the threshold for the entire window; `requireMinPoints` guards against noisy intervals.",
+			Description: "Anomaly rules are not yet supported under schemaVersion v2alpha1, so this example uses the v1 shape. Wraps a builder query in the `anomaly` function with daily seasonality FuseScope compares each point against the forecast for that time of day. Fires when the anomaly score stays below the threshold for the entire window; `requireMinPoints` guards against noisy intervals.",
 			Value: map[string]any{
 				"alert":       "Anomalous drop in ingested spans",
 				"alertType":   "METRIC_BASED_ALERT",
@@ -412,7 +412,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 		{
 			Name:        "traces_threshold_latency",
 			Summary:     "Traces threshold p99 latency (ns → s conversion)",
-			Description: "Builder query against the traces signal with p99(duration_nano). The series unit is ns (compositeQuery.unit), the target is in seconds (threshold.targetUnit) SigNoz converts before comparing. Canonical shape when series and target live in different units.",
+			Description: "Builder query against the traces signal with p99(duration_nano). The series unit is ns (compositeQuery.unit), the target is in seconds (threshold.targetUnit) FuseScope converts before comparing. Canonical shape when series and target live in different units.",
 			Value: map[string]any{
 				"alert":         "Search API p99 latency above 5s",
 				"alertType":     "TRACES_BASED_ALERT",

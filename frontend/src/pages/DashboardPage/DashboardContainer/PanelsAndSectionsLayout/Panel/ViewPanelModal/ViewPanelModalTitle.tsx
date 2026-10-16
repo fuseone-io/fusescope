@@ -1,6 +1,6 @@
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { usePanelTitle } from '../hooks/usePanelTitle';
 import styles from './ViewPanelModal.module.scss';

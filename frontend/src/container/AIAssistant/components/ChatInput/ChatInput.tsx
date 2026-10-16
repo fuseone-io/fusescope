@@ -29,7 +29,7 @@ import type {
 	ListDashboardsForUserV2200,
 	ListDashboardsForUserV2Params,
 	ListRules200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import logEvent from 'api/common/logEvent';
 import { useQueryService } from 'hooks/useQueryService';
 // eslint-disable-next-line

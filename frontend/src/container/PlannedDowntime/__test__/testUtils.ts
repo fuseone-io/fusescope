@@ -1,11 +1,11 @@
 import type {
 	AlertmanagertypesScheduleDTO,
 	AlertmanagertypesPlannedMaintenanceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	AlertmanagertypesMaintenanceKindDTO,
 	AlertmanagertypesMaintenanceStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 export const buildSchedule = (
 	schedule: Partial<AlertmanagertypesScheduleDTO>,

@@ -73,7 +73,7 @@ export const SsoNotEnforced: Story = {
 	args: { enforced: false },
 };
 
-/** The form behind a domain's provider: what SigNoz sends the IdP and reads back. */
+/** The form behind a domain's provider: what FuseScope sends the IdP and reads back. */
 export const ConfigureDomain: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await clickFirst(canvasElement, 'auth-domain-configure');

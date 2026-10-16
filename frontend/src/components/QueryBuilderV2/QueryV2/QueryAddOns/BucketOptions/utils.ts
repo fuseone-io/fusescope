@@ -5,7 +5,7 @@ import {
 	Querybuildertypesv5BucketOptionsLogDTO,
 	Querybuildertypesv5BucketOptionsLogDTOKind,
 	Querybuildertypesv5BucketsKindDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
 import {

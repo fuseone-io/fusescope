@@ -3,7 +3,7 @@ import {
 	InframonitoringtypesContainerStatusDTO,
 	InframonitoringtypesPodCountsByStatusDTO,
 	InframonitoringtypesPodStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { getPodStatusItems } from '../commonUtils';
 import { getContainerStatusItems } from '../Containers/utils';

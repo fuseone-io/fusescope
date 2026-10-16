@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import {
 	DashboardtypesStackModeDTO,
 	DashboardtypesTimePreferenceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import VisualizationSection from '../VisualizationSection';
 

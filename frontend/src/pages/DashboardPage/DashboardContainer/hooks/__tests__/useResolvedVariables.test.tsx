@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesVariableDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { selectResolvedVariables } from '../../store/slices/variableSelectionSlice';
 import { useDashboardStore } from '../../store/useDashboardStore';

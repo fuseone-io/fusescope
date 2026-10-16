@@ -596,7 +596,7 @@ func TestBuildHTMLDescriptionOverflow(t *testing.T) {
 			assert.Equal(t, strings.Count(got, "<div>"), strings.Count(got, "</div>"))
 			assert.True(t, strings.HasSuffix(got, "</div>"))
 			if c.wantTrailer {
-				assert.Regexp(t, `…and \d+ more alerts\. Open in SigNoz for the full list\.`, got)
+				assert.Regexp(t, `…and \d+ more alerts\. Open in FuseScope for the full list\.`, got)
 			} else {
 				assert.NotContains(t, got, "more alerts")
 			}
@@ -641,7 +641,7 @@ func TestPrepareContentDescriptionOverflow(t *testing.T) {
 	require.NoError(t, err)
 	assert.LessOrEqual(t, utf8.RuneCountInString(desc), maxDescriptionLenRunes)
 	assert.Equal(t, strings.Count(desc, "<div>"), strings.Count(desc, "</div>"))
-	assert.Regexp(t, `…and \d+ more alerts\. Open in SigNoz for the full list\.`, desc)
+	assert.Regexp(t, `…and \d+ more alerts\. Open in FuseScope for the full list\.`, desc)
 }
 
 func repeatParts(part string, n int) []string {

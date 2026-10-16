@@ -1,5 +1,5 @@
 import { resolveTimeSeriesLegendSeries } from '../../utils/legendSeries';
-import type { DashboardtypesHistogramPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesHistogramPanelSpecDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { SectionKind, type SectionConfig } from '../../types/sections';
 

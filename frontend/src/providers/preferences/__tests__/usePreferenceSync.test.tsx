@@ -3,7 +3,7 @@ import { useGetSavedView } from 'api/generated/services/saved-view';
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,

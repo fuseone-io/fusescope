@@ -8,7 +8,7 @@ import { sections } from './sections';
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 export const definition: PanelDefinition<'signoz/TablePanel'> = {

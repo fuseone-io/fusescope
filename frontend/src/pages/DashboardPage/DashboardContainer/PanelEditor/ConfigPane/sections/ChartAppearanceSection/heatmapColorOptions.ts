@@ -3,7 +3,7 @@ import {
 	DashboardtypesHeatmapColorModeDTO,
 	DashboardtypesHeatmapColorScaleDTO,
 	DashboardtypesHeatmapPaletteDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	HEATMAP_COLOR_MODE_MAP,
 	HEATMAP_COLOR_SCALE_MAP,

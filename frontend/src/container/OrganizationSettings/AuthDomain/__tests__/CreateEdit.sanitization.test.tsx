@@ -3,7 +3,7 @@ import { rest, server } from 'mocks-server/server';
 import {
 	AuthtypesAuthDomainConfigGoogleDTO,
 	AuthtypesGettableAuthDomainDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import CreateEdit from '../CreateEdit/CreateEdit';
 import {

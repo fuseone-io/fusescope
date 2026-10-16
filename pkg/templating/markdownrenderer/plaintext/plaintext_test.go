@@ -32,7 +32,7 @@ func TestPlainText(t *testing.T) {
 		want string
 	}{
 		{"strips bold and italic", "**bold** and *italic*", "bold and italic"},
-		{"link becomes text (url)", "[View in SigNoz](https://signoz.io/alert)", "View in SigNoz (https://signoz.io/alert)"},
+		{"link becomes text (url)", "[View in FuseScope](https://signoz.io/alert)", "View in FuseScope (https://signoz.io/alert)"},
 		{"bold label kept, marker dropped", "**Alert:** name (critical)", "Alert: name (critical)"},
 		{"strikethrough stripped", "~~gone~~", "gone"},
 		{"inline code unwrapped", "run `foo bar`", "run foo bar"},

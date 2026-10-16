@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/fuseScope.schemas';
 import { FieldKeysConfigProp } from 'api/querySuggestions/types';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';

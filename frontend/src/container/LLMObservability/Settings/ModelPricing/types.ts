@@ -2,7 +2,7 @@ import {
 	LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO,
 	type LlmpricingruletypesLLMPricingRuleDTO,
 	type LlmpricingruletypesUnmappedModelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 export type PricingRule = LlmpricingruletypesLLMPricingRuleDTO;
 

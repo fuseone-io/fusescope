@@ -8,8 +8,8 @@ import set from 'api/browser/localstorage/set';
 import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import type { SpantypesPostableTraceAggregationsDTO } from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
+import type { SpantypesPostableTraceAggregationsDTO } from 'api/generated/services/fuseScope.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { screen, userEvent, within } from 'storybook/test';

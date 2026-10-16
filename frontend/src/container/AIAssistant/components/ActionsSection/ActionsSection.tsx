@@ -136,7 +136,7 @@ function ActionIcon({
 }
 
 /**
- * The agent emits `action.query` as the SigNoz REST query-range request body:
+ * The agent emits `action.query` as the FuseScope REST query-range request body:
  *
  *   - V5 (current backend): `{ ..., compositeQuery: { queries: [{ type, spec }] } }`
  *     — each `spec` already carries `filter.expression` directly.

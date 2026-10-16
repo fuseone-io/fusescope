@@ -5,7 +5,7 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	DashboardtypesQueryDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { handleQueryChange } from 'lib/query/panelQuery';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';

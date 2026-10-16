@@ -9,7 +9,7 @@ import {
 import { Organization } from 'types/api/user/getOrganization';
 import { UserResponse as User } from 'types/api/user/getUser';
 import { Info } from 'types/api/v1/version/get';
-import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
+import { GetHosts200 } from 'api/generated/services/fuseScope.schemas';
 
 export interface IAppContext {
 	user: IUser;

@@ -3,7 +3,7 @@ import {
 	DashboardtypesHeatmapColorModeDTO,
 	DashboardtypesHeatmapColorScaleDTO,
 	DashboardtypesHeatmapPaletteDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { DEFAULT_COLOR_STEPS } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
 import { render, screen, userEvent } from 'tests/test-utils';
 

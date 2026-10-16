@@ -8,7 +8,7 @@ import {
 	useGetMyOrganization,
 	useUpdateMyOrganization,
 } from 'api/generated/services/orgs';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';

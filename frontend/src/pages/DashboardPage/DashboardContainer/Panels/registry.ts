@@ -42,7 +42,7 @@ export const PANEL_OPTIONS: PanelOption[] = Object.values(PANELS);
 
 /**
  * Whether this build can render the kind. `PanelKind` spans every kind the API declares,
- * but a dashboard spec written by a newer SigNoz can name one this client has never heard
+ * but a dashboard spec written by a newer FuseScope can name one this client has never heard
  * of — so ask before doing work on a panel's behalf, such as fetching its data.
  */
 export function isPanelKindSupported(kind: PanelKind): boolean {

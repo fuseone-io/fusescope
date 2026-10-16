@@ -1,7 +1,7 @@
 import type {
 	DashboardtypesJSONPatchOperationDTO,
 	DashboardtypesVariableDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /**
  * Builds the JSON-Patch to persist the dashboard's variable list. Add/edit/

@@ -70,7 +70,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/web"
 )
 
-type SigNoz struct {
+type FuseScope struct {
 	*factory.Registry
 	Instrumentation        instrumentation.Instrumentation
 	Analytics              analytics.Analytics
@@ -186,7 +186,7 @@ func New(
 	cloudIntegrationCallback func(sqlstore.SQLStore, dashboard.Module, global.Global, zeus.Zeus, gateway.Gateway, licensing.Licensing, serviceaccount.Module, cloudintegration.Config) (cloudintegration.Module, error),
 	metricReductionRuleModuleCallback func(sqlstore.SQLStore, telemetrystore.TelemetryStore, dashboard.Module, queryparser.QueryParser, licensing.Licensing, flagger.Flagger, telemetrytypes.MetadataStore, factory.ProviderSettings, int) metricreductionrule.Module,
 	rulerProviderFactories func(cache.Cache, alertmanager.Alertmanager, sqlstore.SQLStore, telemetrystore.TelemetryStore, telemetrytypes.MetadataStore, prometheus.Prometheus, organization.Getter, rulestatehistory.Module, querier.Querier, queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]],
-) (*SigNoz, error) {
+) (*FuseScope, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
 	if err != nil {
@@ -636,7 +636,7 @@ func New(
 		return nil, err
 	}
 
-	return &SigNoz{
+	return &FuseScope{
 		Registry:               registry,
 		Analytics:              analytics,
 		Instrumentation:        instrumentation,

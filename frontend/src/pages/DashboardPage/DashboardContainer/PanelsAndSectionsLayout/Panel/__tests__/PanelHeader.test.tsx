@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import {
 	type DashboardtypesPanelDTO,
 	Querybuildertypesv5VariableTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 import type { ReactElement } from 'react';

@@ -1,5 +1,5 @@
 import { SelectProps } from 'antd';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/fuseScope.schemas';
 import { DataSource } from 'types/common/queryBuilder';
 
 export type QueryLabelProps = {

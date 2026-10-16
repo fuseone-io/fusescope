@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import cx from 'classnames';
 import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
-import { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import { AuthtypesGettableRoleDTO } from 'api/generated/services/fuseScope.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';

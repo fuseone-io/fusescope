@@ -154,7 +154,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 								</div>
 							</div>
 							<div className="integrations-list-item-column">
-								<div className="integrations-list-item-published-by">SigNoz</div>
+								<div className="integrations-list-item-published-by">FuseScope</div>
 							</div>
 							<div className="integrations-list-item-column">
 								<div className="integrations-list-item-installation-status">

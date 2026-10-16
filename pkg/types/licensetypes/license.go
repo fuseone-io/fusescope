@@ -229,7 +229,7 @@ func NewZeusLicenseFromData(data map[string]any) (*zeustypes.License, error) {
 // caller should enrich the error with the specific operation using errors.WithAdditionalf.
 func (license *License) ErrIfCloud() error {
 	if license.Platform == LicensePlatformCloud {
-		return errors.New(errors.TypeInvalidInput, ErrCodeCloudLicenseOperationUnsupported, "this operation is not supported for licenses managed by SigNoz Cloud")
+		return errors.New(errors.TypeInvalidInput, ErrCodeCloudLicenseOperationUnsupported, "this operation is not supported for licenses managed by FuseScope Cloud")
 	}
 	return nil
 }

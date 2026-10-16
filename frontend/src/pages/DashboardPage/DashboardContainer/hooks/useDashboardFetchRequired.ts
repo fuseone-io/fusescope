@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesVariableDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 
 import { useDashboardFetch } from './useDashboardFetch';

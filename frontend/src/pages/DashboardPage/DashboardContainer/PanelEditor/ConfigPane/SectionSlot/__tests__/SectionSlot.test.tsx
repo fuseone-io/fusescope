@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/fuseScope.schemas';
 import {
 	type SectionConfig,
 	SectionKind,

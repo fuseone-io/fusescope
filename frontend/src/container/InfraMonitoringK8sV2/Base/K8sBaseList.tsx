@@ -14,7 +14,7 @@ import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
-import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/fuseScope.schemas';
 import { openInNewTab } from 'utils/navigation';
 import APIError from 'types/api/error';
 

@@ -1,8 +1,8 @@
 import type {
 	Querybuildertypesv5QueryRangeRequestDTOVariables,
 	Querybuildertypesv5VariableItemDTOValue,
-} from 'api/generated/services/sigNoz.schemas';
-import { Querybuildertypesv5VariableTypeDTO } from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
+import { Querybuildertypesv5VariableTypeDTO } from 'api/generated/services/fuseScope.schemas';
 
 import type {
 	VariableFormModel,

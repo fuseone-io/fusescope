@@ -102,7 +102,7 @@ export const singleSignOnMocks = defineStoryMocks({
 			mutationResolver(values.domainDelete),
 		),
 
-		// The provider form maps IdP groups onto SigNoz roles, so it reads the role
+		// The provider form maps IdP groups onto FuseScope roles, so it reads the role
 		// catalogue that the Roles tab owns.
 		rest.get(
 			'http://localhost/api/v1/roles',

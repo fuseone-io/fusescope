@@ -9,7 +9,7 @@ import {
 	type DashboardtypesSpanGapsDTO,
 	type DashboardtypesStackModeDTO,
 	type Querybuildertypesv5BucketOptionsDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { FillMode, StackMode } from 'lib/uPlotV2/config/types';

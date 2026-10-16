@@ -3,7 +3,7 @@ import {
 	DashboardtypesQueryDTO,
 	Querybuildertypesv5BuilderQuerySpecDTO,
 	Querybuildertypesv5CompositeQueryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	fromPerses,

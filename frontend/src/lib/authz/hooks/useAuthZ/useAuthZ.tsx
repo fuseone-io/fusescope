@@ -5,7 +5,7 @@ import { authzCheck } from 'api/generated/services/authz';
 import type {
 	CoretypesObjectDTO,
 	AuthtypesTransactionDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { IS_DEV, MODE } from 'lib/env';
 
 import { AUTHZ_CACHE_TIME, SINGLE_FLIGHT_WAIT_TIME_MS } from './constants';

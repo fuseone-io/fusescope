@@ -5,7 +5,7 @@ import { Button, Card, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';
-import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas';
+import type { CreateSubscription201 } from 'api/generated/services/fuseScope.schemas';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -70,7 +70,7 @@ const supportChannels = [
 		key: 'slack_community',
 		name: 'Slack Community',
 		icon: <Slack size={16} />,
-		title: 'Get support from the SigNoz community on Slack.',
+		title: 'Get support from the FuseScope community on Slack.',
 		url: 'https://signoz.io/slack',
 		btnText: 'Join Slack',
 		isExternal: true,
@@ -266,7 +266,7 @@ export default function Support(): JSX.Element {
 			>
 				<Typography.Text className="add-credit-card-text">
 					You&apos;re currently on <span className="highlight-text">Trial plan</span>
-					. Add a credit card to access SigNoz chat support to your workspace.
+					. Add a credit card to access FuseScope chat support to your workspace.
 				</Typography.Text>
 			</Modal>
 		</div>

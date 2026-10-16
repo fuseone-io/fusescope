@@ -1,4 +1,4 @@
-import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TagtypesPostableTagDTO } from 'api/generated/services/fuseScope.schemas';
 
 export { parseKeyValueTag } from 'components/TagKeyValueInput/utils';
 

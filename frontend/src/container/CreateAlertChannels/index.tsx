@@ -18,7 +18,7 @@ import {
 	useCreateChannel,
 	useTestChannel,
 } from 'api/generated/services/channels';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';

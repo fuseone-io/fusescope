@@ -4,15 +4,15 @@ import type {
 	DashboardtypesQueryDTO,
 	Querybuildertypesv5CompositeQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
-	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind as AIBuilderQueryPluginKind,
-	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind as BuilderQueryPluginKind,
-	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind as CompositeQueryPluginKind,
+	DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAIBuilderQuerySpecDTOKind as AIBuilderQueryPluginKind,
+	DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBuilderQuerySpecDTOKind as BuilderQueryPluginKind,
+	DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind as CompositeQueryPluginKind,
 	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
 	Querybuildertypesv5QueryEnvelopePromQLDTOType,
 	Querybuildertypesv5RequestTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';

@@ -3,7 +3,7 @@ import { Info, Loader } from '@signozhq/icons';
 import { Spin, Table, TablePaginationConfig, TableProps, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { SorterResult } from 'antd/es/table/interface';
-import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/fuseScope.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';

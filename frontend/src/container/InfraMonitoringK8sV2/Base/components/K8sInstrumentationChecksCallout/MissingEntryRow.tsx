@@ -5,7 +5,7 @@ import { Divider } from '@signozhq/ui/divider';
 import type {
 	InframonitoringtypesMissingAttributesComponentEntryDTO,
 	InframonitoringtypesMissingMetricsComponentEntryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 type MissingEntryRowProps =
 	| {

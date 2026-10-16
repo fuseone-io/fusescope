@@ -21,7 +21,7 @@ import type {
 	GetSubscription200,
 	SubscriptiontypesGettableSubscriptionUsageDTO,
 	SubscriptiontypesSubscriptionUsageBreakdownDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	createSubscription,
 	updateSubscription,

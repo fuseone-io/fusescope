@@ -2,7 +2,7 @@ import {
 	getSavedView,
 	listSavedViews,
 } from 'api/generated/services/saved-view';
-import { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSavedViewDTO } from 'api/generated/services/fuseScope.schemas';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { SavedViewSourcePage } from 'container/SavedViews/types';

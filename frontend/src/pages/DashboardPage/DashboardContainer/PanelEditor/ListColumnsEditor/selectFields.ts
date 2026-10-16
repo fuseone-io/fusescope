@@ -3,7 +3,7 @@ import {
 	type DashboardtypesListPanelSpecDTO,
 	type DashboardtypesPanelSpecDTO,
 	type TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,

@@ -9,7 +9,7 @@ import {
 	AuthtypesOIDCConfigDTO,
 	AuthtypesRoleMappingDTO,
 	AuthtypesSamlConfigDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /**
  * Maps the config envelope's per-variant kind to the provider enum driving the

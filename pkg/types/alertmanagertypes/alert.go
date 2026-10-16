@@ -143,9 +143,9 @@ func NewTestAlert(receiver *Receiver, startsAt time.Time, updatedAt time.Time) *
 				"severity":  "critical",
 			},
 			Annotations: model.LabelSet{
-				"description": "Test alert fired from SigNoz",
-				"summary":     "Test alert fired from SigNoz",
-				"message":     "Test alert fired from SigNoz",
+				"description": "Test alert fired from FuseScope",
+				"summary":     "Test alert fired from FuseScope",
+				"message":     "Test alert fired from FuseScope",
 			},
 		},
 		UpdatedAt: updatedAt,

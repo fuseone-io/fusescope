@@ -12,7 +12,7 @@ import {
 import type {
 	RenderErrorResponseDTO,
 	ServiceaccounttypesGettableFactorAPIKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import dayjs from 'dayjs';

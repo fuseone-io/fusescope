@@ -1,4 +1,4 @@
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/fuseScope.schemas';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { fieldDataTypeToDataType } from 'utils/fieldDataType';

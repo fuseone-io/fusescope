@@ -1,5 +1,5 @@
-import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/fuseScope.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { resolveSignal } from '../getBuilderQueries';
 

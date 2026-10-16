@@ -194,7 +194,7 @@ func (provider *provider) addLicensingRoutes(router *mux.Router) error {
 			ID:                  "DeleteLicense",
 			Tags:                []string{"licenses"},
 			Summary:             "Delete a license.",
-			Description:         "This endpoint deletes the license by id. Licenses managed by SigNoz Cloud cannot be deleted.",
+			Description:         "This endpoint deletes the license by id. Licenses managed by FuseScope Cloud cannot be deleted.",
 			Request:             nil,
 			RequestContentType:  "",
 			Response:            nil,

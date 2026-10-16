@@ -5,7 +5,7 @@
 	}
 
 	// Override react-grid-layout's default red drag/resize placeholder with the
-	// SigNoz brand blue.
+	// FuseScope brand blue.
 	:global(.react-grid-item.react-grid-placeholder) {
 		background: var(--bg-robin-500);
 		opacity: 0.2;

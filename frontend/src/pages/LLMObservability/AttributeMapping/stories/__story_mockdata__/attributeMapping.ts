@@ -7,8 +7,8 @@ import type {
 	ListSpanMapperGroups200,
 	SpantypesSpanMapperGroupConditionKeyDTO,
 	SpantypesSpanMapperGroupDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { SpantypesSpanMapperOriginDTO } from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
+import { SpantypesSpanMapperOriginDTO } from 'api/generated/services/fuseScope.schemas';
 
 const ORG_ID = 'org-signoz';
 

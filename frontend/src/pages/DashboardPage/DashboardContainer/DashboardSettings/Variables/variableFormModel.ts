@@ -1,8 +1,8 @@
 import {
 	DashboardtypesDynamicVariableSignalDTO,
 	DashboardtypesListVariableSpecSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import type { DashboardtypesVariableDefaultValueDTO } from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
+import type { DashboardtypesVariableDefaultValueDTO } from 'api/generated/services/fuseScope.schemas';
 import { sortBy } from 'lodash-es';
 
 /**

@@ -1,4 +1,4 @@
-import type { ServiceaccounttypesServiceAccountDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ServiceaccounttypesServiceAccountDTO } from 'api/generated/services/fuseScope.schemas';
 import { toISOString } from 'utils/app';
 
 export function toServiceAccountRow(

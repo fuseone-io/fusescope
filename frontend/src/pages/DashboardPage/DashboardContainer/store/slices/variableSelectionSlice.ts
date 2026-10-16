@@ -1,4 +1,4 @@
-import type { Querybuildertypesv5QueryRangeRequestDTOVariables } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryRangeRequestDTOVariables } from 'api/generated/services/fuseScope.schemas';
 import type { StateCreator } from 'zustand';
 
 import type {

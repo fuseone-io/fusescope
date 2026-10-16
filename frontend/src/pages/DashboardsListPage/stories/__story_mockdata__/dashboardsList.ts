@@ -12,7 +12,7 @@ import {
 	type ListDashboardsForUserV2200,
 	type ListUsers200,
 	type TagtypesGettableTagDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { createAppContextMock } from 'tests/fixtures/appContextMock';
 import { USER_ROLES } from 'types/roles';
 

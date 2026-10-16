@@ -3,7 +3,7 @@ import {
 	invalidateGetSavedView,
 	invalidateListSavedViews,
 } from 'api/generated/services/saved-view';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 
 export async function invalidateSavedViews(
 	queryClient: QueryClient,

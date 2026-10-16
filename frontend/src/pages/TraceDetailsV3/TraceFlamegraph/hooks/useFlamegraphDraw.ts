@@ -1,7 +1,7 @@
 import React, { RefObject, useCallback, useMemo, useRef } from 'react';
 import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
-import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/fuseScope.schemas';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { ConnectorLine } from '../computeVisualLayout';

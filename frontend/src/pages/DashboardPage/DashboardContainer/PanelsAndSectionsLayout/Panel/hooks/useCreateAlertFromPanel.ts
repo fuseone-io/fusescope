@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import { useReplaceVariables } from 'api/generated/services/querier';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';

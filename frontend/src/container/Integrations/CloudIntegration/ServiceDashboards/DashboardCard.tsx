@@ -1,6 +1,6 @@
 import type { KeyboardEvent, MouseEvent } from 'react';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import { CloudintegrationtypesServiceDashboardDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesServiceDashboardDTO } from 'api/generated/services/fuseScope.schemas';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { openInNewTab } from 'utils/navigation';
 

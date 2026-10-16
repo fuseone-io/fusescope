@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/fuseScope.schemas';
 import { Warning } from 'types/api';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 

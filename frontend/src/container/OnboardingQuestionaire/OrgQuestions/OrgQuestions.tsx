@@ -140,7 +140,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 			<div className="onboarding-header-section">
 				<div className="onboarding-header-icon">🎉</div>
 				<Typography.Title level={4} className="onboarding-header-title">
-					Welcome to SigNoz Cloud
+					Welcome to FuseScope Cloud
 				</Typography.Title>
 				<Typography.Text className="onboarding-header-subtitle">
 					Let&apos;s get you started
@@ -182,7 +182,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 					{showMigrationQuestion && (
 						<div className="form-group">
 							<div className="question">
-								What is your timeline for migrating to SigNoz?
+								What is your timeline for migrating to FuseScope?
 							</div>
 							<RadioGroup
 								color="primary"

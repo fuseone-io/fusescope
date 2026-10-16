@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Info } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
-import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/fuseScope.schemas';
 import cx from 'classnames';
 // eslint-disable-next-line signoz/no-antd-components -- fixed-option signal picker
 import { Select } from 'antd';

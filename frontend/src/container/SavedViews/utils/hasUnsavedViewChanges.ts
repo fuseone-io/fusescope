@@ -1,4 +1,4 @@
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/fuseScope.schemas';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import isEqual from 'lodash-es/isEqual';
 import { DataSource } from 'types/common/queryBuilder';

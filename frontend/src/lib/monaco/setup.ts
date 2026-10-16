@@ -12,7 +12,7 @@ self.MonacoEnvironment = {
 		if (label === 'json') {
 			return new JsonWorker(); // JSON language service
 		}
-		// SigNoz editors use JSON + a hand-registered ClickHouse tokenizer (no worker),
+		// FuseScope editors use JSON + a hand-registered ClickHouse tokenizer (no worker),
 		// so the base editor worker covers everything else.
 		return new EditorWorker(); // base worker — sql, yaml, plaintext etc.
 	},

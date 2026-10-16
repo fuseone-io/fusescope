@@ -2,8 +2,8 @@ import type {
 	Querybuildertypesv5ColumnDescriptorDTO,
 	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5ScalarDataDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
+import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/fuseScope.schemas';
 
 import { isBuilderEnvelope } from 'lib/query/builderEnvelope';
 

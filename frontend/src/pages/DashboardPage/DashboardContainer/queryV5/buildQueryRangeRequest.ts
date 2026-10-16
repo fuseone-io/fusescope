@@ -9,14 +9,14 @@ import type {
 	Querybuildertypesv5QueryEnvelopeDTO,
 	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5QueryRangeRequestDTOVariables,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	Querybuildertypesv5OrderDirectionDTO,
 	Querybuildertypesv5QueryEnvelopeBuilderAIDTOType,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
 	Querybuildertypesv5QueryEnvelopePromQLDTOType,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import type { PanelQueryCapabilities } from '../Panels/types/panelCapabilities';
 import { isBuilderEnvelope } from 'lib/query/builderEnvelope';

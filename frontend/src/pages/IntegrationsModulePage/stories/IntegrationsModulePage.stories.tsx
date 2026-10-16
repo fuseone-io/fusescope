@@ -49,7 +49,7 @@ const search = async (
 };
 
 /**
- * The integrations a workspace can install: the three cloud providers SigNoz
+ * The integrations a workspace can install: the three cloud providers FuseScope
  * sets up in one click, then every built-in integration with who published it
  * and whether it is installed.
  */
@@ -67,7 +67,7 @@ export const NoSearchMatches: Story = {
 };
 
 /**
- * The form for an integration SigNoz does not publish yet. Submitting it is a
+ * The form for an integration FuseScope does not publish yet. Submitting it is a
  * telemetry event, not an endpoint.
  */
 export const RequestIntegration: Story = {

@@ -11,7 +11,7 @@ import type {
 	RenderErrorResponseDTO,
 	AlertmanagertypesPlannedMaintenanceDTO,
 	AlertmanagertypesScheduleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import cx from 'classnames';
 import dayjs from 'dayjs';

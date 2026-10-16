@@ -1,4 +1,4 @@
-import { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSavedViewDTO } from 'api/generated/services/fuseScope.schemas';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';

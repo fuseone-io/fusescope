@@ -7,7 +7,7 @@ import setLocalStorage from 'api/browser/localstorage/set';
 import type {
 	MetricsexplorertypesInspectMetricsRequestDTO,
 	MetricsexplorertypesStatsRequestDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';

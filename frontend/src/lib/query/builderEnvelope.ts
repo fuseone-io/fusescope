@@ -2,12 +2,12 @@ import type {
 	Querybuildertypesv5QueryEnvelopeBuilderAIDTO,
 	Querybuildertypesv5QueryEnvelopeBuilderDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	DashboardtypesQueryPluginKindDTO,
 	Querybuildertypesv5QueryEnvelopeBuilderAIDTOType,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 const BUILDER_ENVELOPE_TYPES: string[] = [
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,

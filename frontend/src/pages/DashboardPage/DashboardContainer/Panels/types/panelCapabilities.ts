@@ -1,7 +1,7 @@
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	type TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 export type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';

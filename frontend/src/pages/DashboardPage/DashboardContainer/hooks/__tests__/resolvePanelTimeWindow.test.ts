@@ -1,4 +1,4 @@
-import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { resolvePanelTimeWindow } from '../resolvePanelTimeWindow';
 

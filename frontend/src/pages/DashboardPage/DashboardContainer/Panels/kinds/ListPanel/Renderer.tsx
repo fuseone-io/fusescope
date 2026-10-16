@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from '@signozhq/icons';
 import {
 	type DashboardtypesListPanelSpecDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import LogDetail from 'components/LogDetail';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useTimezone } from 'providers/Timezone';

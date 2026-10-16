@@ -1,7 +1,7 @@
 import {
 	AuthtypesGettableRoleDTO,
 	AuthtypesRoleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 const orgId = '019ba2bb-2fa1-7b24-8159-cfca08617ef9';
 
@@ -12,7 +12,7 @@ export const managedRoles: AuthtypesGettableRoleDTO[] = [
 		updatedAt: '2026-02-03T18:00:55.624356Z',
 		name: 'signoz-admin',
 		description:
-			'Role assigned to users who have full administrative access to SigNoz resources.',
+			'Role assigned to users who have full administrative access to FuseScope resources.',
 		type: 'managed',
 		orgId,
 	},
@@ -22,7 +22,7 @@ export const managedRoles: AuthtypesGettableRoleDTO[] = [
 		updatedAt: '2026-02-03T18:00:55.624359Z',
 		name: 'signoz-editor',
 		description:
-			'Role assigned to users who can create, edit, and manage SigNoz resources but do not have full administrative privileges.',
+			'Role assigned to users who can create, edit, and manage FuseScope resources but do not have full administrative privileges.',
 		type: 'managed',
 		orgId,
 	},
@@ -32,7 +32,7 @@ export const managedRoles: AuthtypesGettableRoleDTO[] = [
 		updatedAt: '2026-02-03T18:00:55.624362Z',
 		name: 'signoz-viewer',
 		description:
-			'Role assigned to users who have read-only access to SigNoz resources.',
+			'Role assigned to users who have read-only access to FuseScope resources.',
 		type: 'managed',
 		orgId,
 	},

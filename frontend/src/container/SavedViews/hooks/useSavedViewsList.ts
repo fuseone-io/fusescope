@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useListSavedViews } from 'api/generated/services/saved-view';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import { useAppContext } from 'providers/App/App';
 
 import { UseSavedViewsListResult } from '../types';

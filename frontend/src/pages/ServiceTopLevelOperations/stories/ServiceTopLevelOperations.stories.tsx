@@ -39,7 +39,7 @@ export default meta;
 type Story = StoryObj<ServiceTopLevelOperationsArgs>;
 
 /**
- * The entry-point spans SigNoz derived a service's RED metrics from, which is
+ * The entry-point spans FuseScope derived a service's RED metrics from, which is
  * what the warning on the services table links to.
  */
 export const Default: Story = {};

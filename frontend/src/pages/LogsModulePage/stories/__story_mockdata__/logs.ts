@@ -12,7 +12,7 @@ import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 	type TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import type { OptionsQuery } from 'container/OptionsMenu/types';
 import { STORAGE_VERSION } from 'lib/recentQueries/constants';

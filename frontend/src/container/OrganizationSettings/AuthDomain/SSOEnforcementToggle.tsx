@@ -5,7 +5,7 @@ import { useUpdateAuthDomain } from 'api/generated/services/authdomains';
 import {
 	AuthtypesGettableAuthDomainDTO,
 	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorV2Resp } from 'types/api';

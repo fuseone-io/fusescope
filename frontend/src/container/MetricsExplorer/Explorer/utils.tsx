@@ -1,5 +1,5 @@
 import { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
-import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/fuseScope.schemas';
 import { mapMetricUnitToUniversalUnit } from 'components/YAxisUnitSelector/utils';
 import { useGetMultipleMetrics } from 'hooks/metricsExplorer/useGetMultipleMetrics';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';

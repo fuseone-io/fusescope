@@ -2,7 +2,7 @@ import { Table } from 'antd';
 import {
 	CloudintegrationtypesCollectedLogAttributeDTO,
 	CloudintegrationtypesCollectedMetricDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { BarChart, Info, ScrollText } from '@signozhq/icons';
 import { Tooltip } from '@signozhq/ui/tooltip';
 

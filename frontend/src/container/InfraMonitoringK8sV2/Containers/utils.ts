@@ -6,7 +6,7 @@ import {
 	InframonitoringtypesContainerReadyDTO,
 	InframonitoringtypesContainerRecordDTO,
 	InframonitoringtypesContainerStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { StatusCountItem } from '../components/GroupedStatusCounts';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';

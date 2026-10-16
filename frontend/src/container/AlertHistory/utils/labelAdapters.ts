@@ -1,4 +1,4 @@
-import type { Querybuildertypesv5LabelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5LabelDTO } from 'api/generated/services/fuseScope.schemas';
 import type { Labels } from 'types/api/alerts/def';
 
 export function labelsArrayToObject(

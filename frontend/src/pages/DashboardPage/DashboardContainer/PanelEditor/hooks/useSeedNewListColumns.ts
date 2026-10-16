@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type {
 	DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import {
 	defaultColumnsForSignal,

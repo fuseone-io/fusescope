@@ -2,7 +2,7 @@ import { useQuery, UseQueryResult } from 'react-query';
 import {
 	GetTraceAggregations200,
 	SpantypesSpanAggregationDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { getTraceAggregations } from 'api/generated/services/tracedetail';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 

@@ -1,4 +1,4 @@
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/fuseScope.schemas';
 
 /**
  * Router location state for opening the panel editor pre-loaded with edits instead of

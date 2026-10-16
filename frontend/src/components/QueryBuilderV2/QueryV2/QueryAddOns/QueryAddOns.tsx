@@ -12,7 +12,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
 import { ChevronUp } from '@signozhq/icons';
-import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/fuseScope.schemas';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';

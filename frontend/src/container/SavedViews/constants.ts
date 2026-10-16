@@ -2,7 +2,7 @@ import { Copy, Link, PenLine, Trash2 } from '@signozhq/icons';
 import {
 	SavedviewtypesSchemaVersionDTO,
 	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { QueryParams } from 'constants/query';
 import {
 	buildSavedViewDeletePermission,

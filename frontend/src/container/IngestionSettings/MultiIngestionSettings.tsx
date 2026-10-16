@@ -37,7 +37,7 @@ import {
 import {
 	GatewaytypesIngestionKeyDTO,
 	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Badges from 'components/Badges/Badges';
@@ -1633,7 +1633,7 @@ function MultiIngestionSettings(): JSX.Element {
 				<header>
 					<Typography.Title className="title"> Ingestion Keys </Typography.Title>
 					<Typography.Text className="subtitle">
-						Create and manage ingestion keys for the SigNoz Cloud{' '}
+						Create and manage ingestion keys for the FuseScope Cloud{' '}
 						<a
 							href="https://signoz.io/docs/ingestion/signoz-cloud/keys/"
 							target="_blank"

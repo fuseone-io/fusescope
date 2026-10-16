@@ -53,7 +53,7 @@ export default meta;
 type Story = StoryObj<CloudIntegrationArgs>;
 
 /**
- * An AWS account SigNoz collects from: the services it can watch split by
+ * An AWS account FuseScope collects from: the services it can watch split by
  * whether a signal is switched on, and the first enabled one open on its
  * collection switches, its dashboards and what it collects.
  */

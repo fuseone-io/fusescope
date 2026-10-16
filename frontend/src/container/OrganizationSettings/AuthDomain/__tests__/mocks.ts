@@ -3,7 +3,7 @@ import {
 	AuthtypesAuthDomainConfigOIDCDTOKind,
 	AuthtypesAuthDomainConfigSAMLDTOKind,
 	AuthtypesGettableAuthDomainDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 // API Endpoints
 export const AUTH_DOMAINS_LIST_ENDPOINT = '*/api/v2/auth_domains';

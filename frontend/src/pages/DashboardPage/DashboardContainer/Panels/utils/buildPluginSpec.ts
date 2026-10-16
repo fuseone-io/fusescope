@@ -15,7 +15,7 @@ import {
 	DashboardtypesTimePreferenceDTO,
 	DashboardtypesVerticalAlignDTO,
 	type TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { defaultColumnsForSignal } from '../../PanelEditor/ListColumnsEditor/selectFields';
 import {

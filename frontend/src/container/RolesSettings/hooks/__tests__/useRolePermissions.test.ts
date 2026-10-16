@@ -3,7 +3,7 @@ import {
 	AuthtypesTransactionGroupDTO,
 	CoretypesKindDTO,
 	CoretypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
 
 import {

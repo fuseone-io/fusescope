@@ -1,7 +1,7 @@
 import {
 	type DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import { defaultColumnsForSignal } from '../ListColumnsEditor/selectFields';

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { useDashboardPermissions } from './useDashboardPermissions';
 

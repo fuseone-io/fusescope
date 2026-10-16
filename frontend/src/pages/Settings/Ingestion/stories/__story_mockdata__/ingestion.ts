@@ -8,7 +8,7 @@ import type {
 	GatewaytypesLimitDTO,
 	GetIngestionKeys200,
 	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { IngestionInfo } from 'types/api/settings/ingestion';
 
 /** `per_page` the page asks for, so a longer page is a body the gateway never sends. */

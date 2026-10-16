@@ -87,7 +87,7 @@ describe('InviteTeamMembers', () => {
 				screen.getByRole('heading', { name: /invite your team/i }),
 			).toBeInTheDocument();
 			expect(
-				screen.getByText(/signoz is a lot more useful with collaborators/i),
+				screen.getByText(/fusescope is a lot more useful with collaborators/i),
 			).toBeInTheDocument();
 			expect(screen.getByTestId('mock-invite-members')).toBeInTheDocument();
 		});

@@ -1,7 +1,7 @@
 import {
 	SpantypesEventDTO as FlamegraphEvent,
 	SpantypesFlamegraphSpanDTO as FlamegraphSpan,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { Dispatch, SetStateAction } from 'react';
 
 import { VisualLayout } from './computeVisualLayout';

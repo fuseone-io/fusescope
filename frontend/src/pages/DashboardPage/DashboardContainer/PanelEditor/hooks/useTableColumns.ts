@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 import type { PanelFormattingSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { getColumnUnit } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getColumnUnit';
 import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';

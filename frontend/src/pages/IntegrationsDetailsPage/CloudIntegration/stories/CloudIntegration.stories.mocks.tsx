@@ -4,7 +4,7 @@
  */
 
 import { rest } from 'msw';
-import type { CloudintegrationtypesUpdatableServiceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesUpdatableServiceDTO } from 'api/generated/services/fuseScope.schemas';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';

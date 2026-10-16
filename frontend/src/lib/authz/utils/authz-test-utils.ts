@@ -1,7 +1,7 @@
 import type {
 	AuthtypesGettableTransactionDTO,
 	AuthtypesTransactionDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { ENVIRONMENT } from 'constants/env';
 import { gettableTransactionToPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import type {

@@ -6,7 +6,7 @@ import { useDashboardFetchRequired } from 'pages/DashboardPage/DashboardContaine
 
 import type { StaticEditorPaneProps } from '../../../../types/panelDefinition';
 import { withPanelText } from '../../../../utils/withPanelText';
-import type { DashboardtypesTextPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesTextPanelSpecDTO } from 'api/generated/services/fuseScope.schemas';
 
 import styles from './TextEditorPane.module.scss';
 

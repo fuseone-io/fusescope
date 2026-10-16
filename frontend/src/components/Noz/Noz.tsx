@@ -8,7 +8,7 @@ interface NozProps {
 }
 
 /**
- * Noz — the SigNoz AI assistant mascot. Waves on hover.
+ * Noz — the FuseScope AI assistant mascot. Waves on hover.
  *
  * Hover behavior:
  *  - Hovering the icon itself triggers the wave.

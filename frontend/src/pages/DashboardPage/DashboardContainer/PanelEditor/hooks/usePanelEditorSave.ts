@@ -9,7 +9,7 @@ import {
 	DashboardtypesPanelKindDTO,
 	DashboardtypesPatchOpDTO,
 	type GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';

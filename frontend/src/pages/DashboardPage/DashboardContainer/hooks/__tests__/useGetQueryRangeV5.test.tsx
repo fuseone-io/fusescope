@@ -6,7 +6,7 @@ import { queryRangeV5 } from 'api/generated/services/querier';
 import type {
 	Querybuildertypesv5QueryRangeRequestDTO,
 	QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import { useGetQueryRangeV5 } from '../useGetQueryRangeV5';
 

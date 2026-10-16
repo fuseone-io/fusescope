@@ -1,7 +1,7 @@
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Typography } from '@signozhq/ui/typography';
-import { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { useVolumeControlConfig } from '../../hooks/useVolumeControlConfig';
 import ImpactPanel from './ImpactPanel/ImpactPanel';

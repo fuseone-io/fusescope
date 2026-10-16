@@ -60,7 +60,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 										>
 											{activeLicense.state === LicenseState.TERMINATED && (
 												<>
-													Your SigNoz license is terminated, please contact support at{' '}
+													Your FuseScope license is terminated, please contact support at{' '}
 													<a href="mailto:cloud-support@signoz.io">
 														cloud-support@signoz.io
 													</a>{' '}
@@ -69,7 +69,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 											)}
 											{activeLicense.state === LicenseState.EXPIRED && (
 												<>
-													Your SigNoz license is expired, please contact support at{' '}
+													Your FuseScope license is expired, please contact support at{' '}
 													<a href="mailto:cloud-support@signoz.io">
 														cloud-support@signoz.io
 													</a>{' '}
@@ -86,7 +86,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 											)}
 											{activeLicense.state === LicenseState.CANCELLED && (
 												<>
-													Your SigNoz license is cancelled, please contact support at{' '}
+													Your FuseScope license is cancelled, please contact support at{' '}
 													<a href="mailto:cloud-support@signoz.io">
 														cloud-support@signoz.io
 													</a>{' '}

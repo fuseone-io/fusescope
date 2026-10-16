@@ -112,7 +112,7 @@ type APIHandler struct {
 
 	QueryParserAPI *queryparser.API
 
-	Signoz *signoz.SigNoz
+	Signoz *signoz.FuseScope
 }
 
 type APIHandlerOpts struct {
@@ -130,7 +130,7 @@ type APIHandlerOpts struct {
 
 	QueryParserAPI *queryparser.API
 
-	Signoz *signoz.SigNoz
+	Signoz *signoz.FuseScope
 }
 
 // NewAPIHandler returns an APIHandler

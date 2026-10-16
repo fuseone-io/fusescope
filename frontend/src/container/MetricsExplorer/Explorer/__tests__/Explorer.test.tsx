@@ -7,7 +7,7 @@ import { render, screen } from '@testing-library/react';
 import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';

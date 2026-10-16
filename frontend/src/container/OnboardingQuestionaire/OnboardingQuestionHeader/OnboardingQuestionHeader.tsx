@@ -14,7 +14,7 @@ export function OnboardingQuestionHeader({
 	return (
 		<div className="onboarding-header-section">
 			<div className="onboarding-header-icon">
-				<img src={barberPoolUrl} alt="SigNoz" width="32" height="32" />
+				<img src={barberPoolUrl} alt="FuseScope" width="32" height="32" />
 			</div>
 			<Typography.Title level={4} className="onboarding-header-title">
 				{title}

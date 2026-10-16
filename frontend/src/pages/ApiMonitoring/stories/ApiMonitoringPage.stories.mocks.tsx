@@ -3,13 +3,13 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/fuseScope.schemas';
 import {
 	QuickfiltertypesSourceDTO,
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import ROUTES from 'constants/routes';
 import { VIEWS } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
 import { DEFAULT_PARAMS } from 'container/ApiMonitoring/queryParams';

@@ -24,8 +24,8 @@ import type {
 	AlertmanagertypesPlannedMaintenanceDTO,
 	AlertmanagertypesPostablePlannedMaintenanceDTO,
 	AlertmanagertypesRecurrenceDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
+import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import {

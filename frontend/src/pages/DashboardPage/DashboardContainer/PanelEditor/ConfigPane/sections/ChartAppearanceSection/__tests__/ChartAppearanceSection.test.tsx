@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import {
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesTimeSeriesChartAppearanceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { DEFAULT_FILL_OPACITY } from 'lib/uPlotV2/utils/fillOpacity';
 
 import ChartAppearanceSection from '../ChartAppearanceSection';

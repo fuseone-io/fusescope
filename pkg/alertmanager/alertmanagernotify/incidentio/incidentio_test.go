@@ -110,7 +110,7 @@ func TestNotifyFiringEvent(t *testing.T) {
 	assert.Equal(t, "https://signoz.example/alerts/edit?ruleId=1", ev.SourceURL)
 	assert.Contains(t, ev.Description, "**Alert:** HighCPU (critical)")
 	assert.Contains(t, ev.Description, "**Summary:** cpu high")
-	assert.Contains(t, ev.Description, "[View in SigNoz](https://signoz.example/alerts/edit?ruleId=1)")
+	assert.Contains(t, ev.Description, "[View in FuseScope](https://signoz.example/alerts/edit?ruleId=1)")
 	assert.Contains(t, ev.Description, "[View related logs](https://signoz.example/logs?q=1)")
 	assert.Equal(t, map[string]string{
 		"alertname":  "HighCPU",

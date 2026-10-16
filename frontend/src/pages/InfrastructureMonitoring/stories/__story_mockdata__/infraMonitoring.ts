@@ -24,7 +24,7 @@ import {
 	type InframonitoringtypesStatefulSetRecordDTO,
 	type InframonitoringtypesVolumeRecordDTO,
 	type Querybuildertypesv5QueryWarnDataDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,

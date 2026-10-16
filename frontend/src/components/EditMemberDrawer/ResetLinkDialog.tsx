@@ -38,7 +38,7 @@ function ResetLinkDialog({
 				<p className="reset-link-dialog__description">
 					{linkType === 'invite'
 						? 'Share this one-time link with the team member to complete their account setup.'
-						: 'This creates a one-time link the team member can use to set a new password for their SigNoz account.'}
+						: 'This creates a one-time link the team member can use to set a new password for their FuseScope account.'}
 				</p>
 				<div className="reset-link-dialog__link-row">
 					<div className="reset-link-dialog__link-text-wrap">

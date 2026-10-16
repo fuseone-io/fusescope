@@ -1,7 +1,7 @@
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 /**
  * Local draft state for the panel being edited, kept as a perses `DashboardtypesPanelDTO`

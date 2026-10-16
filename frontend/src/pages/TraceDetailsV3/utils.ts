@@ -1,4 +1,4 @@
-import type { SpantypesWaterfallSpanDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesWaterfallSpanDTO } from 'api/generated/services/fuseScope.schemas';
 import { pick } from 'lodash-es';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 

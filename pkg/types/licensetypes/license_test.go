@@ -131,5 +131,5 @@ func TestNewLicenseFromStorableLicenseRoundTrip(t *testing.T) {
 	assert.Equal(t, license.ValidFrom, roundTrippedLicense.ValidFrom)
 	assert.Equal(t, license.ValidUntil, roundTrippedLicense.ValidUntil)
 
-	assert.ErrorContains(t, roundTrippedLicense.ErrIfCloud(), "not supported for licenses managed by SigNoz Cloud")
+	assert.ErrorContains(t, roundTrippedLicense.ErrIfCloud(), "not supported for licenses managed by FuseScope Cloud")
 }

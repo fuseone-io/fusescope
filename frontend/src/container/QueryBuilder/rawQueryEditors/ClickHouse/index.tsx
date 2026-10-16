@@ -32,7 +32,7 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 							</a>
 							{' · Using AI? '}
 							<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
-								Install the SigNoz ClickHouse query agent skill
+								Install the FuseScope ClickHouse query agent skill
 							</a>
 						</span>
 					}

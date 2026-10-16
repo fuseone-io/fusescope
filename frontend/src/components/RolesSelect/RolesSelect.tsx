@@ -3,7 +3,7 @@ import { Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRoles } from 'api/generated/services/role';
-import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/fuseScope.schemas';
 import cx from 'classnames';
 import APIError from 'types/api/error';
 import { popupContainer } from 'utils/selectPopupContainer';

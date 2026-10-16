@@ -14,7 +14,7 @@ import {
 import type {
 	RenderErrorResponseDTO,
 	RuletypesPostableRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import type { AxiosError } from 'axios';
 
 import type { AlertRule } from '../types';

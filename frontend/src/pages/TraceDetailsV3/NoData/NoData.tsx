@@ -28,7 +28,7 @@ function NoData(): JSX.Element {
 				<div className={styles.reason}>
 					<img src={constructionUrl} alt="no-data" className={styles.reasonImg} />
 					<Typography.Text className={styles.reasonText}>
-						The trace data has not been rendered on your SigNoz server yet. You can
+						The trace data has not been rendered on your FuseScope server yet. You can
 						wait for a bit and refresh this page if this is the case.
 					</Typography.Text>
 				</div>

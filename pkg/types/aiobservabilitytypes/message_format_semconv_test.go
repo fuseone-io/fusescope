@@ -82,15 +82,15 @@ func TestFormat_Semconv(t *testing.T) {
 		{
 			// langchain capture, ChatOpenAI.chat span
 			name:   "SemconvToolCallTurn_DecodedUnchanged",
-			input:  `[{"role": "user", "parts": [{"type": "text", "content": "Search for SigNoz AI observability docs, then tell me the weather in Bengaluru."}]}, {"role": "assistant", "parts": [{"type": "tool_call", "id": "call_jL9UhSdUC9wWn2qfWwOjpzFd", "name": "search_web", "arguments": {"query": "SigNoz AI observability documentation"}}, {"type": "tool_call", "id": "call_nkVdZ8xX8d17HtmVddbUgJUc", "name": "get_weather", "arguments": {"city": "Bengaluru"}}]}, {"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_jL9UhSdUC9wWn2qfWwOjpzFd", "response": "{\"query\": \"SigNoz AI observability documentation\", \"results\": [{\"title\": \"SigNoz docs: AI observability\", \"snippet\": \"...\"}, {\"title\": \"OpenTelemetry GenAI conventions\", \"snippet\": \"...\"}]}"}]}, {"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_nkVdZ8xX8d17HtmVddbUgJUc", "response": "{\"city\": \"Bengaluru\", \"temp_c\": 18, \"summary\": \"Clear\"}"}]}]`,
-			output: `[{"role": "assistant", "parts": [{"type": "text", "content": "I found some results for the SigNoz AI observability documentation. Here's one of the titles you might be interested in:\n\n- **SigNoz docs: AI observability**\n\nUnfortunately, a snippet was not provided, but you can look it up directly for more details.\n\nAs for the weather in Bengaluru, it's currently 18\u00b0C and clear."}], "finish_reason": "stop"}]`,
+			input:  `[{"role": "user", "parts": [{"type": "text", "content": "Search for FuseScope AI observability docs, then tell me the weather in Bengaluru."}]}, {"role": "assistant", "parts": [{"type": "tool_call", "id": "call_jL9UhSdUC9wWn2qfWwOjpzFd", "name": "search_web", "arguments": {"query": "FuseScope AI observability documentation"}}, {"type": "tool_call", "id": "call_nkVdZ8xX8d17HtmVddbUgJUc", "name": "get_weather", "arguments": {"city": "Bengaluru"}}]}, {"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_jL9UhSdUC9wWn2qfWwOjpzFd", "response": "{\"query\": \"FuseScope AI observability documentation\", \"results\": [{\"title\": \"FuseScope docs: AI observability\", \"snippet\": \"...\"}, {\"title\": \"OpenTelemetry GenAI conventions\", \"snippet\": \"...\"}]}"}]}, {"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_nkVdZ8xX8d17HtmVddbUgJUc", "response": "{\"city\": \"Bengaluru\", \"temp_c\": 18, \"summary\": \"Clear\"}"}]}]`,
+			output: `[{"role": "assistant", "parts": [{"type": "text", "content": "I found some results for the FuseScope AI observability documentation. Here's one of the titles you might be interested in:\n\n- **FuseScope docs: AI observability**\n\nUnfortunately, a snippet was not provided, but you can look it up directly for more details.\n\nAs for the weather in Bengaluru, it's currently 18\u00b0C and clear."}], "finish_reason": "stop"}]`,
 			wantInput: `[
 			  {
 			    "role": "user",
 			    "parts": [
 			      {
 			        "type": "text",
-			        "content": "Search for SigNoz AI observability docs, then tell me the weather in Bengaluru."
+			        "content": "Search for FuseScope AI observability docs, then tell me the weather in Bengaluru."
 			      }
 			    ]
 			  },
@@ -102,7 +102,7 @@ func TestFormat_Semconv(t *testing.T) {
 			        "name": "search_web",
 			        "id": "call_jL9UhSdUC9wWn2qfWwOjpzFd",
 			        "arguments": {
-			          "query": "SigNoz AI observability documentation"
+			          "query": "FuseScope AI observability documentation"
 			        }
 			      },
 			      {
@@ -120,7 +120,7 @@ func TestFormat_Semconv(t *testing.T) {
 			    "parts": [
 			      {
 			        "type": "tool_call_response",
-			        "response": "{\"query\": \"SigNoz AI observability documentation\", \"results\": [{\"title\": \"SigNoz docs: AI observability\", \"snippet\": \"...\"}, {\"title\": \"OpenTelemetry GenAI conventions\", \"snippet\": \"...\"}]}",
+			        "response": "{\"query\": \"FuseScope AI observability documentation\", \"results\": [{\"title\": \"FuseScope docs: AI observability\", \"snippet\": \"...\"}, {\"title\": \"OpenTelemetry GenAI conventions\", \"snippet\": \"...\"}]}",
 			        "id": "call_jL9UhSdUC9wWn2qfWwOjpzFd"
 			      }
 			    ]
@@ -142,7 +142,7 @@ func TestFormat_Semconv(t *testing.T) {
 			    "parts": [
 			      {
 			        "type": "text",
-			        "content": "I found some results for the SigNoz AI observability documentation. Here's one of the titles you might be interested in:\n\n- **SigNoz docs: AI observability**\n\nUnfortunately, a snippet was not provided, but you can look it up directly for more details.\n\nAs for the weather in Bengaluru, it's currently 18°C and clear."
+			        "content": "I found some results for the FuseScope AI observability documentation. Here's one of the titles you might be interested in:\n\n- **FuseScope docs: AI observability**\n\nUnfortunately, a snippet was not provided, but you can look it up directly for more details.\n\nAs for the weather in Bengaluru, it's currently 18°C and clear."
 			      }
 			    ],
 			    "finish_reason": "stop"

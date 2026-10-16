@@ -9,12 +9,12 @@ import type {
 	AuthtypesTransactionGroupDTO,
 	GetRole200,
 	ListRoles200,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	AuthtypesRelationDTO,
 	CoretypesKindDTO,
 	CoretypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 import { RoleType } from 'types/roles';
 
 export const CUSTOM_ROLE_MAX = 8;

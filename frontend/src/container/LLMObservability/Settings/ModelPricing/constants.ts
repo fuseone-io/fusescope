@@ -1,4 +1,4 @@
-import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas';
+import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/fuseScope.schemas';
 
 import type { CacheBucketDef, DrawerDraft } from './types';
 

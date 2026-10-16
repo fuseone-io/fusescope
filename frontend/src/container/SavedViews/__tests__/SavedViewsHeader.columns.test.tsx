@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button } from '@signozhq/ui/button';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import ROUTES from 'constants/routes';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 

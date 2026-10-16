@@ -1,4 +1,4 @@
-import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/fuseScope.schemas';
 import { toQueryEnvelopes } from 'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest';
 
 /** Counts enabled queries, unwrapping the single `signoz/CompositeQuery` wrapper. */

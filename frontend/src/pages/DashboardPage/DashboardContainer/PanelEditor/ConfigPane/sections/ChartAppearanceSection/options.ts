@@ -2,7 +2,7 @@ import {
 	DashboardtypesFillModeDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+} from 'api/generated/services/fuseScope.schemas';
 
 import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';
 import { TILE_DRAWINGS } from '../../controls/drawings/tileDrawings';

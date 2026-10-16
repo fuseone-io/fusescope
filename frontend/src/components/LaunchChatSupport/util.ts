@@ -3,7 +3,7 @@ export const onboardingHelpMessage = (
 	moduleId: string,
 ): string => `Hi Team,
 
-I am facing issues sending data to SigNoz. Here are my application details
+I am facing issues sending data to FuseScope. Here are my application details
 
 Data Source: ${dataSourceName}
 Framework:

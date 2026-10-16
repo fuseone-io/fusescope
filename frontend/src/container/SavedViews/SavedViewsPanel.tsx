@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { TowerControl, X } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import { SavedViewListPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';

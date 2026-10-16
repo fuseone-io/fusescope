@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Button, Skeleton } from 'antd';
-import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import { FieldKeysConfig } from 'api/querySuggestions/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';

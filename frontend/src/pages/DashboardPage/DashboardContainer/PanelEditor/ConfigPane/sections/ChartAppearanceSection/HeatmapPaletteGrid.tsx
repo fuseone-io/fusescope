@@ -1,5 +1,5 @@
 import cx from 'classnames';
-import type { DashboardtypesHeatmapPaletteDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesHeatmapPaletteDTO } from 'api/generated/services/fuseScope.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { paletteGradient, PALETTE_OPTIONS } from './heatmapColorOptions';
