@@ -83,8 +83,8 @@ function RoleMappingSection({
 								</h4>
 								<p className="role-mapping-section__section-description">
 									Configure how user roles are determined from your Identity Provider.
-									You can either use a direct role attribute or map IDP groups to FuseScope
-									roles.
+									You can either use a direct role attribute or map IDP groups to
+									FuseScope roles.
 								</p>
 							</div>
 							{!expanded && hasErrors && (

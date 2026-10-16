@@ -587,8 +587,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		<div className="workspace-restricted-banner">
 			{activeLicense?.state === LicenseState.TERMINATED && (
 				<>
-					Your FuseScope license is terminated, enterprise features have been disabled.
-					Please contact support at{' '}
+					Your FuseScope license is terminated, enterprise features have been
+					disabled. Please contact support at{' '}
 					<a href="mailto:support@signoz.io">support@signoz.io</a> for new license
 				</>
 			)}
@@ -623,8 +623,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 			{activeLicense?.state === LicenseState.DEFAULTED && (
 				<>
-					Your FuseScope license is defaulted. Please clear the bill to continue using
-					the enterprise features. Contact support at{' '}
+					Your FuseScope license is defaulted. Please clear the bill to continue
+					using the enterprise features. Contact support at{' '}
 					<a href="mailto:support@signoz.io">support@signoz.io</a> to avoid
 					termination of license as per our{' '}
 					<a

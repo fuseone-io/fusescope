@@ -14,8 +14,7 @@ export const infoData = [
 	{
 		id: 'infoBlock-3',
 		title: 'Open source',
-		description:
-			'FuseScope is MIT licensed and built in the open by FuseOne.',
+		description: 'FuseScope is MIT licensed and built in the open by FuseOne.',
 	},
 ];
 

@@ -30,8 +30,8 @@ function AuthCard({
 				Authenticate from your client
 			</h3>
 			<p className="mcp-auth-card__description">
-				On first connect, your client opens a FuseScope authorization page asking for
-				two values:
+				On first connect, your client opens a FuseScope authorization page asking
+				for two values:
 			</p>
 
 			<div className="mcp-auth-card__field">

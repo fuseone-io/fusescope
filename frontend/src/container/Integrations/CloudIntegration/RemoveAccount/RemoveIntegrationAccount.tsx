@@ -87,8 +87,8 @@ function RemoveIntegrationAccount({
 		modalDescription = (
 			<>
 				Removing this account will remove all components created for sending
-				telemetry to FuseScope in your Azure subscription within the next ~15 minutes
-				(deployment stack named signoz-integration-telemetry will be deleted
+				telemetry to FuseScope in your Azure subscription within the next ~15
+				minutes (deployment stack named signoz-integration-telemetry will be deleted
 				automatically). <br />
 				<br />
 				After that, you have to manually delete &apos;signoz-integration&apos;

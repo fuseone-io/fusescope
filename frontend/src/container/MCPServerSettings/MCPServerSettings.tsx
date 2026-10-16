@@ -137,9 +137,10 @@ function MCPServerSettings(): JSX.Element {
 					Configure your client
 				</h3>
 				<p className="mcp-settings__card-description">
-					Add FuseScope to your MCP client. Use a one-click install where available, or
-					copy the config for manual setup. On first connect, the client will open a
-					FuseScope authorization page - use the instance URL and API key from step 2.
+					Add FuseScope to your MCP client. Use a one-click install where available,
+					or copy the config for manual setup. On first connect, the client will open
+					a FuseScope authorization page - use the instance URL and API key from step
+					2.
 				</p>
 				<ClientTabs
 					endpoint={endpoint}

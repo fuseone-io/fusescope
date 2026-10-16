@@ -99,7 +99,11 @@ function PublicDashboardView({
 			<div className={styles.header}>
 				<div className={styles.headerLeft}>
 					<div className={styles.brand}>
-						<img src={fuseScopeBrandLogoUrl} alt="FuseScope" className={styles.brandLogo} />
+						<img
+							src={fuseScopeBrandLogoUrl}
+							alt="FuseScope"
+							className={styles.brandLogo}
+						/>
 						<Typography className={styles.brandName}>FuseScope</Typography>
 					</div>
 					<Typography.Text className={styles.title}>
