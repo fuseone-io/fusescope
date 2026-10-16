@@ -87,7 +87,7 @@ func (b Build) PrettyPrint(cfg Config) {
 		" ## ______/    \\    ______ ##   |  _|  | |_| |\\__ \\|  __/ ___) || (__ | (_) || |_) ||  __/",
 		" =#-            \\  /      -#=   |_|     \\__,_||___/ \\___||____/  \\___| \\___/ | .__/  \\___|",
 		"  +#=            \\/      =#+                                                 |_|          ",
-		"   :*#+:              :+#*:     " + "Version: " + b.version + " (" + b.variant + ")" + " [Copyright " + strconv.Itoa(year) + " FuseOne, MIT License]",
+		"   :*#+:              :+#*:     " + "Version: " + b.version + " (" + b.variant + ")" + " [Copyright " + strconv.Itoa(year) + " FuseOne]",
 		"     .=*#*+=-:..:-=+*#*=.     ",
 		"         .:-=++++=-:.         ",
 	}

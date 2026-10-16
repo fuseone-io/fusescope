@@ -11,7 +11,7 @@ import (
 )
 
 var RootCmd = &cobra.Command{
-	Use:               "signoz",
+	Use:               "fusescope",
 	Short:             "OpenTelemetry-Native Logs, Metrics and Traces in a single pane",
 	Version:           version.Info.Version(),
 	SilenceUsage:      true,

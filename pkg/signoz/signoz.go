@@ -193,7 +193,7 @@ func New(
 		return nil, err
 	}
 
-	instrumentation.Logger().InfoContext(ctx, "starting signoz", slog.String("version", version.Info.Version()), slog.String("variant", version.Info.Variant()), slog.String("commit", version.Info.Hash()), slog.String("branch", version.Info.Branch()), slog.String("go", version.Info.GoVersion()), slog.String("time", version.Info.Time()))
+	instrumentation.Logger().InfoContext(ctx, "starting fusescope", slog.String("version", version.Info.Version()), slog.String("variant", version.Info.Variant()), slog.String("commit", version.Info.Hash()), slog.String("branch", version.Info.Branch()), slog.String("go", version.Info.GoVersion()), slog.String("time", version.Info.Time()))
 	instrumentation.Logger().DebugContext(ctx, "loaded signoz config", slog.Any("config", config))
 
 	// Get the provider settings from instrumentation
