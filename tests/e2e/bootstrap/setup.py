@@ -18,7 +18,6 @@ def _env_file(pytestconfig: pytest.Config) -> Path:
 def test_setup(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    apply_license: types.Operation,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,
     base_path: str,
     pytestconfig: pytest.Config,
@@ -41,7 +40,6 @@ def test_setup(  # pylint: disable=too-many-arguments,too-many-positional-argume
 def test_teardown(
     signoz: types.SigNoz,  # pylint: disable=unused-argument
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    apply_license: types.Operation,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,  # pylint: disable=unused-argument
     pytestconfig: pytest.Config,
 ) -> None:

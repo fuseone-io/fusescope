@@ -2,7 +2,7 @@ import pytest
 from testcontainers.core.container import Network
 
 from fixtures import types
-from fixtures.auth import license_applier, register_admin
+from fixtures.auth import register_admin
 from fixtures.signoz import create_signoz
 
 # The e2e stack served under a URL path prefix, as SIGNOZ_GLOBAL_EXTERNAL__URL
@@ -43,13 +43,3 @@ def signoz_base_path(  # pylint: disable=too-many-arguments,too-many-positional-
 @pytest.fixture(name="create_user_admin", scope="package")
 def create_user_admin_base_path(signoz: types.SigNoz, request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.Operation:
     return register_admin(signoz, request, pytestconfig, cache_key="create_user_admin_base_path", base_path=BASE_PATH)
-
-
-@pytest.fixture(name="apply_license", scope="package")
-def apply_license_base_path(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    request: pytest.FixtureRequest,
-    pytestconfig: pytest.Config,
-) -> types.Operation:
-    return license_applier(signoz, request, pytestconfig, cache_key="apply_license_base_path", base_path=BASE_PATH)
