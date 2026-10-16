@@ -27,12 +27,17 @@ Herdadas do SigNoz e disponíveis hoje:
 - **Exceções, monitoramento de APIs, filas de mensagens (Kafka, Celery) e observabilidade de LLMs.**
 - **Retenção em camadas**: dados recentes em disco local e dados mais antigos num bucket compatível com S3, via storage policy `tiered` do ClickHouse.
 
+Adicionadas pelo FuseScope:
+
+- **Metastore em PostgreSQL**: o backend roda sobre PostgreSQL (usuários, dashboards, alertas, autorização) em implantações com várias réplicas e alta disponibilidade, ou sobre SQLite num único nó. No SigNoz original o PostgreSQL só existia na edição proprietária; a implementação do FuseScope é open source.
+- **Sem envio de telemetria para terceiros**: analytics e o stats reporter vêm desligados por padrão.
+
 ## Roadmap
 
 O objetivo do FuseScope é cobrir o essencial de uma suíte comercial de APM, sem lock-in. Planejado, nesta ordem:
 
-1. Rebranding para FuseScope *(em andamento)*.
-2. Metastore em PostgreSQL para implantações em alta disponibilidade.
+1. ~~Rebranding para FuseScope~~ — concluído.
+2. ~~Metastore em PostgreSQL para implantações em alta disponibilidade~~ — concluído.
 3. SSO via OIDC (por exemplo, Keycloak).
 4. Arquivo de longo prazo: exportar dados além da janela quente para Parquet em object storage, com reidratação de volta no ClickHouse.
 5. Real User Monitoring e session replay.
@@ -52,11 +57,24 @@ make js-build                  # → frontend/build
 make docker-build-community    # → ghcr.io/fuseone-io/fusescope
 ```
 
+### Banco de metadados
+
+O FuseScope guarda seus metadados (usuários, dashboards, regras de alerta, autorização) em SQLite por padrão. Use PostgreSQL para rodar várias réplicas do backend:
+
+```yaml
+sqlstore:
+  provider: postgres
+  postgres:
+    dsn: postgres://fusescope:secret@postgres:5432/fusescope?sslmode=disable
+```
+
+ou pelo ambiente: `SIGNOZ_SQLSTORE_PROVIDER=postgres` e `SIGNOZ_SQLSTORE_POSTGRES_DSN=…`. No chart Helm, `--set postgresql.enabled=true` sobe o PostgreSQL e já faz a ligação. Todas as opções estão em [`conf/example.yaml`](conf/example.yaml).
+
 Para um ambiente local de desenvolvimento (ClickHouse + coletor), veja [docs/contributing/development.md](docs/contributing/development.md).
 
 ## Contribuindo
 
-Issues e pull requests são bem-vindos. Leia o [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir um PR e reporte problemas de segurança como descrito no [SECURITY.md](SECURITY.md).
+Issues e pull requests são bem-vindos. Leia o [CONTRIBUTING.md](CONTRIBUTING.md) e as regras de engenharia em [CLAUDE.md](CLAUDE.md) (testes antes, limites de licença) antes de abrir um PR, e reporte problemas de segurança como descrito no [SECURITY.md](SECURITY.md).
 
 ## Créditos e licença
 

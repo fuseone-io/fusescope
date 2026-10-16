@@ -27,12 +27,17 @@ Inherited from SigNoz and available today:
 - **Exceptions, API monitoring, messaging queues (Kafka, Celery) and LLM observability.**
 - **Tiered retention** — keep recent data on local disks and move older data to an S3-compatible bucket through a ClickHouse `tiered` storage policy.
 
+Added by FuseScope:
+
+- **PostgreSQL metastore** — run the backend on PostgreSQL (users, dashboards, alerts, authorization) for highly available, multi-replica deployments, or on SQLite for a single node. Upstream SigNoz only offered PostgreSQL in its proprietary edition; FuseScope's implementation is open source.
+- **No phone-home** — usage analytics and the stats reporter are off by default.
+
 ## Roadmap
 
 FuseScope aims to cover the core of a commercial APM suite without lock-in. Planned, in order:
 
-1. Rebranding to FuseScope *(in progress)*.
-2. PostgreSQL metastore for highly available deployments.
+1. ~~Rebranding to FuseScope~~ — done.
+2. ~~PostgreSQL metastore for highly available deployments~~ — done.
 3. SSO through OIDC (e.g. Keycloak).
 4. Long-term archive: export data older than the hot window to Parquet in object storage, with rehydration back into ClickHouse.
 5. Real User Monitoring and session replay.
@@ -52,11 +57,24 @@ make js-build                  # → frontend/build
 make docker-build-community    # → ghcr.io/fuseone-io/fusescope
 ```
 
+### Metadata store
+
+FuseScope keeps its metadata (users, dashboards, alert rules, authorization) in SQLite by default. Use PostgreSQL to run several backend replicas:
+
+```yaml
+sqlstore:
+  provider: postgres
+  postgres:
+    dsn: postgres://fusescope:secret@postgres:5432/fusescope?sslmode=disable
+```
+
+or through the environment: `SIGNOZ_SQLSTORE_PROVIDER=postgres` and `SIGNOZ_SQLSTORE_POSTGRES_DSN=…`. With the Helm chart, `--set postgresql.enabled=true` deploys PostgreSQL and wires it in. See [`conf/example.yaml`](conf/example.yaml) for every option.
+
 For a local development environment (ClickHouse + collector), see [docs/contributing/development.md](docs/contributing/development.md).
 
 ## Contributing
 
-Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR, and report security issues as described in [SECURITY.md](SECURITY.md).
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and the engineering rules in [CLAUDE.md](CLAUDE.md) (tests first, licence boundaries) before opening a PR, and report security issues as described in [SECURITY.md](SECURITY.md).
 
 ## Credits and license
 
