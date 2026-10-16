@@ -1,6 +1,9 @@
 <!--A few plain bullets saying what changed and why, for a reviewer skimming it - not a wall of text, not a restatement of the diff, not generated boilerplate.-->
 #### Description
 
+<!--How the change was verified: tests added first, suites run, manual checks. Use a checklist. -->
+#### Test plan
+
 <!--Reference issues using `Closes #issue-number` to enable automatic closure on merge. -->
 #### Issues closed by this PR
 
