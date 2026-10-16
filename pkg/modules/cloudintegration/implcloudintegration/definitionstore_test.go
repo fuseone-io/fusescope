@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	citypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	citypes "github.com/fuseone-io/fusescope/pkg/types/cloudintegrationtypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

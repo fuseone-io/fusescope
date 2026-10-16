@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
-	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
-	"github.com/SigNoz/signoz/pkg/types/opamptypes"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/modules/llmpricingrule"
+	"github.com/fuseone-io/fusescope/pkg/querier"
+	"github.com/fuseone-io/fusescope/pkg/query-service/agentConf"
+	"github.com/fuseone-io/fusescope/pkg/types/aiobservabilitytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/llmpricingruletypes"
+	"github.com/fuseone-io/fusescope/pkg/types/opamptypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // unmappedModelsLookback is the trace data window scanned to discover models in use.

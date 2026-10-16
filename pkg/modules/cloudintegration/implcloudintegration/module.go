@@ -3,10 +3,10 @@ package implcloudintegration
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
-	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/modules/cloudintegration"
+	"github.com/fuseone-io/fusescope/pkg/types/cloudintegrationtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type module struct{}

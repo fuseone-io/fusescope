@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/types"
 )
 
 const MaxListLabelPairs = 1000

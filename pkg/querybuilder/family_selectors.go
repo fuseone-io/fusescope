@@ -3,10 +3,10 @@ package querybuilder
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/types/featuretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // SemconvFamiliesEnabled evaluates the resolve_semconv_families flag for the

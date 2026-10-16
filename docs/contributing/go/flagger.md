@@ -77,8 +77,8 @@ Use the `Flagger` interface to evaluate feature flags. The interface provides ty
 
 ```go
 import (
-    "github.com/SigNoz/signoz/pkg/flagger"
-    "github.com/SigNoz/signoz/pkg/types/featuretypes"
+    "github.com/fuseone-io/fusescope/pkg/flagger"
+    "github.com/fuseone-io/fusescope/pkg/types/featuretypes"
 )
 
 func DoSomething(ctx context.Context, flagger flagger.Flagger) error {

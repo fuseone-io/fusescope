@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/metricsexplorertypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // Handler exposes HTTP handlers for the metrics module.

@@ -3,13 +3,13 @@ package delta
 import (
 	"fmt"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/utils"
 )
 
-// TODO(srikanthccv): support multiple quantiles; see https://github.com/SigNoz/signoz/issues/4016#issuecomment-1838583305
+// TODO(srikanthccv): support multiple quantiles; see https://github.com/fuseone-io/fusescope/issues/4016#issuecomment-1838583305
 var (
 	sketchFmt = "quantilesDDMerge(0.01, %f)(sketch)[1]"
 )

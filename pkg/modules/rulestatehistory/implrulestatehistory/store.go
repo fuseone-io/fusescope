@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/rulestatehistorytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 

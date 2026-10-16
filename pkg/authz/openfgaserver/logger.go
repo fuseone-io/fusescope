@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation"
 	pkgopenfgalogger "github.com/openfga/openfga/pkg/logger"
 	"go.uber.org/zap" //nolint:depguard
 )

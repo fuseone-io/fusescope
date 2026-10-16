@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 )
 
 // BuildFunnelValidationQuery builds a validation query for n-step funnels.

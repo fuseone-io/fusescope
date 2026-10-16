@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 func TestCreateChannelRejectsDuplicateNameInSameOrg(t *testing.T) {

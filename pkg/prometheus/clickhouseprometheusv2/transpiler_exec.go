@@ -7,8 +7,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/prometheus"
 	"github.com/prometheus/prometheus/model/labels"
 	promValue "github.com/prometheus/prometheus/model/value"
 	"github.com/prometheus/prometheus/promql"

@@ -3,7 +3,7 @@ package querier
 import (
 	"sync"
 
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 // Pools for reducing allocations in hot paths.

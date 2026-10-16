@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/mail"
 
-	"github.com/SigNoz/signoz/pkg/emailing"
-	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/smtp/client"
-	"github.com/SigNoz/signoz/pkg/types/emailtypes"
+	"github.com/fuseone-io/fusescope/pkg/emailing"
+	"github.com/fuseone-io/fusescope/pkg/emailing/templatestore/filetemplatestore"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/smtp/client"
+	"github.com/fuseone-io/fusescope/pkg/types/emailtypes"
 )
 
 type provider struct {
@@ -24,7 +24,7 @@ func NewFactory() factory.ProviderFactory[emailing.Emailing, emailing.Config] {
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config emailing.Config) (emailing.Emailing, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/emailing/smtpemailing")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/emailing/smtpemailing")
 
 	// Try to create a template store. If it fails, use an empty store.
 	store, err := filetemplatestore.NewStore(ctx, config.Templates.Directory, emailtypes.Templates, settings.Logger())

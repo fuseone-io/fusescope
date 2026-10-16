@@ -3,7 +3,7 @@ package dashboardtypes
 import (
 	"encoding/json"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // V1 → V2 migration. The v1 storable shape is the frontend's `DashboardData`

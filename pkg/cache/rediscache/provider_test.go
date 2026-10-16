@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/types/cachetypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
+	"github.com/fuseone-io/fusescope/pkg/types/cachetypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/go-redis/redismock/v9"
 	"github.com/stretchr/testify/assert"
 )
@@ -44,7 +44,7 @@ func (cacheable *CacheableA) UnmarshalBinary(data []byte) error {
 func TestSet(t *testing.T) {
 	db, mock := redismock.NewClientMock()
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	cache := &provider{client: db, settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/cache/rediscache")}
+	cache := &provider{client: db, settings: factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/cache/rediscache")}
 
 	cacheable := &CacheableA{
 		Key:    "some-random-key",

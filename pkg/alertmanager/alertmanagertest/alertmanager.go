@@ -8,9 +8,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagerserver"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	mock "github.com/stretchr/testify/mock"
 )

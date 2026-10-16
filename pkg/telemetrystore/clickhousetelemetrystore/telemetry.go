@@ -1,7 +1,7 @@
 package clickhousetelemetrystore
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"go.opentelemetry.io/otel/metric"
 )
 

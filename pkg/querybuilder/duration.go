@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // CoerceDurationValue accepts duration syntax and numeric strings for a

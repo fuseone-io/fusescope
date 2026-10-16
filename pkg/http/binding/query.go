@@ -1,7 +1,7 @@
 package binding
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	ginbinding "github.com/gin-gonic/gin/binding"
 )
 

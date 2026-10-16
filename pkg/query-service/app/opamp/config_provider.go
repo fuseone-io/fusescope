@@ -1,7 +1,7 @@
 package opamp
 
 import (
-	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/opamp/model"
 )
 
 // Interface for a source of otel collector config recommendations.

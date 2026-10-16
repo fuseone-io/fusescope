@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/web"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/web"
 	"github.com/spf13/cobra"
 	"github.com/swaggest/jsonschema-go"
 )

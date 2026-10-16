@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"strconv"
 
-	signozerrors "github.com/SigNoz/signoz/pkg/errors"
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	signozerrors "github.com/fuseone-io/fusescope/pkg/errors"
+	basemodel "github.com/fuseone-io/fusescope/pkg/query-service/model"
 )
 
 // SmartTraceAlgorithm is an algorithm to find the target span and build a tree of spans around it with the given levelUp and levelDown parameters and the given spanLimit

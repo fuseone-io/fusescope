@@ -3,8 +3,8 @@ package clickhouseprometheusv2
 import (
 	"fmt"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/prometheus/prometheus/model/labels"
 )

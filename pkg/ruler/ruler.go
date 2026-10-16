@@ -3,11 +3,11 @@ package ruler
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/statsreporter"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/statsreporter"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type Ruler interface {

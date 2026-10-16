@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template/parse"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // bareVariableRegex matches $-references including dotted paths (e.g. $alert.is_firing).

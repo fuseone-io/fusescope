@@ -4,17 +4,17 @@ import (
 	"context"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/analytics"
-	"github.com/SigNoz/signoz/pkg/authz"
-	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/cachetypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
-	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/analytics"
+	"github.com/fuseone-io/fusescope/pkg/authz"
+	"github.com/fuseone-io/fusescope/pkg/cache"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/cachetypes"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/serviceaccounttypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 var (
@@ -31,7 +31,7 @@ type module struct {
 }
 
 func NewModule(store serviceaccounttypes.Store, authz authz.AuthZ, cache cache.Cache, analytics analytics.Analytics, providerSettings factory.ProviderSettings, config serviceaccount.Config) serviceaccount.Module {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/serviceaccount/implserviceaccount")
 	return &module{store: store, authz: authz, cache: cache, analytics: analytics, settings: settings, config: config}
 }
 

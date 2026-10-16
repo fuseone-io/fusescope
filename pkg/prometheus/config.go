@@ -3,8 +3,8 @@ package prometheus
 import (
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 )
 
 type ActiveQueryTrackerConfig struct {

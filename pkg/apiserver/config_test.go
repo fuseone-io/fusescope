@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/config"
-	"github.com/SigNoz/signoz/pkg/config/envprovider"
-	"github.com/SigNoz/signoz/pkg/factory"
-	httpserver "github.com/SigNoz/signoz/pkg/http/server"
+	"github.com/fuseone-io/fusescope/pkg/config"
+	"github.com/fuseone-io/fusescope/pkg/config/envprovider"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	httpserver "github.com/fuseone-io/fusescope/pkg/http/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

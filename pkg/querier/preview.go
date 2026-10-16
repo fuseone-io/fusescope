@@ -7,10 +7,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // QueryRangePreview validates and renders each query without executing it.

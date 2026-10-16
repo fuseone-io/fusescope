@@ -5,13 +5,13 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/identn"
-	"github.com/SigNoz/signoz/pkg/sharder"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/identn"
+	"github.com/fuseone-io/fusescope/pkg/sharder"
+	"github.com/fuseone-io/fusescope/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 const (

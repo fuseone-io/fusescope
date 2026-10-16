@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"runtime"
 
-	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
 )
 
 type source struct{}

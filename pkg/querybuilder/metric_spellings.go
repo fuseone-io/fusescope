@@ -3,10 +3,10 @@ package querybuilder
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/semconv"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/semconv"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // The span-metrics processor in signoz-otel-collector writes resource

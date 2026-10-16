@@ -3,10 +3,10 @@ package implspanmapper
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/spantypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type store struct {

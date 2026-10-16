@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
 	"github.com/uptrace/bun/schema"
 )
 

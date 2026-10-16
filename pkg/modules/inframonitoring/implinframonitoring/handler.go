@@ -3,12 +3,12 @@ package implinframonitoring
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/http/binding"
-	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/http/binding"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/modules/inframonitoring"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/inframonitoringtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type handler struct {

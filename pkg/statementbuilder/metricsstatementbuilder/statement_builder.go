@@ -10,17 +10,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/clickhousesql"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/statementbuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/types/metrictypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -66,7 +66,7 @@ func NewMetricQueryStatementBuilder(
 	storage qbtypes.Storage,
 	flagger flagger.Flagger,
 ) *StatementBuilder {
-	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema")
+	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/fuseone-io/fusescope/pkg/telemetryschema/metricstelemetryschema")
 	return &StatementBuilder{
 		logger:        metricsSettings.Logger(),
 		metadataStore: metadataStore,

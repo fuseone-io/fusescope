@@ -5,12 +5,12 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/transition"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/tagtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/transition"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/dashboardtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/tagtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {

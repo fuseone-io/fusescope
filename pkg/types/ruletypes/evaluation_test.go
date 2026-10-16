@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 func TestRollingWindow_EvaluationTime(t *testing.T) {

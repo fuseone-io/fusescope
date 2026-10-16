@@ -5,9 +5,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/clickhousesql"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type JSONAccessBranchType struct {

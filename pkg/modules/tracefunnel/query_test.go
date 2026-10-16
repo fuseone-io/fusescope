@@ -3,9 +3,9 @@ package tracefunnel
 import (
 	"testing"
 
-	tracev4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
+	tracev4 "github.com/fuseone-io/fusescope/pkg/query-service/app/traces/v4"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/types/tracefunneltypes"
 )
 
 func TestValidateTracesMultipleSteps(t *testing.T) {

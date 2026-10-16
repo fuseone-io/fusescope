@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/sqlschema"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/signoz"
+	"github.com/fuseone-io/fusescope/pkg/sqlschema"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
 )
 
 func sqlstoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]] {

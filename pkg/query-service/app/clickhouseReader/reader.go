@@ -17,22 +17,22 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
-	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/prometheus"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/featuretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/retentiontypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
+	errorsV2 "github.com/fuseone-io/fusescope/pkg/errors"
 
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
@@ -41,21 +41,21 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
-	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/fuseone-io/fusescope/pkg/cache"
 
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
-	"github.com/SigNoz/signoz/pkg/query-service/app/services"
-	"github.com/SigNoz/signoz/pkg/query-service/app/traces/smart"
-	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/resource"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/services"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/traces/smart"
+	"github.com/fuseone-io/fusescope/pkg/query-service/common"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
 
-	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"github.com/SigNoz/signoz/pkg/semconv"
+	chErrors "github.com/fuseone-io/fusescope/pkg/query-service/errors"
+	"github.com/fuseone-io/fusescope/pkg/query-service/model"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/utils"
+	"github.com/fuseone-io/fusescope/pkg/semconv"
 )
 
 const (
@@ -996,7 +996,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 	// set the ttl if nothing is pending/ no errors
 	go func(ttlPayload map[string]string) {
 		for tableName, query := range ttlPayload {
-			// https://github.com/SigNoz/signoz/issues/5470
+			// https://github.com/fuseone-io/fusescope/issues/5470
 			// we will change ttl for only the new parts and not the old ones
 			query += " SETTINGS materialize_ttl_after_modify=0"
 

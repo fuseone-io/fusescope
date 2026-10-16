@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/AfterShip/clickhouse-sql-parser/parser"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // TelemetryFieldVisitor is an AST visitor for extracting telemetry fields.

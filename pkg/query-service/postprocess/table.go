@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 )
 
 func roundToTwoDecimal(number float64) float64 {

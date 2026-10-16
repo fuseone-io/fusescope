@@ -3,8 +3,8 @@ package signozapiserver
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/http/handler"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 	"github.com/gorilla/mux"
 )
 

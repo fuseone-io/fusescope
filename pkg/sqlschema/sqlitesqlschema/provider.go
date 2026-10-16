@@ -8,10 +8,10 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/sqlschema"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/sqlschema"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
 )
 
 type provider struct {
@@ -28,7 +28,7 @@ func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[sqlschema.SQ
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlschema.Config, sqlstore sqlstore.SQLStore) (sqlschema.SQLSchema, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlschema/sqlitesqlschema")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/sqlschema/sqlitesqlschema")
 	fmter := Formatter{sqlschema.NewFormatter(sqlstore.BunDB().Dialect())}
 
 	return &provider{

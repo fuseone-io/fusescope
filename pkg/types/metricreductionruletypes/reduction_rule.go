@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
@@ -95,15 +95,15 @@ type GettableReductionRule struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	MetricName       string    `json:"metricName" required:"true"`
-	MatchType        MatchType `json:"matchType" required:"true"`
-	Labels           []string  `json:"labels" required:"true" nullable:"true"`
-	EffectiveFrom    time.Time `json:"effectiveFrom" required:"true"`
-	Active           bool      `json:"active" required:"true"`
-	IngestedSeries   uint64    `json:"ingestedSeries" required:"true"`
-	RetainedSeries   uint64    `json:"retainedSeries" required:"true"`
-	IngestedSamples  uint64    `json:"ingestedSamples" required:"true"`
-	RetainedSamples  uint64    `json:"retainedSamples" required:"true"`
+	MetricName      string    `json:"metricName" required:"true"`
+	MatchType       MatchType `json:"matchType" required:"true"`
+	Labels          []string  `json:"labels" required:"true" nullable:"true"`
+	EffectiveFrom   time.Time `json:"effectiveFrom" required:"true"`
+	Active          bool      `json:"active" required:"true"`
+	IngestedSeries  uint64    `json:"ingestedSeries" required:"true"`
+	RetainedSeries  uint64    `json:"retainedSeries" required:"true"`
+	IngestedSamples uint64    `json:"ingestedSamples" required:"true"`
+	RetainedSamples uint64    `json:"retainedSamples" required:"true"`
 }
 
 type GettableReductionRules struct {

@@ -3,8 +3,8 @@ package filterquery
 import (
 	"fmt"
 
-	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	"github.com/antlr4-go/antlr/v4"
+	grammar "github.com/fuseone-io/fusescope/pkg/parser/filterquery/grammar"
 )
 
 func Parse(query string) (antlr.ParseTree, *antlr.CommonTokenStream, *ErrorCollector) {

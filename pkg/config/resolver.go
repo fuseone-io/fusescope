@@ -3,7 +3,7 @@ package config
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 var (

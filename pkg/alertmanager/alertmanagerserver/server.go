@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/inhibit"
@@ -23,10 +23,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagernotify"
+	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
+	"github.com/fuseone-io/fusescope/pkg/alertmanager/nfmanager"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 )
 
 // This is not a real snapshot file and will never be used. We need this placeholder to ensure maintenance runs on shutdown.

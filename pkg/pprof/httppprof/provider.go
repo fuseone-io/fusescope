@@ -8,9 +8,9 @@ import (
 	runtimepprof "runtime/pprof"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	httpserver "github.com/SigNoz/signoz/pkg/http/server"
-	"github.com/SigNoz/signoz/pkg/pprof"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	httpserver "github.com/fuseone-io/fusescope/pkg/http/server"
+	"github.com/fuseone-io/fusescope/pkg/pprof"
 )
 
 type provider struct {
@@ -23,7 +23,7 @@ func NewFactory() factory.ProviderFactory[pprof.PProf, pprof.Config] {
 
 func New(_ context.Context, settings factory.ProviderSettings, config pprof.Config) (pprof.PProf, error) {
 	server, err := httpserver.New(
-		settings.Logger.With(slog.String("pkg", "github.com/SigNoz/signoz/pkg/pprof/httppprof")),
+		settings.Logger.With(slog.String("pkg", "github.com/fuseone-io/fusescope/pkg/pprof/httppprof")),
 		httpserver.Config{Address: config.Address, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second},
 		newHandler(),
 	)

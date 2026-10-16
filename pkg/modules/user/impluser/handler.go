@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/binding"
-	"github.com/SigNoz/signoz/pkg/http/render"
-	root "github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/http/binding"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
+	root "github.com/fuseone-io/fusescope/pkg/modules/user"
+	"github.com/fuseone-io/fusescope/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 

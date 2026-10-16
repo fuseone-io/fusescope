@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/types/parsertypes"
-	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
+	"github.com/fuseone-io/fusescope/pkg/types/parsertypes"
+	"github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 func TestAPI_AnalyzeQueryFilter(t *testing.T) {

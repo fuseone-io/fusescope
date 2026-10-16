@@ -1,7 +1,7 @@
 package contextlinks
 
 import (
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
 )
 
 // TODO(srikanthccv): Fix the URL management.

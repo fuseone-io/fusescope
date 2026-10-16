@@ -3,10 +3,10 @@ package signozapiserver
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/http/handler"
+	"github.com/fuseone-io/fusescope/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/types/aiobservabilitytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/gorilla/mux"
 )
 

@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
-	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/metrics"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/fuseone-io/fusescope/pkg/query-service/common"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
+	"github.com/fuseone-io/fusescope/pkg/query-service/model"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/utils"
 )
 
 type Options struct{}
@@ -48,7 +48,7 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorMinRate: "min",
 }
 
-// See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
+// See https://github.com/fuseone-io/fusescope/issues/2151#issuecomment-1467249056
 var rateWithoutNegative = `If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window))) `
 
 func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {

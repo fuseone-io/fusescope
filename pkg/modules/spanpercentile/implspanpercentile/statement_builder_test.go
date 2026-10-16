@@ -6,9 +6,9 @@ import (
 	"sort"
 	"testing"
 
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/spanpercentiletypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

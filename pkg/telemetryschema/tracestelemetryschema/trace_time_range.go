@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 type TraceTimeRangeFinder struct {

@@ -3,9 +3,9 @@ package v4
 import (
 	"testing"
 
-	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	metricsV3 "github.com/fuseone-io/fusescope/pkg/query-service/app/metrics/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/metrics/v4/helpers"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 	"github.com/stretchr/testify/assert"
 )
 

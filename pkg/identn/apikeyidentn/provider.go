@@ -7,11 +7,11 @@ import (
 
 	"golang.org/x/sync/singleflight"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/identn"
-	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/identn"
+	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 )
 
 type provider struct {
@@ -31,7 +31,7 @@ func New(serviceAccount serviceaccount.Module, config identn.Config, providerSet
 	return &provider{
 		serviceAccount: serviceAccount,
 		config:         config,
-		settings:       factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/apikeyidentn"),
+		settings:       factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/identn/apikeyidentn"),
 		sfGroup:        &singleflight.Group{},
 	}, nil
 }

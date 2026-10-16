@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/AfterShip/clickhouse-sql-parser/parser"
-	"github.com/SigNoz/signoz/pkg/variables"
+	"github.com/fuseone-io/fusescope/pkg/variables"
 )
 
 // VariableValue represents a variable's assigned value.

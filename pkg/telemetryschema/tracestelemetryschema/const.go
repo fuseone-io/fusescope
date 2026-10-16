@@ -1,7 +1,7 @@
 package tracestelemetryschema
 
 import (
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 const (

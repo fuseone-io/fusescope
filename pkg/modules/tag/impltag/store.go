@@ -3,10 +3,10 @@ package impltag
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
-	"github.com/SigNoz/signoz/pkg/types/tagtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/tagtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 

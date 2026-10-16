@@ -3,7 +3,7 @@ package handler
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

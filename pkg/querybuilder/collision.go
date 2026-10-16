@@ -3,8 +3,8 @@ package querybuilder
 import (
 	"fmt"
 
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // AdjustDuplicateKeys adjusts duplicate keys in the query by removing specific context and data type

@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/uptrace/bun"
 )
 

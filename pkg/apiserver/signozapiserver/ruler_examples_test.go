@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
 )
 
 // TestPostableRuleExamplesValidate verifies every example payload returned by

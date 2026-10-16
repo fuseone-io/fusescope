@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/SigNoz/signoz/pkg/clickhousesql"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
-	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/modules/thirdpartyapi"
+	"github.com/fuseone-io/fusescope/pkg/queryparser"
 
 	"log/slog"
 	"net/http"
@@ -27,49 +27,49 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 
-	"github.com/SigNoz/signoz/pkg/http/middleware"
-	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
-	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/http/middleware"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations"
+	"github.com/fuseone-io/fusescope/pkg/signoz"
+	"github.com/fuseone-io/fusescope/pkg/types/retentiontypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	_ "modernc.org/sqlite"
 
-	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
-	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
-	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
-	logsv4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
-	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
-	metricsv3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
-	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
-	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
-	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
-	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
-	"github.com/SigNoz/signoz/pkg/types/licensetypes"
-	"github.com/SigNoz/signoz/pkg/types/opamptypes"
-	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
+	traceFunnelsModule "github.com/fuseone-io/fusescope/pkg/modules/tracefunnel"
+	"github.com/fuseone-io/fusescope/pkg/query-service/agentConf"
+	queues2 "github.com/fuseone-io/fusescope/pkg/query-service/app/integrations/messagingQueues/queues"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/logs"
+	logsv3 "github.com/fuseone-io/fusescope/pkg/query-service/app/logs/v3"
+	logsv4 "github.com/fuseone-io/fusescope/pkg/query-service/app/logs/v4"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/metrics"
+	metricsv3 "github.com/fuseone-io/fusescope/pkg/query-service/app/metrics/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/querier"
+	querierV2 "github.com/fuseone-io/fusescope/pkg/query-service/app/querier/v2"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/queryBuilder"
+	tracesV3 "github.com/fuseone-io/fusescope/pkg/query-service/app/traces/v3"
+	tracesV4 "github.com/fuseone-io/fusescope/pkg/query-service/app/traces/v4"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/postprocess"
+	"github.com/fuseone-io/fusescope/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/featuretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/licensetypes"
+	"github.com/fuseone-io/fusescope/pkg/types/opamptypes"
+	"github.com/fuseone-io/fusescope/pkg/types/pipelinetypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	traceFunnels "github.com/fuseone-io/fusescope/pkg/types/tracefunneltypes"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
-	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/ruler"
-	"github.com/SigNoz/signoz/pkg/version"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations/messagingQueues/kafka"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/logparsingpipeline"
+	"github.com/fuseone-io/fusescope/pkg/query-service/interfaces"
+	"github.com/fuseone-io/fusescope/pkg/query-service/model"
+	"github.com/fuseone-io/fusescope/pkg/ruler"
+	"github.com/fuseone-io/fusescope/pkg/version"
 )
 
 type status string
@@ -202,7 +202,7 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 	return aH, nil
 }
 
-// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/fuseone-io/fusescope/pkg/http/render) with the new error structure
 type structuredResponse struct {
 	Data   interface{}       `json:"data"`
 	Total  int               `json:"total"`
@@ -211,13 +211,13 @@ type structuredResponse struct {
 	Errors []structuredError `json:"errors"`
 }
 
-// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/fuseone-io/fusescope/pkg/http/render) with the new error structure
 type structuredError struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"msg"`
 }
 
-// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/fuseone-io/fusescope/pkg/http/render) with the new error structure
 type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
@@ -255,7 +255,7 @@ func toApiError(err error) *model.ApiError {
 	return &model.ApiError{Typ: typ, Err: err}
 }
 
-// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/fuseone-io/fusescope/pkg/http/render) with the new error structure
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -301,7 +301,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	}
 }
 
-// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/fuseone-io/fusescope/pkg/http/render) with the new error structure
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -350,7 +350,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middlew
 	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
 }
 
-// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/fuseone-io/fusescope/pkg/http/render) with the new error structure
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }

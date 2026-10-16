@@ -3,9 +3,9 @@ package noopanalytics
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/analytics"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
+	"github.com/fuseone-io/fusescope/pkg/analytics"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/types/analyticstypes"
 )
 
 type provider struct {

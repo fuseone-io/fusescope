@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/fuseone-io/fusescope/pkg/prometheus"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/annotations"

@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	tf "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/modules/tracefunnel"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	tf "github.com/fuseone-io/fusescope/pkg/types/tracefunneltypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 

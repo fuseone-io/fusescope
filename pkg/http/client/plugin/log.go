@@ -10,7 +10,7 @@ import (
 	"github.com/gojek/heimdall/v7"
 	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 type reqResLog struct {

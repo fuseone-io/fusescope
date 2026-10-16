@@ -5,20 +5,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/statementbuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder/aistatementbuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder/tracesstatementbuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
+	"github.com/fuseone-io/fusescope/pkg/querier"
+	"github.com/fuseone-io/fusescope/pkg/statementbuilder"
+	"github.com/fuseone-io/fusescope/pkg/statementbuilder/aistatementbuilder"
+	"github.com/fuseone-io/fusescope/pkg/statementbuilder/logsstatementbuilder"
+	"github.com/fuseone-io/fusescope/pkg/statementbuilder/metricsstatementbuilder"
+	"github.com/fuseone-io/fusescope/pkg/statementbuilder/tracesstatementbuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/fuseone-io/fusescope/pkg/flagger/flaggertest"
 )
 
 func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.TelemetryStore) (querier.Querier, *telemetrytypestest.MockMetadataStore) {

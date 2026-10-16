@@ -10,10 +10,10 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/opamptypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/types/opamptypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 
 	"github.com/open-telemetry/opamp-go/protobufs"
 	opampTypes "github.com/open-telemetry/opamp-go/server/types"

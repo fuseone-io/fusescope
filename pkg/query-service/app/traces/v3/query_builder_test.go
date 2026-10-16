@@ -3,8 +3,8 @@ package v3
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

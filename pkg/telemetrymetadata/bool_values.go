@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/tracestelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // boolFieldValues is the suggestion set for a bool field, optionally narrowed

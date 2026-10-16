@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 )
 
 func GetLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, fields *GetFieldsResponse) map[string]v3.AttributeKey {

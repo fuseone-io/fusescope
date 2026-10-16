@@ -6,16 +6,16 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/modules/dashboard"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
+	"github.com/fuseone-io/fusescope/pkg/query-service/model"
+	"github.com/fuseone-io/fusescope/pkg/query-service/utils"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/types/cloudintegrationtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/dashboardtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/pipelinetypes"
+	ruletypes "github.com/fuseone-io/fusescope/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type IntegrationAuthor struct {

@@ -1,9 +1,9 @@
 package rulestatehistorytypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
 )
 
 type Query struct {

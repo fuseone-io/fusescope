@@ -1,6 +1,6 @@
 package querybuildertypesv5
 
-import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+import "github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 
 // GetExpression returns the expression string.
 func (q *QueryEnvelope) GetExpression() string {

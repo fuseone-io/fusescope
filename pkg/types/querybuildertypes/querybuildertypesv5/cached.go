@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"maps"
 
-	"github.com/SigNoz/signoz/pkg/types/cachetypes"
+	"github.com/fuseone-io/fusescope/pkg/types/cachetypes"
 )
 
 var _ cachetypes.Cacheable = (*CachedData)(nil)

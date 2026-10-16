@@ -3,10 +3,10 @@ package querybuilder
 import (
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	grammar "github.com/fuseone-io/fusescope/pkg/parser/filterquery/grammar"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // SplitFilterForAggregates partitions a filter expression on the top-level AND into a

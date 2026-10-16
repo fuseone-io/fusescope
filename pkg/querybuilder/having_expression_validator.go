@@ -4,9 +4,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	grammar "github.com/SigNoz/signoz/pkg/parser/havingexpression/grammar"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	grammar "github.com/fuseone-io/fusescope/pkg/parser/havingexpression/grammar"
 	"github.com/huandu/go-sqlbuilder"
 )
 

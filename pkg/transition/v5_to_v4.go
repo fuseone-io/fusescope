@@ -3,8 +3,8 @@ package transition
 import (
 	"fmt"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 // ConvertV5TimeSeriesDataToV4Result converts v5 TimeSeriesData to v4 Result.

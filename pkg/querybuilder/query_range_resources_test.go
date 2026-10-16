@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

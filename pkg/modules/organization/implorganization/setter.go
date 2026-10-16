@@ -3,13 +3,13 @@ package implorganization
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager"
-	"github.com/SigNoz/signoz/pkg/modules/dashboard"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
-	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/alertmanager"
+	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
+	"github.com/fuseone-io/fusescope/pkg/modules/organization"
+	"github.com/fuseone-io/fusescope/pkg/modules/quickfilter"
+	"github.com/fuseone-io/fusescope/pkg/modules/spanmapper"
+	"github.com/fuseone-io/fusescope/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type setter struct {

@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/modules/organization"
+	"github.com/fuseone-io/fusescope/pkg/modules/spanmapper"
 )
 
 const reconcileRetryInterval = 30 * time.Second
@@ -25,7 +25,7 @@ type service struct {
 // Orgs created later are reconciled by the organization setter instead.
 func NewService(providerSettings factory.ProviderSettings, module spanmapper.Module, orgGetter organization.Getter) factory.Service {
 	return &service{
-		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"),
+		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/spanmapper/implspanmapper"),
 		module:    module,
 		orgGetter: orgGetter,
 		stopC:     make(chan struct{}),

@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/SigNoz/signoz/pkg/modules/dashboard"
-	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
+	"github.com/fuseone-io/fusescope/pkg/query-service/agentConf"
+	"github.com/fuseone-io/fusescope/pkg/query-service/model"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/types/pipelinetypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type Controller struct {

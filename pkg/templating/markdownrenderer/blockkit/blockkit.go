@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/types/templatingtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/templatingtypes"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"

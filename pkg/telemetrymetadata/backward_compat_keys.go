@@ -1,6 +1,6 @@
 package telemetrymetadata
 
-import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+import "github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 
 type BackwardCompatibleKeyMap map[string]string
 

@@ -16,10 +16,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/templating/markdownrenderer"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 

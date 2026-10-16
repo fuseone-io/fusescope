@@ -1,6 +1,6 @@
 package coretypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import "github.com/fuseone-io/fusescope/pkg/valuer"
 
 var Verbs = []Verb{
 	VerbCreate,

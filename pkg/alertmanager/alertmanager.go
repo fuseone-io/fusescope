@@ -5,12 +5,12 @@ import (
 
 	amConfig "github.com/prometheus/alertmanager/config"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/statsreporter"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagerserver"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/statsreporter"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 var (

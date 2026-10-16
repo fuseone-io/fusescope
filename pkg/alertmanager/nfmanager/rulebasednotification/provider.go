@@ -5,13 +5,13 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/expr-lang/expr"
+	"github.com/fuseone-io/fusescope/pkg/alertmanager/nfmanager"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/prometheus/common/model"
 
-	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 )
 
 type provider struct {
@@ -33,7 +33,7 @@ func NewFactory(routeStore alertmanagertypes.RouteStore) factory.ProviderFactory
 
 // New creates a new rule-based grouping strategy provider.
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config nfmanager.Config, routeStore alertmanagertypes.RouteStore) (nfmanager.NotificationManager, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/alertmanager/nfmanager/rulebasednotification")
 
 	return &provider{
 		settings:                             settings,

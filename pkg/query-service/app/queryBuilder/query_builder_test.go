@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
-	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
-	metricsv3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	logsV3 "github.com/fuseone-io/fusescope/pkg/query-service/app/logs/v3"
+	logsV4 "github.com/fuseone-io/fusescope/pkg/query-service/app/logs/v4"
+	metricsv3 "github.com/fuseone-io/fusescope/pkg/query-service/app/metrics/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 	"github.com/stretchr/testify/require"
 )
 

@@ -3,7 +3,7 @@ package rules
 import (
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/fuseone-io/fusescope/pkg/types/metrictypes"
 )
 
 // GenerateMetricQueryCHArgs generates query arguments for metric queries used in tests.

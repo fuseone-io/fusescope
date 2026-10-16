@@ -1,6 +1,6 @@
 package inframonitoringtypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import "github.com/fuseone-io/fusescope/pkg/valuer"
 
 // CheckType identifies a single infra-monitoring subsection (UI tab).
 // One value per v1/v2 list API we surface in the infra-monitoring section.

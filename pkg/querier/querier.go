@@ -15,21 +15,21 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/statsreporter"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/prometheus"
+	"github.com/fuseone-io/fusescope/pkg/query-service/utils"
+	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/statsreporter"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/metrictypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 var (
@@ -83,7 +83,7 @@ func New(
 	logTraceIDWindowPadding time.Duration,
 	maxConcurrentQueries int,
 ) *querier {
-	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
+	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/fuseone-io/fusescope/pkg/querier")
 	if maxConcurrentQueries <= 0 {
 		maxConcurrentQueries = DefaultMaxConcurrentQueries
 	}

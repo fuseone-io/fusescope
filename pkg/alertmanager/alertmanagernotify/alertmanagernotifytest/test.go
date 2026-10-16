@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 

@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/modules/promote"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
-	"github.com/SigNoz/signoz/pkg/types/promotetypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/modules/promote"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/promotetypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 var (
@@ -31,7 +31,7 @@ func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore teleme
 	return &module{
 		metadataStore:  metadataStore,
 		telemetryStore: telemetrystore,
-		settings:       factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/promote/implpromote"),
+		settings:       factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/promote/implpromote"),
 	}
 }
 

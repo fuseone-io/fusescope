@@ -3,8 +3,8 @@ package impldashboard
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/dashboardtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 func (module *module) CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error) {

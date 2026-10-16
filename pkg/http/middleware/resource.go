@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/http/handler"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 

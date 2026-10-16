@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 var ErrCodeMappingDefinitionInvalid = errors.MustNewCode("span_attribute_mapping_definition_invalid")

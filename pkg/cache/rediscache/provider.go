@@ -10,11 +10,11 @@ import (
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/cachetypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/cache"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/types/cachetypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type provider struct {
@@ -27,7 +27,7 @@ func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config cache.Config) (cache.Cache, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/cache/rediscache")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/cache/rediscache")
 	client := redis.NewClient(&redis.Options{
 		Addr:     strings.Join([]string{config.Redis.Host, fmt.Sprint(config.Redis.Port)}, ":"),
 		Password: config.Redis.Password,

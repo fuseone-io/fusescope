@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/prometheus"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/storage"
 )
@@ -28,7 +28,7 @@ func NewFactory(telemetryStore telemetrystore.TelemetryStore) factory.ProviderFa
 }
 
 func New(_ context.Context, providerSettings factory.ProviderSettings, config prometheus.Config, telemetryStore telemetrystore.TelemetryStore) (prometheus.Prometheus, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/prometheus/clickhouseprometheusv2")
 
 	engine := prometheus.NewEngine(settings.Logger(), config)
 	parser := prometheus.NewParser()

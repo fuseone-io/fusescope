@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/binding"
-	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/spantypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/http/binding"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/modules/spanmapper"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 

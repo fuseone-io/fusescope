@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/config"
+	"github.com/fuseone-io/fusescope/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

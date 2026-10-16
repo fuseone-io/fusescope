@@ -3,10 +3,10 @@ package signozapiserver
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	citypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/http/handler"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	citypes "github.com/fuseone-io/fusescope/pkg/types/cloudintegrationtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 

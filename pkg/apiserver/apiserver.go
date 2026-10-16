@@ -1,7 +1,7 @@
 package apiserver
 
 import (
-	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/gorilla/mux"
 )
 

@@ -6,12 +6,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/clickhousesql"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
-	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/types/inframonitoringtypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/sync/errgroup"
 )

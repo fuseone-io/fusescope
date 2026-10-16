@@ -15,33 +15,33 @@ import (
 	"text/template"
 	"time"
 
-	signozerrors "github.com/SigNoz/signoz/pkg/errors"
+	signozerrors "github.com/fuseone-io/fusescope/pkg/errors"
 
-	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
+	"github.com/fuseone-io/fusescope/pkg/types/thirdpartyapitypes"
 
 	"log/slog"
 
 	"github.com/SigNoz/govaluate"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
-	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations/messagingQueues/kafka"
+	queues2 "github.com/fuseone-io/fusescope/pkg/query-service/app/integrations/messagingQueues/queues"
 
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
 
-	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
-	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
-	"github.com/SigNoz/signoz/pkg/query-service/common"
-	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
-	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
-	chVariables "github.com/SigNoz/signoz/pkg/variables/clickhouse"
+	errorsV2 "github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/metrics"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/queryBuilder"
+	"github.com/fuseone-io/fusescope/pkg/query-service/common"
+	baseconstants "github.com/fuseone-io/fusescope/pkg/query-service/constants"
+	"github.com/fuseone-io/fusescope/pkg/query-service/model"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/postprocess"
+	"github.com/fuseone-io/fusescope/pkg/query-service/utils"
+	querytemplate "github.com/fuseone-io/fusescope/pkg/query-service/utils/queryTemplate"
+	"github.com/fuseone-io/fusescope/pkg/types/retentiontypes"
+	chVariables "github.com/fuseone-io/fusescope/pkg/variables/clickhouse"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}

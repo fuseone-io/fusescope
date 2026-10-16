@@ -7,13 +7,13 @@ import (
 	"strings"
 
 	signozstanzahelper "github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
-	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/ast"
 	"github.com/antonmedv/expr/parser"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
+	"github.com/fuseone-io/fusescope/pkg/query-service/queryBuilderToExpr"
+	"github.com/fuseone-io/fusescope/pkg/types/pipelinetypes"
 	"github.com/google/uuid"
 )
 

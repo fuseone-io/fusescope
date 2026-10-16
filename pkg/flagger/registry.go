@@ -1,6 +1,6 @@
 package flagger
 
-import "github.com/SigNoz/signoz/pkg/types/featuretypes"
+import "github.com/fuseone-io/fusescope/pkg/types/featuretypes"
 
 var (
 	FeatureUseSpanMetrics         = featuretypes.MustNewName("use_span_metrics")

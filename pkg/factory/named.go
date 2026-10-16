@@ -1,7 +1,7 @@
 package factory
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // Named is implemented by all types of factories.

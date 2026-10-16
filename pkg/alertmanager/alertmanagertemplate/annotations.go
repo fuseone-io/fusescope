@@ -1,7 +1,7 @@
 package alertmanagertemplate
 
 import (
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/types"
 )
 

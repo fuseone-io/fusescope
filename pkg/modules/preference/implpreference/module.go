@@ -3,10 +3,10 @@ package implpreference
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/preference"
-	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/modules/preference"
+	"github.com/fuseone-io/fusescope/pkg/types/preferencetypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type module struct {

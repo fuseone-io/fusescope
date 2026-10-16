@@ -5,9 +5,9 @@ import (
 
 	"github.com/SigNoz/govaluate"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/queryBuilder"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 )
 
 // postProcessResult applies having clause, metric limit, reduce function to the result

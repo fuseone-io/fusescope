@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/parser/filterquery"
-	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	qbtypesv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/fuseone-io/fusescope/pkg/parser/filterquery"
+	grammar "github.com/fuseone-io/fusescope/pkg/parser/filterquery/grammar"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	qbtypesv5 "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 

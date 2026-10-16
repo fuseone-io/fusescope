@@ -10,25 +10,25 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 
-	"github.com/SigNoz/signoz/pkg/clickhousesql"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/semconv"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/semconv"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/audittelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/logstelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/metertelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/tracestelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/featuretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/metrictypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 var (
@@ -77,7 +77,7 @@ func NewTelemetryMetaStore(
 	telemetrystore telemetrystore.TelemetryStore,
 	fl flagger.Flagger,
 ) telemetrytypes.MetadataStore {
-	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
+	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/fuseone-io/fusescope/pkg/telemetrymetadata")
 
 	t := &telemetryMetaStore{
 		logger:                         metadataSettings.Logger(),

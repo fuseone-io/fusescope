@@ -3,9 +3,9 @@ package signozapiserver
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	pkghandler "github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	pkghandler "github.com/fuseone-io/fusescope/pkg/http/handler"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
 	"github.com/gorilla/mux"
 	openapi "github.com/swaggest/openapi-go"
 )

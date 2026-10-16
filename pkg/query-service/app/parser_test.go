@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/common"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/common"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

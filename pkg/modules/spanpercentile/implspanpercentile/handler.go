@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	errorsV2 "github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/modules/spanpercentile"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/spanpercentiletypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type handler struct {

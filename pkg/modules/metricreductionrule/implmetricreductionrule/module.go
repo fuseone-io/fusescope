@@ -3,11 +3,11 @@ package implmetricreductionrule
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/metricreductionrule"
-	"github.com/SigNoz/signoz/pkg/types/metricreductionruletypes"
-	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/modules/metricreductionrule"
+	"github.com/fuseone-io/fusescope/pkg/types/metricreductionruletypes"
+	"github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type module struct{}

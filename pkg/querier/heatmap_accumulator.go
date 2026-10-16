@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 // bucketBounds holds the values in (Lower, Upper]. Only Upper reaches the

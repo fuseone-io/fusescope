@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/types/apdextypes"
+	"github.com/fuseone-io/fusescope/pkg/types/apdextypes"
 )
 
 type Module interface {

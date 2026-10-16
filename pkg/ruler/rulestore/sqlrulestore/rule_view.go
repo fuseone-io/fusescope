@@ -3,9 +3,9 @@ package sqlrulestore
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	ruletypes "github.com/fuseone-io/fusescope/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 func (r *rule) CreateRuleView(ctx context.Context, view *ruletypes.RuleView) error {

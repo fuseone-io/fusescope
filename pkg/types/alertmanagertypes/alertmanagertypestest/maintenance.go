@@ -7,8 +7,8 @@ package alertmanagertypestest
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	mock "github.com/stretchr/testify/mock"
 )
 

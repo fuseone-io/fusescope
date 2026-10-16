@@ -4,9 +4,9 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/emailing"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/emailtypes"
+	"github.com/fuseone-io/fusescope/pkg/emailing"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/types/emailtypes"
 )
 
 type provider struct {
@@ -18,7 +18,7 @@ func NewFactory() factory.ProviderFactory[emailing.Emailing, emailing.Config] {
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config emailing.Config) (emailing.Emailing, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/emailing/noopemailing")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/emailing/noopemailing")
 	return &provider{
 		settings: settings,
 	}, nil

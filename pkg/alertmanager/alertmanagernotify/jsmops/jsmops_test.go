@@ -3,7 +3,7 @@ package jsmops
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

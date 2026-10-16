@@ -6,10 +6,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/queryBuilderToExpr"
+	"github.com/fuseone-io/fusescope/pkg/types"
 	"github.com/uptrace/bun"
 )
 

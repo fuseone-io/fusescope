@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 	segment "github.com/segmentio/analytics-go/v3"
 )
 

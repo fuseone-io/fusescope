@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 )
 
 func TestPostProcessResult(t *testing.T) {

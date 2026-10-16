@@ -1,7 +1,7 @@
 package apdextypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/types"
 	"github.com/uptrace/bun"
 )
 

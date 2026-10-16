@@ -8,8 +8,8 @@ import (
 	"unicode/utf8"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
-	"github.com/SigNoz/signoz/pkg/errors"
-	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	qb "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/perses/spec/go/common"
 	"github.com/perses/spec/go/dashboard"
 )

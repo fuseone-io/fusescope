@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/config/configtest"
+	"github.com/fuseone-io/fusescope/pkg/config/configtest"
 	"github.com/stretchr/testify/assert"
 )
 

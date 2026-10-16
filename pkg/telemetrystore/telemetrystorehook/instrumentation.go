@@ -3,9 +3,9 @@ package telemetrystorehook
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
@@ -26,11 +26,11 @@ func NewInstrumentationFactory() factory.ProviderFactory[telemetrystore.Telemetr
 }
 
 func NewInstrumentation(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStoreHook, error) {
-	meter := providerSettings.MeterProvider.Meter("github.com/SigNoz/signoz/pkg/telemetrystore")
+	meter := providerSettings.MeterProvider.Meter("github.com/fuseone-io/fusescope/pkg/telemetrystore")
 
 	return &instrumentation{
 		clickhouseCluster: config.Clickhouse.Cluster,
-		tracer:            providerSettings.TracerProvider.Tracer("github.com/SigNoz/signoz/pkg/telemetrystore"),
+		tracer:            providerSettings.TracerProvider.Tracer("github.com/fuseone-io/fusescope/pkg/telemetrystore"),
 		meter:             meter,
 	}, nil
 }

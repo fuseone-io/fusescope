@@ -3,9 +3,9 @@ package apiserver
 import (
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	httpserver "github.com/SigNoz/signoz/pkg/http/server"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	httpserver "github.com/fuseone-io/fusescope/pkg/http/server"
 )
 
 // Config holds the configuration for config.

@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/binding"
-	signozjsonschema "github.com/SigNoz/signoz/pkg/jsonschema"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/http/binding"
+	signozjsonschema "github.com/fuseone-io/fusescope/pkg/jsonschema"
+	"github.com/fuseone-io/fusescope/pkg/types/metrictypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/swaggest/jsonschema-go"
 )
 

@@ -1,6 +1,6 @@
 package preferencetypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import "github.com/fuseone-io/fusescope/pkg/valuer"
 
 var (
 	ScopeOrg  = Scope{valuer.NewString("org")}

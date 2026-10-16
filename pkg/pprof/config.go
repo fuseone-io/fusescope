@@ -1,6 +1,6 @@
 package pprof
 
-import "github.com/SigNoz/signoz/pkg/factory"
+import "github.com/fuseone-io/fusescope/pkg/factory"
 
 // Config holds the configuration for the pprof server.
 type Config struct {

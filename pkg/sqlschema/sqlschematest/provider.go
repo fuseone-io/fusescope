@@ -3,8 +3,8 @@ package sqlschematest
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/sqlschema"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/sqlschema"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
 )

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/logstelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/tracestelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 func (q *querier) Collect(ctx context.Context, _ valuer.UUID) (map[string]any, error) {

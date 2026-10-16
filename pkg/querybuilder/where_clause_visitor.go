@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
-	"github.com/SigNoz/signoz/pkg/semconv"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	grammar "github.com/fuseone-io/fusescope/pkg/parser/filterquery/grammar"
+	"github.com/fuseone-io/fusescope/pkg/semconv"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )

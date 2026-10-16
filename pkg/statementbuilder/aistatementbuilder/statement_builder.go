@@ -1,15 +1,15 @@
 package aistatementbuilder
 
 import (
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/statementbuilder"
-	scopedtraces "github.com/SigNoz/signoz/pkg/statementbuilder/scopedtracesstatementbuilder"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/statementbuilder"
+	scopedtraces "github.com/fuseone-io/fusescope/pkg/statementbuilder/scopedtracesstatementbuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/aitelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/aiobservabilitytypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // NewFactory returns the provider factory for builder_ai_query: the gen_ai Scope

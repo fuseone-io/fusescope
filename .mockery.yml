@@ -1,14 +1,14 @@
 # Link to template variables: https://pkg.go.dev/github.com/vektra/mockery/v3/config#TemplateData
 template: testify
 packages:
-  github.com/SigNoz/signoz/pkg/alertmanager:
+  github.com/fuseone-io/fusescope/pkg/alertmanager:
     config:
       all: true
       dir: '{{.InterfaceDir}}/alertmanagertest'
       filename: "alertmanager.go"
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
-  github.com/SigNoz/signoz/pkg/types/alertmanagertypes:
+  github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes:
     interfaces:
       MaintenanceStore:
     config:
@@ -16,7 +16,7 @@ packages:
       filename: "maintenance.go"
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
-  github.com/SigNoz/signoz/pkg/tokenizer:
+  github.com/fuseone-io/fusescope/pkg/tokenizer:
     config:
       all: true
       dir: '{{.InterfaceDir}}/tokenizertest'

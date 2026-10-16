@@ -5,13 +5,13 @@ import (
 	"regexp"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
-	"github.com/SigNoz/signoz/pkg/queryparser"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
+	"github.com/fuseone-io/fusescope/pkg/queryparser"
+	"github.com/fuseone-io/fusescope/pkg/ruler/rulestore/sqlrulestore"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore/sqlstoretest"
+	ruletypes "github.com/fuseone-io/fusescope/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // MockSQLRuleStore is a mock RuleStore backed by sqlmock.

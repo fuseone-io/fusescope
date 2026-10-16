@@ -3,10 +3,10 @@ package signozglobal
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/global"
-	"github.com/SigNoz/signoz/pkg/identn"
-	"github.com/SigNoz/signoz/pkg/types/globaltypes"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/global"
+	"github.com/fuseone-io/fusescope/pkg/identn"
+	"github.com/fuseone-io/fusescope/pkg/types/globaltypes"
 )
 
 type provider struct {
@@ -22,7 +22,7 @@ func NewFactory(identNConfig identn.Config) factory.ProviderFactory[global.Globa
 }
 
 func newProvider(_ context.Context, providerSettings factory.ProviderSettings, config global.Config, identNConfig identn.Config) (global.Global, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/global/signozglobal")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/global/signozglobal")
 	return &provider{
 		config:       config,
 		identNConfig: identNConfig,

@@ -1,6 +1,6 @@
 package aiobservabilitytypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import "github.com/fuseone-io/fusescope/pkg/valuer"
 
 // Format: LangChain's serialised run inputs and outputs, {messages: [[Serializable]]} and
 // {generations: [[{text, generation_info, message}]]}, each message {lc: 1, type: "constructor",

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/inframonitoringtypes"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 )

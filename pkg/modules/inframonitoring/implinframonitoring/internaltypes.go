@@ -1,6 +1,6 @@
 package implinframonitoring
 
-import "github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
+import "github.com/fuseone-io/fusescope/pkg/types/inframonitoringtypes"
 
 // The types in this file are only used within the implinframonitoring package, and are not exposed outside.
 // They are primarily used for internal processing and structuring of data within the module's implementation.

@@ -3,10 +3,10 @@ package implretention
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/retention"
-	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/modules/retention"
+	"github.com/fuseone-io/fusescope/pkg/types/retentiontypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type getter struct {

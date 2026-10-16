@@ -5,10 +5,10 @@ import (
 	"sort"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/querycache"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/querycache"
+	"github.com/fuseone-io/fusescope/pkg/query-service/utils/labels"
 )
 
 func AdjustedMetricTimeRange(start, end, step int64, mq v3.BuilderQuery) (int64, int64) {
@@ -191,7 +191,7 @@ func FilterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 		}
 
 		// filter the last point if it is not a complete aggregation window
-		// adding or condition to handle the end time is equal to a complete window end https://github.com/SigNoz/signoz/pull/7212#issuecomment-2703677190
+		// adding or condition to handle the end time is equal to a complete window end https://github.com/fuseone-io/fusescope/pull/7212#issuecomment-2703677190
 		if (!endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd-(missEnd%stepMs)) ||
 			(endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd) {
 			// Remove the last point

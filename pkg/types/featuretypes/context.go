@@ -1,7 +1,7 @@
 package featuretypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 

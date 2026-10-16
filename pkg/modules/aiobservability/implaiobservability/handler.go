@@ -6,16 +6,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/http/binding"
-	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/http/binding"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/modules/aiobservability"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/aitelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/types/aiobservabilitytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type handler struct {
@@ -25,7 +25,7 @@ type handler struct {
 
 func NewHandler(providerSettings factory.ProviderSettings, telemetryMetadataStore telemetrytypes.MetadataStore) aiobservability.Handler {
 	return &handler{
-		settings:               factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/aiobservability/implaiobservability"),
+		settings:               factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/aiobservability/implaiobservability"),
 		telemetryMetadataStore: telemetryMetadataStore,
 	}
 }

@@ -4,7 +4,7 @@ package nfmanager
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/prometheus/common/model"
 )
 

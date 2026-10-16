@@ -3,8 +3,8 @@ package tracestelemetryschema
 import (
 	"strings"
 
-	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	"github.com/antlr4-go/antlr/v4"
+	grammar "github.com/fuseone-io/fusescope/pkg/parser/filterquery/grammar"
 )
 
 type traceIDExtractor struct {

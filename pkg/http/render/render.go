@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 )

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
 )
 
 type TelemetryStore interface {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/types/promotetypes"
+	"github.com/fuseone-io/fusescope/pkg/types/promotetypes"
 )
 
 type Module interface {

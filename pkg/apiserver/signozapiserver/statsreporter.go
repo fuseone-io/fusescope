@@ -3,7 +3,7 @@ package signozapiserver
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/fuseone-io/fusescope/pkg/http/handler"
 	"github.com/gorilla/mux"
 )
 

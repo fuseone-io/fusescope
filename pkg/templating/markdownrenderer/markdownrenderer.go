@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"sync"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/blockkit"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/mrkdwn"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/plaintext"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/templating/markdownrenderer/blockkit"
+	"github.com/fuseone-io/fusescope/pkg/templating/markdownrenderer/mrkdwn"
+	"github.com/fuseone-io/fusescope/pkg/templating/markdownrenderer/plaintext"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 )

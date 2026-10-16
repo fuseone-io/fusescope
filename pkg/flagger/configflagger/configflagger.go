@@ -4,10 +4,10 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/types/featuretypes"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
@@ -27,7 +27,7 @@ func NewFactory(registry featuretypes.Registry) factory.ProviderFactory[flagger.
 }
 
 func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, registry featuretypes.Registry) (flagger.FlaggerProvider, error) {
-	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/pkg/flagger/configflagger")
+	settings := factory.NewScopedProviderSettings(ps, "github.com/fuseone-io/fusescope/pkg/flagger/configflagger")
 
 	featureVariants := make(map[featuretypes.Name]*featuretypes.FeatureVariant)
 

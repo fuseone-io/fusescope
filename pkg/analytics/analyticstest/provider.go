@@ -3,8 +3,8 @@ package analyticstest
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/analytics"
-	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
+	"github.com/fuseone-io/fusescope/pkg/analytics"
+	"github.com/fuseone-io/fusescope/pkg/types/analyticstypes"
 )
 
 var _ analytics.Analytics = (*Provider)(nil)

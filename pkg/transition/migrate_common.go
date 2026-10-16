@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
-	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/tracestelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 type migrateCommon struct {

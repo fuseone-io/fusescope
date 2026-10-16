@@ -5,7 +5,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 const (

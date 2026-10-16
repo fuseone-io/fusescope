@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/statsreporter"
-	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/statsreporter"
+	"github.com/fuseone-io/fusescope/pkg/types/savedviewtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type Module interface {

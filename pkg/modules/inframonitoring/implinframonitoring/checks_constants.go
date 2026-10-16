@@ -1,6 +1,6 @@
 package implinframonitoring
 
-import "github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
+import "github.com/fuseone-io/fusescope/pkg/types/inframonitoringtypes"
 
 // Component names — the 5 OTel collector receivers/processors that produce
 // metrics and resource attributes consumed by infra-monitoring tabs. Bare

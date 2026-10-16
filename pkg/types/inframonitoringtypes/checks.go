@@ -3,7 +3,7 @@ package inframonitoringtypes
 import (
 	"slices"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // PostableChecks is the request for GET /api/v2/infra_monitoring/checks.

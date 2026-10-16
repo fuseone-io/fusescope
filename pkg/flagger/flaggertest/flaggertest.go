@@ -5,9 +5,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/flagger/configflagger"
-	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/flagger/configflagger"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
 	"github.com/stretchr/testify/require"
 )
 

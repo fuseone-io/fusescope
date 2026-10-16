@@ -10,10 +10,10 @@ import (
 	"github.com/open-telemetry/opamp-go/server"
 	"github.com/open-telemetry/opamp-go/server/types"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
-	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation"
+	model "github.com/fuseone-io/fusescope/pkg/query-service/app/opamp/model"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 var opAmpServer *Server

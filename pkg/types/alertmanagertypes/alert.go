@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/go-openapi/runtime/middleware"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/api/v2/models"

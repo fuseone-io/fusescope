@@ -11,8 +11,8 @@ import (
 	"log/slog"
 	"net/url"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/opsgenie"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagernotify/opsgenie"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/template"
 	commoncfg "github.com/prometheus/common/config"

@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/json"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // Do not take inspiration from this. This is a hack to avoid using valuer.String and use upper case strings.

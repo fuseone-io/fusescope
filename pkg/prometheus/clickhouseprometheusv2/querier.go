@@ -6,8 +6,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/prometheus"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/storage"

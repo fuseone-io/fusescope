@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/gateway"
-	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/gateway"
+	"github.com/fuseone-io/fusescope/pkg/types/gatewaytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type provider struct{}

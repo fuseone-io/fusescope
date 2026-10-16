@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 type Client struct {

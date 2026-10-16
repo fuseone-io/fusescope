@@ -3,7 +3,7 @@ package utils
 import (
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
 )
 
 var (

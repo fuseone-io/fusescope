@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
 	"github.com/prometheus/alertmanager/types"

@@ -3,9 +3,9 @@ package queriertest
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/querier"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/querier"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // MockQuerier implements querier.Querier for testing. Each behavior can be

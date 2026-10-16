@@ -6,16 +6,16 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
-	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
-	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
-	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/sqlmigration"
-	"github.com/SigNoz/signoz/pkg/sqlmigrator"
-	"github.com/SigNoz/signoz/pkg/sqlschema"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/version"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation"
+	"github.com/fuseone-io/fusescope/pkg/modules/dashboard/impldashboard"
+	"github.com/fuseone-io/fusescope/pkg/modules/tag/impltag"
+	"github.com/fuseone-io/fusescope/pkg/signoz"
+	"github.com/fuseone-io/fusescope/pkg/sqlmigration"
+	"github.com/fuseone-io/fusescope/pkg/sqlmigrator"
+	"github.com/fuseone-io/fusescope/pkg/sqlschema"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/version"
 )
 
 type SQLStoreProviderFactories func() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]]

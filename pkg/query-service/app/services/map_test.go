@@ -3,7 +3,7 @@ package services
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	"github.com/stretchr/testify/require"
 )
 

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 type Schedule struct {

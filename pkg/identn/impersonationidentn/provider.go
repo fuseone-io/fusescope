@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/identn"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/identn"
+	"github.com/fuseone-io/fusescope/pkg/modules/organization"
+	"github.com/fuseone-io/fusescope/pkg/modules/user"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 )
 
 type provider struct {
@@ -31,7 +31,7 @@ func NewFactory(orgGetter organization.Getter, userGetter user.Getter, userConfi
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config identn.Config, orgGetter organization.Getter, userGetter user.Getter, userConfig user.Config) (identn.IdentN, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/impersonationidentn")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/identn/impersonationidentn")
 
 	settings.Logger().WarnContext(ctx, "impersonation identity provider is enabled, all requests will impersonate the root user")
 

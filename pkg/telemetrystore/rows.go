@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
 )
 
 // WrapRows reports JSONValue as the scan type of every JSON column. Nested JSON — Array(JSON),

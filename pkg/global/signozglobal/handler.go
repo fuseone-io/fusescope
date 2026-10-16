@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/global"
-	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/global"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
 )
 
 type handler struct {

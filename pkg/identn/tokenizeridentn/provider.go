@@ -8,11 +8,11 @@ import (
 
 	"golang.org/x/sync/singleflight"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/identn"
-	"github.com/SigNoz/signoz/pkg/tokenizer"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/identn"
+	"github.com/fuseone-io/fusescope/pkg/tokenizer"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 )
 
 type provider struct {
@@ -32,7 +32,7 @@ func New(providerSettings factory.ProviderSettings, tokenizer tokenizer.Tokenize
 	return &provider{
 		tokenizer: tokenizer,
 		config:    config,
-		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"),
+		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/identn/tokenizeridentn"),
 		sfGroup:   &singleflight.Group{},
 	}, nil
 }

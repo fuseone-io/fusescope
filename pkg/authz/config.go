@@ -1,7 +1,7 @@
 package authz
 
 import (
-	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 )
 
 type Config struct {

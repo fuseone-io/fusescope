@@ -3,8 +3,8 @@ package llmpricingruletypes
 import (
 	"bytes"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/aiobservabilitytypes"
 	"gopkg.in/yaml.v3"
 )
 

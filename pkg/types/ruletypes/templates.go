@@ -12,7 +12,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 
 	htmltpl "html/template"
 	texttpl "text/template"

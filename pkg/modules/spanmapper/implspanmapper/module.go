@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
-	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/types/opamptypes"
-	"github.com/SigNoz/signoz/pkg/types/spantypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/modules/spanmapper"
+	"github.com/fuseone-io/fusescope/pkg/query-service/agentConf"
+	"github.com/fuseone-io/fusescope/pkg/types/opamptypes"
+	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // maxTestSpans bounds the input size: every test request boots a full
@@ -27,7 +27,7 @@ func NewModule(store spantypes.SpanMapperStore, registry spantypes.SpanMapperGro
 	return &module{
 		store:    store,
 		registry: registry,
-		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"),
+		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/spanmapper/implspanmapper"),
 	}
 }
 

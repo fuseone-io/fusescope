@@ -3,9 +3,9 @@ package noopauditor
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/auditor"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"github.com/fuseone-io/fusescope/pkg/auditor"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/types/audittypes"
 )
 
 type provider struct {

@@ -3,10 +3,10 @@ package impltag
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/modules/tag"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
-	"github.com/SigNoz/signoz/pkg/types/tagtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/modules/tag"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/tagtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type module struct {

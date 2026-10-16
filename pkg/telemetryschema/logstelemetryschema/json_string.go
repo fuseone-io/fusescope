@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/clickhousesql"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetrytypes.FieldDataType, any) {
@@ -227,8 +227,8 @@ func getBodyJSONArrayKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytype
 
 // getBodyJSONScalarKey builds the single-element-set fallback for a scalar body value: the leaf
 // extracted as a scalar of type dt, plus a guard restricting it to a genuinely scalar body. The
-// guard is required because JSON_VALUE returns '' for an array/object/missing value, which would
-// otherwise zero-value match (has(x,0) / has(x,false) / has(x,'') on any array). ok=false when
+// guard is required because JSON_VALUE returns ” for an array/object/missing value, which would
+// otherwise zero-value match (has(x,0) / has(x,false) / has(x,”) on any array). ok=false when
 // the path still traverses an array ([*]/[]).
 func getBodyJSONScalarKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) (expr string, guard string, ok bool) {
 	name := strings.TrimSuffix(strings.TrimSuffix(key.Name, "[*]"), "[]")

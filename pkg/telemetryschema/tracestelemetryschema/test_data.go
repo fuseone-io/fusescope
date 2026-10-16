@@ -3,7 +3,7 @@ package tracestelemetryschema
 import (
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 func BuildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytypes.TelemetryFieldKey {

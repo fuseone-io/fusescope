@@ -3,7 +3,7 @@ package authtypes
 import (
 	"encoding/json"
 
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
 )
 
 type Relation struct {

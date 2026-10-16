@@ -4,7 +4,7 @@ import (
 	"context"
 	_ "embed"
 
-	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/fuseone-io/fusescope/pkg/authz"
 	openfgapkgtransformer "github.com/openfga/language/pkg/go/transformer"
 )
 

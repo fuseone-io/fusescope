@@ -3,7 +3,7 @@ package implinframonitoring
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/inframonitoringtypes"
 	"github.com/stretchr/testify/require"
 )
 

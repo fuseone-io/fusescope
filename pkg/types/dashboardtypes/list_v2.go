@@ -4,10 +4,10 @@ import (
 	"slices"
 	"unicode/utf8"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/tagtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types"
+	"github.com/fuseone-io/fusescope/pkg/types/tagtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 const (

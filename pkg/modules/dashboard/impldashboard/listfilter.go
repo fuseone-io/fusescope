@@ -3,10 +3,10 @@ package impldashboard
 import (
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/parser/filterquery/sqlcompiler"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/parser/filterquery/sqlcompiler"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/types/dashboardtypes"
 )
 
 // Compile wraps compiler errors in the dashboard list filter error code.

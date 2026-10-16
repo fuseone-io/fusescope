@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 )
 
 func AddMetricValueFilter(mq *v3.BuilderQuery) *v3.MetricValueFilter {

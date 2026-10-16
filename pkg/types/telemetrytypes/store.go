@@ -3,8 +3,8 @@ package telemetrytypes
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/metrictypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // MetadataStore is the interface for the telemetry metadata store.

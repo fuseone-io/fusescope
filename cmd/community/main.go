@@ -3,8 +3,8 @@ package main
 import (
 	"log/slog"
 
-	"github.com/SigNoz/signoz/cmd"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/fuseone-io/fusescope/cmd"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation"
 )
 
 func main() {

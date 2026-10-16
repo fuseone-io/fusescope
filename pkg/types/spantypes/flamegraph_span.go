@@ -3,7 +3,7 @@ package spantypes
 import (
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 type FlamegraphSpan struct {

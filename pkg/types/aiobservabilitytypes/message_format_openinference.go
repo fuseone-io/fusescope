@@ -1,6 +1,6 @@
 package aiobservabilitytypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import "github.com/fuseone-io/fusescope/pkg/valuer"
 
 // Format: the flattened llm.input_messages.N.message.* and llm.output_messages.N.message.* keys, the
 // provider-neutral copy of the conversation the OpenInference instrumentations write on LLM spans. A side

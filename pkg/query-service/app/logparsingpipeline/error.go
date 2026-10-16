@@ -1,6 +1,6 @@
 package logparsingpipeline
 
-import "github.com/SigNoz/signoz/pkg/errors"
+import "github.com/fuseone-io/fusescope/pkg/errors"
 
 var (
 	CodeInvalidOperatorType       = errors.MustNewCode("operator_type_mismatch")

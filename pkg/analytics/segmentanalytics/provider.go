@@ -4,10 +4,10 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/analytics"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
+	"github.com/fuseone-io/fusescope/pkg/analytics"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/types/analyticstypes"
 	segment "github.com/segmentio/analytics-go/v3"
 )
 
@@ -22,7 +22,7 @@ func NewFactory() factory.ProviderFactory[analytics.Analytics, analytics.Config]
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config analytics.Config) (analytics.Analytics, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/analytics/segmentanalytics")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/analytics/segmentanalytics")
 
 	client, err := segment.NewWithConfig(config.Segment.Key, segment.Config{
 		Logger: newSegmentLogger(settings),

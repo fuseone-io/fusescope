@@ -6,8 +6,8 @@ import (
 	"regexp"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/savedviewtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 var savedViewColumns = []string{"id", "created_at", "updated_at", "created_by", "updated_by", "org_id", "name", "source", "data"}

@@ -5,14 +5,14 @@ import (
 	"strconv"
 	"sync"
 
-	authz "github.com/SigNoz/signoz/pkg/authz"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	authz "github.com/fuseone-io/fusescope/pkg/authz"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	openfgapkgtransformer "github.com/openfga/language/pkg/go/transformer"
 	openfgapkgserver "github.com/openfga/openfga/pkg/server"
@@ -43,7 +43,7 @@ type Server struct {
 }
 
 func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore) (*Server, error) {
-	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
+	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/fuseone-io/fusescope/pkg/authz/openfgaauthz")
 
 	// setup the openfga server
 	opts := []openfgapkgserver.OpenFGAServiceV1Option{

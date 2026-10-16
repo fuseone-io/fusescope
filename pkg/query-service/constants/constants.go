@@ -5,9 +5,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/query-service/model"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 const OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket

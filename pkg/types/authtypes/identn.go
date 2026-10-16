@@ -1,6 +1,6 @@
 package authtypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import "github.com/fuseone-io/fusescope/pkg/valuer"
 
 var (
 	IdentNProviderTokenizer     = IdentNProvider{valuer.NewString("tokenizer")}

@@ -5,7 +5,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 )
 
 // conn wraps rows the way the clickhouse provider does, so mocked JSON columns report the scan

@@ -1,8 +1,8 @@
 package authtypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 func NewSubject(resource coretypes.Resource, selector string, orgID valuer.UUID, relation *coretypes.Verb) (string, error) {

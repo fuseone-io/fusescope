@@ -191,7 +191,7 @@ A standalone service only has the `factory.Service` lifecycle i.e it does not se
         // ... dependencies ...
     ) user.Service {
         return &service{
-            settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user"),
+            settings: factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/user"),
             // ... dependencies ...
             stopC:    make(chan struct{}),
         }

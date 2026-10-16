@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz-otel-collector/constants"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
-	"github.com/SigNoz/signoz/pkg/types/promotetypes"
+	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/logstelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/types/promotetypes"
 	"github.com/stretchr/testify/require"
 )
 

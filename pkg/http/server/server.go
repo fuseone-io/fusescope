@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 )
 
 var _ factory.Service = (*Server)(nil)
@@ -51,7 +51,7 @@ func New(logger *slog.Logger, cfg Config, handler http.Handler) (*Server, error)
 
 	return &Server{
 		srv:     srv,
-		logger:  logger.With(slog.String("pkg", "github.com/SigNoz/signoz/pkg/http/server")),
+		logger:  logger.With(slog.String("pkg", "github.com/fuseone-io/fusescope/pkg/http/server")),
 		handler: handler,
 		cfg:     cfg,
 	}, nil

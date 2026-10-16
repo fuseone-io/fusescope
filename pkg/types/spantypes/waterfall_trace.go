@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/cachetypes"
+	"github.com/fuseone-io/fusescope/pkg/types/cachetypes"
 )
 
 type TraceBounds struct {

@@ -3,20 +3,20 @@ package app
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/fuseone-io/fusescope/pkg/queryparser"
 
-	"github.com/SigNoz/signoz/pkg/http/middleware"
-	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
-	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
-	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/fuseone-io/fusescope/pkg/http/middleware"
+	"github.com/fuseone-io/fusescope/pkg/query-service/agentConf"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/clickhouseReader"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/logparsingpipeline"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/opamp"
+	opAmpModel "github.com/fuseone-io/fusescope/pkg/query-service/app/opamp/model"
+	"github.com/fuseone-io/fusescope/pkg/signoz"
 
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
 )
 
 // Server runs auxiliary servers (opamp) alongside the signoz apiserver

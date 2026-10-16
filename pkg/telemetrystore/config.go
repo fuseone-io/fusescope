@@ -3,7 +3,7 @@ package telemetrystore
 import (
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 )
 
 type Config struct {

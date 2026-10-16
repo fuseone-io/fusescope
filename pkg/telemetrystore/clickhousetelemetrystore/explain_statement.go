@@ -3,7 +3,7 @@ package clickhousetelemetrystore
 import (
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // ErrCodeUnsafeStatement is returned when a statement is not a single statement

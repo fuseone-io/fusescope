@@ -1,7 +1,7 @@
 package aitelemetryschema
 
 import (
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // FieldKeys merges in the keys the metadata store cannot serve: the computed

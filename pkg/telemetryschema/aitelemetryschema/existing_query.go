@@ -1,8 +1,8 @@
 package aitelemetryschema
 
 import (
-	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/types/aiobservabilitytypes"
 )
 
 var (

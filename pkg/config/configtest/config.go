@@ -1,8 +1,8 @@
 package configtest
 
 import (
-	"github.com/SigNoz/signoz/pkg/config"
-	"github.com/SigNoz/signoz/pkg/config/envprovider"
+	"github.com/fuseone-io/fusescope/pkg/config"
+	"github.com/fuseone-io/fusescope/pkg/config/envprovider"
 )
 
 func NewResolverConfig() config.ResolverConfig {

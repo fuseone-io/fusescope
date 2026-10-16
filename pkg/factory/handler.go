@@ -3,7 +3,7 @@ package factory
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
 )
 
 // Handler provides HTTP handler functions for service health checks.

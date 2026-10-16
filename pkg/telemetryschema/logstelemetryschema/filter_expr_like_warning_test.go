@@ -2,14 +2,14 @@ package logstelemetryschema
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
-	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/flagger/flaggertest"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
+	"github.com/fuseone-io/fusescope/pkg/querybuilder"
 	"github.com/stretchr/testify/require"
 )
 

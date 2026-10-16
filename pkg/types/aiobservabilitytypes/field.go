@@ -1,7 +1,7 @@
 package aiobservabilitytypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // the explorer lists AI traces, so the signal is always traces and the metric

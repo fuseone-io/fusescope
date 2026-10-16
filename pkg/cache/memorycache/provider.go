@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/cachetypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/dgraph-io/ristretto/v2"
+	"github.com/fuseone-io/fusescope/pkg/cache"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/types/cachetypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	semconv "go.opentelemetry.io/collector/semconv/v1.6.1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -29,7 +29,7 @@ func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
 }
 
 func New(ctx context.Context, settings factory.ProviderSettings, config cache.Config) (cache.Cache, error) {
-	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/cache/memorycache")
+	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/fuseone-io/fusescope/pkg/cache/memorycache")
 
 	cc, err := ristretto.NewCache(&ristretto.Config[string, any]{
 		NumCounters: config.Memory.NumCounters,

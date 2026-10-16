@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/SigNoz/signoz/pkg/types/opamptypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/opamptypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"

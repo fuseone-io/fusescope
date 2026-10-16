@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // communicates with calling apis when config is applied or fails

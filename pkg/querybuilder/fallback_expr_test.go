@@ -3,8 +3,8 @@ package querybuilder
 import (
 	"testing"
 
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -90,7 +90,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 		},
 		{
 			// we cast to float64 if it's a comparison operator and the value is a stringified number
-			// reason:- https://github.com/SigNoz/signoz/pull/9154#issuecomment-3369941207
+			// reason:- https://github.com/fuseone-io/fusescope/pull/9154#issuecomment-3369941207
 			name: "http_request_duration_float_field_with_string_value_comparison_operator",
 			key: &telemetrytypes.TelemetryFieldKey{
 				Name:          "http.request.duration",
@@ -104,7 +104,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 		},
 		{
 			// we cast to float64 if it's a comparison operator and the value is a stringified number
-			// reason:- https://github.com/SigNoz/signoz/pull/9154#issuecomment-3369941207
+			// reason:- https://github.com/fuseone-io/fusescope/pull/9154#issuecomment-3369941207
 			name: "http_request_duration_float_field_with_string_value_comparison_operator_1",
 			key: &telemetrytypes.TelemetryFieldKey{
 				Name:          "http.request.duration",

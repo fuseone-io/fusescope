@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
 )
 
 // ExplainPlanNode is a node in ClickHouse's `EXPLAIN json = 1, indexes = 1`

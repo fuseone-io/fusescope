@@ -3,7 +3,7 @@ package inframonitoringtypes
 import (
 	"slices"
 
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // PodStatus is the kubectl-style pod display status, derived from

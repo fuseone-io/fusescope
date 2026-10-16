@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 var _ Valuer = (*String)(nil)
@@ -79,7 +79,7 @@ func (enum String) MarshalText() (text []byte, err error) {
 }
 
 // Implement Gin's BindUnmarshaler interface
-// See https://github.com/SigNoz/signoz/pull/10219 description for additional details.
+// See https://github.com/fuseone-io/fusescope/pull/10219 description for additional details.
 func (enum *String) UnmarshalParam(param string) error {
 	*enum = NewString(param)
 	return nil

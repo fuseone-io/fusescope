@@ -5,7 +5,7 @@ import (
 
 	"github.com/swaggest/jsonschema-go"
 
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 var (

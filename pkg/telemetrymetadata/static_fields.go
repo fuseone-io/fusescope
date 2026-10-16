@@ -3,7 +3,7 @@ package telemetrymetadata
 import (
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 func staticFieldMatchesAny(field telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) bool {

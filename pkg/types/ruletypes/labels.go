@@ -32,7 +32,7 @@ const (
 )
 
 // Label is a key/value pair of strings.
-// TODO(srikanthccv): https://github.com/SigNoz/signoz/issues/9232?
+// TODO(srikanthccv): https://github.com/fuseone-io/fusescope/issues/9232?
 type Label struct {
 	Name, Value string
 }

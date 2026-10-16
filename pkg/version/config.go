@@ -1,6 +1,6 @@
 package version
 
-import "github.com/SigNoz/signoz/pkg/factory"
+import "github.com/fuseone-io/fusescope/pkg/factory"
 
 type BannerConfig struct {
 	Enabled bool `mapstructure:"enabled"`

@@ -1,9 +1,9 @@
 package querybuilder
 
 import (
-	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
+	grammar "github.com/fuseone-io/fusescope/pkg/parser/filterquery/grammar"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // QueryStringToKeysSelectors converts a query string to a list of field key selectors
@@ -58,7 +58,7 @@ func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector
 			}
 
 			// todo(tushar): consider reverting changes done to this method in below PR to avoid scope specific checks
-			// https://github.com/SigNoz/signoz/issues/11374
+			// https://github.com/fuseone-io/fusescope/issues/11374
 			if key.FieldContext == telemetrytypes.FieldContextScope {
 				keys = append(keys, &telemetrytypes.FieldKeySelector{
 					Name:          key.FieldContext.StringValue() + "." + key.Name,

@@ -5,8 +5,8 @@ import (
 	"io/fs"
 	"path"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/dashboardtypes"
 )
 
 const definitionsRoot = "fs/definitions"

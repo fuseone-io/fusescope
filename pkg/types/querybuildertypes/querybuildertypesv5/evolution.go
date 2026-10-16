@@ -7,8 +7,8 @@ import (
 	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // SelectEvolutionsForColumns selects the appropriate evolution entries for each column based on the time range.

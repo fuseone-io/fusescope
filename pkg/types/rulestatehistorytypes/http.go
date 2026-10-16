@@ -1,8 +1,8 @@
 package rulestatehistorytypes
 
 import (
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
 )
 
 // PostableRuleStateHistoryBaseQuery defines URL query params common across v2 rule history APIs.

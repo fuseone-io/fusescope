@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/go-viper/mapstructure/v2"
 )
 

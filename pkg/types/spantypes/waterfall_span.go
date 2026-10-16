@@ -7,10 +7,10 @@ import (
 	"sort"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/aiobservabilitytypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 const (

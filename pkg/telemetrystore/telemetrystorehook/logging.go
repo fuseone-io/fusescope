@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 )
 
 type logging struct {
@@ -23,7 +23,7 @@ func NewLoggingFactory() factory.ProviderFactory[telemetrystore.TelemetryStoreHo
 
 func NewLogging(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStoreHook, error) {
 	return &logging{
-		logger: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook").Logger(),
+		logger: factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/telemetrystore/telemetrystorehook").Logger(),
 		level:  slog.LevelDebug,
 	}, nil
 }

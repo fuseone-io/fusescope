@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 func errorContains(err error, substr string) bool {

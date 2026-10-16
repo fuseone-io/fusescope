@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
-	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/resource"
+	tracesV3 "github.com/fuseone-io/fusescope/pkg/query-service/app/traces/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/query-service/utils"
 )
 
 const NANOSECOND = 1000000000

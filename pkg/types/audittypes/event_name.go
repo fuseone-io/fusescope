@@ -1,6 +1,6 @@
 package audittypes
 
-import "github.com/SigNoz/signoz/pkg/types/coretypes"
+import "github.com/fuseone-io/fusescope/pkg/types/coretypes"
 
 // EventName is a typed wrapper for audit event names, ensuring not every
 // string qualifies as an event name.

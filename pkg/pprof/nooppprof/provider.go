@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/pprof"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/pprof"
 )
 
 type provider struct {

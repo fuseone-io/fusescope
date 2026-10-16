@@ -5,10 +5,10 @@ import (
 	"slices"
 	"strings"
 
-	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
-	"github.com/SigNoz/signoz/pkg/parser/filterquery/sqlcompiler"
-	qbtypesv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	grammar "github.com/fuseone-io/fusescope/pkg/parser/filterquery/grammar"
+	"github.com/fuseone-io/fusescope/pkg/parser/filterquery/sqlcompiler"
+	qbtypesv5 "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
 )
 
 const (

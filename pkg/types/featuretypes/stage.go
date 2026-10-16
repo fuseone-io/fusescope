@@ -1,6 +1,6 @@
 package featuretypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import "github.com/fuseone-io/fusescope/pkg/valuer"
 
 // A concrete type for a feature flag stage.
 type Stage struct{ valuer.String }

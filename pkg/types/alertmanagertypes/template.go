@@ -7,7 +7,7 @@ import (
 	tmplhtml "html/template"
 	tmpltext "text/template"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	alertmanagertemplate "github.com/prometheus/alertmanager/template"
 )
 

@@ -3,8 +3,8 @@ package model
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/types/opamptypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/opamptypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // Interface for source of otel collector config recommendations.

@@ -5,10 +5,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
+	"github.com/fuseone-io/fusescope/pkg/types/thirdpartyapitypes"
 
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 const (

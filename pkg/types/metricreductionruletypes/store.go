@@ -3,7 +3,7 @@ package metricreductionruletypes
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type Store interface {

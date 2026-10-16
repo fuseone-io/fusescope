@@ -3,7 +3,7 @@ package coretypes
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 var errCodeResolvedResourcesNotFound = errors.MustNewCode("resolved_resources_not_found")

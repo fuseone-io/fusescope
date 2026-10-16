@@ -3,9 +3,9 @@ package dashboardtypes
 import (
 	"encoding/json"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	jsonpatch "github.com/evanphx/json-patch/v5"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/swaggest/jsonschema-go"
 )
 

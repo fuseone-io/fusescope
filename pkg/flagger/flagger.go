@@ -6,9 +6,9 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/types/featuretypes"
 )
 
 // Any feature flag provider has to implement this interface.
@@ -64,7 +64,7 @@ type flagger struct {
 }
 
 func New(ctx context.Context, ps factory.ProviderSettings, config Config, registry featuretypes.Registry, factories ...factory.ProviderFactory[FlaggerProvider, Config]) (Flagger, error) {
-	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/pkg/flagger")
+	settings := factory.NewScopedProviderSettings(ps, "github.com/fuseone-io/fusescope/pkg/flagger")
 
 	providers := make(map[string]FlaggerProvider)
 	clients := make(map[string]*openfeature.Client)

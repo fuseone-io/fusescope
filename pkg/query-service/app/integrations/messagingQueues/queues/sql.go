@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	format "github.com/SigNoz/signoz/pkg/query-service/utils"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	format "github.com/fuseone-io/fusescope/pkg/query-service/utils"
 )
 
 // generateOverviewSQL builds the ClickHouse SQL query with optional filters.

@@ -3,8 +3,8 @@ package metricreductionruletypes_test
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/http/binding"
-	"github.com/SigNoz/signoz/pkg/types/metricreductionruletypes"
+	"github.com/fuseone-io/fusescope/pkg/http/binding"
+	"github.com/fuseone-io/fusescope/pkg/types/metricreductionruletypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

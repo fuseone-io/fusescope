@@ -11,10 +11,10 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	plabels "github.com/prometheus/prometheus/model/labels"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
+	ruletypes "github.com/fuseone-io/fusescope/pkg/types/ruletypes"
 )
 
 // PromRuleTask is a promql rule executor
@@ -59,8 +59,8 @@ func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 		seriesInPreviousEval: make([]map[string]plabels.Labels, len(rules)),
 		done:                 make(chan struct{}),
 		terminated:           make(chan struct{}),
-		notify: notify,
-		logger: opts.Logger,
+		notify:               notify,
+		logger:               opts.Logger,
 	}
 }
 

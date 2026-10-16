@@ -1,6 +1,6 @@
 package querier
 
-import "github.com/SigNoz/signoz/pkg/querybuilder"
+import "github.com/fuseone-io/fusescope/pkg/querybuilder"
 
 const hourNanos = int64(3_600_000_000_000) // 1 h in ns
 

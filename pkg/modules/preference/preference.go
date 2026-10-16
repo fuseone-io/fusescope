@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/preferencetypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type Module interface {

@@ -1,8 +1,8 @@
 package agentConf
 
 import (
-	"github.com/SigNoz/signoz/pkg/types/opamptypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/types/opamptypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // Interface for features implemented via agent config.

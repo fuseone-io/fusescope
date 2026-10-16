@@ -3,7 +3,7 @@ package sqlitesqlschema
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/sqlschema"
+	"github.com/fuseone-io/fusescope/pkg/sqlschema"
 	"github.com/stretchr/testify/assert"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 )

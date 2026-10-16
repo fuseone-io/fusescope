@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/config"
+	"github.com/fuseone-io/fusescope/pkg/config"
 	koanfenv "github.com/knadh/koanf/providers/env"
 )
 

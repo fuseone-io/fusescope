@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
@@ -55,7 +55,7 @@ func (middleware *Recovery) Wrap(next http.Handler) http.Handler {
 				}
 				middleware.logger.ErrorContext(req.Context(), recoveryMessage, attrs...)
 
-				render.Error(rw, errors.Wrap(err, errors.TypeFatal, errors.CodeFatal, "An unexpected error occurred. Please retry, and if the issue persists, report it at https://github.com/SigNoz/signoz/issues or contact support."))
+				render.Error(rw, errors.Wrap(err, errors.TypeFatal, errors.CodeFatal, "An unexpected error occurred. Please retry, and if the issue persists, report it at https://github.com/fuseone-io/fusescope/issues or contact support."))
 			}
 		}()
 		next.ServeHTTP(rw, req)

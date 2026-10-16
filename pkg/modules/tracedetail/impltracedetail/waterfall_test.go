@@ -37,7 +37,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 	"github.com/stretchr/testify/assert"
 )
 

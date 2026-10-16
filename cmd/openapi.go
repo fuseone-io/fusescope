@@ -4,9 +4,9 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation"
-	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/version"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation"
+	"github.com/fuseone-io/fusescope/pkg/signoz"
+	"github.com/fuseone-io/fusescope/pkg/version"
 	"github.com/spf13/cobra"
 )
 

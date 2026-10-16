@@ -13,7 +13,7 @@ import (
 	"io/fs"
 	"path"
 
-	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	koanfJson "github.com/knadh/koanf/parsers/json"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"

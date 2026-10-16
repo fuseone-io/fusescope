@@ -9,9 +9,9 @@ import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"go.opentelemetry.io/collector/confmap"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	model "github.com/fuseone-io/fusescope/pkg/query-service/app/opamp/model"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/opamp/otelconfig"
 )
 
 var (

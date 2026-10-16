@@ -5,7 +5,7 @@
 
 package aiobservabilitytypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import "github.com/fuseone-io/fusescope/pkg/valuer"
 
 var (
 	RoleSystem    = Role{valuer.NewString("system")}

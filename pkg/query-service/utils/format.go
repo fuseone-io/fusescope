@@ -9,10 +9,10 @@ import (
 
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/semconv"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/fuseone-io/fusescope/pkg/semconv"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // ValidateAndCastValue validates and casts the value of a key to the corresponding data type of the key

@@ -681,7 +681,7 @@ func renderGo(families []generatedFamily) ([]byte, error) {
 		}
 	}
 	if needsTelemetryTypes {
-		out.WriteString("import \"github.com/SigNoz/signoz/pkg/types/telemetrytypes\"\n\n")
+		out.WriteString("import \"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes\"\n\n")
 	}
 	out.WriteString("var families = []Family{\n")
 	for _, family := range families {

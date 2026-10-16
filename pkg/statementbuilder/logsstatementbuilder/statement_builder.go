@@ -6,19 +6,19 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/clickhousesql"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
+	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/statementbuilder"
+	"github.com/fuseone-io/fusescope/pkg/statementbuilder/resourcefilter"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/logstelemetryschema"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/featuretypes"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -79,7 +79,7 @@ func NewLogQueryStatementBuilder(
 	telemetryStore telemetrystore.TelemetryStore,
 	cfg statementbuilder.Config,
 ) *logQueryStatementBuilder {
-	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema")
+	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/fuseone-io/fusescope/pkg/telemetryschema/logstelemetryschema")
 
 	resourceFilterResolver := resourcefilter.NewResolver[qbtypes.LogAggregation](
 		settings,

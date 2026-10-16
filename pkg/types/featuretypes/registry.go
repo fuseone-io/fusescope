@@ -1,7 +1,7 @@
 package featuretypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 

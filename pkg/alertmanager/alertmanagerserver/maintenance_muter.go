@@ -8,8 +8,8 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
+	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
 )
 
 // MaintenanceMuter implements types.Muter for maintenance windows.

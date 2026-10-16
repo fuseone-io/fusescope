@@ -83,7 +83,7 @@ func New(...) (*SigNoz, error) {
 To use a provider, import its interface. For example, to use the prometheus provider, import `pkg/prometheus/prometheus.go`:
 
 ```go
-import "github.com/SigNoz/signoz/pkg/prometheus/prometheus"
+import "github.com/fuseone-io/fusescope/pkg/prometheus/prometheus"
 
 func CreateSomething(ctx context.Context, prometheus prometheus.Prometheus) {
     ...

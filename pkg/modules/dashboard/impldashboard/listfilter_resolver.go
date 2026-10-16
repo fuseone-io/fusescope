@@ -3,10 +3,10 @@ package impldashboard
 import (
 	"strings"
 
-	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
-	"github.com/SigNoz/signoz/pkg/parser/filterquery/sqlcompiler"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	qbtypesv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	grammar "github.com/fuseone-io/fusescope/pkg/parser/filterquery/grammar"
+	"github.com/fuseone-io/fusescope/pkg/parser/filterquery/sqlcompiler"
+	"github.com/fuseone-io/fusescope/pkg/types/dashboardtypes"
+	qbtypesv5 "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 

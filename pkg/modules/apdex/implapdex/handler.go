@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/apdex"
-	"github.com/SigNoz/signoz/pkg/types/apdextypes"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
+	"github.com/fuseone-io/fusescope/pkg/modules/apdex"
+	"github.com/fuseone-io/fusescope/pkg/types/apdextypes"
+	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 )
 
 type handler struct {

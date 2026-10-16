@@ -1,8 +1,8 @@
 package promotetypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 type IndexMaterializedPathsResult struct {

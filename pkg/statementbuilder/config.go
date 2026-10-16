@@ -1,7 +1,7 @@
 package statementbuilder
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // SkipResourceFingerprint configures when the resource fingerprint subquery is skipped in favor of main-table filtering.

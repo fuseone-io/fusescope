@@ -6,7 +6,7 @@ import (
 	"html/template"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // Field names map to the HTML attributes they populate in the template:

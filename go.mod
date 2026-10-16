@@ -1,4 +1,4 @@
-module github.com/SigNoz/signoz
+module github.com/fuseone-io/fusescope
 
 go 1.25.7
 

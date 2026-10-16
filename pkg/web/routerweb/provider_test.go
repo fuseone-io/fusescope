@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
-	"github.com/SigNoz/signoz/pkg/global"
-	"github.com/SigNoz/signoz/pkg/web"
+	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
+	"github.com/fuseone-io/fusescope/pkg/global"
+	"github.com/fuseone-io/fusescope/pkg/web"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

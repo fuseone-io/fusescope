@@ -3,9 +3,9 @@ package cachetest
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/cache/memorycache"
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/fuseone-io/fusescope/pkg/cache"
+	"github.com/fuseone-io/fusescope/pkg/cache/memorycache"
+	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 )
 
 func New(config cache.Config) (cache.Cache, error) {

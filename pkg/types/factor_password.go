@@ -7,8 +7,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/sethvargo/go-password/password"
 	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"

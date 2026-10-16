@@ -4,10 +4,10 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/config"
-	"github.com/SigNoz/signoz/pkg/config/envprovider"
-	"github.com/SigNoz/signoz/pkg/config/fileprovider"
-	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/fuseone-io/fusescope/pkg/config"
+	"github.com/fuseone-io/fusescope/pkg/config/envprovider"
+	"github.com/fuseone-io/fusescope/pkg/config/fileprovider"
+	"github.com/fuseone-io/fusescope/pkg/signoz"
 )
 
 func NewSigNozConfig(ctx context.Context, logger *slog.Logger, configFiles []string) (signoz.Config, error) {

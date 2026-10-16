@@ -1,6 +1,6 @@
 package querybuildertypesv5
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import "github.com/fuseone-io/fusescope/pkg/valuer"
 
 type QueryType struct {
 	valuer.String

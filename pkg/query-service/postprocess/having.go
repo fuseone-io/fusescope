@@ -3,7 +3,7 @@ package postprocess
 import (
 	"strings"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 )
 
 // ApplyHavingClause applies the having clause to the result

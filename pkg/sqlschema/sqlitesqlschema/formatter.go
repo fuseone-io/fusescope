@@ -3,7 +3,7 @@ package sqlitesqlschema
 import (
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/sqlschema"
+	"github.com/fuseone-io/fusescope/pkg/sqlschema"
 )
 
 type Formatter struct {

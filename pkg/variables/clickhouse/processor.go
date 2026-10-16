@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/AfterShip/clickhouse-sql-parser/parser"
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // FilterAction represents what to do with a filter containing a variable.

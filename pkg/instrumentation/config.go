@@ -3,7 +3,7 @@ package instrumentation
 import (
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
 )
 

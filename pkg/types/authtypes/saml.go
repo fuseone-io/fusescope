@@ -3,7 +3,7 @@ package authtypes
 import (
 	"encoding/json"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 type SamlConfig struct {

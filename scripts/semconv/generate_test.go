@@ -549,7 +549,7 @@ func TestRenderGoPinsOutput(t *testing.T) {
 
 package semconv
 
-import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+import "github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 
 var families = []Family{
 	{

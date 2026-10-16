@@ -1,6 +1,6 @@
 package audittypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import "github.com/fuseone-io/fusescope/pkg/valuer"
 
 // PrincipalType identifies the kind of actor that performed the action.
 // TODO: use PrincipalType from coretypes once the coretypes package is available.

@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
 )
 
 type ResourceDef interface {

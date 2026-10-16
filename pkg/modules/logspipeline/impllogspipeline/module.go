@@ -3,9 +3,9 @@ package impllogspipeline
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/modules/logspipeline"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/modules/logspipeline"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 const elementType = "log_pipelines"

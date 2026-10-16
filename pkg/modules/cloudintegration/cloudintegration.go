@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/statsreporter"
-	citypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/statsreporter"
+	citypes "github.com/fuseone-io/fusescope/pkg/types/cloudintegrationtypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type Module interface {

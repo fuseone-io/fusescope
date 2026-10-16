@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	qb "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/perses/spec/go/dashboard/variable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

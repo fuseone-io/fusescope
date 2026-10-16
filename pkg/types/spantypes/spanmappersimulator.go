@@ -8,7 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz-otel-collector/pkg/collectorsimulator"
 	"github.com/SigNoz/signoz-otel-collector/processor/signozspanmapperprocessor"
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"gopkg.in/yaml.v3"

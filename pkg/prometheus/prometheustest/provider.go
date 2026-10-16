@@ -3,10 +3,10 @@ package prometheustest
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/prometheus"
+	"github.com/fuseone-io/fusescope/pkg/prometheus/clickhouseprometheusv2"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 )
 
 // New returns the clickhousev2 provider over the given telemetry store, so
