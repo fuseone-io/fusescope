@@ -53,8 +53,10 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/sharder/singlesharder"
 	"github.com/fuseone-io/fusescope/pkg/sqlmigration"
 	"github.com/fuseone-io/fusescope/pkg/sqlschema"
+	"github.com/fuseone-io/fusescope/pkg/sqlschema/postgressqlschema"
 	"github.com/fuseone-io/fusescope/pkg/sqlschema/sqlitesqlschema"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/sqlstore/postgressqlstore"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore/sqlitesqlstore"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore/sqlstorehook"
 	"github.com/fuseone-io/fusescope/pkg/statsreporter"
@@ -109,12 +111,14 @@ func NewPProfProviderFactories() factory.NamedMap[factory.ProviderFactory[pprof.
 func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]] {
 	return factory.MustNewNamedMap(
 		sqlitesqlstore.NewFactory(sqlstorehook.NewLoggingFactory(), sqlstorehook.NewInstrumentationFactory()),
+		postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory(), sqlstorehook.NewInstrumentationFactory()),
 	)
 }
 
 func NewSQLSchemaProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
 	return factory.MustNewNamedMap(
 		sqlitesqlschema.NewFactory(sqlstore),
+		postgressqlschema.NewFactory(sqlstore),
 	)
 }
 

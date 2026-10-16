@@ -31,6 +31,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.1
 	github.com/huandu/go-sqlbuilder v1.39.1
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12
 	github.com/knadh/koanf v1.5.0
 	github.com/knadh/koanf/v2 v2.3.3
@@ -91,6 +92,7 @@ require (
 )
 
 require (
+	github.com/IBM/pgxpoolprometheus v1.1.2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.41.5 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.32.12 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.12 // indirect
@@ -129,7 +131,9 @@ require (
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/huandu/go-clone v1.7.3 // indirect
-	github.com/jackc/pgx/v5 v5.9.2 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
