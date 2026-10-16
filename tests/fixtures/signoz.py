@@ -156,6 +156,12 @@ def create_signoz(
         try:
             ready(container=container)
         except Exception as e:  # pylint: disable=broad-exception-caught
+            stdout, stderr = container.get_logs()
+            logger.error(
+                "FuseScope container logs:\n%s\n%s",
+                stdout.decode(errors="replace")[-20000:],
+                stderr.decode(errors="replace")[-20000:],
+            )
             raise e
 
         return types.SigNoz(
