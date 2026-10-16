@@ -76,7 +76,7 @@ jobs:
           - clickhousecluster
           - metricreduction
         sqlstore-provider:
-          - postgres
+          - sqlite
           - sqlite
         sqlite-mode:
           - wal
