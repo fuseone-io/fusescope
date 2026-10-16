@@ -325,8 +325,8 @@ analytics:
 
 ##################### StatsReporter #####################
 statsreporter:
-  # Whether to enable stats reporter. This is used to provide valuable insights to the SigNoz team. It does not collect any sensitive/PII data.
-  enabled: true
+  # Whether to enable the stats reporter. It only reports through the analytics provider, which is disabled by default.
+  enabled: false
   # The interval at which the stats are collected.
   interval: 6h
   collect:

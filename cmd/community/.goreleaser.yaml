@@ -2,15 +2,15 @@
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 version: 2
 
-project_name: signoz-community
+project_name: fusescope
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - id: signoz
-    binary: bin/signoz
+  - id: fusescope
+    binary: bin/fusescope
     main: ./cmd/community
     goos:
       - linux
@@ -24,12 +24,11 @@ builds:
       - v8.0
     ldflags:
       - -s -w
-      - -X github.com/SigNoz/signoz/pkg/version.version=v{{ .Version }}
-      - -X github.com/SigNoz/signoz/pkg/version.variant=community
-      - -X github.com/SigNoz/signoz/pkg/version.hash={{ .ShortCommit }}
-      - -X github.com/SigNoz/signoz/pkg/version.time={{ .CommitTimestamp }}
-      - -X github.com/SigNoz/signoz/pkg/version.branch={{ .Branch }}
-      - -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr
+      - -X github.com/fuseone-io/fusescope/pkg/version.version=v{{ .Version }}
+      - -X github.com/fuseone-io/fusescope/pkg/version.variant=community
+      - -X github.com/fuseone-io/fusescope/pkg/version.hash={{ .ShortCommit }}
+      - -X github.com/fuseone-io/fusescope/pkg/version.time={{ .CommitTimestamp }}
+      - -X github.com/fuseone-io/fusescope/pkg/version.branch={{ .Branch }}
     mod_timestamp: "{{ .CommitTimestamp }}"
     tags:
       - timetzdata

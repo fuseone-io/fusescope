@@ -1,7 +1,7 @@
 ARG ALPINE_SHA="pass-a-valid-docker-sha-otherwise-this-will-fail"
 
 FROM alpine@sha256:${ALPINE_SHA}
-LABEL maintainer="signoz"
+LABEL maintainer="fuseone"
 WORKDIR /root
 
 ARG OS="linux"
@@ -11,10 +11,10 @@ RUN apk update && \
     apk add ca-certificates && \
     rm -rf /var/cache/apk/*
 
-COPY ./target/${OS}-${ARCH}/signoz-community /root/signoz-community
+COPY ./target/${OS}-${ARCH}/fusescope /root/fusescope
 COPY ./templates /root/templates
 COPY frontend/build/ /etc/signoz/web/
 
-RUN chmod 755 /root /root/signoz-community
+RUN chmod 755 /root /root/fusescope
 
-ENTRYPOINT ["./signoz-community", "server"]
+ENTRYPOINT ["./fusescope", "server"]

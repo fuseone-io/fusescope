@@ -3,7 +3,7 @@ package statsreporter
 import (
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 )
 
 type Config struct {
@@ -27,7 +27,7 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return Config{
-		Enabled:  true,
+		Enabled:  false,
 		Interval: 6 * time.Hour,
 		Collect: Collect{
 			Identities: true,

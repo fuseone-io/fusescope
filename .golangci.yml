@@ -23,7 +23,7 @@ linters:
         noerrors:
           deny:
             - pkg: errors
-              desc: Do not use errors package. Use github.com/SigNoz/signoz/pkg/errors instead.
+              desc: Do not use errors package. Use github.com/fuseone-io/fusescope/pkg/errors instead.
         nozap:
           deny:
             - pkg: go.uber.org/zap
@@ -51,7 +51,6 @@ linters:
       - std-error-handling
     paths:
       - pkg/query-service
-      - ee/query-service
       - scripts/
       - tmp/
       - third_party$

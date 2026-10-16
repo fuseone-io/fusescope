@@ -48,9 +48,9 @@ def create_signoz(
             arch = "amd64"
 
         # Build the image
-        dockerfile_path = "cmd/enterprise/Dockerfile.integration"
+        dockerfile_path = "cmd/community/Dockerfile.integration"
         if with_web:
-            dockerfile_path = "cmd/enterprise/Dockerfile.with-web.integration"
+            dockerfile_path = "cmd/community/Dockerfile.with-web.integration"
 
         # Docker build context is the repo root — one up from pytest's
         # rootdir (tests/).

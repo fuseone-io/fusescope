@@ -1,5 +1,6 @@
 FROM alpine:3.20.3
-LABEL maintainer="signoz"
+LABEL maintainer="fuseone"
+LABEL org.opencontainers.image.source="https://github.com/fuseone-io/fusescope"
 WORKDIR /root
 
 ARG OS="linux"
@@ -10,10 +11,10 @@ RUN apk update && \
 	rm -rf /var/cache/apk/*
 
 
-COPY ./target/${OS}-${TARGETARCH}/signoz-community /root/signoz
+COPY ./target/${OS}-${TARGETARCH}/fusescope /root/fusescope
 COPY ./templates /root/templates
 COPY frontend/build/ /etc/signoz/web/
 
-RUN chmod 755 /root /root/signoz
+RUN chmod 755 /root /root/fusescope
 
-ENTRYPOINT ["./signoz", "server"]
+ENTRYPOINT ["./fusescope", "server"]
