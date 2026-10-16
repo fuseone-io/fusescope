@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
+	schemamigrator "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/fuseone-io/fusescope-otel-collector/pkg/keycheck"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )

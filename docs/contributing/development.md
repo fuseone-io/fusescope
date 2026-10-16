@@ -59,7 +59,7 @@ This command:
 Next, start the OpenTelemetry Collector to receive telemetry data:
 
 ```bash
-make devenv-signoz-otel-collector
+make devenv-fusescope-otel-collector
 ```
 
 This command:

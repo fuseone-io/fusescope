@@ -1,6 +1,6 @@
 package telemetrymetadata
 
-import otelconst "github.com/SigNoz/signoz-otel-collector/constants"
+import otelconst "github.com/fuseone-io/fusescope-otel-collector/constants"
 
 const (
 	DBName                           = "signoz_metadata"

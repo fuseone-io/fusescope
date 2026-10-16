@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	otelconstants "github.com/SigNoz/signoz-otel-collector/constants"
+	otelconstants "github.com/fuseone-io/fusescope-otel-collector/constants"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )

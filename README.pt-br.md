@@ -12,7 +12,7 @@
   <a href="https://github.com/fuseone-io/fusescope/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/fuseone-io/fusescope?color=950fb8"></a>
 </p>
 
-O FuseScope é uma plataforma de observabilidade nativa de OpenTelemetry: APM, tracing distribuído, gestão de logs, métricas, dashboards e alertas sobre ClickHouse. É desenvolvido pela [FuseOne](https://github.com/fuseone-io) como um hard fork do [SigNoz](https://github.com/SigNoz/signoz) e é **100% licenciado sob MIT**: o código proprietário `ee/` do SigNoz não faz parte deste repositório.
+O FuseScope é uma plataforma de observabilidade nativa de OpenTelemetry: APM, tracing distribuído, gestão de logs, métricas, dashboards e alertas sobre ClickHouse. É desenvolvido pela [FuseOne](https://github.com/fuseone-io) como um hard fork do [SigNoz](https://github.com/SigNoz/signoz). O código-fonte deste repositório é **licenciado sob MIT**, e o código proprietário `ee/` do SigNoz não faz parte dele.
 
 ## Funcionalidades
 
@@ -39,7 +39,7 @@ O objetivo do FuseScope é cobrir o essencial de uma suíte comercial de APM, se
 
 ## Primeiros passos
 
-O FuseScope precisa do ClickHouse e do coletor OpenTelemetry do FuseScope (um fork do `signoz-otel-collector`, em breve). Enquanto os charts Helm da FuseOne não são publicados, compile a partir do código-fonte:
+O FuseScope precisa do ClickHouse e do [coletor OpenTelemetry do FuseScope](https://github.com/fuseone-io/fusescope-otel-collector). Implante com os [charts Helm do FuseScope](https://github.com/fuseone-io/fusescope-charts) ou compile a partir do código-fonte:
 
 ```bash
 # backend (Go 1.25)
@@ -62,4 +62,4 @@ Issues e pull requests são bem-vindos. Leia o [CONTRIBUTING.md](CONTRIBUTING.md
 
 O FuseScope se apoia no trabalho do time e da comunidade do [SigNoz](https://signoz.io), cujo código sob licença MIT é a base deste projeto. "SigNoz" é marca da SigNoz Inc.; o FuseScope não é afiliado nem endossado pela SigNoz Inc.
 
-Distribuído sob a [Licença MIT](LICENSE).
+O código-fonte deste repositório é distribuído sob a [Licença MIT](LICENSE). O backend depende de pacotes Go do [fusescope-otel-collector](https://github.com/fuseone-io/fusescope-otel-collector), licenciado sob **AGPL-3.0**; por isso, os binários e imagens compilados do FuseScope incluem código AGPL-3.0 e devem ser distribuídos em conformidade com essa licença.

@@ -6,8 +6,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/SigNoz/signoz-otel-collector/pkg/collectorsimulator"
-	"github.com/SigNoz/signoz-otel-collector/processor/signozspanmapperprocessor"
+	"github.com/fuseone-io/fusescope-otel-collector/pkg/collectorsimulator"
+	"github.com/fuseone-io/fusescope-otel-collector/processor/signozspanmapperprocessor"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/pdata/ptrace"

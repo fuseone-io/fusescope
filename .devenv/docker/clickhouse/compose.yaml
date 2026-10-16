@@ -67,7 +67,7 @@ services:
       timeout: 5s
       retries: 3
   telemetrystore-migrator:
-    image: signoz/signoz-otel-collector:v0.144.6
+    image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
     container_name: telemetrystore-migrator
     environment:
       - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
@@ -79,9 +79,9 @@ services:
     command:
       - -c
       - |
-        /signoz-otel-collector migrate bootstrap &&
-        /signoz-otel-collector migrate sync up &&
-        /signoz-otel-collector migrate async up
+        /fusescope-otel-collector migrate bootstrap &&
+        /fusescope-otel-collector migrate sync up &&
+        /fusescope-otel-collector migrate async up
     depends_on:
       clickhouse:
         condition: service_healthy

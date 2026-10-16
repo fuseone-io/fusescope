@@ -3,8 +3,8 @@ package queryBuilderToExpr
 import (
 	"testing"
 
-	signozstanzahelper "github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
 	"github.com/expr-lang/expr/vm"
+	signozstanzahelper "github.com/fuseone-io/fusescope-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
 	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	"github.com/stretchr/testify/assert"

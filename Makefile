@@ -49,13 +49,13 @@ devenv-postgres: ## Run postgres in devenv
 	@cd .devenv/docker/postgres; \
 	docker compose -f compose.yaml up -d
 
-.PHONY: devenv-signoz-otel-collector
-devenv-signoz-otel-collector: ## Run signoz-otel-collector in devenv (requires clickhouse to be running)
-	@cd .devenv/docker/signoz-otel-collector; \
+.PHONY: devenv-fusescope-otel-collector
+devenv-fusescope-otel-collector: ## Run fusescope-otel-collector in devenv (requires clickhouse to be running)
+	@cd .devenv/docker/fusescope-otel-collector; \
 	docker compose -f compose.yaml up -d
 
 .PHONY: devenv-up
-devenv-up: devenv-clickhouse devenv-signoz-otel-collector ## Start both clickhouse and signoz-otel-collector for local development
+devenv-up: devenv-clickhouse devenv-fusescope-otel-collector ## Start both clickhouse and fusescope-otel-collector for local development
 	@echo "Development environment is ready!"
 	@echo "   - ClickHouse: http://localhost:8123"
 	@echo "   - Signoz OTel Collector: grpc://localhost:4317, http://localhost:4318"

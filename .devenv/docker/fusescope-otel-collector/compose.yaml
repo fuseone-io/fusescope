@@ -1,14 +1,14 @@
 services:
-  signoz-otel-collector:
-    image: signoz/signoz-otel-collector:v0.142.0
-    container_name: signoz-otel-collector-dev
+  fusescope-otel-collector:
+    image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
+    container_name: fusescope-otel-collector-dev
     entrypoint:
       - /bin/sh
     command:
       - -c
       - |
-        /signoz-otel-collector migrate sync check &&
-        /signoz-otel-collector --config=/etc/otel-collector-config.yaml
+        /fusescope-otel-collector migrate sync check &&
+        /fusescope-otel-collector --config=/etc/otel-collector-config.yaml
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     environment:

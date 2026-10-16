@@ -1,7 +1,7 @@
 package logstelemetryschema
 
 import (
-	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/fuseone-io/fusescope-otel-collector/constants"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )

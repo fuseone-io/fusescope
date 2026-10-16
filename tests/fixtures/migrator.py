@@ -29,7 +29,7 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
         environment = dict(env_overrides) if env_overrides else {}
 
         container = client.containers.run(
-            image=f"signoz/signoz-schema-migrator:{migrator_version}",
+            image=f"ghcr.io/fuseone-io/fusescope-schema-migrator:{migrator_version}",
             command=f"sync --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN']}",
             detach=True,
             auto_remove=False,
@@ -48,7 +48,7 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
         container.remove()
 
         container = client.containers.run(
-            image=f"signoz/signoz-schema-migrator:{migrator_version}",
+            image=f"ghcr.io/fuseone-io/fusescope-schema-migrator:{migrator_version}",
             command=f"async --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN']}",
             detach=True,
             auto_remove=False,

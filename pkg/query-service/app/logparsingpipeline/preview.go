@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz-otel-collector/pkg/collectorsimulator"
-	_ "github.com/SigNoz/signoz-otel-collector/pkg/parser/grok"
-	"github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor"
+	"github.com/fuseone-io/fusescope-otel-collector/pkg/collectorsimulator"
+	_ "github.com/fuseone-io/fusescope-otel-collector/pkg/parser/grok"
+	"github.com/fuseone-io/fusescope-otel-collector/processor/signozlogspipelineprocessor"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	"github.com/fuseone-io/fusescope/pkg/types/pipelinetypes"

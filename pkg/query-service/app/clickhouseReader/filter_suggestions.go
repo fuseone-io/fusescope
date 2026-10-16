@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz-otel-collector/utils/fingerprint"
+	"github.com/fuseone-io/fusescope-otel-collector/utils/fingerprint"
 	errorsV2 "github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"

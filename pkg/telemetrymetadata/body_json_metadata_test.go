@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/fuseone-io/fusescope-otel-collector/constants"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/logstelemetryschema"
 	"github.com/fuseone-io/fusescope/pkg/types/promotetypes"

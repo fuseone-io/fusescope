@@ -12,7 +12,7 @@
   <a href="https://github.com/fuseone-io/fusescope/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/fuseone-io/fusescope?color=950fb8"></a>
 </p>
 
-FuseScope is an OpenTelemetry-native observability platform: APM, distributed tracing, log management, metrics, dashboards and alerts on top of ClickHouse. It is built by [FuseOne](https://github.com/fuseone-io) as a hard fork of [SigNoz](https://github.com/SigNoz/signoz) and is **100% MIT licensed** — the proprietary `ee/` code of SigNoz is not part of this repository.
+FuseScope is an OpenTelemetry-native observability platform: APM, distributed tracing, log management, metrics, dashboards and alerts on top of ClickHouse. It is built by [FuseOne](https://github.com/fuseone-io) as a hard fork of [SigNoz](https://github.com/SigNoz/signoz). The source code in this repository is **MIT licensed**, and the proprietary `ee/` code of SigNoz is not part of it.
 
 ## Features
 
@@ -39,7 +39,7 @@ FuseScope aims to cover the core of a commercial APM suite without lock-in. Plan
 
 ## Getting started
 
-FuseScope needs ClickHouse and the FuseScope OpenTelemetry collector (a fork of `signoz-otel-collector`, coming soon). Until the FuseOne Helm charts are published, build from source:
+FuseScope needs ClickHouse and the [FuseScope OpenTelemetry collector](https://github.com/fuseone-io/fusescope-otel-collector). Deploy them with the [FuseScope Helm charts](https://github.com/fuseone-io/fusescope-charts), or build from source:
 
 ```bash
 # backend (Go 1.25)
@@ -62,4 +62,4 @@ Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) be
 
 FuseScope stands on the work of the [SigNoz](https://signoz.io) team and community, whose MIT-licensed code is the foundation of this project. "SigNoz" is a trademark of SigNoz Inc.; FuseScope is not affiliated with or endorsed by SigNoz Inc.
 
-Released under the [MIT License](LICENSE).
+The source code in this repository is released under the [MIT License](LICENSE). The backend depends on Go packages from [fusescope-otel-collector](https://github.com/fuseone-io/fusescope-otel-collector), which is licensed under the **AGPL-3.0**; compiled FuseScope binaries and images therefore include AGPL-3.0 code and must be distributed in compliance with that license.
