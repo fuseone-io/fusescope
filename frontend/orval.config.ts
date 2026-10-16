@@ -88,7 +88,7 @@ export default defineConfig({
 				// info is of type InfoObject from openapi spec
 				header: (info: { title: string; version: string }): string[] => [
 					`! Do not edit manually`,
-					`* The file has been auto-generated using Orval for SigNoz`,
+					`* The file has been auto-generated using Orval for FuseScope`,
 					`* regenerate with 'pnpm generate:api'`,
 					...(info.title ? [info.title] : []),
 					...(info.version ? [`OpenAPI spec version: ${info.version}`] : []),

@@ -1,8 +1,8 @@
 /**
  * ! Do not edit manually
- * * The file has been auto-generated using Orval for SigNoz
+ * * The file has been auto-generated using Orval for FuseScope
  * * regenerate with 'pnpm generate:api'
- * SigNoz
+ * FuseScope
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
@@ -27,7 +27,7 @@ import type {
 	RenderErrorResponseDTO,
 	UpdateRoutePolicy200,
 	UpdateRoutePolicyPathParameters,
-} from '../sigNoz.schemas';
+} from '../fuseScope.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';

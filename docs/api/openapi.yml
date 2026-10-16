@@ -254,18 +254,18 @@ components:
           webhook: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfig'
         propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfig'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfig'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfig'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfig'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelSlackConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelEmailConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelWebhookConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelPagerdutyConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelOpsgenieConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelMSTeamsConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelGoogleChatConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJiraConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJSMOpsConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelIncidentIOConfig'
       type: object
-    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig:
+    AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelEmailConfig:
       properties:
         kind:
           enum:
@@ -277,7 +277,7 @@ components:
       - kind
       - spec
       type: object
-    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfig:
+    AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelGoogleChatConfig:
       properties:
         kind:
           enum:
@@ -289,7 +289,7 @@ components:
       - kind
       - spec
       type: object
-    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig:
+    AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelIncidentIOConfig:
       properties:
         kind:
           enum:
@@ -301,7 +301,7 @@ components:
       - kind
       - spec
       type: object
-    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig:
+    AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJSMOpsConfig:
       properties:
         kind:
           enum:
@@ -313,7 +313,7 @@ components:
       - kind
       - spec
       type: object
-    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig:
+    AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJiraConfig:
       properties:
         kind:
           enum:
@@ -325,7 +325,7 @@ components:
       - kind
       - spec
       type: object
-    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfig:
+    AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelMSTeamsConfig:
       properties:
         kind:
           enum:
@@ -337,7 +337,7 @@ components:
       - kind
       - spec
       type: object
-    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig:
+    AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelOpsgenieConfig:
       properties:
         kind:
           enum:
@@ -349,7 +349,7 @@ components:
       - kind
       - spec
       type: object
-    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig:
+    AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelPagerdutyConfig:
       properties:
         kind:
           enum:
@@ -361,7 +361,7 @@ components:
       - kind
       - spec
       type: object
-    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfig:
+    AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelSlackConfig:
       properties:
         kind:
           enum:
@@ -373,7 +373,7 @@ components:
       - kind
       - spec
       type: object
-    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfig:
+    AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelWebhookConfig:
       properties:
         kind:
           enum:
@@ -3740,9 +3740,9 @@ components:
           traces: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
         propertyName: signal
       oneOf:
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
       type: object
     DashboardtypesComparisonOperator:
       enum:
@@ -4449,16 +4449,16 @@ components:
           signoz/TimeSeriesPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
         propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
-      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
-      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
-      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
-      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
-      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
-      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
-      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
-      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
-      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTimeSeriesPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBarChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAreaChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesNumberPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesPieChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTablePanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHistogramPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesListPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHeatmapPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -4473,7 +4473,7 @@ components:
       - signoz/TextPanel
       - signoz/HeatmapPanel
       type: string
-    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
         kind:
           enum:
@@ -4485,7 +4485,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBarChartPanelSpec:
       properties:
         kind:
           enum:
@@ -4497,7 +4497,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHeatmapPanelSpec:
       properties:
         kind:
           enum:
@@ -4509,7 +4509,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHistogramPanelSpec:
       properties:
         kind:
           enum:
@@ -4521,7 +4521,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesListPanelSpec:
       properties:
         kind:
           enum:
@@ -4533,7 +4533,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesNumberPanelSpec:
       properties:
         kind:
           enum:
@@ -4545,7 +4545,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesPieChartPanelSpec:
       properties:
         kind:
           enum:
@@ -4557,7 +4557,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec:
+    DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTablePanelSpec:
       properties:
         kind:
           enum:
@@ -4569,7 +4569,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextPanelSpec:
       properties:
         kind:
           enum:
@@ -4581,7 +4581,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTimeSeriesPanelSpec:
       properties:
         kind:
           enum:
@@ -4706,13 +4706,13 @@ components:
           signoz/TraceOperator: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator'
         propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'
-      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec'
-      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
-      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula'
-      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
-      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
-      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBuilderQuerySpec'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAIBuilderQuerySpec'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator'
       type: object
     DashboardtypesQueryPluginKind:
       enum:
@@ -4724,7 +4724,7 @@ components:
       - signoz/ClickHouseSQL
       - signoz/TraceOperator
       type: string
-    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec:
+    DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAIBuilderQuerySpec:
       properties:
         kind:
           enum:
@@ -4736,7 +4736,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec:
+    DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBuilderQuerySpec:
       properties:
         kind:
           enum:
@@ -4748,7 +4748,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery:
+    DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery:
       properties:
         kind:
           enum:
@@ -4760,7 +4760,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery:
+    DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery:
       properties:
         kind:
           enum:
@@ -4772,7 +4772,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery:
+    DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery:
       properties:
         kind:
           enum:
@@ -4784,7 +4784,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula:
+    DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula:
       properties:
         kind:
           enum:
@@ -4796,7 +4796,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator:
+    DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator:
       properties:
         kind:
           enum:
@@ -5043,8 +5043,8 @@ components:
           TextVariable: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
         propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesListVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextVariableSpec'
       type: object
     DashboardtypesVariableDefaultValue:
       oneOf:
@@ -5052,7 +5052,7 @@ components:
       - items:
           type: string
         type: array
-    DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec:
+    DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesListVariableSpec:
       properties:
         kind:
           enum:
@@ -5064,7 +5064,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec:
+    DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextVariableSpec:
       properties:
         kind:
           enum:
@@ -5084,9 +5084,9 @@ components:
           signoz/QueryVariable: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec'
         propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesDynamicVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesQueryVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesCustomVariableSpec'
       type: object
     DashboardtypesVariablePluginKind:
       enum:
@@ -5094,7 +5094,7 @@ components:
       - signoz/QueryVariable
       - signoz/CustomVariable
       type: string
-    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec:
+    DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesCustomVariableSpec:
       properties:
         kind:
           enum:
@@ -5106,7 +5106,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec:
+    DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesDynamicVariableSpec:
       properties:
         kind:
           enum:
@@ -5118,7 +5118,7 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec:
+    DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesQueryVariableSpec:
       properties:
         kind:
           enum:
@@ -8182,9 +8182,9 @@ components:
           traces: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
         propertyName: signal
       oneOf:
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
       type: object
     Querybuildertypesv5ClickHouseQuery:
       properties:
@@ -8482,7 +8482,7 @@ components:
           nullable: true
           type: array
       type: object
-    Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation:
+    Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation:
       properties:
         aggregations:
           items:
@@ -8545,7 +8545,7 @@ components:
       required:
       - signal
       type: object
-    Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation:
+    Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation:
       properties:
         aggregations:
           items:
@@ -8608,7 +8608,7 @@ components:
       required:
       - signal
       type: object
-    Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation:
+    Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation:
       properties:
         aggregations:
           items:
@@ -8762,7 +8762,7 @@ components:
     Querybuildertypesv5QueryEnvelopeBuilderAI:
       properties:
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       required:
@@ -11265,11 +11265,11 @@ components:
 info:
   contact:
     email: support@signoz.io
-    name: SigNoz Support
+    name: FuseScope Support
     url: https://signoz.io
   description: OpenTelemetry-Native Logs, Metrics and Traces in a single pane
   termsOfService: https://signoz.io/terms-of-service/
-  title: SigNoz
+  title: FuseScope
   version: ""
 openapi: 3.0.3
 paths:
@@ -17992,10 +17992,10 @@ paths:
   /api/v2/dashboards/system/{name}:
     get:
       deprecated: false
-      description: Returns a dashboard SigNoz ships and owns, addressed by its stable
-        definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards
-        are read-only and upgraded through releases. The dashboard's own `name` field
-        carries a reserved prefix that the path segment must not include.
+      description: Returns a dashboard FuseScope ships and owns, addressed by its
+        stable definition name (e.g. `ai-o11y-overview`) rather than its id. System
+        dashboards are read-only and upgraded through releases. The dashboard's own
+        `name` field carries a reserved prefix that the path segment must not include.
       operationId: GetSystemDashboard
       parameters:
       - in: path
@@ -22528,7 +22528,7 @@ paths:
               metric_anomaly:
                 description: Anomaly rules are not yet supported under schemaVersion
                   v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality SigNoz compares
+                  in the `anomaly` function with daily seasonality FuseScope compares
                   each point against the forecast for that time of day. Fires when
                   the anomaly score stays below the threshold for the entire window;
                   `requireMinPoints` guards against noisy intervals.
@@ -23093,7 +23093,7 @@ paths:
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
-                  (threshold.targetUnit) SigNoz converts before comparing. Canonical
+                  (threshold.targetUnit) FuseScope converts before comparing. Canonical
                   shape when series and target live in different units.
                 summary: Traces threshold p99 latency (ns → s conversion)
                 value:
@@ -23480,7 +23480,7 @@ paths:
               metric_anomaly:
                 description: Anomaly rules are not yet supported under schemaVersion
                   v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality SigNoz compares
+                  in the `anomaly` function with daily seasonality FuseScope compares
                   each point against the forecast for that time of day. Fires when
                   the anomaly score stays below the threshold for the entire window;
                   `requireMinPoints` guards against noisy intervals.
@@ -24045,7 +24045,7 @@ paths:
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
-                  (threshold.targetUnit) SigNoz converts before comparing. Canonical
+                  (threshold.targetUnit) FuseScope converts before comparing. Canonical
                   shape when series and target live in different units.
                 summary: Traces threshold p99 latency (ns → s conversion)
                 value:
@@ -24333,7 +24333,7 @@ paths:
               metric_anomaly:
                 description: Anomaly rules are not yet supported under schemaVersion
                   v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality SigNoz compares
+                  in the `anomaly` function with daily seasonality FuseScope compares
                   each point against the forecast for that time of day. Fires when
                   the anomaly score stays below the threshold for the entire window;
                   `requireMinPoints` guards against noisy intervals.
@@ -24898,7 +24898,7 @@ paths:
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
-                  (threshold.targetUnit) SigNoz converts before comparing. Canonical
+                  (threshold.targetUnit) FuseScope converts before comparing. Canonical
                   shape when series and target live in different units.
                 summary: Traces threshold p99 latency (ns → s conversion)
                 value:
@@ -25764,7 +25764,7 @@ paths:
               metric_anomaly:
                 description: Anomaly rules are not yet supported under schemaVersion
                   v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality SigNoz compares
+                  in the `anomaly` function with daily seasonality FuseScope compares
                   each point against the forecast for that time of day. Fires when
                   the anomaly score stays below the threshold for the entire window;
                   `requireMinPoints` guards against noisy intervals.
@@ -26329,7 +26329,7 @@ paths:
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
-                  (threshold.targetUnit) SigNoz converts before comparing. Canonical
+                  (threshold.targetUnit) FuseScope converts before comparing. Canonical
                   shape when series and target live in different units.
                 summary: Traces threshold p99 latency (ns → s conversion)
                 value:
@@ -28511,7 +28511,7 @@ paths:
   /api/v4/licenses/{id}:
     delete:
       deprecated: false
-      description: This endpoint deletes the license by id. Licenses managed by SigNoz
+      description: This endpoint deletes the license by id. Licenses managed by FuseScope
         Cloud cannot be deleted.
       operationId: DeleteLicense
       parameters:
@@ -29732,15 +29732,15 @@ paths:
       - prometheus
       x-signoz-stability: alpha
 servers:
-- description: The fully qualified URL to the SigNoz APIServer.
+- description: The fully qualified URL to the FuseScope APIServer.
   url: https://{host}:{port}{base_path}
   variables:
     base_path:
       default: /
-      description: The base path of the SigNoz APIServer
+      description: The base path of the FuseScope APIServer
     host:
       default: localhost
-      description: The host of the SigNoz APIServer
+      description: The host of the FuseScope APIServer
     port:
       default: "8080"
-      description: The port of the SigNoz APIServer
+      description: The port of the FuseScope APIServer

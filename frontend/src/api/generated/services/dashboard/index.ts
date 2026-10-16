@@ -1,8 +1,8 @@
 /**
  * ! Do not edit manually
- * * The file has been auto-generated using Orval for SigNoz
+ * * The file has been auto-generated using Orval for FuseScope
  * * regenerate with 'pnpm generate:api'
- * SigNoz
+ * FuseScope
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
@@ -63,7 +63,7 @@ import type {
 	UpdateDashboardView200,
 	UpdateDashboardViewPathParameters,
 	UpdatePublicDashboardPathParameters,
-} from '../sigNoz.schemas';
+} from '../fuseScope.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -1693,7 +1693,7 @@ export const useMigrateDashboardV2 = <
 	return useMutation(getMigrateDashboardV2MutationOptions(options));
 };
 /**
- * Returns a dashboard SigNoz ships and owns, addressed by its stable definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards are read-only and upgraded through releases. The dashboard's own `name` field carries a reserved prefix that the path segment must not include.
+ * Returns a dashboard FuseScope ships and owns, addressed by its stable definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards are read-only and upgraded through releases. The dashboard's own `name` field carries a reserved prefix that the path segment must not include.
  * @summary Get system dashboard
  */
 export const getSystemDashboard = (

@@ -1,8 +1,8 @@
 /**
  * ! Do not edit manually
- * * The file has been auto-generated using Orval for SigNoz
+ * * The file has been auto-generated using Orval for FuseScope
  * * regenerate with 'pnpm generate:api'
- * SigNoz
+ * FuseScope
  */
 export enum AiobservabilitytypesBlobPartDTOType {
 	blob = 'blob',
@@ -295,7 +295,7 @@ export interface AlertmanagertypesChannelDTO {
 	updatedAt?: string;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTOKind {
+export enum AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelSlackConfigDTOKind {
 	slack = 'slack',
 }
 export interface AlertmanagertypesChannelSlackConfirmationDTO {
@@ -412,16 +412,16 @@ export interface AlertmanagertypesChannelSlackConfigDTO {
 	titleLink?: string;
 }
 
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO {
+export interface AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelSlackConfigDTO {
 	/**
 	 * @enum slack
 	 * @type string
 	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTOKind;
+	kind: AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelSlackConfigDTOKind;
 	spec: AlertmanagertypesChannelSlackConfigDTO;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTOKind {
+export enum AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelEmailConfigDTOKind {
 	email = 'email',
 }
 export type AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf = {
@@ -453,16 +453,16 @@ export interface AlertmanagertypesChannelEmailConfigDTO {
 	to: string;
 }
 
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO {
+export interface AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelEmailConfigDTO {
 	/**
 	 * @enum email
 	 * @type string
 	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTOKind;
+	kind: AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelEmailConfigDTOKind;
 	spec: AlertmanagertypesChannelEmailConfigDTO;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTOKind {
+export enum AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelWebhookConfigDTOKind {
 	webhook = 'webhook',
 }
 export interface AlertmanagertypesChannelWebhookConfigDTO {
@@ -491,16 +491,16 @@ export interface AlertmanagertypesChannelWebhookConfigDTO {
 	username?: string;
 }
 
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTO {
+export interface AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelWebhookConfigDTO {
 	/**
 	 * @enum webhook
 	 * @type string
 	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTOKind;
+	kind: AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelWebhookConfigDTOKind;
 	spec: AlertmanagertypesChannelWebhookConfigDTO;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind {
+export enum AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind {
 	pagerduty = 'pagerduty',
 }
 export type AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf = {
@@ -565,16 +565,16 @@ export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	url?: string;
 }
 
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTO {
+export interface AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelPagerdutyConfigDTO {
 	/**
 	 * @enum pagerduty
 	 * @type string
 	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind;
+	kind: AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind;
 	spec: AlertmanagertypesChannelPagerdutyConfigDTO;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind {
+export enum AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind {
 	opsgenie = 'opsgenie',
 }
 export type AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf = {
@@ -623,16 +623,16 @@ export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	source?: string;
 }
 
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTO {
+export interface AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @enum opsgenie
 	 * @type string
 	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind;
+	kind: AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind;
 	spec: AlertmanagertypesChannelOpsgenieConfigDTO;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTOKind {
+export enum AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelMSTeamsConfigDTOKind {
 	msteams = 'msteams',
 }
 export interface AlertmanagertypesChannelMSTeamsConfigDTO {
@@ -655,16 +655,16 @@ export interface AlertmanagertypesChannelMSTeamsConfigDTO {
 	webhookUrl: string;
 }
 
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTO {
+export interface AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelMSTeamsConfigDTO {
 	/**
 	 * @enum msteams
 	 * @type string
 	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTOKind;
+	kind: AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelMSTeamsConfigDTOKind;
 	spec: AlertmanagertypesChannelMSTeamsConfigDTO;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTOKind {
+export enum AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelGoogleChatConfigDTOKind {
 	googlechat = 'googlechat',
 }
 export interface AlertmanagertypesChannelGoogleChatConfigDTO {
@@ -687,16 +687,16 @@ export interface AlertmanagertypesChannelGoogleChatConfigDTO {
 	webhookUrl: string;
 }
 
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTO {
+export interface AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelGoogleChatConfigDTO {
 	/**
 	 * @enum googlechat
 	 * @type string
 	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTOKind;
+	kind: AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelGoogleChatConfigDTOKind;
 	spec: AlertmanagertypesChannelGoogleChatConfigDTO;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
+export enum AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
 	jira = 'jira',
 }
 export type AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf = {
@@ -773,16 +773,16 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	wontFixResolution?: string;
 }
 
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO {
+export interface AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJiraConfigDTO {
 	/**
 	 * @enum jira
 	 * @type string
 	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind;
+	kind: AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJiraConfigDTOKind;
 	spec: AlertmanagertypesChannelJiraConfigDTO;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTOKind {
+export enum AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJSMOpsConfigDTOKind {
 	jsmops = 'jsmops',
 }
 export interface AlertmanagertypesChannelJSMOpsConfigDTO {
@@ -813,16 +813,16 @@ export interface AlertmanagertypesChannelJSMOpsConfigDTO {
 	tags?: string;
 }
 
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO {
+export interface AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJSMOpsConfigDTO {
 	/**
 	 * @enum jsmops
 	 * @type string
 	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTOKind;
+	kind: AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJSMOpsConfigDTOKind;
 	spec: AlertmanagertypesChannelJSMOpsConfigDTO;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind {
+export enum AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind {
 	incidentio = 'incidentio',
 }
 export type AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf = {
@@ -863,26 +863,26 @@ export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	url: string;
 }
 
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO {
+export interface AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelIncidentIOConfigDTO {
 	/**
 	 * @enum incidentio
 	 * @type string
 	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind;
+	kind: AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind;
 	spec: AlertmanagertypesChannelIncidentIOConfigDTO;
 }
 
 export type AlertmanagertypesChannelConfigDTO =
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO;
+	| AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelSlackConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelEmailConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelWebhookConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelPagerdutyConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelOpsgenieConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelMSTeamsConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelGoogleChatConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJiraConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComFuseoneIoFusescopePkgTypesAlertmanagertypesChannelIncidentIOConfigDTO;
 
 export enum AlertmanagertypesChannelDefectDTO {
 	none = 'none',
@@ -4976,10 +4976,10 @@ export interface Querybuildertypesv5LogAggregationDTO {
 	expression?: string;
 }
 
-export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal {
+export enum Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal {
 	logs = 'logs',
 }
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
+export interface Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
 	/**
 	 * @type array,null
 	 */
@@ -5036,7 +5036,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @enum logs
 	 * @type string
 	 */
-	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal;
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
@@ -5104,10 +5104,10 @@ export interface Querybuildertypesv5MetricAggregationDTO {
 	timeAggregation?: MetrictypesTimeAggregationDTO;
 }
 
-export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal {
+export enum Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal {
 	metrics = 'metrics',
 }
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
+export interface Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
 	/**
 	 * @type array,null
 	 */
@@ -5164,15 +5164,15 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @enum metrics
 	 * @type string
 	 */
-	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal;
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
-export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal {
+export enum Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal {
 	traces = 'traces',
 }
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
+export interface Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
 	/**
 	 * @type array,null
 	 */
@@ -5229,15 +5229,15 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @enum traces
 	 * @type string
 	 */
-	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal;
+	signal: Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal;
 	source?: TelemetrytypesSourceDTO;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
 export type DashboardtypesBuilderQuerySpecDTO =
-	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
-	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO
-	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
+	| Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
 
 export enum DashboardtypesComparisonOperatorDTO {
 	above = 'above',
@@ -5340,7 +5340,7 @@ export interface DashboardtypesLinkDTO {
 	url?: string;
 }
 
-export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
+export enum DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 }
 export enum DashboardtypesFillModeDTO {
@@ -5379,40 +5379,40 @@ export interface DashboardtypesTimeSeriesPanelSpecDTO {
 	visualization?: DashboardtypesTimeSeriesVisualizationDTO;
 }
 
-export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO {
+export interface DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTimeSeriesPanelSpecDTO {
 	/**
 	 * @enum signoz/TimeSeriesPanel
 	 * @type string
 	 */
-	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind;
+	kind: DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind;
 	spec: DashboardtypesTimeSeriesPanelSpecDTO;
 }
 
-export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTOKind {
+export enum DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBarChartPanelSpecDTOKind {
 	'signoz/BarChartPanel' = 'signoz/BarChartPanel',
 }
-export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO {
+export interface DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBarChartPanelSpecDTO {
 	/**
 	 * @enum signoz/BarChartPanel
 	 * @type string
 	 */
-	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTOKind;
+	kind: DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBarChartPanelSpecDTOKind;
 	spec: DashboardtypesBarChartPanelSpecDTO;
 }
 
-export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTOKind {
+export enum DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAreaChartPanelSpecDTOKind {
 	'signoz/AreaChartPanel' = 'signoz/AreaChartPanel',
 }
-export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTO {
+export interface DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAreaChartPanelSpecDTO {
 	/**
 	 * @enum signoz/AreaChartPanel
 	 * @type string
 	 */
-	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTOKind;
+	kind: DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAreaChartPanelSpecDTOKind;
 	spec: DashboardtypesAreaChartPanelSpecDTO;
 }
 
-export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpecDTOKind {
+export enum DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesNumberPanelSpecDTOKind {
 	'signoz/NumberPanel' = 'signoz/NumberPanel',
 }
 export interface DashboardtypesNumberPanelSpecDTO {
@@ -5424,16 +5424,16 @@ export interface DashboardtypesNumberPanelSpecDTO {
 	visualization?: DashboardtypesBasicVisualizationDTO;
 }
 
-export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpecDTO {
+export interface DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesNumberPanelSpecDTO {
 	/**
 	 * @enum signoz/NumberPanel
 	 * @type string
 	 */
-	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpecDTOKind;
+	kind: DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesNumberPanelSpecDTOKind;
 	spec: DashboardtypesNumberPanelSpecDTO;
 }
 
-export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTOKind {
+export enum DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesPieChartPanelSpecDTOKind {
 	'signoz/PieChartPanel' = 'signoz/PieChartPanel',
 }
 export interface DashboardtypesPieChartPanelSpecDTO {
@@ -5442,16 +5442,16 @@ export interface DashboardtypesPieChartPanelSpecDTO {
 	visualization?: DashboardtypesBasicVisualizationDTO;
 }
 
-export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTO {
+export interface DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesPieChartPanelSpecDTO {
 	/**
 	 * @enum signoz/PieChartPanel
 	 * @type string
 	 */
-	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTOKind;
+	kind: DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesPieChartPanelSpecDTOKind;
 	spec: DashboardtypesPieChartPanelSpecDTO;
 }
 
-export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTOKind {
+export enum DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTablePanelSpecDTOKind {
 	'signoz/TablePanel' = 'signoz/TablePanel',
 }
 export type DashboardtypesTableFormattingDTOColumnUnitsAnyOf = {
@@ -5503,16 +5503,16 @@ export interface DashboardtypesTablePanelSpecDTO {
 	visualization?: DashboardtypesBasicVisualizationDTO;
 }
 
-export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTO {
+export interface DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTablePanelSpecDTO {
 	/**
 	 * @enum signoz/TablePanel
 	 * @type string
 	 */
-	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTOKind;
+	kind: DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTablePanelSpecDTOKind;
 	spec: DashboardtypesTablePanelSpecDTO;
 }
 
-export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTOKind {
+export enum DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHistogramPanelSpecDTOKind {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 }
 export interface DashboardtypesHistogramBucketsDTO {
@@ -5535,16 +5535,16 @@ export interface DashboardtypesHistogramPanelSpecDTO {
 	legend?: DashboardtypesLegendDTO;
 }
 
-export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO {
+export interface DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHistogramPanelSpecDTO {
 	/**
 	 * @enum signoz/HistogramPanel
 	 * @type string
 	 */
-	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTOKind;
+	kind: DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHistogramPanelSpecDTOKind;
 	spec: DashboardtypesHistogramPanelSpecDTO;
 }
 
-export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTOKind {
+export enum DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesListPanelSpecDTOKind {
 	'signoz/ListPanel' = 'signoz/ListPanel',
 }
 export interface DashboardtypesListPanelSpecDTO {
@@ -5554,16 +5554,16 @@ export interface DashboardtypesListPanelSpecDTO {
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 }
 
-export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO {
+export interface DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesListPanelSpecDTO {
 	/**
 	 * @enum signoz/ListPanel
 	 * @type string
 	 */
-	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTOKind;
+	kind: DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesListPanelSpecDTOKind;
 	spec: DashboardtypesListPanelSpecDTO;
 }
 
-export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind {
+export enum DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextPanelSpecDTOKind {
 	'signoz/TextPanel' = 'signoz/TextPanel',
 }
 export interface DashboardtypesHeaderOptionsDTO {
@@ -5605,16 +5605,16 @@ export interface DashboardtypesTextPanelSpecDTO {
 	text?: string;
 }
 
-export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO {
+export interface DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextPanelSpecDTO {
 	/**
 	 * @enum signoz/TextPanel
 	 * @type string
 	 */
-	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind;
+	kind: DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextPanelSpecDTOKind;
 	spec: DashboardtypesTextPanelSpecDTO;
 }
 
-export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind {
+export enum DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHeatmapPanelSpecDTOKind {
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 }
 export enum DashboardtypesHeatmapYScaleDTO {
@@ -5686,26 +5686,26 @@ export interface DashboardtypesHeatmapPanelSpecDTO {
 	visualization?: DashboardtypesBasicVisualizationDTO;
 }
 
-export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO {
+export interface DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHeatmapPanelSpecDTO {
 	/**
 	 * @enum signoz/HeatmapPanel
 	 * @type string
 	 */
-	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind;
+	kind: DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHeatmapPanelSpecDTOKind;
 	spec: DashboardtypesHeatmapPanelSpecDTO;
 }
 
 export type DashboardtypesPanelPluginDTO =
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTimeSeriesPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBarChartPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAreaChartPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesNumberPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesPieChartPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTablePanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHistogramPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesListPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesHeatmapPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -5715,37 +5715,37 @@ export enum Querybuildertypesv5RequestTypeDTO {
 	trace = 'trace',
 	heatmap = 'heatmap',
 }
-export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind {
+export enum DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBuilderQuerySpecDTOKind {
 	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
 }
-export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTO {
+export interface DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBuilderQuerySpecDTO {
 	/**
 	 * @enum signoz/BuilderQuery
 	 * @type string
 	 */
-	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind;
+	kind: DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBuilderQuerySpecDTOKind;
 	spec: DashboardtypesBuilderQuerySpecDTO;
 }
 
-export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind {
+export enum DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAIBuilderQuerySpecDTOKind {
 	'signoz/AIBuilderQuery' = 'signoz/AIBuilderQuery',
 }
-export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTO {
+export interface DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAIBuilderQuerySpecDTO {
 	/**
 	 * @enum signoz/AIBuilderQuery
 	 * @type string
 	 */
-	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind;
+	kind: DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAIBuilderQuerySpecDTOKind;
 	spec: DashboardtypesAIBuilderQuerySpecDTO;
 }
 
-export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind {
+export enum DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind {
 	'signoz/CompositeQuery' = 'signoz/CompositeQuery',
 }
 export type Querybuildertypesv5BuilderQuerySpecDTO =
-	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO
-	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
-	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO;
+	| Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO;
 
 export enum Querybuildertypesv5QueryEnvelopeBuilderDTOType {
 	builder_query = 'builder_query',
@@ -5763,7 +5763,7 @@ export enum Querybuildertypesv5QueryEnvelopeBuilderAIDTOType {
 	builder_ai_query = 'builder_ai_query',
 }
 export interface Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
+	spec?: Querybuildertypesv5QueryBuilderQueryGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
 	/**
 	 * @type string
 	 * @enum builder_ai_query
@@ -5971,71 +5971,71 @@ export interface Querybuildertypesv5CompositeQueryDTO {
 	queries?: Querybuildertypesv5QueryEnvelopeDTO[] | null;
 }
 
-export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTO {
+export interface DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTO {
 	/**
 	 * @enum signoz/CompositeQuery
 	 * @type string
 	 */
-	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind;
+	kind: DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind;
 	spec: Querybuildertypesv5CompositeQueryDTO;
 }
 
-export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTOKind {
+export enum DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTOKind {
 	'signoz/Formula' = 'signoz/Formula',
 }
-export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTO {
+export interface DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTO {
 	/**
 	 * @enum signoz/Formula
 	 * @type string
 	 */
-	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTOKind;
+	kind: DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTOKind;
 	spec: Querybuildertypesv5QueryBuilderFormulaDTO;
 }
 
-export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTOKind {
+export enum DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTOKind {
 	'signoz/PromQLQuery' = 'signoz/PromQLQuery',
 }
-export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTO {
+export interface DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTO {
 	/**
 	 * @enum signoz/PromQLQuery
 	 * @type string
 	 */
-	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTOKind;
+	kind: DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTOKind;
 	spec: Querybuildertypesv5PromQueryDTO;
 }
 
-export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTOKind {
+export enum DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTOKind {
 	'signoz/ClickHouseSQL' = 'signoz/ClickHouseSQL',
 }
-export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTO {
+export interface DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTO {
 	/**
 	 * @enum signoz/ClickHouseSQL
 	 * @type string
 	 */
-	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTOKind;
+	kind: DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTOKind;
 	spec: Querybuildertypesv5ClickHouseQueryDTO;
 }
 
-export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTOKind {
+export enum DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTOKind {
 	'signoz/TraceOperator' = 'signoz/TraceOperator',
 }
-export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTO {
+export interface DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTO {
 	/**
 	 * @enum signoz/TraceOperator
 	 * @type string
 	 */
-	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTOKind;
+	kind: DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTOKind;
 	spec: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
 }
 
 export type DashboardtypesQueryPluginDTO =
-	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTO
-	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTO
-	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTO
-	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTO
-	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTO
-	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTO
-	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTO;
+	| DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesBuilderQuerySpecDTO
+	| DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesAIBuilderQuerySpecDTO
+	| DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTO
+	| DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTO
+	| DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTO
+	| DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTO
+	| DashboardtypesQueryPluginVariantGithubComFuseoneIoFusescopePkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTO;
 
 export interface DashboardtypesQuerySpecDTO {
 	/**
@@ -6087,12 +6087,12 @@ export interface DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridL
 export type DashboardtypesLayoutDTO =
 	DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTO;
 
-export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
+export enum DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
 }
 export type DashboardtypesVariableDefaultValueDTO = string | string[];
 
-export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
+export enum DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
 }
 export enum DashboardtypesDynamicVariableSignalDTO {
@@ -6109,16 +6109,16 @@ export interface DashboardtypesDynamicVariableSpecDTO {
 	signal: DashboardtypesDynamicVariableSignalDTO;
 }
 
-export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTO {
+export interface DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesDynamicVariableSpecDTO {
 	/**
 	 * @enum signoz/DynamicVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind;
+	kind: DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesDynamicVariableSpecDTOKind;
 	spec: DashboardtypesDynamicVariableSpecDTO;
 }
 
-export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTOKind {
+export enum DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesQueryVariableSpecDTOKind {
 	'signoz/QueryVariable' = 'signoz/QueryVariable',
 }
 export interface DashboardtypesQueryVariableSpecDTO {
@@ -6128,31 +6128,31 @@ export interface DashboardtypesQueryVariableSpecDTO {
 	queryValue: string;
 }
 
-export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTO {
+export interface DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesQueryVariableSpecDTO {
 	/**
 	 * @enum signoz/QueryVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTOKind;
+	kind: DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesQueryVariableSpecDTOKind;
 	spec: DashboardtypesQueryVariableSpecDTO;
 }
 
-export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTOKind {
+export enum DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesCustomVariableSpecDTOKind {
 	'signoz/CustomVariable' = 'signoz/CustomVariable',
 }
-export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTO {
+export interface DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesCustomVariableSpecDTO {
 	/**
 	 * @enum signoz/CustomVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTOKind;
+	kind: DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesCustomVariableSpecDTOKind;
 	spec: DashboardtypesCustomVariableSpecDTO;
 }
 
 export type DashboardtypesVariablePluginDTO =
-	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTO
-	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTO
-	| DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTO;
+	| DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesDynamicVariableSpecDTO
+	| DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesQueryVariableSpecDTO
+	| DashboardtypesVariablePluginVariantGithubComFuseoneIoFusescopePkgTypesDashboardtypesCustomVariableSpecDTO;
 
 export enum DashboardtypesListVariableSpecSortDTO {
 	none = 'none',
@@ -6191,16 +6191,16 @@ export interface DashboardtypesListVariableSpecDTO {
 	sort?: DashboardtypesListVariableSpecSortDTO;
 }
 
-export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO {
+export interface DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesListVariableSpecDTO {
 	/**
 	 * @enum ListVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind;
+	kind: DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesListVariableSpecDTOKind;
 	spec: DashboardtypesListVariableSpecDTO;
 }
 
-export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind {
+export enum DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextVariableSpecDTOKind {
 	TextVariable = 'TextVariable',
 }
 export interface DashboardtypesTextVariableSpecDTO {
@@ -6220,18 +6220,18 @@ export interface DashboardtypesTextVariableSpecDTO {
 	value: string;
 }
 
-export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO {
+export interface DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextVariableSpecDTO {
 	/**
 	 * @enum TextVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind;
+	kind: DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextVariableSpecDTOKind;
 	spec: DashboardtypesTextVariableSpecDTO;
 }
 
 export type DashboardtypesVariableDTO =
-	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO
-	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO;
+	| DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesListVariableSpecDTO
+	| DashboardtypesVariableEnvelopeGithubComFuseoneIoFusescopePkgTypesDashboardtypesTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
 	display: DashboardtypesDisplayDTO;
