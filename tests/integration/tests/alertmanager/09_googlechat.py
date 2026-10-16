@@ -45,7 +45,7 @@ GOOGLECHAT_CASES = [
                     validation_data={
                         "path": "/v1/spaces/gc-metrics/messages",
                         "count": 1,
-                        "json_body": googlechat_card_subset("threshold_above_at_least_once", [("Open in SigNoz", r"/alerts/overview\?ruleId=")]),
+                        "json_body": googlechat_card_subset("threshold_above_at_least_once", [("Open in FuseScope", r"/alerts/overview\?ruleId=")]),
                     },
                 ),
             ],
@@ -67,7 +67,7 @@ GOOGLECHAT_CASES = [
                         "count": 1,
                         "json_body": googlechat_card_subset(
                             "threshold_below_at_least_once",
-                            [("View Related Logs", r"/logs/logs-explorer\?"), ("Open in SigNoz", r"/alerts/overview\?ruleId=")],
+                            [("View Related Logs", r"/logs/logs-explorer\?"), ("Open in FuseScope", r"/alerts/overview\?ruleId=")],
                         ),
                     },
                 ),
@@ -90,7 +90,7 @@ GOOGLECHAT_CASES = [
                         "count": 1,
                         "json_body": googlechat_card_subset(
                             "threshold_above_average",
-                            [("View Related Traces", r"traces-explorer\?"), ("Open in SigNoz", r"/alerts/overview\?ruleId=")],
+                            [("View Related Traces", r"traces-explorer\?"), ("Open in FuseScope", r"/alerts/overview\?ruleId=")],
                         ),
                     },
                 ),
@@ -176,7 +176,7 @@ def test_googlechat_retry_429_then_200(  # pylint: disable=too-many-arguments,to
                         # a retryable 429 is followed by a successful re-POST => >=2 hits
                         "path": path,
                         "min_count": 2,
-                        "json_body": {"cardsV2": [{"cardId": "signoz-alert"}]},
+                        "json_body": {"cardsV2": [{"cardId": "fusescope-alert"}]},
                     },
                 ),
             ],

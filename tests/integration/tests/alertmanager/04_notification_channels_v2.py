@@ -41,7 +41,7 @@ DNS1123_LABEL = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
                 "titleLink": "{{ .CommonLabels.ruleSource }}",
                 "footer": "platform · terraform",
                 "fields": [{"title": "Severity", "value": "{{ .CommonLabels.severity }}", "short": True}],
-                "actions": [{"type": "button", "text": "Open in SigNoz", "url": "{{ .CommonLabels.ruleSource }}", "style": "primary", "name": "open", "value": "signoz"}],
+                "actions": [{"type": "button", "text": "Open in FuseScope", "url": "{{ .CommonLabels.ruleSource }}", "style": "primary", "name": "open", "value": "signoz"}],
             },
             id="slack_with_fields_and_actions",
         ),
@@ -417,7 +417,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                     "\n"
                     "{{ end }}{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}\n"
                     "\n"
-                    "{{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})\n"
+                    "{{ end }}{{ if .GeneratorURL }}[View in FuseScope]({{ .GeneratorURL }})\n"
                     "\n"
                     "{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})\n"
                     "\n"
@@ -448,7 +448,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                     "\n"
                     "{{ end }}{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}\n"
                     "\n"
-                    "{{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})\n"
+                    "{{ end }}{{ if .GeneratorURL }}[View in FuseScope]({{ .GeneratorURL }})\n"
                     "\n"
                     "{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})\n"
                     "\n"

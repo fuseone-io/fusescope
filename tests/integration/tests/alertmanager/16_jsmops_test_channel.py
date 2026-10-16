@@ -59,7 +59,7 @@ def test_jsmops_create_alert_with_note(
     alert = json.loads(base64.b64decode(creates[0]["bodyAsBase64"]).decode("utf-8"))
     assert alert["alias"], "alias carries the group hash for dedup/close"
     assert re.search(r"\[FIRING:1\] Test Alert \(", alert["message"]), alert["message"]
-    assert alert["source"] == "SigNoz"
+    assert alert["source"] == "FuseScope"
     assert alert["tags"] == ["signoz"]
     # advanced treatment renders the default body as HTML
     assert "<div>" in alert["description"], alert["description"]
@@ -68,7 +68,7 @@ def test_jsmops_create_alert_with_note(
     assert len(notes) == 1
     assert notes[0]["queryParams"]["identifierType"]["values"] == ["alias"]
     note = json.loads(base64.b64decode(notes[0]["bodyAsBase64"]).decode("utf-8"))
-    assert note["source"] == "SigNoz"
+    assert note["source"] == "FuseScope"
     assert note["note"].strip(), "the timeline note carries the plain-text snapshot"
 
 

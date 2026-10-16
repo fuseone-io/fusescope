@@ -107,5 +107,5 @@ def test_googlechat_test_channel(  # pylint: disable=too-many-arguments,too-many
         assert req["url"] == path, f"expected webhook url {path} posted verbatim, got {req['url']}"
         # cardsV2 shape with the hardcoded test alert
         card = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
-        assert card["cardsV2"][0]["cardId"] == "signoz-alert"
+        assert card["cardsV2"][0]["cardId"] == "fusescope-alert"
         assert re.search(r"Test Alert \(", card["cardsV2"][0]["card"]["header"]["title"])

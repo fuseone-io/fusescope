@@ -46,7 +46,7 @@ JSMOPS_CASES = [
                     validation_data={
                         "path": f"{JSMOPS_API_BASE}/v2/alerts",
                         "count": 1,
-                        "json_body": jsmops_alert_subset("threshold_above_at_least_once", [("View in SigNoz", r"/alerts/overview\?ruleId=")]),
+                        "json_body": jsmops_alert_subset("threshold_above_at_least_once", [("View in FuseScope", r"/alerts/overview\?ruleId=")]),
                     },
                 ),
                 types.NotificationValidation(
@@ -73,7 +73,7 @@ JSMOPS_CASES = [
                         "count": 1,
                         "json_body": jsmops_alert_subset(
                             "threshold_below_at_least_once",
-                            [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View related logs", r"/logs/logs-explorer\?")],
+                            [("View in FuseScope", r"/alerts/overview\?ruleId="), ("View related logs", r"/logs/logs-explorer\?")],
                         ),
                     },
                 ),

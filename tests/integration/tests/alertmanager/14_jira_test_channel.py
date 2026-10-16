@@ -76,7 +76,7 @@ def test_jira_create_issue(
     assert fields["project"] == {"key": "OPS"}
     assert fields["issuetype"] == {"name": "Task"}
     assert re.search(r"\[FIRING:1\] Test Alert \(", fields["summary"]), fields["summary"]
-    assert "signoz-alert" in fields["labels"]
+    assert "fusescope-alert" in fields["labels"]
     assert any(label.startswith("ALERT{") for label in fields["labels"]), fields["labels"]
     # ADF body leads with the firing status panel
     panel = fields["description"]["content"][0]
@@ -123,7 +123,7 @@ def test_jira_updates_existing_open_issue(
     make_http_mocks(
         notification_channel,
         [
-            jira_search_mapping([jira_search_issue("OPS-7", done=False, labels=["user-added", "signoz-alert"])]),
+            jira_search_mapping([jira_search_issue("OPS-7", done=False, labels=["user-added", "fusescope-alert"])]),
             jira_update_mapping("OPS-7"),
             jira_comment_mapping("OPS-7"),
         ],
@@ -146,7 +146,7 @@ def test_jira_updates_existing_open_issue(
     assert len(updates) == 1
     fields = json.loads(base64.b64decode(updates[0]["bodyAsBase64"]).decode("utf-8"))["fields"]
     assert "user-added" in fields["labels"], f"user-added labels must survive the update: {fields['labels']}"
-    assert "signoz-alert" in fields["labels"]
+    assert "fusescope-alert" in fields["labels"]
     assert "project" not in fields and "issuetype" not in fields, "create-only fields must not be sent on update"
 
     assert len(find_requests(notification_channel, "POST", f"{JIRA_API_BASE}/issue")) == 0
@@ -168,7 +168,7 @@ def test_jira_reopens_done_issue(
     make_http_mocks(
         notification_channel,
         [
-            jira_search_mapping([jira_search_issue("OPS-7", done=True, labels=["signoz-alert"])]),
+            jira_search_mapping([jira_search_issue("OPS-7", done=True, labels=["fusescope-alert"])]),
             jira_update_mapping("OPS-7"),
             jira_transitions_mapping(
                 "OPS-7",

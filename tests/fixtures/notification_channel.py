@@ -220,7 +220,7 @@ def googlechat_card_subset(alertname: str, buttons: list[tuple[str, str]]) -> di
         "text": f"[FIRING:1] {alertname}",
         "cardsV2": [
             {
-                "cardId": "signoz-alert",
+                "cardId": "fusescope-alert",
                 "card": {
                     "header": {"title": f"[FIRING:1] {alertname}"},
                     "sections": [
@@ -292,7 +292,7 @@ def incidentio_event_subset(alertname: str, links: list[tuple[str, str]]) -> dic
     """An alert-event subset asserting title, firing status, dedup key, SigNoz
     source_url, metadata labels, and each markdown link's text AND url (as a
     regex), so a broken link is caught too. links: (text, url_regex) pairs in
-    default-template order (View in SigNoz -> related logs -> related traces)."""
+    default-template order (View in FuseScope -> related logs -> related traces)."""
     description = "(?s)" + re.escape(f"**Alert:** {alertname}")
     for text, url in links:
         description += rf".*\[{re.escape(text)}\]\([^)]*{url}"
@@ -481,7 +481,7 @@ def jsmops_alert_subset(alertname: str, links: list[tuple[str, str]]) -> dict:
     return {
         "alias": re.compile(r".+"),
         "message": f"[FIRING:1] {alertname}",
-        "source": "SigNoz",
+        "source": "FuseScope",
         "tags": ["signoz"],
         "details": {"alertname": alertname},
         "description": re.compile(description),
@@ -517,7 +517,7 @@ def jira_issue_subset(alertname: str, links: list[tuple[str, str]]) -> dict:
             "project": {"key": "OPS"},
             "issuetype": {"name": "Task"},
             "summary": f"[FIRING:1] {alertname}",
-            "labels": ["signoz-alert", re.compile(r"ALERT\{")],
+            "labels": ["fusescope-alert", re.compile(r"ALERT\{")],
             "description": {"type": "doc", "version": 1, "content": description_content},
         },
     }

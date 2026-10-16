@@ -45,7 +45,7 @@ JIRA_CASES = [
                     validation_data={
                         "path": f"{JIRA_API_BASE}/issue",
                         "count": 1,
-                        "json_body": jira_issue_subset("threshold_above_at_least_once", [("Open in SigNoz", r"/alerts/overview\?ruleId=")]),
+                        "json_body": jira_issue_subset("threshold_above_at_least_once", [("Open in FuseScope", r"/alerts/overview\?ruleId=")]),
                     },
                 ),
                 types.NotificationValidation(
@@ -71,7 +71,7 @@ JIRA_CASES = [
                         "count": 1,
                         "json_body": jira_issue_subset(
                             "threshold_below_at_least_once",
-                            [("Open in SigNoz", r"/alerts/overview\?ruleId="), ("View Related Logs", r"/logs/logs-explorer\?")],
+                            [("Open in FuseScope", r"/alerts/overview\?ruleId="), ("View Related Logs", r"/logs/logs-explorer\?")],
                         ),
                     },
                 ),
