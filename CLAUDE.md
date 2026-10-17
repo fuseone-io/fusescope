@@ -20,7 +20,7 @@ skills, hooks): [`docs/contributing/claude-code.md`](docs/contributing/claude-co
 ## License posture (non-negotiable)
 
 - Source in this repo is **MIT**. Never add GPL/AGPL/SSPL/BUSL/Commons-Clause code
-  or dependencies; new dependencies must be MIT, BSD or Apache-2.0.
+  or dependencies; new dependencies must be MIT, BSD, ISC or Apache-2.0.
 - SigNoz's `ee/` and `cmd/enterprise/` trees are **proprietary** and were removed.
   Features that only existed there (PostgreSQL metastore, SSO, RBAC, …) are
   re-implemented **clean-room**: work from our interfaces, the MIT code and public
