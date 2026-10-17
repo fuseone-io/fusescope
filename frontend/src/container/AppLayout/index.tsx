@@ -24,6 +24,7 @@ import type { UpdateSubscription200 } from 'api/generated/services/fuseScope.sch
 import getUserVersion from 'api/v1/version/get';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import cx from 'classnames';
+import AppHeader from 'components/AppHeader/AppHeader';
 import AppSidebar from 'components/AppSidebar/AppSidebar';
 import AppSidebarProvider from 'components/AppSidebar/AppSidebarProvider';
 import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
@@ -41,7 +42,6 @@ import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
 import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import BottomStrip from 'container/BottomStrip';
-import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -85,7 +85,7 @@ import {
 } from 'utils/timeUtils';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
-import { getRouteKey } from './utils';
+import { getRouteKey, isFullScreenRoute } from './utils';
 
 import './AppLayout.styles.scss';
 
@@ -399,17 +399,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
 
-	const isPublicDashboard = pathname.startsWith('/public/dashboard/');
-	const isAIAssistantPage = pathname.startsWith('/ai-assistant/');
-	// The V2 panel editor is a chromeless full-page route (no side nav / top nav),
-	// like the onboarding and public-dashboard screens.
-	const isPanelEditorV2 = routeKey === 'DASHBOARD_PANEL_EDITOR';
-
-	const renderFullScreen =
-		pathname === ROUTES.ONBOARDING ||
-		pathname === ROUTES.GET_STARTED_WITH_CLOUD ||
-		isPublicDashboard ||
-		isPanelEditorV2;
+	const renderFullScreen = isFullScreenRoute(pathname);
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
@@ -730,18 +720,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						})}
 						data-overlayscrollbars-initialize
 					>
+						{isToDisplayLayout && !renderFullScreen && <AppHeader />}
 						<Sentry.ErrorBoundary
 							fallback={<ErrorBoundaryFallback />}
 							ref={errorBoundaryRef}
 						>
 							<LayoutContent data-overlayscrollbars-initialize>
 								<OverlayScrollbar>
-									<ChildrenContainer>
-										{isToDisplayLayout && !renderFullScreen && !isAIAssistantPage && (
-											<TopNav />
-										)}
-										{children}
-									</ChildrenContainer>
+									<ChildrenContainer>{children}</ChildrenContainer>
 								</OverlayScrollbar>
 							</LayoutContent>
 						</Sentry.ErrorBoundary>

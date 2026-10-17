@@ -8,6 +8,8 @@ import { CmdKProvider } from 'providers/cmdKProvider';
 import { render, RenderResult } from 'tests/test-utils';
 import { UserPreference } from 'types/api/preferences/preference';
 
+import SidebarToggle from 'components/AppHeader/components/SidebarToggle';
+
 import AppSidebar from '../AppSidebar';
 import AppSidebarProvider from '../AppSidebarProvider';
 
@@ -61,6 +63,8 @@ interface RenderOptions {
 	preferences?: UserPreference[];
 	overrides?: Partial<IAppContext>;
 	onPreferenceUpdate?: (preference: UserPreference) => void;
+	/** Rendered next to the sidebar; the toggle lives in the app header. */
+	content?: ReactNode;
 }
 
 export function renderAppSidebar({
@@ -70,6 +74,7 @@ export function renderAppSidebar({
 	preferences = [],
 	overrides = {},
 	onPreferenceUpdate = jest.fn(),
+	content = <SidebarToggle />,
 }: RenderOptions = {}): RenderResult {
 	mockMatchMedia();
 
@@ -85,6 +90,7 @@ export function renderAppSidebar({
 				<KeyboardHotkeysProvider>
 					<AppSidebarProvider hasSidebar>
 						<AppSidebar />
+						{content}
 					</AppSidebarProvider>
 				</KeyboardHotkeysProvider>
 			</CmdKProvider>

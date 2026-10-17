@@ -92,7 +92,7 @@ export interface Routing {
 	/** antd puts a `RouteTab` item's route on `data-node-key`. */
 	routeTab(route: string): Locator;
 	activeRouteTab(route: string): Locator;
-	/** The picker `TopNav` renders. Several pages mount their own. */
+	/** The picker the app header renders. Several pages mount their own. */
 	globalTimePicker(): Locator;
 	selectRelativeTime(value: string): Promise<void>;
 	expectRelativeTime(value: string): Promise<void>;
@@ -186,7 +186,7 @@ export function routingDriver(page: Page): Routing {
 			routing.routeTab(route).getByRole('tab', { selected: true }),
 
 		globalTimePicker: () =>
-			page.locator('.top-nav-container').getByTestId('dropDown'),
+			page.getByTestId('app-header').getByTestId('dropDown'),
 
 		// A click before the picker is interactive is dropped silently, so retry the
 		// open. The popover unmounts on close, which is what proves the selection
