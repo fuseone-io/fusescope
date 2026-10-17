@@ -16,7 +16,8 @@ block() {
 case "$tool" in
   Bash)
     cmd=$(jq -r '.tool_input.command // empty' <<<"$input")
-    if grep -Eq '(^|[;&|[:space:]])git[[:space:]]' <<<"$cmd" &&
+    # Only subcommands that read history or contents; commit messages may name ee/.
+    if grep -Eq '(^|[;&|[:space:]/])git([[:space:]]+(-C[[:space:]]+[^[:space:]]+|-[^[:space:]]+))*[[:space:]]+(show|log|diff|blame|annotate|cat-file|checkout|restore|archive|grep|ls-tree|ls-files|format-patch|cherry-pick|apply)([[:space:]]|$)' <<<"$cmd" &&
       grep -Eq '(^|[[:space:]:"'\''/])(ee|cmd/enterprise)(/|[[:space:]"'\'']|$)' <<<"$cmd"; then
       block "git access to ee/ or cmd/enterprise is not allowed (clean-room)."
     fi
