@@ -57,11 +57,19 @@ function isExternalUrl(node) {
 }
 
 // window.open(withBasePath(x)) and window.open(getAbsoluteUrl(x)) are already safe.
+// The constants/docs helpers always return external URLs.
+const SAFE_HELPERS = new Set([
+	'withBasePath',
+	'getAbsoluteUrl',
+	'signozDocsUrl',
+	'fuseScopeDocsUrl',
+]);
+
 function isSafeHelperCall(node) {
 	return (
 		node.type === 'CallExpression' &&
 		node.callee.type === 'Identifier' &&
-		(node.callee.name === 'withBasePath' || node.callee.name === 'getAbsoluteUrl')
+		SAFE_HELPERS.has(node.callee.name)
 	);
 }
 
