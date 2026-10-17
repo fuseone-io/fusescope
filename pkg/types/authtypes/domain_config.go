@@ -82,6 +82,7 @@ type StorableAuthDomainConfig struct {
 	Enabled     bool             `json:"enabled"`
 	Config      AuthDomainConfig `json:"config"`
 	RoleMapping *RoleMapping     `json:"roleMapping"`
+	ManagedBy   string           `json:"managedBy,omitempty"`
 }
 
 func (AuthDomainConfig) JSONSchemaOneOf() []any {

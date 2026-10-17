@@ -24,6 +24,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/identn"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation"
 	"github.com/fuseone-io/fusescope/pkg/meterreporter"
+	"github.com/fuseone-io/fusescope/pkg/modules/authdomain"
 	"github.com/fuseone-io/fusescope/pkg/modules/cloudintegration"
 	"github.com/fuseone-io/fusescope/pkg/modules/inframonitoring"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer"
@@ -133,6 +134,9 @@ type Config struct {
 	// ServiceAccount config
 	ServiceAccount serviceaccount.Config `mapstructure:"serviceaccount"`
 
+	// AuthDomain config: SSO domains declared in the configuration file.
+	AuthDomain authdomain.Config `mapstructure:"authdomain"`
+
 	// Auditor config
 	Auditor auditor.Config `mapstructure:"auditor"`
 
@@ -178,6 +182,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		user.NewConfigFactory(),
 		identn.NewConfigFactory(),
 		serviceaccount.NewConfigFactory(),
+		authdomain.NewConfigFactory(),
 		auditor.NewConfigFactory(),
 		meterreporter.NewConfigFactory(),
 		cloudintegration.NewConfigFactory(),

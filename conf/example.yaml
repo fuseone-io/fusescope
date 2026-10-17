@@ -432,6 +432,51 @@ serviceaccount:
     # toggle service account analytics
     enabled: true
 
+##################### Auth Domains (SSO) #####################
+authdomain:
+  # How often the domains below are re-applied. This also picks up the organization
+  # created at first sign-up.
+  reconcile_interval: 1m
+  # SSO domains declared here are created or updated automatically, deleted when
+  # removed from this list, and read-only in the UI and API. Domains created in the
+  # UI are not affected. `config` and `role_mapping` use the same shape as the
+  # /api/v2/auth_domains API; string values may reference environment variables
+  # as ${NAME}.
+  domains: []
+  # domains:
+  #   # Microsoft Entra ID
+  #   - name: example.com
+  #     # Organization id or name; may be omitted when there is a single organization.
+  #     org: ""
+  #     enabled: true
+  #     config:
+  #       kind: oidc
+  #       spec:
+  #         issuer: https://login.microsoftonline.com/<tenant-id>/v2.0
+  #         clientId: <application-id>
+  #         clientSecret: ${FUSESCOPE_ENTRA_CLIENT_SECRET}
+  #     role_mapping:
+  #       defaultRole: VIEWER
+  #       groupMappings:
+  #         <entra-group-object-id>: ADMIN
+  #   # Keycloak
+  #   - name: example.org
+  #     config:
+  #       kind: oidc
+  #       spec:
+  #         issuer: https://keycloak.example.org/realms/<realm>
+  #         clientId: fusescope
+  #         clientSecret: ${FUSESCOPE_KEYCLOAK_CLIENT_SECRET}
+  #   # Okta: request the groups scope to receive the groups claim
+  #   - name: example.net
+  #     config:
+  #       kind: oidc
+  #       spec:
+  #         issuer: https://<org>.okta.com
+  #         clientId: <client-id>
+  #         clientSecret: ${FUSESCOPE_OKTA_CLIENT_SECRET}
+  #         scopes: [groups]
+
 ##################### Auditor #####################
 auditor:
   # Specifies the auditor provider to use.

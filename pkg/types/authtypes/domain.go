@@ -26,7 +26,12 @@ var (
 	ErrCodeAuthDomainMismatch      = errors.MustNewCode("auth_domain_mismatch")
 	ErrCodeAuthDomainNotFound      = errors.MustNewCode("auth_domain_not_found")
 	ErrCodeAuthDomainAlreadyExists = errors.MustNewCode("auth_domain_already_exists")
+	ErrCodeAuthDomainManaged       = errors.MustNewCode("auth_domain_managed")
 )
+
+// ManagedByConfig marks auth domains declared in the configuration file; they are
+// reconciled from it and read-only through the API.
+const ManagedByConfig = "config"
 
 type GettableAuthDomain struct {
 	StorableAuthDomain
@@ -34,6 +39,7 @@ type GettableAuthDomain struct {
 	Config            AuthDomainConfig   `json:"config"`
 	RoleMapping       *RoleMapping       `json:"roleMapping"`
 	AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
+	ManagedBy         string             `json:"managedBy,omitempty" description:"Set to config when the domain is declared in the configuration file and read-only through the API."`
 }
 
 type AuthNProviderInfo struct {
@@ -97,6 +103,19 @@ func NewAuthDomainFromPostableAuthDomain(postableAuthDomain *PostableAuthDomain,
 	}, nil
 }
 
+func NewManagedAuthDomain(postableAuthDomain *PostableAuthDomain, orgID valuer.UUID) (*AuthDomain, error) {
+	authDomain, err := NewAuthDomainFromPostableAuthDomain(postableAuthDomain, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := authDomain.ReplaceManaged(postableAuthDomain); err != nil {
+		return nil, err
+	}
+
+	return authDomain, nil
+}
+
 func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain) (*AuthDomain, error) {
 	storableAuthDomainConfig := new(StorableAuthDomainConfig)
 	if err := json.Unmarshal([]byte(storableAuthDomain.Data), storableAuthDomainConfig); err != nil {
@@ -116,6 +135,7 @@ func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, authNProviderIn
 		Config:             authDomain.Config(),
 		RoleMapping:        authDomain.RoleMapping(),
 		AuthNProviderInfo:  authNProviderInfo,
+		ManagedBy:          authDomain.storableAuthDomainConfig.ManagedBy,
 	}
 }
 
@@ -137,6 +157,36 @@ func (typ *AuthDomain) Config() AuthDomainConfig {
 
 func (typ *AuthDomain) RoleMapping() *RoleMapping {
 	return typ.storableAuthDomainConfig.RoleMapping
+}
+
+func (typ *AuthDomain) IsManaged() bool {
+	return typ.storableAuthDomainConfig.ManagedBy == ManagedByConfig
+}
+
+// ReplaceManaged replaces the configuration with the one from the configuration
+// file and marks the domain as managed, keeping its id. It reports whether the
+// stored data changed.
+func (typ *AuthDomain) ReplaceManaged(postableAuthDomain *PostableAuthDomain) (bool, error) {
+	storableAuthDomainConfig := &StorableAuthDomainConfig{
+		Enabled:     postableAuthDomain.Enabled,
+		Config:      postableAuthDomain.Config,
+		RoleMapping: postableAuthDomain.RoleMapping,
+		ManagedBy:   ManagedByConfig,
+	}
+
+	data, err := json.Marshal(storableAuthDomainConfig)
+	if err != nil {
+		return false, err
+	}
+
+	if string(data) == typ.storableAuthDomain.Data {
+		return false, nil
+	}
+
+	typ.storableAuthDomainConfig = storableAuthDomainConfig
+	typ.storableAuthDomain.Data = string(data)
+	typ.storableAuthDomain.UpdatedAt = time.Now()
+	return true, nil
 }
 
 func (typ *AuthDomain) Update(updatableAuthDomain *UpdatableAuthDomain) error {

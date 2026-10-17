@@ -26,8 +26,32 @@ packages:
   github.com/fuseone-io/fusescope/pkg/types/authtypes:
     interfaces:
       AuthNStore:
+        config:
+          filename: "authnstore.go"
+      AuthDomainStore:
+        config:
+          filename: "authdomainstore.go"
     config:
       dir: '{{.InterfaceDir}}/authtypestest'
-      filename: "authnstore.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'
+  github.com/fuseone-io/fusescope/pkg/modules/organization:
+    interfaces:
+      Getter:
+    config:
+      dir: '{{.InterfaceDir}}/organizationtest'
+      filename: "getter.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'
+  github.com/fuseone-io/fusescope/pkg/modules/authdomain:
+    interfaces:
+      Module:
+        config:
+          filename: "module.go"
+      Reconciler:
+        config:
+          filename: "reconciler.go"
+    config:
+      dir: '{{.InterfaceDir}}/authdomaintest'
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'

@@ -31,10 +31,19 @@ type Module interface {
 	// Delete an existing auth domain by id.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
+	// Make the configuration-managed domains of an organization match the given
+	// list: create or update them, and delete the managed ones no longer listed.
+	ApplyManagedDomains(context.Context, valuer.UUID, []*authtypes.PostableAuthDomain) error
+
 	// Get the IDP info of the domain provided.
 	GetAuthNProviderInfo(context.Context, *authtypes.AuthDomain) *authtypes.AuthNProviderInfo
 
 	statsreporter.StatsCollector
+}
+
+// Reconciler applies the auth domains declared in the configuration file to the organizations.
+type Reconciler interface {
+	Reconcile(context.Context) error
 }
 
 type Handler interface {

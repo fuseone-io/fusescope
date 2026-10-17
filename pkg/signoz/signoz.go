@@ -589,6 +589,11 @@ func New(
 		return nil, err
 	}
 
+	authDomainReconciler, err := implauthdomain.NewReconciler(providerSettings, modules.AuthDomain, orgGetter, config.AuthDomain)
+	if err != nil {
+		return nil, err
+	}
+
 	registry, err := factory.NewRegistry(
 		ctx,
 		instrumentation.Logger(),
@@ -606,6 +611,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("ruler"), rulerInstance),
 		factory.NewNamedService(factory.MustNewName("systemdashboard"), impldashboard.NewService(providerSettings, dashboard, orgGetter)),
 		factory.NewNamedService(factory.MustNewName("spanmappergroup"), implspanmapper.NewService(providerSettings, spanMapperModule, orgGetter)),
+		factory.NewNamedService(factory.MustNewName("authdomain"), implauthdomain.NewService(providerSettings, authDomainReconciler, config.AuthDomain.ReconcileInterval)),
 	)
 	if err != nil {
 		return nil, err
