@@ -44,9 +44,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: lts/*
       - name: install-pnpm
@@ -77,7 +77,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       # Images bring-up-stack would otherwise pull, at the tests/conftest.py
       # defaults. A stale tag only loses the head start.
       - name: pull-images
@@ -95,18 +95,18 @@ jobs:
             wiremock/wiremock:2.35.1-1 \
             | xargs -P 0 -n 1 docker pull -q
       - name: python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: 3.13
       - name: uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v10.3.0
       - name: python-install
         id: python-install
         background: true
         run: |
           cd tests && uv sync
       - name: node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: lts/*
       - name: install-pnpm
@@ -120,7 +120,7 @@ jobs:
       # BuildKit cache mounts so the in-test image build is incremental.
       - name: restore
         id: restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ${{ runner.temp }}/cacheci
           key: tests-primary
@@ -176,7 +176,7 @@ jobs:
             e2e/bootstrap/setup.py::test_teardown
       - name: upload-artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-artifacts-${{ matrix.project }}-${{ matrix.shard }}
           path: tests/e2e/artifacts/
