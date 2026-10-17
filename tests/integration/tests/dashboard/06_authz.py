@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 from wiremock.resources.mappings import Mapping
 
@@ -327,6 +328,7 @@ def test_viewer_allowed_on_saved_views(
 # ─── per-object FGA scoping (enterprise, custom role) ─────────────────────────
 
 
+@pytest.mark.skip(reason="SigNoz Cloud licensing is not part of FuseScope; removed with fuseone-io/fusescope#23")
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -336,6 +338,7 @@ def test_apply_license(
     add_license(signoz, make_http_mocks, get_token)
 
 
+@pytest.mark.skip(reason="public dashboards are not implemented in FuseScope yet (fuseone-io/fusescope#15)")
 def test_editor_allowed_on_public_config(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -386,6 +389,7 @@ def test_editor_allowed_on_public_config(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_setup_scoped_actor(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -415,6 +419,7 @@ def test_setup_scoped_actor(
     change_user_role(signoz, admin_token, user_id, "signoz-viewer", _ACTOR_ROLE_NAME)
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_read_scoped_to_granted_dashboard(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -446,6 +451,7 @@ def test_read_scoped_to_granted_dashboard(
     assert response.status_code == HTTPStatus.FORBIDDEN, f"read other dashboard: expected 403, got {response.status_code}: {response.text}"
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_list_returns_every_dashboard(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -465,6 +471,7 @@ def test_list_returns_every_dashboard(
     assert {_TARGET_A, _TARGET_B} <= names
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_publish_and_unpublish_require_update_on_the_dashboard(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -574,6 +581,7 @@ def test_publish_and_unpublish_require_update_on_the_dashboard(
     assert response.status_code == HTTPStatus.NO_CONTENT, f"unpublish with dashboard update: {response.text}"
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_dashboard_authz_cleanup(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument

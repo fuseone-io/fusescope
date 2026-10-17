@@ -38,6 +38,7 @@ def test_managed_roles_create_on_register(
         assert role["type"] == "managed"
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_custom_role_create_requires_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -54,6 +55,7 @@ def test_custom_role_create_requires_license(
     assert resp.status_code == HTTPStatus.UNAVAILABLE_FOR_LEGAL_REASONS, f"expected 451 without license, got {resp.status_code}: {resp.text}"
 
 
+@pytest.mark.skip(reason="SigNoz Cloud licensing is not part of FuseScope; removed with fuseone-io/fusescope#23")
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument

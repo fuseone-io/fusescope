@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 from wiremock.client import (
     HttpMethods,
@@ -19,6 +20,8 @@ from fixtures.gateway import (
     get_latest_gateway_request_body,
 )
 from fixtures.logger import setup_logger
+
+pytestmark = pytest.mark.skip(reason="SigNoz Cloud licensing is not part of FuseScope; removed with fuseone-io/fusescope#23")
 
 logger = setup_logger(__name__)
 

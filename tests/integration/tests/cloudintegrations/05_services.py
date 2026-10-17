@@ -14,6 +14,8 @@ from fixtures.cloudintegrations import (
 )
 from fixtures.logger import setup_logger
 
+pytestmark = pytest.mark.skip(reason="cloud integrations are not implemented in FuseScope yet (fuseone-io/fusescope#16)")
+
 logger = setup_logger(__name__)
 
 AWS_SERVICE_SPEC = ProviderServiceSpec(

@@ -1,12 +1,15 @@
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 from selenium import webdriver
 from wiremock.resources.mappings import Mapping
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license, assert_user_has_role
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
+
+pytestmark = pytest.mark.skip(reason="SAML is not implemented in FuseScope yet (fuseone-io/fusescope#7)")
 
 # SigNoz is served under /signoz, so the SAML ACS registered with the IdP must
 # include the prefix to match the backend-generated AssertionConsumerServiceURL.

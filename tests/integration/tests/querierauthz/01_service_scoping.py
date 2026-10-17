@@ -23,6 +23,7 @@ scoped_role = "telemetry-scope-key-a"
 scoped_email = "scope-key-a@telemetry.test"
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_setup(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -59,6 +60,7 @@ def test_setup(
 )
 def test_invalid_telemetry_selector_rejected(
     signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     selector: str,
 ) -> None:
@@ -75,6 +77,7 @@ def test_invalid_telemetry_selector_rejected(
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 @pytest.mark.parametrize(
     "expression",
     [
@@ -106,6 +109,7 @@ def test_allowed(
     assert response.status_code == HTTPStatus.OK, response.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 @pytest.mark.parametrize(
     "expression",
     [
@@ -139,6 +143,7 @@ def test_denied(
     assert "not authorized" in response.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_denied_message_names_resource(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -156,6 +161,7 @@ def test_denied_message_names_resource(
     assert "builder_query/signoz.workspace.key.id/key-b" in response.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_variables_resolve_into_gate(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -189,6 +195,7 @@ def test_variables_resolve_into_gate(
     assert denied.status_code == HTTPStatus.FORBIDDEN, denied.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_returns_only_scoped_rows(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],

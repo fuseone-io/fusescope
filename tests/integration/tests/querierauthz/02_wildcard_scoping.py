@@ -2,6 +2,8 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
+
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, change_user_role, create_active_user
 from fixtures.logs import Logs
@@ -15,6 +17,7 @@ builder_all_role = "telemetry-scope-builder-all"
 builder_all_email = "scope-builder-all@telemetry.test"
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_setup(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -32,6 +35,7 @@ def test_setup(
     change_user_role(signoz, admin_token, all_user, "signoz-viewer", builder_all_role)
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_key_wildcard_allows_any_single_key(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -54,6 +58,7 @@ def test_key_wildcard_allows_any_single_key(
     assert key_b.status_code == HTTPStatus.OK, key_b.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_key_wildcard_denies_unfiltered(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -70,6 +75,7 @@ def test_key_wildcard_denies_unfiltered(
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_builder_wildcard_allows_unfiltered(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -88,6 +94,7 @@ def test_builder_wildcard_allows_unfiltered(
 
 def test_admin_allows_unfiltered_across_keys(
     signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:

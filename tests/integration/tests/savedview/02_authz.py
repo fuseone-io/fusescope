@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 from wiremock.resources.mappings import Mapping
 
@@ -15,6 +16,8 @@ from fixtures.auth import (
 )
 from fixtures.role import find_role_by_name, transaction_group
 from fixtures.savedview import SAVED_VIEW_BASE, create_saved_view, find_saved_view_by_name
+
+pytestmark = pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 
 _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME = "saved-view-fga-readonly"
 _SAVED_VIEW_FGA_CUSTOM_USER_EMAIL = "customrole+savedviewfga@integration.test"

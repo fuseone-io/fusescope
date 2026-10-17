@@ -1,6 +1,7 @@
 import http
 from collections.abc import Callable
 
+import pytest
 import requests
 from wiremock.client import (
     HttpMethods,
@@ -12,6 +13,8 @@ from wiremock.client import (
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+
+pytestmark = pytest.mark.skip(reason="SigNoz Cloud licensing is not part of FuseScope; removed with fuseone-io/fusescope#23")
 
 
 def test_apply_license(

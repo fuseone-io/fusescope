@@ -8,6 +8,8 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, change_user_role, create_active_user
 from fixtures.role import transaction_group
 
+pytestmark = pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
+
 user_password = "password123Z$"
 keywild_role = "telemetry-check-keywild"
 keywild_email = "check-keywild@telemetry.test"

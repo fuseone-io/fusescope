@@ -2,12 +2,15 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
 import requests
 from wiremock.resources.mappings import Mapping
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.metrics import Metrics
 from fixtures.types import Operation, SigNoz, TestContainerDocker
+
+pytestmark = pytest.mark.skip(reason="public dashboards are not implemented in FuseScope yet (fuseone-io/fusescope#15)")
 
 V2_BASE_URL = "/api/v2/dashboards"
 PANEL_KEY = "24e2697b"

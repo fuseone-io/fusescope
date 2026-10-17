@@ -9,6 +9,8 @@ from wiremock.resources.mappings import Mapping
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.types import Operation, SigNoz, TestContainerDocker
 
+pytestmark = pytest.mark.skip(reason="public dashboards are not implemented in FuseScope yet (fuseone-io/fusescope#15)")
+
 
 def test_apply_license(
     signoz: SigNoz,
