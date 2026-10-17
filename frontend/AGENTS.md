@@ -47,9 +47,18 @@ Run everything with `npx pnpm@10 …` (the repo rejects pnpm 11).
 - Code that may need an authorization check: read
   [`src/lib/authz/README.md`](src/lib/authz/README.md).
 
+## New UI
+
+New screens use the shadcn/ui components in `src/components/ui` with Tailwind
+(`tw:`-prefixed utilities) and the FuseScope tokens, replacing antd and
+`@signozhq/ui` page by page. Read
+[`src/components/ui/README.md`](src/components/ui/README.md) before adding a
+component or a screen: no preflight, `fs-ui` scope, `--fs-*` variables,
+`forwardRef` on React 18.
+
 ## Styling
 
-- New CSS uses CSS Modules — see [`docs/css-modules-guide.md`](docs/css-modules-guide.md).
+- New screens style with Tailwind (see New UI). Other new CSS uses CSS Modules — see [`docs/css-modules-guide.md`](docs/css-modules-guide.md).
 - Before styling a `@signozhq/ui` component, check its props in
   `node_modules/@signozhq/ui/dist/<component>/*.d.ts` for `className`/`style`
   support; avoid overriding its CSS variables unless required.
@@ -59,8 +68,9 @@ Run everything with `npx pnpm@10 …` (the repo rejects pnpm 11).
 
 ## What not to introduce
 
-- No new UI, charting, table or form libraries — antd, `@signozhq/ui` and the
-  existing charting stack cover these.
+- No new UI, charting, table or form libraries — `src/components/ui`
+  (shadcn/ui on Radix), the legacy antd/`@signozhq/ui` and the existing
+  charting stack cover these.
 - No analytics, telemetry or support widgets that phone home without an explicit
   decision; existing ones (PostHog, Sentry, Appcues, Pylon) stay off by default.
 - No dependencies with non-OSI licenses.
