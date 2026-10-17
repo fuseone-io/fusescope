@@ -57,7 +57,7 @@ export const pipelinesMocks = defineStoryMocks({
 			description:
 				'Where the latest config version got to. Anything other than deployed or failed keeps the page polling every three seconds.',
 			options: DEPLOY_STATUSES,
-			value: 'DEPLOYED',
+			value: 'deployed',
 		}),
 		versions: countControl('Config versions', {
 			group: DEPLOYMENT,
