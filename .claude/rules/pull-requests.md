@@ -8,4 +8,5 @@
 - **AI-assisted commits end with a `Co-Authored-By:` trailer** naming the model (e.g. `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`).
 - **Keep the commit body short and human readable** focused on decision made if any. Commit body must not re-iterate the changes done, skip if title is sufficient in conveying the change.
 - **Use conventional commit format** for commits and PR title.
+- **Docs-only PRs skip CI by path.** Markdown and `docs/` (except `docs/api/`, the OpenAPI spec) are in each workflow's `paths-ignore`; no `[skip ci]` needed. When adding a documentation folder, add it to the `paths-ignore` lists in `goci`, `jsci`, `e2eci` and `integrationci`.
 - **Amending and force-pushing are fine on PR branches** before merge. Never rewrite `main`; merges are fast-forward and only with CI green.

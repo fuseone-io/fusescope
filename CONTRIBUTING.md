@@ -38,6 +38,7 @@ Thanks for helping. This page is the short version of how we work; the engineeri
 
 - Fill in the [PR template](.github/pull_request_template.md), keeping only the headings that apply. Put `Closes #<n>` in the description, not in commits.
 - CI labels, added by maintainers: `safe-to-integrate` runs the integration matrix, `safe-to-e2e` runs Playwright when the diff doesn't touch `frontend/` or `tests/e2e/`, and `safe-to-test` lets CI run on fork and bot PRs.
+- PRs that only change documentation (Markdown files, `docs/` except `docs/api/`) skip the Go, frontend, e2e and integration workflows; only the commit check runs. No `[skip ci]` needed.
 - PRs merge by rebase, with CI green.
 
 ## Report a problem
