@@ -10,25 +10,11 @@ import ChangeHistory from 'container/PipelinePage/Layouts/ChangeHistory';
 import PipelinePage from 'container/PipelinePage/Layouts/Pipeline';
 import { useNotifications } from 'hooks/useNotifications';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { SuccessResponse } from 'types/api';
 import { Pipeline } from 'types/api/pipeline/def';
 
-import './Pipelines.styles.scss';
+import { pipelineRefetchInterval } from './utils';
 
-const pipelineRefetchInterval = (
-	pipelineResponse: SuccessResponse<Pipeline> | undefined,
-): number | false => {
-	// Refetch pipeline data periodically if deployment of
-	// its latest changes is not complete yet.
-	const latestVersion = pipelineResponse?.payload?.history?.[0];
-	const isLatestDeploymentFinished = ['DEPLOYED', 'FAILED'].includes(
-		latestVersion?.deployStatus || '',
-	);
-	if (latestVersion && !isLatestDeploymentFinished) {
-		return 3000;
-	}
-	return false;
-};
+import './Pipelines.styles.scss';
 
 function Pipelines(): JSX.Element {
 	const { t } = useTranslation('common');

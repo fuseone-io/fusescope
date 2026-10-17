@@ -141,5 +141,5 @@ export const ChangeHistory: Story = {
 
 /** A deployment the collector has not finished, which the page polls for. */
 export const Deploying: Story = {
-	args: { deployStatus: 'IN_PROGRESS' },
+	args: { deployStatus: 'in_progress' },
 };

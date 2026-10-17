@@ -13,26 +13,23 @@ import type {
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-/**
- * What the API sends. The change-history column renders the lowercase spelling,
- * so a version's stage stays blank there: see the story's PR.
- */
+/** What the API sends. */
 export const DEPLOY_STATUSES = [
-	'DEPLOYED',
-	'IN_PROGRESS',
-	'FAILED',
-	'DIRTY',
-	'UNKNOWN',
+	'deployed',
+	'in_progress',
+	'failed',
+	'dirty',
+	'unknown',
 ] as const;
 
 export type DeployStatus = (typeof DEPLOY_STATUSES)[number];
 
 const DEPLOY_RESULTS: Record<DeployStatus, string> = {
-	DEPLOYED: 'deploy success',
-	IN_PROGRESS: 'deployment started',
-	FAILED: 'collector rejected the config: unknown processor "grok_parser"',
-	DIRTY: 'config on the collector is older than this version',
-	UNKNOWN: '',
+	deployed: 'deploy success',
+	in_progress: 'deployment started',
+	failed: 'collector rejected the config: unknown processor "grok_parser"',
+	dirty: 'config on the collector is older than this version',
+	unknown: '',
 };
 
 const filterOn = (key: string, value: string): TagFilter => ({
@@ -162,7 +159,7 @@ const historyFor = (
 	Array.from({ length: versions }, (_unused, index) => {
 		const version = versions - index;
 		const isLatest = index === 0;
-		const status = isLatest ? deployStatus : 'DEPLOYED';
+		const status = isLatest ? deployStatus : 'deployed';
 
 		return {
 			active: isLatest,

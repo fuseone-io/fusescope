@@ -54,6 +54,16 @@ export interface PipelineData {
 	tags?: Array<string>; // Tags data is missing in API response
 }
 
+/** Mirrors `opamptypes.DeployStatus` on the backend. */
+export enum DeployStatus {
+	Dirty = 'dirty',
+	Deploying = 'deploying',
+	Deployed = 'deployed',
+	InProgress = 'in_progress',
+	Failed = 'failed',
+	Unknown = 'unknown',
+}
+
 export interface HistoryData {
 	active: boolean;
 	createdAt: string;
