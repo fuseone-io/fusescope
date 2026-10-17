@@ -524,13 +524,9 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		await page.goto('/home');
-		// Sidebar items are <div class="nav-item"> with the label as visible
-		// text — they're not <a role="link">, so getByRole won't reach them.
-		// Filter on the exact label to avoid matching nested items that
-		// happen to contain the substring.
 		await page
-			.locator('.nav-item')
-			.filter({ hasText: /^Dashboards$/ })
+			.getByTestId('app-sidebar')
+			.getByRole('link', { name: 'Dashboards', exact: true })
 			.click();
 		await expect(page).toHaveURL(/\/dashboard/);
 		await expect(page).toHaveTitle('SigNoz | All Dashboards');

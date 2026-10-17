@@ -1,11 +1,4 @@
 import { ReactNode } from 'react';
-import { MenuProps } from 'antd';
-
-export type MenuItem = Required<MenuProps>['items'][number];
-
-export type SidebarMenu = MenuItem & {
-	tags?: string[];
-};
 
 export interface SidebarItem {
 	key: string | number;
@@ -25,22 +18,9 @@ export interface SidebarItem {
 	itemKey?: string;
 }
 
-export const CHANGELOG_LABEL = 'Full Changelog';
-
 export interface SettingsNavSection {
 	title?: string;
 	items: SidebarItem[];
 	key: string;
 	hasDivider?: boolean;
-}
-
-export interface DropdownSeparator {
-	type: 'divider' | 'group';
-	label?: ReactNode;
-}
-
-export enum SecondaryMenuItemKey {
-	Slack = 'slack',
-	Version = 'version',
-	Support = 'support',
 }

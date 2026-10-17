@@ -87,7 +87,7 @@ export interface Routing {
 	historyDepth(): Promise<number>;
 	/** Complete the login form on the page as it stands, without navigating. */
 	login(): Promise<void>;
-	/** Sidebar entries are `div.nav-item`, not links. */
+	/** A main-navigation link, by its exact label. */
 	sidebarItem(label: string): Locator;
 	/** antd puts a `RouteTab` item's route on `data-node-key`. */
 	routeTab(route: string): Locator;
@@ -178,7 +178,9 @@ export function routingDriver(page: Page): Routing {
 		},
 
 		sidebarItem: (label) =>
-			page.locator('.nav-item').filter({ hasText: new RegExp(`^${label}$`) }),
+			page
+				.getByTestId('app-sidebar')
+				.getByRole('link', { name: label, exact: true }),
 		routeTab: (route) => page.locator(`.ant-tabs-tab[data-node-key="${route}"]`),
 		activeRouteTab: (route) =>
 			routing.routeTab(route).getByRole('tab', { selected: true }),
