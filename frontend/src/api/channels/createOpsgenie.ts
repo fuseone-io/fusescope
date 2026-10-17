@@ -19,6 +19,7 @@ const create = async (
 			name: props.name,
 			opsgenie_configs: [
 				{
+					send_resolved: props.send_resolved,
 					api_key: props.api_key,
 					description: props.description,
 					priority: props.priority,
