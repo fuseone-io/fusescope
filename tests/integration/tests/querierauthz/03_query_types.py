@@ -2,6 +2,8 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
+
 from fixtures import querier, types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, change_user_role, create_active_user
 from fixtures.querier import make_query_request
@@ -20,6 +22,7 @@ meter_query = [{"type": "builder_query", "spec": {"name": "A", "signal": "metric
 audit_query = [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "source": "audit", "disabled": False}}]
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_setup(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -49,6 +52,7 @@ def test_setup(
     create_active_user(signoz, admin_token, email=viewer_email, role="signoz-viewer", password=user_password)
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_clickhouse_sql_requires_chsql_grant(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -66,6 +70,7 @@ def test_clickhouse_sql_requires_chsql_grant(
     assert admin.status_code == HTTPStatus.OK, admin.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_promql_requires_promql_grant(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -82,6 +87,7 @@ def test_promql_requires_promql_grant(
     assert admin.status_code != HTTPStatus.FORBIDDEN, admin.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_trace_operator_rides_on_referenced_queries(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -104,6 +110,7 @@ def test_trace_operator_rides_on_referenced_queries(
     assert denied.status_code == HTTPStatus.FORBIDDEN, denied.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_formula_rides_on_referenced_queries(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -129,6 +136,7 @@ def test_formula_rides_on_referenced_queries(
     assert denied.status_code == HTTPStatus.FORBIDDEN, denied.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_managed_viewer_meter_and_clickhouse_allowed_audit_denied(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],

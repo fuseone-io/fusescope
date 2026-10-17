@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 from wiremock.client import (
     HttpMethods,
@@ -13,6 +14,8 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.cloudintegrations import setup_create_account_mocks
 from fixtures.logger import setup_logger
+
+pytestmark = pytest.mark.skip(reason="cloud integrations are not implemented in FuseScope yet (fuseone-io/fusescope#16)")
 
 logger = setup_logger(__name__)
 

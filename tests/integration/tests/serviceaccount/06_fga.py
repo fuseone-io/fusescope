@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 from wiremock.resources.mappings import Mapping
 
@@ -19,6 +20,8 @@ from fixtures.serviceaccount import (
     create_service_account,
     find_service_account_by_name,
 )
+
+pytestmark = pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 
 _SA_FGA_CUSTOM_ROLE_NAME = "sa-fga-readonly"
 _SA_FGA_CUSTOM_USER_EMAIL = "customrole+safga@integration.test"

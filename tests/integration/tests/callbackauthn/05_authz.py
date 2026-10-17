@@ -166,7 +166,7 @@ def test_editor_and_viewer_forbidden(
         assert response.status_code == HTTPStatus.FORBIDDEN, f"{email} delete: expected 403, got {response.status_code}: {response.text}"
 
 
-@pytest.mark.skip(reason="custom roles are an enterprise feature the community build does not ship")
+@pytest.mark.skip(reason="SigNoz Cloud licensing is not part of FuseScope; removed with fuseone-io/fusescope#23")
 def test_apply_license(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -176,7 +176,7 @@ def test_apply_license(
     add_license(signoz, make_http_mocks, get_token)
 
 
-@pytest.mark.skip(reason="custom roles are an enterprise feature the community build does not ship")
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_setup_actor(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -198,7 +198,7 @@ def test_setup_actor(
     change_user_role(signoz, admin_token, user_id, "signoz-viewer", _ACTOR_ROLE_NAME)
 
 
-@pytest.mark.skip(reason="custom roles are an enterprise feature the community build does not ship")
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_actor_without_grants_forbidden(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -238,7 +238,7 @@ def test_actor_without_grants_forbidden(
     assert response.status_code == HTTPStatus.FORBIDDEN, f"read without grant: expected 403, got {response.status_code}: {response.text}"
 
 
-@pytest.mark.skip(reason="custom roles are an enterprise feature the community build does not ship")
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_create_requires_attach_on_mapped_roles(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -349,7 +349,7 @@ def test_create_requires_attach_on_mapped_roles(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
-@pytest.mark.skip(reason="custom roles are an enterprise feature the community build does not ship")
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_update_requires_detach_on_stored_roles(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -434,7 +434,7 @@ def test_update_requires_detach_on_stored_roles(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
-@pytest.mark.skip(reason="custom roles are an enterprise feature the community build does not ship")
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_instance_verbs_scoped_to_granted_domain(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument

@@ -18,6 +18,8 @@ from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
 from fixtures.role import transaction_group
 
+pytestmark = pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
+
 user_password = "password123Z$"
 scoped_role = "infra-scope-key-a"
 scoped_email = "infra-scope-key-a@telemetry.test"

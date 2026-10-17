@@ -9,6 +9,8 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.cloudintegrations import ProviderAccountSpec
 from fixtures.logger import setup_logger
 
+pytestmark = pytest.mark.skip(reason="cloud integrations are not implemented in FuseScope yet (fuseone-io/fusescope#16)")
+
 logger = setup_logger(__name__)
 
 AWS_ACCOUNT_SPEC = ProviderAccountSpec(

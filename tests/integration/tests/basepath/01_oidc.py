@@ -2,6 +2,7 @@ from collections.abc import Callable
 from http import HTTPStatus
 from urllib.parse import urlparse
 
+import pytest
 import requests
 from selenium import webdriver
 from wiremock.resources.mappings import Mapping
@@ -15,6 +16,7 @@ BASE_PATH = "/signoz"
 OIDC_CALLBACK_PATH = f"{BASE_PATH}/api/v1/complete/oidc"
 
 
+@pytest.mark.skip(reason="SigNoz Cloud licensing is not part of FuseScope; removed with fuseone-io/fusescope#23")
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -31,6 +33,7 @@ def test_apply_license(
 
 def test_create_auth_domain(
     signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
     idp: TestContainerIDP,  # pylint: disable=unused-argument
     create_oidc_client: Callable[[str, str], None],
     get_oidc_settings: Callable[[str], dict],

@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 from wiremock.resources.mappings import Mapping
 
@@ -20,6 +21,7 @@ CRUD_ASSIGNEE_USER_EMAIL = "crud+assignee@integration.test"
 CRUD_ASSIGNEE_USER_PASSWORD = "password123Z$"
 
 
+@pytest.mark.skip(reason="SigNoz Cloud licensing is not part of FuseScope; removed with fuseone-io/fusescope#23")
 def test_apply_license(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -29,6 +31,7 @@ def test_apply_license(
     add_license(signoz, make_http_mocks, get_token)
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_create_get_list_roundtrip(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -57,6 +60,7 @@ def test_create_get_list_roundtrip(
     assert CRUD_ROLE_NAME in {r["name"] for r in resp.json()["data"]}
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_declarative_update_adds_and_removes_transactions(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -100,6 +104,7 @@ def test_declarative_update_adds_and_removes_transactions(
     assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_update_changes_description(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -180,6 +185,7 @@ def test_create_validation_rejected(
         assert resp.status_code == HTTPStatus.BAD_REQUEST, f"{label}: expected 400, got {resp.status_code}: {resp.text}"
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_duplicate_name_conflict(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -203,6 +209,7 @@ def test_duplicate_name_conflict(
         assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_managed_role_is_immutable(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -223,6 +230,7 @@ def test_managed_role_is_immutable(
     assert resp.status_code == HTTPStatus.BAD_REQUEST, f"delete managed role: expected 400, got {resp.status_code}: {resp.text}"
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_delete_role_with_assignee_guarded(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -267,6 +275,7 @@ def test_delete_role_with_assignee_guarded(
     assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_delete_role_after_deleting_assigned_user(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -301,6 +310,7 @@ def test_delete_role_after_deleting_assigned_user(
     assert resp.status_code == HTTPStatus.NO_CONTENT, f"delete role after deleting its only assignee: {resp.text}"
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_delete_removes_role(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -318,6 +328,7 @@ def test_delete_removes_role(
     assert resp.status_code == HTTPStatus.NOT_FOUND, f"expected 404 after delete, got {resp.status_code}: {resp.text}"
 
 
+@pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 def test_cleanup_assignee_user(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument

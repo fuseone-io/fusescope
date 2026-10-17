@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 from wiremock.resources.mappings import Mapping
 
@@ -13,6 +14,8 @@ from fixtures.auth import (
     create_active_user,
 )
 from fixtures.role import find_role_by_name, transaction_group
+
+pytestmark = pytest.mark.skip(reason="custom roles are not implemented in FuseScope yet (fuseone-io/fusescope#14)")
 
 PROMOTED_PATH_BASE = "/api/v1/promoted_paths"
 
