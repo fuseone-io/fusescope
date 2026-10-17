@@ -8,7 +8,7 @@ import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/fuseScope.schemas';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
@@ -100,7 +100,7 @@ export default function Dashboards({
 								logEvent('Homepage: Learn more clicked', {
 									source: 'Dashboards',
 								});
-								window.open(signozDocsUrl('/userguide/manage-dashboards/'), '_blank');
+								window.open(fuseScopeDocsUrl('/dashboards/dashboards/'), '_blank');
 							}}
 						>
 							Learn more <ArrowUpRight size={12} />

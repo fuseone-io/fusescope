@@ -1,9 +1,7 @@
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 export const ExploreHeaderToolTip = {
-	url: signozDocsUrl(
-		'/querying/overview/?utm_source=product&utm_medium=new-query-builder',
-	),
+	url: fuseScopeDocsUrl('/querying/query-builder/'),
 	text: 'More details on how to use query builder',
 };
 

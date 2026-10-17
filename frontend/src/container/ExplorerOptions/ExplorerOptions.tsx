@@ -38,7 +38,7 @@ import axios from 'axios';
 import cx from 'classnames';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -717,17 +717,13 @@ function ExplorerOptions({
 
 	const infoIconLink = useMemo(() => {
 		if (isLogsExplorer) {
-			return signozDocsUrl(
-				'/userguide/logs_query_builder/?utm_source=product&utm_medium=logs-explorer-toolbar',
-			);
+			return fuseScopeDocsUrl('/explore/logs/');
 		}
 		// TODO: Add metrics explorer info icon link
 		if (isMetricsExplorer) {
 			return '';
 		}
-		return signozDocsUrl(
-			'/userguide/traces/?utm_source=product&utm_medium=trace-explorer-toolbar',
-		);
+		return fuseScopeDocsUrl('/explore/traces/');
 	}, [isLogsExplorer, isMetricsExplorer]);
 
 	const getQueryName = (query: Query): string => {

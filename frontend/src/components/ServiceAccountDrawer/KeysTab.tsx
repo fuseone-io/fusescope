@@ -3,7 +3,7 @@ import { KeyRound, X } from '@signozhq/icons';
 import { Pagination, Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/fuseScope.schemas';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 import {
@@ -206,8 +206,8 @@ function KeysTab({
 				<p className="keys-tab__empty-text">
 					No keys. Start by creating one.{' '}
 					<a
-						href={signozDocsUrl(
-							'/manage/administrator-guide/iam/service-accounts/#step-3-generate-an-api-key',
+						href={fuseScopeDocsUrl(
+							'/administration/service-accounts/#create-a-service-account-and-key',
 						)}
 						target="_blank"
 						rel="noopener noreferrer"

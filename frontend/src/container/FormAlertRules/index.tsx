@@ -21,7 +21,7 @@ import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/Que
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -82,18 +82,10 @@ export enum AlertDetectionTypes {
 }
 
 const ALERT_SETUP_GUIDE_URLS: Record<AlertTypes, string> = {
-	[AlertTypes.METRICS_BASED_ALERT]: signozDocsUrl(
-		'/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
-	),
-	[AlertTypes.LOGS_BASED_ALERT]: signozDocsUrl(
-		'/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
-	),
-	[AlertTypes.TRACES_BASED_ALERT]: signozDocsUrl(
-		'/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
-	),
-	[AlertTypes.EXCEPTIONS_BASED_ALERT]: signozDocsUrl(
-		'/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
-	),
+	[AlertTypes.METRICS_BASED_ALERT]: fuseScopeDocsUrl('/alerts/alert-rules/'),
+	[AlertTypes.LOGS_BASED_ALERT]: fuseScopeDocsUrl('/alerts/alert-rules/'),
+	[AlertTypes.TRACES_BASED_ALERT]: fuseScopeDocsUrl('/alerts/alert-rules/'),
+	[AlertTypes.EXCEPTIONS_BASED_ALERT]: fuseScopeDocsUrl('/alerts/alert-rules/'),
 	[AlertTypes.ANOMALY_BASED_ALERT]: signozDocsUrl(
 		'/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
 	),

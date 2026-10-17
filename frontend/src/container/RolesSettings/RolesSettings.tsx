@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Plus } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import ROUTES from 'constants/routes';
@@ -32,7 +32,7 @@ function RolesSettings(): JSX.Element {
 							: 'The built-in roles of this instance.'}
 					</span>{' '}
 					<a
-						href={signozDocsUrl('/manage/administrator-guide/iam/roles/')}
+						href={fuseScopeDocsUrl('/administration/users-and-roles/#roles')}
 						target="_blank"
 						rel="noopener noreferrer"
 						className={styles.rolesSettingsHeaderLearnMore}

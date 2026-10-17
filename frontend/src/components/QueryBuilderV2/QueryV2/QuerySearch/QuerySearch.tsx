@@ -25,7 +25,7 @@ import {
 	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
 } from 'constants/antlrQueryConstants';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
@@ -1485,7 +1485,7 @@ function QuerySearch({
 			Need help with search syntax?
 			<br />
 			<a
-				href={signozDocsUrl('/userguide/search-syntax/')}
+				href={fuseScopeDocsUrl('/querying/search-syntax/')}
 				target="_blank"
 				rel="noopener noreferrer"
 				style={{ color: '#1890ff', textDecoration: 'underline' }}
@@ -1577,7 +1577,7 @@ function QuerySearch({
 					placement="left"
 				>
 					<a
-						href={signozDocsUrl('/userguide/search-syntax/')}
+						href={fuseScopeDocsUrl('/querying/search-syntax/')}
 						target="_blank"
 						rel="noopener noreferrer"
 						style={{

@@ -7,7 +7,7 @@ import { withRouter } from 'react-router-dom';
 import { Select, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import Graph from 'components/Graph';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { GetService, getUsageData, UsageDataItem } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalTime } from 'types/actions/globalTime';
@@ -172,7 +172,7 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 						<Typography>
 							No spans found. Please add instrumentation (follow this
 							<a
-								href={signozDocsUrl('/instrumentation/overview')}
+								href={fuseScopeDocsUrl('/sending-data/instrumentation/')}
 								target="_blank"
 								style={{ marginLeft: 3 }}
 								rel="noreferrer"

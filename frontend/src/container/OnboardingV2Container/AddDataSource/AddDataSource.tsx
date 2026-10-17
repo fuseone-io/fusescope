@@ -15,7 +15,7 @@ import { toast } from '@signozhq/ui/sonner';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
-import { DOCS_BASE_URL, signozDocsUrl } from 'constants/docs';
+import { DOCS_BASE_URL, fuseScopeDocsUrl } from 'constants/docs';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useGetGlobalConfig } from 'api/generated/services/global';
@@ -187,7 +187,7 @@ function OnboardingAddDataSource(): JSX.Element {
 		useState<boolean>(false);
 
 	const [docsUrl, setDocsUrl] = useState<string>(
-		signozDocsUrl('/instrumentation/'),
+		fuseScopeDocsUrl('/sending-data/instrumentation/'),
 	);
 
 	const [selectedDataSource, setSelectedDataSource] = useState<Entity | null>(
