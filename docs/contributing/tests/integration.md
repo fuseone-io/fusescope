@@ -24,7 +24,7 @@ cd tests
 uv sync
 ```
 
-> **_NOTE:_** the build backend could throw an error while installing `psycopg2`, please see https://www.psycopg.org/docs/install.html#build-prerequisites
+> **_NOTE:_** the build backend could throw an error while installing `psycopg2`, please see https://www.psycopg.org/docs/install.html#build-prerequisites; on macOS, follow [the macOS notes](../development.md#macos-with-colima).
 
 ### Starting the Test Environment
 
@@ -65,6 +65,10 @@ Some suites define their own SigNoz variant in a suite-local `conftest.py` (`cre
 ```bash
 uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild integration/tests/<suite>/
 ```
+
+### Reusing the environment across suites
+
+`--reuse` also keeps state between suites: users, roles, dashboards and the SQL store written by one suite are still there when the next one starts, and a suite with its own SigNoz variant can leave that container running. A suite that passes alone can then fail after another one (for example, logins returning 500). CI runs every suite on a fresh environment without `--reuse`; do the same when checking several suites in a row, or run `make py-test-teardown` between them.
 
 ### Stopping the Test Environment
 

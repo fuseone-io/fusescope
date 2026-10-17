@@ -1,29 +1,46 @@
 # Development Guide
 
-Welcome! This guide will help you set up your local development environment for SigNoz. Let's get you started! 🚀
+This guide sets up a local FuseScope: ClickHouse, the collector, the backend and the frontend.
 
 ## What do I need?
 
-Before diving in, make sure you have these tools installed:
+| Tool | Version | Notes |
+|---|---|---|
+| Go | 1.25.7 | Run Go commands with `GOTOOLCHAIN=go1.25.7`; newer Go versions break `bytedance/sonic` |
+| Node | 22 ([`frontend/.nvmrc`](../../frontend/.nvmrc)) | nvm, mise or fnm |
+| pnpm | 10 | Always `npx pnpm@10 …`; the repo rejects pnpm 11 |
+| Docker | with BuildKit (`docker buildx`) | ClickHouse, PostgreSQL and the test containers |
+| uv + Python 3.13 | | Integration and e2e tests |
+| golangci-lint | v2 | v1 refuses the repo's config |
+| gh | | Issues and PRs from the terminal |
 
-- **Git** - Our version control system
-  - Download from [git-scm.com](https://git-scm.com/)
+> **Tip**: `make help` lists every target.
 
-- **Go** - Powers our backend
-  - Download from [go.dev/dl](https://go.dev/dl/)
-  - Check [go.mod](../../go.mod#L3) for the minimum version
+### macOS with Colima
 
-- **Node** - Powers our frontend
-  - Download from [nodejs.org](https://nodejs.org)
-  - Check [.nvmrc](../../frontend/.nvmrc) for the version
+The default Colima VM (2 CPUs, 4 GiB) can't run ClickHouse, the collector, the backend and PostgreSQL together. Give it more and use Apple's virtualization:
 
-- **Pnpm** - Our frontend package manager
-  - Follow the [installation guide](https://pnpm.io/installation)
+```bash
+colima stop && colima start --cpu 6 --memory 12 --vm-type vz --mount-type virtiofs
+```
 
-- **Docker** - For running Clickhouse and Postgres locally
-  - Get it from [docs.docker.com/get-docker](https://docs.docker.com/get-docker/)
+Homebrew's Docker CLI ships without BuildKit, which the image builds need:
 
-> 💡 **Tip**: Run `make help` to see all available commands with descriptions
+```bash
+brew install docker-buildx
+mkdir -p ~/.docker/cli-plugins
+ln -sfn "$(brew --prefix)/opt/docker-buildx/bin/docker-buildx" ~/.docker/cli-plugins/docker-buildx
+```
+
+`psycopg2` (integration tests) builds from source and needs `pg_config` and OpenSSL:
+
+```bash
+brew install libpq openssl@3
+export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib" CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
+```
+
+Put the exports in your shell profile, then `cd tests && uv sync`.
 
 ## How do I get the code?
 
@@ -39,7 +56,7 @@ Before diving in, make sure you have these tools installed:
 
 ## How do I run it locally?
 
-SigNoz has three main components: Clickhouse, Backend, and Frontend. Let's set them up one by one.
+FuseScope has three main components: ClickHouse, the backend and the frontend.
 
 ### 1. Setting up ClickHouse
 
@@ -54,7 +71,7 @@ This command:
 - Sets up Zookeeper
 - Runs the latest schema migrations
 
-### 2. Setting up SigNoz OpenTelemetry Collector
+### 2. Setting up the FuseScope OpenTelemetry Collector
 
 Next, start the OpenTelemetry Collector to receive telemetry data:
 
@@ -63,11 +80,11 @@ make devenv-fusescope-otel-collector
 ```
 
 This command:
-- Starts the SigNoz OpenTelemetry Collector
+- Starts the FuseScope OpenTelemetry Collector
 - Listens on port 4317 (gRPC) and 4318 (HTTP) for incoming telemetry data
 - Forwards data to ClickHouse for storage
 
-> 💡 **Quick Setup**: Use `make devenv-up` to start both ClickHouse and OTel Collector together
+> **Quick setup**: Use `make devenv-up` to start both ClickHouse and OTel Collector together
 
 ### 3. Starting the Backend
 
@@ -88,7 +105,7 @@ This command:
    make go-stop
    ```
 
-> 💡 **Tip**: The API server runs at `http://localhost:8080/` by default. You can configure this using `apiserver.address` configuration option. See
+> **Tip**: The API server runs at `http://localhost:8080/` by default. You can configure this using `apiserver.address` configuration option. See
 > [running more than one instance](#how-do-i-run-more-than-one-instance) if you need that for agentic testing.
 
 ### 4. Setting up the Frontend
@@ -100,7 +117,7 @@ This command:
 
 2. Install dependencies:
    ```bash
-   pnpm install
+   npx pnpm@10 install
    ```
 
 3. Create a `.env` file in this directory:
@@ -110,12 +127,10 @@ This command:
 
 4. Start the development server:
    ```bash
-   pnpm dev
+   npx pnpm@10 dev
    ```
 
-> 💡 **Tip**: `pnpm dev` will automatically rebuild when you make changes to the code
-
-Now you're all set to start developing! Happy coding! 🎉
+> **Tip**: the dev server reloads on every change.
 
 ## Verifying Your Setup
 To verify everything is working correctly:
@@ -157,7 +172,7 @@ make go-stop SIGNOZ_APISERVER_ADDRESS=0.0.0.0:8081
 
 ## How to send test data?
 
-You can now send telemetry data to your local SigNoz instance:
+Send telemetry to your local FuseScope:
 
 - **OTLP gRPC**: `localhost:4317`
 - **OTLP HTTP**: `localhost:4318`
