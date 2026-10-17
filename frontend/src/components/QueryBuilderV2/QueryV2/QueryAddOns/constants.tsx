@@ -1,5 +1,5 @@
 import { BarChart, Grid3X3, ScrollText } from '@signozhq/icons';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
 
 import { QueryBuilderField } from '../../queryBuilderFields.types';
@@ -18,7 +18,9 @@ export const ADD_ON_DEFINITIONS = {
 		placeholder: 'Everything (no breakdown)',
 		description:
 			'Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments.',
-		docLink: signozDocsUrl('/querying/aggregation-grouping/#grouping'),
+		docLink: fuseScopeDocsUrl(
+			'/querying/query-builder/#group-by-having-order-by-and-limit',
+		),
 	},
 	[QueryBuilderField.Having]: {
 		input: true,
@@ -28,8 +30,8 @@ export const ADD_ON_DEFINITIONS = {
 		placeholder: 'Type Having query like count() > 10 ...',
 		description:
 			'Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500',
-		docLink: signozDocsUrl(
-			'/querying/result-manipulation/#conditional-filtering-with-having',
+		docLink: fuseScopeDocsUrl(
+			'/querying/query-builder/#group-by-having-order-by-and-limit',
 		),
 	},
 	[QueryBuilderField.OrderBy]: {
@@ -40,7 +42,9 @@ export const ADD_ON_DEFINITIONS = {
 		placeholder: 'Select fields to order by',
 		description:
 			'Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers.',
-		docLink: signozDocsUrl('/querying/result-manipulation/#sorting--limiting'),
+		docLink: fuseScopeDocsUrl(
+			'/querying/query-builder/#group-by-having-order-by-and-limit',
+		),
 	},
 	[QueryBuilderField.Limit]: {
 		input: true,
@@ -50,8 +54,8 @@ export const ADD_ON_DEFINITIONS = {
 		placeholder: 'Enter limit',
 		description:
 			'Show only the top/bottom N results. Perfect for focusing on outliers, reducing noise, and improving dashboard performance.',
-		docLink: signozDocsUrl(
-			'/querying/result-manipulation/#how-limit-works-for-time-series',
+		docLink: fuseScopeDocsUrl(
+			'/querying/query-builder/#group-by-having-order-by-and-limit',
 		),
 	},
 	[QueryBuilderField.Legend]: {
@@ -62,7 +66,7 @@ export const ADD_ON_DEFINITIONS = {
 		placeholder: 'Write legend format',
 		description:
 			'Customize series labels using variables like {{service.name}}-{{endpoint}}. Makes charts readable at a glance during incident investigation.',
-		docLink: signozDocsUrl('/querying/aggregation-grouping/#legend-formatting'),
+		docLink: fuseScopeDocsUrl('/querying/query-builder/#legend-format'),
 	},
 	[QueryBuilderField.ReduceTo]: {
 		input: false,
@@ -80,7 +84,7 @@ export const ADD_ON_DEFINITIONS = {
 		queryPath: 'bucketOptions',
 		description:
 			'Choose how the bucket axis is spaced — logarithmically, so every band is the same height and the tail stays readable, or linearly up to a max value. Left to Auto, the query picks the finest log axis it can return.',
-		docLink: signozDocsUrl('/userguide/query-builder-v5/'),
+		docLink: fuseScopeDocsUrl('/querying/query-builder/'),
 	},
 } as const satisfies Record<AddOnField, AddOnDefinition>;
 

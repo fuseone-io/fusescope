@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { BarChart, ChartBar, Diff, Gauge, Histogram } from '@signozhq/icons';
 import { MetrictypesTypeDTO } from 'api/generated/services/fuseScope.schemas';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import {
 	MetricInspectionState,
@@ -77,12 +77,12 @@ export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionState = {
 	},
 };
 
-export const TEMPORAL_AGGREGATION_LINK = signozDocsUrl(
-	'/metrics-management/types-and-aggregation/#step-2-temporal-aggregation',
+export const TEMPORAL_AGGREGATION_LINK = fuseScopeDocsUrl(
+	'/querying/query-builder/#aggregations',
 );
 
-export const SPACE_AGGREGATION_LINK = signozDocsUrl(
-	'/metrics-management/types-and-aggregation/#step-3-spatial-aggregation',
+export const SPACE_AGGREGATION_LINK = fuseScopeDocsUrl(
+	'/querying/query-builder/#aggregations',
 );
 
 export const GRAPH_CLICK_PIXEL_TOLERANCE = 10;

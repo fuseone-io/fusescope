@@ -1,4 +1,4 @@
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 
@@ -29,15 +29,13 @@ export const checkListStepToPreferenceKeyMap = {
 };
 
 export const DOCS_LINKS = {
-	ADD_DATA_SOURCE: signozDocsUrl('/instrumentation/overview/'),
-	SEND_LOGS: signozDocsUrl('/userguide/logs_query_builder/'),
-	SEND_TRACES: signozDocsUrl('/userguide/traces/'),
-	SEND_METRICS: signozDocsUrl('/metrics-management/metrics-explorer/'),
-	SETUP_ALERTS: signozDocsUrl('/alerts/'),
-	SETUP_SAVED_VIEWS: signozDocsUrl(
-		'/metrics-management/metrics-explorer/#saved-views-in-metrics-explorer',
-	),
-	SETUP_DASHBOARDS: signozDocsUrl('/userguide/manage-dashboards/'),
+	ADD_DATA_SOURCE: fuseScopeDocsUrl('/sending-data/instrumentation/'),
+	SEND_LOGS: fuseScopeDocsUrl('/explore/logs/'),
+	SEND_TRACES: fuseScopeDocsUrl('/explore/traces/'),
+	SEND_METRICS: fuseScopeDocsUrl('/explore/metrics/'),
+	SETUP_ALERTS: fuseScopeDocsUrl('/alerts/alert-rules/'),
+	SETUP_SAVED_VIEWS: fuseScopeDocsUrl('/explore/metrics/#chart-a-metric'),
+	SETUP_DASHBOARDS: fuseScopeDocsUrl('/dashboards/dashboards/'),
 };
 
 export const defaultChecklistItemsState: ChecklistItem[] = [

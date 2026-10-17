@@ -28,7 +28,7 @@ import type {
 import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import {
 	ModalButtonWrapper,
 	ModalTitle,
@@ -547,8 +547,8 @@ export function PlannedDowntimeForm(
 									<span>
 										Scope the planned downtime by alert labels.{' '}
 										<a
-											href={signozDocsUrl(
-												'/alerts-management/planned-maintenance/#scoping-with-label-expressions',
+											href={fuseScopeDocsUrl(
+												'/alerts/routing-and-downtime/#planned-downtime',
 											)}
 											target="_blank"
 											rel="noopener noreferrer"

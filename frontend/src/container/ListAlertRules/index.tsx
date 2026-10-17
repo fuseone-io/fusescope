@@ -7,7 +7,7 @@ import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
 import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import { useAppContext } from 'providers/App/App';
@@ -150,7 +150,7 @@ function ListAlertRules(): JSX.Element {
 						)}
 						<TextToolTip
 							text="More details on how to create alerts"
-							url={signozDocsUrl('/alerts/?utm_source=product&utm_medium=list-alerts')}
+							url={fuseScopeDocsUrl('/alerts/alert-rules/')}
 							urlText="Learn More"
 						/>
 					</div>

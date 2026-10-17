@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	IBuilderQuery,
@@ -85,9 +85,7 @@ function QueryAggregationOptions({
 										Set the time interval for aggregation
 										<br />
 										<a
-											href={signozDocsUrl(
-												'/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series',
-											)}
+											href={fuseScopeDocsUrl('/querying/query-builder/#time-step')}
 											target="_blank"
 											rel="noopener noreferrer"
 											style={{ color: '#1890ff', textDecoration: 'underline' }}

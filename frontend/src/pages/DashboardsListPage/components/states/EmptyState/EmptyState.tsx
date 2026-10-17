@@ -7,16 +7,14 @@ import logEvent from 'api/common/logEvent';
 import dashboardsUrl from '@/assets/Icons/dashboards.svg';
 
 import styles from './EmptyState.module.scss';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { openInNewTab } from 'utils/navigation';
 
 interface Props {
 	createDropdown?: ReactNode;
 }
 
-const LEARN_MORE_HREF = signozDocsUrl(
-	'/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',
-);
+const LEARN_MORE_HREF = fuseScopeDocsUrl('/dashboards/dashboards/');
 
 function EmptyState({ createDropdown }: Props): JSX.Element {
 	return (

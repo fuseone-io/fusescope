@@ -6,7 +6,7 @@ import { RotateCw } from '@signozhq/icons';
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import RoutingPolicyListItem from './RoutingPolicyListItem';
 import { RoutingPolicy, RoutingPolicyListProps } from './types';
@@ -65,7 +65,7 @@ function RoutingPolicyList({
 					<Typography.Text>
 						No routing policies yet,{' '}
 						<a
-							href={signozDocsUrl('/alerts-management/routing-policy')}
+							href={fuseScopeDocsUrl('/alerts/routing-and-downtime/#routing-policies')}
 							target="_blank"
 							rel="noopener noreferrer"
 						>

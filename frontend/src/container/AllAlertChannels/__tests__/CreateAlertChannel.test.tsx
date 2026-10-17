@@ -570,7 +570,7 @@ describe('Create Alert Channel', () => {
 					screen.getByRole('link', { name: 'jira_service_account_tip_link' }),
 				).toHaveAttribute(
 					'href',
-					'https://signoz.io/docs/alerts-management/notification-channel/jira/#use-a-service-account-recommended',
+					'https://fuseone-io.github.io/fusescope-docs/alerts/notification-channels/#channel-types',
 				);
 			});
 
@@ -680,7 +680,7 @@ describe('Create Alert Channel', () => {
 					screen.getByRole('link', { name: 'jsmops_tip_link' }),
 				).toHaveAttribute(
 					'href',
-					'https://signoz.io/docs/alerts-management/notification-channel/jsm-ops/',
+					'https://fuseone-io.github.io/fusescope-docs/alerts/notification-channels/#channel-types',
 				);
 			});
 
@@ -766,7 +766,7 @@ describe('Create Alert Channel', () => {
 					screen.getByRole('link', { name: 'incidentio_tip_link' }),
 				).toHaveAttribute(
 					'href',
-					'https://signoz.io/docs/alerts-management/notification-channel/incidentio/',
+					'https://fuseone-io.github.io/fusescope-docs/alerts/notification-channels/#channel-types',
 				);
 			});
 

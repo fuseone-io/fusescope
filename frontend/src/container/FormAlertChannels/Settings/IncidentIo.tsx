@@ -4,7 +4,7 @@ import { Minus, Plus } from '@signozhq/icons';
 import { Button, Form, Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import { IncidentIOChannel } from '../../CreateAlertChannels/config';
 
@@ -49,7 +49,7 @@ function IncidentIOSettings({
 			>
 				{t('incidentio_tip')}{' '}
 				<Typography.Link
-					href={signozDocsUrl('/alerts-management/notification-channel/incidentio/')}
+					href={fuseScopeDocsUrl('/alerts/notification-channels/#channel-types')}
 					target="_blank"
 					rel="noopener noreferrer"
 				>

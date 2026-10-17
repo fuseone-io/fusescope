@@ -1,7 +1,7 @@
 import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import Modal from 'components/Modal';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 function SkipOnBoardingModal({ onContinueClick }: Props): JSX.Element {
 	return (
@@ -30,7 +30,7 @@ function SkipOnBoardingModal({ onContinueClick }: Props): JSX.Element {
 					<Typography>
 						Please instrument your application as mentioned&nbsp;
 						<a
-							href={signozDocsUrl('/instrumentation/overview')}
+							href={fuseScopeDocsUrl('/sending-data/instrumentation/')}
 							target="_blank"
 							rel="noreferrer"
 						>

@@ -4,7 +4,7 @@ import cx from 'classnames';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
@@ -313,7 +313,9 @@ function QueryAddOns({
 											<TooltipContent
 												label="Group By"
 												description="Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments."
-												docLink={signozDocsUrl('/querying/aggregation-grouping/#grouping')}
+												docLink={fuseScopeDocsUrl(
+													'/querying/query-builder/#group-by-having-order-by-and-limit',
+												)}
 											/>
 										}
 									>
@@ -350,8 +352,8 @@ function QueryAddOns({
 											<TooltipContent
 												label="Having"
 												description="Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500"
-												docLink={signozDocsUrl(
-													'/querying/result-manipulation/#conditional-filtering-with-having',
+												docLink={fuseScopeDocsUrl(
+													'/querying/query-builder/#group-by-having-order-by-and-limit',
 												)}
 											/>
 										}
@@ -392,8 +394,8 @@ function QueryAddOns({
 											<TooltipContent
 												label="Order By"
 												description="Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers."
-												docLink={signozDocsUrl(
-													'/querying/result-manipulation/#sorting--limiting',
+												docLink={fuseScopeDocsUrl(
+													'/querying/query-builder/#group-by-having-order-by-and-limit',
 												)}
 											/>
 										}

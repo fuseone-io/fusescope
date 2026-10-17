@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Collapse, Form, Input, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import { JiraChannel } from '../../CreateAlertChannels/config';
 import {
@@ -129,9 +129,7 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 			>
 				{t('jira_service_account_tip')}{' '}
 				<Typography.Link
-					href={signozDocsUrl(
-						'/alerts-management/notification-channel/jira/#use-a-service-account-recommended',
-					)}
+					href={fuseScopeDocsUrl('/alerts/notification-channels/#channel-types')}
 					target="_blank"
 					rel="noopener noreferrer"
 				>

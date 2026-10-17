@@ -1,30 +1,24 @@
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
 import { DataSource } from 'types/common/queryBuilder';
 
 export const ALERT_INFO_LINKS = [
 	{
 		infoText: 'How to create Metrics-based alerts',
-		link: signozDocsUrl(
-			'/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-empty-page',
-		),
+		link: fuseScopeDocsUrl('/alerts/alert-rules/'),
 		leftIconVisible: false,
 		rightIconVisible: true,
 		dataSource: DataSource.METRICS,
 	},
 	{
 		infoText: 'How to create Log-based alerts',
-		link: signozDocsUrl(
-			'/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-empty-page',
-		),
+		link: fuseScopeDocsUrl('/alerts/alert-rules/'),
 		leftIconVisible: false,
 		rightIconVisible: true,
 		dataSource: DataSource.LOGS,
 	},
 	{
 		infoText: 'How to create Trace-based alerts',
-		link: signozDocsUrl(
-			'/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-empty-page',
-		),
+		link: fuseScopeDocsUrl('/alerts/alert-rules/'),
 		leftIconVisible: false,
 		rightIconVisible: true,
 		dataSource: DataSource.TRACES,

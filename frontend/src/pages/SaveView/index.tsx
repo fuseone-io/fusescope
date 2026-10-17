@@ -12,7 +12,7 @@ import {
 	showErrorNotification,
 } from 'components/ExplorerCard/utils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
 import {
 	MeterExplorerEventKeys,
@@ -307,9 +307,7 @@ function SaveView(): JSX.Element {
 					Manage your saved views for {ROUTES_VS_SOURCEPAGE[pathname]}.{' '}
 					<Typography.Link
 						className="learn-more"
-						href={signozDocsUrl(
-							'/metrics-management/metrics-explorer/?utm_source=product&utm_medium=views-tab#saved-views-in-metrics-explorer',
-						)}
+						href={fuseScopeDocsUrl('/explore/metrics/#chart-a-metric')}
 						target="_blank"
 					>
 						Learn more
