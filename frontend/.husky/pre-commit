@@ -1,4 +1,4 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-cd frontend && pnpm lint-staged
+cd frontend && npx --yes pnpm@10 lint-staged
