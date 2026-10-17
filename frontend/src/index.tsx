@@ -16,6 +16,7 @@ import 'lib/monaco/setup';
 import './ReactI18';
 
 import 'styles.scss';
+import './styles/tailwind.css';
 
 installTranslationResilience();
 configureOverlayScrollbars();
