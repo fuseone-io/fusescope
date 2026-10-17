@@ -18,6 +18,9 @@ from fixtures.tls import CA_CONTAINER_PATH, CA_ID_LABEL, ca_id
 logger = setup_logger(__name__)
 
 
+CONFIG_CONTAINER_PATH = "/etc/fusescope/config.yaml"
+
+
 def create_signoz(
     network: Network,
     zeus: types.TestContainerDocker,
@@ -29,6 +32,7 @@ def create_signoz(
     cache_key: str = "signoz",
     env_overrides: dict | None = None,
     tls: types.TLS | None = None,
+    config_file: str | None = None,
 ) -> types.SigNoz:
     """
     Factory function for creating a SigNoz container.
@@ -108,6 +112,10 @@ def create_signoz(
             container.with_env(k, v)
         container.with_exposed_ports(8080)
         container.with_network(network=network)
+
+        if config_file:
+            container.with_volume_mapping(config_file, CONFIG_CONTAINER_PATH, "ro")
+            container.with_command(f"--config {CONFIG_CONTAINER_PATH}")
 
         provider = request.config.getoption("--sqlstore-provider")
         if provider == "sqlite":

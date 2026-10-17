@@ -41,6 +41,7 @@ jobs:
           - alertmanager
           - alertmanagerrotation
           - basepath
+          - authdomainconfig
           - callbackauthn
           - cloudintegrations
           - dashboard
