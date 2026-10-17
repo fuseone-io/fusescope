@@ -5,12 +5,14 @@ import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import { signozDocsUrl } from 'constants/docs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import styles from './NewDashboardModal.module.scss';
 
-const TEMPLATES_DOCS_URL =
-	'https://signoz.io/docs/dashboards/dashboard-templates/overview/';
+const TEMPLATES_DOCS_URL = signozDocsUrl(
+	'/dashboards/dashboard-templates/overview/',
+);
 
 // Templates aren't served by the BE yet, so this tab is a browse-and-request
 // placeholder: link out to the published template library, and let cloud users

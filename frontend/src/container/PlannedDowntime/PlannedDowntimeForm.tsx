@@ -28,6 +28,7 @@ import type {
 import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { signozDocsUrl } from 'constants/docs';
 import {
 	ModalButtonWrapper,
 	ModalTitle,
@@ -546,7 +547,9 @@ export function PlannedDowntimeForm(
 									<span>
 										Scope the planned downtime by alert labels.{' '}
 										<a
-											href="https://signoz.io/docs/alerts-management/planned-maintenance/#scoping-with-label-expressions"
+											href={signozDocsUrl(
+												'/alerts-management/planned-maintenance/#scoping-with-label-expressions',
+											)}
 											target="_blank"
 											rel="noopener noreferrer"
 										>

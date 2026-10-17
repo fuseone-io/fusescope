@@ -1,5 +1,9 @@
+import { signozDocsUrl } from 'constants/docs';
+
 export const ExploreHeaderToolTip = {
-	url: 'https://signoz.io/docs/querying/overview/?utm_source=product&utm_medium=new-query-builder',
+	url: signozDocsUrl(
+		'/querying/overview/?utm_source=product&utm_medium=new-query-builder',
+	),
 	text: 'More details on how to use query builder',
 };
 

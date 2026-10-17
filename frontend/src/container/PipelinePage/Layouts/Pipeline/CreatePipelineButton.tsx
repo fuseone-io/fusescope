@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import logEvent from 'api/common/logEvent';
 import TextToolTip from 'components/TextToolTip';
+import { signozDocsUrl } from 'constants/docs';
 import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
 
 import { ButtonContainer, CustomButton } from '../../styles';
@@ -43,7 +44,9 @@ function CreatePipelineButton({
 		<ButtonContainer>
 			<TextToolTip
 				text={t('learn_more')}
-				url="https://signoz.io/docs/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab"
+				url={signozDocsUrl(
+					'/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab',
+				)}
 			/>
 			{isAddNewPipelineVisible && (
 				<CustomButton onClick={onEnterEditMode} disabled={isDisabled}>

@@ -5,6 +5,7 @@ import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import { useListRules } from 'api/generated/services/rules';
 import type { RuletypesRuleDTO } from 'api/generated/services/fuseScope.schemas';
+import { signozDocsUrl } from 'constants/docs';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -109,11 +110,7 @@ export default function AlertRules({
 									source: 'Alert Rules',
 								});
 
-								window.open(
-									'https://signoz.io/docs/alerts/',
-									'_blank',
-									'noreferrer noopener',
-								);
+								window.open(signozDocsUrl('/alerts/'), '_blank', 'noreferrer noopener');
 							}}
 						>
 							Learn more <ArrowUpRight size={12} />

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { Button, Form } from 'antd';
 import { CircleCheck, CloudUpload, Info, Wrench } from '@signozhq/icons';
+import { signozDocsUrl } from 'constants/docs';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { checkVersionState } from 'utils/app';
@@ -100,7 +101,9 @@ function Version(): JSX.Element {
 					{!isError && !isLatestVersion && (
 						<div className="version-page-upgrade-container">
 							<Button
-								href="https://signoz.io/docs/opentelemetry-collection-agents/docker/overview/"
+								href={signozDocsUrl(
+									'/opentelemetry-collection-agents/docker/overview/',
+								)}
 								target="_blank"
 								type="primary"
 								className="periscope-btn primary"

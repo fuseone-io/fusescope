@@ -2,10 +2,13 @@ import { ArrowUpRight, KeyRound } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { Typography } from '@signozhq/ui/typography';
 
+import { signozDocsUrl } from 'constants/docs';
+
 import styles from './SetupGuideCallout.module.scss';
 
-const GCP_INTEGRATION_DOCS_URL =
-	'https://signoz.io/docs/integrations/gcp/gcp-integration/';
+const GCP_INTEGRATION_DOCS_URL = signozDocsUrl(
+	'/integrations/gcp/gcp-integration/',
+);
 
 function SetupGuideCallout(): JSX.Element {
 	return (

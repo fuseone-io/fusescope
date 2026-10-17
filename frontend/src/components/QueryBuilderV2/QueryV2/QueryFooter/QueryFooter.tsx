@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
+import { signozDocsUrl } from 'constants/docs';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DraftingCompass, Plus, Sigma } from '@signozhq/icons';
@@ -44,7 +45,7 @@ function TraceOperatorSection({
 					<div style={{ textAlign: 'center' }}>
 						Add Trace Matching
 						<Typography.Link
-							href="https://signoz.io/docs/querying/multi-query-analysis/#trace-matching"
+							href={signozDocsUrl('/querying/multi-query-analysis/#trace-matching')}
 							target="_blank"
 							style={{ textDecoration: 'underline' }}
 						>
@@ -127,7 +128,9 @@ export default function QueryFooter({
 									<div style={{ textAlign: 'center' }}>
 										Add New Formula
 										<Typography.Link
-											href="https://signoz.io/docs/querying/multi-query-analysis/#advanced-comparisons"
+											href={signozDocsUrl(
+												'/querying/multi-query-analysis/#advanced-comparisons',
+											)}
 											target="_blank"
 											style={{ textDecoration: 'underline' }}
 										>

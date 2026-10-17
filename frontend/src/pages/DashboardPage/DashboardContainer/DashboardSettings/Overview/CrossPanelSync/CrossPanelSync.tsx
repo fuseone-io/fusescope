@@ -2,6 +2,7 @@ import { ExternalLink, SolidInfoCircle } from '@signozhq/icons';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import { signozDocsUrl } from 'constants/docs';
 import { Events } from 'constants/events';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
@@ -61,7 +62,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 								Sync crosshair and tooltip across all the dashboard panels
 							</span>
 							<Typography.Link
-								href="https://signoz.io/docs/dashboards/interactivity/#cross-panel-sync"
+								href={signozDocsUrl('/dashboards/interactivity/#cross-panel-sync')}
 								target="_blank"
 								rel="noopener noreferrer"
 								className={styles.crossPanelSyncTooltipDocLink}

@@ -4,9 +4,7 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 import styles from './ColumnHeader.module.scss';
 import cx from 'classnames';
 import { MouseEventHandler } from 'react';
-import { DOCS_BASE_URL } from 'constants/docs';
-
-const DOCS_ROOT = `${DOCS_BASE_URL}/docs`;
+import { signozDocsUrl } from 'constants/docs';
 
 interface ColumnHeaderProps {
 	children?: React.ReactNode;
@@ -43,7 +41,7 @@ function ColumnHeader({
 						<div onClick={stopPropagationHandler}>
 							{tooltipTitle}{' '}
 							<a
-								href={`${DOCS_ROOT}${docPath}`}
+								href={signozDocsUrl(docPath)}
 								target="_blank"
 								rel="noopener"
 								onClick={stopPropagationHandler}

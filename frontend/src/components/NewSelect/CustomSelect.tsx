@@ -20,6 +20,7 @@ import { Select } from 'antd';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { signozDocsUrl } from 'constants/docs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
 import type { BaseSelectRef } from 'rc-select';
@@ -552,7 +553,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 									{isDynamicVariable && (
 										<TextToolTip
 											text="Related values: Filtered by other variable selections. All values: Unfiltered complete list. Learn more"
-											url="https://signoz.io/docs/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections"
+											url={signozDocsUrl(
+												'/userguide/manage-variables/#dynamic-variable-dropdowns-display-values-in-two-sections',
+											)}
 											urlText="here"
 											useFilledIcon={false}
 											outlinedIcon={

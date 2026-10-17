@@ -8,11 +8,13 @@ import {
 } from 'components/QuickFilters/types';
 import { TriangleAlert } from '@signozhq/icons';
 import TanStackTable from 'components/TanStackTableView';
+import { signozDocsUrl } from 'constants/docs';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
-const HOSTNAME_DOCS_URL =
-	'https://signoz.io/docs/infrastructure-monitoring/hostmetrics/#host-name-is-blankempty';
+const HOSTNAME_DOCS_URL = signozDocsUrl(
+	'/infrastructure-monitoring/hostmetrics/#host-name-is-blankempty',
+);
 
 export function HostnameCell({
 	hostName,

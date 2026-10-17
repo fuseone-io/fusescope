@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { Link } from 'react-router-dom';
 import { Button, Select, Skeleton, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { signozDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import { useQueryService } from 'hooks/useQueryService';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -150,10 +151,7 @@ export default function ServiceTraces({
 									logEvent('Homepage: Learn more clicked', {
 										source: 'Service Traces',
 									});
-									window.open(
-										'https://signoz.io/docs/instrumentation/overview/',
-										'_blank',
-									);
+									window.open(signozDocsUrl('/instrumentation/overview/'), '_blank');
 								}}
 							>
 								Learn more <ArrowUpRight size={12} />

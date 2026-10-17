@@ -5,7 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
 import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/fuseScope.schemas';
-import { DOCS_BASE_URL } from 'constants/docs';
+import { signozDocsUrl } from 'constants/docs';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useNotifications } from 'hooks/useNotifications';
@@ -94,7 +94,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						<span>
 							Find your ingestion URL and learn more about sending data to FuseScope{' '}
 							<a
-								href={`${DOCS_BASE_URL}/docs/ingestion/signoz-cloud/overview/`}
+								href={signozDocsUrl('/ingestion/signoz-cloud/overview/')}
 								target="_blank"
 								className="learn-more"
 								rel="noreferrer"
@@ -209,7 +209,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						<span>
 							We support{' '}
 							<a
-								href={`${DOCS_BASE_URL}/docs/ingestion/signoz-cloud/keys/`}
+								href={signozDocsUrl('/ingestion/signoz-cloud/keys/')}
 								target="_blank"
 								className="learn-more"
 								rel="noreferrer"

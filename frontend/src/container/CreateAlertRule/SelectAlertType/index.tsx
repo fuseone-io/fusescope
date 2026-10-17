@@ -5,6 +5,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
+import { signozDocsUrl } from 'constants/docs';
 import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -29,23 +30,27 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 		let url = '';
 		switch (option) {
 			case AlertTypes.ANOMALY_BASED_ALERT:
-				url = 'https://signoz.io/docs/alerts-management/anomaly-based-alerts/';
+				url = signozDocsUrl('/alerts-management/anomaly-based-alerts/');
 				break;
 			case AlertTypes.METRICS_BASED_ALERT:
-				url =
-					'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				url = signozDocsUrl(
+					'/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
+				);
 				break;
 			case AlertTypes.LOGS_BASED_ALERT:
-				url =
-					'https://signoz.io/docs/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				url = signozDocsUrl(
+					'/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
+				);
 				break;
 			case AlertTypes.TRACES_BASED_ALERT:
-				url =
-					'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				url = signozDocsUrl(
+					'/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
+				);
 				break;
 			case AlertTypes.EXCEPTIONS_BASED_ALERT:
-				url =
-					'https://signoz.io/docs/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				url = signozDocsUrl(
+					'/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
+				);
 				break;
 			default:
 				break;

@@ -4,6 +4,7 @@ import cx from 'classnames';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
+import { signozDocsUrl } from 'constants/docs';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
@@ -312,7 +313,7 @@ function QueryAddOns({
 											<TooltipContent
 												label="Group By"
 												description="Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments."
-												docLink="https://signoz.io/docs/querying/aggregation-grouping/#grouping"
+												docLink={signozDocsUrl('/querying/aggregation-grouping/#grouping')}
 											/>
 										}
 									>
@@ -349,7 +350,9 @@ function QueryAddOns({
 											<TooltipContent
 												label="Having"
 												description="Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500"
-												docLink="https://signoz.io/docs/querying/result-manipulation/#conditional-filtering-with-having"
+												docLink={signozDocsUrl(
+													'/querying/result-manipulation/#conditional-filtering-with-having',
+												)}
 											/>
 										}
 									>
@@ -389,7 +392,9 @@ function QueryAddOns({
 											<TooltipContent
 												label="Order By"
 												description="Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers."
-												docLink="https://signoz.io/docs/querying/result-manipulation/#sorting--limiting"
+												docLink={signozDocsUrl(
+													'/querying/result-manipulation/#sorting--limiting',
+												)}
 											/>
 										}
 									>
@@ -427,7 +432,9 @@ function QueryAddOns({
 												<TooltipContent
 													label="Reduce to"
 													description="Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value."
-													docLink="https://signoz.io/docs/userguide/query-builder-v5/#result-manipulation"
+													docLink={signozDocsUrl(
+														'/userguide/query-builder-v5/#result-manipulation',
+													)}
 												/>
 											}
 										>

@@ -1,6 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import EmptyQuickFilterIcon from 'assets/CustomIcons/EmptyQuickFilterIcon';
+import { signozDocsUrl } from 'constants/docs';
 import { ArrowUpRight } from '@signozhq/icons';
 
 const QUICK_FILTER_DOC_PATHS: Record<string, string> = {
@@ -23,7 +24,7 @@ function LogsQuickFilterEmptyState({
 		const section = QUICK_FILTER_DOC_PATHS[attributeKey];
 
 		window.open(
-			`https://signoz.io/docs/logs-management/features/logs-quick-filters#${section}`,
+			signozDocsUrl(`/logs-management/features/logs-quick-filters#${section}`),
 			'_blank',
 		);
 	};

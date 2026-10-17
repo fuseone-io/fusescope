@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Collapse, Form, Input, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
+import { signozDocsUrl } from 'constants/docs';
+
 import { JsmOpsChannel } from '../../CreateAlertChannels/config';
 
 function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
@@ -51,7 +53,7 @@ function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 			>
 				{t('jsmops_tip')}{' '}
 				<Typography.Link
-					href="https://signoz.io/docs/alerts-management/notification-channel/jsm-ops/"
+					href={signozDocsUrl('/alerts-management/notification-channel/jsm-ops/')}
 					target="_blank"
 					rel="noopener noreferrer"
 				>

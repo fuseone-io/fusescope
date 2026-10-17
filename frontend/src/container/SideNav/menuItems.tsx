@@ -3,6 +3,7 @@ import type {
 	DropdownActionItemType,
 	DropdownItemType,
 } from '@signozhq/ui/dropdown';
+import { signozDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import {
 	ArrowUpRight,
@@ -449,7 +450,7 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 		),
 		icon: <Book size={14} />,
 		isExternal: true,
-		url: 'https://signoz.io/docs',
+		url: signozDocsUrl(),
 		itemKey: 'documentation',
 	},
 	{

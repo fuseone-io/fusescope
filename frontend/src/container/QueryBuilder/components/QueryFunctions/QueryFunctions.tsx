@@ -4,6 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { cloneDeep, pullAt } from 'lodash-es';
 import { Plus } from '@signozhq/icons';
+import { signozDocsUrl } from 'constants/docs';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
@@ -216,7 +217,9 @@ export default function QueryFunctions({
 							Add new function
 							<Typography.Link
 								style={{ textDecoration: 'underline' }}
-								href="https://signoz.io/docs/querying/functions-extended-analysis/?utm_source=product&utm_medium=query-builder"
+								href={signozDocsUrl(
+									'/querying/functions-extended-analysis/?utm_source=product&utm_medium=query-builder',
+								)}
 								target="_blank"
 							>
 								{' '}

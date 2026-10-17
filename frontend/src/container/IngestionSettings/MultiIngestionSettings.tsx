@@ -44,6 +44,7 @@ import Badges from 'components/Badges/Badges';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { signozDocsUrl } from 'constants/docs';
 import { QueryParams } from 'constants/query';
 import { initialQueryMeterWithType } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -1635,7 +1636,7 @@ function MultiIngestionSettings(): JSX.Element {
 					<Typography.Text className="subtitle">
 						Create and manage ingestion keys for the FuseScope Cloud{' '}
 						<a
-							href="https://signoz.io/docs/ingestion/signoz-cloud/keys/"
+							href={signozDocsUrl('/ingestion/signoz-cloud/keys/')}
 							target="_blank"
 							className="learn-more"
 							rel="noreferrer"

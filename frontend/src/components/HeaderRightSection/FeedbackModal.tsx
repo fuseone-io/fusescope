@@ -5,6 +5,7 @@ import { Button, Input } from 'antd';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import { signozDocsUrl } from 'constants/docs';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
@@ -146,7 +147,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 						</Typography.Link>
 						or{' '}
 						<a
-							href="https://signoz.io/docs/introduction/"
+							href={signozDocsUrl('/introduction/')}
 							target="_blank"
 							rel="noreferrer"
 							className="read-docs-link"

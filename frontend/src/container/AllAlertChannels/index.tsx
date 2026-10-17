@@ -8,6 +8,7 @@ import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
+import { signozDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
@@ -68,7 +69,7 @@ function AlertChannels(): JSX.Element {
 				<RightActionContainer>
 					<TextToolTip
 						text={t('tooltip_notification_channels')}
-						url="https://signoz.io/docs/setup-alerts-notification/"
+						url={signozDocsUrl('/setup-alerts-notification/')}
 					/>
 
 					<Tooltip
