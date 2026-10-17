@@ -31,6 +31,7 @@ function sidebarState(): string | null {
 describe('Sidebar', () => {
 	beforeEach(() => {
 		mockMatchMedia();
+		document.cookie = 'sidebar_state=; path=/; max-age=0';
 	});
 
 	afterEach(() => {
@@ -73,6 +74,24 @@ describe('Sidebar', () => {
 
 		fireEvent.keyDown(window, { key: 'b', ...modifier });
 		expect(sidebarState()).toBe('expanded');
+	});
+
+	it('leaves persistence to the owner when controlled', async () => {
+		const onOpenChange = jest.fn();
+		const user = userEvent.setup();
+		render(
+			<SidebarProvider open onOpenChange={onOpenChange}>
+				<Sidebar collapsible="icon">
+					<SidebarContent>navigation</SidebarContent>
+				</Sidebar>
+				<SidebarTrigger data-testid="sidebar-trigger" />
+			</SidebarProvider>,
+		);
+
+		await user.click(screen.getByTestId('sidebar-trigger'));
+
+		expect(onOpenChange).toHaveBeenCalledWith(false);
+		expect(document.cookie).not.toContain('sidebar_state');
 	});
 
 	it('ignores B without a modifier', () => {
