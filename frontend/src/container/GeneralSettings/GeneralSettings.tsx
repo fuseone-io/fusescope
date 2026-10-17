@@ -10,6 +10,7 @@ import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import CustomDomainSettings from 'container/CustomDomainSettings';
+import { buildSetRetentionProps } from 'container/GeneralSettings/buildSetRetentionProps';
 import LicenseKeyRow from 'container/GeneralSettings/LicenseKeyRow/LicenseKeyRow';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -378,12 +379,14 @@ function GeneralSettings({
 						ttlConditions: [],
 					});
 				} else {
-					await setRetentionApi({
-						type,
-						totalDuration: `${apiCallTotalRetention || -1}h`,
-						coldStorage: s3Enabled ? 's3' : null,
-						toColdDuration: `${apiCallS3Retention || -1}h`,
-					});
+					await setRetentionApi(
+						buildSetRetentionProps({
+							type,
+							totalRetentionHours: apiCallTotalRetention,
+							s3RetentionHours: apiCallS3Retention,
+							s3Enabled,
+						}),
+					);
 				}
 			} catch (error) {
 				hasSetTTLFailed = true;
