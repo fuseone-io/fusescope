@@ -2,12 +2,24 @@ name: e2eci
 
 on:
   pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "docs/adr/**"
+      - "docs/brand/**"
+      - "docs/contributing/**"
+      - "docs/img/**"
     types:
       - opened
       - synchronize
       - reopened
       - labeled
   pull_request_target:
+    paths-ignore:
+      - "**/*.md"
+      - "docs/adr/**"
+      - "docs/brand/**"
+      - "docs/contributing/**"
+      - "docs/img/**"
     types:
       - labeled
   merge_group:
