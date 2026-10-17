@@ -937,9 +937,9 @@ def insert_traces(
 
 
 def insert_attribute_evolution_to_clickhouse(conn, signal: str, release_time: datetime.datetime) -> None:
-    """Seed the `attributes` JSON column-evolution row for a signal at release_time. Unlike the
-    resource row (seeded by the migrator at install), the attribute JSON rollout is install-specific
-    and not migrator-seeded, so tests insert it to gate map-vs-JSON resolution across a window."""
+    """Seed the `attributes` JSON column-evolution row for a signal at release_time, so tests
+    gate map-vs-JSON resolution across a window. The migrator also seeds a traces row at install
+    time; delete_attribute_evolution_from_clickhouse removes it."""
     # insert_deduplicate=0: successive tests seed a byte-identical row (release_time is
     # minute-aligned), and ReplicatedMergeTree would drop the re-insert as a duplicate even
     # after the prior test's teardown deleted it, leaving the querier to fall back to the Map.
@@ -963,6 +963,10 @@ def seed_attribute_evolution(
 
     yield _seed
 
+    delete_attribute_evolution_from_clickhouse(clickhouse)
+
+
+def delete_attribute_evolution_from_clickhouse(clickhouse: types.TestContainerClickhouse) -> None:
     cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
     clickhouse.conn.query(f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' DELETE WHERE column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__' SETTINGS mutations_sync = 1")
 
@@ -974,6 +978,7 @@ ATTRIBUTE_JSON_ROLLOUT_TIME = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC)
 
 @pytest.fixture(name="use_attribute_backend")
 def use_attribute_backend(
+    clickhouse: types.TestContainerClickhouse,
     seed_attribute_evolution: Callable[[str, datetime.datetime], None],
 ) -> Callable[[str], None]:
     """Applies the physical attribute layout a test runs under. "map" leaves the querier on the
@@ -986,6 +991,8 @@ def use_attribute_backend(
     def _apply(backend: str) -> None:
         if backend == "json":
             seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
+        else:
+            delete_attribute_evolution_from_clickhouse(clickhouse)
 
     return _apply
 
