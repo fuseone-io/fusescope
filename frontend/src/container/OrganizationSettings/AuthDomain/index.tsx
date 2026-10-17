@@ -20,7 +20,9 @@ import APIError from 'types/api/error';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import CreateEdit from './CreateEdit/CreateEdit';
+import ManagedByConfigBadge from './ManagedByConfigBadge';
 import SSOEnforcementToggle from './SSOEnforcementToggle';
+import { isManagedByConfig } from './utils';
 
 import './AuthDomain.styles.scss';
 import '../../IngestionSettings/IngestionSettings.styles.scss';
@@ -117,7 +119,12 @@ function AuthDomain(): JSX.Element {
 				dataIndex: 'name',
 				key: 'name',
 				width: 100,
-				render: (val): JSX.Element => <span>{val}</span>,
+				render: (val, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
+					<span>
+						{val}
+						{isManagedByConfig(record) && <ManagedByConfigBadge />}
+					</span>
+				),
 			},
 			{
 				title: 'Enforce SSO',
@@ -158,19 +165,23 @@ function AuthDomain(): JSX.Element {
 							color="primary"
 							onClick={(): void => setRecord(record)}
 							variant="link"
+							disabled={isManagedByConfig(record)}
+							disabledTooltip="Managed by the configuration file"
 							testId="auth-domain-configure"
 						>
 							Configure {SSOType.get(record.config?.kind || '')}
 						</Button>
-						<Button
-							size="md"
-							color="danger"
-							onClick={(): void => showDeleteModal(record)}
-							variant="link"
-							testId="auth-domain-delete"
-						>
-							Delete
-						</Button>
+						{!isManagedByConfig(record) && (
+							<Button
+								size="md"
+								color="danger"
+								onClick={(): void => showDeleteModal(record)}
+								variant="link"
+								testId="auth-domain-delete"
+							>
+								Delete
+							</Button>
+						)}
 					</section>
 				),
 			},

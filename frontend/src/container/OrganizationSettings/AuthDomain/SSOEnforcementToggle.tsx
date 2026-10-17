@@ -11,6 +11,8 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 
+import { isManagedByConfig } from './utils';
+
 interface SSOEnforcementToggleProps {
 	isDefaultChecked: boolean;
 	record: AuthtypesGettableAuthDomainDTO;
@@ -63,8 +65,12 @@ function SSOEnforcementToggle({
 		<Switch
 			color="primary"
 			textPlacement="right"
-			disabled={isLoading}
-			disabledTooltip="Saving the SSO enforcement setting"
+			disabled={isLoading || isManagedByConfig(record)}
+			disabledTooltip={
+				isManagedByConfig(record)
+					? 'Managed by the configuration file'
+					: 'Saving the SSO enforcement setting'
+			}
 			value={isChecked}
 			onChange={onChangeHandler}
 			testId="auth-domain-enforce-sso"

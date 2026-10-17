@@ -64,6 +64,23 @@ export const mockOidcAuthDomain: AuthtypesGettableAuthDomainDTO = {
 	},
 };
 
+// Mock Auth Domain declared in the configuration file
+export const mockManagedOidcAuthDomain: AuthtypesGettableAuthDomainDTO = {
+	id: 'domain-managed',
+	name: 'managed.io',
+	enabled: true,
+	managedBy: 'config',
+	config: {
+		kind: AuthtypesAuthDomainConfigOIDCDTOKind.oidc,
+		spec: {
+			issuer: 'https://login.microsoftonline.com/tenant/v2.0',
+			clientId: 'managed-client-id',
+			clientSecret: 'managed-client-secret',
+		},
+	},
+	authNProviderInfo: {},
+};
+
 // Mock Auth Domain with Role Mapping
 export const mockDomainWithRoleMapping: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-4',

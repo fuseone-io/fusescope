@@ -4,10 +4,12 @@ import { CircleHelp } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
-import { Form, Tooltip } from 'antd';
+import { Form, Select, Tooltip } from 'antd';
 
 import ClaimMappingSection from './components/ClaimMappingSection';
+import OIDCPresetSelector from './components/OIDCPresetSelector';
 import RoleMappingSection from './components/RoleMappingSection';
+import { DEFAULT_OIDC_PRESET, OIDCPreset } from './oidcPresets';
 
 import './Providers.styles.scss';
 
@@ -21,6 +23,15 @@ function ConfigureOIDCAuthnProvider({
 	const form = Form.useFormInstance();
 
 	const [expandedSection, setExpandedSection] = useState<ExpandedSection>(null);
+	const [preset, setPreset] = useState<OIDCPreset>(DEFAULT_OIDC_PRESET);
+
+	const handlePresetChange = useCallback(
+		(selected: OIDCPreset): void => {
+			setPreset(selected);
+			form.setFieldValue(['oidcConfig', 'scopes'], selected.scopes);
+		},
+		[form],
+	);
 
 	const handleClaimMappingChange = useCallback((expanded: boolean): void => {
 		setExpandedSection(expanded ? 'claim-mapping' : null);
@@ -48,6 +59,8 @@ function ConfigureOIDCAuthnProvider({
 				</p>
 			</section>
 
+			<OIDCPresetSelector value={preset.id} onChange={handlePresetChange} />
+
 			<div className="authn-provider__columns">
 				{/* Left Column - Core OIDC Settings */}
 				<div className="authn-provider__left">
@@ -65,7 +78,7 @@ function ConfigureOIDCAuthnProvider({
 								{ required: true, message: 'Domain is required', whitespace: true },
 							]}
 						>
-							<Input id="oidc-domain" disabled={!isCreate} />
+							<Input id="oidc-domain" disabled={!isCreate} testId="oidc-domain" />
 						</Form.Item>
 					</div>
 
@@ -83,7 +96,11 @@ function ConfigureOIDCAuthnProvider({
 								{ required: true, message: 'Issuer URL is required', whitespace: true },
 							]}
 						>
-							<Input id="oidc-issuer" />
+							<Input
+								id="oidc-issuer"
+								placeholder={preset.issuerPlaceholder}
+								testId="oidc-issuer"
+							/>
 						</Form.Item>
 					</div>
 
@@ -116,7 +133,7 @@ function ConfigureOIDCAuthnProvider({
 								{ required: true, message: 'Client ID is required', whitespace: true },
 							]}
 						>
-							<Input id="oidc-client-id" />
+							<Input id="oidc-client-id" testId="oidc-client-id" />
 						</Form.Item>
 					</div>
 
@@ -138,7 +155,29 @@ function ConfigureOIDCAuthnProvider({
 								},
 							]}
 						>
-							<Input id="oidc-client-secret" />
+							<Input id="oidc-client-secret" testId="oidc-client-secret" />
+						</Form.Item>
+					</div>
+
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="oidc-scopes">
+							Additional Scopes
+							<Tooltip title="Scopes requested on top of openid, email and profile. Okta needs `groups` to send group membership.">
+								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+							</Tooltip>
+						</label>
+						<Form.Item
+							name={['oidcConfig', 'scopes']}
+							className="authn-provider__form-item"
+						>
+							<Select
+								id="oidc-scopes"
+								mode="tags"
+								placeholder="e.g. groups"
+								open={false}
+								tokenSeparators={[',', ' ']}
+								data-testid="oidc-scopes"
+							/>
 						</Form.Item>
 					</div>
 
