@@ -14,7 +14,8 @@ These rules apply repo-wide. Topic rules live in [`.claude/rules/`](.claude/rule
 (comments, Go, pytest, pull requests) and the frontend has its own
 [`frontend/CLAUDE.md`](frontend/CLAUDE.md). Go architecture guides are in
 [`docs/contributing/go/`](docs/contributing/go/) — read the relevant one before
-adding a provider, module, handler or SQL.
+adding a provider, module, handler or SQL. Claude Code setup (plugins, agents,
+skills, hooks): [`docs/contributing/claude-code.md`](docs/contributing/claude-code.md).
 
 ## License posture (non-negotiable)
 
