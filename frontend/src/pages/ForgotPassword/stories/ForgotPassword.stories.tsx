@@ -61,6 +61,19 @@ export const RateLimited: Story = {
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
 		await submit(canvasElement);
-		await within(canvasElement).findByText(/rate_limited/i);
+		await within(canvasElement).findByText(/too many reset emails/i);
+	},
+};
+
+/** Self-service reset turned off (`user.password.reset.allow_self`): ask an admin. */
+export const SelfServiceDisabled: Story = {
+	args: { request: 'unsupported' },
+	// The deliberate 501 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await submit(canvasElement);
+		await within(canvasElement).findByRole('heading', {
+			name: /ask an admin/i,
+		});
 	},
 };

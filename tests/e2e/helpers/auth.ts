@@ -46,7 +46,7 @@ async function login(page: Page, user: User): Promise<void> {
 	await page.getByTestId('email').fill(user.email);
 	await page.getByTestId('initiate_login').click();
 	await page.getByTestId('password').fill(user.password);
-	await page.getByRole('button', { name: 'Sign in with Password' }).click();
+	await page.getByTestId('password_authn_submit').click();
 	// Post-login lands somewhere different depending on whether the org is
 	// licensed (onboarding flow on ENTERPRISE) or not (legacy "Hello there"
 	// welcome). Wait for URL to move off /login — whichever page follows

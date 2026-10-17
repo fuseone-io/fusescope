@@ -6,12 +6,11 @@ import {
 	rest,
 	server,
 } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 
 import ForgotPassword, { ForgotPasswordRouteState } from '../index';
 
-// Mock dependencies
 jest.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
@@ -27,390 +26,269 @@ const mockHistoryPush = history.push as jest.MockedFunction<
 >;
 
 const FORGOT_PASSWORD_ENDPOINT = '*/api/v2/factor_password/forgot';
+const TEST_EMAIL = 'jest.test@fusescope.dev';
 
-// Mock data
-const mockSingleOrg: OrgSessionContext[] = [
-	{
-		id: 'org-1',
-		name: 'Test Organization',
-		authNSupport: {
-			password: [{ provider: 'email_password' }],
-			callback: [],
-		},
-	},
-];
+const org = (id: string, name: string): OrgSessionContext => ({
+	id,
+	name,
+	authNSupport: { password: [{ provider: 'email_password' }], callback: [] },
+});
 
-const mockMultipleOrgs: OrgSessionContext[] = [
-	{
-		id: 'org-1',
-		name: 'Organization One',
-		authNSupport: {
-			password: [{ provider: 'email_password' }],
-			callback: [],
-		},
-	},
-	{
-		id: 'org-2',
-		name: 'Organization Two',
-		authNSupport: {
-			password: [{ provider: 'email_password' }],
-			callback: [],
-		},
-	},
-];
-
-const TEST_EMAIL = 'jest.test@signoz.io';
-
-const defaultProps: ForgotPasswordRouteState = {
+const singleOrg: ForgotPasswordRouteState = {
 	email: TEST_EMAIL,
-	orgs: mockSingleOrg,
+	orgs: [org('org-1', 'Test Organization')],
 };
 
-const multiOrgProps: ForgotPasswordRouteState = {
+const multipleOrgs: ForgotPasswordRouteState = {
 	email: TEST_EMAIL,
-	orgs: mockMultipleOrgs,
+	orgs: [org('org-1', 'Organization One'), org('org-2', 'Organization Two')],
 };
 
-describe('ForgotPassword Component', () => {
+const acceptRequests = (): void => {
+	server.use(
+		rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) => res(ctx.status(204))),
+	);
+};
+
+/** What the backend answers when `user.password.reset.allow_self` is off. */
+const rejectSelfService = (): void => {
+	server.use(
+		rest.post(
+			FORGOT_PASSWORD_ENDPOINT,
+			createErrorResponse(
+				501,
+				'unsupported',
+				'Users are not allowed to reset their password themselves, please contact an admin to reset your password.',
+			),
+		),
+	);
+};
+
+type User = ReturnType<typeof userEvent.setup>;
+
+describe('ForgotPassword', () => {
+	let user: User;
+
 	beforeEach(() => {
 		jest.clearAllMocks();
+		user = userEvent.setup({ pointerEventsCheck: 0 });
 	});
 
 	afterEach(() => {
 		server.resetHandlers();
 	});
 
-	describe('Initial Render', () => {
-		it('renders forgot password form with all required elements', () => {
-			render(<ForgotPassword {...defaultProps} />);
+	describe('request form', () => {
+		it('offers to email a reset link to the email from sign in', () => {
+			render(<ForgotPassword {...singleOrg} />);
 
-			expect(screen.getByText(/forgot your password\?/i)).toBeInTheDocument();
 			expect(
-				screen.getByText(/send a reset link to your inbox/i),
+				screen.getByRole('heading', { name: /reset your password/i }),
 			).toBeInTheDocument();
-			expect(screen.getByTestId('email')).toBeInTheDocument();
-			expect(screen.getByTestId('forgot-password-submit')).toBeInTheDocument();
-			expect(screen.getByTestId('forgot-password-back')).toBeInTheDocument();
-		});
-
-		it('pre-fills email from props', () => {
-			render(<ForgotPassword {...defaultProps} />);
-
-			const emailInput = screen.getByTestId('email');
-			expect(emailInput).toHaveValue(TEST_EMAIL);
-		});
-
-		it('disables email input field', () => {
-			render(<ForgotPassword {...defaultProps} />);
-
-			const emailInput = screen.getByTestId('email');
-			expect(emailInput).toBeDisabled();
-		});
-
-		it('does not show organization dropdown for single org', () => {
-			render(<ForgotPassword {...defaultProps} />);
-
+			expect(
+				screen.getByText(/we'll email you a link to choose a new password/i),
+			).toBeInTheDocument();
+			expect(screen.getByTestId('email')).toHaveValue(TEST_EMAIL);
+			expect(screen.getByTestId('email')).toBeDisabled();
+			expect(screen.getByTestId('forgot-password-submit')).toBeEnabled();
 			expect(screen.queryByTestId('orgId')).not.toBeInTheDocument();
-			expect(screen.queryByText('Organization Name')).not.toBeInTheDocument();
 		});
 
-		it('enables submit button when email is provided with single org', () => {
-			render(<ForgotPassword {...defaultProps} />);
+		it('goes back to sign in', async () => {
+			render(<ForgotPassword {...singleOrg} />);
 
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
+			await user.click(screen.getByTestId('forgot-password-back'));
+
+			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+		});
+
+		it.each(['', '   '])('needs an email (%j)', (email) => {
+			render(<ForgotPassword {...singleOrg} email={email} />);
+
+			expect(screen.getByTestId('forgot-password-submit')).toBeDisabled();
 		});
 	});
 
-	describe('Multiple Organizations', () => {
-		it('shows organization dropdown when multiple orgs exist', () => {
-			render(<ForgotPassword {...multiOrgProps} />);
+	describe('multiple workspaces', () => {
+		it('needs the workspace to reset the password in', async () => {
+			render(<ForgotPassword {...multipleOrgs} />);
 
+			const submit = screen.getByTestId('forgot-password-submit');
 			expect(screen.getByTestId('orgId')).toBeInTheDocument();
-			expect(screen.getByText('Organization Name')).toBeInTheDocument();
+			expect(submit).toBeDisabled();
+
+			await user.click(screen.getByRole('radio', { name: /organization two/i }));
+
+			expect(submit).toBeEnabled();
 		});
 
-		it('disables submit button when org is not selected', () => {
-			const propsWithoutOrgId: ForgotPasswordRouteState = {
-				email: TEST_EMAIL,
-				orgs: mockMultipleOrgs,
-			};
+		it('starts from the workspace picked at sign in', () => {
+			render(<ForgotPassword {...multipleOrgs} orgId="org-2" />);
 
-			render(<ForgotPassword {...propsWithoutOrgId} />);
-
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+			expect(
+				screen.getByRole('radio', { name: /organization two/i }),
+			).toBeChecked();
+			expect(screen.getByTestId('forgot-password-submit')).toBeEnabled();
 		});
 
-		it('enables submit button after selecting an organization', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+		it('sends the picked workspace', async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(FORGOT_PASSWORD_ENDPOINT, async (req, res, ctx) => {
+					body = await req.json();
+					return res(ctx.status(204));
+				}),
+			);
+			render(<ForgotPassword {...multipleOrgs} />);
 
-			render(<ForgotPassword {...multiOrgProps} />);
+			await user.click(screen.getByRole('radio', { name: /organization two/i }));
+			await user.click(screen.getByTestId('forgot-password-submit'));
 
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
-
-			// Click on the dropdown to reveal the options
-			await user.click(screen.getByRole('combobox'));
-			await user.click(screen.getByText('Organization One'));
-
-			await waitFor(() => {
-				expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
-			});
-		});
-
-		it('pre-selects organization when orgId is provided', () => {
-			const propsWithOrgId: ForgotPasswordRouteState = {
-				email: TEST_EMAIL,
-				orgId: 'org-1',
-				orgs: mockMultipleOrgs,
-			};
-
-			render(<ForgotPassword {...propsWithOrgId} />);
-
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
+			await screen.findByRole('heading', { name: /check your email/i });
+			expect(body).toMatchObject({ email: TEST_EMAIL, orgId: 'org-2' });
 		});
 	});
 
-	describe('Form Submission - Success', () => {
-		it('successfully submits forgot password request and shows success screen', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+	describe('self-service reset allowed', () => {
+		it('tells the user to check their email', async () => {
+			acceptRequests();
+			render(<ForgotPassword {...singleOrg} />);
 
-			server.use(
-				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
-					res(ctx.status(200), ctx.json({ status: 'success' })),
-				),
-			);
-
-			render(<ForgotPassword {...defaultProps} />);
-
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			await user.click(submitButton);
+			await user.click(screen.getByTestId('forgot-password-submit'));
 
 			await expect(
-				screen.findByText(/check your email/i),
+				screen.findByRole('heading', { name: /check your email/i }),
 			).resolves.toBeInTheDocument();
+			expect(screen.getByText(TEST_EMAIL)).toBeInTheDocument();
+			expect(screen.getByText(/a reset link is on its way/i)).toBeInTheDocument();
+		});
+
+		it('goes back to sign in from the confirmation', async () => {
+			acceptRequests();
+			render(<ForgotPassword {...singleOrg} />);
+
+			await user.click(screen.getByTestId('forgot-password-submit'));
+			await user.click(await screen.findByTestId('back-to-login'));
+
+			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+		});
+
+		it('sends the link again from the confirmation', async () => {
+			let requests = 0;
+			server.use(
+				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) => {
+					requests += 1;
+					return res(ctx.status(204));
+				}),
+			);
+			render(<ForgotPassword {...singleOrg} />);
+
+			await user.click(screen.getByTestId('forgot-password-submit'));
+			await user.click(
+				await screen.findByRole('button', { name: /send it again/i }),
+			);
+			await user.click(screen.getByTestId('forgot-password-submit'));
+
+			await screen.findByRole('heading', { name: /check your email/i });
+			expect(requests).toBe(2);
+		});
+
+		it('shows Sending… and disables the button while the request is in flight', async () => {
+			server.use(
+				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
+					res(ctx.delay(100), ctx.status(204)),
+				),
+			);
+			render(<ForgotPassword {...singleOrg} />);
+
+			const submit = screen.getByTestId('forgot-password-submit');
+			await user.click(submit);
+
+			await expect(screen.findByText(/sending/i)).resolves.toBeInTheDocument();
+			expect(submit).toBeDisabled();
+		});
+	});
+
+	describe('self-service reset turned off', () => {
+		it('tells the user to ask an admin instead of claiming an email was sent', async () => {
+			rejectSelfService();
+			render(<ForgotPassword {...singleOrg} />);
+
+			await user.click(screen.getByTestId('forgot-password-submit'));
+
+			await expect(
+				screen.findByRole('heading', { name: /ask an admin/i }),
+			).resolves.toBeInTheDocument();
+			expect(screen.getByText(/settings → members/i)).toBeInTheDocument();
+			expect(screen.queryByText(/check your email/i)).not.toBeInTheDocument();
 			expect(
-				screen.getByText(/we've sent a password reset link/i),
-			).toBeInTheDocument();
+				screen.queryByTestId('forgot-password-submit'),
+			).not.toBeInTheDocument();
+			expect(screen.queryByTestId('email')).not.toBeInTheDocument();
 		});
 
-		it('shows back to login button on success screen', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+		it('goes back to sign in', async () => {
+			rejectSelfService();
+			render(<ForgotPassword {...singleOrg} />);
 
-			server.use(
-				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
-					res(ctx.status(200), ctx.json({ status: 'success' })),
-				),
-			);
-
-			render(<ForgotPassword {...defaultProps} />);
-
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			await user.click(submitButton);
-
-			await expect(
-				screen.findByTestId('back-to-login'),
-			).resolves.toBeInTheDocument();
-		});
-
-		it('redirects to login when clicking back to login on success screen', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			server.use(
-				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
-					res(ctx.status(200), ctx.json({ status: 'success' })),
-				),
-			);
-
-			render(<ForgotPassword {...defaultProps} />);
-
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			await user.click(submitButton);
-
-			await expect(
-				screen.findByTestId('back-to-login'),
-			).resolves.toBeInTheDocument();
-
-			const backToLoginButton = screen.getByTestId('back-to-login');
-			await user.click(backToLoginButton);
+			await user.click(screen.getByTestId('forgot-password-submit'));
+			await user.click(await screen.findByTestId('back-to-login'));
 
 			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
 		});
 	});
 
-	describe('Form Submission - Error Handling', () => {
-		it('displays error message when forgot password API fails', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
+	describe('errors', () => {
+		it('shows the API error', async () => {
 			server.use(
 				rest.post(
 					FORGOT_PASSWORD_ENDPOINT,
 					createErrorResponse(400, 'USER_NOT_FOUND', 'User not found'),
 				),
 			);
+			render(<ForgotPassword {...singleOrg} />);
 
-			render(<ForgotPassword {...defaultProps} />);
+			await user.click(screen.getByTestId('forgot-password-submit'));
 
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			await user.click(submitButton);
-
-			await expect(
-				screen.findByText(/user not found/i),
-			).resolves.toBeInTheDocument();
+			await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
+				/user not found/i,
+			);
+			expect(screen.queryByText(/check your email/i)).not.toBeInTheDocument();
 		});
 
-		it('displays error message when API returns server error', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
+		it('shows a server error', async () => {
 			server.use(rest.post(FORGOT_PASSWORD_ENDPOINT, handleInternalServerError));
+			render(<ForgotPassword {...singleOrg} />);
 
-			render(<ForgotPassword {...defaultProps} />);
+			await user.click(screen.getByTestId('forgot-password-submit'));
 
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			await user.click(submitButton);
-
-			await expect(
-				screen.findByText(/internal server error occurred/i),
-			).resolves.toBeInTheDocument();
+			await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
+				/internal server error occurred/i,
+			);
 		});
 
-		it('clears error message on new submission attempt', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			let requestCount = 0;
-
+		it('clears the error on a new attempt', async () => {
+			let requests = 0;
 			server.use(
-				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) => {
-					requestCount += 1;
-					if (requestCount === 1) {
-						return res(
-							ctx.status(400),
-							ctx.json({
-								error: {
-									code: 'USER_NOT_FOUND',
-									message: 'User not found',
-								},
-							}),
-						);
-					}
-					return res(ctx.status(200), ctx.json({ status: 'success' }));
+				rest.post(FORGOT_PASSWORD_ENDPOINT, (req, res, ctx) => {
+					requests += 1;
+					return requests === 1
+						? createErrorResponse(400, 'USER_NOT_FOUND', 'User not found')(
+								req,
+								res,
+								ctx,
+							)
+						: res(ctx.status(204));
 				}),
 			);
+			render(<ForgotPassword {...singleOrg} />);
 
-			render(<ForgotPassword {...defaultProps} />);
+			await user.click(screen.getByTestId('forgot-password-submit'));
+			await screen.findByText(/user not found/i);
+			await user.click(screen.getByTestId('forgot-password-submit'));
 
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			await user.click(submitButton);
-
-			await expect(
-				screen.findByText(/user not found/i),
-			).resolves.toBeInTheDocument();
-
-			// Click submit again
-			await user.click(submitButton);
-
-			await waitFor(() => {
-				expect(screen.queryByText(/user not found/i)).not.toBeInTheDocument();
-			});
-			await expect(
-				screen.findByText(/check your email/i),
-			).resolves.toBeInTheDocument();
-		});
-	});
-
-	describe('Navigation', () => {
-		it('redirects to login when clicking back button on form', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			render(<ForgotPassword {...defaultProps} />);
-
-			const backButton = screen.getByTestId('forgot-password-back');
-			await user.click(backButton);
-
-			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
-		});
-	});
-
-	describe('Loading States', () => {
-		it('shows loading state during API call', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			server.use(
-				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
-					res(ctx.delay(100), ctx.status(200), ctx.json({ status: 'success' })),
-				),
-			);
-
-			render(<ForgotPassword {...defaultProps} />);
-
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			await user.click(submitButton);
-
-			// Button should show loading state
-			await expect(
-				screen.findByText(/sending\.\.\./i),
-			).resolves.toBeInTheDocument();
-		});
-
-		it('disables submit button during loading', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			server.use(
-				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
-					res(ctx.delay(100), ctx.status(200), ctx.json({ status: 'success' })),
-				),
-			);
-
-			render(<ForgotPassword {...defaultProps} />);
-
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			await user.click(submitButton);
-
-			await waitFor(() => {
-				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
-			});
-		});
-	});
-
-	describe('Edge Cases', () => {
-		it('handles empty email gracefully', () => {
-			const propsWithEmptyEmail: ForgotPasswordRouteState = {
-				email: '',
-				orgs: mockSingleOrg,
-			};
-
-			render(<ForgotPassword {...propsWithEmptyEmail} />);
-
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
-		});
-
-		it('handles whitespace-only email', () => {
-			const propsWithWhitespaceEmail: ForgotPasswordRouteState = {
-				email: '   ',
-				orgs: mockSingleOrg,
-			};
-
-			render(<ForgotPassword {...propsWithWhitespaceEmail} />);
-
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
-		});
-
-		it('handles empty orgs array by disabling submission', () => {
-			const propsWithNoOrgs: ForgotPasswordRouteState = {
-				email: TEST_EMAIL,
-				orgs: [],
-			};
-
-			render(<ForgotPassword {...propsWithNoOrgs} />);
-
-			// Should not show org dropdown
-			expect(screen.queryByTestId('orgId')).not.toBeInTheDocument();
-			// Submit should be disabled because no orgId can be determined
-			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+			await screen.findByRole('heading', { name: /check your email/i });
+			expect(screen.queryByText(/user not found/i)).not.toBeInTheDocument();
 		});
 	});
 });

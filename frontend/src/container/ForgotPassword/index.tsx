@@ -1,28 +1,28 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import { ArrowLeft, ArrowRight } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
-import { Form, Select } from 'antd';
-import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { FormEvent, useCallback, useMemo, useState } from 'react';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useForgotPassword } from 'api/generated/services/users';
 import AuthError from 'components/AuthError/AuthError';
+import AuthButton from 'components/AuthLayout/AuthButton';
+import AuthField from 'components/AuthLayout/AuthField';
+import AuthHeading from 'components/AuthLayout/AuthHeading';
+import {
+	AUTH_FORM_CLASS,
+	AUTH_INPUT_CLASS,
+	AUTH_LINK_CLASS,
+	AUTH_NOTE_CLASS,
+} from 'components/AuthLayout/classNames';
+import OrgPicker from 'components/AuthLayout/OrgPicker';
+import { Input } from 'components/ui/input';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import APIError from 'types/api/error';
+import { cn } from 'lib/utils';
+import { ChevronLeft } from 'lucide-react';
 import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 import { getBaseUrl } from 'utils/basePath';
 
-import tvUrl from '@/assets/svgs/tv.svg';
-
+import AskAdminScreen from './AskAdminScreen';
 import SuccessScreen from './SuccessScreen';
-
-import './ForgotPassword.styles.scss';
-import 'container/Login/Login.styles.scss';
-
-type FormValues = {
-	email: string;
-	orgId: string;
-};
+import { isSelfServiceResetDisabled } from './utils';
 
 export type ForgotPasswordRouteState = {
 	email: string;
@@ -35,183 +35,105 @@ function ForgotPassword({
 	orgId,
 	orgs,
 }: ForgotPasswordRouteState): JSX.Element {
-	const [form] = Form.useForm<FormValues>();
 	const {
 		mutate: forgotPasswordMutate,
 		isLoading,
 		isSuccess,
 		error: mutationError,
+		reset,
 	} = useForgotPassword();
-
-	const errorMessage = useMemo(() => {
-		if (!mutationError) {
-			return undefined;
-		}
-
-		try {
-			ErrorResponseHandlerForGeneratedAPIs(mutationError);
-		} catch (apiError) {
-			return apiError as APIError;
-		}
-	}, [mutationError]);
-
-	const initialOrgId = useMemo((): string | undefined => {
-		if (orgId) {
-			return orgId;
-		}
-
-		if (orgs.length === 1) {
-			return orgs[0]?.id;
-		}
-
-		return undefined;
-	}, [orgId, orgs]);
-
-	const watchedEmail = Form.useWatch('email', form);
-	const selectedOrgId = Form.useWatch('orgId', form);
-
-	useEffect(() => {
-		form.setFieldsValue({
-			email,
-			orgId: initialOrgId,
-		});
-	}, [email, form, initialOrgId]);
+	const errorMessage = useMemo(
+		() => convertToApiError(mutationError),
+		[mutationError],
+	);
 
 	const hasMultipleOrgs = orgs.length > 1;
-
-	const submitDisabledReason = useMemo((): string | undefined => {
-		if (!watchedEmail?.trim()) {
-			return 'Enter your email first';
-		}
-
-		// Ensure we have an orgId (either selected from dropdown or the initial one)
-		const currentOrgId = hasMultipleOrgs ? selectedOrgId : initialOrgId;
-		return currentOrgId ? undefined : 'Select an organization first';
-	}, [watchedEmail, selectedOrgId, initialOrgId, hasMultipleOrgs]);
-
-	const handleSubmit = useCallback((): void => {
-		const values = form.getFieldsValue();
-		const currentOrgId = hasMultipleOrgs ? values.orgId : initialOrgId;
-
-		if (!currentOrgId) {
-			return;
-		}
-
-		// Call the forgot password API
-		forgotPasswordMutate({
-			data: {
-				email: values.email,
-				orgId: currentOrgId,
-				frontendBaseURL: getBaseUrl(),
-			},
-		});
-	}, [form, forgotPasswordMutate, initialOrgId, hasMultipleOrgs]);
+	const [selectedOrgId, setSelectedOrgId] = useState<string | undefined>(
+		() => orgId || (orgs.length === 1 ? orgs[0]?.id : undefined),
+	);
+	const canSubmit = Boolean(email.trim()) && Boolean(selectedOrgId);
 
 	const handleBackToLogin = useCallback((): void => {
 		history.push(ROUTES.LOGIN);
 	}, []);
 
-	// Success screen
+	const handleSubmit = (event: FormEvent): void => {
+		event.preventDefault();
+		if (!canSubmit || !selectedOrgId || isLoading) {
+			return;
+		}
+
+		forgotPasswordMutate({
+			data: { email, orgId: selectedOrgId, frontendBaseURL: getBaseUrl() },
+		});
+	};
+
 	if (isSuccess) {
-		return <SuccessScreen onBackToLogin={handleBackToLogin} />;
+		return (
+			<SuccessScreen
+				email={email}
+				onBackToLogin={handleBackToLogin}
+				onSendAgain={reset}
+			/>
+		);
 	}
 
-	// Form screen
+	if (isSelfServiceResetDisabled(errorMessage)) {
+		return <AskAdminScreen onBackToLogin={handleBackToLogin} />;
+	}
+
 	return (
-		<div className="login-form-container">
-			<Form
-				form={form}
-				onFinish={handleSubmit}
-				className="forgot-password-form"
-				initialValues={{
-					email,
-					orgId: initialOrgId,
-				}}
+		<form
+			className={AUTH_FORM_CLASS}
+			aria-labelledby="forgot-title"
+			onSubmit={handleSubmit}
+			noValidate
+		>
+			<button
+				type="button"
+				data-testid="forgot-password-back"
+				onClick={handleBackToLogin}
+				className={cn(
+					AUTH_LINK_CLASS,
+					'tw:inline-flex tw:items-center tw:gap-1.5 tw:self-start',
+				)}
 			>
-				<div className="login-form-header">
-					<div className="login-form-emoji">
-						<img src={tvUrl} alt="TV" width="32" height="32" />
-					</div>
-					<h4 className="forgot-password-title">Forgot your password?</h4>
-					<p className="forgot-password-description">
-						Send a reset link to your inbox and get back to monitoring.
-					</p>
-				</div>
-
-				<div className="login-form-card">
-					<div className="forgot-password-field">
-						<label className="forgot-password-label" htmlFor="forgotPasswordEmail">
-							Email address
-						</label>
-						<Form.Item name="email">
-							<Input
-								type="email"
-								id="forgotPasswordEmail"
-								data-testid="email"
-								required
-								disabled
-								className="login-form-input"
-							/>
-						</Form.Item>
-					</div>
-
-					{hasMultipleOrgs && (
-						<div className="forgot-password-field">
-							<label className="forgot-password-label" htmlFor="orgId">
-								Organization Name
-							</label>
-							<Form.Item
-								name="orgId"
-								rules={[{ required: true, message: 'Please select your organization' }]}
-							>
-								<Select
-									id="orgId"
-									data-testid="orgId"
-									className="login-form-input login-form-select-no-border"
-									placeholder="Select your organization"
-									options={orgs.map((org) => ({
-										value: org.id,
-										label: org.name || 'default',
-									}))}
-								/>
-							</Form.Item>
-						</div>
-					)}
-				</div>
-
-				{errorMessage && <AuthError error={errorMessage} />}
-
-				<div className="login-form-actions forgot-password-actions">
-					<Button
-						size="md"
-						color="secondary"
-						variant="solid"
-						type="button"
-						testId="forgot-password-back"
-						width="100%"
-						onClick={handleBackToLogin}
-						prefix={<ArrowLeft size={12} />}
-					>
-						Back to login
-					</Button>
-
-					<Button
-						disabledTooltip={submitDisabledReason}
-						size="md"
-						disabled={Boolean(submitDisabledReason)}
-						loading={isLoading}
-						variant="solid"
-						color="primary"
-						type="submit"
-						testId="forgot-password-submit"
-						width="100%"
-						suffix={<ArrowRight size={12} />}
-					>
-						{isLoading ? 'Sending...' : 'Send reset link'}
-					</Button>
-				</div>
-			</Form>
-		</div>
+				<ChevronLeft aria-hidden="true" strokeWidth={1.75} className="tw:size-4" />
+				Back to sign in
+			</button>
+			<AuthHeading
+				id="forgot-title"
+				title="Reset your password"
+				description="We'll email you a link to choose a new password."
+			/>
+			<AuthField htmlFor="forgotPasswordEmail" label="Email">
+				<Input
+					id="forgotPasswordEmail"
+					data-testid="email"
+					type="email"
+					value={email}
+					disabled
+					readOnly
+					className={cn(AUTH_INPUT_CLASS, 'tw:bg-muted tw:disabled:opacity-100')}
+				/>
+			</AuthField>
+			{hasMultipleOrgs && (
+				<OrgPicker orgs={orgs} value={selectedOrgId} onChange={setSelectedOrgId} />
+			)}
+			<AuthButton
+				type="submit"
+				data-testid="forgot-password-submit"
+				loading={isLoading}
+				disabled={!canSubmit}
+			>
+				{isLoading ? 'Sending…' : 'Send reset link'}
+			</AuthButton>
+			{errorMessage && <AuthError error={errorMessage} />}
+			<p className={AUTH_NOTE_CLASS}>
+				Signed in with single sign-on? Reset your password with your identity
+				provider instead.
+			</p>
+		</form>
 	);
 }
 

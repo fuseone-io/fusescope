@@ -1,15 +1,11 @@
-import AuthPageContainer from 'components/AuthPageContainer';
+import AuthLayout from 'components/AuthLayout/AuthLayout';
 import LoginContainer from 'container/Login';
-
-import './Login.styles.scss';
 
 function Login(): JSX.Element {
 	return (
-		<AuthPageContainer>
-			<div className="auth-form-card">
-				<LoginContainer />
-			</div>
-		</AuthPageContainer>
+		<AuthLayout>
+			<LoginContainer />
+		</AuthLayout>
 	);
 }
 
