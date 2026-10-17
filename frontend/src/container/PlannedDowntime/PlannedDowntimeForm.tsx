@@ -400,7 +400,7 @@ export function PlannedDowntimeForm(
 				</Form.Item>
 				{recurrenceType === recurrenceOptions.weekly.value && (
 					<Form.Item
-						label="Weekly occurernce"
+						label="Weekly occurrence"
 						name={['recurrence', 'repeatOn']}
 						rules={requiredFieldRule}
 					>
