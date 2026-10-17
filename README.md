@@ -31,19 +31,19 @@ Added by FuseScope:
 
 - **PostgreSQL metastore** — run the backend on PostgreSQL (users, dashboards, alerts, authorization) for highly available, multi-replica deployments, or on SQLite for a single node. Upstream SigNoz only offered PostgreSQL in its proprietary edition; FuseScope's implementation is open source.
 - **Single sign-on with OpenID Connect** — Microsoft Entra ID, Keycloak, Okta, Auth0, Google or any OIDC provider, with group → role mapping. Configure it in the UI or declare it in the configuration file (read-only in the UI, secrets from environment variables). Upstream SigNoz only offered OIDC in its proprietary edition.
+- **Single sign-on with SAML 2.0** — SP- and IdP-initiated login with any SAML 2.0 identity provider (Keycloak, ADFS, Okta, Entra ID, …), with the same group → role mapping. Upstream SigNoz only offered SAML in its proprietary edition.
 - **No phone-home** — usage analytics and the stats reporter are off by default.
 
 ## Roadmap
 
 FuseScope aims to cover the core of a commercial APM suite without lock-in.
 
-Done: ~~rebranding to FuseScope~~, ~~PostgreSQL metastore~~, ~~SSO through OpenID Connect~~.
+Done: ~~rebranding to FuseScope~~, ~~PostgreSQL metastore~~, ~~SSO through OpenID Connect~~, ~~SAML single sign-on~~.
 
 Next, in order:
 
 1. Long-term archive: export data older than the hot window to Parquet in object storage, with rehydration back into ClickHouse ([#11](https://github.com/fuseone-io/fusescope/issues/11)).
 2. Real User Monitoring and session replay ([#12](https://github.com/fuseone-io/fusescope/issues/12)).
-3. SAML single sign-on ([#7](https://github.com/fuseone-io/fusescope/issues/7)).
 
 The full list — anomaly detection, custom roles, synthetics, SLOs, profiling and more — is tracked in the [roadmap issues](https://github.com/fuseone-io/fusescope/issues?q=is%3Aopen+label%3Aroadmap).
 
@@ -96,6 +96,8 @@ authdomain:
 ```
 
 The redirect URI to register at the identity provider is `https://<fusescope-host>/api/v1/complete/oidc`. More examples (Keycloak, Okta) are in [`conf/example.yaml`](conf/example.yaml).
+
+For SAML, add a SAML domain in the same page with the identity provider's entity ID, SSO URL and signing certificate (all in its metadata). Register FuseScope at the identity provider with the entity ID `<fusescope-host>` and the ACS URL `https://<fusescope-host>/api/v1/complete/saml`, and set `global.external_url` so FuseScope only accepts responses for its own host.
 
 For a local development environment (ClickHouse + collector), see [docs/contributing/development.md](docs/contributing/development.md).
 
