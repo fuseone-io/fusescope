@@ -30,17 +30,22 @@ Herdadas do SigNoz e disponíveis hoje:
 Adicionadas pelo FuseScope:
 
 - **Metastore em PostgreSQL**: o backend roda sobre PostgreSQL (usuários, dashboards, alertas, autorização) em implantações com várias réplicas e alta disponibilidade, ou sobre SQLite num único nó. No SigNoz original o PostgreSQL só existia na edição proprietária; a implementação do FuseScope é open source.
+- **Single sign-on com OpenID Connect**: Microsoft Entra ID, Keycloak, Okta, Auth0, Google ou qualquer provedor OIDC, com mapeamento de grupos para papéis. Configure pela interface ou declare no arquivo de configuração (somente leitura na interface, segredos vindos de variáveis de ambiente). No SigNoz original o OIDC só existia na edição proprietária.
 - **Sem envio de telemetria para terceiros**: analytics e o stats reporter vêm desligados por padrão.
 
 ## Roadmap
 
-O objetivo do FuseScope é cobrir o essencial de uma suíte comercial de APM, sem lock-in. Planejado, nesta ordem:
+O objetivo do FuseScope é cobrir o essencial de uma suíte comercial de APM, sem lock-in.
 
-1. ~~Rebranding para FuseScope~~ — concluído.
-2. ~~Metastore em PostgreSQL para implantações em alta disponibilidade~~ — concluído.
-3. SSO via OIDC (por exemplo, Keycloak).
-4. Arquivo de longo prazo: exportar dados além da janela quente para Parquet em object storage, com reidratação de volta no ClickHouse.
-5. Real User Monitoring e session replay.
+Concluído: ~~rebranding para FuseScope~~, ~~metastore em PostgreSQL~~, ~~SSO com OpenID Connect~~.
+
+Próximos, nesta ordem:
+
+1. Arquivo de longo prazo: exportar dados além da janela quente para Parquet em object storage, com reidratação de volta no ClickHouse ([#11](https://github.com/fuseone-io/fusescope/issues/11)).
+2. Real User Monitoring e session replay ([#12](https://github.com/fuseone-io/fusescope/issues/12)).
+3. Single sign-on com SAML ([#7](https://github.com/fuseone-io/fusescope/issues/7)).
+
+A lista completa (detecção de anomalias, papéis customizados, synthetics, SLOs, profiling e outros) está nas [issues de roadmap](https://github.com/fuseone-io/fusescope/issues?q=is%3Aopen+label%3Aroadmap).
 
 ## Primeiros passos
 
@@ -69,6 +74,28 @@ sqlstore:
 ```
 
 ou pelo ambiente: `SIGNOZ_SQLSTORE_PROVIDER=postgres` e `SIGNOZ_SQLSTORE_POSTGRES_DSN=…`. No chart Helm, `--set postgresql.enabled=true` sobe o PostgreSQL e já faz a ligação. Todas as opções estão em [`conf/example.yaml`](conf/example.yaml).
+
+### Single sign-on
+
+Adicione um domínio OpenID Connect em *Settings → Single Sign-on* ou declare no arquivo de configuração:
+
+```yaml
+authdomain:
+  domains:
+    - name: exemplo.com.br
+      config:
+        kind: oidc
+        spec:
+          issuer: https://login.microsoftonline.com/<tenant-id>/v2.0
+          clientId: <application-id>
+          clientSecret: ${FUSESCOPE_ENTRA_CLIENT_SECRET}
+      role_mapping:
+        defaultRole: VIEWER
+        groupMappings:
+          <group-id>: ADMIN
+```
+
+A URI de redirecionamento a cadastrar no provedor é `https://<host-do-fusescope>/api/v1/complete/oidc`. Mais exemplos (Keycloak, Okta) estão em [`conf/example.yaml`](conf/example.yaml).
 
 Para um ambiente local de desenvolvimento (ClickHouse + coletor), veja [docs/contributing/development.md](docs/contributing/development.md).
 

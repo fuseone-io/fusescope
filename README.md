@@ -30,17 +30,22 @@ Inherited from SigNoz and available today:
 Added by FuseScope:
 
 - **PostgreSQL metastore** — run the backend on PostgreSQL (users, dashboards, alerts, authorization) for highly available, multi-replica deployments, or on SQLite for a single node. Upstream SigNoz only offered PostgreSQL in its proprietary edition; FuseScope's implementation is open source.
+- **Single sign-on with OpenID Connect** — Microsoft Entra ID, Keycloak, Okta, Auth0, Google or any OIDC provider, with group → role mapping. Configure it in the UI or declare it in the configuration file (read-only in the UI, secrets from environment variables). Upstream SigNoz only offered OIDC in its proprietary edition.
 - **No phone-home** — usage analytics and the stats reporter are off by default.
 
 ## Roadmap
 
-FuseScope aims to cover the core of a commercial APM suite without lock-in. Planned, in order:
+FuseScope aims to cover the core of a commercial APM suite without lock-in.
 
-1. ~~Rebranding to FuseScope~~ — done.
-2. ~~PostgreSQL metastore for highly available deployments~~ — done.
-3. SSO through OIDC (e.g. Keycloak).
-4. Long-term archive: export data older than the hot window to Parquet in object storage, with rehydration back into ClickHouse.
-5. Real User Monitoring and session replay.
+Done: ~~rebranding to FuseScope~~, ~~PostgreSQL metastore~~, ~~SSO through OpenID Connect~~.
+
+Next, in order:
+
+1. Long-term archive: export data older than the hot window to Parquet in object storage, with rehydration back into ClickHouse ([#11](https://github.com/fuseone-io/fusescope/issues/11)).
+2. Real User Monitoring and session replay ([#12](https://github.com/fuseone-io/fusescope/issues/12)).
+3. SAML single sign-on ([#7](https://github.com/fuseone-io/fusescope/issues/7)).
+
+The full list — anomaly detection, custom roles, synthetics, SLOs, profiling and more — is tracked in the [roadmap issues](https://github.com/fuseone-io/fusescope/issues?q=is%3Aopen+label%3Aroadmap).
 
 ## Getting started
 
@@ -69,6 +74,28 @@ sqlstore:
 ```
 
 or through the environment: `SIGNOZ_SQLSTORE_PROVIDER=postgres` and `SIGNOZ_SQLSTORE_POSTGRES_DSN=…`. With the Helm chart, `--set postgresql.enabled=true` deploys PostgreSQL and wires it in. See [`conf/example.yaml`](conf/example.yaml) for every option.
+
+### Single sign-on
+
+Add an OpenID Connect domain in *Settings → Single Sign-on*, or declare it in the configuration file:
+
+```yaml
+authdomain:
+  domains:
+    - name: example.com
+      config:
+        kind: oidc
+        spec:
+          issuer: https://login.microsoftonline.com/<tenant-id>/v2.0
+          clientId: <application-id>
+          clientSecret: ${FUSESCOPE_ENTRA_CLIENT_SECRET}
+      role_mapping:
+        defaultRole: VIEWER
+        groupMappings:
+          <group-id>: ADMIN
+```
+
+The redirect URI to register at the identity provider is `https://<fusescope-host>/api/v1/complete/oidc`. More examples (Keycloak, Okta) are in [`conf/example.yaml`](conf/example.yaml).
 
 For a local development environment (ClickHouse + collector), see [docs/contributing/development.md](docs/contributing/development.md).
 
