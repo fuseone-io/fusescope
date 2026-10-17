@@ -2,7 +2,7 @@ import { Group, Info } from '@signozhq/icons';
 import { Tooltip } from '@signozhq/ui/tooltip';
 
 import styles from './EntityGroupHeader.module.scss';
-import { DOCS_BASE_URL } from 'constants/app';
+import { DOCS_BASE_URL } from 'constants/docs';
 
 const DOCS_ROOT = `${DOCS_BASE_URL}/docs`;
 

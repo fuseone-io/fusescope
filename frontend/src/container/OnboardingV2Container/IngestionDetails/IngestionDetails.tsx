@@ -5,7 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
 import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/fuseScope.schemas';
-import { DOCS_BASE_URL } from 'constants/app';
+import { DOCS_BASE_URL } from 'constants/docs';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useNotifications } from 'hooks/useNotifications';

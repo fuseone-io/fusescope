@@ -4,7 +4,7 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 import styles from './ColumnHeader.module.scss';
 import cx from 'classnames';
 import { MouseEventHandler } from 'react';
-import { DOCS_BASE_URL } from 'constants/app';
+import { DOCS_BASE_URL } from 'constants/docs';
 
 const DOCS_ROOT = `${DOCS_BASE_URL}/docs`;
 

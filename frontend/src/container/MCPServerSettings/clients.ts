@@ -1,4 +1,4 @@
-import { DOCS_BASE_URL } from 'constants/app';
+import { DOCS_BASE_URL } from 'constants/docs';
 
 export interface McpClient {
 	key: string;
