@@ -5,6 +5,11 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from 'components/ui/dropdown-menu';
+import {
+	HoverCard,
+	HoverCardContent,
+	HoverCardTrigger,
+} from 'components/ui/hover-card';
 import { Sheet, SheetContent, SheetTitle } from 'components/ui/sheet';
 import {
 	Tooltip,
@@ -40,6 +45,17 @@ describe('portalled content', () => {
 		);
 
 		expect(screen.getByTestId('tooltip')).toHaveClass('fs-ui');
+	});
+
+	it('scopes the hover card', () => {
+		render(
+			<HoverCard open>
+				<HoverCardTrigger>hover</HoverCardTrigger>
+				<HoverCardContent data-testid="hover-card">card</HoverCardContent>
+			</HoverCard>,
+		);
+
+		expect(screen.getByTestId('hover-card')).toHaveClass('fs-ui');
 	});
 
 	it('scopes the sheet and its overlay', () => {

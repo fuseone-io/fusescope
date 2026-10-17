@@ -5,6 +5,7 @@ import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Sheet, SheetOverlay, SheetPortal } from 'components/ui/sheet';
+import { Switch } from 'components/ui/switch';
 import {
 	SidebarGroupAction,
 	SidebarMenuAction,
@@ -51,6 +52,11 @@ const cases: Case[] = [
 			</Sheet>
 		),
 		tag: 'DIV',
+	},
+	{
+		name: 'Switch',
+		element: (ref) => <Switch ref={ref as RefObject<HTMLButtonElement>} />,
+		tag: 'BUTTON',
 	},
 	{
 		name: 'SidebarTrigger',
