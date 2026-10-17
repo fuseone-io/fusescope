@@ -190,7 +190,9 @@ jobs:
     steps:
       - name: verdict
         if: |
-          github.event_name != 'merge_group' && (needs.changes.result != 'success' ||
+          github.event_name != 'merge_group' &&
+          !(github.event_name == 'pull_request_target' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]') &&
+          (needs.changes.result != 'success' ||
           (needs.changes.outputs.e2e == 'true' && (needs.fmtlint.result != 'success' || needs.test.result != 'success')))
         run: |
           echo "::error::e2e did not pass. Fork and dependabot PRs need the safe-to-test label."
