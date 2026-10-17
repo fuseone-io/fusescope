@@ -27,6 +27,10 @@ export const checkVersionState = (
 	return stripVersionPrefix(versionCore) === stripVersionPrefix(latestVersion);
 };
 
+/** Builds without a version stamp report `<unset>`. */
+export const isKnownVersion = (version?: string): boolean =>
+	!!version?.trim() && version.trim() !== '<unset>';
+
 // list of forbidden tags to remove in dompurify
 export const FORBID_DOM_PURIFY_TAGS = ['img', 'form', 'style'];
 export const FORBID_DOM_PURIFY_ATTR = ['style'];

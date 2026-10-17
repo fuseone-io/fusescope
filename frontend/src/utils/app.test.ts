@@ -1,4 +1,14 @@
-import { checkVersionState } from './app';
+import { checkVersionState, isKnownVersion } from './app';
+
+describe('isKnownVersion', () => {
+	it.each([undefined, '', '   ', '<unset>'])('is false for %j', (version) => {
+		expect(isKnownVersion(version)).toBe(false);
+	});
+
+	it.each(['v0.148.0', '0.76.2'])('is true for %j', (version) => {
+		expect(isKnownVersion(version)).toBe(true);
+	});
+});
 
 describe('checkVersionState', () => {
 	it('returns true when both versions match exactly', () => {

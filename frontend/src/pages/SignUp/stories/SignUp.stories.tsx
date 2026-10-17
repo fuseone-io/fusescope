@@ -35,18 +35,9 @@ const fillForm = async (
 ): Promise<void> => {
 	const canvas = within(canvasElement);
 
-	await userEvent.type(
-		canvas.getByPlaceholderText(/john@signoz.io/i),
-		SIGNUP_EMAIL,
-	);
-	await userEvent.type(
-		canvas.getByPlaceholderText(/enter new password/i),
-		SIGNUP_PASSWORD,
-	);
-	await userEvent.type(
-		canvas.getByPlaceholderText(/confirm your new password/i),
-		confirmPassword,
-	);
+	await userEvent.type(canvas.getByTestId('email'), SIGNUP_EMAIL);
+	await userEvent.type(canvas.getByTestId('password'), SIGNUP_PASSWORD);
+	await userEvent.type(canvas.getByTestId('confirmPassword'), confirmPassword);
 	// The mismatch message is what the blur is for, not the typing.
 	await userEvent.tab();
 };
@@ -58,7 +49,7 @@ export const Default: Story = {};
 export const PasswordMismatch: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await fillForm(canvasElement, 'something-else');
-		await within(canvasElement).findByText(/passwords don't match/i);
+		await within(canvasElement).findByText(/the passwords don't match/i);
 	},
 };
 
@@ -71,9 +62,7 @@ export const RegistrationRejected: Story = {
 		const canvas = within(canvasElement);
 
 		await fillForm(canvasElement, SIGNUP_PASSWORD);
-		await userEvent.click(
-			canvas.getByRole('button', { name: /access my workspace/i }),
-		);
-		await canvas.findByText(/already_exists/i);
+		await userEvent.click(canvas.getByTestId('signup-submit'));
+		await canvas.findByText(/already has an admin/i);
 	},
 };

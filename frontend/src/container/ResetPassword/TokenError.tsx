@@ -1,13 +1,12 @@
-import { ArrowLeft, CircleAlert } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
 import AuthError from 'components/AuthError/AuthError';
-import AuthPageContainer from 'components/AuthPageContainer';
+import AuthButton from 'components/AuthLayout/AuthButton';
+import AuthHeading from 'components/AuthLayout/AuthHeading';
+import AuthLayout from 'components/AuthLayout/AuthLayout';
+import { AUTH_FORM_CLASS } from 'components/AuthLayout/classNames';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
+import { CircleAlert } from 'lucide-react';
 import APIError from 'types/api/error';
-
-import './ResetPassword.styles.scss';
 
 interface TokenErrorContent {
 	title: string;
@@ -19,7 +18,7 @@ function getErrorContent(error?: APIError): TokenErrorContent {
 
 	if (code === 'reset_password_token_expired') {
 		return {
-			title: 'Reset Password token is expired',
+			title: 'Reset password token is expired',
 			subtitle:
 				'Password reset links are single-use and expire after a set period. Please request a new password reset link.',
 		};
@@ -27,14 +26,14 @@ function getErrorContent(error?: APIError): TokenErrorContent {
 
 	if (code === 'reset_password_token_not_found') {
 		return {
-			title: 'Invalid Reset Link',
+			title: 'Invalid reset link',
 			subtitle:
 				'This reset password link is invalid or has already been used. Please request a new password reset link.',
 		};
 	}
 
 	return {
-		title: 'Reset Link Unavailable',
+		title: 'Reset link unavailable',
 		subtitle:
 			'We could not validate your reset password link. Please request a new one.',
 	};
@@ -48,35 +47,31 @@ function TokenError({ error }: TokenErrorProps): JSX.Element {
 	const { title, subtitle } = getErrorContent(error);
 
 	return (
-		<AuthPageContainer>
-			<div className="reset-password-card reset-password-card--centered">
-				<div className="reset-password-header">
-					<div className="reset-password-header-icon reset-password-header-icon--error">
-						<CircleAlert size={32} />
-					</div>
-					<Typography.Title level={4} className="reset-password-header-title">
-						{title}
-					</Typography.Title>
-					<Typography.Text className="reset-password-header-subtitle">
-						{subtitle}
-					</Typography.Text>
-				</div>
+		<AuthLayout>
+			<section className={AUTH_FORM_CLASS} aria-labelledby="token-error-title">
+				<span
+					aria-hidden="true"
+					className="tw:flex tw:size-12 tw:items-center tw:justify-center tw:rounded-lg tw:bg-error-soft tw:text-error-ink"
+				>
+					<CircleAlert strokeWidth={1.5} className="tw:size-6" />
+				</span>
+				<AuthHeading id="token-error-title" title={title} description={subtitle} />
 				{error && <AuthError error={error} />}
-				<div className="reset-password-back-action">
-					<Button
-						size="md"
-						color="primary"
-						variant="solid"
-						testId="back-to-login"
-						prefix={<ArrowLeft size={12} />}
-						onClick={(): void => history.push(ROUTES.LOGIN)}
-					>
-						Back to login
-					</Button>
-				</div>
-			</div>
-		</AuthPageContainer>
+				<AuthButton
+					type="button"
+					tone="secondary"
+					data-testid="back-to-login"
+					onClick={(): void => history.push(ROUTES.LOGIN)}
+				>
+					Back to sign in
+				</AuthButton>
+			</section>
+		</AuthLayout>
 	);
 }
+
+TokenError.defaultProps = {
+	error: undefined,
+};
 
 export default TokenError;

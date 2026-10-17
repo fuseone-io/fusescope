@@ -4,13 +4,14 @@
  */
 
 import type {
+	CallbackAuthN,
 	OrgSessionContext,
 	SessionsContext,
 } from 'types/api/v2/sessions/context/get';
 
 export const LOGIN_EMAIL = 'anna@signoz.io';
 
-export const AUTHN_MECHANISMS = ['password', 'sso'] as const;
+export const AUTHN_MECHANISMS = ['password', 'sso', 'saml'] as const;
 
 export type AuthNMechanism = (typeof AUTHN_MECHANISMS)[number];
 
@@ -22,17 +23,17 @@ const ORGS = [
 
 export const ORG_MAX = ORGS.length;
 
+const CALLBACKS: Record<Exclude<AuthNMechanism, 'password'>, CallbackAuthN> = {
+	sso: { provider: 'oidc', url: 'https://sso.example.com/realms/acme/auth' },
+	saml: { provider: 'saml', url: 'https://idp.example.com/saml/sso' },
+};
+
 const authNSupport = (
 	mechanism: AuthNMechanism,
 ): OrgSessionContext['authNSupport'] =>
-	mechanism === 'sso'
-		? {
-				password: [],
-				callback: [
-					{ provider: 'google', url: 'https://accounts.google.com/o/saml2/idp' },
-				],
-			}
-		: { password: [{ provider: 'password' }], callback: [] };
+	mechanism === 'password'
+		? { password: [{ provider: 'email_password' }], callback: [] }
+		: { password: [], callback: [CALLBACKS[mechanism]] };
 
 /**
  * The org warning is what the backend attaches to a workspace the user can

@@ -1,6 +1,5 @@
 import { PropsWithChildren } from 'react';
 
-import AuthFooter from './AuthFooter';
 import AuthHeader from './AuthHeader';
 
 import './AuthPageContainer.styles.scss';
@@ -28,7 +27,6 @@ function AuthPageContainer({
 				>
 					{children}
 				</main>
-				<AuthFooter />
 			</div>
 		</div>
 	);

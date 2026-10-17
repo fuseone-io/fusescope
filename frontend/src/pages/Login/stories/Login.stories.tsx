@@ -40,8 +40,8 @@ const submitEmail = async (canvasElement: HTMLElement): Promise<void> => {
 	await waitFor(() => expect(email).toBeEnabled());
 	await userEvent.type(email, LOGIN_EMAIL);
 
-	const next = canvas.getByRole('button', { name: /next/i });
-	await waitFor(() => expect(next).not.toHaveAttribute('aria-disabled', 'true'));
+	const next = canvas.getByTestId('initiate_login');
+	await waitFor(() => expect(next).toBeEnabled());
 	await userEvent.click(next);
 };
 
@@ -58,7 +58,7 @@ export const PasswordStep: Story = {
 	},
 };
 
-/** An email in three workspaces: the organization has to be picked first. */
+/** An email in three workspaces: the workspace has to be picked first. */
 export const MultipleOrganizations: Story = {
 	args: { orgs: 3 },
 	play: async ({ canvasElement }): Promise<void> => {
@@ -74,7 +74,18 @@ export const SingleSignOn: Story = {
 		await submitEmail(canvasElement);
 		// The hand-off only renders once the session context has answered.
 		await within(canvasElement).findByRole('button', {
-			name: /sign in with sso/i,
+			name: /continue with single sign-on/i,
+		});
+	},
+};
+
+/** A workspace behind a SAML identity provider. */
+export const SamlSignOn: Story = {
+	args: { authN: 'saml' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await submitEmail(canvasElement);
+		await within(canvasElement).findByRole('button', {
+			name: /continue with single sign-on/i,
 		});
 	},
 };

@@ -3,7 +3,6 @@ import { useQuery } from 'react-query';
 import { useLocation } from 'react-use';
 import { AxiosError } from 'axios';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import getUserVersion from 'api/v1/version/get';
 import { verifyResetPasswordToken } from 'api/generated/services/users';
 import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { Logout } from 'api/utils';
@@ -12,13 +11,8 @@ import ResetPasswordContainer from 'container/ResetPassword';
 import TokenError from 'container/ResetPassword/TokenError';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useAppContext } from 'providers/App/App';
-import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
 
 function ResetPassword(): JSX.Element {
-	const { user, isLoggedIn } = useAppContext();
-	const { showErrorModal } = useErrorModal();
 	const { search } = useLocation();
 	const params = new URLSearchParams(search || '');
 	const token = params.get('token') || '';
@@ -29,16 +23,6 @@ function ResetPassword(): JSX.Element {
 			history.push(ROUTES.LOGIN);
 		}
 	}, [token]);
-
-	const {
-		data: versionData,
-		isLoading: isVersionLoading,
-		error: versionError,
-	} = useQuery({
-		queryFn: getUserVersion,
-		queryKey: ['getUserVersion', user?.accessJwt],
-		enabled: !isLoggedIn,
-	});
 
 	const {
 		isLoading: isVerifying,
@@ -59,17 +43,11 @@ function ResetPassword(): JSX.Element {
 		[tokenError],
 	);
 
-	useEffect(() => {
-		if (versionError) {
-			showErrorModal(versionError as APIError);
-		}
-	}, [versionError, showErrorModal]);
-
 	if (!token) {
 		return <Spinner tip="Loading..." />;
 	}
 
-	if (isVersionLoading || isVerifying) {
+	if (isVerifying) {
 		return <Spinner tip="Validating your reset password token..." />;
 	}
 
@@ -77,7 +55,7 @@ function ResetPassword(): JSX.Element {
 		return <TokenError error={tokenApiError} />;
 	}
 
-	return <ResetPasswordContainer version={versionData?.data.version || ''} />;
+	return <ResetPasswordContainer />;
 }
 
 export default ResetPassword;

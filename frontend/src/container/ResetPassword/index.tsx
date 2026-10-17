@@ -1,33 +1,27 @@
-import { useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-use';
-import { Button } from '@signozhq/ui/button';
-import { Callout } from '@signozhq/ui/callout';
-import { Form, Input as AntdInput } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useResetPassword } from 'api/generated/services/users';
 import AuthError from 'components/AuthError/AuthError';
-import AuthPageContainer from 'components/AuthPageContainer';
+import AuthButton from 'components/AuthLayout/AuthButton';
+import AuthHeading from 'components/AuthLayout/AuthHeading';
+import AuthLayout from 'components/AuthLayout/AuthLayout';
+import { AUTH_FORM_CLASS } from 'components/AuthLayout/classNames';
+import NewPasswordFields from 'components/AuthLayout/NewPasswordFields';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
-import { Label } from 'pages/SignUp/styles';
+import { cn } from 'lib/utils';
 
-import { FormContainer } from './styles';
-
-import './ResetPassword.styles.scss';
-
-type FormValues = { password: string; confirmPassword: string };
-
-function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
-	const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+function ResetPassword(): JSX.Element {
 	const { t } = useTranslation(['common']);
 	const { search } = useLocation();
-	const params = new URLSearchParams(search);
-	const token = params.get('token');
+	const token = new URLSearchParams(search).get('token');
 	const { notifications } = useNotifications();
+
+	const [password, setPassword] = useState('');
+	const [confirmPassword, setConfirmPassword] = useState('');
 
 	const {
 		mutate: resetPassword,
@@ -35,44 +29,32 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 		error: mutationError,
 		reset: resetMutation,
 	} = useResetPassword();
-
 	const errorMessage = useMemo(
 		() => convertToApiError(mutationError),
 		[mutationError],
 	);
 
-	const [form] = Form.useForm<FormValues>();
-	const password = Form.useWatch('password', form);
-	const confirmPassword = Form.useWatch('confirmPassword', form);
+	const isMismatch = Boolean(confirmPassword) && password !== confirmPassword;
+	const isComplete =
+		Boolean(password.trim()) && Boolean(confirmPassword.trim()) && !isMismatch;
 
-	const isPasswordMismatch =
-		Boolean(confirmPassword) && password !== confirmPassword;
-	const showPasswordMismatchError = confirmPasswordTouched && isPasswordMismatch;
-	const isValidPassword =
-		Boolean(password?.trim()) &&
-		Boolean(confirmPassword?.trim()) &&
-		password === confirmPassword;
-
-	const handleValuesChange = (): void => {
+	const clearError = (): void => {
 		if (mutationError) {
 			resetMutation();
 		}
 	};
 
-	const handleSubmit = (): void => {
-		if (!token) {
+	const handleSubmit = (event: FormEvent): void => {
+		event.preventDefault();
+		if (!token || !isComplete || isLoading) {
 			return;
 		}
 
 		resetPassword(
-			{ data: { password: form.getFieldValue('password'), token } },
+			{ data: { password, token } },
 			{
 				onSuccess: (): void => {
-					notifications.success({
-						message: t('success', {
-							ns: 'common',
-						}),
-					});
+					notifications.success({ message: t('success', { ns: 'common' }) });
 					history.push(ROUTES.LOGIN);
 				},
 			},
@@ -80,107 +62,45 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	};
 
 	return (
-		<AuthPageContainer>
-			<div className="reset-password-card">
-				<div className="reset-password-header">
-					<div className="reset-password-header-icon">
-						<KeyRound size={32} />
-					</div>
-					<Typography.Title level={4} className="reset-password-header-title">
-						Reset Your Password
-					</Typography.Title>
-					<Typography.Text className="reset-password-header-subtitle">
-						Monitor your applications. Find what is causing issues.
-					</Typography.Text>
-					{version && (
-						<div className="reset-password-version-badge">FuseScope {version}</div>
-					)}
-				</div>
-
-				<FormContainer
-					form={form}
-					onFinish={handleSubmit}
-					onValuesChange={handleValuesChange}
-					className="reset-password-form"
+		<AuthLayout>
+			<form
+				className={cn(AUTH_FORM_CLASS, 'tw:gap-5')}
+				aria-labelledby="reset-title"
+				onSubmit={handleSubmit}
+				noValidate
+			>
+				<AuthHeading
+					id="reset-title"
+					title="Set a new password"
+					description="You'll sign in with it next time."
+				/>
+				<NewPasswordFields
+					password={password}
+					confirmPassword={confirmPassword}
+					onPasswordChange={(value): void => {
+						setPassword(value);
+						clearError();
+					}}
+					onConfirmPasswordChange={(value): void => {
+						setConfirmPassword(value);
+						clearError();
+					}}
+					passwordLabel="New password"
+					confirmLabel="Confirm new password"
+				/>
+				<AuthButton
+					type="submit"
+					data-testid="reset-password-submit"
+					data-attr="reset-password"
+					loading={isLoading}
+					disabled={!isComplete}
 				>
-					<div className="reset-password-form-container">
-						<div className="reset-password-form-fields">
-							<div className="reset-password-field-container">
-								<Label htmlFor="password">New Password</Label>
-								<Form.Item
-									name="password"
-									validateTrigger="onBlur"
-									rules={[{ required: true, message: 'Please enter password!' }]}
-								>
-									<AntdInput.Password
-										tabIndex={0}
-										id="password"
-										data-testid="password"
-										placeholder="Enter new password"
-										className="reset-password-form-input"
-									/>
-								</Form.Item>
-							</div>
-
-							<div className="reset-password-field-container">
-								<Label htmlFor="confirmPassword">Confirm New Password</Label>
-								<Form.Item
-									name="confirmPassword"
-									validateTrigger="onBlur"
-									rules={[{ required: true, message: 'Please enter confirm password!' }]}
-								>
-									<AntdInput.Password
-										onBlur={(): void => setConfirmPasswordTouched(true)}
-										id="confirmPassword"
-										data-testid="confirmPassword"
-										placeholder="Confirm your new password"
-										className="reset-password-form-input"
-									/>
-								</Form.Item>
-							</div>
-						</div>
-					</div>
-
-					{showPasswordMismatchError && (
-						<Callout
-							type="error"
-							size="small"
-							showIcon
-							icon={<CircleAlert size={12} />}
-							className="reset-password-error-callout"
-						>
-							Passwords don&apos;t match. Please try again.
-						</Callout>
-					)}
-
-					{errorMessage && !showPasswordMismatchError && (
-						<AuthError error={errorMessage} />
-					)}
-
-					<div className="reset-password-form-actions">
-						<Button
-							size="md"
-							variant="solid"
-							color="primary"
-							type="submit"
-							data-attr="reset-password"
-							loading={isLoading}
-							disabled={!isValidPassword}
-							disabledTooltip="Enter matching passwords in both fields"
-							width="100%"
-							suffix={<ArrowRight size={16} />}
-						>
-							Reset Password
-						</Button>
-					</div>
-				</FormContainer>
-			</div>
-		</AuthPageContainer>
+					Save password
+				</AuthButton>
+				{errorMessage && !isMismatch && <AuthError error={errorMessage} />}
+			</form>
+		</AuthLayout>
 	);
-}
-
-interface ResetPasswordProps {
-	version: string;
 }
 
 export default ResetPassword;

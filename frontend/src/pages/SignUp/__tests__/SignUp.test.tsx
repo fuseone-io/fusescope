@@ -1,4 +1,6 @@
+import logEvent from 'api/common/logEvent';
 import afterLogin from 'AppRoutes/utils';
+import ROUTES from 'constants/routes';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { SignupResponse } from 'types/api/v1/register/post';
@@ -6,7 +8,6 @@ import { Token } from 'types/api/v2/sessions/email_password/post';
 
 import SignUp from '../SignUp';
 
-// Mock dependencies - must be before imports
 jest.mock('AppRoutes/utils', () => ({
 	__esModule: true,
 	default: jest.fn(),
@@ -26,11 +27,13 @@ jest.mock('lib/history', () => ({
 
 const REGISTER_ENDPOINT = '*/api/v1/register';
 const EMAIL_PASSWORD_ENDPOINT = '*/api/v2/sessions/email_password';
+const EMAIL = 'admin@fusescope.dev';
+const PASSWORD = 'Fusescope2026!';
 
 const mockSignupResponse: SignupResponse = {
 	orgId: 'test-org-id',
 	createdAt: Date.now(),
-	email: 'test@signoz.io',
+	email: EMAIL,
 	id: 'test-user-id',
 	displayName: 'Test User',
 	role: 'ADMIN',
@@ -41,178 +44,148 @@ const mockTokenResponse: Token = {
 	refreshToken: 'mock-refresh-token',
 };
 
-describe('SignUp Component - Regular Signup', () => {
+type User = ReturnType<typeof userEvent.setup>;
+
+const fields = (): {
+	email: HTMLElement;
+	password: HTMLElement;
+	confirm: HTMLElement;
+	submit: HTMLElement;
+} => ({
+	email: screen.getByLabelText(/work email/i),
+	password: screen.getByTestId('password'),
+	confirm: screen.getByTestId('confirmPassword'),
+	submit: screen.getByRole('button', { name: /create account and continue/i }),
+});
+
+const fill = async (
+	user: User,
+	{
+		email = EMAIL,
+		password = PASSWORD,
+	}: { email?: string; password?: string } = {},
+): Promise<void> => {
+	const form = fields();
+	await user.type(form.email, email);
+	await user.type(form.password, password);
+	await user.type(form.confirm, password);
+};
+
+const requirementState = (label: RegExp): string | null | undefined =>
+	screen.getByText(label).closest('li')?.getAttribute('data-state');
+
+describe('SignUp', () => {
+	let user: User;
+
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockAfterLogin.mockClear();
-		window.history.pushState({}, '', '/signup');
+		user = userEvent.setup({ pointerEventsCheck: 0 });
 	});
 
 	afterEach(() => {
 		server.resetHandlers();
 	});
 
-	describe('Initial Render', () => {
-		it('renders signup form with all required fields', () => {
-			render(<SignUp />, undefined, { initialRoute: '/signup' });
-
-			expect(screen.getByText(/create your account/i)).toBeInTheDocument();
-			expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-			expect(screen.getByLabelText(/set your password/i)).toBeInTheDocument();
-			expect(
-				screen.getByLabelText(/confirm your new password/i),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole('button', { name: /access my workspace/i }),
-			).toBeInTheDocument();
-		});
-
-		it('shows info callout for admin account creation', () => {
-			render(<SignUp />, undefined, { initialRoute: '/signup' });
+	describe('initial render', () => {
+		it('asks for the first admin account', () => {
+			render(<SignUp />, undefined, { initialRoute: ROUTES.SIGN_UP });
 
 			expect(
-				screen.getByText(/this will create an admin account/i),
+				screen.getByRole('heading', { name: /create the admin account/i }),
 			).toBeInTheDocument();
+			expect(screen.getByText(/gets the admin role/i)).toBeInTheDocument();
+			expect(screen.getByLabelText(/work email/i)).toHaveAttribute(
+				'placeholder',
+				'you@company.com',
+			);
+			expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+			expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
+			expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute(
+				'href',
+				ROUTES.LOGIN,
+			);
+			expect(screen.queryByText(/signoz/i)).not.toBeInTheDocument();
 		});
 	});
 
-	describe('Form Validation', () => {
-		it('disables submit button when form is invalid', async () => {
-			render(<SignUp />, undefined, { initialRoute: '/signup' });
+	describe('validation', () => {
+		it('keeps the submit disabled until every field is filled', async () => {
+			render(<SignUp />, undefined, { initialRoute: ROUTES.SIGN_UP });
+			const form = fields();
 
-			const submitButton = screen.getByRole('button', {
-				name: /access my workspace/i,
-			});
+			expect(form.submit).toBeDisabled();
 
-			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+			await user.type(form.password, PASSWORD);
+			await user.type(form.confirm, PASSWORD);
+			expect(form.submit).toBeDisabled();
+
+			await user.type(form.email, EMAIL);
+			expect(form.submit).toBeEnabled();
+
+			await user.clear(form.confirm);
+			expect(form.submit).toBeDisabled();
 		});
 
-		it('disables submit button for partially filled fields', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+		it('checks the password against the policy as it is typed', async () => {
+			render(<SignUp />, undefined, { initialRoute: ROUTES.SIGN_UP });
+			const { password } = fields();
 
-			render(<SignUp />, undefined, { initialRoute: '/signup' });
+			expect(requirementState(/12 characters or more/i)).toBe('unmet');
 
-			const emailInput = screen.getByLabelText(/email address/i);
-			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
-			const confirmPasswordInput = screen.getByPlaceholderText(
-				/confirm your new password/i,
-			);
-			const submitButton = screen.getByRole('button', {
-				name: /access my workspace/i,
-			});
+			await user.type(password, 'Fusescope2026');
+			expect(requirementState(/12 characters or more/i)).toBe('met');
+			expect(requirementState(/upper and lower case/i)).toBe('met');
+			expect(requirementState(/a number/i)).toBe('met');
+			expect(requirementState(/a symbol/i)).toBe('unmet');
 
-			// Missing email
-			await user.type(passwordInput, 'password123');
-			await user.type(confirmPasswordInput, 'password123');
-			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
-
-			// Missing password
-			await user.clear(passwordInput);
-			await user.clear(confirmPasswordInput);
-			await user.type(emailInput, 'test@signoz.io');
-			await user.type(confirmPasswordInput, 'password123');
-			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
-
-			// Missing confirm password
-			await user.clear(confirmPasswordInput);
-			await user.type(passwordInput, 'password123');
-			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+			await user.type(password, '!');
+			expect(requirementState(/a symbol/i)).toBe('met');
 		});
 
-		it('shows error when passwords do not match', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+		it('says when the passwords do not match, once the confirmation is left', async () => {
+			render(<SignUp />, undefined, { initialRoute: ROUTES.SIGN_UP });
+			const form = fields();
 
-			render(<SignUp />, undefined, { initialRoute: '/signup' });
+			await user.type(form.password, PASSWORD);
+			await user.type(form.confirm, 'Fusescope2025!');
+			expect(
+				screen.queryByText(/the passwords don't match/i),
+			).not.toBeInTheDocument();
 
-			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
-			const confirmPasswordInput = screen.getByPlaceholderText(
-				/confirm your new password/i,
-			);
+			await user.tab();
+			expect(screen.getByText(/the passwords don't match/i)).toBeInTheDocument();
+			expect(form.confirm).toHaveAttribute('aria-invalid', 'true');
+			expect(form.submit).toBeDisabled();
 
-			await user.type(passwordInput, 'password123');
-			await user.type(confirmPasswordInput, 'password456');
-			await user.tab(); // Blur the confirm password field to trigger validation
-
-			await expect(
-				screen.findByText(/passwords don't match/i),
-			).resolves.toBeInTheDocument();
-		});
-
-		it('clears password mismatch error when passwords match', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			render(<SignUp />, undefined, { initialRoute: '/signup' });
-
-			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
-			const confirmPasswordInput = screen.getByPlaceholderText(
-				/confirm your new password/i,
-			);
-
-			await user.type(passwordInput, 'password123');
-			await user.type(confirmPasswordInput, 'password456');
-			await user.tab(); // Blur the confirm password field to trigger validation
-
-			await expect(
-				screen.findByText(/passwords don't match/i),
-			).resolves.toBeInTheDocument();
-
-			await user.clear(confirmPasswordInput);
-			await user.type(confirmPasswordInput, 'password123');
-			await user.tab(); // Blur again to trigger validation
-
-			await waitFor(() => {
-				expect(
-					screen.queryByText(/passwords don't match/i),
-				).not.toBeInTheDocument();
-			});
+			await user.clear(form.confirm);
+			await user.type(form.confirm, PASSWORD);
+			await user.tab();
+			expect(
+				screen.queryByText(/the passwords don't match/i),
+			).not.toBeInTheDocument();
 		});
 	});
 
-	describe('Successful Signup', () => {
-		it('successfully creates account and logs in user', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
+	describe('submission', () => {
+		it('creates the account and signs in', async () => {
 			server.use(
 				rest.post(REGISTER_ENDPOINT, (_req, res, ctx) =>
 					res(
 						ctx.status(200),
-						ctx.json({
-							data: mockSignupResponse,
-							status: 'success',
-						}),
+						ctx.json({ data: mockSignupResponse, status: 'success' }),
 					),
 				),
 				rest.post(EMAIL_PASSWORD_ENDPOINT, (_req, res, ctx) =>
 					res(
 						ctx.status(200),
-						ctx.json({
-							data: mockTokenResponse,
-							status: 'success',
-						}),
+						ctx.json({ data: mockTokenResponse, status: 'success' }),
 					),
 				),
 			);
+			render(<SignUp />, undefined, { initialRoute: ROUTES.SIGN_UP });
 
-			render(<SignUp />, undefined, { initialRoute: '/signup' });
-
-			const emailInput = screen.getByLabelText(/email address/i);
-			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
-			const confirmPasswordInput = screen.getByPlaceholderText(
-				/confirm your new password/i,
-			);
-			const submitButton = screen.getByRole('button', {
-				name: /access my workspace/i,
-			});
-
-			await user.type(emailInput, 'test@signoz.io');
-			await user.type(passwordInput, 'password123');
-			await user.type(confirmPasswordInput, 'password123');
-
-			await waitFor(() => {
-				expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
-			});
-
-			await user.click(submitButton);
+			await fill(user);
+			await user.click(fields().submit);
 
 			await waitFor(() => {
 				expect(mockAfterLogin).toHaveBeenCalledWith(
@@ -220,50 +193,35 @@ describe('SignUp Component - Regular Signup', () => {
 					'mock-refresh-token',
 				);
 			});
+			expect(logEvent).toHaveBeenCalledWith('Account Created Successfully', {
+				email: EMAIL,
+			});
 		});
-	});
 
-	describe('Error Handling', () => {
-		it('displays error message when signup API fails', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
+		it('shows the error of the register API', async () => {
 			server.use(
 				rest.post(REGISTER_ENDPOINT, (_req, res, ctx) =>
 					res(
 						ctx.status(400),
 						ctx.json({
 							error: {
-								code: 'EMAIL_EXISTS',
-								message: 'Email already exists',
+								code: 'invalid_password',
+								message:
+									'password must be at least 12 characters long, should contain at least one uppercase letter',
 							},
 						}),
 					),
 				),
 			);
+			render(<SignUp />, undefined, { initialRoute: ROUTES.SIGN_UP });
 
-			render(<SignUp />, undefined, { initialRoute: '/signup' });
+			await fill(user, { password: 'weak' });
+			await user.click(fields().submit);
 
-			const emailInput = screen.getByLabelText(/email address/i);
-			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
-			const confirmPasswordInput = screen.getByPlaceholderText(
-				/confirm your new password/i,
+			await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
+				/password must be at least 12 characters long/i,
 			);
-			const submitButton = screen.getByRole('button', {
-				name: /access my workspace/i,
-			});
-
-			await user.type(emailInput, 'existing@signoz.io');
-			await user.type(passwordInput, 'password123');
-			await user.type(confirmPasswordInput, 'password123');
-
-			await waitFor(() => {
-				expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
-			});
-
-			await user.click(submitButton);
-
-			const errorCallouts = await screen.findAllByText(/email already exists/i);
-			expect(errorCallouts.length).toBeGreaterThan(0);
+			expect(mockAfterLogin).not.toHaveBeenCalled();
 		});
 	});
 });

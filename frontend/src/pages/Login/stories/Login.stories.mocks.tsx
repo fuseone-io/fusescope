@@ -28,14 +28,14 @@ export const loginMocks = defineStoryMocks({
 		orgs: countControl('Organizations', {
 			group: WORKSPACE,
 			description:
-				'Workspaces the email belongs to. More than one adds the organization select above the password.',
+				'Workspaces the email belongs to. More than one adds the workspace picker above the password.',
 			value: 1,
 			max: ORG_MAX,
 		}),
 		authN: choiceControl<AuthNMechanism>('Sign-in method', {
 			group: WORKSPACE,
 			description:
-				'What the organization supports: a password field, or the button that hands off to its identity provider.',
+				'What the organization supports: a password field, or the button that hands off to its OIDC or SAML identity provider.',
 			options: AUTHN_MECHANISMS,
 			value: 'password',
 		}),

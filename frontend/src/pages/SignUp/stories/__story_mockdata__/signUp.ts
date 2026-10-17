@@ -9,7 +9,7 @@ import type { ROLES } from 'types/roles';
 
 export const SIGNUP_EMAIL = 'anna@signoz.io';
 
-export const SIGNUP_PASSWORD = 'correct-horse-battery';
+export const SIGNUP_PASSWORD = 'Correct-horse-battery-1';
 
 export const REGISTRATIONS = ['accepted', 'rejected'] as const;
 
