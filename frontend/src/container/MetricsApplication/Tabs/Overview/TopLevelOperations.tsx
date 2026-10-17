@@ -4,7 +4,8 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import Graph from 'container/WidgetCard/Card';
 import { SERVICE_DETAIL_DRILLDOWN_ENABLED } from 'container/MetricsApplication/constant';
-import { Card, GraphContainer } from 'container/MetricsApplication/styles';
+import ChartPanel from 'container/MetricsApplication/components/ChartPanel';
+import { GraphContainer } from 'container/MetricsApplication/styles';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Widgets } from 'types/api/widgets/widget';
 
@@ -19,7 +20,7 @@ function TopLevelOperation({
 	topLevelOperationsIsLoading,
 }: TopLevelOperationProps): JSX.Element {
 	return (
-		<Card data-testid={name}>
+		<ChartPanel testId={name}>
 			{topLevelOperationsIsError ? (
 				<Typography>
 					{axios.isAxiosError(topLevelOperationsError)
@@ -38,7 +39,7 @@ function TopLevelOperation({
 					/>
 				</GraphContainer>
 			)}
-		</Card>
+		</ChartPanel>
 	);
 }
 

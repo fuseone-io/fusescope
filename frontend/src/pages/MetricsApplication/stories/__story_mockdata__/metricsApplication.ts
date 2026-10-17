@@ -4,7 +4,8 @@
  */
 
 import type { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
-import type { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
+import type { ServicesList } from 'types/api/metrics/getService';
+import type { TopOperationList } from 'container/MetricsApplication/KeyOperations/types';
 import type {
 	ApDexPayloadAndSettingsProps,
 	MetricMetaProps,
@@ -96,4 +97,23 @@ export const apDexSettingsResponse = (
 export const metricMetaResponse = (): MetricMetaProps => ({
 	delta: false,
 	le: [0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+});
+
+/** This service's row of the services list: what the KPI strip reads. */
+export const serviceSummaryResponse = (): {
+	status: string;
+	data: ServicesList[];
+} => ({
+	status: 'success',
+	data: [
+		{
+			serviceName: SERVICE_NAME,
+			p99: 612_000_000,
+			avgDuration: 48_000_000,
+			numCalls: 14_460,
+			callRate: 2.41,
+			numErrors: 275,
+			errorRate: 1.9,
+		},
+	],
 });

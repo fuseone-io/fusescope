@@ -1,4 +1,4 @@
-import { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
+import { TopOperationList } from 'container/MetricsApplication/KeyOperations/types';
 import { Tags } from 'hooks/useResourceAttribute/types';
 
 export interface Props {

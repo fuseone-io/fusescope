@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
-import { Col } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { QueryParams } from 'constants/query';
@@ -35,7 +34,10 @@ import {
 	SERVICE_DETAIL_DRILLDOWN_ENABLED,
 } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
-import { Card, GraphContainer, Row } from '../styles';
+import ChartCell from '../components/ChartCell';
+import ChartGrid from '../components/ChartGrid';
+import ChartPanel from '../components/ChartPanel';
+import { GraphContainer } from '../styles';
 import { Button } from './styles';
 import { IServiceName } from './types';
 import {
@@ -170,8 +172,8 @@ function DBCall(): JSX.Element {
 	const onGraphClickHandler = useGraphClickHandler(setSelectedTimeStamp);
 
 	return (
-		<Row gutter={24}>
-			<Col span={12}>
+		<ChartGrid>
+			<ChartCell>
 				<Button
 					type="default"
 					size="small"
@@ -187,7 +189,7 @@ function DBCall(): JSX.Element {
 				>
 					View Traces
 				</Button>
-				<Card data-testid="database_call_rps">
+				<ChartPanel testId="database_call_rps">
 					<GraphContainer>
 						<Graph
 							widget={databaseCallsRPSWidget}
@@ -205,10 +207,10 @@ function DBCall(): JSX.Element {
 							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
-				</Card>
-			</Col>
+				</ChartPanel>
+			</ChartCell>
 
-			<Col span={12}>
+			<ChartCell>
 				<Button
 					type="default"
 					size="small"
@@ -225,7 +227,7 @@ function DBCall(): JSX.Element {
 					View Traces
 				</Button>
 
-				<Card data-testid="database_call_avg_duration">
+				<ChartPanel testId="database_call_avg_duration">
 					<GraphContainer>
 						<Graph
 							widget={databaseCallsAverageDurationWidget}
@@ -244,9 +246,9 @@ function DBCall(): JSX.Element {
 							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
-				</Card>
-			</Col>
-		</Row>
+				</ChartPanel>
+			</ChartCell>
+		</ChartGrid>
 	);
 }
 

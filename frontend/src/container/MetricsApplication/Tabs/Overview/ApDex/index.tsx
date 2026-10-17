@@ -1,7 +1,8 @@
 import { memo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Spinner from 'components/Spinner';
-import { Card, GraphContainer } from 'container/MetricsApplication/styles';
+import ChartPanel from 'container/MetricsApplication/components/ChartPanel';
+import { GraphContainer } from 'container/MetricsApplication/styles';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
 
@@ -33,14 +34,14 @@ function ApDexApplication({
 
 	if (isLoading || isRefetching) {
 		return (
-			<Card>
+			<ChartPanel>
 				<Spinner height="40vh" tip="Loading..." />
-			</Card>
+			</ChartPanel>
 		);
 	}
 
 	return (
-		<Card data-testid="apdex">
+		<ChartPanel testId="apdex">
 			<GraphContainer>
 				<ApDexMetricsApplication
 					handleGraphClick={handleGraphClick}
@@ -50,7 +51,7 @@ function ApDexApplication({
 					thresholdValue={data?.data[0].threshold}
 				/>
 			</GraphContainer>
-		</Card>
+		</ChartPanel>
 	);
 }
 

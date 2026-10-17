@@ -7,7 +7,9 @@ import {
 	render,
 	screen,
 	waitFor,
+	within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -27,9 +29,11 @@ jest.mock('hooks/useResourceAttribute/utils', () => ({
 	convertRawQueriesToTraceSelectedTags: (): any[] => [],
 }));
 
+const mockSafeNavigate = jest.fn();
+
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
@@ -301,5 +305,53 @@ describe('TopOperation API Integration', () => {
 		});
 
 		expect(toggleSwitch).not.toBeChecked();
+	});
+
+	it('renders one row per operation with its error-rate badge', async () => {
+		renderComponent();
+
+		const rows = await screen.findAllByTestId('top-operation-row');
+		expect(rows).toHaveLength(mockTopOperationsData.length);
+
+		const first = within(rows[0]);
+		expect(first.getByText('GET /api/users')).toBeInTheDocument();
+		expect(first.getByText('5.00 %')).toHaveAttribute('data-tone', 'error');
+	});
+
+	it('opens the operation in the traces explorer when its row is clicked', async () => {
+		renderComponent();
+
+		const [row] = await screen.findAllByTestId('top-operation-row');
+		fireEvent.click(row);
+
+		expect(mockSafeNavigate).toHaveBeenCalledWith(
+			expect.stringContaining('"operation":["GET /api/users"]'),
+		);
+	});
+
+	it('filters the operations by name', async () => {
+		renderComponent();
+
+		await screen.findAllByTestId('top-operation-row');
+		await userEvent.type(screen.getByTestId('top-operations-search'), 'users');
+
+		expect(screen.getAllByTestId('top-operation-row')).toHaveLength(
+			mockTopOperationsData.filter((op) => op.name.includes('users')).length,
+		);
+	});
+
+	it('downloads the operations as CSV', async () => {
+		const createObjectURL = jest.fn(() => 'blob:operations');
+		Object.defineProperty(URL, 'createObjectURL', {
+			value: createObjectURL,
+			configurable: true,
+		});
+		renderComponent();
+
+		await screen.findAllByTestId('top-operation-row');
+		await userEvent.click(screen.getByTestId('download-menu-trigger'));
+		await userEvent.click(await screen.findByText('CSV'));
+
+		expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
 	});
 });

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Popover } from 'antd';
+import { Button } from 'components/ui/button';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
+import { Settings } from 'lucide-react';
 
-import { Button, ButtonContainer } from '../styles';
 import ApDexSettings from './ApDexSettings';
-import { Settings } from '@signozhq/icons';
 
 function ApDexApplication(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
@@ -58,13 +58,14 @@ function ApDexApplication(): JSX.Element {
 				/>
 			}
 		>
-			<div className="ap-dex-settings-popover-content">
-				<Button size="middle">
-					<ButtonContainer>
-						<Settings size="md" /> Settings
-					</ButtonContainer>
-				</Button>
-			</div>
+			<Button
+				variant="outline"
+				data-testid="service-settings"
+				className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
+			>
+				<Settings aria-hidden="true" />
+				Settings
+			</Button>
 		</Popover>
 	);
 }

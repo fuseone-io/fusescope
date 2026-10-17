@@ -7,6 +7,7 @@ import logEvent from 'api/common/logEvent';
 import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
+import Panel from 'components/PageTemplate/components/Panel';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -43,14 +44,16 @@ import {
 	errorPercentage,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import { Col, ColApDexContainer, ColErrorContainer, Row } from '../styles';
+import ChartCell from '../components/ChartCell';
+import ChartGrid from '../components/ChartGrid';
 import ApDex from './Overview/ApDex';
 import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel';
+import ServiceKpis from './Overview/ServiceKpis';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
 import TopOperationMetrics from './Overview/TopOperationMetrics';
-import { Button, Card } from './styles';
+import { Button } from './styles';
 import { IServiceName } from './types';
 import {
 	generateExplorerPath,
@@ -303,9 +306,10 @@ function Application(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 
 	return (
-		<>
-			<Row gutter={24}>
-				<Col span={12}>
+		<div className="tw:flex tw:flex-col tw:gap-4">
+			<ServiceKpis servicename={servicename} />
+			<ChartGrid>
+				<ChartCell>
 					<ServiceOverview
 						onDragSelect={onDragSelect}
 						handleGraphClick={handleGraphClick}
@@ -315,9 +319,9 @@ function Application(): JSX.Element {
 						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
 						stepInterval={stepInterval}
 					/>
-				</Col>
+				</ChartCell>
 
-				<Col span={12}>
+				<ChartCell>
 					<Button
 						type="default"
 						size="small"
@@ -343,67 +347,67 @@ function Application(): JSX.Element {
 						opName="Rate"
 						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
 					/>
-				</Col>
-			</Row>
-			<Row gutter={24}>
-				<Col span={12}>
-					<ColApDexContainer>
-						<Button
-							type="default"
-							size="small"
-							id="ApDex_button"
-							onClick={onViewTracePopupClick({
-								servicename,
-								selectedTraceTags,
-								timestamp: selectedTimeStamp,
-								apmToTraceQuery,
-								stepInterval,
-								safeNavigate,
-							})}
-						>
-							View Traces
-						</Button>
-						<ApDex
-							handleGraphClick={handleGraphClick}
-							onDragSelect={onDragSelect}
-							topLevelOperationsRoute={topLevelOperationsRoute}
-							tagFilterItems={tagFilterItems}
-						/>
-					</ColApDexContainer>
-					<ColErrorContainer>
-						<GraphControlsPanel
-							id="Error_button"
-							onViewLogsClick={onErrorTrackHandler(
-								selectedTimeStamp,
-								logErrorQuery,
-								true,
-							)}
-							onViewTracesClick={onErrorTrackHandler(
-								selectedTimeStamp,
-								errorTrackQuery,
-							)}
-						/>
+				</ChartCell>
 
-						<TopLevelOperation
-							handleGraphClick={handleGraphClick}
-							onDragSelect={onDragSelect}
-							topLevelOperationsError={topLevelOperationsError}
-							topLevelOperationsIsError={topLevelOperationsIsError}
-							name="error_percentage_%"
-							widget={errorPercentageWidget}
-							opName="Error"
-							topLevelOperationsIsLoading={topLevelOperationsIsLoading}
-						/>
-					</ColErrorContainer>
-				</Col>
+				<ChartCell>
+					<Button
+						type="default"
+						size="small"
+						id="ApDex_button"
+						onClick={onViewTracePopupClick({
+							servicename,
+							selectedTraceTags,
+							timestamp: selectedTimeStamp,
+							apmToTraceQuery,
+							stepInterval,
+							safeNavigate,
+						})}
+					>
+						View Traces
+					</Button>
+					<ApDex
+						handleGraphClick={handleGraphClick}
+						onDragSelect={onDragSelect}
+						topLevelOperationsRoute={topLevelOperationsRoute}
+						tagFilterItems={tagFilterItems}
+					/>
+				</ChartCell>
 
-				<Col span={12}>
-					<Card>
-						{isSpanMetricEnabled ? <TopOperationMetrics /> : <TopOperation />}{' '}
-					</Card>
-				</Col>
-			</Row>
-		</>
+				<ChartCell>
+					<GraphControlsPanel
+						id="Error_button"
+						onViewLogsClick={onErrorTrackHandler(
+							selectedTimeStamp,
+							logErrorQuery,
+							true,
+						)}
+						onViewTracesClick={onErrorTrackHandler(
+							selectedTimeStamp,
+							errorTrackQuery,
+						)}
+					/>
+
+					<TopLevelOperation
+						handleGraphClick={handleGraphClick}
+						onDragSelect={onDragSelect}
+						topLevelOperationsError={topLevelOperationsError}
+						topLevelOperationsIsError={topLevelOperationsIsError}
+						name="error_percentage_%"
+						widget={errorPercentageWidget}
+						opName="Error"
+						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
+					/>
+				</ChartCell>
+			</ChartGrid>
+
+			{isSpanMetricEnabled ? (
+				<Panel testId="top-operations" className="tw:overflow-hidden">
+					<TopOperationMetrics />
+				</Panel>
+			) : (
+				<TopOperation />
+			)}
+		</div>
 	);
 }
 

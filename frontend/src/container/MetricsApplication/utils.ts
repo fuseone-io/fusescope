@@ -2,7 +2,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { withBasePath } from 'utils/basePath';
 
-import { TopOperationList } from './TopOperationsTable';
+import { TopOperationList } from './KeyOperations/types';
 import { NavigateToTraceProps } from './types';
 
 export const getErrorRate = (list: TopOperationList): number => {

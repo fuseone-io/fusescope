@@ -1,7 +1,7 @@
 import { QueryClient } from 'react-query';
 import configureStore from 'redux-mock-store';
 
-import { TopOperationList } from '../TopOperationsTable';
+import { TopOperationList } from '../KeyOperations/types';
 
 interface TopOperation {
 	numCalls: number;

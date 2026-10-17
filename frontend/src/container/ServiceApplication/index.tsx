@@ -5,7 +5,6 @@ import { useAppContext } from 'providers/App/App';
 
 import ServiceMetrics from './ServiceMetrics';
 import ServiceTraces from './ServiceTraces';
-import { Container } from './styles';
 
 function Services(): JSX.Element {
 	const { featureFlags } = useAppContext();
@@ -15,9 +14,7 @@ function Services(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<Container style={{ marginTop: 0 }}>
-				{isSpanMetricEnabled ? <ServiceMetrics /> : <ServiceTraces />}
-			</Container>
+			{isSpanMetricEnabled ? <ServiceMetrics /> : <ServiceTraces />}
 		</Sentry.ErrorBoundary>
 	);
 }

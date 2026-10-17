@@ -16,10 +16,10 @@ import { isUndefined } from 'lodash-es';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'hooks/useResourceAttribute/types';
+import ServicesList from 'pages/Services/components/ServicesList/ServicesList';
 
 import SkipOnBoardingModal from '../SkipOnBoardModal';
 import { useServicesStripInfo } from '../useServicesStripInfo';
-import ServiceTraceTable from './ServiceTracesTable';
 
 function ServiceTraces(): JSX.Element {
 	const { maxTime, minTime, selectedTime } = useSelector<
@@ -83,7 +83,9 @@ function ServiceTraces(): JSX.Element {
 		return <SkipOnBoardingModal onContinueClick={onContinueClick} />;
 	}
 
-	return <ServiceTraceTable services={services} loading={isLoading} />;
+	return (
+		<ServicesList services={services} loading={isLoading} isMetricData={false} />
+	);
 }
 
 export default ServiceTraces;
