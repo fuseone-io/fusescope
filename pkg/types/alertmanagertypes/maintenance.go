@@ -17,7 +17,7 @@ import (
 
 var ErrCodeInvalidPlannedMaintenancePayload = errors.MustNewCode("invalid_planned_maintenance_payload")
 
-const scopeDocUrl = "https://signoz.io/docs/alerts-management/planned-maintenance/#scoping-with-label-expressions"
+const scopeDocUrl = "https://fuseone-io.github.io/fusescope-docs/alerts/routing-and-downtime/#planned-downtime"
 
 type MaintenanceStatus struct {
 	valuer.String
