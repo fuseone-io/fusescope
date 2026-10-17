@@ -20,13 +20,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: 3.13
       - name: uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v10.3.0
       - name: install
         run: |
           cd tests && uv sync
@@ -100,13 +100,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: 3.13
       - name: uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v10.3.0
       - name: install
         run: |
           cd tests && uv sync
@@ -132,7 +132,7 @@ jobs:
       # BuildKit cache mounts so the in-test image build is incremental.
       - name: restore
         id: restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ${{ runner.temp }}/cacheci
           key: tests-primary
