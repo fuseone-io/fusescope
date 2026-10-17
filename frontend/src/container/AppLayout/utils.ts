@@ -30,3 +30,13 @@ export function getRouteKey(pathname: string): string {
 
 	return dynamic?.[0] ?? 'DEFAULT';
 }
+
+/** Routes rendered without the sidebar and app header. */
+export function isFullScreenRoute(pathname: string): boolean {
+	return (
+		pathname === ROUTES.ONBOARDING ||
+		pathname === ROUTES.GET_STARTED_WITH_CLOUD ||
+		pathname.startsWith('/public/dashboard/') ||
+		getRouteKey(pathname) === 'DASHBOARD_PANEL_EDITOR'
+	);
+}

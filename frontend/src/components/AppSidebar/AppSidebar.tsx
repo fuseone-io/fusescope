@@ -10,7 +10,6 @@ import {
 	SidebarMenuItem,
 	SidebarRail,
 	SidebarSeparator,
-	SidebarTrigger,
 } from 'components/ui/sidebar';
 import ROUTES from 'constants/routes';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
@@ -81,94 +80,88 @@ function AppSidebar(): JSX.Element {
 		: AI_ASSISTANT_NAV_ITEM.key;
 
 	return (
-		<>
-			<SidebarTrigger
-				data-testid="app-sidebar-mobile-trigger"
-				className="fs-ui tw:fixed tw:top-2 tw:left-2 tw:z-20 tw:bg-background tw:md:hidden"
-			/>
-			<Sidebar
-				collapsible="icon"
-				data-testid="app-sidebar"
-				className="fs-ui tw:absolute tw:h-full tw:font-sans tw:text-sm"
+		<Sidebar
+			collapsible="icon"
+			data-testid="app-sidebar"
+			className="fs-ui tw:absolute tw:h-full tw:font-sans tw:text-sm"
+		>
+			<nav
+				aria-label="Main navigation"
+				className="tw:flex tw:h-full tw:min-h-0 tw:flex-col"
 			>
-				<nav
-					aria-label="Main navigation"
-					className="tw:flex tw:h-full tw:min-h-0 tw:flex-col"
-				>
-					<SidebarBrand
-						homeUrl={urlFor(ROUTES.HOME)}
-						onHome={(event: MouseEvent): void => navigate(ROUTES.HOME, event)}
-					/>
-					<SidebarContent className="tw:gap-1 tw:py-2 tw:overflow-x-hidden tw:[scrollbar-width:thin] tw:group-data-[collapsible=icon]:overflow-y-auto tw:group-data-[collapsible=icon]:[scrollbar-width:none]">
-						{showNewSource && (
-							<SidebarGroup className="tw:py-1">
-								<SidebarMenu>
-									<SidebarMenuItem>
-										<SidebarMenuButton
-											variant="outline"
-											tooltip="New source"
-											disabled={isWorkspaceBlocked}
-											className={NAV_BUTTON_CLASS}
-											onClick={(event): void => {
-												void logEvent('Sidebar: Menu clicked', {
-													menuRoute: ROUTES.GET_STARTED_WITH_CLOUD,
-													menuLabel: 'Get Started',
-												});
-												openRoute(ROUTES.GET_STARTED_WITH_CLOUD, event);
-											}}
-										>
-											<PackagePlus />
-											<span>New source</span>
-										</SidebarMenuButton>
-									</SidebarMenuItem>
-								</SidebarMenu>
-							</SidebarGroup>
-						)}
-						{shortcuts.length > 0 && (
-							<NavGroupSection label="Shortcuts">
-								{shortcuts.map((item) => renderItem(item, 'shortcut'))}
-							</NavGroupSection>
-						)}
-						{groups.map((group) => (
-							<NavGroupSection key={group.key} label={group.label}>
-								{group.items.map((item) => renderItem(item, group.key))}
-							</NavGroupSection>
-						))}
-					</SidebarContent>
-					<SidebarFooter className="tw:gap-1 tw:pb-3">
-						<SidebarMenu className="tw:gap-0.5">
-							{isAIAssistantEnabled && (
-								<NavMenuItem
-									item={AI_ASSISTANT_NAV_ITEM}
-									href={aiPath}
-									isActive={activeKey === AI_ASSISTANT_NAV_ITEM.key}
-									isDisabled={isWorkspaceBlocked}
-									onNavigate={(event): void => {
-										logClick(AI_ASSISTANT_NAV_ITEM);
-										openRoute(aiPath, event);
-									}}
-								/>
-							)}
-							{integrations && renderItem(integrations, 'footer')}
-							<HelpMenu />
+				<SidebarBrand
+					homeUrl={urlFor(ROUTES.HOME)}
+					onHome={(event: MouseEvent): void => navigate(ROUTES.HOME, event)}
+				/>
+				<SidebarContent className="tw:gap-1 tw:py-2 tw:overflow-x-hidden tw:[scrollbar-width:thin] tw:group-data-[collapsible=icon]:overflow-y-auto tw:group-data-[collapsible=icon]:[scrollbar-width:none]">
+					{showNewSource && (
+						<SidebarGroup className="tw:py-1">
+							<SidebarMenu>
+								<SidebarMenuItem>
+									<SidebarMenuButton
+										variant="outline"
+										tooltip="New source"
+										disabled={isWorkspaceBlocked}
+										className={NAV_BUTTON_CLASS}
+										onClick={(event): void => {
+											void logEvent('Sidebar: Menu clicked', {
+												menuRoute: ROUTES.GET_STARTED_WITH_CLOUD,
+												menuLabel: 'Get Started',
+											});
+											openRoute(ROUTES.GET_STARTED_WITH_CLOUD, event);
+										}}
+									>
+										<PackagePlus />
+										<span>New source</span>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							</SidebarMenu>
+						</SidebarGroup>
+					)}
+					{shortcuts.length > 0 && (
+						<NavGroupSection label="Shortcuts">
+							{shortcuts.map((item) => renderItem(item, 'shortcut'))}
+						</NavGroupSection>
+					)}
+					{groups.map((group) => (
+						<NavGroupSection key={group.key} label={group.label}>
+							{group.items.map((item) => renderItem(item, group.key))}
+						</NavGroupSection>
+					))}
+				</SidebarContent>
+				<SidebarFooter className="tw:gap-1 tw:pb-3">
+					<SidebarMenu className="tw:gap-0.5">
+						{isAIAssistantEnabled && (
 							<NavMenuItem
-								item={SETTINGS_NAV_ITEM}
-								href={urlFor(ROUTES.SETTINGS)}
-								isActive={pathname.startsWith(ROUTES.SETTINGS)}
+								item={AI_ASSISTANT_NAV_ITEM}
+								href={aiPath}
+								isActive={activeKey === AI_ASSISTANT_NAV_ITEM.key}
 								isDisabled={isWorkspaceBlocked}
 								onNavigate={(event): void => {
-									logClick(SETTINGS_NAV_ITEM);
-									navigate(ROUTES.SETTINGS, event);
+									logClick(AI_ASSISTANT_NAV_ITEM);
+									openRoute(aiPath, event);
 								}}
 							/>
-						</SidebarMenu>
-						<SidebarSeparator className="tw:mx-0" />
-						<UserMenu />
-					</SidebarFooter>
-				</nav>
-				<SidebarRail />
-			</Sidebar>
-		</>
+						)}
+						{integrations && renderItem(integrations, 'footer')}
+						<HelpMenu />
+						<NavMenuItem
+							item={SETTINGS_NAV_ITEM}
+							href={urlFor(ROUTES.SETTINGS)}
+							isActive={pathname.startsWith(ROUTES.SETTINGS)}
+							isDisabled={isWorkspaceBlocked}
+							onNavigate={(event): void => {
+								logClick(SETTINGS_NAV_ITEM);
+								navigate(ROUTES.SETTINGS, event);
+							}}
+						/>
+					</SidebarMenu>
+					<SidebarSeparator className="tw:mx-0" />
+					<UserMenu />
+				</SidebarFooter>
+			</nav>
+			<SidebarRail />
+		</Sidebar>
 	);
 }
 

@@ -17,7 +17,7 @@ function SidebarToggle(): JSX.Element {
 					className="tw:size-8 tw:shrink-0 tw:text-muted-foreground tw:hover:bg-muted tw:hover:text-foreground tw:[&_svg]:size-4.5 tw:[&_svg]:stroke-[1.5]"
 				/>
 			</TooltipTrigger>
-			<TooltipContent side="right">
+			<TooltipContent side="bottom" align="start">
 				<span>{open ? 'Collapse sidebar' : 'Expand sidebar'}</span>
 				<Kbd>{shortcut}</Kbd>
 			</TooltipContent>

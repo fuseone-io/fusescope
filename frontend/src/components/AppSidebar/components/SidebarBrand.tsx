@@ -4,7 +4,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from 'components/ui/tooltip';
 import { useAppContext } from 'providers/App/App';
 
 import { useVersionInfo } from '../hooks/useVersionInfo';
-import SidebarToggle from './SidebarToggle';
 
 import fuseScopeLogoUrl from '@/assets/Logos/fusescope-logo.svg';
 import fuseScopeLogoWhiteUrl from '@/assets/Logos/fusescope-logo-white.svg';
@@ -53,7 +52,6 @@ function SidebarBrand({ homeUrl, onHome }: SidebarBrandProps): JSX.Element {
 						className="tw:hidden tw:size-8 tw:group-data-[collapsible=icon]:block"
 					/>
 				</a>
-				<SidebarToggle />
 			</div>
 
 			{(licenseTag || currentVersion) && (
