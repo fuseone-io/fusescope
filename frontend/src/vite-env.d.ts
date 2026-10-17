@@ -30,6 +30,7 @@ interface ImportMetaEnv {
 	readonly VITE_SENTRY_TUNNEL: string;
 	readonly VITE_SENTRY_DSN: string;
 	readonly VITE_DOCS_BASE_URL: string;
+	readonly VITE_FUSESCOPE_DOCS_URL: string;
 	readonly VITE_ENVIRONMENT: string;
 	readonly VITE_VERSION: string;
 }

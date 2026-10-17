@@ -15,7 +15,7 @@ import { toast } from '@signozhq/ui/sonner';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
-import { DOCS_BASE_URL } from 'constants/app';
+import { DOCS_BASE_URL } from 'constants/docs';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useGetGlobalConfig } from 'api/generated/services/global';

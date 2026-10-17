@@ -178,6 +178,9 @@ export default defineConfig(({ mode }): UserConfig => {
 				env.VITE_WEBSOCKET_API_ENDPOINT,
 			),
 			'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
+			'process.env.FUSESCOPE_DOCS_URL': JSON.stringify(
+				env.VITE_FUSESCOPE_DOCS_URL,
+			),
 			'process.env.ENVIRONMENT': JSON.stringify(env.VITE_ENVIRONMENT),
 			'process.env.VERSION': JSON.stringify(env.VITE_VERSION),
 		},
