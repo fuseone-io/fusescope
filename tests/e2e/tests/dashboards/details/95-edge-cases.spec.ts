@@ -113,8 +113,8 @@ test.describe('Dashboard Detail Page — Edge Cases', () => {
 		await expect(page.getByRole('img', { name: 'SigNoz' })).toBeVisible();
 
 		await page
-			.locator('.nav-item')
-			.filter({ hasText: /^Dashboards$/ })
+			.getByTestId('app-sidebar')
+			.getByRole('link', { name: 'Dashboards', exact: true })
 			.click();
 
 		await expect(page).toHaveURL(/\/dashboard($|\?)/);
@@ -189,8 +189,8 @@ test.describe('Dashboard Detail Page — Edge Cases', () => {
 		).toBeVisible();
 
 		await page
-			.locator('.nav-item')
-			.filter({ hasText: /^Dashboards$/ })
+			.getByTestId('app-sidebar')
+			.getByRole('link', { name: 'Dashboards', exact: true })
 			.click();
 
 		await expect(page).toHaveURL(/\/dashboard($|\?)/);

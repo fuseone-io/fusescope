@@ -15,18 +15,17 @@ import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { Toaster } from '@signozhq/ui/sonner';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { Flex } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
 import logEvent from 'api/common/logEvent';
 import { updateSubscription } from 'api/generated/services/subscriptions';
 import type { UpdateSubscription200 } from 'api/generated/services/fuseScope.schemas';
-import updateUserPreference from 'api/v1/user/preferences/name/update';
 import getUserVersion from 'api/v1/version/get';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
-import { AxiosError } from 'axios';
 import cx from 'classnames';
+import AppSidebar from 'components/AppSidebar/AppSidebar';
+import AppSidebarProvider from 'components/AppSidebar/AppSidebarProvider';
 import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -37,16 +36,13 @@ import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
 import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
-import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
 import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import BottomStrip from 'container/BottomStrip';
-import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
-import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
@@ -79,10 +75,8 @@ import {
 	LicensePlatform,
 	LicenseState,
 } from 'types/api/licensesV3/getActive';
-import { UserPreference } from 'types/api/preferences/preference';
 import AppReducer from 'types/reducer/app';
 import { getBaseUrl } from 'utils/basePath';
-import { showErrorNotification } from 'utils/error';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
 	getFormattedDate,
@@ -104,7 +98,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		activeLicense,
 		isFetchingActiveLicense,
 		userPreferences,
-		isFetchingUserPreferences,
 		updateChangelog,
 		toggleChangelogModal,
 		showChangelogModal,
@@ -654,85 +647,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		</div>
 	);
 
-	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-	const { updateUserPreferenceInContext } = useAppContext();
-
-	const { mutate: updateUserPreferenceMutation } = useMutation(
-		updateUserPreference,
-		{
-			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
-			},
-		},
-	);
-
-	const sideNavPinnedPreference = userPreferences?.find(
-		(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
-	)?.value as boolean;
-
-	// Add loading state to prevent layout shift during initial load
-	const [isSidebarLoaded, setIsSidebarLoaded] = useState(false);
-
-	// Get sidebar state from localStorage as fallback until preferences are loaded
-	const getSidebarStateFromLocalStorage = useCallback((): boolean => {
-		try {
-			const storedValue = getLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED);
-			return storedValue === 'true';
-		} catch {
-			return false;
-		}
-	}, []);
-
-	// Set sidebar as loaded after user preferences fetch completes (success or error)
-	useEffect(() => {
-		if (!isFetchingUserPreferences) {
-			setIsSidebarLoaded(true);
-		}
-	}, [isFetchingUserPreferences]);
-
-	// Use localStorage value as fallback until preferences are loaded
-	const isSideNavPinned = isSidebarLoaded
-		? sideNavPinnedPreference
-		: getSidebarStateFromLocalStorage();
-
-	const handleToggleSidebar = useCallback((): void => {
-		const newState = !isSideNavPinned;
-
-		logEvent('Global Shortcut: Sidebar Toggle', {
-			previousState: isSideNavPinned,
-			newState,
-		});
-
-		// Save to localStorage immediately for instant feedback
-		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, newState.toString());
-
-		// Update the context immediately
-		const save = {
-			name: USER_PREFERENCES.SIDENAV_PINNED,
-			value: newState,
-		};
-		updateUserPreferenceInContext(save as UserPreference);
-
-		// Make the API call in the background
-		updateUserPreferenceMutation({
-			name: USER_PREFERENCES.SIDENAV_PINNED,
-			value: newState,
-		});
-	}, [
-		isSideNavPinned,
-		updateUserPreferenceInContext,
-		updateUserPreferenceMutation,
-	]);
-
-	// Register the sidebar toggle shortcut
-	useEffect(() => {
-		registerShortcut(GlobalShortcuts.ToggleSidebar, handleToggleSidebar);
-
-		return (): void => {
-			deregisterShortcut(GlobalShortcuts.ToggleSidebar);
-		};
-	}, [registerShortcut, deregisterShortcut, handleToggleSidebar]);
-
 	const SHOW_TRIAL_EXPIRY_BANNER =
 		showTrialExpiryBanner && !showPaymentFailedWarning;
 	const SHOW_WORKSPACE_RESTRICTED_BANNER = showWorkspaceRestricted;
@@ -799,19 +713,17 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					</div>
 				)}
 
-				<Flex
+				<AppSidebarProvider
+					hasSidebar={isToDisplayLayout && !renderFullScreen}
 					className={cx(
 						'app-layout',
 						isDarkMode ? 'darkMode dark' : 'lightMode',
-						isSideNavPinned ? 'side-nav-pinned' : '',
 						SHOW_WORKSPACE_RESTRICTED_BANNER ? 'isWorkspaceRestricted' : '',
 						SHOW_TRIAL_EXPIRY_BANNER ? 'isTrialExpired' : '',
 						SHOW_PAYMENT_FAILED_BANNER ? 'isPaymentFailed' : '',
 					)}
 				>
-					{isToDisplayLayout && !renderFullScreen && (
-						<SideNav isPinned={isSideNavPinned} />
-					)}
+					{isToDisplayLayout && !renderFullScreen && <AppSidebar />}
 					<div
 						className={cx('app-content', {
 							'full-screen-content': renderFullScreen,
@@ -845,7 +757,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 							<AIAssistantModal />
 						</>
 					)}
-				</Flex>
+				</AppSidebarProvider>
 
 				{chatSupport === ChatSupportState.NeedsCard && !isSavedViewEnabled && (
 					<ChatSupportGateway />

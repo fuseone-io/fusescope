@@ -82,14 +82,14 @@ export const NavHelpMenu: Story = {
 };
 
 /**
- * The sidebar's Settings menu, open: the workspace and account sections the nav
+ * The sidebar's user menu, open: the workspace and account sections the nav
  * reaches without leaving the page.
  */
-export const NavSettingsMenu: Story = {
+export const NavUserMenu: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(
 			await within(canvasElement).findByTestId(
-				'settings-nav-item',
+				'user-menu-trigger',
 				{},
 				{ timeout: 10000 },
 			),

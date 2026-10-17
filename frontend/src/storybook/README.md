@@ -30,7 +30,7 @@ story](#adding-a-page-story).
 
 ## The sidebar
 
-Titles mirror the app's own side nav (`container/SideNav/menuItems.tsx`):
+Titles mirror the app's own side nav (`components/AppSidebar/constants.tsx`):
 `Pages/<Area>/<Page>`, where the area is the nav section and the page is the
 label the nav gives it, so a page sits where someone would click it in the
 product. The leaf is the product's label rather than the component's name, never
