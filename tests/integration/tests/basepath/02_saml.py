@@ -9,14 +9,13 @@ from wiremock.resources.mappings import Mapping
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license, assert_user_has_role
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
-pytestmark = pytest.mark.skip(reason="SAML is not implemented in FuseScope yet (fuseone-io/fusescope#7)")
-
 # SigNoz is served under /signoz, so the SAML ACS registered with the IdP must
 # include the prefix to match the backend-generated AssertionConsumerServiceURL.
 BASE_PATH = "/signoz"
 SAML_CALLBACK_PATH = f"{BASE_PATH}/api/v1/complete/saml"
 
 
+@pytest.mark.skip(reason="SigNoz Cloud licensing is not part of FuseScope; removed with fuseone-io/fusescope#23")
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -33,6 +32,7 @@ def test_apply_license(
 
 def test_create_auth_domain(
     signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
     idp: TestContainerIDP,  # pylint: disable=unused-argument
     create_saml_client: Callable[[str, str], None],
     get_saml_settings: Callable[[], dict],

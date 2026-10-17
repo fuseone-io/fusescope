@@ -24,9 +24,8 @@ from fixtures.idp import (
 from fixtures.role import find_role_by_name
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
-pytestmark = pytest.mark.skip(reason="SAML is not implemented in FuseScope yet (fuseone-io/fusescope#7)")
 
-
+@pytest.mark.skip(reason="SigNoz Cloud licensing is not part of FuseScope; removed with fuseone-io/fusescope#23")
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
