@@ -110,4 +110,12 @@ var EnterprisePlan = []*Feature{
 	},
 }
 
-var DefaultFeatureSet = []*Feature{}
+var DefaultFeatureSet = []*Feature{
+	{
+		Name:       SSO,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+}
