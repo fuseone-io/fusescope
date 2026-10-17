@@ -4,8 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldSkipMaintenance(t *testing.T) {
@@ -1009,6 +1011,10 @@ func TestPostablePlannedMaintenance_ValidateScope(t *testing.T) {
 			err := p.Validate()
 			if (err != nil) != c.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, c.wantErr)
+			}
+			if c.wantErr {
+				_, _, _, _, url, _ := errors.Unwrapb(err)
+				assert.Equal(t, "https://fuseone-io.github.io/fusescope-docs/alerts/routing-and-downtime/#planned-downtime", url)
 			}
 		})
 	}
