@@ -7,6 +7,7 @@ import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/fuseScope.schemas';
+import { signozDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
@@ -189,7 +190,9 @@ export default function SavedViews({
 								});
 
 								window.open(
-									'https://signoz.io/docs/metrics-management/metrics-explorer/#saved-views-in-metrics-explorer',
+									signozDocsUrl(
+										'/metrics-management/metrics-explorer/#saved-views-in-metrics-explorer',
+									),
 									'_blank',
 									'noopener noreferrer',
 								);

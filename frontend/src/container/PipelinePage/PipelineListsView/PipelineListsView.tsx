@@ -14,6 +14,7 @@ import { Typography } from '@signozhq/ui/typography';
 import type { ExpandableConfig } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import savePipeline from 'api/pipeline/post';
+import { signozDocsUrl } from 'constants/docs';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEqual, isUndefined } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -78,7 +79,9 @@ function PipelinesListEmptyState(): JSX.Element {
 						<Typography>
 							{t('learn_more')}&nbsp;
 							<a
-								href="https://signoz.io/docs/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab"
+								href={signozDocsUrl(
+									'/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab',
+								)}
 								target="_blank"
 								rel="noopener noreferrer"
 							>

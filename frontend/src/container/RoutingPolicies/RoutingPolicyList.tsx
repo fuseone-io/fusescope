@@ -6,6 +6,8 @@ import { RotateCw } from '@signozhq/icons';
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
+import { signozDocsUrl } from 'constants/docs';
+
 import RoutingPolicyListItem from './RoutingPolicyListItem';
 import { RoutingPolicy, RoutingPolicyListProps } from './types';
 
@@ -63,7 +65,7 @@ function RoutingPolicyList({
 					<Typography.Text>
 						No routing policies yet,{' '}
 						<a
-							href="https://signoz.io/docs/alerts-management/routing-policy"
+							href={signozDocsUrl('/alerts-management/routing-policy')}
 							target="_blank"
 							rel="noopener noreferrer"
 						>

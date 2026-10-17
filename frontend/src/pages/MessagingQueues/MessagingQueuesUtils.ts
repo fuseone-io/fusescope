@@ -6,6 +6,7 @@ import {
 import { getPartitionLatencyDetails } from 'api/messagingQueues/getPartitionLatencyDetails';
 import { getTopicThroughputDetails } from 'api/messagingQueues/getTopicThroughputDetails';
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
+import { signozDocsUrl } from 'constants/docs';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
@@ -18,8 +19,9 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
-export const KAFKA_SETUP_DOC_LINK =
-	'https://signoz.io/docs/messaging-queues/kafka?utm_source=product&utm_medium=kafka-get-started';
+export const KAFKA_SETUP_DOC_LINK = signozDocsUrl(
+	'/messaging-queues/kafka?utm_source=product&utm_medium=kafka-get-started',
+);
 
 export function convertToTitleCase(text: string): string {
 	return text

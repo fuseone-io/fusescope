@@ -13,6 +13,7 @@ import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
+import { signozDocsUrl } from 'constants/docs';
 import Download from 'container/Download/Download';
 import { filterDropdown } from 'container/ServiceApplication/Filter/FilterDropdown';
 import useResourceAttribute from 'hooks/useResourceAttribute';
@@ -197,7 +198,7 @@ function TopOperationsTable({
 
 	const entryPointSpanInfo = {
 		text: 'Shows the spans where requests enter new services for the first time',
-		url: 'https://signoz.io/docs/apm-and-distributed-tracing/application-details/',
+		url: signozDocsUrl('/apm-and-distributed-tracing/application-details/'),
 		urlText: 'Learn more about Entrypoint Spans.',
 	};
 

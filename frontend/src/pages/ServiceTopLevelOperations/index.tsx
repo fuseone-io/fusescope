@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Histogram, RefreshCw } from '@signozhq/icons';
 import { Alert, Table } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { signozDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import useErrorNotification from 'hooks/useErrorNotification';
@@ -54,7 +55,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 			FuseScope calculates the RED metrics for a service using the entry-point
 			spans. For more details, you can check out our
 			<a
-				href="https://signoz.io/docs/userguide/metrics/"
+				href={signozDocsUrl('/userguide/metrics/')}
 				target="_blank"
 				rel="noreferrer"
 			>

@@ -8,6 +8,7 @@ import {
 	invalidateListServiceAccounts,
 	useListServiceAccounts,
 } from 'api/generated/services/serviceaccount';
+import { signozDocsUrl } from 'constants/docs';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -220,7 +221,7 @@ function ServiceAccountsSettings(): JSX.Element {
 					<p className="sa-settings__subtitle">
 						Overview of service accounts added to this workspace.{' '}
 						<a
-							href="https://signoz.io/docs/manage/administrator-guide/iam/service-accounts"
+							href={signozDocsUrl('/manage/administrator-guide/iam/service-accounts')}
 							target="_blank"
 							rel="noopener noreferrer"
 							className="sa-settings__learn-more"

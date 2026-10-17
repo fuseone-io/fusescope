@@ -4,6 +4,8 @@ import { Minus, Plus } from '@signozhq/icons';
 import { Button, Form, Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
+import { signozDocsUrl } from 'constants/docs';
+
 import { IncidentIOChannel } from '../../CreateAlertChannels/config';
 
 interface MetadataRow {
@@ -47,7 +49,7 @@ function IncidentIOSettings({
 			>
 				{t('incidentio_tip')}{' '}
 				<Typography.Link
-					href="https://signoz.io/docs/alerts-management/notification-channel/incidentio/"
+					href={signozDocsUrl('/alerts-management/notification-channel/incidentio/')}
 					target="_blank"
 					rel="noopener noreferrer"
 				>

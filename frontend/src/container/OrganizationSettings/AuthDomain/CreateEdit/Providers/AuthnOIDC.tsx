@@ -6,6 +6,8 @@ import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
 import { Form, Select, Tooltip } from 'antd';
 
+import { signozDocsUrl } from 'constants/docs';
+
 import ClaimMappingSection from './components/ClaimMappingSection';
 import OIDCPresetSelector from './components/OIDCPresetSelector';
 import RoleMappingSection from './components/RoleMappingSection';
@@ -49,7 +51,7 @@ function ConfigureOIDCAuthnProvider({
 					Configure OpenID Connect Single Sign-On with your Identity Provider. Read
 					the{' '}
 					<a
-						href="https://signoz.io/docs/manage/administrator-guide/sso/overview/"
+						href={signozDocsUrl('/manage/administrator-guide/sso/overview/')}
 						target="_blank"
 						rel="noreferrer"
 					>

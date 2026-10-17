@@ -6,6 +6,7 @@ import { Alert } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import { signozDocsUrl } from 'constants/docs';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -164,7 +165,7 @@ function BreakDown(): JSX.Element {
 								Meter metrics data is aggregated over 1 hour period. Please select time
 								range accordingly.&nbsp;
 								<a
-									href="https://signoz.io/docs/cost-meter/overview/#get-started"
+									href={signozDocsUrl('/cost-meter/overview/#get-started')}
 									rel="noopener noreferrer"
 									target="_blank"
 									style={{ textDecoration: 'underline' }}

@@ -8,6 +8,7 @@ import { Modal } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
+import { signozDocsUrl } from 'constants/docs';
 import CustomDomainSettings from 'container/CustomDomainSettings';
 import LicenseKeyRow from 'container/GeneralSettings/LicenseKeyRow/LicenseKeyRow';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
@@ -726,7 +727,7 @@ function GeneralSettings({
 						<TextToolTip
 							{...{
 								text: `More details on how to set retention period`,
-								url: 'https://signoz.io/docs/userguide/retention-period/',
+								url: signozDocsUrl('/userguide/retention-period/'),
 							}}
 						/>
 					)}

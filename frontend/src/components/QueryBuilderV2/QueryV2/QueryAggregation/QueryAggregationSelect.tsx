@@ -25,6 +25,7 @@ import CodeMirror, {
 } from '@uiw/react-codemirror';
 import { Button, Popover, Tooltip } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
+import { signozDocsUrl } from 'constants/docs';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -676,7 +677,9 @@ function QueryAggregationSelect({
 						</span>
 						<br />
 						<a
-							href="https://signoz.io/docs/querying/aggregation-grouping/#core-aggregation-functions-logs--traces"
+							href={signozDocsUrl(
+								'/querying/aggregation-grouping/#core-aggregation-functions-logs--traces',
+							)}
 							target="_blank"
 							rel="noopener noreferrer"
 							style={{ color: '#1890ff', textDecoration: 'underline' }}

@@ -6,6 +6,7 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';
 import type { CreateSubscription201 } from 'api/generated/services/fuseScope.schemas';
+import { signozDocsUrl } from 'constants/docs';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -53,7 +54,7 @@ const supportChannels = [
 		name: 'Documentation',
 		icon: <Book size={16} />,
 		title: 'Find answers in the documentation.',
-		url: 'https://signoz.io/docs/',
+		url: signozDocsUrl('/'),
 		btnText: 'Visit docs',
 		isExternal: true,
 	},

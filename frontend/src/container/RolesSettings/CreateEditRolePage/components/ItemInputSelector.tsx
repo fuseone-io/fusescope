@@ -7,10 +7,13 @@ import { Typography } from '@signozhq/ui/typography';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 
+import { signozDocsUrl } from 'constants/docs';
+
 import styles from './ItemInputSelector.module.scss';
 
-const BASE_DOCS_URL =
-	'https://signoz.io/docs/manage/administrator-guide/iam/permissions/';
+const BASE_DOCS_URL = signozDocsUrl(
+	'/manage/administrator-guide/iam/permissions/',
+);
 
 export interface ItemInputSelectorProps {
 	placeholder: string;

@@ -1,4 +1,5 @@
 import { BarChart, Grid3X3, ScrollText } from '@signozhq/icons';
+import { signozDocsUrl } from 'constants/docs';
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
 
 import { QueryBuilderField } from '../../queryBuilderFields.types';
@@ -17,7 +18,7 @@ export const ADD_ON_DEFINITIONS = {
 		placeholder: 'Everything (no breakdown)',
 		description:
 			'Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments.',
-		docLink: 'https://signoz.io/docs/querying/aggregation-grouping/#grouping',
+		docLink: signozDocsUrl('/querying/aggregation-grouping/#grouping'),
 	},
 	[QueryBuilderField.Having]: {
 		input: true,
@@ -27,8 +28,9 @@ export const ADD_ON_DEFINITIONS = {
 		placeholder: 'Type Having query like count() > 10 ...',
 		description:
 			'Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500',
-		docLink:
-			'https://signoz.io/docs/querying/result-manipulation/#conditional-filtering-with-having',
+		docLink: signozDocsUrl(
+			'/querying/result-manipulation/#conditional-filtering-with-having',
+		),
 	},
 	[QueryBuilderField.OrderBy]: {
 		input: true,
@@ -38,8 +40,7 @@ export const ADD_ON_DEFINITIONS = {
 		placeholder: 'Select fields to order by',
 		description:
 			'Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers.',
-		docLink:
-			'https://signoz.io/docs/querying/result-manipulation/#sorting--limiting',
+		docLink: signozDocsUrl('/querying/result-manipulation/#sorting--limiting'),
 	},
 	[QueryBuilderField.Limit]: {
 		input: true,
@@ -49,8 +50,9 @@ export const ADD_ON_DEFINITIONS = {
 		placeholder: 'Enter limit',
 		description:
 			'Show only the top/bottom N results. Perfect for focusing on outliers, reducing noise, and improving dashboard performance.',
-		docLink:
-			'https://signoz.io/docs/querying/result-manipulation/#how-limit-works-for-time-series',
+		docLink: signozDocsUrl(
+			'/querying/result-manipulation/#how-limit-works-for-time-series',
+		),
 	},
 	[QueryBuilderField.Legend]: {
 		input: true,
@@ -60,8 +62,7 @@ export const ADD_ON_DEFINITIONS = {
 		placeholder: 'Write legend format',
 		description:
 			'Customize series labels using variables like {{service.name}}-{{endpoint}}. Makes charts readable at a glance during incident investigation.',
-		docLink:
-			'https://signoz.io/docs/querying/aggregation-grouping/#legend-formatting',
+		docLink: signozDocsUrl('/querying/aggregation-grouping/#legend-formatting'),
 	},
 	[QueryBuilderField.ReduceTo]: {
 		input: false,
@@ -70,8 +71,7 @@ export const ADD_ON_DEFINITIONS = {
 		queryPath: 'reduceTo',
 		description:
 			'Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value.',
-		docLink:
-			'https://signoz.io/docs/userguide/query-builder-v5/#result-manipulation',
+		docLink: signozDocsUrl('/userguide/query-builder-v5/#result-manipulation'),
 	},
 	[QueryBuilderField.BucketOptions]: {
 		input: false,
@@ -80,7 +80,7 @@ export const ADD_ON_DEFINITIONS = {
 		queryPath: 'bucketOptions',
 		description:
 			'Choose how the bucket axis is spaced — logarithmically, so every band is the same height and the tail stays readable, or linearly up to a max value. Left to Auto, the query picks the finest log axis it can return.',
-		docLink: 'https://signoz.io/docs/userguide/query-builder-v5/',
+		docLink: signozDocsUrl('/userguide/query-builder-v5/'),
 	},
 } as const satisfies Record<AddOnField, AddOnDefinition>;
 

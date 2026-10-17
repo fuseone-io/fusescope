@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo } from 'react';
 import { Tooltip } from 'antd';
 import cx from 'classnames';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
+import { signozDocsUrl } from 'constants/docs';
 import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import SpaceAggregationOptions from 'container/QueryBuilder/components/SpaceAggregationOptions/SpaceAggregationOptions';
 import { GroupByFilter, OperatorsSelect } from 'container/QueryBuilder/filters';
@@ -110,7 +111,9 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 								<Tooltip
 									title={
 										<a
-											href="https://signoz.io/docs/metrics-management/types-and-aggregation/#aggregation"
+											href={signozDocsUrl(
+												'/metrics-management/types-and-aggregation/#aggregation',
+											)}
 											target="_blank"
 											rel="noopener noreferrer"
 											style={{ color: '#1890ff', textDecoration: 'underline' }}
@@ -141,7 +144,9 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 												Set the time interval for aggregation
 												<br />
 												<a
-													href="https://signoz.io/docs/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series"
+													href={signozDocsUrl(
+														'/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series',
+													)}
 													target="_blank"
 													rel="noopener noreferrer"
 													style={{ color: '#1890ff', textDecoration: 'underline' }}
@@ -179,7 +184,9 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 								<Tooltip
 									title={
 										<a
-											href="https://signoz.io/docs/metrics-management/types-and-aggregation/#aggregation"
+											href={signozDocsUrl(
+												'/metrics-management/types-and-aggregation/#aggregation',
+											)}
 											target="_blank"
 											rel="noopener noreferrer"
 											style={{ color: '#1890ff', textDecoration: 'underline' }}
@@ -264,7 +271,9 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										Set the time interval for aggregation
 										<br />
 										<a
-											href="https://signoz.io/docs/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series"
+											href={signozDocsUrl(
+												'/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series',
+											)}
 											target="_blank"
 											rel="noopener noreferrer"
 											style={{ color: '#1890ff', textDecoration: 'underline' }}

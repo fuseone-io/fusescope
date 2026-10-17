@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { Callout } from '@signozhq/ui/callout';
 import { ArrowUpRight } from '@signozhq/icons';
 
+import { signozDocsUrl } from 'constants/docs';
+
 import styles from './MissingSpansBanner.module.scss';
 
-const MISSING_SPANS_DOCS_URL =
-	'https://signoz.io/docs/traces-management/troubleshooting/faqs/#q-why-are-some-spans-missing-from-a-trace';
+const MISSING_SPANS_DOCS_URL = signozDocsUrl(
+	'/traces-management/troubleshooting/faqs/#q-why-are-some-spans-missing-from-a-trace',
+);
 
 function MissingSpansBanner(): JSX.Element | null {
 	// Session-only dismissal — not persisted, so the banner returns on reload.

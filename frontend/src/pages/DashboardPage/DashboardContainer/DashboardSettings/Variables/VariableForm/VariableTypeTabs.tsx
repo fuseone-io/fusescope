@@ -11,6 +11,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Tabs } from '@signozhq/ui/tabs';
 import { Typography } from '@signozhq/ui/typography';
 import TextToolTip from 'components/TextToolTip';
+import { signozDocsUrl } from 'constants/docs';
 
 import type { VariableType } from '../variableFormModel';
 import styles from './VariableForm.module.scss';
@@ -44,7 +45,9 @@ function VariableTypeTabs({
 					<Typography.Text className={styles.label}>Variable Type</Typography.Text>
 					<TextToolTip
 						text="Learn more about supported variable types"
-						url="https://signoz.io/docs/userguide/manage-variables/#supported-variable-types"
+						url={signozDocsUrl(
+							'/userguide/manage-variables/#supported-variable-types',
+						)}
 						urlText="here"
 						useFilledIcon={false}
 						outlinedIcon={<Info size={14} />}
@@ -96,7 +99,9 @@ function VariableTypeTabs({
 							>
 								<TextToolTip
 									text="Query variables can be slow and brittle, so they aren't recommended. Learn why"
-									url="https://signoz.io/docs/userguide/manage-variables/#why-avoid-clickhouse-query-variables"
+									url={signozDocsUrl(
+										'/userguide/manage-variables/#why-avoid-clickhouse-query-variables',
+									)}
 									urlText="here"
 									useFilledIcon={false}
 									outlinedIcon={<Info size={14} color={Color.BG_AMBER_600} />}
