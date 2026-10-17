@@ -274,6 +274,21 @@ describe('CreateEdit Modal', () => {
 			expect(screen.getByText(/skip email verification/i)).toBeInTheDocument();
 			expect(screen.getByText(/get user info/i)).toBeInTheDocument();
 		});
+
+		it('links to the FuseScope SSO docs', () => {
+			render(
+				<CreateEdit
+					isCreate={false}
+					record={mockOidcAuthDomain}
+					onClose={mockOnClose}
+				/>,
+			);
+
+			expect(screen.getByRole('link', { name: 'docs' })).toHaveAttribute(
+				'href',
+				'https://fuseone-io.github.io/fusescope-docs/configuration/sso/',
+			);
+		});
 	});
 
 	describe('Role Mapping', () => {
