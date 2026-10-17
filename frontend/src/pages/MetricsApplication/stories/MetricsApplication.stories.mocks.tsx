@@ -20,6 +20,7 @@ import {
 	METRICS_LABEL_VALUES,
 	metricMetaResponse,
 	SERVICE_NAME,
+	serviceSummaryResponse,
 	TOP_OPERATION_MAX,
 	topLevelOperationsResponse,
 	topOperationsResponse,
@@ -76,6 +77,11 @@ export const metricsApplicationMocks = defineStoryMocks({
 			rest.post(
 				'http://localhost/api/v1/service/top_level_operations',
 				response.json(() => topLevelOperationsResponse(SERVICE_NAME)),
+			),
+			// This service's row of the services list feeds the KPI strip.
+			rest.post(
+				'http://localhost/api/v2/services',
+				response.json(() => serviceSummaryResponse()),
 			),
 			rest.post(
 				'http://localhost/api/v2/service/top_operations',

@@ -12,13 +12,12 @@ export const ColumnTitle: Record<ColumnKey, string> = {
 	[ColumnKey.Operations]: 'Operations Per Second',
 };
 
-export enum ColumnWidth {
-	Application = 200,
-	P99 = 150,
-	ErrorRate = 150,
-	Operations = 150,
-}
-
-export const SORTING_ORDER = 'descend';
-
 export const SEARCH_PLACEHOLDER = 'Search by service';
+
+export const PAGE_SIZE = 10;
+
+export const MAX_TOP_LEVEL_OPERATIONS = 2500;
+
+/** Error-rate percentages at which the badge turns warning, then error. */
+export const ERROR_RATE_WARNING = 1;
+export const ERROR_RATE_CRITICAL = 5;

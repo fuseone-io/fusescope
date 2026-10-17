@@ -11,7 +11,8 @@ import {
 } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
-import { Card, GraphContainer } from 'container/MetricsApplication/styles';
+import ChartPanel from 'container/MetricsApplication/components/ChartPanel';
+import { GraphContainer } from 'container/MetricsApplication/styles';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -110,7 +111,7 @@ function ServiceOverview({
 					safeNavigate,
 				})}
 			/>
-			<Card data-testid="service_latency">
+			<ChartPanel testId="service_latency">
 				<GraphContainer>
 					<Graph
 						onDragSelect={onDragSelect}
@@ -121,7 +122,7 @@ function ServiceOverview({
 						enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 					/>
 				</GraphContainer>
-			</Card>
+			</ChartPanel>
 		</>
 	);
 }

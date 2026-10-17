@@ -42,6 +42,11 @@ type Story = StoryObj<MetricsApplicationArgs>;
  */
 export const Default: Story = {};
 
+/** The overview in the dark theme. */
+export const Dark: Story = {
+	parameters: { signoz: { theme: 'dark' } },
+};
+
 /** The database calls the service makes, by system and by upstream. */
 export const DatabaseCalls: Story = {
 	args: { tab: 'DB_CALL_METRICS' },

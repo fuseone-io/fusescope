@@ -1,64 +1,69 @@
 import { useParams } from 'react-router-dom';
-import { Tabs, TabsProps } from 'antd';
+import PageHeader from 'components/PageTemplate/components/PageHeader';
+import PageTabs from 'components/PageTemplate/components/PageTabs';
+import { useQueryParamTab } from 'components/PageTemplate/hooks/useQueryParamTab';
+import PageTemplate from 'components/PageTemplate/PageTemplate';
+import { PageTab } from 'components/PageTemplate/types';
 import { QueryParams } from 'constants/query';
 import DBCall from 'container/MetricsApplication/Tabs/DBCall';
 import External from 'container/MetricsApplication/Tabs/External';
 import Overview from 'container/MetricsApplication/Tabs/Overview';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
+import { Server } from 'lucide-react';
 
-import ApDexApplication from './ApDex/ApDexApplication';
+import ServiceHeaderActions from './components/ServiceHeaderActions';
 import { MetricsApplicationTab, TAB_KEY_VS_LABEL } from './types';
-import useMetricsApplicationTabKey from './useMetricsApplicationTabKey';
 
-import './MetricsApplication.styles.scss';
+const TABS = Object.values(MetricsApplicationTab);
 
 function MetricsApplication(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<{
 		servicename: string;
 	}>();
+	const servicename = decodeURIComponent(encodedServiceName);
 
-	const activeKey = useMetricsApplicationTabKey();
+	const [activeTab, setActiveTab] = useQueryParamTab({
+		param: QueryParams.tab,
+		values: TABS,
+		fallback: MetricsApplicationTab.OVER_METRICS,
+	});
 
-	const urlQuery = useUrlQuery();
-	const { safeNavigate } = useSafeNavigate();
-
-	const items: TabsProps['items'] = [
+	const tabs: PageTab[] = [
 		{
+			value: MetricsApplicationTab.OVER_METRICS,
 			label: TAB_KEY_VS_LABEL[MetricsApplicationTab.OVER_METRICS],
-			key: MetricsApplicationTab.OVER_METRICS,
-			children: <Overview />,
+			content: <Overview />,
 		},
 		{
+			value: MetricsApplicationTab.DB_CALL_METRICS,
 			label: TAB_KEY_VS_LABEL[MetricsApplicationTab.DB_CALL_METRICS],
-			key: MetricsApplicationTab.DB_CALL_METRICS,
-			children: <DBCall />,
+			content: <DBCall />,
 		},
 		{
+			value: MetricsApplicationTab.EXTERNAL_METRICS,
 			label: TAB_KEY_VS_LABEL[MetricsApplicationTab.EXTERNAL_METRICS],
-			key: MetricsApplicationTab.EXTERNAL_METRICS,
-			children: <External />,
+			content: <External />,
 		},
 	];
 
-	const onTabChange = (tab: string): void => {
-		urlQuery.set(QueryParams.tab, tab);
-		safeNavigate(`/services/${encodedServiceName}?${urlQuery.toString()}`);
-	};
-
 	return (
-		<div className="metrics-application-container">
-			<ResourceAttributesFilter />
-			<ApDexApplication />
-			<Tabs
-				items={items}
-				activeKey={activeKey}
-				className="service-route-tab"
-				destroyInactiveTabPane
-				onChange={onTabChange}
+		<PageTemplate testId="service-page">
+			<PageHeader
+				icon={<Server />}
+				title={servicename}
+				titleMono
+				actions={<ServiceHeaderActions servicename={servicename} />}
 			/>
-		</div>
+			<div className="tw:[&_.resourceAttributesFilter-container]:mb-0!">
+				<ResourceAttributesFilter />
+			</div>
+			<PageTabs
+				label="Service sections"
+				tabs={tabs}
+				value={activeTab}
+				onValueChange={setActiveTab}
+			/>
+		</PageTemplate>
 	);
 }
 

@@ -37,6 +37,11 @@ type Story = StoryObj<ServicesArgs>;
  */
 export const Default: Story = {};
 
+/** The default list in the dark theme. */
+export const Dark: Story = {
+	parameters: { signoz: { theme: 'dark' } },
+};
+
 /** The same list read from span metrics instead of traces, so p99 is in ns. */
 export const SpanMetrics: Story = {
 	args: { mode: 'span-metrics' },
