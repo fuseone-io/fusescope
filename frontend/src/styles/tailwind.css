@@ -1,0 +1,287 @@
+/*
+ * Tailwind for the shadcn/ui-based UI; rules in src/components/ui/README.md.
+ * Legacy screens must render unchanged: no preflight, utilities carry the
+ * `tw:` prefix, the reset only applies inside `.fs-ui`, and theme variables
+ * use `--fs-` because @signozhq/design-tokens already defines `--background`,
+ * `--primary`, `--sidebar`, ….
+ */
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme) prefix(tw);
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+@import 'tw-animate-css/prefix';
+
+@source '..';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+	--fs-background: #f7f8fa;
+	--fs-foreground: #111827;
+	--fs-card: #ffffff;
+	--fs-card-foreground: #111827;
+	--fs-popover: #ffffff;
+	--fs-popover-foreground: #111827;
+	--fs-primary: #0f5fb8;
+	--fs-primary-foreground: #ffffff;
+	--fs-primary-strong: #093f7c;
+	--fs-primary-soft: #e8f0fb;
+	--fs-primary-ink: #0f5fb8;
+	--fs-secondary: #eceef2;
+	--fs-secondary-foreground: #111827;
+	--fs-brand-secondary: #950fb8;
+	--fs-brand-secondary-foreground: #ffffff;
+	--fs-brand-secondary-soft: #f5e8fb;
+	--fs-brand-secondary-ink: #950fb8;
+	--fs-muted: #eceef2;
+	--fs-muted-foreground: #4b5563;
+	--fs-subtle-foreground: #64707f;
+	--fs-accent: #e8f0fb;
+	--fs-accent-foreground: #0f5fb8;
+	--fs-destructive: #dc2626;
+	--fs-destructive-foreground: #ffffff;
+	--fs-border: #d8dce4;
+	--fs-input: #64707f;
+	--fs-ring: #0f5fb8;
+	--fs-success: #059669;
+	--fs-success-soft: #d1fae5;
+	--fs-success-ink: #064e3b;
+	--fs-warning: #d97706;
+	--fs-warning-soft: #fef3c7;
+	--fs-warning-ink: #78350f;
+	--fs-error: #dc2626;
+	--fs-error-soft: #fee2e2;
+	--fs-error-ink: #7f1d1d;
+	--fs-series-1: #0f5fb8;
+	--fs-series-2: #950fb8;
+	--fs-series-3: #059669;
+	--fs-series-4: #d97706;
+	--fs-series-5: #6d9ad8;
+	--fs-series-6: #b86dd8;
+	--fs-series-7: #64707f;
+	--fs-sidebar: #ffffff;
+	--fs-sidebar-foreground: #111827;
+	--fs-sidebar-primary: #0f5fb8;
+	--fs-sidebar-primary-foreground: #ffffff;
+	--fs-sidebar-accent: #e8f0fb;
+	--fs-sidebar-accent-foreground: #0f5fb8;
+	--fs-sidebar-border: #d8dce4;
+	--fs-sidebar-ring: #0f5fb8;
+}
+
+.dark {
+	--fs-background: #0a1628;
+	--fs-foreground: #eceef2;
+	--fs-card: #111827;
+	--fs-card-foreground: #eceef2;
+	--fs-popover: #111827;
+	--fs-popover-foreground: #eceef2;
+	--fs-primary: #3d8be0;
+	--fs-primary-foreground: #011228;
+	--fs-primary-strong: #6d9ad8;
+	--fs-primary-soft: #031f40;
+	--fs-primary-ink: #9dbbe0;
+	--fs-secondary: #011228;
+	--fs-secondary-foreground: #eceef2;
+	--fs-brand-secondary: #c04fe0;
+	--fs-brand-secondary-foreground: #1d0128;
+	--fs-brand-secondary-soft: #310340;
+	--fs-brand-secondary-ink: #cf9de0;
+	--fs-muted: #011228;
+	--fs-muted-foreground: #b8bfcc;
+	--fs-subtle-foreground: #8e98a8;
+	--fs-accent: #031f40;
+	--fs-accent-foreground: #9dbbe0;
+	--fs-destructive: #dc2626;
+	--fs-destructive-foreground: #ffffff;
+	--fs-border: #1f2937;
+	--fs-input: #64707f;
+	--fs-ring: #6d9ad8;
+	--fs-success: #059669;
+	--fs-success-soft: #064e3b;
+	--fs-success-ink: #d1fae5;
+	--fs-warning: #d97706;
+	--fs-warning-soft: #78350f;
+	--fs-warning-ink: #fef3c7;
+	--fs-error: #dc2626;
+	--fs-error-soft: #7f1d1d;
+	--fs-error-ink: #fee2e2;
+	--fs-series-1: #3d8be0;
+	--fs-series-2: #c04fe0;
+	--fs-series-3: #059669;
+	--fs-series-4: #d97706;
+	--fs-series-5: #9dbbe0;
+	--fs-series-6: #cf9de0;
+	--fs-series-7: #8e98a8;
+	--fs-sidebar: #111827;
+	--fs-sidebar-foreground: #eceef2;
+	--fs-sidebar-primary: #3d8be0;
+	--fs-sidebar-primary-foreground: #011228;
+	--fs-sidebar-accent: #031f40;
+	--fs-sidebar-accent-foreground: #9dbbe0;
+	--fs-sidebar-border: #1f2937;
+	--fs-sidebar-ring: #6d9ad8;
+}
+
+@theme {
+	--font-sans: 'Inter', 'Segoe UI', -apple-system, system-ui, sans-serif;
+	--font-mono: 'JetBrains Mono', 'Fira Code', Consolas, ui-monospace, monospace;
+
+	--radius-sm: 4px;
+	--radius-md: 8px;
+	--radius-lg: 12px;
+	--radius-xl: 16px;
+	--radius-2xl: 24px;
+
+	--shadow-sm: 0 1px 2px 0 rgba(10, 22, 40, 0.05);
+	--shadow-md:
+		0 4px 6px -1px rgba(10, 22, 40, 0.08), 0 2px 4px -2px rgba(10, 22, 40, 0.05);
+	--shadow-lg:
+		0 10px 15px -3px rgba(10, 22, 40, 0.08), 0 4px 6px -4px rgba(10, 22, 40, 0.05);
+	--shadow-xl:
+		0 20px 25px -5px rgba(10, 22, 40, 0.1), 0 8px 10px -6px rgba(10, 22, 40, 0.06);
+}
+
+/* `inline` so utilities resolve --fs-* where used and follow `.dark`. */
+@theme inline {
+	--color-background: var(--fs-background);
+	--color-foreground: var(--fs-foreground);
+	--color-card: var(--fs-card);
+	--color-card-foreground: var(--fs-card-foreground);
+	--color-popover: var(--fs-popover);
+	--color-popover-foreground: var(--fs-popover-foreground);
+	--color-primary: var(--fs-primary);
+	--color-primary-foreground: var(--fs-primary-foreground);
+	--color-primary-strong: var(--fs-primary-strong);
+	--color-primary-soft: var(--fs-primary-soft);
+	--color-primary-ink: var(--fs-primary-ink);
+	--color-secondary: var(--fs-secondary);
+	--color-secondary-foreground: var(--fs-secondary-foreground);
+	--color-brand-secondary: var(--fs-brand-secondary);
+	--color-brand-secondary-foreground: var(--fs-brand-secondary-foreground);
+	--color-brand-secondary-soft: var(--fs-brand-secondary-soft);
+	--color-brand-secondary-ink: var(--fs-brand-secondary-ink);
+	--color-muted: var(--fs-muted);
+	--color-muted-foreground: var(--fs-muted-foreground);
+	--color-subtle-foreground: var(--fs-subtle-foreground);
+	--color-accent: var(--fs-accent);
+	--color-accent-foreground: var(--fs-accent-foreground);
+	--color-destructive: var(--fs-destructive);
+	--color-destructive-foreground: var(--fs-destructive-foreground);
+	--color-border: var(--fs-border);
+	--color-input: var(--fs-input);
+	--color-ring: var(--fs-ring);
+
+	--color-surface: var(--fs-background);
+	--color-surface-raised: var(--fs-card);
+	--color-surface-sunken: var(--fs-muted);
+	--color-ink: var(--fs-foreground);
+	--color-ink-muted: var(--fs-muted-foreground);
+	--color-ink-subtle: var(--fs-subtle-foreground);
+
+	--color-success: var(--fs-success);
+	--color-success-soft: var(--fs-success-soft);
+	--color-success-ink: var(--fs-success-ink);
+	--color-warning: var(--fs-warning);
+	--color-warning-soft: var(--fs-warning-soft);
+	--color-warning-ink: var(--fs-warning-ink);
+	--color-error: var(--fs-error);
+	--color-error-soft: var(--fs-error-soft);
+	--color-error-ink: var(--fs-error-ink);
+
+	--color-severity-trace: var(--fs-subtle-foreground);
+	--color-severity-debug: var(--fs-muted-foreground);
+	--color-severity-info: var(--fs-primary);
+	--color-severity-warn: var(--fs-warning);
+	--color-severity-error: var(--fs-error);
+	--color-severity-fatal: var(--fs-brand-secondary);
+
+	--color-series-1: var(--fs-series-1);
+	--color-series-2: var(--fs-series-2);
+	--color-series-3: var(--fs-series-3);
+	--color-series-4: var(--fs-series-4);
+	--color-series-5: var(--fs-series-5);
+	--color-series-6: var(--fs-series-6);
+	--color-series-7: var(--fs-series-7);
+	--color-chart-1: var(--fs-series-1);
+	--color-chart-2: var(--fs-series-2);
+	--color-chart-3: var(--fs-series-3);
+	--color-chart-4: var(--fs-series-4);
+	--color-chart-5: var(--fs-series-5);
+
+	--color-sidebar: var(--fs-sidebar);
+	--color-sidebar-foreground: var(--fs-sidebar-foreground);
+	--color-sidebar-primary: var(--fs-sidebar-primary);
+	--color-sidebar-primary-foreground: var(--fs-sidebar-primary-foreground);
+	--color-sidebar-accent: var(--fs-sidebar-accent);
+	--color-sidebar-accent-foreground: var(--fs-sidebar-accent-foreground);
+	--color-sidebar-border: var(--fs-sidebar-border);
+	--color-sidebar-ring: var(--fs-sidebar-ring);
+}
+
+/* Preflight's essentials, limited to `.fs-ui` subtrees. Portalled shadcn
+ * content (menus, tooltips, sheets) carries `fs-ui` itself. */
+@layer base {
+	:where(
+		.fs-ui,
+		.fs-ui *,
+		.fs-ui::before,
+		.fs-ui::after,
+		.fs-ui *::before,
+		.fs-ui *::after,
+		.fs-ui ::backdrop,
+		.fs-ui ::file-selector-button
+	) {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+		border: 0 solid;
+		border-color: var(--fs-border);
+		outline-color: color-mix(in oklab, var(--fs-ring) 50%, transparent);
+	}
+
+	:where(.fs-ui) :where(h1, h2, h3, h4, h5, h6) {
+		font-size: inherit;
+		font-weight: inherit;
+	}
+
+	:where(.fs-ui) :where(ol, ul, menu) {
+		list-style: none;
+	}
+
+	:where(.fs-ui) :where(a) {
+		color: inherit;
+		text-decoration: inherit;
+	}
+
+	:where(.fs-ui)
+		:where(button, input, select, optgroup, textarea, ::file-selector-button) {
+		font: inherit;
+		font-feature-settings: inherit;
+		font-variation-settings: inherit;
+		letter-spacing: inherit;
+		color: inherit;
+		border-radius: 0;
+		background-color: transparent;
+		opacity: 1;
+	}
+
+	:where(.fs-ui) :where(input, textarea)::placeholder {
+		opacity: 1;
+		color: var(--fs-subtle-foreground);
+	}
+
+	:where(.fs-ui) :where(img, svg, video, canvas, audio, iframe, embed, object) {
+		display: block;
+		vertical-align: middle;
+	}
+
+	:where(.fs-ui) :where(img, video) {
+		max-width: 100%;
+		height: auto;
+	}
+
+	:where(.fs-ui) [hidden]:where(:not([hidden='until-found'])) {
+		display: none;
+	}
+}

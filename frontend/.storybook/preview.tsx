@@ -24,6 +24,7 @@ import i18n from '../src/ReactI18';
 import '../src/lib/monaco/setup';
 
 import '../src/styles.scss';
+import '../src/styles/tailwind.css';
 
 import '../src/storybook/storybook-root.scss';
 

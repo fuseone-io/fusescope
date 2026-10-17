@@ -1,4 +1,5 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
@@ -87,6 +88,7 @@ export default defineConfig(({ mode }): UserConfig => {
 		devBasePathPlugin(basePath),
 		devBootDataPlugin(env),
 		react(),
+		tailwindcss(),
 		vitePluginChecker({
 			typescript: true,
 			// this doubles the build tim
