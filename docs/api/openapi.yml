@@ -1454,6 +1454,10 @@ components:
           type: boolean
         id:
           type: string
+        managedBy:
+          description: Set to config when the domain is declared in the configuration
+            file and read-only through the API.
+          type: string
         name:
           type: string
         orgId:

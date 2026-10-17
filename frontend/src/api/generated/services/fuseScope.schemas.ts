@@ -3120,6 +3120,11 @@ export interface AuthtypesGettableAuthDomainDTO {
 	id: string;
 	/**
 	 * @type string
+	 * @description Set to config when the domain is declared in the configuration file and read-only through the API.
+	 */
+	managedBy?: string;
+	/**
+	 * @type string
 	 */
 	name?: string;
 	/**
