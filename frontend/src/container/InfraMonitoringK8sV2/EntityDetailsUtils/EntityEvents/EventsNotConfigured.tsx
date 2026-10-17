@@ -1,15 +1,13 @@
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowRight } from '@signozhq/icons';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { openInNewTab } from 'utils/navigation';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
 import styles from './EventsNotConfigured.module.scss';
 
-const K8S_EVENTS_DOCS_URL = signozDocsUrl(
-	'/infrastructure-monitoring/k8s-metrics/',
-);
+const K8S_EVENTS_DOCS_URL = fuseScopeDocsUrl('/sending-data/kubernetes/');
 
 export default function EventsNotConfigured(): JSX.Element {
 	const handleLearnMore = (): void => {
