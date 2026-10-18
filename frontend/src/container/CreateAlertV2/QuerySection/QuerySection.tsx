@@ -22,6 +22,7 @@ import { EQueryType } from 'types/common/dashboard';
 
 import { useCreateAlertState } from '../context';
 import Stepper from '../Stepper';
+import { ALERT_STEP_IDS } from '../StepsNav/constants';
 import ChartPreview from './ChartPreview';
 import { buildAlertDefForChartPreview } from './utils';
 
@@ -130,7 +131,7 @@ function QuerySection(): JSX.Element {
 	];
 
 	return (
-		<div className="query-section">
+		<section id={ALERT_STEP_IDS.QUERY} className="query-section alert-step-panel">
 			<Stepper stepNumber={1} label="Define the query" />
 			<ChartPreview
 				alertDef={alertDef}
@@ -169,7 +170,7 @@ function QuerySection(): JSX.Element {
 				ruleId=""
 				hideTitle
 			/>
-		</div>
+		</section>
 	);
 }
 

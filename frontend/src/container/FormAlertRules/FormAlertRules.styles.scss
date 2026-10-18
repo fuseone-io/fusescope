@@ -21,15 +21,92 @@
 	}
 }
 
+// Each step is a heading plus the card after it; together they draw one
+// numbered panel, numbered by a counter so a hidden step shifts the rest.
 .form-alert-rules-container {
-	&.create-mode {
-		padding: 16px;
+	.steps-container {
+		counter-reset: alert-step;
+	}
+
+	.alert-step-heading {
+		counter-increment: alert-step;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin: 16px 0 0;
+		padding: 16px 20px 4px;
+		border: 1px solid var(--fs-border);
+		border-bottom: 0;
+		border-radius: 12px 12px 0 0;
+		background: var(--fs-card);
+		color: var(--fs-foreground);
+		font-size: 14px;
+
+		&::before {
+			content: counter(alert-step);
+			display: flex;
+			flex: none;
+			align-items: center;
+			justify-content: center;
+			width: 24px;
+			height: 24px;
+			border-radius: 9999px;
+			background: var(--fs-primary);
+			color: var(--fs-primary-foreground);
+			font-size: 12px;
+		}
+
+		+ .ant-card {
+			margin-top: 0;
+			border: 1px solid var(--fs-border);
+			border-top: 0;
+			border-radius: 0 0 12px 12px;
+			background: var(--fs-card);
+
+			.ant-card-body {
+				padding: 12px 20px 20px;
+			}
+		}
+	}
+
+	.detection-method-container {
+		margin: 16px 0 0;
+		padding: 0 20px 16px;
+		border: 1px solid var(--fs-border);
+		border-radius: 12px;
+		background: var(--fs-card);
+
+		.alert-step-heading {
+			margin: 0;
+			padding: 16px 0 4px;
+			border: 0;
+			background: none;
+		}
+	}
+
+	.chart-preview-container .ant-card {
+		border-color: var(--fs-border);
+		border-radius: 12px;
+		background: var(--fs-card);
+	}
+
+	.alert-form-actions {
+		position: sticky;
+		bottom: 0;
+		z-index: 10;
+		gap: 8px;
+		margin-top: 16px;
+		padding: 12px 0;
+		border-top: 1px solid var(--fs-border);
+		background: var(--fs-background);
+
+		.ant-btn {
+			margin-right: 0;
+		}
 	}
 }
 
 .steps-container {
-	width: 80%;
-
 	.alert-query-section-container {
 		--query-builder-v2-color: var(--l2-foreground);
 		--query-builder-v2-background-color: var(--l3-background);
@@ -61,7 +138,7 @@
 }
 
 .overview-header {
-	margin-bottom: 1rem;
+	margin-bottom: 16px;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -97,8 +174,6 @@
 }
 
 .detection-method-container {
-	margin: 24px 0;
-
 	.ant-tabs-nav {
 		margin-bottom: 0;
 

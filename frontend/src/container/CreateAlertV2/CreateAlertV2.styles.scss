@@ -1,6 +1,22 @@
 .create-alert-v2-container {
-	background-color: var(--l1-background);
-	padding-bottom: 100px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding-bottom: 16px;
+}
+
+// A step panel re-points the legacy surface tokens its widgets read at the
+// page template's, so the query builder and pickers inside sit on the panel.
+.alert-step-panel {
+	--l1-background: var(--fs-card);
+	--l2-background: var(--fs-muted);
+	--l1-border: var(--fs-border);
+
+	padding: 16px 20px 20px;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
+	scroll-margin-top: 16px;
 }
 
 .sticky-page-spinner {

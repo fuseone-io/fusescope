@@ -4,11 +4,9 @@ import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/map
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
-import AlertCondition from '../CreateAlertV2/AlertCondition';
+import AlertSteps from '../CreateAlertV2/AlertSteps';
 import { buildInitialAlertDef } from '../CreateAlertV2/context/utils';
 import Footer from '../CreateAlertV2/Footer';
-import NotificationSettings from '../CreateAlertV2/NotificationSettings';
-import QuerySection from '../CreateAlertV2/QuerySection';
 import { Spinner } from '../CreateAlertV2/utils';
 
 import '../CreateAlertV2/CreateAlertV2.styles.scss';
@@ -36,9 +34,7 @@ function EditAlertV2({
 		<>
 			<Spinner />
 			<div className="create-alert-v2-container">
-				<QuerySection />
-				<AlertCondition />
-				<NotificationSettings />
+				<AlertSteps />
 			</div>
 			<Footer />
 		</>

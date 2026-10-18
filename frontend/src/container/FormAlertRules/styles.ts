@@ -13,13 +13,13 @@ export const StyledLeftContainer = styled(Col)`
 
 export const MainFormContainer = styled(Form)``;
 
-export const ButtonContainer = styled.div`
+export const ButtonContainer = styled.div.attrs({
+	className: 'alert-form-actions',
+})`
 	&&& {
 		display: flex;
 		justify-content: flex-start;
 		align-items: center;
-		margin-top: 1rem;
-		margin-bottom: 3rem;
 	}
 `;
 
@@ -48,9 +48,8 @@ export const Container = styled.div`
 	flex-direction: column;
 `;
 
-export const StepHeading = styled.p`
-	margin-top: 1rem;
-	font-weight: bold;
+export const StepHeading = styled.p.attrs({ className: 'alert-step-heading' })`
+	font-weight: 600;
 `;
 
 export const InlineSelect = styled(Select)`

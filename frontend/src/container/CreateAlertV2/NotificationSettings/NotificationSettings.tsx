@@ -9,6 +9,7 @@ import {
 } from '../context/constants';
 import AdvancedOptionItem from '../EvaluationSettings/AdvancedOptionItem';
 import Stepper from '../Stepper';
+import { ALERT_STEP_IDS } from '../StepsNav/constants';
 import MultipleNotifications from './MultipleNotifications';
 import NotificationMessage from './NotificationMessage';
 
@@ -81,7 +82,10 @@ function NotificationSettings(): JSX.Element {
 	);
 
 	return (
-		<div className="notification-settings-container">
+		<section
+			id={ALERT_STEP_IDS.NOTIFICATION}
+			className="notification-settings-container alert-step-panel"
+		>
 			<Stepper stepNumber={3} label="Notification settings" />
 			<NotificationMessage />
 			<div className="notification-settings-content">
@@ -104,7 +108,7 @@ function NotificationSettings(): JSX.Element {
 					data-testid="repeat-notifications-container"
 				/>
 			</div>
-		</div>
+		</section>
 	);
 }
 
