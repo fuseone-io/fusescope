@@ -57,7 +57,7 @@ describe('HelpMenu', () => {
 		expect(itemLabels(await openHelpMenu())).toStrictEqual([
 			'Documentation',
 			'GitHub',
-			'Community Slack',
+			'Report an issue',
 			'Invite a Team Member',
 		]);
 	});
@@ -123,6 +123,49 @@ describe('HelpMenu', () => {
 
 		expect(mockPush).toHaveBeenCalledWith(
 			`${ROUTES.MEMBERS_SETTINGS}?invite=true`,
+		);
+	});
+
+	it.each([
+		['Documentation', 'https://fuseone-io.github.io/fusescope-docs'],
+		['GitHub', 'https://github.com/fuseone-io/fusescope'],
+		[
+			'Report an issue',
+			'https://github.com/fuseone-io/fusescope/issues/new/choose',
+		],
+	])('points %s to FuseScope', async (label, url) => {
+		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+		renderAppSidebar({ pinned: true });
+
+		const menu = await openHelpMenu();
+		await userEvent
+			.setup({ pointerEventsCheck: 0 })
+			.click(within(menu).getByText(label));
+
+		expect(open).toHaveBeenCalledWith(
+			expect.stringMatching(new RegExp(`^${url}`)),
+			'_blank',
+		);
+	});
+
+	it('points the full changelog to the FuseScope releases', async () => {
+		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+		renderAppSidebar({
+			pinned: true,
+			overrides: {
+				changelog: changelog(['First']),
+				toggleChangelogModal: jest.fn(),
+			},
+		});
+
+		const menu = await openHelpMenu();
+		await userEvent
+			.setup({ pointerEventsCheck: 0 })
+			.click(within(menu).getByText('Full Changelog'));
+
+		expect(open).toHaveBeenCalledWith(
+			'https://github.com/fuseone-io/fusescope/releases',
+			'_blank',
 		);
 	});
 });
