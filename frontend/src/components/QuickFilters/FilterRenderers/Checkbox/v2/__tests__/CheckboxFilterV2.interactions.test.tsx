@@ -428,7 +428,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 	});
 
 	describe('show more functionality', () => {
-		it('shows "Show More..." when more than 10 values', async () => {
+		it('shows "Show N more" when more than 10 values', async () => {
 			const values = Array.from(
 				{ length: 15 },
 				(_, i) => `value-${String(i).padStart(2, '0')}`,
@@ -445,14 +445,16 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-value-00');
 
-			expect(screen.getByTestId('checkbox-filter-show-more')).toBeInTheDocument();
+			expect(screen.getByTestId('checkbox-filter-show-more')).toHaveTextContent(
+				'Show 5 more',
+			);
 
 			expect(
 				screen.queryByTestId('checkbox-value-row-value-10'),
 			).not.toBeInTheDocument();
 		});
 
-		it('loads more values when "Show More..." clicked', async () => {
+		it('loads more values when "Show N more" clicked', async () => {
 			const user = userEvent.setup();
 
 			const values = Array.from(

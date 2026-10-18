@@ -4,7 +4,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 import { isKeyMatch } from './utils';
 
-const DEFAULT_VISIBLE_ITEMS_COUNT = 10;
+export const DEFAULT_VISIBLE_ITEMS_COUNT = 10;
 
 interface UseCheckboxDisclosureProps {
 	filter: IQuickFiltersConfig;

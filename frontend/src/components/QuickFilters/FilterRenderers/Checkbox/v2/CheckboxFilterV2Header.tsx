@@ -11,6 +11,7 @@ import styles from './CheckboxFilterV2Header.module.scss';
 
 interface CheckboxFilterHeaderProps {
 	title: string;
+	attributeKey?: string;
 	isOpen: boolean;
 	actionsClassName?: string;
 	resetActionClassName?: string;
@@ -21,6 +22,7 @@ interface CheckboxFilterHeaderProps {
 
 export function CheckboxFilterV2Header({
 	title,
+	attributeKey,
 	isOpen,
 	actionsClassName,
 	resetActionClassName,
@@ -63,6 +65,11 @@ export function CheckboxFilterV2Header({
 					<ChevronRight size={13} cursor="pointer" />
 				)}
 				<Tooltip title={isTitleTruncated ? title : undefined}>{titleText}</Tooltip>
+				{attributeKey && (
+					<span className={styles.attributeKey} title={attributeKey}>
+						{attributeKey}
+					</span>
+				)}
 			</section>
 			{isOpen && (
 				<section className={classNames(styles.rightAction, actionsClassName)}>
