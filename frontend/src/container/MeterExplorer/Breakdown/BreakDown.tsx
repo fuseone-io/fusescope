@@ -12,7 +12,6 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridCard from 'container/WidgetCard/Card';
 import { Card, CardContainer } from 'container/WidgetCard/styles';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -131,9 +130,6 @@ function BreakDown(): JSX.Element {
 
 	return (
 		<div className="meter-explorer-breakdown">
-			<section className="meter-explorer-date-time">
-				<DateTimeSelectionV2 showAutoRefresh={false} />
-			</section>
 			<section className="meter-explorer-graphs">
 				{showInfo && (
 					<Alert

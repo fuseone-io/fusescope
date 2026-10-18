@@ -2,18 +2,10 @@
 	display: flex;
 	flex-direction: column;
 
-	.meter-explorer-date-time {
-		display: flex;
-		min-height: 30px;
-		justify-content: end;
-		border-bottom: 1px solid var(--l1-border);
-		padding: 10px 16px;
-	}
-
 	.meter-explorer-graphs {
 		display: flex;
 		flex-direction: column;
-		padding: 20px;
+		padding: 16px 24px 32px;
 		gap: 36px;
 
 		.info {

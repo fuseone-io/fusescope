@@ -1,16 +1,12 @@
-import { useLocation } from 'react-use';
-import RouteTab from 'components/RouteTab';
+import ModuleTabsLayout from 'components/PageTemplate/components/ModuleTabsLayout';
 import { TabRoutes } from 'components/RouteTab/types';
-import ROUTES from 'constants/routes';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import history from 'lib/history';
+import { ChartArea } from 'lucide-react';
 
 import { Explorer, Meter, Views } from './constants';
 
-import './MeterExplorer.styles.scss';
-
 function MeterExplorerPage(): JSX.Element {
-	const { pathname } = useLocation();
 	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const routes: TabRoutes[] = [
@@ -20,12 +16,13 @@ function MeterExplorerPage(): JSX.Element {
 	];
 
 	return (
-		<RouteTab
-			className="meter-explorer-page"
+		<ModuleTabsLayout
+			title="Cost Meter"
+			icon={<ChartArea />}
 			routes={routes}
-			activeKey={pathname}
+			activeKey={Meter.key}
 			history={history}
-			defaultActiveKey={ROUTES.METER}
+			testId="meter-explorer-page"
 		/>
 	);
 }
