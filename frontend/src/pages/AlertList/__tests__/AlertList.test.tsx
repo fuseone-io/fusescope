@@ -3,7 +3,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import AlertList from '../index';
 
 const ALERTS_PATH = '/alerts';
-const TAB_SELECTOR = '.ant-tabs-tab';
 const LIST_ALERT_RULES_TEXT = 'List Alert Rules Component';
 const TRIGGERED_ALERTS_TEXT = 'Triggered Alerts';
 const ALERT_RULES_TEXT = 'Alert Rules';
@@ -84,11 +83,12 @@ const mockQueryParams = (params: Record<string, string | null>): void => {
 	});
 };
 
+// Radix tabs activate on mousedown, not click.
 const clickTab = (tabText: string): void => {
-	const tab = screen.getByText(tabText).closest(TAB_SELECTOR);
-	if (tab) {
-		fireEvent.click(tab);
-	}
+	fireEvent.mouseDown(screen.getByRole('tab', { name: tabText }), {
+		button: 0,
+		ctrlKey: false,
+	});
 };
 
 describe('AlertList', () => {

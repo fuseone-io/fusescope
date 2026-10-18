@@ -1,18 +1,12 @@
-import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
-import { SEVERITY_BADGE_COLORS } from 'components/Alerts/constants';
+import { STATE_LABELS } from 'components/Alerts/constants';
 import LabelColumn from 'components/Alerts/LabelColumn';
+import { SEVERITY_TONES, STATE_TONES } from 'components/Alerts/tones';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
 import type { AlertRule } from './types';
-
-const STATE_CONFIG: Record<string, { color: BadgeColorType; label: string }> = {
-	firing: { color: 'danger', label: 'Firing' },
-	inactive: { color: 'success', label: 'OK' },
-	pending: { color: 'warning', label: 'Pending' },
-	disabled: { color: 'secondary', label: 'Disabled' },
-};
 
 export function getAlertRuleColumns(
 	formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
@@ -28,19 +22,14 @@ export function getAlertRuleColumns(
 			enableMove: false,
 			cell: ({ row, value }): JSX.Element => {
 				const state = String(value ?? '').toLowerCase();
-				const config = STATE_CONFIG[state] ?? {
-					color: 'secondary',
-					label: 'Unknown',
-				};
 				return (
-					<Badge
-						color={config.color}
-						variant="outlined"
+					<StatusBadge
+						dot
+						tone={STATE_TONES[state] ?? 'neutral'}
 						testId={`alert-row-${row.id ?? ''}-state`}
-						width="min-content"
 					>
-						{config.label}
-					</Badge>
+						{STATE_LABELS[state] ?? 'Unknown'}
+					</StatusBadge>
 				);
 			},
 		},
@@ -78,14 +67,12 @@ export function getAlertRuleColumns(
 					);
 				}
 				return (
-					<Badge
-						textTransform="none"
-						color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
-						variant="outlined"
+					<StatusBadge
+						tone={SEVERITY_TONES[severity] ?? 'neutral'}
 						testId={`alert-row-${row.id ?? ''}-severity`}
 					>
 						{severity}
-					</Badge>
+					</StatusBadge>
 				);
 			},
 		},
@@ -107,9 +94,7 @@ export function getAlertRuleColumns(
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 
-				return (
-					<LabelColumn labels={tagKeys} value={labels} color="highlight-danger" />
-				);
+				return <LabelColumn labels={tagKeys} value={labels} color="secondary" />;
 			},
 		},
 		{

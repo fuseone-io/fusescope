@@ -1,37 +1,24 @@
-import { Badge } from '@signozhq/ui/badge';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import { StatusTone } from 'components/PageTemplate/types';
 
 interface AlertStatusTagProps {
 	state: string;
 	testId?: string;
 }
 
+const STATUS: Record<string, { tone: StatusTone; label: string }> = {
+	unprocessed: { tone: 'success', label: 'Unprocessed' },
+	active: { tone: 'error', label: 'Firing' },
+	suppressed: { tone: 'error', label: 'Suppressed' },
+};
+
 function AlertStatusTag({ state, testId }: AlertStatusTagProps): JSX.Element {
-	switch (state) {
-		case 'unprocessed':
-			return (
-				<Badge color="success" variant="outlined" testId={testId}>
-					Unprocessed
-				</Badge>
-			);
-		case 'active':
-			return (
-				<Badge color="danger" variant="outlined" testId={testId}>
-					Firing
-				</Badge>
-			);
-		case 'suppressed':
-			return (
-				<Badge color="danger" variant="outlined" testId={testId}>
-					Suppressed
-				</Badge>
-			);
-		default:
-			return (
-				<Badge color="secondary" variant="outlined" testId={testId}>
-					Unknown
-				</Badge>
-			);
-	}
+	const status = STATUS[state] ?? { tone: 'neutral', label: 'Unknown' };
+	return (
+		<StatusBadge dot tone={status.tone} testId={testId}>
+			{status.label}
+		</StatusBadge>
+	);
 }
 
 export default AlertStatusTag;

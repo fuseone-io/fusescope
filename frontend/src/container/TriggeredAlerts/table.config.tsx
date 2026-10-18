@@ -1,6 +1,6 @@
 import { BellDot } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
-import { SEVERITY_BADGE_COLORS } from 'components/Alerts/constants';
+import { SEVERITY_TONES } from 'components/Alerts/tones';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -58,14 +58,9 @@ export function getAlertColumns(
 					return <TanStackTable.Text data-testid={testId}>-</TanStackTable.Text>;
 				}
 				return (
-					<Badge
-						textTransform="none"
-						color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
-						variant="outlined"
-						testId={testId}
-					>
+					<StatusBadge tone={SEVERITY_TONES[severity] ?? 'neutral'} testId={testId}>
 						{severity}
-					</Badge>
+					</StatusBadge>
 				);
 			},
 		},
@@ -101,9 +96,7 @@ export function getAlertColumns(
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 
-				return (
-					<LabelColumn labels={tagKeys} value={labels} color="highlight-danger" />
-				);
+				return <LabelColumn labels={tagKeys} value={labels} color="secondary" />;
 			},
 		},
 	];

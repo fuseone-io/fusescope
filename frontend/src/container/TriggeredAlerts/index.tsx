@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
-import { Search } from '@signozhq/icons';
-import { Input } from '@signozhq/ui/input';
+import cx from 'classnames';
 import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
+import tablePanel from 'components/Alerts/TablePanel.module.scss';
+import ToolbarSearch from 'components/Alerts/ToolbarSearch/ToolbarSearch';
 import type { FilterValue } from 'components/Alerts/types';
 import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
@@ -169,12 +170,11 @@ function TriggeredAlerts(): JSX.Element {
 	return (
 		<div className={styles.container}>
 			<div className={styles.filtersRow}>
-				<Input
-					className={styles.searchInput}
+				<ToolbarSearch
+					className="tw:flex-[1_1_240px]"
 					placeholder="Search alerts by name"
 					value={searchText}
 					onChange={handleSearchChange}
-					suffix={<Search size={14} className={styles.searchIcon} />}
 					testId="triggered-alerts-search-input"
 				/>
 				<ComboboxSimple
@@ -202,7 +202,10 @@ function TriggeredAlerts(): JSX.Element {
 				/>
 			</div>
 
-			<div ref={containerRef} className={styles.tableContainer}>
+			<div
+				ref={containerRef}
+				className={cx(styles.tableContainer, !isEmptyNoAlerts && tablePanel.panel)}
+			>
 				{isError ? (
 					<ErrorEmptyState title="Failed to load alerts" onRefresh={refetch} />
 				) : isEmptyDueToFilters ? (

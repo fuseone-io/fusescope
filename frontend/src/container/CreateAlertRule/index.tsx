@@ -1,20 +1,18 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Form, Tabs, TabsProps } from 'antd';
+import { Form } from 'antd';
 import logEvent from 'api/common/logEvent';
-import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
+import { PageTab } from 'components/PageTemplate/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import CreateAlertV2 from 'container/CreateAlertV2';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
-import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import AlertsPageShell from 'pages/AlertList/components/AlertsPageShell';
 import { AlertListTabs } from 'pages/AlertList/types';
-import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
@@ -123,29 +121,20 @@ function CreateRules(): JSX.Element {
 		initialAlertValue,
 	]);
 
-	const items: TabsProps['items'] = [
+	const tabs: PageTab[] = [
 		{
-			label: (
-				<div className="periscope-tab top-level-tab">
-					<GalleryVerticalEnd size={14} />
-					Triggered Alerts
-				</div>
-			),
-			key: AlertListTabs.TRIGGERED_ALERTS,
-			children: null,
+			value: AlertListTabs.TRIGGERED_ALERTS,
+			label: 'Triggered Alerts',
+			content: null,
 		},
 		{
-			label: (
-				<div className="periscope-tab top-level-tab">
-					<Pyramid size={14} />
-					Alert Rules
-				</div>
-			),
-			key: AlertListTabs.ALERT_RULES,
-			children: (
+			value: AlertListTabs.ALERT_RULES,
+			label: 'Alert Rules',
+			content: (
 				<div className="create-alert-wrapper">
 					<AlertBreadcrumb
 						className="create-alert__breadcrumb"
+						showDivider={false}
 						items={
 							isTypeSelectionMode
 								? [
@@ -173,34 +162,19 @@ function CreateRules(): JSX.Element {
 			),
 		},
 		{
-			label: (
-				<div className="periscope-tab top-level-tab">
-					<ConfigureIcon width={14} height={14} />
-					Configuration
-				</div>
-			),
-			key: AlertListTabs.CONFIGURATION,
-			children: null,
+			value: AlertListTabs.CONFIGURATION,
+			label: 'Configuration',
+			content: null,
 		},
 	];
 
 	return (
-		<Tabs
-			destroyInactiveTabPane
-			items={items}
-			activeKey={AlertListTabs.ALERT_RULES}
-			onChange={handleTabChange}
-			className="alerts-container create-alert-tabs"
-			tabBarExtraContent={
-				<div className="create-alert-tabs__extra">
-					<DateTimeSelector showAutoRefresh />
-					<HeaderRightSection
-						enableAnnouncements={false}
-						enableShare
-						enableFeedback
-					/>
-				</div>
-			}
+		<AlertsPageShell
+			testId="create-alert-page"
+			tabs={tabs}
+			activeTab={AlertListTabs.ALERT_RULES}
+			onTabChange={handleTabChange}
+			showHeaderRightSection={false}
 		/>
 	);
 }

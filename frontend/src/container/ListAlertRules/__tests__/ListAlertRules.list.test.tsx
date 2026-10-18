@@ -52,20 +52,20 @@ describe('ListAlertRules — list rendering', () => {
 		);
 
 		expect(screen.getByTestId('alert-row-rule-1-state')).toHaveAttribute(
-			'data-color',
-			'danger',
+			'data-tone',
+			'error',
 		);
 		expect(screen.getByTestId('alert-row-rule-2-state')).toHaveAttribute(
-			'data-color',
+			'data-tone',
 			'warning',
 		);
 		expect(screen.getByTestId('alert-row-rule-3-state')).toHaveAttribute(
-			'data-color',
+			'data-tone',
 			'success',
 		);
 		expect(screen.getByTestId('alert-row-rule-4-state')).toHaveAttribute(
-			'data-color',
-			'secondary',
+			'data-tone',
+			'neutral',
 		);
 	});
 
@@ -92,11 +92,11 @@ describe('ListAlertRules — list rendering', () => {
 			'-',
 		);
 		expect(screen.getByTestId('alert-row-rule-1-severity')).toHaveAttribute(
-			'data-color',
-			'danger',
+			'data-tone',
+			'error',
 		);
 		expect(screen.getByTestId('alert-row-rule-2-severity')).toHaveAttribute(
-			'data-color',
+			'data-tone',
 			'warning',
 		);
 	});

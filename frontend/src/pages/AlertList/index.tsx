@@ -1,8 +1,7 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Tabs, TabsProps } from 'antd';
-import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
+import PageTabs from 'components/PageTemplate/components/PageTabs';
+import { PageTab } from 'components/PageTemplate/types';
 import ROUTES from 'constants/routes';
 import AllAlertChannels from 'container/AllAlertChannels';
 import AllAlertRules from 'container/ListAlertRules';
@@ -11,14 +10,14 @@ import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Cable, GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import AlertDetails from 'pages/AlertDetails';
 import ChannelsEdit from 'pages/ChannelsEdit';
 import ChannelsNew from 'pages/ChannelsNew';
 
+import AlertsPageShell, { FILL_TAB_PANEL } from './components/AlertsPageShell';
 import { AlertListSubTabs, AlertListTabs } from './types';
 
-import './AlertList.styles.scss';
+const TAB_PANE_CLASS = 'tw:flex tw:flex-1 tw:flex-col';
 
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
@@ -44,64 +43,39 @@ function AllAlertList(): JSX.Element {
 		[safeNavigate],
 	);
 
-	const configurationTab = useMemo(() => {
-		const tabs = [
-			{
-				label: 'Planned Downtime',
-				key: AlertListSubTabs.PLANNED_DOWNTIME,
-				children: <PlannedDowntime />,
-			},
-			{
-				label: 'Routing Policies',
-				key: AlertListSubTabs.ROUTING_POLICIES,
-				children: <RoutingPolicies />,
-			},
-		];
-		return (
-			<Tabs
-				className="configuration-tabs"
-				activeKey={subTab || AlertListSubTabs.PLANNED_DOWNTIME}
-				items={tabs}
-				onChange={handleConfigurationTabChange}
-			/>
-		);
-	}, [subTab, handleConfigurationTabChange]);
-
-	const items: TabsProps['items'] = [
+	const configurationTabs: PageTab[] = [
 		{
-			label: (
-				<div className="periscope-tab top-level-tab">
-					<GalleryVerticalEnd size={14} />
-					Triggered Alerts
-				</div>
-			),
-			key: AlertListTabs.TRIGGERED_ALERTS,
-			children: <TriggeredAlerts />,
+			value: AlertListSubTabs.PLANNED_DOWNTIME,
+			label: 'Planned Downtime',
+			content: <PlannedDowntime />,
 		},
 		{
-			label: (
-				<div className="periscope-tab top-level-tab">
-					<Pyramid size={14} />
-					Alert Rules
-				</div>
-			),
-			key: AlertListTabs.ALERT_RULES,
-			children: (
-				<div className="alert-rules-container">
+			value: AlertListSubTabs.ROUTING_POLICIES,
+			label: 'Routing Policies',
+			content: <RoutingPolicies />,
+		},
+	];
+
+	const tabs: PageTab[] = [
+		{
+			value: AlertListTabs.TRIGGERED_ALERTS,
+			label: 'Triggered Alerts',
+			content: <TriggeredAlerts />,
+		},
+		{
+			value: AlertListTabs.ALERT_RULES,
+			label: 'Alert Rules',
+			content: (
+				<div className={TAB_PANE_CLASS}>
 					{isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />}
 				</div>
 			),
 		},
 		{
-			label: (
-				<div className="periscope-tab top-level-tab">
-					<Cable size={14} />
-					Notification Channels
-				</div>
-			),
-			key: AlertListTabs.CHANNELS,
-			children: (
-				<div className="alert-rules-container">
+			value: AlertListTabs.CHANNELS,
+			label: 'Notification Channels',
+			content: (
+				<div className={TAB_PANE_CLASS}>
 					{isChannelsNew && <ChannelsNew />}
 					{isChannelsEdit && <ChannelsEdit />}
 					{!isChannelDetails && <AllAlertChannels />}
@@ -109,14 +83,17 @@ function AllAlertList(): JSX.Element {
 			),
 		},
 		{
-			label: (
-				<div className="periscope-tab top-level-tab">
-					<ConfigureIcon width={14} height={14} />
-					Configuration
-				</div>
+			value: AlertListTabs.CONFIGURATION,
+			label: 'Configuration',
+			content: (
+				<PageTabs
+					label="Configuration sections"
+					tabs={configurationTabs}
+					value={subTab || AlertListSubTabs.PLANNED_DOWNTIME}
+					onValueChange={handleConfigurationTabChange}
+					className={FILL_TAB_PANEL}
+				/>
 			),
-			key: AlertListTabs.CONFIGURATION,
-			children: configurationTab,
 		},
 	];
 
@@ -130,39 +107,28 @@ function AllAlertList(): JSX.Element {
 		return tab || AlertListTabs.ALERT_RULES;
 	};
 
+	const handleTabChange = (tab: string): void => {
+		const queryParams = new URLSearchParams();
+
+		queryParams.set('tab', tab);
+
+		// If navigating to Configuration tab, set default subTab
+		if (tab === AlertListTabs.CONFIGURATION) {
+			const currentSubTab = subTab || AlertListSubTabs.PLANNED_DOWNTIME;
+			queryParams.set('subTab', currentSubTab);
+		} else {
+			// Clear subTab when navigating out of Configuration tab
+			queryParams.delete('subTab');
+		}
+
+		safeNavigate(`/alerts?${queryParams.toString()}`);
+	};
+
 	return (
-		<Tabs
-			destroyInactiveTabPane
-			items={items}
-			activeKey={getActiveKey()}
-			onChange={(tab): void => {
-				const queryParams = new URLSearchParams();
-
-				queryParams.set('tab', tab);
-
-				// If navigating to Configuration tab, set default subTab
-				if (tab === AlertListTabs.CONFIGURATION) {
-					const currentSubTab = subTab || AlertListSubTabs.PLANNED_DOWNTIME;
-					queryParams.set('subTab', currentSubTab);
-				} else {
-					// Clear subTab when navigating out of Configuration tab
-					queryParams.delete('subTab');
-				}
-
-				safeNavigate(`/alerts?${queryParams.toString()}`);
-			}}
-			className={`alerts-container ${
-				isAlertHistory || isAlertOverview || isChannelDetails
-					? 'alert-details-tabs'
-					: ''
-			}`}
-			tabBarExtraContent={
-				<HeaderRightSection
-					enableAnnouncements={false}
-					enableShare
-					enableFeedback
-				/>
-			}
+		<AlertsPageShell
+			tabs={tabs}
+			activeTab={getActiveKey()}
+			onTabChange={handleTabChange}
 		/>
 	);
 }
