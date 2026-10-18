@@ -6,7 +6,6 @@ import CeleryTaskDetail, {
 } from 'components/CeleryTask/CeleryTaskDetail/CeleryTaskDetail';
 import CeleryTaskGraphGrid from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphGrid';
 import { QueryParams } from 'constants/query';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 
 import './CeleryTask.styles.scss';
@@ -33,12 +32,6 @@ export default function CeleryTask(): JSX.Element {
 	return (
 		<div className="celery-task-container">
 			<div className="celery-content">
-				<div className="celery-content-header">
-					<p className="celery-content-header-title">Celery</p>
-					<div className="celery-content-header-right">
-						<DateTimeSelectionV2 showAutoRefresh hideShareModal={false} />
-					</div>
-				</div>
 				<CeleryTaskGraphGrid
 					onClick={onTaskClick}
 					queryEnabled={!task}

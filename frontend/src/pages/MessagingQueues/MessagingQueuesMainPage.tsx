@@ -1,57 +1,39 @@
 import { useLocation } from 'react-router-dom';
-import RouteTab from 'components/RouteTab';
+import ModuleTabsLayout from 'components/PageTemplate/components/ModuleTabsLayout';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { ListMinus, Rows3 } from '@signozhq/icons';
+import { ListMinus } from 'lucide-react';
 import CeleryOverview from 'pages/Celery/CeleryOverview/CeleryOverview';
 
 import CeleryTask from '../Celery/CeleryTask/CeleryTask';
 import MessagingQueues from './MessagingQueues';
 import MQDetailPage from './MQDetailPage/MQDetailPage';
 
-import './MessagingQueuesMainPage.styles.scss';
-
 export const Kafka: TabRoutes = {
 	Component: MessagingQueues,
-	name: (
-		<div className="tab-item">
-			<ListMinus size={16} /> Kafka
-		</div>
-	),
+	name: 'Kafka',
 	route: ROUTES.MESSAGING_QUEUES_KAFKA,
 	key: ROUTES.MESSAGING_QUEUES_KAFKA,
 };
 
 export const KafkaDetail: TabRoutes = {
 	Component: MQDetailPage,
-	name: (
-		<div className="tab-item">
-			<ListMinus size={16} /> Kafka
-		</div>
-	),
+	name: 'Kafka',
 	route: ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
 	key: ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
 };
 
 export const Celery: TabRoutes = {
 	Component: CeleryTask,
-	name: (
-		<div className="tab-item">
-			<Rows3 size={16} /> Celery
-		</div>
-	),
+	name: 'Celery',
 	route: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
 	key: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
 };
 
 export const Overview: TabRoutes = {
 	Component: CeleryOverview,
-	name: (
-		<div className="tab-item">
-			<Rows3 size={16} /> Overview
-		</div>
-	),
+	name: 'Overview',
 	route: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 	key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 };
@@ -68,11 +50,13 @@ export default function MessagingQueuesMainPage(): JSX.Element {
 	];
 
 	return (
-		<RouteTab
-			className="messaging-queues-module-container"
+		<ModuleTabsLayout
+			title="Messaging Queues"
+			icon={<ListMinus />}
 			routes={routes}
 			activeKey={pathname}
 			history={history}
+			testId="messaging-queues-page"
 		/>
 	);
 }

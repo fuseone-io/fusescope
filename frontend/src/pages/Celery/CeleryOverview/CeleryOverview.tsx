@@ -3,7 +3,6 @@ import CeleryOverviewConfigOptions from 'components/CeleryOverview/CeleryOvervie
 import CeleryOverviewTable, {
 	RowData,
 } from 'components/CeleryOverview/CeleryOverviewTable/CeleryOverviewTable';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 
 import CeleryOverviewDetails from './CeleryOverviewDetail/CeleryOverviewDetails';
 
@@ -19,12 +18,6 @@ export default function CeleryOverview(): JSX.Element {
 	return (
 		<div className="celery-overview-container">
 			<div className="celery-overview-content">
-				<div className="celery-overview-content-header">
-					<p className="celery-overview-content-header-title">
-						Messaging Queue Overview
-					</p>
-					<DateTimeSelectionV2 showAutoRefresh hideShareModal={false} />
-				</div>
 				<CeleryOverviewConfigOptions />
 				<CeleryOverviewTable onRowClick={onRowClick} />
 			</div>
