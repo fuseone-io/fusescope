@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { Card } from 'antd';
+import PageHeader from 'components/PageTemplate/components/PageHeader';
+import Panel from 'components/PageTemplate/components/Panel';
+import PageTemplate from 'components/PageTemplate/PageTemplate';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
@@ -16,12 +18,18 @@ import { getDetailedServiceMapItems, ServiceMapStore } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { GlobalTime } from 'types/actions/globalTime';
+import { Route } from 'lucide-react';
 
 import Map from './Map';
+import { useElementWidth } from './useElementWidth';
+
+// The page header and filters above the graph, so the graph fits the viewport.
+const GRAPH_TOP_OFFSET = 280;
+const MIN_GRAPH_HEIGHT = 480;
 
 const Container = styled.div`
 	.force-graph-container {
-		overflow: scroll;
+		overflow: auto;
 	}
 
 	.force-graph-container .graph-tooltip {
@@ -66,6 +74,7 @@ export interface graphDataType {
 
 function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const fgRef = useRef();
+	const [graphContainerRef, graphWidth] = useElementWidth<HTMLDivElement>();
 
 	const { getDetailedServiceMapItems, globalTime, serviceMap } = props;
 
@@ -94,15 +103,34 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 		}
 
 		if (serviceMap.items.length === 0) {
-			return <Card>No Service Found</Card>;
+			return (
+				<div className="fs-ui tw:px-5 tw:py-10 tw:text-center tw:text-sm tw:text-muted-foreground">
+					No Service Found
+				</div>
+			);
 		}
 
-		return <Map fgRef={fgRef} serviceMap={serviceMap} />;
+		return (
+			<Map
+				fgRef={fgRef}
+				serviceMap={serviceMap}
+				graphWidth={graphWidth}
+				graphHeight={Math.max(
+					MIN_GRAPH_HEIGHT,
+					window.innerHeight - GRAPH_TOP_OFFSET,
+				)}
+			/>
+		);
 	};
 
 	return (
-		<Container className="service-map-container">
-			<div className="tw:mb-4">
+		<PageTemplate testId="service-map-page">
+			<PageHeader
+				icon={<Route />}
+				title="Service Map"
+				description="Calls between services in the selected time range"
+			/>
+			<div>
 				<ResourceAttributesFilter
 					suffixIcon={
 						<TextToolTip
@@ -116,8 +144,12 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 				/>
 			</div>
 
-			{renderBody()}
-		</Container>
+			<Panel testId="service-map-graph" className="tw:overflow-hidden">
+				<Container ref={graphContainerRef} className="service-map-container">
+					{renderBody()}
+				</Container>
+			</Panel>
+		</PageTemplate>
 	);
 }
 

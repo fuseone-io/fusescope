@@ -1,22 +1,27 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Link, useParams } from 'react-router-dom';
-import { Histogram, RefreshCw } from '@signozhq/icons';
-import { Alert, Table } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import { signozDocsUrl } from 'constants/docs';
-import ROUTES from 'constants/routes';
+import { useParams } from 'react-router-dom';
+import PageHeader from 'components/PageTemplate/components/PageHeader';
+import Panel from 'components/PageTemplate/components/Panel';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import TablePagination from 'components/PageTemplate/components/TablePagination';
+import PageTemplate from 'components/PageTemplate/PageTemplate';
+import { pageOf } from 'components/PageTemplate/utils';
+import { Table, TableBody, TableCell, TableRow } from 'components/ui/table';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
+import { Tags } from 'hooks/useResourceAttribute/types';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { HardDrive, LoaderCircle } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'hooks/useResourceAttribute/types';
 
-import './ServiceTopLevelOperations.styles.scss';
+import TopLevelOperationsInfo from './TopLevelOperationsInfo';
+
+const PAGE_SIZE = 100;
 
 export default function ServiceTopLevelOperations(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
@@ -32,6 +37,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 	);
 
 	const [topLevelOperations, setTopLevelOperations] = useState<string[]>([]);
+	const [page, setPage] = useState(1);
 
 	const { data, error, isLoading } = useQueryService({
 		minTime,
@@ -50,94 +56,65 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 		setTopLevelOperations(selectedService?.dataWarning?.topLevelOps || []);
 	}, [servicename, data]);
 
-	const alertDesc = (): ReactNode => (
-		<div className="">
-			FuseScope calculates the RED metrics for a service using the entry-point
-			spans. For more details, you can check out our
-			<a
-				href={signozDocsUrl('/userguide/metrics/')}
-				target="_blank"
-				rel="noreferrer"
-			>
-				{' '}
-				docs
-			</a>
-			. We expect the number of unique entry-point operations to be no more than
-			2500. The high number of top level operations might be due to an
-			instrumentation issue in your service. Below table shows the sample top level
-			operations. Please refer to official docs for span name guidelines{' '}
-			<a
-				href="https://opentelemetry.io/docs/specs/otel/trace/api/#span"
-				target="_blank"
-				rel="noreferrer"
-			>
-				{' '}
-				here
-			</a>{' '}
-			and update the instrumentation to to follow the guidelines. If there are any
-			dynamic IDs in the span name, make sure to use the span attributes instead.
-			If you have more questions, please reach out to us via support.
-		</div>
-	);
-
-	const columns = [
-		{
-			title: 'Top Level Operation',
-			key: 'top-level-operation',
-			render: (operation: string): JSX.Element => (
-				<div className="top-level-operations-list-item" key={operation}>
-					<Typography.Text> {operation} </Typography.Text>
-				</div>
-			),
-		},
-	];
+	const rows = pageOf(topLevelOperations, page, PAGE_SIZE);
 
 	return (
-		<div className="container">
-			<Typography.Title level={5} className="top-level-operations-header">
-				<Link to={ROUTES.APPLICATION}>
-					<span className="breadcrumb">
-						{' '}
-						<Histogram size={12} /> services{' '}
-					</span>
-				</Link>
-				<div className="divider">/</div>
-				<Link to={`${ROUTES.APPLICATION}/${servicename}`}>
-					<span className="breadcrumb">{servicename} </span>
-				</Link>
-			</Typography.Title>
+		<PageTemplate testId="top-level-operations-page">
+			<PageHeader
+				icon={<HardDrive />}
+				titleMono
+				title={servicename}
+				badges={
+					!isLoading && (
+						<StatusBadge tone="neutral" testId="top-level-operations-count">
+							{topLevelOperations.length}
+						</StatusBadge>
+					)
+				}
+				description="Top level operations"
+			/>
 
-			<div className="info-alert">
-				<Alert message={alertDesc()} type="info" showIcon />
-			</div>
+			<TopLevelOperationsInfo />
 
 			{isLoading && (
-				<div className="loading-top-level-operations">
-					<Typography.Title level={5}>
-						<RefreshCw className="animate-spin" size="sm" /> Loading ...
-					</Typography.Title>
+				<div className="fs-ui tw:flex tw:items-center tw:gap-2 tw:font-sans tw:text-sm tw:text-muted-foreground">
+					<LoaderCircle className="tw:size-4 tw:animate-spin" /> Loading ...
 				</div>
 			)}
 
 			{!isLoading && (
-				<div className="top-level-operations-list">
-					<Table
-						columns={columns}
-						bordered
-						title={(): string => 'Top Level Operations'}
-						// @ts-expect-error
-						dataSource={topLevelOperations}
-						loading={isLoading}
-						showHeader={false}
-						pagination={{
-							pageSize: 100,
-							hideOnSinglePage: true,
-							showTotal: (total: number, range: number[]): string =>
-								`${range[0]}-${range[1]} of ${total}`,
-						}}
+				<Panel
+					title="Top Level Operations"
+					testId="top-level-operations-list"
+					className="tw:overflow-hidden"
+					bodyClassName="tw:mt-3 tw:border-t tw:border-border"
+				>
+					<Table>
+						<TableBody>
+							{rows.map((operation) => (
+								<TableRow key={operation} data-testid="top-level-operation">
+									<TableCell className="tw:font-mono tw:text-xs tw:whitespace-normal tw:break-all">
+										{operation}
+									</TableCell>
+								</TableRow>
+							))}
+							{rows.length === 0 && (
+								<TableRow>
+									<TableCell className="tw:h-24 tw:text-center tw:text-muted-foreground">
+										No data
+									</TableCell>
+								</TableRow>
+							)}
+						</TableBody>
+					</Table>
+					<TablePagination
+						page={page}
+						pageSize={PAGE_SIZE}
+						total={topLevelOperations.length}
+						onPageChange={setPage}
 					/>
-				</div>
+				</Panel>
 			)}
-		</div>
+		</PageTemplate>
 	);
 }
