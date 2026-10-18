@@ -1,19 +1,18 @@
 import { useMemo } from 'react';
-import { Color } from '@signozhq/design-tokens';
-import { Badge } from '@signozhq/ui/badge';
-import { Button, Skeleton } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import { Skeleton } from 'components/ui/skeleton';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { MoveUpRight, RotateCw } from '@signozhq/icons';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
-import awwSnapIconUrl from '@/assets/Icons/awwSnap.svg';
-import dottedDoubleLineUrl from '@/assets/svgs/dotted-double-line.svg';
-
+import CardGrid from '../components/CardGrid';
+import IntegrationCard from '../components/IntegrationCard';
+import IntegrationsNotFound from '../components/IntegrationsNotFound';
+import SectionLabel from '../components/SectionLabel';
 import { handleContactSupport } from '../utils';
+import IntegrationsError from '../components/IntegrationsError';
 
-import './IntegrationsList.styles.scss';
+const SKELETON_KEYS = ['a', 'b', 'c', 'd', 'e', 'f'];
 
 interface IntegrationsListProps {
 	searchQuery: string;
@@ -46,132 +45,57 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 
 	const loading = isLoading || isFetching || isRefetching;
 
-	const handleSelectedIntegration = (integration: IntegrationsProps): void => {
-		setSelectedIntegration(integration);
-	};
-
-	const renderError = (): JSX.Element => {
-		return (
-			<div className="error-container">
-				<div className="error-content">
-					<img src={awwSnapIconUrl} alt="error-emoji" className="error-state-svg" />
-					<Typography.Text>
-						Something went wrong :/ Please retry or contact support.
-					</Typography.Text>
-					<div className="error-btns">
-						<Button
-							type="primary"
-							className="retry-btn"
-							onClick={(): Promise<any> => refetch()}
-							icon={<RotateCw size={14} />}
-						>
-							Retry
-						</Button>
-						<div
-							className="contact-support"
-							onClick={(): void => handleContactSupport(isCloudUserVal)}
-						>
-							<Typography.Link className="text">Contact Support </Typography.Link>
-
-							<MoveUpRight size={14} color={Color.BG_ROBIN_400} />
-						</div>
-					</div>
-				</div>
-			</div>
-		);
-	};
-
 	return (
-		<div className="integrations-list-container">
-			<div className="integrations-list-title-header">
-				<div className="integrations-list-header-title">All Integrations</div>
-				<div className="integrations-list-header-dotted-double-line">
-					<img
-						src={dottedDoubleLineUrl}
-						alt="dotted-double-line"
-						width="100%"
-						height="100%"
-					/>
-				</div>
-			</div>
+		<section className="integrations-list-container fs-ui tw:flex tw:flex-col tw:gap-4 tw:font-sans tw:text-foreground">
+			<SectionLabel>All integrations</SectionLabel>
 
-			{!loading && isError && renderError()}
+			{!loading && isError && (
+				<IntegrationsError
+					testId="integrations-list-error"
+					onRetry={(): void => {
+						void refetch();
+					}}
+					onContactSupport={(): void => handleContactSupport(isCloudUserVal)}
+				/>
+			)}
 
 			{loading && (
-				<div className="loading-container">
-					<Skeleton.Input active size="large" className="skeleton-item" />
-					<Skeleton.Input active size="large" className="skeleton-item" />
-					<Skeleton.Input active size="large" className="skeleton-item" />
-					<Skeleton.Input active size="large" className="skeleton-item" />
-					<Skeleton.Input active size="large" className="skeleton-item" />
-				</div>
+				<CardGrid testId="integrations-list-loading">
+					{SKELETON_KEYS.map((key) => (
+						<Skeleton key={key} className="tw:h-[124px] tw:rounded-xl tw:bg-muted" />
+					))}
+				</CardGrid>
 			)}
 
 			{!loading && integrationsList.length === 0 && searchQuery.trim() && (
-				<div className="integrations-not-found-container">
-					<div className="integrations-not-found-content">
-						<img
-							src={awwSnapIconUrl}
-							alt="no-integrations"
-							className="integrations-not-found-image"
-						/>
-						<div className="integrations-not-found-text">
-							No integrations found for &ldquo;{searchQuery.trim()}&rdquo;
-						</div>
-					</div>
-				</div>
+				<IntegrationsNotFound query={searchQuery.trim()} />
 			)}
 
 			{!loading && integrationsList.length > 0 && (
-				<div className="integrations-list">
-					<div className="integrations-list-header">
-						<div className="integrations-list-header-column title-column">Name</div>
-						<div className="integrations-list-header-column published-by-column">
-							Published By
-						</div>
-						<div className="integrations-list-header-column installation-status-column">
-							Status
-						</div>
-					</div>
-
+				<CardGrid testId="integrations-list">
 					{integrationsList.map((integration) => (
-						<div
-							className="integrations-list-item"
+						<IntegrationCard
 							key={integration.id}
-							onClick={(): void => handleSelectedIntegration(integration)}
-						>
-							<div className="integrations-list-item-column title-column">
-								<div className="integrations-list-item-name-image-container">
-									<img
-										src={integration.icon}
-										alt={integration.title}
-										className="integrations-list-item-name-image-container-image"
-									/>
-								</div>
-
-								<div className="integrations-list-item-name-text">
-									{integration.title}
-								</div>
-							</div>
-							<div className="integrations-list-item-column">
-								<div className="integrations-list-item-published-by">FuseScope</div>
-							</div>
-							<div className="integrations-list-item-column">
-								<div className="integrations-list-item-installation-status">
-									<Badge
-										color={integration.is_installed ? 'success' : 'warning'}
-										variant="outlined"
-										textTransform="capitalize"
-									>
-										{integration.is_installed ? 'Installed' : 'Not Installed'}
-									</Badge>
-								</div>
-							</div>
-						</div>
+							className="integrations-list-item"
+							icon={integration.icon}
+							iconAlt={integration.title}
+							title={integration.title}
+							subtitle="by FuseScope"
+							description={integration.description}
+							footer={
+								<StatusBadge
+									dot
+									tone={integration.is_installed ? 'success' : 'neutral'}
+								>
+									{integration.is_installed ? 'Installed' : 'Not Installed'}
+								</StatusBadge>
+							}
+							onClick={(): void => setSelectedIntegration(integration)}
+						/>
 					))}
-				</div>
+				</CardGrid>
 			)}
-		</div>
+		</section>
 	);
 }
 

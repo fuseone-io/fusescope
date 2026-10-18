@@ -9,7 +9,7 @@ export enum ConnectionStates {
 	NotInstalled = 'notInstalled',
 }
 
-const ConnectionStatesLabelMap = {
+export const ConnectionStatesLabelMap: Record<ConnectionStates, string> = {
 	[ConnectionStates.Connected]: 'This integration is working properly',
 	[ConnectionStates.TestingConnection]: 'Listening for data...',
 	[ConnectionStates.NoDataSinceLong]:

@@ -1,18 +1,15 @@
 import { useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
-import { Button } from '@signozhq/ui/button';
-import { Flex, Skeleton } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import ROUTES from 'constants/routes';
+import { useParams } from 'react-router-dom';
+import PageTemplate from 'components/PageTemplate/PageTemplate';
+import { Skeleton } from 'components/ui/skeleton';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { defaultTo } from 'lodash-es';
-import { ArrowLeft, MoveUpRight, RotateCw } from '@signozhq/icons';
-
-import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 
 import CloudIntegration from '../CloudIntegration/CloudIntegration';
+import BackToIntegrations from '../components/BackToIntegrations';
+import IntegrationsError from '../components/IntegrationsError';
 import { IntegrationType } from '../types';
 import { INTEGRATION_TYPES } from '../constants';
 import { handleContactSupport } from '../utils';
@@ -22,17 +19,13 @@ import IntergrationsUninstallBar from './IntegrationsUninstallBar';
 import { ConnectionStates } from './TestConnection';
 import { getConnectionStatesFromConnectionStatus } from './utils';
 
-import './IntegrationDetailPage.styles.scss';
-
 const cloudIntegrationTypeById: Record<string, IntegrationType> = {
 	[INTEGRATION_TYPES.AWS]: IntegrationType.AWS_SERVICES,
 	[INTEGRATION_TYPES.AZURE]: IntegrationType.AZURE_SERVICES,
 	[INTEGRATION_TYPES.GCP]: IntegrationType.GCP_SERVICES,
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function IntegrationDetailPage(): JSX.Element {
-	const history = useHistory();
 	const { integrationId } = useParams<{ integrationId?: string }>();
 	const [activeDetailTab, setActiveDetailTab] = useState<string | null>(
 		'overview',
@@ -66,54 +59,21 @@ function IntegrationDetailPage(): JSX.Element {
 	}
 
 	return (
-		<div className="integration-details-container">
-			<Flex justify="space-between" align="center">
-				<Button
-					size="md"
-					variant="link"
-					color="secondary"
-					prefix={<ArrowLeft size={14} />}
-					onClick={(): void => {
-						history.push(ROUTES.INTEGRATIONS);
-					}}
-				>
-					All Integrations
-				</Button>
-			</Flex>
+		<PageTemplate testId="integration-details-page">
+			<BackToIntegrations />
 
 			{isError && (
-				<div className="error-container">
-					<div className="error-content">
-						<img src={awwSnapUrl} alt="error-emoji" className="error-state-svg" />
-						<Typography.Text>
-							Something went wrong :/ Please retry or contact support.
-						</Typography.Text>
-						<div className="error-btns">
-							<Button
-								size="md"
-								variant="solid"
-								color="secondary"
-								onClick={(): Promise<any> => refetch()}
-								prefix={<RotateCw size={14} />}
-							>
-								Retry
-							</Button>
-							<Button
-								size="md"
-								variant="solid"
-								color="secondary"
-								onClick={(): void => handleContactSupport(isCloudUserVal)}
-								suffix={<MoveUpRight size={12} />}
-							>
-								Contact Support
-							</Button>
-						</div>
-					</div>
-				</div>
+				<IntegrationsError
+					testId="integration-details-error"
+					onRetry={(): void => {
+						void refetch();
+					}}
+					onContactSupport={(): void => handleContactSupport(isCloudUserVal)}
+				/>
 			)}
 
 			{!isError && (
-				<div className="integration-details-content-container">
+				<>
 					<IntegrationDetailHeader
 						id={integrationId || ''}
 						title={defaultTo(integrationData?.title, '')}
@@ -130,12 +90,13 @@ function IntegrationDetailPage(): JSX.Element {
 					/>
 
 					{loading && (
-						<div className="loading-container">
-							<Skeleton active className="skeleton-item" />
-						</div>
+						<Skeleton
+							data-testid="integration-details-loading"
+							className="tw:h-80 tw:w-full tw:rounded-lg tw:bg-muted"
+						/>
 					)}
 
-					{!isError && !loading && integrationData && (
+					{!loading && integrationData && (
 						<IntegrationDetailContent
 							activeDetailTab={activeDetailTab || 'overview'}
 							integrationData={integrationData}
@@ -144,19 +105,17 @@ function IntegrationDetailPage(): JSX.Element {
 						/>
 					)}
 
-					{!isError &&
-						!loading &&
-						connectionStatus !== ConnectionStates.NotInstalled && (
-							<IntergrationsUninstallBar
-								integrationTitle={defaultTo(integrationData?.title, '')}
-								integrationId={integrationId || ''}
-								onUnInstallSuccess={refetch}
-								connectionStatus={connectionStatus}
-							/>
-						)}
-				</div>
+					{!loading && connectionStatus !== ConnectionStates.NotInstalled && (
+						<IntergrationsUninstallBar
+							integrationTitle={defaultTo(integrationData?.title, '')}
+							integrationId={integrationId || ''}
+							onUnInstallSuccess={refetch}
+							connectionStatus={connectionStatus}
+						/>
+					)}
+				</>
 			)}
-		</div>
+		</PageTemplate>
 	);
 }
 

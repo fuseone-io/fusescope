@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import { isNull, isUndefined } from 'lodash-es';
+import { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
 import { ConnectionStates } from './TestConnection';
 
@@ -52,4 +53,37 @@ export function getConnectionStatesFromConnectionStatus(
 	}
 
 	return ConnectionStates.Connected;
+}
+
+interface LatestReceivedData {
+	last_received_ts_ms: number | null;
+	last_received_from: string | null;
+}
+
+export function getLatestReceivedData(
+	connectionData: IntegrationConnectionStatus,
+): LatestReceivedData {
+	const { logs, metrics } = connectionData;
+
+	if (logs?.last_received_ts_ms && metrics?.last_received_ts_ms) {
+		const latest =
+			logs.last_received_ts_ms > metrics.last_received_ts_ms ? logs : metrics;
+		return {
+			last_received_ts_ms: latest.last_received_ts_ms,
+			last_received_from: latest.last_received_from,
+		};
+	}
+	if (logs?.last_received_ts_ms) {
+		return {
+			last_received_ts_ms: logs.last_received_ts_ms,
+			last_received_from: logs.last_received_from,
+		};
+	}
+	if (metrics?.last_received_ts_ms) {
+		return {
+			last_received_ts_ms: metrics.last_received_ts_ms,
+			last_received_from: metrics.last_received_from,
+		};
+	}
+	return { last_received_ts_ms: null, last_received_from: null };
 }

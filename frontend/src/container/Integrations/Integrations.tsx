@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
+import PageTemplate from 'components/PageTemplate/PageTemplate';
 import ROUTES from 'constants/routes';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
@@ -8,8 +9,6 @@ import { INTEGRATION_TELEMETRY_EVENTS } from './constants';
 import IntegrationsHeader from './IntegrationsHeader/IntegrationsHeader';
 import IntegrationsList from './IntegrationsList/IntegrationsList';
 import OneClickIntegrations from './OneClickIntegrations/OneClickIntegrations';
-
-import './Integrations.styles.scss';
 
 function Integrations(): JSX.Element {
 	const history = useHistory();
@@ -35,24 +34,20 @@ function Integrations(): JSX.Element {
 	}, []);
 
 	return (
-		<div className="integrations-page">
-			<div className="integrations-content">
-				<div className="integrations-listing-container">
-					<IntegrationsHeader
-						searchQuery={searchQuery}
-						onSearchChange={setSearchQuery}
-					/>
-					<OneClickIntegrations
-						searchQuery={searchQuery}
-						setSelectedIntegration={setSelectedIntegration}
-					/>
-					<IntegrationsList
-						searchQuery={searchQuery}
-						setSelectedIntegration={setSelectedIntegration}
-					/>
-				</div>
-			</div>
-		</div>
+		<PageTemplate testId="integrations-page">
+			<IntegrationsHeader
+				searchQuery={searchQuery}
+				onSearchChange={setSearchQuery}
+			/>
+			<OneClickIntegrations
+				searchQuery={searchQuery}
+				setSelectedIntegration={setSelectedIntegration}
+			/>
+			<IntegrationsList
+				searchQuery={searchQuery}
+				setSelectedIntegration={setSelectedIntegration}
+			/>
+		</PageTemplate>
 	);
 }
 

@@ -1,14 +1,12 @@
-import { Button, Tabs, TabsProps } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
-import { CableCar, Group } from '@signozhq/icons';
+import PageTabs from 'components/PageTemplate/components/PageTabs';
+import Panel from 'components/PageTemplate/components/Panel';
+import { PageTab } from 'components/PageTemplate/types';
+import { Database, Info, Wrench } from 'lucide-react';
 import { IntegrationDetailedProps } from 'types/api/integrations/types';
 
 import Configure from './IntegrationDetailContentTabs/Configure';
 import DataCollected from './IntegrationDetailContentTabs/DataCollected';
 import Overview from './IntegrationDetailContentTabs/Overview';
-
-import './IntegrationDetailPage.styles.scss';
 
 interface IntegrationDetailContentProps {
 	activeDetailTab: string;
@@ -17,76 +15,78 @@ interface IntegrationDetailContentProps {
 	setActiveDetailTab: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
+const TAB_ICON_CLASS = 'tw:size-4';
+/** The tab bodies are legacy markdown and antd tables laid out for antd's line height. */
+const PANEL_BODY_CLASS = 'tw:p-5 tw:leading-[1.5715]';
+
 function IntegrationDetailContent(
 	props: IntegrationDetailContentProps,
 ): JSX.Element {
 	const { activeDetailTab, integrationData, integrationId, setActiveDetailTab } =
 		props;
-	const items: TabsProps['items'] = [
+
+	const tabs: PageTab[] = [
 		{
-			key: 'overview',
+			value: 'overview',
 			label: (
-				<Button
-					type="text"
-					className="integration-tab-btns"
-					icon={<CableCar size={14} />}
-				>
-					<Typography.Text className="typography">Overview</Typography.Text>
-				</Button>
+				<>
+					<Info aria-hidden="true" className={TAB_ICON_CLASS} />
+					Overview
+				</>
 			),
-			children: (
-				<Overview
-					categories={integrationData.categories}
-					assets={integrationData.assets}
-					overviewContent={integrationData.overview}
-				/>
+			content: (
+				<Panel testId="integration-overview" bodyClassName={PANEL_BODY_CLASS}>
+					<Overview
+						categories={integrationData.categories}
+						assets={integrationData.assets}
+						overviewContent={integrationData.overview}
+					/>
+				</Panel>
 			),
 		},
 		{
-			key: 'configuration',
+			value: 'configuration',
 			label: (
-				<Button
-					type="text"
-					className="integration-tab-btns"
-					icon={<ConfigureIcon />}
-				>
-					<Typography.Text className="typography">Configure</Typography.Text>
-				</Button>
+				<>
+					<Wrench aria-hidden="true" className={TAB_ICON_CLASS} />
+					Configure
+				</>
 			),
-			children: (
-				<Configure
-					configuration={integrationData.configuration}
-					integrationId={integrationId}
-				/>
+			content: (
+				<Panel testId="integration-configure" bodyClassName={PANEL_BODY_CLASS}>
+					<Configure
+						configuration={integrationData.configuration}
+						integrationId={integrationId}
+					/>
+				</Panel>
 			),
 		},
 		{
-			key: 'dataCollected',
+			value: 'dataCollected',
 			label: (
-				<Button
-					type="text"
-					className="integration-tab-btns"
-					icon={<Group size={14} />}
-				>
-					<Typography.Text className="typography">Data Collected</Typography.Text>
-				</Button>
+				<>
+					<Database aria-hidden="true" className={TAB_ICON_CLASS} />
+					Data Collected
+				</>
 			),
-			children: (
-				<DataCollected
-					logsData={integrationData.data_collected.logs}
-					metricsData={integrationData.data_collected.metrics}
-				/>
+			content: (
+				<Panel testId="integration-data-collected" bodyClassName={PANEL_BODY_CLASS}>
+					<DataCollected
+						logsData={integrationData.data_collected.logs}
+						metricsData={integrationData.data_collected.metrics}
+					/>
+				</Panel>
 			),
 		},
 	];
+
 	return (
-		<div className="integration-detail-container">
-			<Tabs
-				activeKey={activeDetailTab}
-				items={items}
-				onChange={setActiveDetailTab}
-			/>
-		</div>
+		<PageTabs
+			label="Integration details"
+			tabs={tabs}
+			value={activeDetailTab}
+			onValueChange={setActiveDetailTab}
+		/>
 	);
 }
 
