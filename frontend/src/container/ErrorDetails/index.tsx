@@ -2,19 +2,29 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { Button, Space } from 'antd';
-import { Divider } from '@signozhq/ui/divider';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
-import { ResizeTable } from 'components/ResizeTable';
+import KpiStrip from 'components/PageTemplate/components/KpiStrip';
+import PageHeader from 'components/PageTemplate/components/PageHeader';
+import Panel from 'components/PageTemplate/components/Panel';
+import Stat from 'components/PageTemplate/components/Stat';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import PageTemplate from 'components/PageTemplate/PageTemplate';
+import { Button } from 'components/ui/button';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getNanoSeconds } from 'container/AllError/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
+import {
+	Bug,
+	ChevronLeft,
+	ChevronRight,
+	LoaderCircle,
+	Waypoints,
+} from 'lucide-react';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useTimezone } from 'providers/Timezone';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
@@ -22,9 +32,7 @@ import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
 import { keyToExclude } from './config';
-import { DashedContainer, EditorContainer, EventContainer } from './styles';
-
-import './styles.scss';
+import ErrorAttributesTable from './ErrorAttributesTable';
 
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { idPayload } = props;
@@ -61,24 +69,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const errorDetail = idPayload;
 
 	const [stackTraceValue] = useState(errorDetail.exceptionStacktrace);
-
-	const columns = useMemo(
-		() => [
-			{
-				title: 'Key',
-				width: 100,
-				dataIndex: 'key',
-				key: 'key',
-			},
-			{
-				title: 'Value',
-				dataIndex: 'value',
-				width: 100,
-				key: 'value',
-			},
-		],
-		[],
-	);
 
 	const { notifications } = useNotifications();
 
@@ -146,27 +136,35 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	return (
-		<div className="error-details-container">
-			<Typography.Title level={4}>{errorDetail.exceptionType}</Typography.Title>
-			<Typography.Text>{errorDetail.exceptionMessage}</Typography.Text>
-			<Divider />
+	const isNavigating = nextPrevStatus === 'loading';
 
-			<EventContainer>
-				<div>
-					<Typography>Event {errorDetail.errorId}</Typography>
-					<Typography>
-						{formatTimezoneAdjustedTimestamp(
-							errorDetail.timestamp,
-							DATE_TIME_FORMATS.UTC_FULL,
-						)}
-					</Typography>
-				</div>
-				<div>
-					<Space align="end" direction="horizontal">
+	return (
+		<PageTemplate testId="error-details-page">
+			<PageHeader
+				icon={<Bug />}
+				titleMono
+				title={errorDetail.exceptionType}
+				badges={
+					errorDetail.serviceName && (
+						<StatusBadge tone="neutral" className="tw:font-mono">
+							{errorDetail.serviceName}
+						</StatusBadge>
+					)
+				}
+				description={
+					<span className="tw:font-mono tw:text-xs tw:break-all">
+						{errorDetail.exceptionMessage}
+					</span>
+				}
+				actions={
+					<>
 						<Button
-							loading={nextPrevStatus === 'loading'}
-							disabled={nextPrevData?.payload?.prevErrorID.length === 0}
+							variant="outline"
+							size="sm"
+							data-testid="error-details-older"
+							disabled={
+								isNavigating || nextPrevData?.payload?.prevErrorID.length === 0
+							}
 							onClick={(): Promise<void> =>
 								onClickErrorIdHandler(
 									nextPrevData?.payload?.prevErrorID || '',
@@ -174,11 +172,20 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 								)
 							}
 						>
+							{isNavigating ? (
+								<LoaderCircle className="tw:animate-spin" />
+							) : (
+								<ChevronLeft />
+							)}
 							{t('older')}
 						</Button>
 						<Button
-							loading={nextPrevStatus === 'loading'}
-							disabled={nextPrevData?.payload?.nextErrorID.length === 0}
+							variant="outline"
+							size="sm"
+							data-testid="error-details-newer"
+							disabled={
+								isNavigating || nextPrevData?.payload?.nextErrorID.length === 0
+							}
 							onClick={(): Promise<void> =>
 								onClickErrorIdHandler(
 									nextPrevData?.payload?.nextErrorID || '',
@@ -187,29 +194,69 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 							}
 						>
 							{t('newer')}
+							{isNavigating ? (
+								<LoaderCircle className="tw:animate-spin" />
+							) : (
+								<ChevronRight />
+							)}
 						</Button>
-					</Space>
+						<Button
+							size="sm"
+							title={t('see_trace_graph')}
+							data-testid="error-details-trace"
+							onClick={onClickTraceHandler}
+						>
+							<Waypoints />
+							{t('see_error_in_trace_graph')}
+						</Button>
+					</>
+				}
+			/>
+
+			<KpiStrip label="Event">
+				<Stat
+					label="Event"
+					value={
+						<span className="tw:font-mono tw:text-sm tw:font-medium tw:tracking-normal tw:break-all">
+							{errorDetail.errorId}
+						</span>
+					}
+				/>
+				<Stat
+					label="Timestamp"
+					value={
+						<span className="tw:text-sm tw:font-medium tw:tracking-normal">
+							{formatTimezoneAdjustedTimestamp(
+								errorDetail.timestamp,
+								DATE_TIME_FORMATS.UTC_FULL,
+							)}
+						</span>
+					}
+				/>
+				<Stat
+					label="Trace ID"
+					value={
+						<span className="tw:font-mono tw:text-sm tw:font-medium tw:tracking-normal tw:break-all">
+							{errorDetail.traceID}
+						</span>
+					}
+				/>
+			</KpiStrip>
+
+			<Panel title={t('stack_trace')} bodyClassName="tw:mt-3 tw:px-1 tw:pb-1">
+				<div className="tw:h-[50vh]">
+					<Editor value={stackTraceValue} readOnly />
 				</div>
-			</EventContainer>
+			</Panel>
 
-			<DashedContainer>
-				<Typography>{t('see_trace_graph')}</Typography>
-				<Button onClick={onClickTraceHandler} type="primary">
-					{t('see_error_in_trace_graph')}
-				</Button>
-			</DashedContainer>
-
-			<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-			<div className="error-container">
-				<Editor value={stackTraceValue} readOnly />
-			</div>
-
-			<EditorContainer>
-				<Space direction="vertical">
-					<ResizeTable columns={columns} tableLayout="fixed" dataSource={data} />
-				</Space>
-			</EditorContainer>
-		</div>
+			<Panel
+				title="Attributes"
+				className="tw:overflow-hidden"
+				bodyClassName="tw:mt-3 tw:border-t tw:border-border"
+			>
+				<ErrorAttributesTable rows={data} />
+			</Panel>
+		</PageTemplate>
 	);
 }
 

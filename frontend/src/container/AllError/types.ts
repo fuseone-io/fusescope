@@ -1,9 +1,12 @@
-import type { FilterDropdownProps } from 'antd/es/table/interface';
+import { OrderBy } from 'types/api/errors/getAll';
 
-export interface FilterDropdownExtendsProps {
-	placeholder: string;
-	filterKey: string;
-	confirm: FilterDropdownProps['confirm'];
-	setSelectedKeys: FilterDropdownProps['setSelectedKeys'];
-	selectedKeys: FilterDropdownProps['selectedKeys'];
+export type ColumnFilterKey = 'exceptionType' | 'serviceName';
+
+export interface ExceptionColumn {
+	key: OrderBy | 'exceptionMessage';
+	label: string;
+	sortable: boolean;
+	align: 'left' | 'right';
+	filter?: { key: ColumnFilterKey; placeholder: string };
+	className?: string;
 }

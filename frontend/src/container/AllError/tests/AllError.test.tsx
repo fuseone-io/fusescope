@@ -1,8 +1,9 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider, useSelector } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { Router } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
+import history from 'lib/history';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
@@ -55,9 +56,16 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	},
 } as any);
 
-function Exceptions({ initUrl }: { initUrl?: string[] }): JSX.Element {
+// The list keeps its state in the url through `lib/history`, so the router
+// must follow that history for the table to see its own updates.
+function renderExceptions(initUrl = '/exceptions'): void {
+	history.replace(initUrl);
+	render(<Exceptions />);
+}
+
+function Exceptions(): JSX.Element {
 	return (
-		<MemoryRouter initialEntries={initUrl ?? ['/exceptions']}>
+		<Router history={history}>
 			<TimezoneProvider>
 				<Provider store={store}>
 					<MockQueryClientProvider>
@@ -65,13 +73,9 @@ function Exceptions({ initUrl }: { initUrl?: string[] }): JSX.Element {
 					</MockQueryClientProvider>
 				</Provider>
 			</TimezoneProvider>
-		</MemoryRouter>
+		</Router>
 	);
 }
-
-Exceptions.defaultProps = {
-	initUrl: ['/exceptions'],
-};
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const listErrorsURL = `${BASE_URL}/api/v1/listErrors`;
@@ -101,36 +105,72 @@ describe('Exceptions - All Errors', () => {
 	});
 
 	it('renders correctly with default props', async () => {
-		render(<Exceptions />);
+		renderExceptions();
 		const item = await screen.findByText(/redis timeout/i);
 		expect(item).toBeInTheDocument();
 	});
 
-	it('should sort Error Message appropriately', async () => {
-		render(<Exceptions />);
+	it('links each exception to its detail page', async () => {
+		renderExceptions();
 		await screen.findByText(/redis timeout/i);
 
-		const caretIconUp = screen.getAllByLabelText('caret-up')[0];
-		const caretIconDown = screen.getAllByLabelText('caret-down')[0];
+		expect(
+			screen.getByRole('link', { name: '*errors.errorString' }),
+		).toHaveAttribute(
+			'href',
+			'/error-detail?groupId=511b9c91a92b9c5166ecb77235f5743b&timestamp=1744655277797616374',
+		);
+	});
+
+	it('should sort Error Message appropriately', async () => {
+		renderExceptions();
+		await screen.findByText(/redis timeout/i);
+
+		const sortByType = screen.getByTestId('exceptions-sort-exceptionType');
+		const typeHeader = sortByType.closest('th');
 
 		// sort by ascending
-		expect(caretIconUp.className).not.toContain('active');
-		fireEvent.click(caretIconUp);
-		expect(caretIconUp.className).toContain('active');
+		expect(typeHeader).toHaveAttribute('aria-sort', 'none');
+		fireEvent.click(sortByType);
+		await waitFor(() =>
+			expect(typeHeader).toHaveAttribute('aria-sort', 'ascending'),
+		);
 		let queryParams = new URLSearchParams(window.location.search);
 		expect(queryParams.get('order')).toBe('ascending');
 		expect(queryParams.get('orderParam')).toBe('exceptionType');
 
 		// sort by descending
-		expect(caretIconDown.className).not.toContain('active');
-		fireEvent.click(caretIconDown);
-		expect(caretIconDown.className).toContain('active');
+		fireEvent.click(sortByType);
+		await waitFor(() =>
+			expect(typeHeader).toHaveAttribute('aria-sort', 'descending'),
+		);
 		queryParams = new URLSearchParams(window.location.search);
 		expect(queryParams.get('order')).toBe('descending');
 	});
 
+	it('filters by exception type from the column search', async () => {
+		renderExceptions(
+			'/exceptions?pageSize=10&offset=20&order=ascending&orderParam=serviceName',
+		);
+		await screen.findByText(/redis timeout/i);
+
+		fireEvent.click(screen.getByTestId('exceptions-filter-exceptionType'));
+		fireEvent.change(await screen.findByPlaceholderText('Search By Exception'), {
+			target: { value: 'redis' },
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+		await waitFor(() => {
+			const qp = new URLSearchParams(window.location.search);
+			expect(qp.get('exceptionType')).toBe('redis');
+		});
+		const queryParams = new URLSearchParams(window.location.search);
+		expect(queryParams.get('offset')).toBe('0');
+		expect(queryParams.get('orderParam')).toBe('serviceName');
+	});
+
 	it('should call useQueries with exact composite query object', async () => {
-		render(<Exceptions initUrl={[INIT_URL_WITH_COMMON_QUERY]} />);
+		renderExceptions(INIT_URL_WITH_COMMON_QUERY);
 		await screen.findByText(/redis timeout/i);
 		expect(postListErrorsSpy).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -142,22 +182,14 @@ describe('Exceptions - All Errors', () => {
 	describe('pagination edge cases', () => {
 		it('should navigate to page 2 when pageSize=100 and clicking next', async () => {
 			// Arrange: start with pageSize=100 and offset=0
-			render(
-				<Exceptions
-					initUrl={[
-						`/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName`,
-					]}
-				/>,
+			renderExceptions(
+				`/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName`,
 			);
 
 			// Wait for initial load
 			await screen.findByText(/redis timeout/i);
 
-			const nextPageItem = screen.getByTitle('Next Page');
-			const nextPageButton = nextPageItem.querySelector(
-				'button',
-			) as HTMLButtonElement;
-			fireEvent.click(nextPageButton);
+			fireEvent.click(screen.getByTestId('pagination-next'));
 
 			await waitFor(() => {
 				const qp = new URLSearchParams(window.location.search);
@@ -170,16 +202,14 @@ describe('Exceptions - All Errors', () => {
 
 		it('initializes current page from URL (offset/pageSize)', async () => {
 			// offset=100, pageSize=100 => current page should be 2
-			render(
-				<Exceptions
-					initUrl={[
-						`/exceptions?pageSize=100&offset=100&order=ascending&orderParam=serviceName`,
-					]}
-				/>,
+			renderExceptions(
+				`/exceptions?pageSize=100&offset=100&order=ascending&orderParam=serviceName`,
 			);
 			await screen.findByText(/redis timeout/i);
-			const activeItem = document.querySelector('.ant-pagination-item-active');
-			expect(activeItem?.textContent).toBe('2');
+			expect(screen.getByTestId('pagination-page-2')).toHaveAttribute(
+				'aria-current',
+				'page',
+			);
 			const qp = new URLSearchParams(window.location.search);
 			expect(qp.get('pageSize')).toBe('100');
 			expect(qp.get('offset')).toBe('100');
@@ -187,17 +217,11 @@ describe('Exceptions - All Errors', () => {
 
 		it('clicking a numbered page updates offset correctly', async () => {
 			// pageSize=100, click page 3 => offset = 200
-			render(
-				<Exceptions
-					initUrl={[
-						`/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName`,
-					]}
-				/>,
+			renderExceptions(
+				`/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName`,
 			);
 			await screen.findByText(/redis timeout/i);
-			const page3Item = screen.getByTitle('3');
-			const page3Anchor = page3Item.querySelector('a') as HTMLAnchorElement;
-			fireEvent.click(page3Anchor);
+			fireEvent.click(screen.getByTestId('pagination-page-3'));
 			await waitFor(() => {
 				const qp = new URLSearchParams(window.location.search);
 				expect(qp.get('offset')).toBe('200');
