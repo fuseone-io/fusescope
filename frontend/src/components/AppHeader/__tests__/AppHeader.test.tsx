@@ -178,6 +178,7 @@ describe('AppHeader', () => {
 			'/services/checkout-api',
 			ROUTES.SERVICE_MAP,
 			ROUTES.METRICS_EXPLORER,
+			ROUTES.ALERTS_NEW,
 		])('shows the global picker with auto refresh on %s', (route) => {
 			renderHeader(route);
 
@@ -199,7 +200,6 @@ describe('AppHeader', () => {
 			'/traces/funnels/abc',
 			'/trace/abc',
 			'/dashboard/abc',
-			ROUTES.ALERTS_NEW,
 			ROUTES.SETTINGS,
 			'/ai-assistant/abc',
 		])('leaves the picker to the page on %s', (route) => {

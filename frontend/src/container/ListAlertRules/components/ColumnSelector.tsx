@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
-import { Columns3 } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
 import type { TableColumnDef } from 'components/TanStackTableView';
+import { Button } from 'components/ui/button';
 import {
 	hideColumn,
 	showColumn,
 	useHiddenColumnIds,
 } from 'components/TanStackTableView';
+import { Columns3 } from 'lucide-react';
 
 import styles from './ColumnSelector.module.scss';
 
@@ -43,12 +43,11 @@ function ColumnSelector<TData>({
 		<Popover>
 			<PopoverTrigger asChild>
 				<Button
-					variant="outlined"
-					size="sm"
-					color="secondary"
-					prefix={<Columns3 size={14} />}
-					testId="alert-columns-button"
+					variant="outline"
+					className="fs-ui tw:font-sans"
+					data-testid="alert-columns-button"
 				>
+					<Columns3 aria-hidden="true" />
 					Columns
 				</Button>
 			</PopoverTrigger>

@@ -1,0 +1,45 @@
+// Dresses a TanStack table as a page-template panel: raised surface, 1px
+// border, sunken uppercase header, no zebra rows.
+.panel {
+	overflow: hidden;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
+	color: var(--fs-foreground);
+
+	--tanstack-table-header-cell-bg: var(--fs-muted);
+	--tanstack-table-header-cell-color: var(--fs-muted-foreground);
+	--tanstack-table-header-border-color: var(--fs-border);
+	--tanstack-table-cell-bg: var(--fs-card);
+	--tanstack-table-cell-color: var(--fs-foreground);
+	--tanstack-table-row-hover-bg: var(--fs-muted);
+	--tanstack-table-row-active-bg: var(--fs-accent);
+	--tanstack-table-row-odd-bg: var(--fs-card);
+	--tanstack-table-row-even-bg: var(--fs-card);
+	--tanstack-table-resize-handle-bg: var(--fs-muted);
+	--tanstack-table-resize-handle-hover-bg: var(--fs-border);
+	--tanstack-table-loading-overlay-bg: color-mix(
+		in srgb,
+		var(--fs-card) 60%,
+		transparent
+	);
+
+	:global(thead th),
+	:global(thead th *) {
+		font-family:
+			Inter,
+			'Segoe UI',
+			-apple-system,
+			system-ui,
+			sans-serif;
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		color: var(--fs-muted-foreground);
+	}
+
+	:global(tbody tr) {
+		border-bottom: 1px solid var(--fs-border);
+	}
+}

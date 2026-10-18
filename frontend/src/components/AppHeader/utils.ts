@@ -27,7 +27,6 @@ const NAV_LABELS = new Map(
 /** Pages that render their own time picker, or none. */
 const ROUTES_WITHOUT_GLOBAL_PICKER = [
 	ROUTES.SIGN_UP,
-	ROUTES.ALERTS_NEW,
 	ROUTES.AI_ASSISTANT,
 	...routesToDisable,
 	...routesToSkip,
