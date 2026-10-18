@@ -1,17 +1,9 @@
 import { type FocusEvent, KeyboardEvent } from 'react';
-import {
-	Check,
-	Globe,
-	LockKeyhole,
-	LockKeyholeOpen,
-	SolidInfoCircle,
-	X,
-} from '@signozhq/icons';
+import { Check, Globe, LockKeyhole, LockKeyholeOpen, X } from '@signozhq/icons';
 import TagBadge from 'components/TagBadge/TagBadge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { isEmpty } from 'lodash-es';
@@ -122,132 +114,136 @@ function DashboardInfo({
 
 	return (
 		<div className={styles.dashboardInfo}>
-			<img src={image} alt={title} className={styles.dashboardImage} />
+			<span className={styles.iconTile} aria-hidden="true">
+				<img src={image} alt={title} className={styles.dashboardImage} />
+			</span>
 
-			{isEditing ? (
-				<div className={styles.dashboardTitleEditor} onBlur={onEditorBlur}>
-					<Input
-						autoFocus
-						value={draft}
-						testId="dashboard-title-input"
-						maxLength={DASHBOARD_NAME_MAX_LENGTH}
-						className={styles.dashboardTitleInput}
-						onChange={(e): void => onDraftChange(e.target.value)}
-						onKeyDown={onKeyDown}
-					/>
-					<Button
-						type="button"
-						variant="solid"
-						color="primary"
-						size="sm"
-						icon
-						aria-label="Save title"
-						testId="dashboard-title-save"
-						onClick={onCommit}
-					>
-						<Check size={14} />
-					</Button>
-					<Button
-						type="button"
-						variant="outlined"
-						color="secondary"
-						size="sm"
-						icon
-						aria-label="Cancel title edit"
-						testId="dashboard-title-cancel"
-						onClick={onCancel}
-					>
-						<X size={14} />
-					</Button>
+			<div className={styles.infoBody}>
+				<div className={styles.titleRow}>
+					{isEditing ? (
+						<div className={styles.dashboardTitleEditor} onBlur={onEditorBlur}>
+							<Input
+								autoFocus
+								value={draft}
+								testId="dashboard-title-input"
+								maxLength={DASHBOARD_NAME_MAX_LENGTH}
+								className={styles.dashboardTitleInput}
+								onChange={(e): void => onDraftChange(e.target.value)}
+								onKeyDown={onKeyDown}
+							/>
+							<Button
+								type="button"
+								variant="solid"
+								color="primary"
+								size="sm"
+								icon
+								aria-label="Save title"
+								testId="dashboard-title-save"
+								onClick={onCommit}
+							>
+								<Check size={14} />
+							</Button>
+							<Button
+								type="button"
+								variant="outlined"
+								color="secondary"
+								size="sm"
+								icon
+								aria-label="Cancel title edit"
+								testId="dashboard-title-cancel"
+								onClick={onCancel}
+							>
+								<X size={14} />
+							</Button>
+						</div>
+					) : (
+						<Tooltip title={title}>
+							<h1
+								className={cx(styles.dashboardTitle, {
+									[styles.dashboardTitleHover]: canEdit,
+								})}
+								data-testid="dashboard-title"
+								onClick={canEdit ? onStartEdit : undefined}
+							>
+								{title}
+							</h1>
+						</Tooltip>
+					)}
+
+					{isPublicDashboard && (
+						<Tooltip title="This dashboard is publicly accessible. Click to open the public page.">
+							<Button
+								type="button"
+								variant="ghost"
+								color="secondary"
+								size="sm"
+								icon
+								aria-label="Open public dashboard"
+								testId="dashboard-public-link"
+								onClick={handleOpenPublicUrl}
+							>
+								<Globe size={14} />
+							</Button>
+						</Tooltip>
+					)}
+
+					{showLockToggle && (
+						<Tooltip title={onToggleLock ? lockTooltip : undefined}>
+							<Button
+								disabledTooltip={lockTooltip}
+								type="button"
+								variant="ghost"
+								color="secondary"
+								size="sm"
+								icon
+								aria-label={isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard'}
+								testId="dashboard-lock"
+								disabled={!onToggleLock}
+								onClick={onToggleLock}
+							>
+								{isDashboardLocked ? (
+									<LockKeyhole size={14} />
+								) : (
+									<LockKeyholeOpen size={14} />
+								)}
+							</Button>
+						</Tooltip>
+					)}
+
+					{hasTags && (
+						<div className={styles.dashboardTags} data-testid="dashboard-tags">
+							{visibleTags.map((tag) => (
+								<TagBadge key={tag}>{tag}</TagBadge>
+							))}
+							{remainingTags.length > 0 && (
+								<Tooltip title={<TagsOverflowTooltip tags={remainingTags} />}>
+									<span data-testid="dashboard-tags-overflow">
+										<TagBadge>+{remainingTags.length}</TagBadge>
+									</span>
+								</Tooltip>
+							)}
+						</div>
+					)}
 				</div>
-			) : (
-				<Tooltip title={title}>
-					<Typography.Text
-						className={cx(styles.dashboardTitle, {
-							[styles.dashboardTitleHover]: canEdit,
-						})}
-						data-testid="dashboard-title"
-						onClick={canEdit ? onStartEdit : undefined}
-					>
-						{title}
-					</Typography.Text>
-				</Tooltip>
-			)}
 
-			{hasDescription && (
-				<Tooltip
-					side="bottom"
-					title={
-						<span className={styles.descriptionTooltip}>
+				{hasDescription && (
+					<Tooltip
+						side="bottom"
+						title={
+							<span className={styles.descriptionTooltip}>
+								{linkifyText(description)}
+							</span>
+						}
+					>
+						<p
+							className={styles.description}
+							data-testid="dashboard-description-info"
+						>
 							{linkifyText(description)}
-						</span>
-					}
-				>
-					<SolidInfoCircle
-						className={styles.descriptionIcon}
-						size={14}
-						data-testid="dashboard-description-info"
-					/>
-				</Tooltip>
-			)}
-
-			{isPublicDashboard && (
-				<Tooltip title="This dashboard is publicly accessible. Click to open the public page.">
-					<Button
-						type="button"
-						variant="ghost"
-						color="secondary"
-						size="sm"
-						icon
-						aria-label="Open public dashboard"
-						testId="dashboard-public-link"
-						onClick={handleOpenPublicUrl}
-					>
-						<Globe size={14} />
-					</Button>
-				</Tooltip>
-			)}
-
-			{showLockToggle && (
-				<Tooltip title={onToggleLock ? lockTooltip : undefined}>
-					<Button
-						disabledTooltip={lockTooltip}
-						type="button"
-						variant="ghost"
-						color="secondary"
-						size="sm"
-						icon
-						aria-label={isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard'}
-						testId="dashboard-lock"
-						disabled={!onToggleLock}
-						onClick={onToggleLock}
-					>
-						{isDashboardLocked ? (
-							<LockKeyhole size={14} />
-						) : (
-							<LockKeyholeOpen size={14} />
-						)}
-					</Button>
-				</Tooltip>
-			)}
-
-			{hasTags && (
-				<>
-					<span className={styles.divider} />
-					<div className={styles.dashboardTags} data-testid="dashboard-tags">
-						{visibleTags.map((tag) => (
-							<TagBadge key={tag}>{tag}</TagBadge>
-						))}
-						{remainingTags.length > 0 && (
-							<Tooltip title={<TagsOverflowTooltip tags={remainingTags} />}>
-								<span data-testid="dashboard-tags-overflow">
-									<TagBadge>+{remainingTags.length}</TagBadge>
-								</span>
-							</Tooltip>
-						)}
-					</div>
-				</>
-			)}
+						</p>
+					</Tooltip>
+				)}
+			</div>
 		</div>
 	);
 }

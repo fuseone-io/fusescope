@@ -7,7 +7,7 @@
 	// Override react-grid-layout's default red drag/resize placeholder with the
 	// FuseScope brand blue.
 	:global(.react-grid-item.react-grid-placeholder) {
-		background: var(--bg-robin-500);
+		background: var(--fs-primary);
 		opacity: 0.2;
 		border-radius: 4px;
 		transition-duration: 100ms;
@@ -20,8 +20,8 @@
 	// Recolour it with the theme border token so the grip is visible in both.
 	:global(.react-resizable-handle) {
 		&::after {
-			border-right-color: var(--l2-border) !important;
-			border-bottom-color: var(--l2-border) !important;
+			border-right-color: var(--fs-border) !important;
+			border-bottom-color: var(--fs-border) !important;
 		}
 	}
 }

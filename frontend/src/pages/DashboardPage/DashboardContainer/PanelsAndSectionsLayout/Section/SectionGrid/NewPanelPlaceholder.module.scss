@@ -6,18 +6,18 @@
 	gap: 4px;
 	height: 100%;
 	box-sizing: border-box;
-	border: 1px dashed var(--bg-robin-500);
+	border: 1px dashed var(--fs-primary);
 	border-radius: 6px;
-	background: color-mix(in srgb, var(--bg-robin-500) 6%, transparent);
+	background: color-mix(in srgb, var(--fs-primary) 6%, transparent);
 }
 
 .name {
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 	font-size: 12px;
 	font-weight: 500;
 }
 
 .label {
-	color: var(--bg-robin-400);
+	color: var(--fs-primary);
 	font-size: 11px;
 }

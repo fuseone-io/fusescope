@@ -4,17 +4,17 @@
 	gap: 8px;
 	margin-top: 12px;
 	padding-top: 2px;
-	color: var(--l3-foreground);
+	color: var(--fs-subtle-foreground);
 }
 
 .hintIcon {
 	flex: none;
 	margin-top: 1px;
-	color: var(--l3-foreground);
+	color: var(--fs-subtle-foreground);
 }
 
 .hintText {
-	color: var(--l3-foreground);
+	color: var(--fs-subtle-foreground);
 	font-size: 12px;
 	line-height: 1.5;
 }

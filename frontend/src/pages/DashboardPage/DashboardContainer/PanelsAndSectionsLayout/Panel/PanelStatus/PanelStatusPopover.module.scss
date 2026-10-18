@@ -45,7 +45,7 @@
 
 .code {
 	margin: 0;
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 	font-size: 14px;
 	font-weight: 500;
 	line-height: 20px;
@@ -53,7 +53,7 @@
 
 .message {
 	margin: 0;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	font-size: 13px;
 	line-height: 18px;
 	word-break: break-word;
@@ -61,7 +61,7 @@
 
 .docsLink {
 	text-decoration: none;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }
 
 // === MESSAGES count pill + dotted rule ===
@@ -77,7 +77,7 @@
 	align-items: center;
 	gap: 6px;
 	padding: 2px 10px;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 20px;
 }
 
@@ -89,14 +89,14 @@
 }
 
 .badgeText {
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 	font-size: 10px;
 	font-weight: 500;
 	letter-spacing: 0.5px;
 }
 
 .badgeCount {
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	font-size: 12px;
 	font-weight: 500;
 }
@@ -106,7 +106,7 @@
 	height: 8px;
 	background-image: radial-gradient(
 		circle,
-		var(--l3-background) 1px,
+		var(--fs-muted) 1px,
 		transparent 2px
 	);
 	background-size: 8px 11px;
@@ -128,7 +128,7 @@
 .messageItem {
 	position: relative;
 	padding-left: 14px;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	font-family: 'Geist Mono', monospace;
 	font-size: 12px;
 	line-height: 18px;
@@ -143,5 +143,5 @@
 	width: 2px;
 	height: 4px;
 	border-radius: 50px;
-	background: var(--l1-border);
+	background: var(--fs-border);
 }

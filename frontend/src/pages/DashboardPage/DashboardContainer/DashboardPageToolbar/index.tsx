@@ -7,6 +7,7 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 } from 'api/generated/services/fuseScope.schemas';
 import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
@@ -15,6 +16,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { getAbsoluteUrl } from 'utils/basePath';
 
+import { useShareVariablesOption } from '../components/DashboardPageHeader/useShareVariablesOption';
 import { useCreatePanel } from '../hooks/useCreatePanel';
 import { useOptimisticPatch } from '../hooks/useOptimisticPatch';
 import { usePublicDashboardMeta } from '../DashboardSettings/PublicDashboard/usePublicDashboardMeta';
@@ -56,6 +58,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		[dashboard.tags],
 	);
 
+	const shareVariablesOption = useShareVariablesOption();
 	const { showErrorModal } = useErrorModal();
 	const { patchAsync } = useOptimisticPatch();
 	const {
@@ -178,15 +181,23 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					onCommit={commit}
 					onCancel={cancel}
 				/>
-				<DashboardActions
-					title={title}
-					dashboard={dashboard}
-					handle={handle}
-					isDashboardLocked={isDashboardLocked}
-					onAddPanel={onAddPanel}
-					onLockToggle={(): void => handleLockDashboardToggle('menu')}
-					onOpenRename={startEdit}
-				/>
+				<div className={styles.headerActions}>
+					<HeaderRightSection
+						enableAnnouncements={false}
+						enableShare
+						enableFeedback
+						shareModalExtraOption={shareVariablesOption}
+					/>
+					<DashboardActions
+						title={title}
+						dashboard={dashboard}
+						handle={handle}
+						isDashboardLocked={isDashboardLocked}
+						onAddPanel={onAddPanel}
+						onLockToggle={(): void => handleLockDashboardToggle('menu')}
+						onOpenRename={startEdit}
+					/>
+				</div>
 			</div>
 
 			{/* Row 2: the time selector floats top-right (declared first so the
