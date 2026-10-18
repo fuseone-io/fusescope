@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { Checkbox } from '@signozhq/ui/checkbox';
-import { Input } from '@signozhq/ui/input';
-import { Input as AntdInput } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight } from '@signozhq/icons';
+import { Input } from 'components/ui/input';
 import { useAppContext } from 'providers/App/App';
 
-import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
-
-import '../OnboardingQuestionaire.styles.scss';
+import ChoiceChip from '../components/ChoiceChip';
+import OnboardingNavButton from '../components/OnboardingNavButton';
+import QuestionField from '../components/QuestionField';
+import QuestionStep from '../components/QuestionStep';
 
 export interface SignozDetails {
 	interestInSignoz: string[] | null;
@@ -32,6 +29,8 @@ const interestedInOptions: Record<string, string> = {
 	correlateSignals: 'Correlate signals for faster troubleshooting',
 	openSourceTooling: 'Prefer open-source tooling',
 };
+
+const DISCOVER_QUESTION = 'How did you first come across FuseScope?';
 
 function seededShuffle<T>(array: T[], seed: string): T[] {
 	const result = [...array];
@@ -98,7 +97,7 @@ export function AboutSigNozQuestions({
 	const createInterestChangeHandler =
 		(option: string) =>
 		(checked: boolean): void => {
-			handleInterestChange(option, Boolean(checked));
+			handleInterestChange(option, checked);
 		};
 
 	const getNextDisabledReason = (): string => {
@@ -128,82 +127,68 @@ export function AboutSigNozQuestions({
 	};
 
 	return (
-		<div className="questions-container">
-			<OnboardingQuestionHeader
-				title="Set up your workspace"
-				subtitle="Tailor FuseScope to suit your observability needs."
-			/>
+		<QuestionStep
+			title="Set up your workspace"
+			subtitle="Tailor FuseScope to suit your observability needs."
+			footer={
+				<OnboardingNavButton
+					onClick={handleOnNext}
+					disabled={isNextDisabled}
+					disabledTooltip={getNextDisabledReason()}
+					showArrow
+				>
+					Next
+				</OnboardingNavButton>
+			}
+		>
+			<QuestionField question={DISCOVER_QUESTION}>
+				<textarea
+					aria-label={DISCOVER_QUESTION}
+					className="tw:min-h-20 tw:w-full tw:resize-none tw:rounded-md tw:border tw:border-input tw:bg-transparent tw:px-3 tw:py-2 tw:text-sm tw:text-foreground tw:shadow-xs tw:outline-none tw:placeholder:text-muted-foreground tw:focus-visible:border-ring tw:focus-visible:ring-[3px] tw:focus-visible:ring-ring/50 tw:dark:bg-input/30"
+					placeholder="e.g., I asked ChatGPT for Datadog alternatives, searched Google for “OpenTelemetry tools,” saw a Reddit or LinkedIn post, or heard about it from a colleague."
+					value={discoverSignoz}
+					autoFocus
+					rows={4}
+					onChange={(e): void => setDiscoverSignoz(e.target.value)}
+				/>
+			</QuestionField>
 
-			<div className="questions-form-container">
-				<div className="questions-form">
-					<div className="form-group">
-						<div className="question">How did you first come across FuseScope?</div>
+			<QuestionField question="What got you interested in FuseScope?">
+				<div className="tw:flex tw:flex-col tw:gap-2">
+					{shuffledOptionKeys.map((option: string) => (
+						<ChoiceChip
+							key={option}
+							type="checkbox"
+							name="interestInSignoz"
+							value={option}
+							checked={interestInSignoz.includes(option)}
+							onChange={createInterestChangeHandler(option)}
+						>
+							{interestedInOptions[option]}
+						</ChoiceChip>
+					))}
 
-						<AntdInput.TextArea
-							className="discover-signoz-input"
-							placeholder="e.g., I asked ChatGPT for Datadog alternatives, searched Google for “OpenTelemetry tools,” saw a Reddit or LinkedIn post, or heard about it from a colleague."
-							value={discoverSignoz}
-							autoFocus
-							rows={4}
-							onChange={(e): void => setDiscoverSignoz(e.target.value)}
-						/>
-					</div>
-
-					<div className="form-group">
-						<div className="question">What got you interested in FuseScope?</div>
-						<div className="checkbox-grid">
-							{shuffledOptionKeys.map((option: string) => (
-								<div key={option} className="checkbox-item">
-									<Checkbox
-										color="primary"
-										id={`checkbox-${option}`}
-										value={interestInSignoz.includes(option)}
-										onChange={createInterestChangeHandler(option)}
-									>
-										{interestedInOptions[option]}
-									</Checkbox>
-								</div>
-							))}
-
-							<div className="checkbox-item checkbox-item-others">
-								<Checkbox
-									color="primary"
-									id="others-checkbox"
-									value={interestInSignoz.includes('Others')}
-									onChange={createInterestChangeHandler('Others')}
-								>
-									{interestInSignoz.includes('Others') ? '' : 'Others'}
-								</Checkbox>
-								{interestInSignoz.includes('Others') && (
-									<Input
-										type="text"
-										className="onboarding-questionaire-other-input"
-										placeholder="What got you interested in FuseScope?"
-										value={otherInterestInSignoz}
-										autoFocus
-										onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
-									/>
-								)}
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div className="onboarding-buttons-container">
-					<Button
-						size="md"
-						variant="solid"
-						color="primary"
-						width="100%"
-						onClick={handleOnNext}
-						disabled={isNextDisabled}
-						disabledTooltip={getNextDisabledReason()}
-						suffix={<ArrowRight size={12} />}
+					<ChoiceChip
+						type="checkbox"
+						name="interestInSignoz"
+						value="Others"
+						checked={interestInSignoz.includes('Others')}
+						onChange={createInterestChangeHandler('Others')}
 					>
-						Next
-					</Button>
+						Others
+					</ChoiceChip>
 				</div>
-			</div>
-		</div>
+				{interestInSignoz.includes('Others') && (
+					<Input
+						type="text"
+						className="tw:h-10"
+						placeholder="What got you interested in FuseScope?"
+						value={otherInterestInSignoz}
+						autoFocus
+						onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
+					/>
+				)}
+			</QuestionField>
+		</QuestionStep>
 	);
 }

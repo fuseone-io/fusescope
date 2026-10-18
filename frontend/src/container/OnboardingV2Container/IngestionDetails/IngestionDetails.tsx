@@ -1,15 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button, Skeleton, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
 import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/fuseScope.schemas';
 import { signozDocsUrl } from 'constants/docs';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
+import { Button } from 'components/ui/button';
+import { Skeleton } from 'components/ui/skeleton';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from '@signozhq/icons';
+import {
+	ArrowUpRight,
+	Copy,
+	Globe,
+	Info,
+	Key,
+	TriangleAlert,
+} from 'lucide-react';
 import { withBasePath } from 'utils/basePath';
 
 import './IngestionDetails.styles.scss';
@@ -36,6 +44,18 @@ const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
 	INGESTION_URL_COPIED: 'Ingestion URL copied',
 	REGION_COPIED: 'Region copied',
 };
+
+const FIELD_LABEL =
+	'tw:flex tw:items-center tw:gap-1.5 tw:text-xs tw:font-medium tw:tracking-wide tw:text-muted-foreground tw:uppercase';
+
+const FIELD_VALUE =
+	'tw:flex tw:min-w-0 tw:items-center tw:justify-between tw:gap-2 tw:rounded-md tw:border tw:border-border tw:bg-muted tw:py-1 tw:pr-1 tw:pl-3 tw:font-mono tw:text-[13px]';
+
+const LINKS_ROW =
+	'tw:flex tw:items-start tw:gap-2 tw:text-[13px] tw:text-muted-foreground';
+
+const LINK =
+	'tw:inline-flex tw:items-center tw:gap-0.5 tw:text-primary-ink! tw:underline tw:underline-offset-2';
 
 export default function OnboardingIngestionDetails(): JSX.Element {
 	const { notifications } = useNotifications();
@@ -81,137 +101,160 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	}, [isIngestionKeysLoading, ingestionKeys]);
 
 	return (
-		<div className="configure-product-ingestion-section-content">
+		<div className="fs-ui tw:flex tw:flex-col tw:gap-4 tw:font-sans tw:text-sm tw:text-foreground">
 			{isError && (
-				<div className="ingestion-endpoint-section-error-container">
-					<Typography.Text className="ingestion-endpoint-section-error-text error">
-						<TriangleAlert size={14} /> {error.message || 'Something went wrong'}
-					</Typography.Text>
+				<div className="tw:flex tw:flex-col tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-surface-raised tw:p-4">
+					<p className="tw:flex tw:items-center tw:gap-2 tw:text-error">
+						<TriangleAlert className="tw:size-3.5 tw:shrink-0" aria-hidden />
+						<span className="translate-safe">
+							{error.message || 'Something went wrong'}
+						</span>
+					</p>
 
-					<div className="ingestion-setup-details-links">
-						<Info size={14} />
+					<p className={LINKS_ROW}>
+						<Info className="tw:mt-0.5 tw:size-3.5 tw:shrink-0" aria-hidden />
 
 						<span>
 							Find your ingestion URL and learn more about sending data to FuseScope{' '}
 							<a
 								href={signozDocsUrl('/ingestion/signoz-cloud/overview/')}
 								target="_blank"
-								className="learn-more"
+								className={LINK}
 								rel="noreferrer"
 							>
-								here <ArrowUpRight size={14} />
+								here <ArrowUpRight className="tw:size-3.5" aria-hidden />
 							</a>
 						</span>
-					</div>
+					</p>
 				</div>
 			)}
 
 			{(isIngestionKeysLoading || !isError) && (
 				<>
-					<div className="ingestion-key-details-section">
-						<Typography.Text className="ingestion-key-details-section-text">
+					<div className="tw:flex tw:flex-col tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-surface-raised tw:p-4">
+						<p className="tw:text-muted-foreground">
 							You can use this key to send your telemetry data to FuseScope.
-						</Typography.Text>
+						</p>
 
-						<div className="ingestion-key-details-section-key">
-							{isIngestionKeysLoading || isLoadingGlobalConfig ? (
-								<div className="skeleton-container">
-									<Skeleton.Input active className="skeleton-input" />
-									<Skeleton.Input active className="skeleton-input" />
-									<Skeleton.Input active className="skeleton-input" />
-									<Skeleton.Input active className="skeleton-input" />
-								</div>
-							) : (
-								<div className="ingestion-key-region-details-section">
-									{!isLoadingGlobalConfig && (
-										<div className="ingestion-region-container">
-											<Typography.Text className="ingestion-region-label">
-												Ingestion URL
-											</Typography.Text>
+						{isIngestionKeysLoading || isLoadingGlobalConfig ? (
+							<div className="tw:flex tw:flex-col tw:gap-2">
+								<Skeleton className="tw:h-[18px] tw:w-full" />
+								<Skeleton className="tw:h-[18px] tw:w-full" />
+								<Skeleton className="tw:h-[18px] tw:w-full" />
+								<Skeleton className="tw:h-[18px] tw:w-full" />
+							</div>
+						) : (
+							<dl className="tw:flex tw:flex-col tw:gap-3">
+								{!isLoadingGlobalConfig && (
+									<div className="tw:flex tw:flex-col tw:gap-1">
+										<dt className={FIELD_LABEL}>
+											<Globe className="tw:size-3.5" aria-hidden />
+											Ingestion URL
+										</dt>
 
-											{!isErrorGlobalConfig && (
-												<Typography.Text className="ingestion-region-value-copy">
+										{!isErrorGlobalConfig && (
+											<dd className={FIELD_VALUE}>
+												<span className="tw:min-w-0 tw:truncate">
 													{globalConfig?.data?.ingestion_url}
+												</span>
 
-													<Copy
-														size={14}
-														className="copy-btn"
-														onClick={(): void => {
-															logEvent(
-																`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_URL_COPIED}`,
-																{},
-															);
+												<Button
+													variant="ghost"
+													size="icon-xs"
+													aria-label="Copy ingestion URL"
+													className="tw:text-muted-foreground"
+													onClick={(): void => {
+														logEvent(
+															`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_URL_COPIED}`,
+															{},
+														);
 
-															const ingestionURL = globalConfig?.data?.ingestion_url;
+														const ingestionURL = globalConfig?.data?.ingestion_url;
 
-															if (ingestionURL) {
-																handleCopyKey(ingestionURL);
-															}
-														}}
-													/>
-												</Typography.Text>
-											)}
+														if (ingestionURL) {
+															handleCopyKey(ingestionURL);
+														}
+													}}
+												>
+													<Copy aria-hidden />
+												</Button>
+											</dd>
+										)}
 
-											{isErrorGlobalConfig && (
+										{isErrorGlobalConfig && (
+											<dd>
 												<Tooltip
 													rootClassName="ingestion-url-error-tooltip"
 													arrow={false}
 													title={
 														<div className="ingestion-url-error-content">
-															<Typography.Text className="ingestion-url-error-code">
+															<span className="ingestion-url-error-code">
 																{globalConfigApiError?.getErrorCode()}
-															</Typography.Text>
+															</span>
 
-															<Typography.Text className="ingestion-url-error-message">
+															<span className="ingestion-url-error-message">
 																{globalConfigApiError?.getErrorMessage()}
-															</Typography.Text>
+															</span>
 														</div>
 													}
 													placement="topLeft"
 												>
-													<Button type="text" icon={<TriangleAlert size={14} />} />
+													<Button
+														variant="ghost"
+														size="icon-xs"
+														aria-label="Ingestion URL error"
+														className="tw:text-warning"
+													>
+														<TriangleAlert aria-hidden />
+													</Button>
 												</Tooltip>
-											)}
-										</div>
-									)}
-
-									<div className="ingestion-key-container">
-										<Typography.Text className="ingestion-key-label">
-											<Key size={14} /> Ingestion Key
-										</Typography.Text>
-
-										<Typography.Text className="ingestion-key-value-copy">
-											{maskKey(firstIngestionKey?.value || '')}
-
-											<Copy
-												size={14}
-												className="copy-btn"
-												onClick={(): void => {
-													logEvent(
-														`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_KEY_COPIED}`,
-														{},
-													);
-													if (firstIngestionKey?.value) {
-														handleCopyKey(firstIngestionKey.value);
-													}
-												}}
-											/>
-										</Typography.Text>
+											</dd>
+										)}
 									</div>
+								)}
+
+								<div className="tw:flex tw:flex-col tw:gap-1">
+									<dt className={FIELD_LABEL}>
+										<Key className="tw:size-3.5" aria-hidden /> Ingestion Key
+									</dt>
+
+									<dd className={FIELD_VALUE}>
+										<span className="tw:min-w-0 tw:truncate">
+											{maskKey(firstIngestionKey?.value || '')}
+										</span>
+
+										<Button
+											variant="ghost"
+											size="icon-xs"
+											aria-label="Copy ingestion key"
+											className="tw:text-muted-foreground"
+											onClick={(): void => {
+												logEvent(
+													`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_KEY_COPIED}`,
+													{},
+												);
+												if (firstIngestionKey?.value) {
+													handleCopyKey(firstIngestionKey.value);
+												}
+											}}
+										>
+											<Copy aria-hidden />
+										</Button>
+									</dd>
 								</div>
-							)}
-						</div>
+							</dl>
+						)}
 					</div>
 
-					<div className="ingestion-setup-details-links">
-						<Info size={14} />
+					<p className={LINKS_ROW}>
+						<Info className="tw:mt-0.5 tw:size-3.5 tw:shrink-0" aria-hidden />
 
 						<span>
 							We support{' '}
 							<a
 								href={signozDocsUrl('/ingestion/signoz-cloud/keys/')}
 								target="_blank"
-								className="learn-more"
+								className={LINK}
 								rel="noreferrer"
 							>
 								multiple ingestions keys
@@ -220,13 +263,13 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 							<a
 								href={withBasePath('/settings/ingestion-settings')}
 								target="_blank"
-								className="learn-more"
+								className={LINK}
 								rel="noreferrer"
 							>
-								click here <ArrowUpRight size={14} />
+								click here <ArrowUpRight className="tw:size-3.5" aria-hidden />
 							</a>
 						</span>
-					</div>
+					</p>
 				</>
 			)}
 		</div>

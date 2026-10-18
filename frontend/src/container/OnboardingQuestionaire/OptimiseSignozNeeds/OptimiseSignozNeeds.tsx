@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
 import { Slider } from '@signozhq/ui/slider';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight, Minus } from '@signozhq/icons';
+import { Minus } from 'lucide-react';
 
-import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
+import OnboardingNavButton from '../components/OnboardingNavButton';
+import QuestionStep from '../components/QuestionStep';
 
 export interface OptimiseSignozDetails {
 	logsPerDay: number;
@@ -46,6 +45,11 @@ const exponentialToLinear = (
 		((Math.log10(expValue) - expMin) / (expMax - expMin)) * 100;
 	return Math.round(linearValue); // Round to get a whole number within the 0-100 range
 };
+
+const SLIDER_LABEL =
+	'tw:flex tw:items-center tw:gap-1 tw:text-xs tw:font-medium tw:uppercase tw:tracking-wide tw:whitespace-nowrap tw:text-muted-foreground';
+
+const SLIDER_STYLES = { range: { backgroundColor: 'var(--fs-primary)' } };
 
 interface OptimiseSignozNeedsProps {
 	optimiseSignozDetails: OptimiseSignozDetails;
@@ -186,129 +190,93 @@ function OptimiseSignozNeeds({
 	);
 
 	return (
-		<div className="questions-container">
-			<OnboardingQuestionHeader
-				title="Set up your workspace"
-				subtitle="Tailor FuseScope to suit your observability needs."
-			/>
-
-			<div className="questions-form-container">
-				<div className="questions-form">
-					<div className="form-group">
-						<Typography.Text className="question">
-							What does your scale approximately look like?
-						</Typography.Text>
-					</div>
-
-					<div className="form-group">
-						<label className="question-slider" htmlFor="organisationName">
-							Logs / Day
-						</label>
-						<div className="slider-container">
-							<div>
-								<Slider
-									min={0}
-									max={100}
-									value={sliderValues.logsPerDay}
-									marks={marks}
-									onChange={(value): void =>
-										handleSliderChange('logsPerDay', value as number)
-									}
-									styles={{
-										range: {
-											backgroundColor: '#4E74F8',
-										},
-									}}
-									tooltip={{
-										formatter: (): string => `${logsPerDayValue.toLocaleString()} GB`,
-									}}
-								/>
-							</div>
-						</div>
-					</div>
-
-					<div className="form-group">
-						<label className="question-slider" htmlFor="organisationName">
-							Metrics <Minus size={14} /> Number of Hosts
-						</label>
-						<div className="slider-container">
-							<div>
-								<Slider
-									min={0}
-									max={100}
-									value={sliderValues.hostsPerDay}
-									marks={hostMarks}
-									onChange={(value): void =>
-										handleSliderChange('hostsPerDay', value as number)
-									}
-									styles={{
-										range: {
-											backgroundColor: '#4E74F8',
-										},
-									}}
-									tooltip={{
-										formatter: (): string => `${hostsPerDayValue.toLocaleString()}`,
-									}}
-								/>
-							</div>
-						</div>
-					</div>
-
-					<div className="form-group">
-						<label className="question-slider" htmlFor="organisationName">
-							Number of services
-						</label>
-						<div className="slider-container">
-							<div>
-								<Slider
-									min={0}
-									max={100}
-									value={sliderValues.services}
-									marks={serviceMarks}
-									onChange={(value): void =>
-										handleSliderChange('services', value as number)
-									}
-									styles={{
-										range: {
-											backgroundColor: '#4E74F8',
-										},
-									}}
-									tooltip={{
-										formatter: (): string => `${servicesValue.toLocaleString()}`,
-									}}
-								/>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div className="onboarding-buttons-container">
-					<Button
-						size="md"
-						variant="solid"
-						color="primary"
-						width="100%"
+		<QuestionStep
+			title="Set up your workspace"
+			subtitle="Tailor FuseScope to suit your observability needs."
+			footer={
+				<>
+					<OnboardingNavButton
 						onClick={handleOnNext}
 						loading={isUpdatingProfile}
 						disabled={isNextDisabled}
 						disabledTooltip="Set at least one of the values above"
-						suffix={<ArrowRight size={12} />}
+						showArrow
 					>
 						Next
-					</Button>
-					<Button
-						size="md"
-						variant="ghost"
-						color="secondary"
-						width="100%"
+					</OnboardingNavButton>
+					<OnboardingNavButton
+						variant="secondary"
 						onClick={handleWillDoLater}
 						loading={isUpdatingProfile}
 					>
 						I&apos;ll do this later
-					</Button>
+					</OnboardingNavButton>
+				</>
+			}
+		>
+			<p className="fs-ui tw:text-sm tw:font-semibold tw:text-foreground">
+				What does your scale approximately look like?
+			</p>
+
+			<div className="tw:flex tw:flex-col tw:gap-2">
+				<span className={SLIDER_LABEL}>Logs / Day</span>
+				<div className="tw:px-2">
+					<Slider
+						min={0}
+						max={100}
+						value={sliderValues.logsPerDay}
+						marks={marks}
+						onChange={(value): void =>
+							handleSliderChange('logsPerDay', value as number)
+						}
+						styles={SLIDER_STYLES}
+						tooltip={{
+							formatter: (): string => `${logsPerDayValue.toLocaleString()} GB`,
+						}}
+					/>
 				</div>
 			</div>
-		</div>
+
+			<div className="tw:flex tw:flex-col tw:gap-2">
+				<span className={SLIDER_LABEL}>
+					Metrics <Minus size={12} aria-hidden /> Number of Hosts
+				</span>
+				<div className="tw:px-2">
+					<Slider
+						min={0}
+						max={100}
+						value={sliderValues.hostsPerDay}
+						marks={hostMarks}
+						onChange={(value): void =>
+							handleSliderChange('hostsPerDay', value as number)
+						}
+						styles={SLIDER_STYLES}
+						tooltip={{
+							formatter: (): string => `${hostsPerDayValue.toLocaleString()}`,
+						}}
+					/>
+				</div>
+			</div>
+
+			<div className="tw:flex tw:flex-col tw:gap-2">
+				<span className={SLIDER_LABEL}>Number of services</span>
+				<div className="tw:px-2">
+					<Slider
+						min={0}
+						max={100}
+						value={sliderValues.services}
+						marks={serviceMarks}
+						onChange={(value): void =>
+							handleSliderChange('services', value as number)
+						}
+						styles={SLIDER_STYLES}
+						tooltip={{
+							formatter: (): string => `${servicesValue.toLocaleString()}`,
+						}}
+					/>
+				</div>
+			</div>
+		</QuestionStep>
 	);
 }
 
