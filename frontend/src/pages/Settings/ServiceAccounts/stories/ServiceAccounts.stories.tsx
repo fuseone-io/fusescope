@@ -86,6 +86,7 @@ export const FilterMenuOpen: Story = {
 			const button = screen.getByRole('button', { name: /all accounts/i });
 
 			if (
+				button.hasAttribute('disabled') ||
 				button.getAttribute('aria-busy') === 'true' ||
 				button.getAttribute('aria-disabled') === 'true'
 			) {
