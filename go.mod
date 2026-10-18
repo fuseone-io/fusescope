@@ -66,7 +66,7 @@ require (
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.9
 	github.com/uptrace/bun/extra/bunotel v1.2.9
-	github.com/yuin/goldmark v1.7.16
+	github.com/yuin/goldmark v1.7.17
 	go.opentelemetry.io/collector/confmap v1.54.0
 	go.opentelemetry.io/collector/otelcol v0.144.0
 	go.opentelemetry.io/collector/pdata v1.54.0
