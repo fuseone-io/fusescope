@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { Button } from 'antd';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import deleteChannel from 'api/channels/delete';
+import { Button } from 'components/ui/button';
 import APIError from 'types/api/error';
 
 function Delete({ notifications, id }: DeleteProps): JSX.Element {
@@ -36,10 +36,12 @@ function Delete({ notifications, id }: DeleteProps): JSX.Element {
 
 	return (
 		<Button
-			loading={loading}
+			variant="ghost"
+			size="sm"
 			disabled={loading}
-			type="link"
+			aria-busy={loading}
 			onClick={onClickHandler}
+			className="tw:text-error-ink tw:hover:text-error-ink"
 		>
 			Delete
 		</Button>

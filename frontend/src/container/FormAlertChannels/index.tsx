@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
 import { Form, FormInstance, Select } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import type { Store } from 'antd/lib/form/interface';
+import Panel from 'components/PageTemplate/components/Panel';
+import { Button } from 'components/ui/button';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
@@ -19,6 +20,7 @@ import {
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
+import { Loader2 } from 'lucide-react';
 
 import EmailSettings from './Settings/Email';
 import GoogleChatSettings from './Settings/GoogleChat';
@@ -30,7 +32,6 @@ import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
-import { Button } from './styles';
 
 function FormAlertChannels({
 	formInstance,
@@ -80,12 +81,17 @@ function FormAlertChannels({
 	};
 
 	return (
-		<>
-			<Typography.Title level={4} className="form-alert-channels-title">
-				{title}
-			</Typography.Title>
-
-			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
+		<Panel
+			title={title}
+			testId="alert-channel-form"
+			bodyClassName="tw:px-5 tw:pt-4"
+		>
+			<Form
+				initialValues={initialValue}
+				layout="vertical"
+				form={formInstance}
+				className="tw:max-w-3xl"
+			>
 				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
 					<Input
 						data-testid="channel-name-textbox"
@@ -180,36 +186,40 @@ function FormAlertChannels({
 				</Form.Item>
 
 				<Form.Item>{renderSettings()}</Form.Item>
-
-				<Form.Item>
-					<Button
-						data-testid="save-channel-button"
-						disabled={savingState}
-						loading={savingState}
-						type="primary"
-						onClick={(): void => onSaveHandler(type)}
-					>
-						{t('button_save_channel')}
-					</Button>
-					<Button
-						data-testid="test-channel-button"
-						disabled={testingState}
-						loading={testingState}
-						onClick={(): void => onTestHandler(type)}
-					>
-						{t('button_test_channel')}
-					</Button>
-					<Button
-						data-testid="return-button"
-						onClick={(): void => {
-							history.replace(ROUTES.ALL_CHANNELS);
-						}}
-					>
-						{t('button_return')}
-					</Button>
-				</Form.Item>
 			</Form>
-		</>
+			<div className="fs-ui tw:-mx-5 tw:flex tw:flex-wrap tw:items-center tw:gap-2 tw:border-t tw:border-border tw:px-5 tw:py-3 tw:font-sans">
+				<Button
+					data-testid="save-channel-button"
+					disabled={savingState}
+					aria-busy={savingState}
+					onClick={(): void => onSaveHandler(type)}
+				>
+					{savingState && <Loader2 aria-hidden="true" className="tw:animate-spin" />}
+					{t('button_save_channel')}
+				</Button>
+				<Button
+					variant="outline"
+					data-testid="test-channel-button"
+					disabled={testingState}
+					aria-busy={testingState}
+					onClick={(): void => onTestHandler(type)}
+				>
+					{testingState && (
+						<Loader2 aria-hidden="true" className="tw:animate-spin" />
+					)}
+					{t('button_test_channel')}
+				</Button>
+				<Button
+					variant="ghost"
+					data-testid="return-button"
+					onClick={(): void => {
+						history.replace(ROUTES.ALL_CHANNELS);
+					}}
+				>
+					{t('button_return')}
+				</Button>
+			</div>
+		</Panel>
 	);
 }
 
