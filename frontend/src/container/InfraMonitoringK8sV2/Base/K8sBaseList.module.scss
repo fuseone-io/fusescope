@@ -3,6 +3,10 @@
 	flex: 1;
 	flex-direction: column;
 	min-height: 0;
+	overflow: hidden;
+	border: 1px solid var(--fs-border);
+	border-radius: 8px;
+	background: var(--fs-card);
 }
 
 .emptyStateContainer {
@@ -14,14 +18,14 @@
 }
 
 .k8SListTable {
-	--tanstack-table-header-cell-bg: var(--l2-background);
-	--tanstack-table-header-cell-color: var(--l2-foreground);
-	--tanstack-table-cell-bg: var(--l2-background);
-	--tanstack-table-cell-color: var(--l2-foreground);
-	--tanstack-table-row-hover-bg: var(--l2-background-hover);
-	--tanstack-table-row-active-bg: var(--l2-background-active);
-	--tanstack-table-resize-handle-bg: var(--l2-background);
-	--tanstack-table-resize-handle-hover-bg: var(--l2-border);
+	--tanstack-table-header-cell-bg: var(--fs-muted);
+	--tanstack-table-header-cell-color: var(--fs-muted-foreground);
+	--tanstack-table-cell-bg: var(--fs-card);
+	--tanstack-table-cell-color: var(--fs-foreground);
+	--tanstack-table-row-hover-bg: var(--fs-muted);
+	--tanstack-table-row-active-bg: var(--fs-primary-soft);
+	--tanstack-table-resize-handle-bg: var(--fs-muted);
+	--tanstack-table-resize-handle-hover-bg: var(--fs-border);
 	--tanstack-table-row-height: 42px;
 
 	--tanstack-table-header-label-width: 100%;
@@ -40,8 +44,8 @@
 }
 
 .paginationContainer {
-	padding-bottom: var(--spacing-8);
-	padding-right: var(--spacing-8);
+	padding: var(--spacing-5) var(--spacing-8);
+	border-top: 1px solid var(--fs-border);
 
 	ul {
 		margin: 0;

@@ -130,9 +130,7 @@ export function K8sBaseList<
 	const [podStatusFilter] = useInfraMonitoringPodStatusFilter();
 	const [nodeReadinessFilter] = useInfraMonitoringNodeReadinessFilter();
 	const [containerStatusFilter] = useInfraMonitoringContainerStatusFilter();
-	const [selectedItemParams, setSelectedItemParams] =
-		useInfraMonitoringSelectedItemParams();
-	const selectedItem = selectedItemParams.selectedItem;
+	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
 
 	const columnStorageKey = `k8s-${entity}-columns`;
 	const hiddenColumnIds = useHiddenColumnIds(columnStorageKey);
@@ -475,7 +473,6 @@ export function K8sBaseList<
 			<K8sHeader
 				controlListPrefix={controlListPrefix}
 				entity={entity}
-				showAutoRefresh={!selectedItem}
 				isFetching={isFetching}
 				cancelQuery={cancelQuery}
 			/>

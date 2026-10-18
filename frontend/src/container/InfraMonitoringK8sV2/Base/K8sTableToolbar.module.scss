@@ -2,9 +2,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-3);
-	padding: 0px var(--spacing-4) var(--spacing-4) var(--spacing-4);
-	background: var(--l1-background);
-	border-bottom: 1px solid var(--l1-border);
+	flex-wrap: wrap;
 }
 
 .groupByContainer {

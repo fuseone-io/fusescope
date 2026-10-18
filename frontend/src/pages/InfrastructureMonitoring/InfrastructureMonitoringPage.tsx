@@ -1,23 +1,20 @@
-import { useLocation } from 'react-use';
-import RouteTab from 'components/RouteTab';
-import { TabRoutes } from 'components/RouteTab/types';
+import ModuleTabsLayout from 'components/PageTemplate/components/ModuleTabsLayout';
 import history from 'lib/history';
+import { Boxes } from 'lucide-react';
 
 import { Hosts, Kubernetes } from './constants';
 
-import './InfrastructureMonitoring.styles.scss';
+const routes = [Hosts, Kubernetes];
 
 export default function InfrastructureMonitoringPage(): JSX.Element {
-	const { pathname } = useLocation();
-
-	const routes: TabRoutes[] = [Hosts, Kubernetes];
-
 	return (
-		<RouteTab
-			className="infra-monitoring-module-container"
+		<ModuleTabsLayout
+			title="Infrastructure"
+			icon={<Boxes />}
 			routes={routes}
-			activeKey={pathname}
+			activeKey={Hosts.key}
 			history={history}
+			testId="infra-monitoring-page"
 		/>
 	);
 }

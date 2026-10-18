@@ -5,7 +5,6 @@ import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySear
 import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -26,7 +25,6 @@ import { logInfraFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/Ba
 interface K8sHeaderProps {
 	controlListPrefix?: React.ReactNode;
 	entity: InfraMonitoringEntity;
-	showAutoRefresh: boolean;
 	isFetching?: boolean;
 	cancelQuery: () => void;
 }
@@ -34,7 +32,6 @@ interface K8sHeaderProps {
 function K8sHeader({
 	controlListPrefix,
 	entity,
-	showAutoRefresh,
 	isFetching = false,
 	cancelQuery,
 }: K8sHeaderProps): JSX.Element {
@@ -125,24 +122,7 @@ function K8sHeader({
 
 	return (
 		<div className={styles.k8SListControls}>
-			<div className={styles.k8SListControlsRow}>
-				{controlListPrefix}
-
-				<div className={styles.k8SDateTimeSelection}>
-					<DateTimeSelectionV2
-						showAutoRefresh={showAutoRefresh}
-						showRefreshText={false}
-						hideShareModal
-						defaultRelativeTime="30m"
-					/>
-				</div>
-
-				<RunQueryBtn
-					isLoadingQueries={isFetching}
-					onStageRunQuery={handleStageRunQuery}
-					handleCancelQuery={handleCancelQuery}
-				/>
-			</div>
+			{controlListPrefix}
 
 			<div className={styles.k8SQbSearchContainer}>
 				<QuerySearch
@@ -156,6 +136,12 @@ function K8sHeader({
 					metricNamespace={METRIC_NAMESPACE_BY_ENTITY[entity]}
 				/>
 			</div>
+
+			<RunQueryBtn
+				isLoadingQueries={isFetching}
+				onStageRunQuery={handleStageRunQuery}
+				handleCancelQuery={handleCancelQuery}
+			/>
 		</div>
 	);
 }

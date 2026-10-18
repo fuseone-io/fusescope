@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listHosts } from 'api/generated/services/inframonitoring';
 import {
@@ -24,6 +22,10 @@ import K8sBaseDetails, {
 } from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
 import { K8sBaseList } from 'container/InfraMonitoringK8sV2/Base/K8sBaseList';
 import StatusFilter from 'container/InfraMonitoringHostsV2/StatusFilter';
+import InfraFilterRail from 'container/InfraMonitoringK8sV2/components/InfraFilterRail';
+import InfraListLayout from 'container/InfraMonitoringK8sV2/components/InfraListLayout';
+import RailSectionLabel from 'container/InfraMonitoringK8sV2/components/RailSectionLabel';
+import RailToggleButton from 'components/PageTemplate/components/RailToggleButton';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8sV2/Base/types';
 import {
 	InfraMonitoringEntity,
@@ -49,10 +51,7 @@ import {
 } from './table.config';
 import { getHostsQuickFiltersConfig } from './utils';
 
-import styles from './InfraMonitoringHosts.module.scss';
-import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
-import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import {
 	logInfraFilterCustomizedEvent,
 	logInfraMonitoringListViewedEvent,
@@ -207,18 +206,13 @@ function Hosts(): JSX.Element {
 		[],
 	);
 
-	const controlListPrefix = !showFilters ? (
-		<div className={styles.quickFiltersToggleContainer}>
-			<Button
-				className="periscope-btn ghost"
-				type="text"
-				size="small"
-				onClick={handleFilterVisibilityChange}
-			>
-				<Filter size={14} />
-			</Button>
-		</div>
-	) : undefined;
+	const controlListPrefix = showFilters ? undefined : (
+		<RailToggleButton
+			open={false}
+			openLabel="Open Filters"
+			onToggle={handleFilterVisibilityChange}
+		/>
+	);
 
 	useEffect(() => {
 		logInfraMonitoringListViewedEvent(InfraMonitoringEntity.HOSTS);
@@ -226,57 +220,46 @@ function Hosts(): JSX.Element {
 
 	return (
 		<>
-			<div className={styles.infraMonitoringContainer}>
-				<div className={styles.infraContentRow}>
-					{showFilters && (
-						<div className={styles.quickFiltersContainer}>
-							<OverlayScrollbar>
-								<>
-									<div className={styles.quickFiltersContainerHeader}>
-										<Typography.Text>Filters</Typography.Text>
-										<Tooltip title="Collapse Filters">
-											<ArrowUpToLine
-												style={{ rotate: '270deg', cursor: 'pointer' }}
-												onClick={handleFilterVisibilityChange}
-												size="md"
-											/>
-										</Tooltip>
-									</div>
-									<QuickFilters
-										source={QuickFiltersSource.INFRA_MONITORING}
-										config={getHostsQuickFiltersConfig()}
-										handleFilterVisibilityChange={handleFilterVisibilityChange}
-										useFieldApis={{
-											metricNamespace:
-												METRIC_NAMESPACE_BY_ENTITY[InfraMonitoringEntity.HOSTS],
-											startUnixMilli,
-											endUnixMilli,
-										}}
-										onQuickFilterChange={handleQuickFilterChange}
-									/>
-								</>
-							</OverlayScrollbar>
-						</div>
-					)}
-					<div
-						className={`${styles.listContainer}${
-							showFilters ? ` ${styles.listContainerFiltersVisible}` : ''
-						}`}
-					>
-						<K8sBaseList<InframonitoringtypesHostRecordDTO>
-							controlListPrefix={controlListPrefix}
-							leftFilters={<StatusFilter />}
-							entity={InfraMonitoringEntity.HOSTS}
-							tableColumns={hostColumnsConfig}
-							fetchListData={fetchListData}
-							getRowKey={getHostRowKey}
-							getItemKey={getHostItemKey}
-							eventCategory={InfraMonitoringEvents.HostEntity}
-							detailsQueryKeyPrefix="hosts"
-						/>
-					</div>
-				</div>
-			</div>
+			<InfraListLayout
+				rail={
+					showFilters && (
+						<InfraFilterRail>
+							<RailSectionLabel
+								className="tw:border-b tw:border-border tw:py-1.5 tw:pr-2 tw:pl-3"
+								action={
+									<RailToggleButton open onToggle={handleFilterVisibilityChange} />
+								}
+							>
+								Filters
+							</RailSectionLabel>
+							<QuickFilters
+								source={QuickFiltersSource.INFRA_MONITORING}
+								config={getHostsQuickFiltersConfig()}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								useFieldApis={{
+									metricNamespace:
+										METRIC_NAMESPACE_BY_ENTITY[InfraMonitoringEntity.HOSTS],
+									startUnixMilli,
+									endUnixMilli,
+								}}
+								onQuickFilterChange={handleQuickFilterChange}
+							/>
+						</InfraFilterRail>
+					)
+				}
+			>
+				<K8sBaseList<InframonitoringtypesHostRecordDTO>
+					controlListPrefix={controlListPrefix}
+					leftFilters={<StatusFilter />}
+					entity={InfraMonitoringEntity.HOSTS}
+					tableColumns={hostColumnsConfig}
+					fetchListData={fetchListData}
+					getRowKey={getHostRowKey}
+					getItemKey={getHostItemKey}
+					eventCategory={InfraMonitoringEvents.HostEntity}
+					detailsQueryKeyPrefix="hosts"
+				/>
+			</InfraListLayout>
 			<K8sBaseDetails
 				category={InfraMonitoringEntity.HOSTS}
 				eventCategory={InfraMonitoringEvents.HostEntity}
