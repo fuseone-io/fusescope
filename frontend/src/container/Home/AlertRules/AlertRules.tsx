@@ -1,24 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Button, Skeleton } from 'antd';
-import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import { useListRules } from 'api/generated/services/rules';
 import type { RuletypesRuleDTO } from 'api/generated/services/fuseScope.schemas';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import { Button } from 'components/ui/button';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
-import Card from 'periscope/components/Card/Card';
+import { Bell, BellRing, Plus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { toCompositeMetricQuery } from 'types/api/alerts/convert';
 import { USER_ROLES } from 'types/roles';
 
-import beaconUrl from '@/assets/Icons/beacon.svg';
-
-import { getItemIcon } from '../constants';
+import HomeEmptyState from '../components/HomeEmptyState';
+import HomeListItem from '../components/HomeListItem';
+import HomeWidget from '../components/HomeWidget';
+import WidgetLink from '../components/WidgetLink';
+import { severityTone } from '../utils';
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
@@ -72,61 +73,49 @@ export default function AlertRules({
 		setSortedAlertRules(sortedRules.slice(0, 5));
 	}, [alerts, onUpdateChecklistDoneItem, loadingUserPreferences]);
 
-	const emptyStateCard = (): JSX.Element => (
-		<div className="empty-state-container">
-			<div className="empty-state-content-container">
-				<div className="empty-state-content">
-					<img src={beaconUrl} alt="empty-alert-icon" className="empty-state-icon" />
+	const isViewer = user?.role === USER_ROLES.VIEWER;
 
-					<div className="empty-title">No Alert rules yet.</div>
-
-					{user?.role !== USER_ROLES.VIEWER && (
-						<div className="empty-description">
-							Create an Alert Rule to get started
-						</div>
-					)}
-				</div>
-
-				{user?.role !== USER_ROLES.VIEWER && (
-					<div className="empty-actions-container">
-						<Link to={ROUTES.ALERTS_NEW}>
-							<Button
-								type="default"
-								className="periscope-btn secondary"
-								icon={<Plus size={16} />}
-								onClick={(): void => {
-									logEvent('Homepage: Create alert rule clicked', {});
-								}}
-							>
-								Create Alert Rule
-							</Button>
-						</Link>
-
-						<Button
-							type="link"
-							className="learn-more-link"
+	const emptyState = (
+		<HomeEmptyState
+			icon={<BellRing />}
+			title="No Alert rules yet."
+			description={isViewer ? undefined : 'Create an Alert Rule to get started'}
+			action={
+				isViewer ? undefined : (
+					<Button asChild variant="outline" size="sm">
+						<Link
+							to={ROUTES.ALERTS_NEW}
 							onClick={(): void => {
-								logEvent('Homepage: Learn more clicked', {
-									source: 'Alert Rules',
-								});
-
-								window.open(
-									fuseScopeDocsUrl('/alerts/alert-rules/'),
-									'_blank',
-									'noreferrer noopener',
-								);
+								void logEvent('Homepage: Create alert rule clicked', {});
 							}}
+							className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
 						>
-							Learn more <ArrowUpRight size={12} />
-						</Button>
-					</div>
-				)}
-			</div>
-		</div>
+							<Plus aria-hidden="true" />
+							Create Alert Rule
+						</Link>
+					</Button>
+				)
+			}
+			onLearnMore={
+				isViewer
+					? undefined
+					: (): void => {
+							void logEvent('Homepage: Learn more clicked', {
+								source: 'Alert Rules',
+							});
+
+							window.open(
+								fuseScopeDocsUrl('/alerts/alert-rules/'),
+								'_blank',
+								'noreferrer noopener',
+							);
+						}
+			}
+		/>
 	);
 
 	const onEditHandler = (record: RuletypesRuleDTO) => (): void => {
-		logEvent('Homepage: Alert clicked', {
+		void logEvent('Homepage: Alert clicked', {
 			ruleId: record.id,
 			ruleName: record.alert,
 			ruleState: record.state,
@@ -150,99 +139,54 @@ export default function AlertRules({
 		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 	};
 
-	const renderAlertRules = (): JSX.Element => (
-		<div className="alert-rules-container home-data-item-container">
-			<div className="alert-rules-list">
-				{sortedAlertRules.map((rule) => (
-					<div
-						role="button"
-						tabIndex={0}
-						className="alert-rule-item home-data-item"
-						key={rule.id}
-						onClick={onEditHandler(rule)}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter') {
-								onEditHandler(rule);
-							}
-						}}
-					>
-						<div className="alert-rule-item-name-container home-data-item-name-container">
-							<img
-								src={getItemIcon(rule.id)}
-								alt="alert-rules"
-								className="alert-rules-img"
-							/>
-
-							<div className="alert-rule-item-name home-data-item-name">
-								{rule.alert}
-							</div>
-						</div>
-
-						<div className="alert-rule-item-description home-data-item-tag">
-							<Badge textTransform="uppercase" color="archive" variant="outlined">
-								{rule?.labels?.severity}
-							</Badge>
-
-							{rule.state === 'firing' && (
-								<Badge color="danger" variant="outlined" textTransform="uppercase">
-									{rule.state}
-								</Badge>
-							)}
-						</div>
-					</div>
-				))}
-			</div>
-		</div>
-	);
-
-	if (isLoading) {
-		return (
-			<Card className="dashboards-list-card home-data-card loading-card">
-				<Card.Content>
-					<Skeleton active />
-				</Card.Content>
-			</Card>
-		);
-	}
-
-	if (isError) {
-		return (
-			<Card className="dashboards-list-card home-data-card error-card">
-				<Card.Content>
-					<Skeleton active />
-				</Card.Content>
-			</Card>
-		);
-	}
-
 	return (
-		<Card className="alert-rules-card home-data-card">
-			{rulesExist && (
-				<Card.Header>
-					<div className="alert-rules-header home-data-card-header">Alerts</div>
-				</Card.Header>
+		<HomeWidget
+			title="Alerts"
+			testId="home-alert-rules"
+			pending={isLoading || isError}
+			actions={
+				rulesExist && (
+					<WidgetLink
+						to={ROUTES.LIST_ALL_ALERT}
+						label="All Alert Rules"
+						onClick={(): void => {
+							void logEvent('Homepage: All alert rules clicked', {});
+						}}
+					/>
+				)
+			}
+		>
+			{rulesExist ? (
+				<ul className="fs-ui tw:font-sans">
+					{sortedAlertRules.map((rule) => (
+						<HomeListItem
+							key={rule.id}
+							icon={<Bell />}
+							label={rule.alert}
+							onOpen={onEditHandler(rule)}
+							trailing={
+								<>
+									{rule.labels?.severity && (
+										<StatusBadge
+											tone={severityTone(rule.labels.severity)}
+											className="tw:uppercase"
+										>
+											{rule.labels.severity}
+										</StatusBadge>
+									)}
+									{rule.state === 'firing' && (
+										<StatusBadge tone="error" dot className="tw:uppercase">
+											{rule.state}
+										</StatusBadge>
+									)}
+								</>
+							}
+						/>
+					))}
+				</ul>
+			) : (
+				emptyState
 			)}
-			<Card.Content>
-				{rulesExist ? renderAlertRules() : emptyStateCard()}
-			</Card.Content>
-
-			{rulesExist && (
-				<Card.Footer>
-					<div className="alert-rules-footer home-data-card-footer">
-						<Link to={ROUTES.LIST_ALL_ALERT}>
-							<Button
-								type="link"
-								className="periscope-btn link learn-more-link"
-								onClick={(): void => {
-									logEvent('Homepage: All alert rules clicked', {});
-								}}
-							>
-								All Alert Rules <ArrowRight size={12} />
-							</Button>
-						</Link>
-					</div>
-				</Card.Footer>
-			)}
-		</Card>
+		</HomeWidget>
 	);
 }

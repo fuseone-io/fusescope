@@ -13,7 +13,6 @@ import Noz from 'components/Noz/Noz';
 
 import { useAIAssistantStripInfo } from './useAIAssistantStripInfo';
 
-import styles from './AIAssistantPage.module.scss';
 import ConversationsList from 'container/AIAssistant/components/ConversationsList';
 
 interface RouteParams {
@@ -134,22 +133,29 @@ export default function AIAssistantPage(): JSX.Element {
 
 	return (
 		<VariantContext.Provider value="page">
-			<div className={styles.page}>
-				<div className={styles.header}>
-					<div className={`${styles.title} noz-wave`}>
-						<Noz size={18} />
-						<span>Noz</span>
+			<div className="tw:flex tw:h-full tw:flex-col tw:bg-background">
+				<div className="fs-ui tw:flex tw:flex-none tw:items-center tw:border-b tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3 tw:font-sans tw:md:px-8">
+					<div className="noz-wave tw:flex tw:items-center tw:gap-3">
+						<span
+							aria-hidden="true"
+							className="tw:flex tw:size-8 tw:flex-none tw:items-center tw:justify-center tw:rounded-lg tw:bg-primary-soft"
+						>
+							<Noz size={18} />
+						</span>
+						<h1 className="tw:text-base tw:font-semibold tw:tracking-[-0.01em] tw:text-foreground">
+							Noz
+						</h1>
 					</div>
 				</div>
 
-				<div className={styles.body}>
+				<div className="tw:flex tw:w-full tw:flex-1 tw:flex-row tw:overflow-hidden">
 					<ConversationsList
 						onSelect={handleHistorySelect}
 						onNewConversation={handleNewConversation}
 						showAddNewConversation
 					/>
 
-					<div className={styles.chat}>
+					<div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:overflow-hidden">
 						{activeId && <ConversationView conversationId={activeId} />}
 					</div>
 				</div>
