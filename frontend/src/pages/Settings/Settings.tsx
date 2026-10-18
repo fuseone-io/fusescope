@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	MouseEvent as ReactMouseEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
@@ -8,17 +14,16 @@ import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { buildNavUrl, getQueryString } from 'container/SideNav/helper';
 import { settingsNavSections } from 'container/SideNav/menuItems';
-import NavItem from 'container/SideNav/NavItem/NavItem';
 import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { Cog } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
+import SettingsNav from './components/SettingsNav';
 import { getRoutes } from './utils';
 
 import './Settings.styles.scss';
@@ -241,13 +246,18 @@ function SettingsPage(): JSX.Element {
 		],
 	);
 
+	const hrefFor = useCallback(
+		(key: string): string =>
+			buildNavUrl(
+				key,
+				getQueryString(routeConfig[key] || [], new URLSearchParams(search)),
+			),
+		[search],
+	);
+
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
-			const params = new URLSearchParams(search);
-			const availableParams = routeConfig[key];
-
-			const queryString = getQueryString(availableParams || [], params);
-			const url = buildNavUrl(key, queryString);
+			const url = hrefFor(key);
 
 			if (pathname !== key) {
 				if (event && isModifierKeyPressed(event)) {
@@ -259,11 +269,18 @@ function SettingsPage(): JSX.Element {
 				}
 			}
 		},
-		[pathname, search],
+		[hrefFor, pathname],
 	);
 
-	const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
-		onClickHandler(item?.key as string, event);
+	const handleMenuItemClick = (
+		event: ReactMouseEvent,
+		item: SidebarItem,
+	): void => {
+		void logEvent('Settings V2: Menu clicked', {
+			menuLabel: item.label,
+			menuRoute: item.key,
+		});
+		onClickHandler(item?.key as string, event as unknown as MouseEvent);
 	};
 
 	const isActiveNavItem = (key: string): boolean => {
@@ -277,69 +294,37 @@ function SettingsPage(): JSX.Element {
 		return pathname === key;
 	};
 
+	const visibleSections = useMemo(
+		() =>
+			settingsNavSections
+				.map((section) => ({
+					...section,
+					items: section.items.filter((sectionItem) =>
+						settingsMenuItems.some(
+							(item) => item.key === sectionItem.key && item.isEnabled,
+						),
+					),
+				}))
+				.filter((section) => section.items.length > 0),
+		[settingsMenuItems],
+	);
+
 	return (
-		<div className="settings-page">
-			<header className="settings-page-header">
-				<div
-					className="settings-page-header-title"
-					data-testid="settings-page-title"
-				>
-					<Cog size={16} />
-					Settings
-				</div>
-			</header>
+		<div className="settings-page tw:flex tw:min-h-0 tw:flex-1 tw:flex-col tw:overflow-hidden tw:bg-background tw:md:flex-row">
+			<SettingsNav
+				sections={visibleSections}
+				hrefFor={hrefFor}
+				isActive={isActiveNavItem}
+				onSelect={handleMenuItemClick}
+			/>
 
-			<div className="settings-page-content-container">
-				<div className="settings-page-sidenav" data-testid="settings-page-sidenav">
-					{settingsNavSections.map((section) => {
-						const enabledItems = section.items.filter((sectionItem) =>
-							settingsMenuItems.some(
-								(item) => item.key === sectionItem.key && item.isEnabled,
-							),
-						);
-						if (enabledItems.length === 0) {
-							return null;
-						}
-						return (
-							<div
-								key={section.key}
-								className={`settings-nav-section${
-									section.hasDivider ? ' settings-nav-section--with-divider' : ''
-								}`}
-							>
-								{section.title && (
-									<div className="settings-nav-section-title">{section.title}</div>
-								)}
-								{enabledItems.map((item) => (
-									<NavItem
-										key={item.key}
-										item={item}
-										isActive={isActiveNavItem(item.key as string)}
-										isDisabled={false}
-										showIcon={false}
-										onClick={(event): void => {
-											void logEvent('Settings V2: Menu clicked', {
-												menuLabel: item.label,
-												menuRoute: item.key,
-											});
-											handleMenuItemClick(event as unknown as MouseEvent, item);
-										}}
-										dataTestId={item.itemKey}
-									/>
-								))}
-							</div>
-						);
-					})}
-				</div>
-
-				<div className="settings-page-content">
-					<RouteTab
-						routes={routes}
-						activeKey={pathname}
-						history={history}
-						tabBarStyle={{ display: 'none' }}
-					/>
-				</div>
+			<div className="settings-page-content tw:flex tw:min-h-0 tw:min-w-0 tw:flex-1 tw:flex-col tw:overflow-y-auto">
+				<RouteTab
+					routes={routes}
+					activeKey={pathname}
+					history={history}
+					tabBarStyle={{ display: 'none' }}
+				/>
 			</div>
 		</div>
 	);
