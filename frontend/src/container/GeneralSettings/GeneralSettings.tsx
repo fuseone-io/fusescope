@@ -43,6 +43,9 @@ import { USER_ROLES } from 'types/roles';
 import LicenseRowDismissibleCallout from './LicenseKeyRow/LicenseRowDismissibleCallout/LicenseRowDismissibleCallout';
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
+import Panel from 'components/PageTemplate/components/Panel';
+import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
+
 import { ActionItemsContainer, ErrorText, ErrorTextContainer } from './styles';
 
 import './GeneralSettings.styles.scss';
@@ -621,12 +624,12 @@ function GeneralSettings({
 		) {
 			return (
 				<Fragment key={category.name}>
-					<div className="retention-row">
-						<span className="retention-row-label">
+					<div className="retention-row tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-t tw:border-border tw:px-5 tw:py-2.5 tw:first:border-t-0">
+						<span className="retention-row-label fs-ui tw:flex tw:items-center tw:gap-2 tw:font-sans tw:text-sm tw:font-medium tw:text-foreground tw:[&_svg]:text-muted-foreground">
 							{category.icon}
 							{category.name}
 						</span>
-						<div className="retention-row-controls">
+						<div className="retention-row-controls tw:flex tw:flex-wrap tw:items-center tw:gap-3">
 							{category.retentionFields.map((field) => (
 								<Retention
 									key={field.name}
@@ -656,7 +659,9 @@ function GeneralSettings({
 					</div>
 
 					{!isCloudUserVal && (
-						<ActionItemsContainer>{category.statusComponent}</ActionItemsContainer>
+						<ActionItemsContainer className="tw:px-5">
+							{category.statusComponent}
+						</ActionItemsContainer>
 					)}
 
 					{!isCloudUserVal && (
@@ -690,14 +695,12 @@ function GeneralSettings({
 	});
 
 	return (
-		<div className="general-settings-page">
-			<div className="general-settings-header">
-				<span className="general-settings-title">Workspace</span>
-				<span className="general-settings-subtitle">
-					Manage your workspace settings.
-				</span>
-			</div>
-
+		<SettingsPageShell
+			testId="general-settings"
+			title="Workspace"
+			description="Manage your workspace settings."
+			narrow
+		>
 			{(showCustomDomainSettings || activeLicense) && (
 				<div className="custom-domain-card">
 					{showCustomDomainSettings && <CustomDomainSettings />}
@@ -717,12 +720,13 @@ function GeneralSettings({
 				</div>
 			)}
 
-			<div className="retention-controls-container">
-				<div className="retention-controls-header">
-					<span className="retention-controls-header-label">Retention Controls</span>
-				</div>
+			<Panel
+				title="Retention Controls"
+				testId="retention-controls"
+				bodyClassName="tw:mt-3 tw:border-t tw:border-border tw:pb-1"
+			>
 				{renderConfig}
-			</div>
+			</Panel>
 
 			{(!isCloudUserVal || errorText) && (
 				<ErrorTextContainer>
@@ -739,7 +743,7 @@ function GeneralSettings({
 			)}
 
 			{isCloudUserVal && <GeneralSettingsCloud />}
-		</div>
+		</SettingsPageShell>
 	);
 }
 

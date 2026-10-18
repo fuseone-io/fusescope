@@ -82,5 +82,5 @@ export const ActionItemsContainer = styled.div`
 	flex-direction: column;
 	align-items: center;
 	gap: 1rem;
-	margin-top: 10%;
+	padding-bottom: 12px;
 `;
