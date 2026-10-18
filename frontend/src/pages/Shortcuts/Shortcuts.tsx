@@ -1,36 +1,55 @@
-import { Table } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import Panel from 'components/PageTemplate/components/Panel';
+import { Kbd, KbdGroup } from 'components/ui/kbd';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from 'components/ui/table';
+import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
 
-import { ALL_SHORTCUTS, generateTableData, shortcutColumns } from './utils';
-
-import './Shortcuts.styles.scss';
+import { ALL_SHORTCUTS, generateTableData } from './utils';
 
 function Shortcuts(): JSX.Element {
-	function getShortcutTable(shortcutSection: string): JSX.Element {
-		const tableData = generateTableData(shortcutSection);
-
-		return (
-			<section key={shortcutSection} className="shortcut-section">
-				<Typography.Text className="shortcut-section-heading">
-					{shortcutSection}
-				</Typography.Text>
-				<Table
-					columns={shortcutColumns}
-					dataSource={tableData}
-					pagination={false}
-					className="shortcut-section-table"
-					bordered
-				/>
-			</section>
-		);
-	}
-
 	return (
-		<div className="keyboard-shortcuts">
-			{Object.keys(ALL_SHORTCUTS).map((shortcutSection) =>
-				getShortcutTable(shortcutSection),
-			)}
-		</div>
+		<SettingsPageShell
+			testId="keyboard-shortcuts"
+			title="Keyboard Shortcuts"
+			narrow
+		>
+			{Object.keys(ALL_SHORTCUTS).map((section) => (
+				<Panel key={section} title={section} className="tw:overflow-hidden">
+					<Table className="tw:mt-3 tw:table-fixed">
+						<TableHeader className="tw:bg-surface-sunken">
+							<TableRow>
+								<TableHead className="tw:w-[30%]">Keyboard Shortcut</TableHead>
+								<TableHead>Description</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{generateTableData(section).map((row) => (
+								<TableRow key={row.key}>
+									<TableCell>
+										<KbdGroup aria-label={row.shortcutKey}>
+											{row.shortcutKey.split('+').map((key) => (
+												<Kbd key={key} className="tw:font-mono tw:uppercase">
+													{key}
+												</Kbd>
+											))}
+										</KbdGroup>
+									</TableCell>
+									<TableCell className="tw:whitespace-normal tw:text-muted-foreground">
+										{row.shortcutDescription}
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</Panel>
+			))}
+		</SettingsPageShell>
 	);
 }
 

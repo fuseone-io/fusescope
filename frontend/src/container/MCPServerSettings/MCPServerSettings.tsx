@@ -13,7 +13,9 @@ import { getBaseUrl } from 'utils/basePath';
 
 import { Badge } from '@signozhq/ui/badge';
 import { toast } from '@signozhq/ui/sonner';
+import Panel from 'components/PageTemplate/components/Panel';
 import Spinner from 'components/Spinner';
+import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
 import AuthCard from './AuthCard/AuthCard';
 import ClientTabs from './ClientTabs/ClientTabs';
 import NotCloudFallback from './NotCloudFallback/NotCloudFallback';
@@ -119,17 +121,13 @@ function MCPServerSettings(): JSX.Element {
 	}
 
 	return (
-		<div className="mcp-settings" data-testid="mcp-settings">
-			<header className="mcp-settings__header">
-				<h1 className="mcp-settings__header-title">FuseScope MCP Server</h1>
-				<p className="mcp-settings__header-subtitle">
-					Connect AI assistants like Claude, Cursor, VS Code, and Codex to your
-					FuseScope data via the Model Context Protocol. Authenticate from your MCP
-					client with a service-account API key.
-				</p>
-			</header>
-
-			<section className="mcp-settings__card">
+		<SettingsPageShell
+			testId="mcp-settings"
+			title="FuseScope MCP Server"
+			description="Connect AI assistants like Claude, Cursor, VS Code, and Codex to your FuseScope data via the Model Context Protocol. Authenticate from your MCP client with a service-account API key."
+			narrow
+		>
+			<Panel bodyClassName="mcp-settings__card">
 				<h3 className="mcp-settings__card-title">
 					<Badge color="secondary" variant="solid">
 						1
@@ -150,7 +148,7 @@ function MCPServerSettings(): JSX.Element {
 					onInstallClick={handleInstallClick}
 					onDocsLinkClick={handleDocsLinkClick}
 				/>
-			</section>
+			</Panel>
 
 			<AuthCard
 				isAdmin={isAdmin}
@@ -161,7 +159,7 @@ function MCPServerSettings(): JSX.Element {
 			/>
 
 			<UseCasesCard onDocsLinkClick={handleDocsLinkClick} />
-		</div>
+		</SettingsPageShell>
 	);
 }
 
