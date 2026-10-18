@@ -1,14 +1,15 @@
 import { useEffect } from 'react';
-import { Button, Col, Modal, Row, Skeleton, Space } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import SystemPagePanel from 'components/SystemPagePanel/SystemPagePanel';
+import { Button } from 'components/ui/button';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
+import { Ban } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 
 import featureGraphicCorrelationUrl from '@/assets/Images/feature-graphic-correlation.svg';
 
-import './WorkspaceAccessRestricted.styles.scss';
+const LINK_CLASS = 'tw:text-primary! tw:underline tw:underline-offset-2';
 
 function WorkspaceAccessRestricted(): JSX.Element {
 	const { activeLicense, isFetchingActiveLicense } = useAppContext();
@@ -30,99 +31,74 @@ function WorkspaceAccessRestricted(): JSX.Element {
 		}
 	}, [isFetchingActiveLicense, activeLicense]);
 
-	return (
-		<div>
-			<Modal
-				rootClassName="workspace-access-restricted__modal"
-				title={
-					<div className="workspace-access-restricted__modal__header">
-						<span className="workspace-access-restricted__modal__title">
-							Your workspace access is restricted
-						</span>
-					</div>
-				}
-				open
-				closable={false}
-				footer={null}
-				width="65%"
-			>
-				<div className="workspace-access-restricted__container">
-					{isFetchingActiveLicense || !activeLicense ? (
-						<Skeleton />
-					) : (
-						<>
-							<Row justify="center" align="middle">
-								<Col>
-									<Space direction="vertical" align="center">
-										<Typography.Title
-											level={4}
-											className="workspace-access-restricted__details"
-										>
-											{activeLicense.state === LicenseState.TERMINATED && (
-												<>
-													Your FuseScope license is terminated, please contact support at{' '}
-													<a href="mailto:cloud-support@signoz.io">
-														cloud-support@signoz.io
-													</a>{' '}
-													for a new deployment
-												</>
-											)}
-											{activeLicense.state === LicenseState.EXPIRED && (
-												<>
-													Your FuseScope license is expired, please contact support at{' '}
-													<a href="mailto:cloud-support@signoz.io">
-														cloud-support@signoz.io
-													</a>{' '}
-													for renewal to avoid termination of license as per our{' '}
-													<a
-														href="https://signoz.io/terms-of-service"
-														target="_blank"
-														rel="noopener noreferrer"
-													>
-														terms of service
-													</a>
-													.
-												</>
-											)}
-											{activeLicense.state === LicenseState.CANCELLED && (
-												<>
-													Your FuseScope license is cancelled, please contact support at{' '}
-													<a href="mailto:cloud-support@signoz.io">
-														cloud-support@signoz.io
-													</a>{' '}
-													for reactivation to avoid termination of license as per our{' '}
-													<a
-														href="https://signoz.io/terms-of-service"
-														target="_blank"
-														rel="noopener noreferrer"
-													>
-														terms of service
-													</a>
-													.
-												</>
-											)}
-										</Typography.Title>
+	const supportLink = (
+		<a href="mailto:cloud-support@signoz.io" className={LINK_CLASS}>
+			cloud-support@signoz.io
+		</a>
+	);
 
-										<Button
-											type="default"
-											shape="round"
-											size="middle"
-											href="mailto:cloud-support@signoz.io"
-											role="button"
-										>
-											Contact Us
-										</Button>
-									</Space>
-								</Col>
-							</Row>
-							<div className="workspace-access-restricted__creative">
-								<img src={featureGraphicCorrelationUrl} alt="correlation-graphic" />
-							</div>
+	const termsLink = (
+		<a
+			href="https://signoz.io/terms-of-service"
+			target="_blank"
+			rel="noopener noreferrer"
+			className={LINK_CLASS}
+		>
+			terms of service
+		</a>
+	);
+
+	const isPageLoading = isFetchingActiveLicense || !activeLicense;
+
+	return (
+		<SystemPagePanel
+			icon={<Ban />}
+			tone="error"
+			loading={isPageLoading}
+			title="Your workspace access is restricted"
+			description={
+				<p className="tw:text-base">
+					{activeLicense?.state === LicenseState.TERMINATED && (
+						<>
+							Your FuseScope license is terminated, please contact support at{' '}
+							{supportLink} for a new deployment
 						</>
 					)}
-				</div>
-			</Modal>
-		</div>
+					{activeLicense?.state === LicenseState.EXPIRED && (
+						<>
+							Your FuseScope license is expired, please contact support at{' '}
+							{supportLink} for renewal to avoid termination of license as per our{' '}
+							{termsLink}.
+						</>
+					)}
+					{activeLicense?.state === LicenseState.CANCELLED && (
+						<>
+							Your FuseScope license is cancelled, please contact support at{' '}
+							{supportLink} for reactivation to avoid termination of license as per our{' '}
+							{termsLink}.
+						</>
+					)}
+				</p>
+			}
+			actions={
+				<Button
+					asChild
+					variant="outline"
+					className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
+				>
+					<a href="mailto:cloud-support@signoz.io">Contact Us</a>
+				</Button>
+			}
+			extra={
+				!isPageLoading && (
+					<img
+						src={featureGraphicCorrelationUrl}
+						alt="correlation-graphic"
+						className="tw:block tw:w-full tw:rounded-xl tw:border tw:border-border"
+					/>
+				)
+			}
+		/>
 	);
 }
 

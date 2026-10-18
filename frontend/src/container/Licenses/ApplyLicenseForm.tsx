@@ -7,13 +7,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { toAPIError } from 'utils/errorUtils';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
-import {
-	ApplyForm,
-	ApplyFormContainer,
-	KeyPreview,
-	LicenseInput,
-} from './styles';
-
 function ApplyLicenseForm({
 	licenseRefetch,
 }: ApplyLicenseFormProps): JSX.Element {
@@ -57,19 +50,21 @@ function ApplyLicenseForm({
 	};
 
 	return (
-		<ApplyFormContainer>
-			<ApplyForm
+		<div className="tw:flex tw:flex-col tw:gap-2 tw:px-5 tw:py-4">
+			<Form
 				form={form}
 				layout="inline"
 				onFinish={onFinish}
 				autoComplete="off"
+				className="tw:w-full"
 			>
-				<LicenseInput
+				<Form.Item
 					name="key"
 					rules={[{ required: true, message: requireErrorMessage('License Key') }]}
+					className="tw:w-full tw:max-w-[420px]"
 				>
 					<Input placeholder={t('placeholder_license_key')} />
-				</LicenseInput>
+				</Form.Item>
 				<Form.Item>
 					<Button
 						loading={isLoading}
@@ -80,9 +75,13 @@ function ApplyLicenseForm({
 						{t('button_apply')}
 					</Button>
 				</Form.Item>
-			</ApplyForm>
-			{key && <KeyPreview>{key}</KeyPreview>}
-		</ApplyFormContainer>
+			</Form>
+			{key && (
+				<div className="tw:font-mono tw:text-xs tw:break-all tw:text-muted-foreground">
+					{key}
+				</div>
+			)}
+		</div>
 	);
 }
 

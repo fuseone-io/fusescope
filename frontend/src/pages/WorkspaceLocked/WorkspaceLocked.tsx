@@ -1,31 +1,17 @@
-/* eslint-disable react/no-unescaped-entities */
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import type { TabsProps } from 'antd';
-import {
-	Button,
-	Col,
-	Collapse,
-	Flex,
-	List,
-	Modal,
-	Row,
-	Skeleton,
-	Space,
-	Tabs,
-} from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
+import SystemPagePanel from 'components/SystemPagePanel/SystemPagePanel';
+import { Button } from 'components/ui/button';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
-import { SubscriptionCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import history from 'lib/history';
-import { CircleArrowRight } from '@signozhq/icons';
+import { Lock } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
@@ -33,16 +19,11 @@ import { isModifierKeyPressed } from 'utils/app';
 import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate } from 'utils/timeUtils';
 
-import CustomerStoryCard from './CustomerStoryCard';
-import InfoBlocks from './InfoBlocks';
-import {
-	customerStoriesData,
-	enterpriseGradeValuesData,
-	faqData,
-	infoData,
-} from './workspaceLocked.data';
+import UpgradeButton from './UpgradeButton';
+import WorkspaceLockedTabs from './WorkspaceLockedTabs';
 
-import './WorkspaceLocked.styles.scss';
+const SECONDARY_BUTTON_CLASS =
+	'tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!';
 
 export default function WorkspaceBlocked(): JSX.Element {
 	const { isFetchingActiveLicense, trialInfo, activeLicense } = useAppContext();
@@ -137,263 +118,73 @@ export default function WorkspaceBlocked(): JSX.Element {
 		safeNavigate(ROUTES.BILLING, { newTab: !!e && isModifierKeyPressed(e) });
 	};
 
-	const renderCustomerStories = (
-		filterCondition: (index: number) => boolean,
-	): JSX.Element[] =>
-		customerStoriesData
-			.filter((_, index) => filterCondition(index))
-			.map((story) => (
-				<CustomerStoryCard
-					avatar={story.avatar}
-					personName={story.personName}
-					role={story.role}
-					message={story.message}
-					link={story.link}
-					key={story.key}
-				/>
-			));
-
-	const tabItems: TabsProps['items'] = [
-		{
-			key: 'whyChooseSignoz',
-			label: t('whyChooseSignoz'),
-			children: (
-				<Row align="middle" justify="center">
-					<Col span={12}>
-						<Row gutter={[24, 48]}>
-							<Col span={24}>
-								<InfoBlocks items={infoData} />
-							</Col>
-							<Col span={24}>
-								<Space size="large" direction="vertical">
-									<Flex vertical>
-										<Typography.Title level={3}>
-											{t('enterpriseGradeObservability')}
-										</Typography.Title>
-										<Typography>{t('observabilityDescription')}</Typography>
-									</Flex>
-									<List
-										itemLayout="horizontal"
-										dataSource={enterpriseGradeValuesData}
-										renderItem={(item, index): React.ReactNode => (
-											<List.Item key={index}>
-												<List.Item.Meta avatar={<CircleArrowRight />} title={item.title} />
-											</List.Item>
-										)}
-									/>
-								</Space>
-							</Col>
-							<Col span={24}>
-								<AuthZTooltip
-									checks={[SubscriptionCreatePermission]}
-									withPortal={false}
-								>
-									<Button
-										type="primary"
-										shape="round"
-										size="middle"
-										loading={isLoading}
-										onClick={handleUpdateCreditCard}
-									>
-										{t('continueToUpgrade')}
-									</Button>
-								</AuthZTooltip>
-							</Col>
-						</Row>
-					</Col>
-				</Row>
-			),
-		},
-		{
-			key: 'youAreInGoodCompany',
-			label: t('youAreInGoodCompany'),
-			children: (
-				<Row gutter={[24, 16]} justify="center">
-					{/* #FIXME: please suggest if there is any better way to loop in different columns to get the masonry layout */}
-					<Col
-						span={10}
-						className="workspace-locked__customer-stories__left-container"
-					>
-						{renderCustomerStories((index) => index % 2 === 0)}
-					</Col>
-					<Col
-						span={10}
-						className="workspace-locked__customer-stories__right-container"
-					>
-						{renderCustomerStories((index) => index % 2 !== 0)}
-					</Col>
-					<Col span={24}>
-						<Flex justify="center">
-							<AuthZTooltip checks={[SubscriptionCreatePermission]} withPortal={false}>
-								<Button
-									type="primary"
-									shape="round"
-									size="middle"
-									loading={isLoading}
-									onClick={handleUpdateCreditCard}
-								>
-									{t('continueToUpgrade')}
-								</Button>
-							</AuthZTooltip>
-						</Flex>
-					</Col>
-				</Row>
-			),
-		},
-		// #TODO: comming soon
-		// {
-		// 	key: '3',
-		// 	label: 'Our Pricing',
-		// 	children: 'Our Pricing',
-		// },
-		{
-			key: 'faqs',
-			label: t('faqs'),
-			children: (
-				<Row align="middle" justify="center">
-					<Col span={12}>
-						<Space
-							size="large"
-							direction="vertical"
-							className="workspace-locked__faq-container"
-						>
-							<Collapse
-								items={faqData}
-								defaultActiveKey={['signoz-cloud-vs-community']}
-								onChange={handleCollapseChange}
-							/>
-							<AuthZTooltip checks={[SubscriptionCreatePermission]} withPortal={false}>
-								<Button
-									type="primary"
-									shape="round"
-									size="middle"
-									loading={isLoading}
-									onClick={handleUpdateCreditCard}
-								>
-									{t('continueToUpgrade')}
-								</Button>
-							</AuthZTooltip>
-						</Space>
-					</Col>
-				</Row>
-			),
-		},
-	];
+	const isPageLoading = isFetchingActiveLicense || !trialInfo;
 
 	return (
-		<div>
-			<Modal
-				rootClassName="workspace-locked__modal"
-				title={
-					<div className="workspace-locked__modal__header">
-						<span className="workspace-locked__modal__title">
-							{t('trialPlanExpired')}
-						</span>
-						<span className="workspace-locked__modal__header__actions">
-							<Flex gap={8} justify="center" align="center">
-								<Button
-									className="workspace-locked__modal__header__actions__billing"
-									type="link"
-									size="small"
-									role="button"
-									onClick={(e): void => handleViewBilling(e)}
-								>
-									View Billing
-								</Button>
-
-								<RefreshPaymentStatus withPortal={false} />
-							</Flex>
-
-							<Button
-								type="default"
-								shape="round"
-								size="middle"
-								href="mailto:cloud-support@signoz.io"
-								role="button"
-								className="periscope-btn"
-								onClick={handleContactUsClick}
-							>
-								Contact Us
-							</Button>
-						</span>
-					</div>
-				}
-				open
-				closable={false}
-				footer={null}
-				width="65%"
-			>
-				<div className="workspace-locked__container">
-					{isFetchingActiveLicense || !trialInfo ? (
-						<Skeleton />
-					) : (
-						<>
-							<Row justify="center" align="middle">
-								<Col>
-									<Space direction="vertical" align="center">
-										<Typography.Title level={2}>
-											<div className="workspace-locked__title">Upgrade to Continue</div>
-										</Typography.Title>
-										<Typography.Text className="workspace-locked__details">
-											{t('upgradeNow')}
-											<br />
-											{t('yourDataIsSafe')}{' '}
-											<span className="workspace-locked__details__highlight">
-												{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
-											</span>{' '}
-											{t('actNow')}
-										</Typography.Text>
-									</Space>
-								</Col>
-							</Row>
-							<Flex gap={8} vertical justify="center" align="center">
-								<Row
-									justify="center"
-									align="middle"
-									className="workspace-locked__modal__cta"
-									gutter={[8, 8]}
-								>
-									<Col>
-										<AuthZTooltip
-											checks={[SubscriptionCreatePermission]}
-											withPortal={false}
-										>
-											<Button
-												type="primary"
-												shape="round"
-												size="middle"
-												loading={isLoading}
-												onClick={handleUpdateCreditCard}
-											>
-												Continue my Journey
-											</Button>
-										</AuthZTooltip>
-									</Col>
-									<Col>
-										<Button
-											type="default"
-											shape="round"
-											size="middle"
-											className="periscope-btn"
-											onClick={handleExtendTrial}
-										>
-											{t('needMoreTime')}
-										</Button>
-									</Col>
-								</Row>
-							</Flex>
-
-							<div className="workspace-locked__tabs">
-								<Tabs
-									items={tabItems}
-									defaultActiveKey="youAreInGoodCompany"
-									onTabClick={handleTabClick}
-								/>
-							</div>
-						</>
-					)}
-				</div>
-			</Modal>
-		</div>
+		<SystemPagePanel
+			icon={<Lock />}
+			tone="warning"
+			loading={isPageLoading}
+			eyebrow={t('trialPlanExpired')}
+			title="Upgrade to Continue"
+			description={
+				<p>
+					{t('upgradeNow')}
+					<br />
+					{t('yourDataIsSafe')}{' '}
+					<span className="tw:font-semibold tw:text-foreground">
+						{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
+					</span>{' '}
+					{t('actNow')}
+				</p>
+			}
+			actions={
+				<>
+					<UpgradeButton isLoading={isLoading} onClick={handleUpdateCreditCard}>
+						Continue my Journey
+					</UpgradeButton>
+					<Button
+						variant="outline"
+						className={SECONDARY_BUTTON_CLASS}
+						onClick={handleExtendTrial}
+					>
+						{t('needMoreTime')}
+					</Button>
+				</>
+			}
+			footer={
+				<>
+					<Button
+						variant="link"
+						size="sm"
+						className="tw:text-muted-foreground"
+						onClick={(e): void => handleViewBilling(e)}
+					>
+						View Billing
+					</Button>
+					<RefreshPaymentStatus withPortal={false} />
+					<Button
+						asChild
+						variant="outline"
+						size="sm"
+						className={SECONDARY_BUTTON_CLASS}
+					>
+						<a href="mailto:cloud-support@signoz.io" onClick={handleContactUsClick}>
+							Contact Us
+						</a>
+					</Button>
+				</>
+			}
+			extra={
+				!isPageLoading && (
+					<WorkspaceLockedTabs
+						isLoading={isLoading}
+						onUpgrade={handleUpdateCreditCard}
+						onTabClick={handleTabClick}
+						onCollapseChange={handleCollapseChange}
+					/>
+				)
+			}
+		/>
 	);
 }

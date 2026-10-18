@@ -28,10 +28,13 @@ describe('WorkspaceLocked', () => {
 		});
 		expect(workspaceLocked).toBeInTheDocument();
 
-		const contactUsBtn = await screen.findByRole('button', {
+		const contactUsLink = await screen.findByRole('link', {
 			name: /Contact Us/i,
 		});
-		expect(contactUsBtn).toBeInTheDocument();
+		expect(contactUsLink).toHaveAttribute(
+			'href',
+			'mailto:cloud-support@signoz.io',
+		);
 	});
 
 	it('enables the upgrade action when subscription create is granted', async () => {

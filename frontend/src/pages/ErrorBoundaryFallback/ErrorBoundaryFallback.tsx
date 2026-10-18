@@ -1,14 +1,11 @@
 import { useCallback } from 'react';
-import { Button } from 'antd';
+import SystemPagePanel from 'components/SystemPagePanel/SystemPagePanel';
+import { Button } from 'components/ui/button';
 import ROUTES from 'constants/routes';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Home, LifeBuoy } from '@signozhq/icons';
+import { House, LifeBuoy, TriangleAlert } from 'lucide-react';
 import { withBasePath } from 'utils/basePath';
-
-import cloudUrl from '@/assets/Images/cloud.svg';
-
-import './ErrorBoundaryFallback.styles.scss';
 
 function ErrorBoundaryFallback(): JSX.Element {
 	const handleReload = (): void => {
@@ -23,39 +20,28 @@ function ErrorBoundaryFallback(): JSX.Element {
 	}, [isCloudUserVal]);
 
 	return (
-		<div className="error-boundary-fallback-container">
-			<div className="error-boundary-fallback-content">
-				<div className="error-icon">
-					<img src={cloudUrl} alt="error-cloud-icon" />
-				</div>
-				<div className="title">Something went wrong :/</div>
-
-				<div className="description">
-					Our team is getting on top to resolve this. Please reach out to support if
-					the issue persists.
-				</div>
-
-				<div className="actions">
-					<Button
-						type="primary"
-						onClick={handleReload}
-						icon={<Home size={16} />}
-						className="periscope-btn primary"
-					>
+		<SystemPagePanel
+			icon={<TriangleAlert />}
+			tone="error"
+			title="Something went wrong :/"
+			description="Our team is getting on top to resolve this. Please reach out to support if the issue persists."
+			actions={
+				<>
+					<Button onClick={handleReload}>
+						<House />
 						Go to Home
 					</Button>
-
 					<Button
-						className="periscope-btn secondary"
-						type="default"
+						variant="outline"
+						className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
 						onClick={handleSupport}
-						icon={<LifeBuoy size={16} />}
 					>
+						<LifeBuoy />
 						Contact Support
 					</Button>
-				</div>
-			</div>
-		</div>
+				</>
+			}
+		/>
 	);
 }
 
