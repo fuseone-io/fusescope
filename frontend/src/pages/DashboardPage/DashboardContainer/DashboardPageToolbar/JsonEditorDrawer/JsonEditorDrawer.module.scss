@@ -1,16 +1,15 @@
 .root {
 	:global(.ant-drawer-wrapper-body) {
-		border-left: 1px solid var(--l1-border);
-		background: var(--l2-background);
+		border-left: 1px solid var(--fs-border);
+		background: var(--fs-card);
 	}
 
 	:global(.ant-drawer-header) {
 		height: 48px;
-		border-bottom: 1px solid var(--l1-border);
+		border-bottom: 1px solid var(--fs-border);
 
 		:global(.ant-drawer-title) {
-			color: var(--l2-foreground);
-			font-family: Inter;
+			color: var(--fs-muted-foreground);
 			font-size: 14px;
 			font-weight: 500;
 		}
@@ -24,7 +23,7 @@
 
 	:global(.ant-drawer-footer) {
 		padding: 12px 16px;
-		border-top: 1px solid var(--l1-border);
+		border-top: 1px solid var(--fs-border);
 	}
 }
 

@@ -5,7 +5,7 @@
 }
 
 .fieldLabel {
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	font-size: 12px;
 	font-weight: 500;
 	line-height: 1;
@@ -18,18 +18,18 @@
 	height: 40px;
 	padding: 0 12px;
 	border-radius: 6px;
-	border: 1px dashed var(--l2-border);
-	background: var(--l1-background);
-	color: var(--l3-foreground);
+	border: 1px dashed var(--fs-border);
+	background: var(--fs-background);
+	color: var(--fs-subtle-foreground);
 }
 
 .linkPlaceholderIcon {
 	flex: none;
-	color: var(--l3-foreground);
+	color: var(--fs-subtle-foreground);
 }
 
 .linkPlaceholderText {
-	color: var(--l3-foreground);
+	color: var(--fs-subtle-foreground);
 	font-size: 13px;
 	line-height: 1;
 }
@@ -41,11 +41,11 @@
 	height: 40px;
 	padding: 0 5px 0 12px;
 	border-radius: 6px;
-	border: 1px solid var(--l2-border);
-	background: var(--l1-background);
+	border: 1px solid var(--fs-border);
+	background: var(--fs-background);
 
 	&:hover {
-		border-color: var(--l3-border);
+		border-color: var(--fs-border);
 	}
 }
 
@@ -55,7 +55,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	font-family: var(--font-mono, 'Geist Mono'), monospace;
 	font-size: 13px;
 	line-height: 1;
@@ -65,5 +65,5 @@
 	width: 1px;
 	height: 20px;
 	margin: 0 4px;
-	background: var(--l2-border);
+	background: var(--fs-border);
 }

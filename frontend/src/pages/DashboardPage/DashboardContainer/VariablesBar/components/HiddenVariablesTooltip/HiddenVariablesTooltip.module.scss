@@ -22,7 +22,7 @@
 // A lone value, ALL, or the unset dash.
 .value {
 	--typography-text-display: block;
-	font-weight: var(--font-weight-medium);
+	font-weight: 500;
 	overflow-wrap: anywhere;
 }
 
@@ -34,6 +34,6 @@
 }
 
 .valueItem {
-	font-weight: var(--font-weight-medium);
+	font-weight: 500;
 	overflow-wrap: anywhere;
 }

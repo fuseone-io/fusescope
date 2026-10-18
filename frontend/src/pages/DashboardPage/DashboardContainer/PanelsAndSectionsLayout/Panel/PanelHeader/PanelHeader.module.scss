@@ -2,10 +2,9 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 8px 12px;
-	border-bottom: 1px solid var(--text-panel-border, var(--l2-border));
+	padding: 8px 8px 4px 14px;
 	cursor: grab;
-	min-height: 32px;
+	min-height: 36px;
 }
 
 .headerLeft {
@@ -21,6 +20,8 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	color: var(--text-panel-ink, inherit);
+	font-size: 14px;
+	font-weight: 600;
 }
 
 .badge {
@@ -38,7 +39,7 @@
 
 // Subtle background-refetch spinner in the header (chart stays mounted).
 .refetchIndicator {
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	flex-shrink: 0;
 }
 
@@ -50,8 +51,8 @@
 	border-radius: 4px;
 	font-size: 11px;
 	line-height: 16px;
-	color: var(--l3-foreground);
-	background: var(--l3-background);
-	border: 1px solid var(--l3-border);
+	color: var(--fs-subtle-foreground);
+	background: var(--fs-muted);
+	border: 1px solid var(--fs-border);
 	cursor: default;
 }

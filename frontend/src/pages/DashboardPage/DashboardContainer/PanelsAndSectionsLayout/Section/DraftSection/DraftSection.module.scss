@@ -1,8 +1,8 @@
 .draftSection {
 	margin-bottom: 12px;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 4px;
-	outline: 1px dashed var(--bg-robin-500);
+	outline: 1px dashed var(--fs-primary);
 	outline-offset: 2px;
 }
 
@@ -11,12 +11,12 @@
 	align-items: center;
 	gap: 8px;
 	padding: 8px 12px;
-	border-bottom: 1px solid var(--l1-border);
-	color: var(--l2-foreground);
+	border-bottom: 1px solid var(--fs-border);
+	color: var(--fs-muted-foreground);
 }
 
 .title {
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 	font-weight: 500;
 	white-space: nowrap;
 	overflow: hidden;
@@ -24,6 +24,6 @@
 }
 
 .placeholder {
-	color: var(--l3-foreground);
+	color: var(--fs-subtle-foreground);
 	font-weight: 500;
 }

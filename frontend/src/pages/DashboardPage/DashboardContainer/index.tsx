@@ -10,11 +10,9 @@ import { useResolvedVariables } from './hooks/useResolvedVariables';
 import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSuggestions';
 import { useDashboardStore } from './store/useDashboardStore';
 import styles from './DashboardContainer.module.scss';
-import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
 import LockedIndicator from './components/LockedIndicator/LockedIndicator';
 import DashboardChangedDialog from './components/DashboardChangedDialog/DashboardChangedDialog';
 import { useDashboardStaleCheck } from './hooks/useDashboardStaleCheck';
-import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 
 interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -35,7 +33,6 @@ function DashboardContainer({
 	canEditDashboardOverride,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
-	const image = resolveDashboardImage(dashboard.image);
 	const name = spec.display.name;
 
 	useEffect(() => {
@@ -77,10 +74,7 @@ function DashboardContainer({
 					// The hidden toolbar owns the auto-refresh timer.
 					<AutoRefreshTicker />
 				) : (
-					<>
-						<DashboardPageHeader title={name} image={image} />
-						<DashboardPageToolbar dashboard={dashboard} handle={fullScreenHandle} />
-					</>
+					<DashboardPageToolbar dashboard={dashboard} handle={fullScreenHandle} />
 				)}
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
 				{!!dashboard.locked && <LockedIndicator />}

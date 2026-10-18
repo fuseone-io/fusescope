@@ -264,7 +264,7 @@ function DashboardActions({
 		<div className={styles.dashboardActionsContainer}>
 			<AuthZDropdown items={menuItems} nativeButton align="end" side="bottom">
 				<Button
-					variant="solid"
+					variant="ghost"
 					color="secondary"
 					size="md"
 					prefix={<Grid3X3 size="md" />}
@@ -276,7 +276,7 @@ function DashboardActions({
 			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 				<Button
 					disabledTooltip={undefined}
-					variant="solid"
+					variant="outlined"
 					color="secondary"
 					prefix={<Configure size="md" />}
 					testId="show-drawer"
@@ -299,7 +299,7 @@ function DashboardActions({
 				<DashboardSettings dashboard={dashboard} />
 			</SettingsDrawer>
 			<Button
-				variant="solid"
+				variant="outlined"
 				color="secondary"
 				prefix={<Braces size="md" />}
 				testId="edit-json"

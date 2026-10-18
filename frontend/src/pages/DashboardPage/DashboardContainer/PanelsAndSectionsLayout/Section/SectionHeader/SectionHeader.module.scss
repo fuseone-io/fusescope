@@ -2,10 +2,11 @@
 	display: flex;
 	align-items: center;
 	gap: 4px;
-	padding: 8px 12px;
+	min-height: 36px;
+	padding: 4px;
 
 	&.headerOpen {
-		border-bottom: 1px solid var(--l1-border);
+		border-bottom: 1px solid var(--fs-border);
 	}
 }
 
@@ -25,8 +26,9 @@
 
 .title {
 	margin-left: 4px;
-	color: var(--l1-foreground);
-	font-weight: 500;
+	color: var(--fs-foreground);
+	font-size: 14px;
+	font-weight: 600;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;

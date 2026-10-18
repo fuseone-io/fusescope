@@ -7,7 +7,7 @@
 }
 
 .intro {
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	font-size: 13px;
 	line-height: 1.5;
 }
@@ -23,9 +23,9 @@
 	flex-direction: column;
 	gap: 8px;
 	padding: 12px;
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 6px;
-	background: var(--l1-background);
+	background: var(--fs-background);
 }
 
 .rowHeader {
@@ -36,18 +36,18 @@
 }
 
 .sourceLabel {
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 	font-weight: 600;
 	font-size: 13px;
 }
 
 .kindTag {
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	font-size: 11px;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 	padding: 2px 8px;
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 4px;
 	white-space: nowrap;
 }
@@ -59,7 +59,7 @@
 }
 
 .fieldLabel {
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	font-size: 11px;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
