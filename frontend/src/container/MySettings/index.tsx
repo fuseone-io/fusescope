@@ -13,6 +13,8 @@ import { useNotifications } from 'hooks/useNotifications';
 import { MonitorCog, Moon, Sun } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { UserPreference } from 'types/api/preferences/preference';
+import Panel from 'components/PageTemplate/components/Panel';
+import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
 import { showErrorNotification } from 'utils/error';
 
 import LicenseSection from './LicenseSection';
@@ -160,31 +162,23 @@ function MySettings(): JSX.Element {
 	};
 
 	return (
-		<div className="my-settings-container">
-			<div className="user-info-section">
-				<div className="user-info-section-header">
-					<div className="user-info-section-title">Account </div>
+		<SettingsPageShell
+			testId="my-settings"
+			title="Account"
+			description="Manage your account settings."
+			narrow
+		>
+			<Panel testId="user-info-section" bodyClassName="user-info-container">
+				<UserInfo />
+			</Panel>
 
-					<div className="user-info-section-subtitle">
-						Manage your account settings.
-					</div>
-				</div>
-
-				<div className="user-info-container">
-					<UserInfo />
-				</div>
-			</div>
-
-			<div className="user-preference-section">
-				<div className="user-preference-section-header">
-					<div className="user-preference-section-title">User Preferences</div>
-
-					<div className="user-preference-section-subtitle">
-						Tailor the FuseScope console to work according to your needs.
-					</div>
-				</div>
-
-				<div className="user-preference-section-content">
+			<Panel
+				title="User Preferences"
+				subtitle="Tailor the FuseScope console to work according to your needs."
+				testId="user-preference-section"
+				bodyClassName="tw:mt-3 tw:border-t tw:border-border"
+			>
+				<div className="user-preference-section-content tw:divide-y tw:divide-border">
 					<div className="user-preference-section-content-item theme-selector">
 						<div className="user-preference-section-content-item-title-action">
 							Select your theme
@@ -237,10 +231,10 @@ function MySettings(): JSX.Element {
 						</div>
 					</div>
 				</div>
-			</div>
+			</Panel>
 
 			<LicenseSection />
-		</div>
+		</SettingsPageShell>
 	);
 }
 
