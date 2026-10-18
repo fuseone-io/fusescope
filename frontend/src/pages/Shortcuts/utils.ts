@@ -1,4 +1,3 @@
-import { TableProps } from 'antd';
 import {
 	DashboardShortcuts,
 	DashboardShortcutsDescription,
@@ -44,30 +43,13 @@ export const ALL_SHORTCUTS_DESCRIPTION: Record<
 	'Dashboard Shortcuts': DashboardShortcutsDescription,
 };
 
-export const shortcutColumns = [
-	{
-		title: 'Keyboard Shortcut',
-		dataIndex: 'shortcutKey',
-		key: 'shortcutKey',
-		width: '30%',
-		className: 'shortcut-key',
-	},
-	{
-		title: 'Description',
-		dataIndex: 'shortcutDescription',
-		key: 'shortcutDescription',
-		className: 'shortcut-description',
-	},
-];
-
-interface ShortcutRow {
+export interface ShortcutRow {
+	key: string;
 	shortcutKey: string;
 	shortcutDescription: string;
 }
 
-export function generateTableData(
-	shortcutSection: string,
-): TableProps<ShortcutRow>['dataSource'] {
+export function generateTableData(shortcutSection: string): ShortcutRow[] {
 	const shortcuts = ALL_SHORTCUTS[shortcutSection];
 	const shortcutsDescription = ALL_SHORTCUTS_DESCRIPTION[shortcutSection];
 	const shortcutsLabel = ALL_SHORTCUTS_LABEL[shortcutSection];

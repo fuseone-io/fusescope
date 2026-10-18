@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import LearnMore from 'components/LearnMore/LearnMore';
+import Panel from 'components/PageTemplate/components/Panel';
 import { MCP_USE_CASES_URL } from '../clients';
 
 import './UseCasesCard.styles.scss';
@@ -15,7 +16,7 @@ function UseCasesCard({ onDocsLinkClick }: UseCasesCardProps): JSX.Element {
 	);
 
 	return (
-		<section className="mcp-use-cases-card">
+		<Panel bodyClassName="mcp-use-cases-card">
 			<h3 className="mcp-use-cases-card__title">What you can do with it</h3>
 			<ul className="mcp-use-cases-card__list">
 				<li>Ask your AI assistant to investigate a spiking error rate.</li>
@@ -28,7 +29,7 @@ function UseCasesCard({ onDocsLinkClick }: UseCasesCardProps): JSX.Element {
 				url={MCP_USE_CASES_URL}
 				onClick={handleClick}
 			/>
-		</section>
+		</Panel>
 	);
 }
 

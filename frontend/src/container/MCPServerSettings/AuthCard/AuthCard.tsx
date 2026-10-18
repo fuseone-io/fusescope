@@ -2,6 +2,8 @@ import { Skeleton } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Info, KeyRound } from '@signozhq/icons';
+import Panel from 'components/PageTemplate/components/Panel';
+
 import CopyIconButton from '../CopyIconButton';
 
 import './AuthCard.styles.scss';
@@ -22,7 +24,7 @@ function AuthCard({
 	onCreateServiceAccount,
 }: AuthCardProps): JSX.Element {
 	return (
-		<section className="mcp-auth-card">
+		<Panel bodyClassName="mcp-auth-card">
 			<h3 className="mcp-auth-card__title">
 				<Badge color="secondary" variant="solid">
 					2
@@ -77,7 +79,7 @@ function AuthCard({
 					</div>
 				)}
 			</div>
-		</section>
+		</Panel>
 	);
 }
 
