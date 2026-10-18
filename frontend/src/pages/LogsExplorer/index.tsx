@@ -3,7 +3,9 @@ import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import explorerChrome from 'components/ExplorerChrome/ExplorerChrome.module.scss';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
@@ -225,7 +227,7 @@ function LogsExplorer(): JSX.Element {
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<EventSourceProvider>
 				<QuickFiltersLayout
-					className="logs-module-page"
+					className={cx('logs-module-page', explorerChrome.explorerChrome)}
 					showFilters={showFilters}
 					onToggleFilters={handleFilterVisibilityChange}
 					savedViewProps={{ source: SavedviewtypesSourceDTO.logs }}

@@ -3,10 +3,12 @@ import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
+import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
+import explorerChrome from 'components/ExplorerChrome/ExplorerChrome.module.scss';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -285,7 +287,7 @@ function TracesExplorer(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<QuickFiltersLayout
-				className="trace-explorer-page"
+				className={cx('trace-explorer-page', explorerChrome.explorerChrome)}
 				showFilters={isOpen}
 				onToggleFilters={(): void => setOpen(!isOpen)}
 				savedViewProps={{ source: SavedviewtypesSourceDTO.traces }}

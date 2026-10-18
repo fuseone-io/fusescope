@@ -1,0 +1,133 @@
+// New-UI look for the explorers' legacy chrome (filter column, toolbar, view
+// switch, floating options bar). Markup and behaviour stay in the shared
+// components; this only restyles them under a page that opts in.
+
+.explorerChrome {
+	background: var(--fs-background);
+
+	:global([data-testid='quick-filters-layout-drawer']),
+	:global([data-testid='quick-filters-layout-filters']) {
+		background: var(--fs-card);
+	}
+
+	:global(.quick-filters) {
+		border-right-color: var(--fs-border);
+		color: var(--fs-foreground);
+	}
+
+	:global(.quick-filters > .header) {
+		min-height: 44px;
+		border-bottom-color: var(--fs-border);
+	}
+
+	:global(.quick-filters > .header .text) {
+		padding-left: 4px;
+		color: var(--fs-foreground);
+		font-family: var(--font-sans);
+		font-size: 13px;
+		font-weight: 600;
+	}
+
+	:global(.quick-filters > .header .sync-tag) {
+		min-width: 22px;
+		height: 22px;
+		padding: 0 6px;
+		border: 0;
+		border-radius: 4px;
+		background: var(--fs-primary-soft);
+		color: var(--fs-primary-ink);
+		font-size: 12px;
+		font-weight: 600;
+	}
+
+	:global([data-testid='checkbox-filter-v2']) {
+		border-bottom-color: var(--fs-border);
+	}
+
+	:global([data-testid='checkbox-filter-header'] p) {
+		color: var(--fs-foreground);
+		font-size: 13px;
+		font-weight: 500;
+	}
+
+	:global([data-testid='collapse-duration'] .collapseContainer) {
+		background: transparent;
+	}
+
+	:global([data-testid='collapse-duration'] .ant-collapse-header) {
+		background: transparent;
+		color: var(--fs-foreground);
+		font-size: 13px;
+		font-weight: 500;
+	}
+
+	:global([data-testid^='checkbox-value-row-']) {
+		min-height: 28px;
+		font-size: 13px;
+	}
+
+	:global(.toolbar) {
+		padding: 4px 16px 0;
+	}
+
+	:global(.left-toolbar .left-toolbar-query-actions) {
+		gap: 2px;
+		margin-bottom: 0;
+		padding: 2px;
+		border: 1px solid var(--fs-border);
+		border-radius: 8px;
+		background: var(--fs-muted);
+	}
+
+	:global(.left-toolbar .left-toolbar-query-actions .explorer-view-option) {
+		height: 28px;
+		padding: 0 10px;
+		border: 1px solid transparent;
+		border-radius: 6px;
+		background: transparent;
+		color: var(--fs-muted-foreground);
+		font-size: 13px;
+		font-weight: 500;
+	}
+
+	:global(
+		.left-toolbar .left-toolbar-query-actions .explorer-view-option:hover
+	) {
+		border: 1px solid transparent !important;
+		color: var(--fs-foreground);
+	}
+
+	:global(
+		.left-toolbar .left-toolbar-query-actions .explorer-view-option.active-tab
+	),
+	:global(
+		.left-toolbar
+			.left-toolbar-query-actions
+			.explorer-view-option.active-tab:hover
+	) {
+		border: 1px solid var(--fs-border) !important;
+		background: var(--fs-card) !important;
+		color: var(--fs-foreground);
+		box-shadow: 0 1px 2px 0
+			color-mix(in srgb, var(--fs-foreground) 5%, transparent);
+	}
+
+	// Above the filter column, which the centred bar overlaps.
+	:global(.explorer-options-container) {
+		z-index: 3;
+	}
+
+	:global(.explorer-options) {
+		align-items: center;
+		padding: 10px 16px;
+		border-color: var(--fs-border);
+		border-radius: 12px;
+		background: var(--fs-card);
+		box-shadow: 0 4px 6px -1px
+			color-mix(in srgb, var(--fs-foreground) 8%, transparent);
+	}
+
+	:global(.explorer-options .ant-btn-round) {
+		border-radius: 8px;
+	}
+}

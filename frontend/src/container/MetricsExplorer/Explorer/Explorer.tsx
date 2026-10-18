@@ -14,6 +14,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
+import explorerChrome from 'components/ExplorerChrome/ExplorerChrome.module.scss';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
@@ -355,6 +356,7 @@ function Explorer(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<QuickFiltersLayout
+				className={explorerChrome.explorerChrome}
 				showFilters={showSidebar}
 				onToggleFilters={(): void => setShowSidebar(!showSidebar)}
 				savedViewProps={{ source: SavedviewtypesSourceDTO.metrics }}
