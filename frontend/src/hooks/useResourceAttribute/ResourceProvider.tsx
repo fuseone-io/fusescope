@@ -142,9 +142,9 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	}, [step, staging, selectedQuery, queries, dispatchQueries]);
 
 	const handleChange = useCallback(
-		(value: string): void => {
+		(value: string | string[]): void => {
 			if (!optionsData.mode) {
-				setStaging((prevStaging) => [...prevStaging, value]);
+				setStaging((prevStaging) => [...prevStaging, value as string]);
 				setSelectedQueries([]);
 				send('NEXT');
 				return;

@@ -1,46 +1,36 @@
-import { X } from '@signozhq/icons';
 import {
 	convertMetricKeyToTrace,
 	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
+import { X } from 'lucide-react';
 
-import {
-	QueryChipContainer,
-	QueryChipItem,
-	QueryChipRemoveButton,
-} from '../../styles';
+import ChipFrame from './ChipFrame';
 import { IQueryChipProps } from './types';
 
 function QueryChip({ queryData, onClose }: IQueryChipProps): JSX.Element {
-	const onCloseHandler = (): void => {
-		onClose(queryData.id);
-	};
-
+	const key = convertMetricKeyToTrace(queryData.tagKey);
 	const isClosable = queryData.tagKey !== getResourceDeploymentKeys();
 
 	return (
-		<QueryChipContainer>
-			<QueryChipItem>{convertMetricKeyToTrace(queryData.tagKey)}</QueryChipItem>
-			<QueryChipItem>{queryData.operator}</QueryChipItem>
-			<QueryChipItem
-				suffix={
-					isClosable ? (
-						<QueryChipRemoveButton
-							type="button"
-							aria-label="Remove"
-							onClick={(e): void => {
-								e.preventDefault();
-								onCloseHandler();
-							}}
-						>
-							<X size={12} />
-						</QueryChipRemoveButton>
-					) : undefined
-				}
-			>
-				{queryData.tagValue.join(', ')}
-			</QueryChipItem>
-		</QueryChipContainer>
+		<ChipFrame>
+			<span className="tw:text-muted-foreground">{key}</span>
+			<span className="tw:font-semibold">{queryData.operator}</span>
+			<span className="tw:truncate">{queryData.tagValue.join(', ')}</span>
+			{isClosable && (
+				<button
+					type="button"
+					aria-label={`Remove ${key} filter`}
+					onMouseDown={(event): void => event.preventDefault()}
+					onClick={(event): void => {
+						event.stopPropagation();
+						onClose(queryData.id);
+					}}
+					className="tw:-mr-1 tw:flex tw:cursor-pointer tw:items-center tw:rounded-sm tw:text-muted-foreground tw:hover:text-foreground"
+				>
+					<X className="tw:size-3" />
+				</button>
+			)}
+		</ChipFrame>
 	);
 }
 

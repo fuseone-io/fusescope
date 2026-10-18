@@ -77,10 +77,10 @@ function ServicesList({
 						placeholder={SEARCH_PLACEHOLDER}
 						value={table.search}
 						onChange={(event): void => table.onSearch(event.target.value)}
-						className="tw:h-[34px] tw:border-border tw:bg-surface-raised tw:pl-9"
+						className="tw:bg-surface-raised tw:pl-9 tw:dark:bg-surface-raised"
 					/>
 				</div>
-				<div className="tw:min-w-0 tw:flex-1 tw:[&_.resourceAttributesFilter-container]:mb-0!">
+				<div className="tw:min-w-0 tw:flex-1">
 					<ResourceAttributesFilter />
 				</div>
 			</div>

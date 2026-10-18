@@ -54,9 +54,7 @@ function MetricsApplication(): JSX.Element {
 				titleMono
 				actions={<ServiceHeaderActions servicename={servicename} />}
 			/>
-			<div className="tw:[&_.resourceAttributesFilter-container]:mb-0!">
-				<ResourceAttributesFilter />
-			</div>
+			<ResourceAttributesFilter />
 			<PageTabs
 				label="Service sections"
 				tabs={tabs}

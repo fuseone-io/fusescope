@@ -134,34 +134,28 @@ export const serviceMapMocks = defineStoryMocks({
 	config: (values) => ({ route: serviceMapRoute(values.filters) }),
 });
 
-/** Opens the select under a test id; it closes again after every pick. */
+/** Opens the filter under a test id: the environment trigger or the attribute field. */
 export const openSelect = async (
 	canvasElement: HTMLElement,
 	testId: string,
 ): Promise<void> => {
-	const select = await within(canvasElement).findByTestId(
+	const field = await within(canvasElement).findByTestId(
 		testId,
 		undefined,
 		untilLoaded,
 	);
 
-	await userEvent.click(within(select).getByRole('combobox'));
+	await userEvent.click(field);
 };
 
-export const OPEN_DROPDOWN =
-	'.ant-select-dropdown:not(.ant-select-dropdown-hidden)';
+export const OPEN_LISTBOX = '[role="listbox"]';
 
-/** antd keeps a hidden copy of each label for screen readers; the title skips it. */
 const visibleOption = (title: string): HTMLElement | null =>
-	document.querySelector<HTMLElement>(
-		`${OPEN_DROPDOWN} .ant-select-item-option[title="${title}"]`,
-	);
+	Array.from(
+		document.querySelectorAll<HTMLElement>(`${OPEN_LISTBOX} [role="option"]`),
+	).find((option) => option.textContent === title) ?? null;
 
-/**
- * Picks the option titled `title` in the open dropdown. `userEvent.click`
- * moves focus off the select on the way, which closes it before the option
- * takes the click.
- */
+/** Picks the option labelled `title` in the open list. */
 export const pickOption = async (title: string): Promise<void> => {
 	const option = await waitFor(() => {
 		const match = visibleOption(title);
@@ -177,9 +171,8 @@ export const pickOption = async (title: string): Promise<void> => {
 };
 
 /**
- * Opens the attribute filter on its next step. Each single-choice pick closes
- * the dropdown and swaps the select for the next step's, and a click that lands
- * before the swap opens nothing, so it opens again until `title` shows.
+ * Waits for the attribute filter to offer `title`. The list stays open from
+ * one step to the next; it is opened only when it is not.
  */
 export const openAttributeFilterOn = (
 	canvasElement: HTMLElement,
@@ -191,7 +184,7 @@ export const openAttributeFilterOn = (
 				return;
 			}
 
-			if (!document.querySelector(OPEN_DROPDOWN)) {
+			if (!document.querySelector(OPEN_LISTBOX)) {
 				await openSelect(canvasElement, 'resource-attributes-filter');
 			}
 
