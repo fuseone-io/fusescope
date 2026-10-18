@@ -1,30 +1,36 @@
-import { TableProps } from 'antd';
 import { ServicesList } from 'types/api/metrics/getService';
 
-export const columns: TableProps<ServicesList>['columns'] = [
+export interface ServiceColumn {
+	key: 'serviceName' | 'p99' | 'errorRate' | 'callRate';
+	title: string;
+	numeric: boolean;
+	render: (service: ServicesList) => string;
+}
+
+export const columns: ServiceColumn[] = [
 	{
 		title: 'APPLICATION',
-		dataIndex: 'serviceName',
 		key: 'serviceName',
+		numeric: false,
+		render: (service): string => service.serviceName,
 	},
 	{
 		title: 'P99 LATENCY (in ms)',
-		dataIndex: 'p99',
 		key: 'p99',
-		render: (value: number): string => (value / 1000000).toFixed(2),
+		numeric: true,
+		render: (service): string => (service.p99 / 1000000).toFixed(2),
 	},
 	{
 		title: 'ERROR RATE (% of total)',
-		dataIndex: 'errorRate',
 		key: 'errorRate',
-
-		render: (value: number): string => value.toFixed(2),
+		numeric: true,
+		render: (service): string => service.errorRate.toFixed(2),
 	},
 	{
 		title: 'OPS / SEC',
-		dataIndex: 'callRate',
 		key: 'callRate',
-		render: (value: number): string => value.toFixed(2),
+		numeric: true,
+		render: (service): string => service.callRate.toFixed(2),
 	},
 ];
 

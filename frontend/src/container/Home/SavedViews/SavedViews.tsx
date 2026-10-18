@@ -1,33 +1,28 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useListSavedViews } from 'api/generated/services/saved-view';
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/fuseScope.schemas';
+import { Button } from 'components/ui/button';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
-import Card from 'periscope/components/Card/Card';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
-import floppyDiscUrl from '@/assets/Icons/floppy-disc.svg';
+import { ArrowRight, Bookmark, Compass } from 'lucide-react';
 
-import { getItemIcon } from '../constants';
-import {
-	ArrowRight,
-	ArrowUpRight,
-	BarChart,
-	Compass,
-	DraftingCompass,
-	ScrollText,
-} from '@signozhq/icons';
+import HomeEmptyState from '../components/HomeEmptyState';
+import HomeListItem from '../components/HomeListItem';
+import HomeWidget from '../components/HomeWidget';
+import WidgetLink from '../components/WidgetLink';
+import SavedViewsTabs from './SavedViewsTabs';
 
 export default function SavedViews({
 	onUpdateChecklistDoneItem,
@@ -95,7 +90,7 @@ export default function SavedViews({
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const handleRedirectQuery = (view: SavedviewtypesSavedViewDTO): void => {
-		logEvent('Homepage: Saved view clicked', {
+		void logEvent('Homepage: Saved view clicked', {
 			viewId: view.id,
 			viewName: view.spec.displayName,
 			entity: selectedEntity,
@@ -144,142 +139,8 @@ export default function SavedViews({
 		return '';
 	}, [selectedEntity]);
 
-	const emptyStateCard = (): JSX.Element => (
-		<div className="empty-state-container">
-			<div className="empty-state-content-container">
-				<div className="empty-state-content">
-					<img
-						src={floppyDiscUrl}
-						alt="empty-alert-icon"
-						className="empty-state-icon"
-					/>
-
-					<div className="empty-title">You have not saved any views yet.</div>
-
-					{user?.role !== USER_ROLES.VIEWER && (
-						<div className="empty-description">
-							Explore your data and save them as views.
-						</div>
-					)}
-				</div>
-
-				{user?.role !== USER_ROLES.VIEWER && (
-					<div className="empty-actions-container">
-						<Link to={getStartedLink}>
-							<Button
-								type="default"
-								className="periscope-btn secondary"
-								onClick={(): void => {
-									logEvent('Homepage: Get Started clicked', {
-										source: 'Saved Views',
-										entity: selectedEntity,
-									});
-								}}
-							>
-								Get Started &nbsp; <ArrowRight size={16} />
-							</Button>
-						</Link>
-
-						<Button
-							type="link"
-							className="learn-more-link"
-							onClick={(): void => {
-								logEvent('Homepage: Learn more clicked', {
-									source: 'Saved Views',
-									entity: selectedEntity,
-								});
-
-								window.open(
-									fuseScopeDocsUrl('/explore/metrics/#chart-a-metric'),
-									'_blank',
-									'noopener noreferrer',
-								);
-							}}
-						>
-							Learn more <ArrowUpRight size={12} />
-						</Button>
-					</div>
-				)}
-			</div>
-		</div>
-	);
-
-	const renderSavedViews = (): JSX.Element => (
-		<div className="saved-views-list-container home-data-item-container">
-			<div className="saved-views-list">
-				{selectedEntityViews.slice(0, 5).map((view) => (
-					<div
-						role="button"
-						tabIndex={0}
-						className="saved-view-item home-data-item"
-						key={view.id}
-						onClick={(): void => handleRedirectQuery(view)}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter') {
-								handleRedirectQuery(view);
-							}
-						}}
-					>
-						<div className="saved-view-item-name-container home-data-item-name-container">
-							<img
-								src={getItemIcon(String(view.id))}
-								alt="alert-rules"
-								className="alert-rules-img"
-							/>
-
-							<div className="saved-view-item-name home-data-item-name">
-								{view.spec.displayName}
-							</div>
-						</div>
-
-						<Button
-							type="link"
-							size="small"
-							className="periscope-btn link"
-							onClick={(): void => handleRedirectQuery(view)}
-						>
-							<Compass size={16} />
-						</Button>
-					</div>
-				))}
-
-				{selectedEntityViews.length === 0 && (
-					<div className="saved-views-list-empty-state">
-						<div className="saved-views-list-empty-state-message">
-							No saved views found.
-						</div>
-					</div>
-				)}
-
-				{selectedEntity === 'logs' && logsViewsError && (
-					<div className="logs-saved-views-error-container">
-						<div className="logs-saved-views-error-message">
-							Oops, something went wrong while loading your saved views.
-						</div>
-					</div>
-				)}
-
-				{selectedEntity === 'traces' && tracesViewsError && (
-					<div className="traces-saved-views-error-container">
-						<div className="traces-saved-views-error-message">
-							Oops, something went wrong while loading your saved views.
-						</div>
-					</div>
-				)}
-
-				{selectedEntity === 'metrics' && metricsViewsError && (
-					<div className="metrics-saved-views-error-container">
-						<div className="metrics-saved-views-error-message">
-							Oops, something went wrong while loading your saved views.
-						</div>
-					</div>
-				)}
-			</div>
-		</div>
-	);
-
 	const handleTabChange = (tab: string): void => {
-		logEvent('Homepage: Saved views switched', {
+		void logEvent('Homepage: Saved views switched', {
 			tab,
 		});
 		let currentViews: SavedviewtypesSavedViewDTO[] = [];
@@ -294,85 +155,101 @@ export default function SavedViews({
 		setSelectedEntity(tab);
 	};
 
-	if (logsViewsLoading || tracesViewsLoading || metricsViewsLoading) {
-		return (
-			<Card className="saved-views-list-card home-data-card loading-card">
-				<Card.Content>
-					<Skeleton active />
-				</Card.Content>
-			</Card>
-		);
-	}
+	const isViewer = user?.role === USER_ROLES.VIEWER;
 
-	if (logsViewsError || tracesViewsError || metricsViewsError) {
-		return (
-			<Card className="saved-views-list-card home-data-card error-card">
-				<Card.Content>
-					<Skeleton active />
-				</Card.Content>
-			</Card>
-		);
-	}
+	const emptyState = (
+		<HomeEmptyState
+			icon={<Bookmark />}
+			title="You have not saved any views yet."
+			description={
+				isViewer ? undefined : 'Explore your data and save them as views.'
+			}
+			action={
+				isViewer ? undefined : (
+					<Button asChild variant="outline" size="sm">
+						<Link
+							to={getStartedLink}
+							onClick={(): void => {
+								void logEvent('Homepage: Get Started clicked', {
+									source: 'Saved Views',
+									entity: selectedEntity,
+								});
+							}}
+							className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
+						>
+							Get Started
+							<ArrowRight aria-hidden="true" />
+						</Link>
+					</Button>
+				)
+			}
+			onLearnMore={
+				isViewer
+					? undefined
+					: (): void => {
+							void logEvent('Homepage: Learn more clicked', {
+								source: 'Saved Views',
+								entity: selectedEntity,
+							});
+
+							window.open(
+								fuseScopeDocsUrl('/explore/metrics/#chart-a-metric'),
+								'_blank',
+								'noopener noreferrer',
+							);
+						}
+			}
+		/>
+	);
+
+	const savedViewsList = (
+		<ul className="fs-ui tw:font-sans">
+			{selectedEntityViews.slice(0, 5).map((view) => (
+				<HomeListItem
+					key={view.id}
+					icon={<Bookmark />}
+					label={view.spec.displayName}
+					onOpen={(): void => handleRedirectQuery(view)}
+					trailing={
+						<Compass aria-hidden="true" className="tw:size-4 tw:text-primary" />
+					}
+				/>
+			))}
+		</ul>
+	);
 
 	return (
-		<Card className="saved-views-list-card home-data-card">
-			{hasSavedViews && (
-				<Card.Header>
-					<div className="saved-views-header home-data-card-header">
-						Saved Views
-						<div className="saved-views-header-actions">
-							<Button.Group className="views-tabs">
-								<Button
-									value="logs"
-									className={selectedEntity === 'logs' ? 'selected tab' : 'tab'}
-									onClick={(): void => handleTabChange('logs')}
-								>
-									<ScrollText size={14} />
-									Logs
-								</Button>
-								<Button
-									value="traces"
-									className={selectedEntity === 'traces' ? 'selected tab' : 'tab'}
-									onClick={(): void => handleTabChange('traces')}
-								>
-									<DraftingCompass size={14} /> Traces
-								</Button>
-								<Button
-									value="metrics"
-									className={selectedEntity === 'metrics' ? 'selected tab' : 'tab'}
-									onClick={(): void => handleTabChange('metrics')}
-								>
-									<BarChart size={14} /> Metrics
-								</Button>
-							</Button.Group>
-						</div>
-					</div>
-				</Card.Header>
-			)}
-
-			<Card.Content>
-				{selectedEntityViews.length > 0 ? renderSavedViews() : emptyStateCard()}
-			</Card.Content>
-
-			{!isSavedViewEnabled && selectedEntityViews.length > 0 && (
-				<Card.Footer>
-					<div className="services-footer home-data-card-footer">
-						<Link to={footerLink}>
-							<Button
-								type="link"
-								className="periscope-btn link learn-more-link"
+		<HomeWidget
+			title="Saved Views"
+			testId="home-saved-views"
+			pending={
+				logsViewsLoading ||
+				tracesViewsLoading ||
+				metricsViewsLoading ||
+				logsViewsError ||
+				tracesViewsError ||
+				metricsViewsError
+			}
+			actions={
+				hasSavedViews && (
+					<>
+						<SavedViewsTabs value={selectedEntity} onChange={handleTabChange} />
+						{!isSavedViewEnabled && selectedEntityViews.length > 0 && (
+							<WidgetLink
+								to={footerLink}
+								label="All Views"
 								onClick={(): void => {
-									logEvent('Homepage: All saved views clicked', {
+									void logEvent('Homepage: All saved views clicked', {
 										entity: selectedEntity,
 									});
 								}}
-							>
-								All Views <ArrowRight size={12} />
-							</Button>
-						</Link>
-					</div>
-				</Card.Footer>
-			)}
-		</Card>
+							/>
+						)}
+					</>
+				)
+			}
+		>
+			{selectedEntityViews.length > 0 ? savedViewsList : emptyState}
+		</HomeWidget>
 	);
 }

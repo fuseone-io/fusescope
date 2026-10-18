@@ -1,28 +1,30 @@
-import { useMemo } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { Skeleton } from 'antd';
+import { ReactNode, useMemo } from 'react';
 import logEvent from 'api/common/logEvent';
 import { useGetHosts } from 'api/generated/services/zeus';
+import PageHeader from 'components/PageTemplate/components/PageHeader';
+import Panel from 'components/PageTemplate/components/Panel';
+import { Button } from 'components/ui/button';
+import { Skeleton } from 'components/ui/skeleton';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { Link2 } from '@signozhq/icons';
-import Card from 'periscope/components/Card/Card';
+import { House, Link2, PartyPopper, Plus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { openInNewTab } from 'utils/navigation';
 
-import containerPlusUrl from '@/assets/Icons/container-plus.svg';
-import helloWaveUrl from '@/assets/Icons/hello-wave.svg';
-import hurrayUrl from '@/assets/Icons/hurray.svg';
-
 import { DOCS_LINKS } from '../constants';
+
+const TITLE = 'Hello there, Welcome to your FuseScope workspace';
 
 function DataSourceInfo({
 	dataSentToSigNoz,
 	isLoading,
+	actions,
 }: {
 	dataSentToSigNoz: boolean;
 	isLoading: boolean;
+	/** Extra header actions, after the workspace URL. */
+	actions?: ReactNode;
 }): JSX.Element {
 	const { activeLicense } = useAppContext();
 
@@ -48,7 +50,7 @@ function DataSourceInfo({
 	);
 
 	const handleConnect = (): void => {
-		logEvent('Homepage: Connect dataSource clicked', {});
+		void logEvent('Homepage: Connect dataSource clicked', {});
 
 		if (activeLicense && activeLicense.platform === LicensePlatform.CLOUD) {
 			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
@@ -57,103 +59,68 @@ function DataSourceInfo({
 		}
 	};
 
-	const renderNotSendingData = (): JSX.Element => (
-		<>
-			<h2 className="welcome-title">
-				Hello there, Welcome to your FuseScope workspace
-			</h2>
+	const workspaceUrl = !isLoading && !isError && hostsData && (
+		<span
+			data-testid="home-workspace-url"
+			className="tw:inline-flex tw:h-9 tw:items-center tw:gap-2 tw:rounded-md tw:border tw:border-border tw:bg-surface-raised tw:px-3 tw:font-mono tw:text-xs tw:text-foreground"
+		>
+			<Link2
+				aria-hidden="true"
+				className="tw:size-3.5 tw:text-subtle-foreground"
+			/>
+			{url}
+		</span>
+	);
 
-			<p className="welcome-description">
+	let description: ReactNode;
+	if (isLoading) {
+		description = <Skeleton className="tw:h-4 tw:w-80 tw:bg-muted" />;
+	} else if (notSendingData) {
+		description = (
+			<>
 				You’re not sending any data yet. <br />
 				FuseScope is so much better with your data ⎯ start by sending your telemetry
 				data to FuseScope.
-			</p>
-
-			<Card className="welcome-card">
-				<Card.Content>
-					<div className="workspace-ready-container">
-						<div className="workspace-ready-header">
-							<span className="workspace-ready-title">
-								<img src={hurrayUrl} alt="hurray" />
-								Your workspace is ready
-							</span>
-
-							<Button
-								variant="solid"
-								color="primary"
-								size="sm"
-								prefix={<img src={containerPlusUrl} alt="plus" />}
-								onClick={handleConnect}
-								// TODO - Support tabindex, keyboard events - @H4ad
-							>
-								Connect Data Source
-							</Button>
-						</div>
-
-						{!isError && hostsData && (
-							<div className="workspace-details">
-								<div className="workspace-url">
-									<Link2 size={12} />
-
-									<span className="workspace-url-text">{url}</span>
-								</div>
-							</div>
-						)}
-					</div>
-				</Card.Content>
-			</Card>
-		</>
-	);
-
-	const renderDataReceived = (): JSX.Element => (
-		<>
-			<h2 className="welcome-title">
-				Hello there, Welcome to your FuseScope workspace
-			</h2>
-
-			{!isError && hostsData && (
-				<Card className="welcome-card">
-					<Card.Content>
-						<div className="workspace-ready-container">
-							<div className="workspace-details">
-								<div className="workspace-url">
-									<Link2 size={12} />
-
-									<span className="workspace-url-text">{url}</span>
-								</div>
-							</div>
-						</div>
-					</Card.Content>
-				</Card>
-			)}
-		</>
-	);
+			</>
+		);
+	}
 
 	return (
-		<div className="welcome-container">
-			<div className="hello-wave-container">
-				<div className="hello-wave-img-container">
-					<img
-						src={helloWaveUrl}
-						alt="hello-wave"
-						className="hello-wave-img"
-						width={36}
-						height={36}
-					/>
-				</div>
-			</div>
+		<>
+			<PageHeader
+				icon={<House />}
+				title={TITLE}
+				description={description}
+				actions={
+					(workspaceUrl || actions) && (
+						<>
+							{workspaceUrl}
+							{actions}
+						</>
+					)
+				}
+			/>
 
-			{isLoading && (
-				<>
-					<Skeleton.Avatar active size={36} shape="square" />
-					<Skeleton active />
-				</>
+			{!isLoading && notSendingData && (
+				<Panel testId="home-workspace-ready">
+					<div className="fs-ui tw:flex tw:flex-wrap tw:items-center tw:gap-3 tw:px-5 tw:py-4 tw:font-sans">
+						<span
+							aria-hidden="true"
+							className="tw:flex tw:size-8 tw:flex-none tw:items-center tw:justify-center tw:rounded-lg tw:bg-success-soft tw:text-success-ink"
+						>
+							<PartyPopper className="tw:size-4" />
+						</span>
+						<span className="tw:flex-1 tw:text-sm tw:font-semibold">
+							Your workspace is ready
+						</span>
+						<Button onClick={handleConnect}>
+							<Plus aria-hidden="true" />
+							Connect Data Source
+						</Button>
+					</div>
+				</Panel>
 			)}
-
-			{!isLoading && dataSentToSigNoz && renderDataReceived()}
-
-			{!isLoading && notSendingData && renderNotSendingData()}
-		</div>
+		</>
 	);
 }
 

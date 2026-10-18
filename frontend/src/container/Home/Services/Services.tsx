@@ -20,19 +20,17 @@ function Services({
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className="home-services-container">
-				{isSpanMetricEnabled ? (
-					<ServiceMetrics
-						onUpdateChecklistDoneItem={onUpdateChecklistDoneItem}
-						loadingUserPreferences={loadingUserPreferences}
-					/>
-				) : (
-					<ServiceTraces
-						onUpdateChecklistDoneItem={onUpdateChecklistDoneItem}
-						loadingUserPreferences={loadingUserPreferences}
-					/>
-				)}
-			</div>
+			{isSpanMetricEnabled ? (
+				<ServiceMetrics
+					onUpdateChecklistDoneItem={onUpdateChecklistDoneItem}
+					loadingUserPreferences={loadingUserPreferences}
+				/>
+			) : (
+				<ServiceTraces
+					onUpdateChecklistDoneItem={onUpdateChecklistDoneItem}
+					loadingUserPreferences={loadingUserPreferences}
+				/>
+			)}
 		</Sentry.ErrorBoundary>
 	);
 }

@@ -1,42 +1,20 @@
-import { Progress } from '@signozhq/ui/progress';
-
 import { ChecklistItem } from '../HomeChecklist/HomeChecklist';
-
-import './StepsProgress.styles.scss';
 
 function StepsProgress({
 	checklistItems,
 }: {
 	checklistItems: ChecklistItem[];
 }): JSX.Element {
-	const completedChecklistItems = checklistItems.filter(
-		(item) => item.completed,
-	);
-
-	const totalChecklistItems = checklistItems.length;
-
-	const progress = (completedChecklistItems.length / totalChecklistItems) * 100;
+	const completed = checklistItems.filter((item) => item.completed).length;
+	const total = checklistItems.length;
 
 	return (
-		<div className="steps-progress-container">
-			<div className="steps-progress-title">
-				<div className="steps-progress-title-text">
-					Build your observability base
-				</div>
-				<div className="steps-progress-count">
-					Step {completedChecklistItems.length} / {totalChecklistItems}
-				</div>
-			</div>
-
-			<div className="steps-progress-progress">
-				<Progress
-					steps={totalChecklistItems}
-					percent={progress}
-					showInfo={false}
-					strokeLinecap="butt"
-				/>
-			</div>
-		</div>
+		<progress
+			aria-label="Onboarding progress"
+			value={completed}
+			max={total}
+			className="tw:block tw:h-1.5 tw:w-full tw:appearance-none tw:overflow-hidden tw:rounded-full tw:border-0 tw:bg-muted tw:[&::-moz-progress-bar]:bg-primary tw:[&::-webkit-progress-bar]:bg-muted tw:[&::-webkit-progress-value]:rounded-full tw:[&::-webkit-progress-value]:bg-primary"
+		/>
 	);
 }
 
