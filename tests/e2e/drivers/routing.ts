@@ -181,9 +181,15 @@ export function routingDriver(page: Page): Routing {
 			page
 				.getByTestId('app-sidebar')
 				.getByRole('link', { name: label, exact: true }),
-		routeTab: (route) => page.locator(`.ant-tabs-tab[data-node-key="${route}"]`),
+		// Legacy `RouteTab` (antd) or the new-UI `ModuleTabsLayout`.
+		routeTab: (route) =>
+			page.locator(
+				`.ant-tabs-tab[data-node-key="${route}"], [role="tab"][data-route-key="${route}"]`,
+			),
 		activeRouteTab: (route) =>
-			routing.routeTab(route).getByRole('tab', { selected: true }),
+			page.locator(
+				`.ant-tabs-tab[data-node-key="${route}"] [role="tab"][aria-selected="true"], [role="tab"][data-route-key="${route}"][aria-selected="true"]`,
+			),
 
 		globalTimePicker: () =>
 			page.getByTestId('app-header').getByTestId('dropDown'),
