@@ -91,6 +91,21 @@ jobs:
         run: |
           go mod tidy
           git diff --compact-summary --exit-code || (echo; echo "go.mod/go.sum are not tidy. Run go mod tidy locally and commit."; exit 1)
+  govulncheck:
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-24.04
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v7
+      - name: go-install
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.7.0 ./...
   semconv-generated:
     if: |
       github.event_name == 'merge_group' ||
