@@ -25,11 +25,11 @@
 }
 
 .filtersLabel {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-medium);
+	font-size: 12px;
+	font-weight: 500;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	margin-right: 2px;
 }
 
@@ -54,8 +54,8 @@
 
 	// Match the search bar: near-black background, --l2-border border.
 	:global(.ant-select-selector) {
-		background-color: var(--l1-background) !important;
-		border-color: var(--l2-border) !important;
+		background-color: var(--fs-background) !important;
+		border-color: var(--fs-border) !important;
 	}
 }
 

@@ -3,7 +3,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { CalendarClock, LockKeyhole, Pin, PinOff } from '@signozhq/icons';
+import { LockKeyhole, Pin, PinOff } from '@signozhq/icons';
 import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
@@ -21,6 +21,7 @@ import type { DashboardListItem } from '../../utils/helpers';
 import { lastUpdatedLabel, tagsToStrings } from '../../utils/helpers';
 import ActionsPopover from '../ActionsPopover/ActionsPopover';
 import DashboardRowTags from './DashboardRowTags/DashboardRowTags';
+import { rowGridClass } from './rowGrid';
 import LegacyDashboardDialog from '../LegacyDashboardDialog/LegacyDashboardDialog';
 
 import styles from './DashboardRow.module.scss';
@@ -106,6 +107,9 @@ function DashboardRow({
 	const legacyPinTooltip =
 		"This dashboard isn't available in the new experience, so it can't be pinned";
 
+	const description = dashboard.spec?.display?.description ?? '';
+	const showUpdated = showUpdatedAt || showUpdatedBy;
+
 	// Only long titles are truncated, so only they need the full-name tooltip.
 	const titleLink = (
 		<div className={styles.titleLink} onClick={onClickHandler}>
@@ -121,37 +125,12 @@ function DashboardRow({
 
 	return (
 		<>
-			<div className={styles.row} onClick={onClickHandler}>
-				<div className={styles.titleWithAction}>
-					<div className={styles.titleBlock}>
-						<Tooltip title={name.length > 50 ? name : undefined} side="bottom">
-							{titleLink}
-						</Tooltip>
-						{isLegacy && (
-							<Badge
-								color="warning"
-								variant="outlined"
-								testId={`dashboard-legacy-${index}`}
-								textTransform="none"
-							>
-								Legacy
-							</Badge>
-						)}
-					</div>
-
-					<DashboardRowTags tags={tags} />
-
-					{isLocked && (
-						<Tooltip title="This dashboard is locked" side="top">
-							<span
-								className={styles.lockIcon}
-								data-testid={`dashboard-lock-${index}`}
-							>
-								<LockKeyhole size={14} />
-							</span>
-						</Tooltip>
-					)}
-
+			<div
+				role="row"
+				className={cx(rowGridClass(showUpdated), styles.row)}
+				onClick={onClickHandler}
+			>
+				<span role="cell" className={styles.cell}>
 					<span
 						className={cx(styles.pinButton, {
 							[styles.pinButtonOn]: isPinned && !isLegacy,
@@ -182,7 +161,73 @@ function DashboardRow({
 							</Button>
 						</Tooltip>
 					</span>
+				</span>
 
+				<span role="cell" className={styles.nameCell}>
+					<span className={styles.titleBlock}>
+						<Tooltip title={name.length > 50 ? name : undefined} side="bottom">
+							{titleLink}
+						</Tooltip>
+						{isLocked && (
+							<Tooltip title="This dashboard is locked" side="top">
+								<span
+									className={styles.lockIcon}
+									data-testid={`dashboard-lock-${index}`}
+								>
+									<LockKeyhole size={14} />
+								</span>
+							</Tooltip>
+						)}
+						{isLegacy && (
+							<Badge
+								color="warning"
+								variant="outlined"
+								testId={`dashboard-legacy-${index}`}
+								textTransform="none"
+							>
+								Legacy
+							</Badge>
+						)}
+					</span>
+					{description && (
+						<span className={styles.description} title={description}>
+							{description}
+						</span>
+					)}
+				</span>
+
+				<span role="cell" className={styles.cell}>
+					<DashboardRowTags tags={tags} />
+				</span>
+
+				<span role="cell" className={styles.stackCell}>
+					{createdBy && (
+						<span className={styles.person}>
+							<span className={styles.avatar} aria-hidden="true">
+								{createdBy.substring(0, 1).toUpperCase()}
+							</span>
+							<span className={styles.personName} title={createdBy}>
+								{createdBy}
+							</span>
+						</span>
+					)}
+					<span className={styles.meta}>{formattedCreatedAt}</span>
+				</span>
+
+				{showUpdated && (
+					<span role="cell" className={styles.stackCell}>
+						{showUpdatedAt && (
+							<span className={styles.primaryMeta}>{lastUpdatedLabel(updatedAt)}</span>
+						)}
+						{showUpdatedBy && updatedBy && (
+							<span className={styles.meta} title={updatedBy}>
+								by {updatedBy}
+							</span>
+						)}
+					</span>
+				)}
+
+				<span role="cell" className={styles.actionsCell}>
 					<ActionsPopover
 						link={link}
 						dashboardId={id}
@@ -193,45 +238,7 @@ function DashboardRow({
 						onView={onClickHandler}
 						isLegacy={isLegacy}
 					/>
-				</div>
-				<div className={styles.details}>
-					<div className={styles.createdAt}>
-						<CalendarClock size={14} />
-						<Typography.Text>{formattedCreatedAt}</Typography.Text>
-					</div>
-
-					{createdBy && (
-						<div className={styles.createdBy}>
-							<div className={styles.avatar}>
-								<Typography.Text className={styles.avatarText}>
-									{createdBy.substring(0, 1).toUpperCase()}
-								</Typography.Text>
-							</div>
-							<Typography.Text className={styles.byLabel}>{createdBy}</Typography.Text>
-						</div>
-					)}
-
-					{showUpdatedAt && (
-						<div className={styles.createdAt}>
-							<CalendarClock size={14} />
-							<Typography.Text>{lastUpdatedLabel(updatedAt)}</Typography.Text>
-						</div>
-					)}
-
-					{updatedBy && showUpdatedBy && (
-						<div className={styles.updatedBy}>
-							<Typography.Text className={styles.byLabel}>
-								Last Updated By -
-							</Typography.Text>
-							<div className={styles.avatar}>
-								<Typography.Text className={styles.avatarText}>
-									{updatedBy.substring(0, 1).toUpperCase()}
-								</Typography.Text>
-							</div>
-							<Typography.Text className={styles.byLabel}>{updatedBy}</Typography.Text>
-						</div>
-					)}
-				</div>
+				</span>
 			</div>
 			{isLegacy && (
 				<LegacyDashboardDialog

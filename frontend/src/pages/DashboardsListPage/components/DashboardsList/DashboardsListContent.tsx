@@ -1,12 +1,12 @@
-import { useMemo } from 'react';
-import { Table } from 'antd';
-import type { TableProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
-
+import Panel from 'components/PageTemplate/components/Panel';
+import TablePagination from 'components/PageTemplate/components/TablePagination';
+import { cn } from 'lib/utils';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 
 import type { DashboardListItem } from '../../utils/helpers';
 import DashboardRow from '../DashboardRow/DashboardRow';
+import { rowGridClass } from '../DashboardRow/rowGrid';
 
 interface Props {
 	dashboards: DashboardListItem[];
@@ -19,6 +19,9 @@ interface Props {
 	loading: boolean;
 }
 
+const HEADER_CELL =
+	'tw:min-w-0 tw:text-xs tw:font-medium tw:tracking-[0.05em] tw:uppercase tw:text-muted-foreground';
+
 function DashboardsListContent({
 	dashboards,
 	page,
@@ -29,45 +32,74 @@ function DashboardsListContent({
 	showUpdatedBy,
 	loading,
 }: Props): JSX.Element {
-	const columns: TableProps<DashboardListItem>['columns'] = useMemo(
-		() => [
-			{
-				title: 'Dashboards',
-				key: 'dashboard',
-				render: (_, dashboard, index): JSX.Element => (
-					<DashboardRow
-						dashboard={dashboard}
-						index={index}
-						showUpdatedAt={showUpdatedAt}
-						showUpdatedBy={showUpdatedBy}
-					/>
-				),
-			},
-		],
-		[showUpdatedAt, showUpdatedBy],
-	);
+	const showUpdated = showUpdatedAt || showUpdatedBy;
+	const grid = rowGridClass(showUpdated);
 
-	const paginationConfig = total > pageSize && {
-		pageSize,
-		showSizeChanger: false,
-		onChange: (pageNumber: number): void => {
-			void logEvent(DashboardListEvents.Paginated, { pageNumber });
-			onPageChange(pageNumber);
-		},
-		current: page,
-		total,
-		hideOnSinglePage: true,
+	const handlePageChange = (pageNumber: number): void => {
+		void logEvent(DashboardListEvents.Paginated, { pageNumber });
+		onPageChange(pageNumber);
 	};
 
 	return (
-		<Table
-			columns={columns}
-			dataSource={dashboards.map((d) => ({ ...d, key: d.id }))}
-			showSorterTooltip
-			loading={loading}
-			showHeader={false}
-			pagination={paginationConfig}
-		/>
+		<Panel testId="dashboards-table" className="tw:overflow-hidden">
+			<div className="tw:overflow-x-auto">
+				<div
+					role="table"
+					aria-label="Dashboards"
+					aria-busy={loading}
+					className="tw:min-w-[880px]"
+				>
+					<div
+						role="row"
+						className={cn(
+							grid,
+							'fs-ui tw:min-h-9 tw:border-b tw:border-border tw:bg-muted tw:font-sans',
+						)}
+					>
+						<span role="columnheader" className={HEADER_CELL}>
+							<span className="tw:sr-only">Pinned</span>
+						</span>
+						<span role="columnheader" className={HEADER_CELL}>
+							Name
+						</span>
+						<span role="columnheader" className={HEADER_CELL}>
+							Tags
+						</span>
+						<span role="columnheader" className={HEADER_CELL}>
+							Created by
+						</span>
+						{showUpdated && (
+							<span role="columnheader" className={HEADER_CELL}>
+								Last updated
+							</span>
+						)}
+						<span role="columnheader" className={HEADER_CELL}>
+							<span className="tw:sr-only">Actions</span>
+						</span>
+					</div>
+					<div
+						role="rowgroup"
+						className={cn('tw:transition-opacity', loading && 'tw:opacity-60')}
+					>
+						{dashboards.map((dashboard, index) => (
+							<DashboardRow
+								key={dashboard.id}
+								dashboard={dashboard}
+								index={index}
+								showUpdatedAt={showUpdatedAt}
+								showUpdatedBy={showUpdatedBy}
+							/>
+						))}
+					</div>
+				</div>
+			</div>
+			<TablePagination
+				page={page}
+				pageSize={pageSize}
+				total={total}
+				onPageChange={handlePageChange}
+			/>
+		</Panel>
 	);
 }
 

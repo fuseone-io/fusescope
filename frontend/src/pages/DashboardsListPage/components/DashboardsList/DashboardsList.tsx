@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import logEvent from 'api/common/logEvent';
 import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
 import {
@@ -36,6 +43,7 @@ import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
 import StatusBar from '../StatusBar/StatusBar';
 import ViewsRail from '../ViewsRail/ViewsRail';
 import CommandHeader from './CommandHeader';
+import DashboardsListHeader from './DashboardsListHeader';
 import DashboardsResults from './DashboardsResults';
 import WorkspaceEmptyState from './WorkspaceEmptyState';
 
@@ -46,7 +54,12 @@ const PAGE_SIZE = 20;
 // we pull a single large page and constrain it in-memory.
 const CLIENT_VIEW_LIMIT = 200;
 
-function DashboardsList(): JSX.Element {
+interface Props {
+	/** Page-level actions (share, feedback) shown next to New dashboard. */
+	headerActions?: ReactNode;
+}
+
+function DashboardsList({ headerActions }: Props): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
 
 	const { user } = useAppContext();
@@ -281,85 +294,91 @@ function DashboardsList(): JSX.Element {
 	const isWorkspaceEmpty = showWorkspaceEmpty && !isLoading;
 
 	return (
-		<div className={styles.layout}>
-			<ViewsRail
-				activeViewId={activeViewId}
-				builtinViews={builtinViews}
-				customViews={customViews}
-				customViewsLoading={customViewsLoading}
-				isCustomActive={isCustomActive}
-				isModified={isModified}
-				collapsed={railCollapsed}
-				onSelect={handleSelectView}
-				onSave={saveView}
-				onSaveChanges={saveActiveView}
-				onReset={handleResetView}
-				onDelete={handleRemoveView}
-				onRename={renameView}
+		<div className={styles.page}>
+			<DashboardsListHeader
+				showCreate={!isWorkspaceEmpty}
+				onCreate={openCreate}
+				actions={headerActions}
 			/>
-			<div className={styles.main}>
-				<div className={styles.mainScroll}>
-					{isWorkspaceEmpty ? (
-						<WorkspaceEmptyState onCreate={openCreate} />
-					) : (
-						<>
-							<div className={styles.headerZone}>
-								<CommandHeader
-									label={activeLabel}
-									count={total}
-									isModified={isModified}
-									onCreate={openCreate}
-								/>
-								<FilterZone
-									query={query}
-									creatorOptions={creatorOptions}
-									source={source}
-									disabled={!canList}
-									onQueryChange={handleQueryChange}
-								/>
-							</div>
-							<div className={styles.viewContent}>
-								{/* Fails closed, unlike the guard's default: the fetch is
-								    already gated on the same check, so falling open would
-								    render the table shell with nothing in it and no reason
-								    given. */}
-								<AuthZGuardContent checks={LIST_CHECKS} onFailRenderContent={false}>
-									<DashboardsResults
-										isLoading={isLoading}
-										hasError={!!error}
-										isCloudUser={!!isCloudUser}
-										onRetry={(): void => {
-											refetch();
-										}}
-										errorHttpStatus={errorHttpStatus}
-										errorMessage={errorMessage}
-										dashboards={dashboards}
-										activeViewId={activeViewId}
-										searchValue={query}
-										hasFilters={!filtersEmpty}
-										sortColumn={sortColumn}
-										onSortChange={onSortChange}
-										sortOrder={sortOrder}
-										onOrderChange={onOrderChange}
-										page={page}
-										pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
-										total={total}
-										onPageChange={setPage}
-										showUpdatedAt={visibleColumns.updatedAt}
-										showUpdatedBy={visibleColumns.updatedBy}
-										loading={isFetching}
-									/>
-								</AuthZGuardContent>
-							</div>
-						</>
-					)}
-				</div>
-				<StatusBar
+			<div className={styles.layout}>
+				<ViewsRail
+					activeViewId={activeViewId}
+					builtinViews={builtinViews}
+					customViews={customViews}
+					customViewsLoading={customViewsLoading}
+					isCustomActive={isCustomActive}
+					isModified={isModified}
 					collapsed={railCollapsed}
-					onToggleCollapse={toggleRail}
-					count={dashboards.length}
-					total={total}
+					onSelect={handleSelectView}
+					onSave={saveView}
+					onSaveChanges={saveActiveView}
+					onReset={handleResetView}
+					onDelete={handleRemoveView}
+					onRename={renameView}
 				/>
+				<div className={styles.main}>
+					<div className={styles.mainScroll}>
+						{isWorkspaceEmpty ? (
+							<WorkspaceEmptyState onCreate={openCreate} />
+						) : (
+							<>
+								<div className={styles.headerZone}>
+									<CommandHeader
+										label={activeLabel}
+										count={total}
+										isModified={isModified}
+									/>
+									<FilterZone
+										query={query}
+										creatorOptions={creatorOptions}
+										source={source}
+										disabled={!canList}
+										onQueryChange={handleQueryChange}
+									/>
+								</div>
+								<div className={styles.viewContent}>
+									{/* Fails closed, unlike the guard's default: the fetch is
+									    already gated on the same check, so falling open would
+									    render the table shell with nothing in it and no reason
+									    given. */}
+									<AuthZGuardContent checks={LIST_CHECKS} onFailRenderContent={false}>
+										<DashboardsResults
+											isLoading={isLoading}
+											hasError={!!error}
+											isCloudUser={!!isCloudUser}
+											onRetry={(): void => {
+												refetch();
+											}}
+											errorHttpStatus={errorHttpStatus}
+											errorMessage={errorMessage}
+											dashboards={dashboards}
+											activeViewId={activeViewId}
+											searchValue={query}
+											hasFilters={!filtersEmpty}
+											sortColumn={sortColumn}
+											onSortChange={onSortChange}
+											sortOrder={sortOrder}
+											onOrderChange={onOrderChange}
+											page={page}
+											pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
+											total={total}
+											onPageChange={setPage}
+											showUpdatedAt={visibleColumns.updatedAt}
+											showUpdatedBy={visibleColumns.updatedBy}
+											loading={isFetching}
+										/>
+									</AuthZGuardContent>
+								</div>
+							</>
+						)}
+					</div>
+					<StatusBar
+						collapsed={railCollapsed}
+						onToggleCollapse={toggleRail}
+						count={dashboards.length}
+						total={total}
+					/>
+				</div>
 			</div>
 
 			<NewDashboardModal
