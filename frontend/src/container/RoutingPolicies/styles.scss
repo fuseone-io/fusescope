@@ -1,42 +1,13 @@
 .routing-policies-container {
 	display: flex;
-	justify-content: center;
 	width: 100%;
 	margin-top: 8px;
 
 	.routing-policies-content {
-		width: calc(100% - 30px);
-		max-width: 736px;
-
-		.title {
-			color: var(--l1-foreground);
-			font-size: var(--font-size-lg);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 28px;
-			letter-spacing: -0.09px;
-		}
-
-		.subtitle {
-			color: var(--l2-foreground);
-			font-size: var(--font-size-sm);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 20px;
-			letter-spacing: -0.07px;
-		}
-
-		.ant-input-affix-wrapper {
-			margin-top: 16px;
-			margin-bottom: 8px;
-		}
-
-		.toolbar {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-			margin-top: 12px;
-		}
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		width: 100%;
 
 		.routing-policies-table {
 			.no-routing-policies-message-container {
@@ -78,9 +49,15 @@
 		background: none !important;
 	}
 	.ant-table-cell {
+		display: block;
 		padding: 0 !important;
 		border: 0 !important;
-		width: 736px;
+		width: 100%;
+	}
+
+	.ant-table-tbody > tr {
+		display: block;
+		width: 100%;
 	}
 
 	.ant-table-tbody {
@@ -89,9 +66,9 @@
 		gap: 16px;
 
 		.policy-list-item {
-			border: 1px solid var(--l1-border);
-			background-color: var(--l2-background);
-			border-radius: 6px;
+			border: 1px solid var(--fs-border);
+			background-color: var(--fs-card);
+			border-radius: 12px;
 
 			.ant-collapse-header {
 				height: 56px;

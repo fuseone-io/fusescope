@@ -111,53 +111,24 @@
 
 .planned-downtime-container {
 	display: flex;
-	justify-content: center;
 	width: 100%;
 
 	.planned-downtime-content {
-		width: calc(100% - 30px);
-		max-width: 736px;
-
-		.title {
-			color: var(--l1-foreground);
-			font-size: var(--font-size-lg);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 28px;
-			letter-spacing: -0.09px;
-		}
-
-		.subtitle {
-			color: var(---bg-vanilla-400);
-			font-size: var(--font-size-sm);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 20px;
-			letter-spacing: -0.07px;
-		}
-
-		.ant-input-affix-wrapper {
-			margin-top: 16px;
-			margin-bottom: 8px;
-		}
-
-		.toolbar {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-			margin-top: 12px;
-		}
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		width: 100%;
 
 		.schedule-created-at {
-			border: 1px solid var(--l1-border);
-			background-color: var(--l2-background);
+			border: 1px solid var(--fs-border);
+			background-color: var(--fs-muted);
 			border-top: 0px;
 			width: 100%;
 			padding: 8px 16px;
 			gap: 6px;
 			height: 40px;
-			border-bottom-left-radius: 6px;
-			border-bottom-right-radius: 6px;
+			border-bottom-left-radius: 12px;
+			border-bottom-right-radius: 12px;
 
 			display: flex;
 			align-items: center;
@@ -232,9 +203,15 @@
 		background: none !important;
 	}
 	.ant-table-cell {
+		display: block;
 		padding: 0 !important;
 		border: 0 !important;
-		width: 736px;
+		width: 100%;
+	}
+
+	.ant-table-tbody > tr {
+		display: block;
+		width: 100%;
 	}
 
 	.ant-table-tbody {
@@ -243,10 +220,10 @@
 		gap: 16px;
 
 		.collapse-list {
-			border: 1px solid var(--l1-border);
-			background-color: var(--l2-background);
-			border-top-left-radius: 6px;
-			border-top-right-radius: 6px;
+			border: 1px solid var(--fs-border);
+			background-color: var(--fs-card);
+			border-top-left-radius: 12px;
+			border-top-right-radius: 12px;
 
 			.render-item-collapse-list {
 				margin-bottom: 13px;

@@ -1,9 +1,5 @@
 import { ChangeEvent, useMemo } from 'react';
-import { Plus, Search } from '@signozhq/icons';
-import { Color } from '@signozhq/design-tokens';
-import { Input } from '@signozhq/ui/input';
-import { Button, Flex, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import ConfigSectionHeader from 'components/Alerts/ConfigSectionHeader/ConfigSectionHeader';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -62,31 +58,17 @@ function RoutingPolicies(): JSX.Element {
 	return (
 		<div className="routing-policies-container">
 			<div className="routing-policies-content">
-				<Typography.Title className="title">Routing Policies</Typography.Title>
-				<Typography.Text className="subtitle">
-					Create and manage routing policies.
-				</Typography.Text>
-				<Flex className="toolbar">
-					<Input
-						placeholder="Search for a routing policy..."
-						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-						value={searchTerm}
-						onChange={handleSearch}
-					/>
-					<Tooltip title={tooltipTitle}>
-						<Button
-							type="primary"
-							onClick={(): void => handlePolicyDetailsModalOpen('create', null)}
-							disabled={disableCreateButton}
-						>
-							<Flex gap={4} align="center">
-								<Plus size={16} />
-								New routing policy
-							</Flex>
-						</Button>
-					</Tooltip>
-				</Flex>
-				<br />
+				<ConfigSectionHeader
+					title="Routing Policies"
+					subtitle="Create and manage routing policies."
+					searchPlaceholder="Search for a routing policy..."
+					searchValue={searchTerm}
+					onSearch={handleSearch}
+					actionLabel="New routing policy"
+					onAction={(): void => handlePolicyDetailsModalOpen('create', null)}
+					actionDisabled={disableCreateButton}
+					actionTooltip={tooltipTitle}
+				/>
 				<RoutingPolicyList
 					routingPolicies={routingPoliciesData}
 					refetchRoutingPolicies={refetchRoutingPolicies}

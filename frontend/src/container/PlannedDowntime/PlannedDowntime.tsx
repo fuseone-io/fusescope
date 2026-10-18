@@ -1,15 +1,12 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Plus, Search } from '@signozhq/icons';
-import { Color } from '@signozhq/design-tokens';
-import { Input } from '@signozhq/ui/input';
-import { Button, Flex, Form, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Form } from 'antd';
 import {
 	useDeleteDowntimeScheduleByID,
 	useListDowntimeSchedules,
 } from 'api/generated/services/downtimeschedules';
 import { useListRules } from 'api/generated/services/rules';
+import ConfigSectionHeader from 'components/Alerts/ConfigSectionHeader/ConfigSectionHeader';
 import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/fuseScope.schemas';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -128,42 +125,26 @@ export function PlannedDowntime(): JSX.Element {
 	return (
 		<div className="planned-downtime-container">
 			<div className="planned-downtime-content">
-				<Typography.Title className="title">Planned Downtime</Typography.Title>
-				<Typography.Text className="subtitle">
-					Create and manage planned downtimes.
-				</Typography.Text>
-				<Flex className="toolbar">
-					<Input
-						placeholder="Search for a planned downtime..."
-						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-						value={searchValue}
-						onChange={handleSearch}
-					/>
-					<Tooltip
-						title={
-							user?.role === USER_ROLES.VIEWER
-								? 'You need edit permissions to create a planned downtime'
-								: ''
-						}
-					>
-						<Button
-							type="primary"
-							onClick={(): void => {
-								setInitialValues(defaultInitialValues);
-								setIsOpen(true);
-								setEditMode(false);
-								form.resetFields();
-							}}
-							disabled={user?.role === USER_ROLES.VIEWER}
-						>
-							<Flex align="center" gap={4}>
-								<Plus size={16} />
-								New downtime
-							</Flex>
-						</Button>
-					</Tooltip>
-				</Flex>
-				<br />
+				<ConfigSectionHeader
+					title="Planned Downtime"
+					subtitle="Create and manage planned downtimes."
+					searchPlaceholder="Search for a planned downtime..."
+					searchValue={String(searchValue)}
+					onSearch={handleSearch}
+					actionLabel="New downtime"
+					onAction={(): void => {
+						setInitialValues(defaultInitialValues);
+						setIsOpen(true);
+						setEditMode(false);
+						form.resetFields();
+					}}
+					actionDisabled={user?.role === USER_ROLES.VIEWER}
+					actionTooltip={
+						user?.role === USER_ROLES.VIEWER
+							? 'You need edit permissions to create a planned downtime'
+							: ''
+					}
+				/>
 				<PlannedDowntimeList
 					downtimeSchedules={downtimeSchedules}
 					alertOptions={alertOptions || []}
