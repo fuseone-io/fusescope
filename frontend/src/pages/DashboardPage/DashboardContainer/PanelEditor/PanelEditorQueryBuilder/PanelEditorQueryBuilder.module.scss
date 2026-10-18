@@ -6,7 +6,7 @@
 	min-height: 0;
 	overflow: auto;
 	scrollbar-gutter: stable;
-	background-color: var(--l1-background);
+	background-color: var(--fs-background);
 	@include custom-scrollbar;
 }
 
@@ -20,19 +20,19 @@
 	width: 100%;
 
 	:global(.ant-tabs-tab) {
-		background-color: var(--l2-background) !important;
-		border-color: var(--l2-border) !important;
+		background-color: var(--fs-card) !important;
+		border-color: var(--fs-border) !important;
 	}
 	:global(.ant-tabs-tab-active) {
-		background-color: var(--l1-background) !important;
+		background-color: var(--fs-background) !important;
 	}
 	:global(.ant-tabs-nav) {
 		// `padding-top` owns the nav's top spacing (moved off `.scrollArea`).
 		padding-top: 12px;
-		background-color: var(--l1-background);
+		background-color: var(--fs-background);
 
 		&::before {
-			border-color: var(--l2-border);
+			border-color: var(--fs-border);
 		}
 	}
 }

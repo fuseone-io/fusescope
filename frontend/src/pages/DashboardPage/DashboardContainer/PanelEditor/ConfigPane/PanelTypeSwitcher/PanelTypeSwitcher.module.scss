@@ -11,12 +11,12 @@
 	--button-padding: 0 5px 0 12px;
 	--button-justify-content: flex-start;
 	--button-label-display: flex;
-	--button-variant-outlined-border: 1px solid var(--l2-border);
-	--button-variant-outlined-background-color: var(--l2-background);
-	--button-variant-outlined-hover-background-color: var(--l2-background);
+	--button-variant-outlined-border: 1px solid var(--fs-border);
+	--button-variant-outlined-background-color: var(--fs-card);
+	--button-variant-outlined-hover-background-color: var(--fs-card);
 
 	&:hover {
-		--button-variant-outlined-border: 1px solid var(--l3-border);
+		--button-variant-outlined-border: 1px solid var(--fs-border);
 	}
 
 	[data-slot='button-label'] {
@@ -29,14 +29,14 @@
 
 .triggerIcon {
 	flex-shrink: 0;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }
 
 .triggerName {
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
@@ -47,8 +47,8 @@
 	gap: 6px;
 	padding: 4px 10px;
 	border-radius: 3px;
-	background: var(--l3-background);
-	color: var(--l2-foreground);
+	background: var(--fs-muted);
+	color: var(--fs-muted-foreground);
 	font-size: 12px;
 }
 

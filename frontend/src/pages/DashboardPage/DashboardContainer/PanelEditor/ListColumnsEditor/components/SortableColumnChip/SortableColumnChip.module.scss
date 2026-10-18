@@ -4,9 +4,9 @@
 	gap: 6px;
 	height: 28px;
 	padding: 0 8px;
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 4px;
-	background-color: var(--l2-background);
+	background-color: var(--fs-card);
 }
 
 .grip {
@@ -23,5 +23,5 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	font-size: 12px;
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 }

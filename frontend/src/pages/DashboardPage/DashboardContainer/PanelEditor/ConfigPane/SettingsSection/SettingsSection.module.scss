@@ -1,5 +1,5 @@
 .section {
-	border-top: 1px solid var(--l1-border);
+	border-top: 1px solid var(--fs-border);
 }
 
 .header {
@@ -9,7 +9,7 @@
 	padding: 0 20px 0 0;
 
 	&:hover {
-		background: var(--l2-background);
+		background: var(--fs-card);
 	}
 }
 
@@ -30,12 +30,12 @@
 	font-size: 13px;
 	font-weight: 400;
 	white-space: nowrap;
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 }
 
 .chevron {
 	flex: none;
-	color: var(--l3-foreground);
+	color: var(--fs-subtle-foreground);
 	cursor: pointer;
 	transition: transform 0.15s ease;
 

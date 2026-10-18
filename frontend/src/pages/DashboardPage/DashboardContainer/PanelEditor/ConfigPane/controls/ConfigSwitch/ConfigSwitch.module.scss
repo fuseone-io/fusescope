@@ -3,9 +3,9 @@
 	align-items: center;
 	gap: 14px;
 	padding: 14px 16px;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 4px;
-	background: var(--l2-background);
+	background: var(--fs-card);
 }
 
 .text {
@@ -21,11 +21,11 @@
 	align-items: center;
 	gap: 8px;
 	font-size: 14px;
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 }
 
 .description {
 	font-size: 12px;
 	line-height: 17px;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }
