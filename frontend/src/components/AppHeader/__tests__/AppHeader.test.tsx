@@ -203,6 +203,7 @@ describe('AppHeader', () => {
 			ROUTES.AI_OBSERVABILITY_EXPLORER,
 			ROUTES.METER,
 			ROUTES.METER_EXPLORER,
+			ROUTES.TRACES_EXPLORER,
 		])('moves the global picker of %s into the header', (route) => {
 			renderHeader(route);
 
@@ -230,7 +231,6 @@ describe('AppHeader', () => {
 		it.each([
 			ROUTES.HOME,
 			ROUTES.LOGS_EXPLORER,
-			ROUTES.TRACES_EXPLORER,
 			ROUTES.LOGS_INDEX_FIELDS,
 			ROUTES.METRICS_EXPLORER_EXPLORER,
 			'/traces/funnels/abc',
