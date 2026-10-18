@@ -1,6 +1,6 @@
 .entityDetailDrawer {
-	border-color: var(--l2-border) !important;
-	background: var(--l2-background) !important;
+	border-color: var(--fs-border) !important;
+	background: var(--fs-card) !important;
 	box-shadow: -4px 10px 16px 2px var(--l1-shadow);
 
 	width: 70%;
@@ -14,9 +14,9 @@
 	}
 
 	[data-slot='drawer-header'] {
-		padding: var(--spacing-4) var(--spacing-8);
-		border-bottom: 1px solid var(--l1-border);
-		background: var(--l2-background);
+		padding: var(--spacing-6) var(--spacing-12);
+		border-bottom: 1px solid var(--fs-border);
+		background: var(--fs-card);
 	}
 
 	[data-slot='drawer-description'] {
@@ -24,7 +24,7 @@
 		flex: 1;
 		flex-direction: column;
 		overflow-y: auto;
-		padding: var(--spacing-8);
+		padding: var(--spacing-8) var(--spacing-12);
 		margin: 0;
 		// On a 13" screen the drawer itself is narrower than 900px, and a flat
 		// minimum there clips the right edge of every tab
@@ -40,9 +40,9 @@
 	gap: var(--spacing-2);
 	flex: none;
 	padding: var(--spacing-1) var(--spacing-3);
-	border-radius: 2px;
-	background: var(--l3-background);
-	color: var(--l2-foreground);
+	border-radius: 4px;
+	background: var(--fs-primary-soft);
+	color: var(--fs-primary-ink);
 	font-size: 11px;
 	font-weight: 500;
 	letter-spacing: 0.06em;
@@ -51,6 +51,8 @@
 
 .title {
 	font-family: var(--periscope-font-family-mono);
+	font-size: 16px;
+	font-weight: 500;
 
 	--typography-margin: 0px var(--spacing-1) 0px 0px;
 }

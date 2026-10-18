@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import {
 	QuickFilterChangeEventData,
@@ -12,7 +9,6 @@ import {
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -46,11 +42,14 @@ import {
 	useInfraMonitoringSelectedItemParams,
 } from './hooks';
 
-import styles from './InfraMonitoringK8s.module.scss';
+import InfraFilterRail from './components/InfraFilterRail';
+import InfraListLayout from './components/InfraListLayout';
+import K8sCategoryList from './components/K8sCategoryList';
+import RailSectionLabel from './components/RailSectionLabel';
+import RailToggleButton from 'components/PageTemplate/components/RailToggleButton';
 import { InfraMonitoringEvents } from 'constants/events';
 import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
-import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import {
 	logInfraFilterCustomizedEvent,
 	logInfraMonitoringListViewedEvent,
@@ -245,107 +244,56 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		}
 	};
 
-	const showFiltersComp = useMemo(() => {
-		return (
-			<>
-				{!showFilters && (
-					<div className={styles.k8SOpenQuickFilters}>
-						<Tooltip title="Open Filters" side="left">
-							<Button
-								aria-label="Action"
-								variant="ghost"
-								size="sm"
-								icon
-								color="secondary"
-								onClick={handleFilterVisibilityChange}
-							>
-								<Filter size={14} />
-							</Button>
-						</Tooltip>
-					</div>
-				)}
-			</>
-		);
-	}, [handleFilterVisibilityChange, showFilters]);
+	const openFiltersButton = showFilters ? undefined : (
+		<RailToggleButton
+			open={false}
+			openLabel="Open Filters"
+			onToggle={handleFilterVisibilityChange}
+		/>
+	);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className={styles.infraMonitoringContainer}>
-				<div className={styles.infraContentRow}>
-					{showFilters && (
-						<div className={styles.quickFiltersContainer}>
-							<OverlayScrollbar>
-								<>
-									<div className={styles.categorySelectorSection}>
-										<div className={styles.sectionHeader} data-type="resource">
-											<Typography.Text className={styles.sectionLabel}>
-												Viewing · Resource
-											</Typography.Text>
-											<div className={styles.sectionLine} />
-											<Tooltip title="Collapse Filters">
-												<ArrowUpToLine
-													style={{ transform: 'rotate(270deg)' }}
-													onClick={handleFilterVisibilityChange}
-													size="md"
-												/>
-											</Tooltip>
-										</div>
-										<div className={styles.categoryCard}>
-											<div className={styles.categoryList}>
-												{categories.map((category) => (
-													<button
-														key={category.key}
-														type="button"
-														className={`${styles.categoryItem} ${
-															selectedCategory === category.key
-																? styles.categoryItemSelected
-																: ''
-														}`}
-														onClick={(): void => handleCategorySelect(category.key)}
-														data-testid={`category-${category.key}`}
-													>
-														{category.icon}
-														<Typography.Text>{category.label}</Typography.Text>
-													</button>
-												))}
-											</div>
-										</div>
-									</div>
-
-									<div className={styles.quickFiltersSection}>
-										<div className={styles.sectionHeader} data-type="filter">
-											<Typography.Text className={styles.sectionLabel}>
-												Filter by
-											</Typography.Text>
-											<div className={styles.sectionLine} />
-										</div>
-										{selectedCategoryConfig && (
-											<QuickFilters
-												source={QuickFiltersSource.INFRA_MONITORING}
-												config={selectedCategoryConfig}
-												handleFilterVisibilityChange={handleFilterVisibilityChange}
-												useFieldApis={selectedCategoryUseFieldApis}
-												onQuickFilterChange={handleQuickFilterChange}
-											/>
-										)}
-									</div>
-								</>
-							</OverlayScrollbar>
-						</div>
-					)}
-
-					<div
-						className={`${styles.listContainer} ${
-							showFilters ? styles.listContainerFiltersVisible : ''
-						}`}
-					>
-						<K8sDynamicList
-							controlListPrefix={showFiltersComp}
-							leftFilters={<EntityStatusFilter />}
-						/>
-					</div>
-				</div>
-			</div>
+			<InfraListLayout
+				rail={
+					showFilters && (
+						<InfraFilterRail>
+							<div className="tw:flex tw:flex-col tw:gap-0.5 tw:border-b tw:border-border tw:p-3">
+								<RailSectionLabel
+									className="tw:px-2"
+									action={
+										<RailToggleButton open onToggle={handleFilterVisibilityChange} />
+									}
+								>
+									Resource
+								</RailSectionLabel>
+								<K8sCategoryList
+									categories={categories}
+									selected={selectedCategory}
+									onSelect={handleCategorySelect}
+								/>
+							</div>
+							<RailSectionLabel className="tw:px-5 tw:pt-3">
+								Filter by
+							</RailSectionLabel>
+							{selectedCategoryConfig && (
+								<QuickFilters
+									source={QuickFiltersSource.INFRA_MONITORING}
+									config={selectedCategoryConfig}
+									handleFilterVisibilityChange={handleFilterVisibilityChange}
+									useFieldApis={selectedCategoryUseFieldApis}
+									onQuickFilterChange={handleQuickFilterChange}
+								/>
+							)}
+						</InfraFilterRail>
+					)
+				}
+			>
+				<K8sDynamicList
+					controlListPrefix={openFiltersButton}
+					leftFilters={<EntityStatusFilter />}
+				/>
+			</InfraListLayout>
 		</Sentry.ErrorBoundary>
 	);
 }
