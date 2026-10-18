@@ -131,7 +131,7 @@ describe('RolesSettings', () => {
 
 		render(<RolesSettings />);
 
-		expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+		expect(screen.getByTestId('roles-loading')).toBeInTheDocument();
 	});
 
 	it('shows error state when API fails', async () => {
