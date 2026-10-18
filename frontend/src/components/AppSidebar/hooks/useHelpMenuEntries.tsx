@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { FeatureKeys } from 'constants/features';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Github, Slack } from '@signozhq/icons';
+import { Github } from '@signozhq/icons';
 import {
 	Book,
+	Bug,
 	GitCommitVertical,
 	LampDesk,
 	MessageSquareText,
@@ -14,9 +15,12 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
+import {
+	FUSESCOPE_NEW_ISSUE_URL,
+	FUSESCOPE_RELEASES_URL,
+	FUSESCOPE_REPO_URL,
+} from '../constants';
 import { HelpMenuEntry } from '../types';
-
-const CHANGELOG_URL = 'https://signoz.io/changelog/';
 
 const LINKS: HelpMenuEntry[] = [
 	{
@@ -24,21 +28,21 @@ const LINKS: HelpMenuEntry[] = [
 		key: 'documentation',
 		label: 'Documentation',
 		icon: <Book />,
-		url: signozDocsUrl(),
+		url: fuseScopeDocsUrl(),
 	},
 	{
 		type: 'item',
 		key: 'github',
 		label: 'GitHub',
 		icon: <Github size={16} />,
-		url: 'https://github.com/signoz/signoz',
+		url: FUSESCOPE_REPO_URL,
 	},
 	{
 		type: 'item',
-		key: 'slack',
-		label: 'Community Slack',
-		icon: <Slack size={16} />,
-		url: 'https://signoz.io/slack',
+		key: 'report-issue',
+		label: 'Report an issue',
+		icon: <Bug />,
+		url: FUSESCOPE_NEW_ISSUE_URL,
 	},
 ];
 
@@ -101,7 +105,7 @@ export function useHelpMenuEntries(): HelpMenuEntry[] {
 			key: 'full-changelog',
 			label: 'Full Changelog',
 			icon: <ScrollText />,
-			url: CHANGELOG_URL,
+			url: FUSESCOPE_RELEASES_URL,
 		});
 		return entries;
 	}, [canChat, isAdmin, changelog]);

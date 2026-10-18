@@ -19,10 +19,17 @@ import {
 } from 'components/ui/sidebar';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Building2, Keyboard, LogOut, Shield, User } from 'lucide-react';
+import { Building2, Keyboard, LogOut, Shield, Tag, User } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import { isKnownVersion } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
-import { NAV_BUTTON_CLASS, WORKSPACE_LOCKED_TOOLTIP } from '../constants';
+import {
+	FUSESCOPE_RELEASES_URL,
+	NAV_BUTTON_CLASS,
+	WORKSPACE_LOCKED_TOOLTIP,
+} from '../constants';
+import { useVersionInfo } from '../hooks/useVersionInfo';
 import { formatRole, getInitials, openRoute } from '../utils';
 
 type UserMenuKey =
@@ -49,11 +56,17 @@ const ROUTE_BY_KEY: Record<Exclude<UserMenuKey, 'logout'>, string> = {
 
 const LOCKED_REASON_ID = 'user-menu-workspace-locked';
 
+function releaseNotesUrl(version: string): string {
+	const tag = version.startsWith('v') ? version : `v${version}`;
+	return `${FUSESCOPE_RELEASES_URL}/tag/${tag}`;
+}
+
 function UserMenu(): JSX.Element {
 	const { user, trialInfo } = useAppContext();
 	const { isEnterpriseSelfHostedUser, isCommunityEnterpriseUser } =
 		useGetTenantLicense();
 	const { isMobile } = useSidebar();
+	const { currentVersion, latestVersion, isUpdateAvailable } = useVersionInfo();
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 	const name = user.displayName || user.email;
 
@@ -149,6 +162,24 @@ function UserMenu(): JSX.Element {
 							{(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser) &&
 								row('license', <Shield />, 'manage-license-nav-item')}
 							{row('keyboard-shortcuts', <Keyboard />, 'keyboard-shortcuts-nav-item')}
+							{isKnownVersion(currentVersion) && (
+								<DropdownMenuItem
+									data-testid="version-nav-item"
+									onClick={(): void => openInNewTab(releaseNotesUrl(currentVersion))}
+								>
+									<Tag />
+									Version
+									<span className="tw:ml-auto tw:inline-flex tw:items-center tw:gap-1.5 tw:font-mono tw:text-xs tw:text-muted-foreground">
+										{currentVersion}
+										{isUpdateAvailable && isKnownVersion(latestVersion) && (
+											<span
+												aria-label={`Update available: ${latestVersion}`}
+												className="tw:size-1.5 tw:rounded-full tw:bg-primary"
+											/>
+										)}
+									</span>
+								</DropdownMenuItem>
+							)}
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem

@@ -5,6 +5,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { screen, userEvent, within } from 'tests/test-utils';
 
 import { renderAppSidebar } from '../../__tests__/renderAppSidebar';
+import { useVersionInfo, VersionInfo } from '../../hooks/useVersionInfo';
 
 const mockPush = jest.fn();
 
@@ -28,7 +29,23 @@ jest.mock('hooks/useIsAIAssistantEnabled', () => ({
 	useIsAIAssistantEnabled: (): boolean => false,
 }));
 
+jest.mock('components/AppSidebar/hooks/useVersionInfo', () => ({
+	useVersionInfo: jest.fn(),
+}));
+
 const mockLicense = jest.mocked(useGetTenantLicense);
+const mockVersionInfo = jest.mocked(useVersionInfo);
+
+function versionInfo(
+	currentVersion: string,
+	latestVersion = currentVersion,
+): VersionInfo {
+	return {
+		currentVersion,
+		latestVersion,
+		isUpdateAvailable: currentVersion !== latestVersion,
+	};
+}
 
 const COMMUNITY = {
 	isCloudUser: false,
@@ -56,6 +73,7 @@ async function openUserMenu(): Promise<HTMLElement> {
 describe('UserMenu', () => {
 	beforeEach(() => {
 		mockLicense.mockReturnValue(COMMUNITY);
+		mockVersionInfo.mockReturnValue(versionInfo('<unset>'));
 	});
 
 	it('shows the user initials, name and role', () => {
@@ -140,4 +158,58 @@ describe('UserMenu', () => {
 
 		expect(Logout).toHaveBeenCalled();
 	});
+
+	it('shows the version below keyboard shortcuts and opens its release notes', async () => {
+		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+		mockVersionInfo.mockReturnValue(versionInfo('v0.149.2'));
+		renderAppSidebar({ pinned: true });
+
+		expect(screen.queryByTestId('app-sidebar-version')).not.toBeInTheDocument();
+
+		const menu = await openUserMenu();
+		const labels = within(menu)
+			.getAllByRole('menuitem')
+			.map((item) => item.textContent);
+
+		expect(labels.indexOf('Keyboard Shortcuts')).toBe(labels.length - 3);
+		expect(within(menu).getByTestId('version-nav-item')).toHaveTextContent(
+			'v0.149.2',
+		);
+
+		await userEvent
+			.setup({ pointerEventsCheck: 0 })
+			.click(within(menu).getByTestId('version-nav-item'));
+
+		expect(open).toHaveBeenCalledWith(
+			'https://github.com/fuseone-io/fusescope/releases/tag/v0.149.2',
+			'_blank',
+		);
+	});
+
+	it('flags an available update on the version row', async () => {
+		mockVersionInfo.mockReturnValue(versionInfo('v0.149.2', 'v0.150.0'));
+		renderAppSidebar({ pinned: true });
+
+		const menu = await openUserMenu();
+
+		expect(
+			within(within(menu).getByTestId('version-nav-item')).getByLabelText(
+				'Update available: v0.150.0',
+			),
+		).toBeInTheDocument();
+	});
+
+	it.each(['', '<unset>'])(
+		'hides the version row when the build has none (%p)',
+		async (version) => {
+			mockVersionInfo.mockReturnValue(versionInfo(version));
+			renderAppSidebar({ pinned: true });
+
+			const menu = await openUserMenu();
+
+			expect(
+				within(menu).queryByTestId('version-nav-item'),
+			).not.toBeInTheDocument();
+		},
+	);
 });

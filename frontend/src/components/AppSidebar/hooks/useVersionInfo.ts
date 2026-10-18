@@ -6,7 +6,6 @@ import AppReducer from 'types/reducer/app';
 import { checkVersionState } from 'utils/app';
 
 export interface VersionInfo {
-	licenseTag: string;
 	currentVersion: string;
 	latestVersion: string;
 	/** Self-hosted only: cloud is always current. */
@@ -17,26 +16,9 @@ export function useVersionInfo(): VersionInfo {
 	const { currentVersion, latestVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
-	const {
-		isCloudUser,
-		isEnterpriseSelfHostedUser,
-		isCommunityEnterpriseUser,
-		isCommunityUser,
-	} = useGetTenantLicense();
-
-	let licenseTag = '';
-	if (isCloudUser) {
-		licenseTag = 'Cloud';
-	} else if (isEnterpriseSelfHostedUser) {
-		licenseTag = 'Enterprise';
-	} else if (isCommunityEnterpriseUser) {
-		licenseTag = 'Free';
-	} else if (isCommunityUser) {
-		licenseTag = 'Community';
-	}
+	const { isCloudUser } = useGetTenantLicense();
 
 	return {
-		licenseTag,
 		currentVersion,
 		latestVersion,
 		isUpdateAvailable:

@@ -155,3 +155,7 @@ export const SETTINGS_NAV_ITEM: NavItem = {
 	label: 'Settings',
 	icon: <Settings />,
 };
+
+export const FUSESCOPE_REPO_URL = 'https://github.com/fuseone-io/fusescope';
+export const FUSESCOPE_RELEASES_URL = `${FUSESCOPE_REPO_URL}/releases`;
+export const FUSESCOPE_NEW_ISSUE_URL = `${FUSESCOPE_REPO_URL}/issues/new/choose`;
