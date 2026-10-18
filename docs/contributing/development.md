@@ -56,6 +56,18 @@ Put the exports in your shell profile, then `cd tests && uv sync`.
 
 ## How do I run it locally?
 
+For frontend work, one command is enough:
+
+```bash
+make dev    # ClickHouse, collector, backend (released image) and sample telemetry in containers; Vite on :3301
+make stop   # stop everything, keep data
+make dev-clean  # stop and delete the data
+```
+
+Sign in at http://localhost:3301 as `admin@fusescope.local` / `FuseScope-dev-1`. HotROD feeds multi-service traces; `telemetrygen` adds logs at several severities and failing `payment` spans. `FUSESCOPE_IMAGE` picks another backend image and `DEV_UI_PORT` another UI port.
+
+To run the backend from source instead, follow the steps below.
+
 FuseScope has three main components: ClickHouse, the backend and the frontend.
 
 ### 1. Setting up ClickHouse

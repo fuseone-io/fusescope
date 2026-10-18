@@ -1,0 +1,61 @@
+x-telemetrygen: &telemetrygen
+  image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:v0.139.0
+  restart: unless-stopped
+  networks:
+    - signoz-devenv
+
+services:
+  hotrod:
+    image: jaegertracing/example-hotrod:1.76.0
+    container_name: hotrod
+    command:
+      - all
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://fusescope-otel-collector:4318
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=dev
+    restart: unless-stopped
+    networks:
+      - signoz-devenv
+
+  hotrod-load:
+    image: curlimages/curl:8.17.0
+    container_name: hotrod-load
+    entrypoint:
+      - sh
+      - -c
+      - |
+        while true; do
+          for customer in 123 392 731 567; do
+            curl -s -o /dev/null "http://hotrod:8080/dispatch?customer=$$customer&nonse=$$RANDOM"
+            sleep 2
+          done
+        done
+    depends_on:
+      - hotrod
+    restart: unless-stopped
+    networks:
+      - signoz-devenv
+
+  logs-checkout:
+    <<: *telemetrygen
+    container_name: logs-checkout
+    command: [logs, --otlp-endpoint=fusescope-otel-collector:4317, --otlp-insecure, --duration=inf, --rate=2, --service=checkout, --otlp-attributes=deployment.environment="dev", --body=order placed, --severity-text=Info, --severity-number=9]
+
+  logs-payment-warn:
+    <<: *telemetrygen
+    container_name: logs-payment-warn
+    command: [logs, --otlp-endpoint=fusescope-otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.5, --service=payment, --otlp-attributes=deployment.environment="dev", --body=payment gateway slow; retrying, --severity-text=Warn, --severity-number=13]
+
+  logs-payment-error:
+    <<: *telemetrygen
+    container_name: logs-payment-error
+    command: [logs, --otlp-endpoint=fusescope-otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.2, --service=payment, --otlp-attributes=deployment.environment="dev", --body=card declined - insufficient funds, --severity-text=Error, --severity-number=17]
+
+  traces-payment-errors:
+    <<: *telemetrygen
+    container_name: traces-payment-errors
+    command: [traces, --otlp-endpoint=fusescope-otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.5, --service=payment, --otlp-attributes=deployment.environment="dev", --child-spans=2, --span-duration=250ms, --status-code=Error]
+
+networks:
+  signoz-devenv:
+    name: signoz-devenv

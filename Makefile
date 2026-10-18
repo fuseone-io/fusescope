@@ -60,10 +60,55 @@ devenv-up: devenv-clickhouse devenv-fusescope-otel-collector ## Start both click
 	@echo "   - ClickHouse: http://localhost:8123"
 	@echo "   - Signoz OTel Collector: grpc://localhost:4317, http://localhost:4318"
 
+DEVENV_COMPOSE := docker compose -f .devenv/docker/compose.yaml
+DEVENV_TMP     := .devenv/tmp
+DEV_UI_PORT    ?= 3301
+DEV_EMAIL      ?= admin@fusescope.local
+DEV_PASSWORD   ?= FuseScope-dev-1
+
+.PHONY: dev
+dev: ## Start ClickHouse, collector, backend and sample telemetry in containers, plus the frontend dev server
+	@$(DEVENV_COMPOSE) up -d
+	@printf "Waiting for the backend"; \
+	for i in $$(seq 1 90); do \
+		curl -sf -o /dev/null localhost:8080/api/v1/health && break; \
+		printf "."; sleep 2; \
+	done; echo; \
+	curl -sf -o /dev/null localhost:8080/api/v1/health || { echo "Backend not healthy: $(DEVENV_COMPOSE) logs fusescope"; exit 1; }
+	@curl -sf -o /dev/null -X POST localhost:8080/api/v1/register -H 'Content-Type: application/json' \
+		-d '{"name":"Admin","email":"$(DEV_EMAIL)","password":"$(DEV_PASSWORD)","orgDisplayName":"FuseScope Dev","orgName":"fusescope-dev"}' || true
+	@mkdir -p $(DEVENV_TMP)
+	@[ -d frontend/node_modules ] || (cd frontend && npx -y pnpm@10 install)
+	@if lsof -ti tcp:$(DEV_UI_PORT) >/dev/null; then \
+		echo "Port $(DEV_UI_PORT) busy; frontend dev server not started."; \
+	else \
+		(cd frontend && VITE_FRONTEND_API_ENDPOINT=http://localhost:8080 exec npx -y pnpm@10 dev --port $(DEV_UI_PORT) --strictPort) > $(DEVENV_TMP)/frontend.log 2>&1 < /dev/null & \
+		for i in $$(seq 1 30); do \
+			curl -s -o /dev/null localhost:$(DEV_UI_PORT) && break; \
+			grep -q "error when starting" $(DEVENV_TMP)/frontend.log 2>/dev/null && break; \
+			sleep 1; \
+		done; \
+		curl -s -o /dev/null localhost:$(DEV_UI_PORT) || { tail -5 $(DEVENV_TMP)/frontend.log; exit 1; }; \
+	fi
+	@echo "FuseScope dev environment:"
+	@echo "   - UI:      http://localhost:$(DEV_UI_PORT) ($(DEV_EMAIL) / $(DEV_PASSWORD))"
+	@echo "   - API:     http://localhost:8080"
+	@echo "   - OTLP:    grpc://localhost:4317, http://localhost:4318"
+	@echo "   - UI logs: $(DEVENV_TMP)/frontend.log"
+
+.PHONY: stop
+stop: ## Stop everything started by make dev, keeping data
+	@PIDS=$$(lsof -ti tcp:$(DEV_UI_PORT)); [ -z "$$PIDS" ] || kill $$PIDS
+	@$(DEVENV_COMPOSE) down
+
+.PHONY: dev-clean
+dev-clean: stop ## Stop the dev environment and delete its data
+	@$(DEVENV_COMPOSE) down -v
+
 .PHONY: devenv-clickhouse-clean
 devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
 	@echo "Removing ClickHouse data..."
-	@rm -rf .devenv/docker/clickhouse/fs/tmp/*
+	@cd .devenv/docker/clickhouse; docker compose -f compose.yaml down -v
 	@echo "ClickHouse data cleaned!"
 
 ##############################################################

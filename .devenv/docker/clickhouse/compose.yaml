@@ -16,16 +16,16 @@ services:
         mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
     restart: on-failure
     volumes:
-      - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
+      - clickhouse-user-scripts:/var/lib/clickhouse/user_scripts/
   clickhouse:
     image: clickhouse/clickhouse-server:25.12.5
     container_name: clickhouse
     volumes:
-      - ${PWD}/fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
-      - ${PWD}/fs/etc/clickhouse-server/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml
-      - ${PWD}/fs/tmp/var/lib/clickhouse/:/var/lib/clickhouse/
-      - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
-      - ${PWD}/../../../deploy/common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
+      - ./fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
+      - ./fs/etc/clickhouse-server/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml
+      - clickhouse-data:/var/lib/clickhouse/
+      - clickhouse-user-scripts:/var/lib/clickhouse/user_scripts/
+      - ./fs/etc/clickhouse-server/custom-function.xml:/etc/clickhouse-server/custom-function.xml
     ports:
       - "127.0.0.1:8123:8123"
       - "127.0.0.1:9000:9000"
@@ -54,7 +54,7 @@ services:
     image: signoz/zookeeper:3.7.1
     container_name: zookeeper
     volumes:
-      - ${PWD}/fs/tmp/zookeeper:/bitnami/zookeeper
+      - zookeeper-data:/bitnami/zookeeper
     ports:
       - "127.0.0.1:2181:2181"
     environment:
@@ -93,3 +93,8 @@ services:
 networks:
   signoz-devenv:
     name: signoz-devenv
+
+volumes:
+  clickhouse-data:
+  clickhouse-user-scripts:
+  zookeeper-data:

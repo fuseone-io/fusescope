@@ -1,0 +1,36 @@
+services:
+  fusescope:
+    image: ${FUSESCOPE_IMAGE:-ghcr.io/fuseone-io/fusescope:0.150.0}
+    container_name: fusescope-dev
+    environment:
+      - SIGNOZ_WEB_ENABLED=false
+      - SIGNOZ_SQLSTORE_SQLITE_PATH=/var/lib/fusescope/signoz.db
+      - SIGNOZ_TOKENIZER_JWT_SECRET=devenv-secret
+      - SIGNOZ_ALERTMANAGER_PROVIDER=signoz
+      - SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse
+      - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster
+    volumes:
+      - fusescope-data:/var/lib/fusescope/
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - localhost:8080/api/v1/health
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    networks:
+      - signoz-devenv
+
+networks:
+  signoz-devenv:
+    name: signoz-devenv
+
+volumes:
+  fusescope-data:
