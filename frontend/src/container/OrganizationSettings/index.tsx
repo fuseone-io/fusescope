@@ -1,10 +1,9 @@
-import { Space } from 'antd';
+import Panel from 'components/PageTemplate/components/Panel';
+import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
 import { useAppContext } from 'providers/App/App';
 
 import AuthDomain from './AuthDomain';
 import DisplayName from './DisplayName';
-
-import './OrganizationSettings.styles.scss';
 
 function OrganizationSettings(): JSX.Element {
 	const { org } = useAppContext();
@@ -14,15 +13,22 @@ function OrganizationSettings(): JSX.Element {
 	}
 
 	return (
-		<div className="organization-settings-container">
-			<Space direction="vertical">
+		<SettingsPageShell
+			testId="organization-settings"
+			title="Single Sign-on"
+			description="Your organization's display name and the domains that sign in through SSO."
+		>
+			<Panel
+				title="Organization"
+				bodyClassName="tw:flex tw:flex-col tw:gap-4 tw:px-5 tw:pt-3 tw:pb-1"
+			>
 				{org.map((e, index) => (
 					<DisplayName key={e.id} id={e.id} index={index} />
 				))}
-			</Space>
+			</Panel>
 
 			<AuthDomain />
-		</div>
+		</SettingsPageShell>
 	);
 }
 

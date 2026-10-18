@@ -4,3 +4,10 @@ import { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/fuseScope
 export const isManagedByConfig = (
 	record: AuthtypesGettableAuthDomainDTO,
 ): boolean => record.managedBy === 'config';
+
+export const SSOType = new Map<string, string>([
+	['google', 'Google Auth'],
+	['saml', 'SAML'],
+	['email_password', 'Email Password'],
+	['oidc', 'OIDC'],
+]);

@@ -1,8 +1,8 @@
-import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Plus, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
-import { Modal, Table, TableColumnsType as ColumnsType } from 'antd';
+import { Modal } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useDeleteAuthDomain,
@@ -14,25 +14,17 @@ import {
 } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
-import CopyToClipboard from 'periscope/components/CopyToClipboard';
+import Panel from 'components/PageTemplate/components/Panel';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
-import { getAbsoluteUrl } from 'utils/basePath';
 
+import AuthDomainTable from './AuthDomainTable';
 import CreateEdit from './CreateEdit/CreateEdit';
-import ManagedByConfigBadge from './ManagedByConfigBadge';
-import SSOEnforcementToggle from './SSOEnforcementToggle';
-import { isManagedByConfig } from './utils';
 
 import './AuthDomain.styles.scss';
 import '../../IngestionSettings/IngestionSettings.styles.scss';
 
-export const SSOType = new Map<string, string>([
-	['google', 'Google Auth'],
-	['saml', 'SAML'],
-	['email_password', 'Email Password'],
-	['oidc', 'OIDC'],
-]);
+export { SSOType } from './utils';
 
 function AuthDomain(): JSX.Element {
 	const [record, setRecord] = useState<AuthtypesGettableAuthDomainDTO>();
@@ -112,89 +104,10 @@ function AuthDomain(): JSX.Element {
 		return errorResult;
 	}, [errorFetchingAuthDomainListResponse]);
 
-	const columns: ColumnsType<AuthtypesGettableAuthDomainDTO> = useMemo(
-		() => [
-			{
-				title: 'Domain',
-				dataIndex: 'name',
-				key: 'name',
-				width: 100,
-				render: (val, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
-					<span>
-						{val}
-						{isManagedByConfig(record) && <ManagedByConfigBadge />}
-					</span>
-				),
-			},
-			{
-				title: 'Enforce SSO',
-				dataIndex: 'enabled',
-				key: 'enabled',
-				width: 80,
-				render: (
-					value: boolean,
-					record: AuthtypesGettableAuthDomainDTO,
-				): JSX.Element => (
-					<SSOEnforcementToggle isDefaultChecked={!!value} record={record} />
-				),
-			},
-			{
-				title: 'IDP Initiated SSO URL',
-				dataIndex: 'relayState',
-				key: 'relayState',
-				width: 80,
-				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => {
-					const relayPath = record.authNProviderInfo?.relayStatePath;
-					if (!relayPath) {
-						return <span className="auth-domain-list-na">N/A</span>;
-					}
-
-					const href = getAbsoluteUrl(`/${relayPath}`);
-					return <CopyToClipboard textToCopy={href} />;
-				},
-			},
-			{
-				title: 'Action',
-				dataIndex: 'action',
-				key: 'action',
-				width: 100,
-				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
-					<section className="auth-domain-list-column-action">
-						<Button
-							size="md"
-							color="primary"
-							onClick={(): void => setRecord(record)}
-							variant="link"
-							disabled={isManagedByConfig(record)}
-							disabledTooltip="Managed by the configuration file"
-							testId="auth-domain-configure"
-						>
-							Configure {SSOType.get(record.config?.kind || '')}
-						</Button>
-						{!isManagedByConfig(record) && (
-							<Button
-								size="md"
-								color="danger"
-								onClick={(): void => showDeleteModal(record)}
-								variant="link"
-								testId="auth-domain-delete"
-							>
-								Delete
-							</Button>
-						)}
-					</section>
-				),
-			},
-		],
-		[showDeleteModal],
-	);
-
 	return (
-		<div className="auth-domain">
-			<section className="auth-domain-header">
-				<h3 className="auth-domain-title" data-testid="auth-domain-title">
-					Authenticated Domains
-				</h3>
+		<Panel
+			title={<span data-testid="auth-domain-title">Authenticated Domains</span>}
+			actions={
 				<Button
 					prefix={<Plus size="md" />}
 					onClick={(): void => {
@@ -207,25 +120,23 @@ function AuthDomain(): JSX.Element {
 				>
 					Add Domain
 				</Button>
-			</section>
-			{formattedError && <ErrorContent error={formattedError} />}
+			}
+			className="auth-domain tw:overflow-hidden"
+			bodyClassName="tw:mt-3 tw:border-t tw:border-border"
+		>
+			{formattedError && (
+				<div className="tw:p-5">
+					<ErrorContent error={formattedError} />
+				</div>
+			)}
 			{!errorFetchingAuthDomainListResponse && (
-				<Table
-					columns={columns}
-					dataSource={authDomainListResponse?.data}
-					onRow={(
-						record: AuthtypesGettableAuthDomainDTO,
-					): HTMLAttributes<HTMLElement> =>
-						// data-* attributes are valid row props but absent from the antd typing
-						({
-							'data-testid': `auth-domain-row-${record.name}`,
-						}) as unknown as HTMLAttributes<HTMLElement>
-					}
+				<AuthDomainTable
+					domains={authDomainListResponse?.data ?? []}
 					loading={
 						isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse
 					}
-					className="auth-domain-list"
-					rowKey="id"
+					onConfigure={setRecord}
+					onDelete={showDeleteModal}
 				/>
 			)}
 			{(addDomain || record) && (
@@ -278,7 +189,7 @@ function AuthDomain(): JSX.Element {
 					<strong>{activeDomain?.name}</strong>? This action cannot be undone.
 				</p>
 			</Modal>
-		</div>
+		</Panel>
 	);
 }
 

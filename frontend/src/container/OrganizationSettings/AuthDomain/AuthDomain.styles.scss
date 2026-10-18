@@ -1,34 +1,3 @@
-.auth-domain {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-
-	.auth-domain-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-
-		.auth-domain-title {
-			margin: 0;
-			font-size: 20px;
-			font-weight: 600;
-		}
-	}
-}
-
-.auth-domain-list {
-	.auth-domain-list-column-action {
-		display: flex;
-		flex-direction: row;
-		gap: 24px;
-	}
-
-	.auth-domain-list-na {
-		padding-left: 6px;
-		color: var(--text-secondary);
-	}
-}
-
 .delete-ingestion-key-modal {
 	.delete-text {
 		color: var(--text);
