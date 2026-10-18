@@ -1,16 +1,12 @@
 import { useCallback } from 'react';
-import { Space } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import UnAuthorized from 'assets/UnAuthorized';
-import { Container } from 'components/NotFound/styles';
+import SystemPagePanel from 'components/SystemPagePanel/SystemPagePanel';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { ShieldAlert } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 
 import { useAppContext } from '../../providers/App/App';
 import { USER_ROLES } from '../../types/roles';
-
-import './index.styles.scss';
 
 function UnAuthorizePage(): JSX.Element {
 	const [debugCurrentRole] = useQueryState('currentRole');
@@ -29,26 +25,30 @@ function UnAuthorizePage(): JSX.Element {
 	}, [isCloudUserVal]);
 
 	return (
-		<Container className="unauthorized-page">
-			<Space align="center" direction="vertical">
-				<UnAuthorized width={64} height={64} />
-				<Typography.Title level={3}>Access Restricted</Typography.Title>
-
+		<SystemPagePanel
+			className="unauthorized-page"
+			icon={<ShieldAlert />}
+			tone="warning"
+			title="Access Restricted"
+			description={
 				<p className="unauthorized-page__description">
 					It looks like you don&lsquo;t have permission to view this page. <br />
 					{mistakeMessage}
 					{userIsAnonymous ? (
-						<Typography.Link
-							className="contact-support-link"
-							onClick={handleContactSupportClick}
-						>
+						<>
 							{' '}
-							reach out to us.
-						</Typography.Link>
+							<button
+								type="button"
+								className="contact-support-link tw:cursor-pointer tw:text-primary tw:hover:underline"
+								onClick={handleContactSupportClick}
+							>
+								reach out to us.
+							</button>
+						</>
 					) : null}
 				</p>
-			</Space>
-		</Container>
+			}
+		/>
 	);
 }
 

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Button, Card, Modal } from 'antd';
+import { Button, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';
+import PageHeader from 'components/PageTemplate/components/PageHeader';
+import PageTemplate from 'components/PageTemplate/PageTemplate';
 import type { CreateSubscription201 } from 'api/generated/services/fuseScope.schemas';
 import { signozDocsUrl } from 'constants/docs';
 import { FeatureKeys } from 'constants/features';
@@ -12,23 +14,20 @@ import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { SubscriptionCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import {
-	ArrowUpRight,
 	Book,
 	CreditCard,
 	Github,
-	LifeBuoy,
 	MessageSquare,
 	Slack,
 	X,
 } from '@signozhq/icons';
+import { LifeBuoy } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
 
-import './Support.styles.scss';
-
-const { Title, Text } = Typography;
+import SupportChannelCard from './SupportChannelCard';
 
 interface Channel {
 	key: any;
@@ -187,46 +186,28 @@ export default function Support(): JSX.Element {
 	};
 
 	return (
-		<div className="support-page-container">
-			<header className="support-page-header">
-				<div className="support-page-header-title" data-testid="support-page-title">
-					<LifeBuoy size={16} />
-					Support
-				</div>
-			</header>
+		<PageTemplate testId="support-page">
+			<PageHeader
+				testId="support-page-title"
+				icon={<LifeBuoy />}
+				title="Support"
+				description="We are here to help in case of questions or issues. Pick the channel that is most convenient for you."
+			/>
 
-			<div className="support-page-content">
-				<div className="support-page-content-description">
-					We are here to help in case of questions or issues. Pick the channel that
-					is most convenient for you.
-				</div>
-
-				<div className="support-channels">
-					{supportChannels.map(
-						(channel): JSX.Element => (
-							<Card className="support-channel" key={channel.key}>
-								<div className="support-channel-content">
-									<Title truncate={1} level={5} className="support-channel-title">
-										{channel.icon}
-										{channel.name}{' '}
-									</Title>
-									<Text> {channel.title} </Text>
-								</div>
-
-								<div className="support-channel-action">
-									<Button
-										className="periscope-btn secondary support-channel-btn"
-										type="default"
-										onClick={(): void => handleChannelClick(channel)}
-									>
-										<Text truncate={1}>{channel.btnText} </Text>
-										{channel.isExternal && <ArrowUpRight size={14} />}
-									</Button>
-								</div>
-							</Card>
-						),
-					)}
-				</div>
+			<div className="support-channels fs-ui tw:grid tw:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] tw:gap-4 tw:font-sans tw:text-foreground">
+				{supportChannels.map(
+					(channel): JSX.Element => (
+						<SupportChannelCard
+							key={channel.key}
+							icon={channel.icon}
+							name={channel.name}
+							title={channel.title}
+							btnText={channel.btnText}
+							isExternal={channel.isExternal}
+							onClick={(): void => handleChannelClick(channel)}
+						/>
+					),
+				)}
 			</div>
 
 			{/* Add Credit Card Modal */}
@@ -270,6 +251,6 @@ export default function Support(): JSX.Element {
 					. Add a credit card to access FuseScope chat support to your workspace.
 				</Typography.Text>
 			</Modal>
-		</div>
+		</PageTemplate>
 	);
 }
