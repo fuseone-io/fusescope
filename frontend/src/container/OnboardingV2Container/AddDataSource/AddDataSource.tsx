@@ -1,40 +1,42 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
-import {
-	Button,
-	Flex,
-	Input,
-	Layout,
-	Modal,
-	Skeleton,
-	Space,
-	Steps,
-} from 'antd';
+import { Modal } from 'antd';
 import { Button as SignozButton } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { useGetGlobalConfig } from 'api/generated/services/global';
+import InviteMembers from 'components/InviteMembers/InviteMembers';
+import PageHeader from 'components/PageTemplate/components/PageHeader';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import { Skeleton } from 'components/ui/skeleton';
 import { DOCS_BASE_URL, fuseScopeDocsUrl } from 'constants/docs';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
+import {
+	ArrowRight,
+	Cable,
+	Check,
+	Search as SearchIcon,
+	X,
+} from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { isModifierKeyPressed } from 'utils/app';
 
 import fuseScopeBrandLogoUrl from '@/assets/Logos/fusescope-brand-logo.svg';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
-import InviteMembers from 'components/InviteMembers/InviteMembers';
 import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links';
+import CategoryFilters from './CategoryFilters';
+import DataSourceOption from './DataSourceOption';
+import QuestionSection from './QuestionSection';
+import RequestDataSource from './RequestDataSource';
+import SetupFlowHeader from './SetupFlowHeader';
 
 import '../OnboardingV2.styles.scss';
-
-const { Header } = Layout;
 
 interface OptionGroup {
 	id: string;
@@ -97,7 +99,7 @@ interface Entity {
 const setupStepItemsBase = [
 	{
 		title: 'Org Setup',
-		description: <Typography.Text>&nbsp;</Typography.Text>,
+		description: ' ',
 	},
 	{
 		title: 'Add your first data source',
@@ -582,673 +584,396 @@ function OnboardingAddDataSource(): JSX.Element {
 		setDataSourceRequestSubmitted(true);
 	};
 
-	const renderRequestDataSource = (): JSX.Element => {
-		const isSearchQueryEmpty = searchQuery.length === 0;
-		const isNoResultsFound = Object.keys(groupedDataSources).length === 0;
-
-		return (
-			<div className="request-data-source-container">
-				{!isNoResultsFound && (
-					<>
-						<Typography.Text>Can’t find what you’re looking for?</Typography.Text>
-
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="279"
-							height="2"
-							viewBox="0 0 279 2"
-							fill="none"
-						>
-							<path
-								d="M0 1L279 1"
-								stroke="#7190F9"
-								strokeOpacity="0.2"
-								strokeDasharray="4 4"
-							/>
-						</svg>
-
-						{!dataSourceRequestSubmitted && (
-							<Button
-								type="default"
-								className="periscope-btn request-data-source-btn secondary"
-								icon={<Goal size={16} />}
-								onClick={handleRequestDataSource}
-							>
-								Request Data Source
-							</Button>
-						)}
-
-						{dataSourceRequestSubmitted && (
-							<Button
-								type="default"
-								className="periscope-btn request-data-source-btn success"
-								icon={<Check size={16} />}
-							>
-								Request raised
-							</Button>
-						)}
-					</>
-				)}
-
-				{isNoResultsFound && !isSearchQueryEmpty && (
-					<>
-						<Typography.Text>
-							Our team can help add{' '}
-							<span className="request-data-source-search-query">{searchQuery}</span>{' '}
-							support for you
-						</Typography.Text>
-
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="279"
-							height="2"
-							viewBox="0 0 279 2"
-							fill="none"
-						>
-							<path
-								d="M0 1L279 1"
-								stroke="#7190F9"
-								strokeOpacity="0.2"
-								strokeDasharray="4 4"
-							/>
-						</svg>
-
-						{!dataSourceRequestSubmitted && (
-							<Button
-								type="default"
-								className="periscope-btn request-data-source-btn secondary"
-								icon={<Goal size={16} />}
-								onClick={handleRaiseRequest}
-							>
-								Raise request
-							</Button>
-						)}
-
-						{dataSourceRequestSubmitted && (
-							<Button
-								type="default"
-								className="periscope-btn request-data-source-btn success"
-								icon={<Check size={16} />}
-							>
-								Request raised
-							</Button>
-						)}
-					</>
-				)}
-			</div>
-		);
-	};
-
 	const progressText = `Get Started (${Math.min(
 		currentStep + 1,
 		setupStepItems.length,
 	)}/${setupStepItems.length})`;
 
+	const isNoResultsFound = Object.keys(groupedDataSources).length === 0;
+
+	const categories = [
+		{ name: 'All', count: onboardingConfigWithLinks.length },
+		...Object.keys(allGroupedDataSources).map((tag) => ({
+			name: tag,
+			count: allGroupedDataSources[tag].length,
+		})),
+	];
+
 	return (
-		<div className="onboarding-v2">
-			<Layout>
-				<div className="setup-flow__header">
-					<div className="onboarding-header-container">
-						<div className="header-left-section">
-							<X
-								size={14}
-								className="onboarding-header-container-close-icon"
+		<div className="tw:flex tw:min-h-screen tw:shrink-0 tw:flex-col tw:bg-background tw:font-sans tw:text-foreground">
+			<SetupFlowHeader
+				progressText={progressText}
+				steps={setupStepItems}
+				currentStep={currentStep}
+				onClose={(e): void => {
+					void logEvent(
+						`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CLOSE_ONBOARDING_CLICKED}`,
+						{
+							currentPage: setupStepItems[currentStep]?.title || '',
+						},
+					);
+
+					safeNavigate(ROUTES.HOME, { newTab: isModifierKeyPressed(e) });
+				}}
+				onInviteTeammate={handleShowInviteTeamMembersModal}
+				chatSupport={{
+					attributes: {
+						dataSource: selectedDataSource?.dataSource,
+						framework: selectedFramework?.label,
+						environment: selectedEnvironment?.label,
+						currentPage: setupStepItems[currentStep]?.title || '',
+					},
+					eventName: `${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.GET_HELP_BUTTON_CLICKED}`,
+				}}
+			/>
+
+			{currentStep === 1 && (
+				<div className="tw:mx-auto tw:flex tw:w-full tw:max-w-[1600px] tw:flex-col tw:gap-6 tw:px-4 tw:pt-6 tw:md:px-8">
+					<PageHeader
+						testId="onboarding-data-source-header"
+						icon={<Cable />}
+						title="Select your data source"
+						description="Select from a host of services to start sending data to FuseScope"
+					/>
+
+					<div className="tw:flex tw:items-start tw:gap-8">
+						<div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-8">
+							<div className="fs-ui tw:relative tw:font-sans">
+								<SearchIcon
+									aria-hidden
+									className="tw:pointer-events-none tw:absolute tw:top-1/2 tw:left-3 tw:size-4 tw:-translate-y-1/2 tw:text-muted-foreground"
+								/>
+								<Input
+									placeholder="Search"
+									maxLength={20}
+									onChange={handleSearch}
+									className="tw:h-10 tw:border-border tw:bg-surface-raised tw:pl-9 tw:dark:bg-surface-raised"
+								/>
+							</div>
+
+							{Object.keys(groupedDataSources).map((tag) => (
+								<section
+									key={tag}
+									className="fs-ui tw:flex tw:flex-col tw:gap-3 tw:font-sans"
+								>
+									<div className="tw:flex tw:items-center tw:gap-3">
+										<h2 className="tw:text-xs tw:font-medium tw:tracking-wide tw:text-muted-foreground tw:uppercase">
+											{tag} ({groupedDataSources[tag].length})
+										</h2>
+										<span aria-hidden className="tw:h-px tw:flex-1 tw:bg-border" />
+									</div>
+									<div className="tw:grid tw:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] tw:gap-2">
+										{groupedDataSources[tag].map((dataSource) => (
+											<DataSourceOption
+												key={dataSource.dataSource}
+												label={dataSource.label}
+												imgUrl={dataSource.imgUrl}
+												selected={selectedDataSource?.label === dataSource.label}
+												onClick={(): void => handleSelectDataSource(dataSource)}
+											/>
+										))}
+									</div>
+								</section>
+							))}
+
+							{isNoResultsFound && (
+								<p className="fs-ui tw:font-sans tw:text-xs tw:tracking-wide tw:text-muted-foreground tw:uppercase">
+									No results for {searchQuery} :/
+								</p>
+							)}
+
+							{!selectedDataSource && (
+								<RequestDataSource
+									searchQuery={searchQuery}
+									hasResults={!isNoResultsFound}
+									submitted={dataSourceRequestSubmitted}
+									onRequest={handleRequestDataSource}
+									onRaiseRequest={handleRaiseRequest}
+								/>
+							)}
+						</div>
+
+						<aside className="tw:sticky tw:top-[136px] tw:max-h-[calc(100vh-152px)] tw:w-60 tw:shrink-0 tw:overflow-y-auto">
+							<CategoryFilters
+								categories={categories}
+								selectedCategory={selectedCategory}
+								onSelect={handleFilterByCategory}
+							/>
+						</aside>
+					</div>
+
+					{selectedDataSource?.question?.desc &&
+						!isEmpty(selectedDataSource?.question) && (
+							<QuestionSection
+								ref={question2Ref}
+								step={2}
+								answered={!!selectedFramework}
+								title={selectedDataSource.question.desc}
+								helpText={selectedDataSource.question.helpText}
+								helpLink={selectedDataSource.question.helpLink}
+								helpLinkText={selectedDataSource.question.helpLinkText}
+							>
+								{selectedDataSource.question.options.map((option) => (
+									<DataSourceOption
+										key={option.label}
+										shape="pill"
+										label={option.label}
+										imgUrl={option.imgUrl}
+										selected={selectedFramework?.label === option.label}
+										onClick={(): void => {
+											if (selectedDataSource?.question?.entityID === 'environment') {
+												handleSelectEnvironment(option, option.link);
+											} else {
+												handleSelectFramework(option);
+											}
+										}}
+									/>
+								))}
+							</QuestionSection>
+						)}
+
+					{selectedFramework?.question?.desc &&
+						!isEmpty(selectedFramework?.question) && (
+							<QuestionSection
+								ref={question3Ref}
+								step={3}
+								answered={!!selectedEnvironment}
+								title={selectedFramework.question.desc}
+								helpText={selectedFramework.question.helpText}
+								helpLink={selectedFramework.question.helpLink}
+								helpLinkText={selectedFramework.question.helpLinkText}
+							>
+								{selectedFramework.question.options.map((option) => (
+									<DataSourceOption
+										key={option.label}
+										shape="pill"
+										label={option.label}
+										imgUrl={option.imgUrl || fuseScopeBrandLogoUrl}
+										selected={selectedEnvironment?.label === option.label}
+										onClick={(): void => handleSelectEnvironment(option, option.link)}
+									/>
+								))}
+							</QuestionSection>
+						)}
+
+					{!hasMoreQuestions && showConfigureProduct && (
+						<div
+							ref={configureProdRef}
+							className="fs-ui tw:sticky tw:bottom-0 tw:z-10 tw:-mx-4 tw:border-t tw:border-border tw:bg-background tw:px-4 tw:py-3 tw:font-sans tw:md:-mx-8 tw:md:px-8"
+						>
+							<Button
+								disabled={!selectedDataSource}
 								onClick={(e): void => {
 									void logEvent(
-										`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CLOSE_ONBOARDING_CLICKED}`,
+										`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONFIGURED_PRODUCT}`,
 										{
+											dataSource: selectedDataSource?.label,
+											framework: selectedFramework?.label,
+											environment: selectedEnvironment?.label,
+										},
+									);
+
+									const currentEntity =
+										selectedEnvironment || selectedFramework || selectedDataSource;
+
+									if (currentEntity?.internalRedirect && currentEntity?.link) {
+										safeNavigate(currentEntity.link, {
+											newTab: isModifierKeyPressed(e),
+										});
+									} else {
+										handleUpdateCurrentStep(2);
+									}
+								}}
+							>
+								Next: Configure your product
+								<ArrowRight aria-hidden />
+							</Button>
+						</div>
+					)}
+				</div>
+			)}
+
+			{currentStep === 2 && (
+				<div className="tw:flex tw:h-[calc(100vh-121px)] tw:gap-4 tw:px-4 tw:py-4 tw:md:px-8">
+					<div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-4">
+						<div className="tw:relative tw:flex-1 tw:overflow-hidden tw:rounded-lg tw:border tw:border-border tw:bg-surface-raised">
+							<div
+								aria-hidden
+								className="tw:absolute tw:inset-0 tw:mx-auto tw:flex tw:w-1/2 tw:flex-col tw:justify-center tw:gap-3"
+							>
+								<Skeleton className="tw:size-10" />
+								<Skeleton className="tw:h-5 tw:w-3/4" />
+								<Skeleton className="tw:h-5 tw:w-full" />
+								<Skeleton className="tw:h-5 tw:w-full" />
+							</div>
+							<iframe
+								title="docs"
+								src={docsUrl}
+								className="tw:relative tw:z-[1] tw:size-full tw:border-0"
+								referrerPolicy="unsafe-url"
+								loading="lazy"
+								allow="clipboard-write; encrypted-media; web-share"
+								allowFullScreen
+							/>
+						</div>
+
+						<div className="fs-ui tw:flex tw:gap-2 tw:font-sans">
+							<Button
+								variant="outline"
+								className="tw:w-28 tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
+								onClick={(): void => {
+									void logEvent(
+										`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BACK_BUTTON_CLICKED}`,
+										{
+											dataSource: selectedDataSource?.label,
+											framework: selectedFramework?.label,
+											environment: selectedEnvironment?.label,
 											currentPage: setupStepItems[currentStep]?.title || '',
 										},
 									);
 
-									safeNavigate(ROUTES.HOME, { newTab: isModifierKeyPressed(e) });
+									handleUpdateCurrentStep(1);
 								}}
-							/>
-							<Typography.Text>{progressText}</Typography.Text>
-						</div>
-
-						<div className="header-right-section">
-							<Button
-								type="default"
-								className="periscope-btn invite-teammate-btn outlined"
-								onClick={handleShowInviteTeamMembersModal}
-								icon={<UserPlus size={16} />}
 							>
-								Invite a teammate
+								Back
 							</Button>
+							<Button
+								className="tw:w-28"
+								onClick={(e): void => {
+									void logEvent(
+										`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONTINUE_BUTTON_CLICKED}`,
+										{
+											dataSource: selectedDataSource?.label,
+											framework: selectedFramework?.label,
+											environment: selectedEnvironment?.label,
+											currentPage: setupStepItems[currentStep]?.title || '',
+										},
+									);
 
-							<LaunchChatSupport
-								attributes={{
-									dataSource: selectedDataSource?.dataSource,
-									framework: selectedFramework?.label,
-									environment: selectedEnvironment?.label,
-									currentPage: setupStepItems[currentStep]?.title || '',
+									handleFilterByCategory('All');
+									handleUpdateCurrentStep(3, e);
 								}}
-								eventName={`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.GET_HELP_BUTTON_CLICKED}`}
-								message=""
-								buttonText="Contact Support"
-								className="periscope-btn get-help-btn outlined"
-							/>
+							>
+								Continue
+							</Button>
 						</div>
 					</div>
+
+					<aside className="tw:w-[30%] tw:max-w-[480px] tw:shrink-0 tw:overflow-y-auto">
+						<OnboardingIngestionDetails />
+					</aside>
 				</div>
-				<Header
-					className="setup-flow__header setup-flow__header--sticky"
-					style={{ position: 'sticky', top: 0, zIndex: 1, width: '100%' }}
-				>
-					<Steps
-						size="small"
-						className="setup-flow__steps"
-						current={currentStep}
-						items={setupStepItems}
+			)}
+
+			<Modal
+				className="invite-team-member-modal"
+				title={<span className="title">Invite a team member</span>}
+				open={showInviteTeamMembersModal}
+				closable
+				onCancel={(): void => setShowInviteTeamMembersModal(false)}
+				width="640px"
+				footer={null}
+				destroyOnClose
+			>
+				<div className="invite-team-member-modal-content">
+					<InviteMembers
+						onSuccess={(): void => {
+							void logEvent(
+								`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SUCCESS}`,
+								{},
+							);
+							setShowInviteTeamMembersModal(false);
+
+							toast.success('Invites sent successfully', { position: 'top-center' });
+						}}
+						onPartialSuccess={(): void => {
+							void logEvent(
+								`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_PARTIAL_SUCCESS}`,
+								{},
+							);
+						}}
+						onAllFailed={(): void => {
+							void logEvent(
+								`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_FAILED}`,
+								{},
+							);
+						}}
+						renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
+							<div className="invite-team-member-modal-footer">
+								<SignozButton
+									size="md"
+									variant="solid"
+									color="secondary"
+									onClick={(): void => setShowInviteTeamMembersModal(false)}
+								>
+									Cancel
+								</SignozButton>
+								<SignozButton
+									size="md"
+									color="primary"
+									variant="solid"
+									onClick={(): void => {
+										void logEvent(
+											`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SEND_CLICKED}`,
+											{},
+										);
+										void submit();
+									}}
+									disabled={!canSubmit}
+									disabledTooltip="Add at least one team member to invite"
+									loading={isSubmitting}
+									suffix={<ArrowRight size={14} />}
+								>
+									Send Invites
+								</SignozButton>
+							</div>
+						)}
 					/>
-				</Header>
-
-				<div className="onboarding-product-setup-container">
-					<div
-						className={`onboarding-product-setup-container_left-section ${
-							currentStep === 1 ? 'step-id-1' : 'step-id-2'
-						}`}
-					>
-						<div className="perlian-bg" />
-
-						{currentStep === 1 && (
-							<div className="onboarding-add-data-source-container step-1">
-								<div className="onboarding-data-sources-container">
-									<div className="onboarding-question-header">
-										<div className="question-title-container">
-											<Typography.Title
-												level={3}
-												className="question-title onboarding-question"
-											>
-												Select your data source
-											</Typography.Title>
-											<Typography.Text className="question-sub-title">
-												Select from a host of services to start sending data to FuseScope
-											</Typography.Text>
-										</div>
-									</div>
-
-									<div className="questionnaire-container">
-										<div
-											className={`question-1 question-block data-sources-and-filters-container ${
-												selectedDataSource ? 'answered' : ''
-											}`}
-										>
-											<div className="data-sources-container">
-												<div className="onboarding-data-source-search">
-													<Input
-														placeholder="Search"
-														maxLength={20}
-														onChange={handleSearch}
-														addonAfter={<Search size="md" />}
-													/>
-												</div>
-
-												{Object.keys(groupedDataSources).map((tag) => (
-													<div key={tag} className="onboarding-data-source-group">
-														<Typography.Title level={5} className="onboarding-title">
-															{tag} ({groupedDataSources[tag].length})
-														</Typography.Title>
-														<div className="onboarding-data-source-list">
-															{groupedDataSources[tag].map((dataSource) => (
-																<Button
-																	key={dataSource.dataSource}
-																	className={`onboarding-data-source-button ${
-																		selectedDataSource?.label === dataSource.label
-																			? 'selected'
-																			: ''
-																	}`}
-																	type="primary"
-																	onClick={(): void => handleSelectDataSource(dataSource)}
-																>
-																	<img
-																		src={dataSource.imgUrl}
-																		alt={dataSource.label}
-																		className="onboarding-data-source-button-img"
-																	/>
-
-																	{dataSource.label}
-																</Button>
-															))}
-														</div>
-													</div>
-												))}
-
-												{Object.keys(groupedDataSources).length === 0 && (
-													<div className="no-results-found-container">
-														<Typography.Text>No results for {searchQuery} :/</Typography.Text>
-													</div>
-												)}
-
-												{!selectedDataSource && renderRequestDataSource()}
-											</div>
-
-											<div className="data-source-categories-filter-container">
-												<div className="onboarding-data-source-category">
-													<Typography.Title level={5} className="onboarding-filters-title">
-														{' '}
-														Filters{' '}
-													</Typography.Title>
-
-													<div
-														key="all"
-														className="onboarding-data-source-category-item"
-														onClick={(): void => handleFilterByCategory('All')}
-														role="button"
-														tabIndex={0}
-														onKeyDown={(e): void => {
-															if (e.key === 'Enter' || e.key === ' ') {
-																handleFilterByCategory('All');
-															}
-														}}
-													>
-														<Typography.Title
-															level={5}
-															className={`onboarding-filters-item-title ${
-																selectedCategory === 'All' ? 'selected' : ''
-															}`}
-														>
-															All
-														</Typography.Title>
-
-														<div className="line-divider" />
-
-														<Typography.Text className="onboarding-filters-item-count">
-															{onboardingConfigWithLinks.length}
-														</Typography.Text>
-													</div>
-
-													{Object.keys(allGroupedDataSources).map((tag) => (
-														<div
-															key={tag}
-															className="onboarding-data-source-category-item"
-															onClick={(): void => handleFilterByCategory(tag)}
-															role="button"
-															tabIndex={0}
-															onKeyDown={(e): void => {
-																if (e.key === 'Enter' || e.key === ' ') {
-																	handleFilterByCategory(tag);
-																}
-															}}
-														>
-															<Typography.Title
-																level={5}
-																className={`onboarding-filters-item-title ${
-																	selectedCategory === tag ? 'selected' : ''
-																}`}
-															>
-																{tag}
-															</Typography.Title>
-
-															<div className="line-divider" />
-
-															<Typography.Text className="onboarding-filters-item-count">
-																{allGroupedDataSources[tag].length}
-															</Typography.Text>
-														</div>
-													))}
-												</div>
-											</div>
-										</div>
-										{selectedDataSource &&
-											selectedDataSource?.question &&
-											!isEmpty(selectedDataSource?.question) && (
-												<div
-													className={`question-2 question-block ${
-														selectedFramework ? 'answered' : ''
-													}`}
-													ref={question2Ref}
-												>
-													{selectedDataSource?.question?.desc && (
-														<>
-															<div className="question-title-container">
-																<Typography.Title
-																	level={3}
-																	className="question-title onboarding-text"
-																>
-																	{selectedDataSource?.question?.desc}
-																</Typography.Title>
-																{selectedDataSource?.question?.helpText && (
-																	<Typography.Text className="question-help-text">
-																		{selectedDataSource?.question?.helpText}
-																		{selectedDataSource?.question?.helpLink && (
-																			<a
-																				href={`${DOCS_BASE_URL}${selectedDataSource?.question?.helpLink}`}
-																				target="_blank"
-																				rel="noopener noreferrer"
-																				className="question-help-link"
-																			>
-																				{selectedDataSource?.question?.helpLinkText ||
-																					'Learn more →'}
-																			</a>
-																		)}
-																	</Typography.Text>
-																)}
-															</div>
-
-															<div className="onboarding-data-source-options">
-																{selectedDataSource?.question?.options.map((option) => (
-																	<Button
-																		key={option.label}
-																		className={`onboarding-data-source-button ${
-																			selectedFramework?.label === option.label ? 'selected' : ''
-																		}`}
-																		type="primary"
-																		onClick={(): void => {
-																			if (
-																				selectedDataSource?.question?.entityID === 'environment'
-																			) {
-																				handleSelectEnvironment(option, option.link);
-																			} else {
-																				handleSelectFramework(option);
-																			}
-																		}}
-																	>
-																		{option.imgUrl && (
-																			<img
-																				src={option.imgUrl || fuseScopeBrandLogoUrl}
-																				alt={option.label}
-																				className="onboarding-data-source-button-img"
-																			/>
-																		)}
-
-																		{option.label}
-																	</Button>
-																))}
-															</div>
-														</>
-													)}
-												</div>
-											)}
-										{selectedFramework &&
-											selectedFramework?.question &&
-											!isEmpty(selectedFramework?.question) && (
-												<div
-													className={`question-3 question-block ${
-														selectedEnvironment ? 'answered' : ''
-													}`}
-													ref={question3Ref}
-												>
-													{selectedFramework?.question?.desc && (
-														<>
-															<div className="question-title-container">
-																<Typography.Title
-																	level={3}
-																	className="question-title onboarding-text"
-																>
-																	{selectedFramework?.question?.desc}
-																</Typography.Title>
-																{selectedFramework?.question?.helpText && (
-																	<Typography.Text className="question-help-text">
-																		{selectedFramework?.question?.helpText}
-																		{selectedFramework?.question?.helpLink && (
-																			<a
-																				href={`${DOCS_BASE_URL}${selectedFramework?.question?.helpLink}`}
-																				target="_blank"
-																				rel="noopener noreferrer"
-																				className="question-help-link"
-																			>
-																				{selectedFramework?.question?.helpLinkText ||
-																					'Learn more →'}
-																			</a>
-																		)}
-																	</Typography.Text>
-																)}
-															</div>
-
-															<div className="onboarding-data-source-options">
-																{selectedFramework?.question?.options.map((option) => (
-																	<Button
-																		key={option.label}
-																		className={`onboarding-data-source-button ${
-																			selectedEnvironment?.label === option.label ? 'selected' : ''
-																		}`}
-																		type="primary"
-																		onClick={(): void =>
-																			handleSelectEnvironment(option, option.link)
-																		}
-																	>
-																		<img
-																			src={option.imgUrl || fuseScopeBrandLogoUrl}
-																			alt={option.label}
-																			className="onboarding-data-source-button-img"
-																		/>
-																		{option.label}
-																	</Button>
-																))}
-															</div>
-														</>
-													)}
-												</div>
-											)}
-										{!hasMoreQuestions && showConfigureProduct && (
-											<div className="questionaire-footer" ref={configureProdRef}>
-												<Button
-													type="primary"
-													disabled={!selectedDataSource}
-													shape="round"
-													onClick={(e): void => {
-														void logEvent(
-															`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONFIGURED_PRODUCT}`,
-															{
-																dataSource: selectedDataSource?.label,
-																framework: selectedFramework?.label,
-																environment: selectedEnvironment?.label,
-															},
-														);
-
-														const currentEntity =
-															selectedEnvironment || selectedFramework || selectedDataSource;
-
-														if (currentEntity?.internalRedirect && currentEntity?.link) {
-															safeNavigate(currentEntity.link, {
-																newTab: isModifierKeyPressed(e),
-															});
-														} else {
-															handleUpdateCurrentStep(2);
-														}
-													}}
-												>
-													Next: Configure your product
-												</Button>
-											</div>
-										)}
-									</div>
-								</div>
-							</div>
-						)}
-
-						{currentStep === 2 && (
-							<div className="onboarding-configure-container step-2">
-								<div className="configure-product-docs-section">
-									<div className="loading-container">
-										<Flex gap="middle" vertical>
-											<Space align="end">
-												<Skeleton.Avatar
-													style={{ width: 40, height: 40 }}
-													shape="square"
-													active
-												/>
-											</Space>
-											<Space align="start">
-												<Skeleton.Button active size="small" block />
-												<Skeleton.Input active size="small" />
-												<Skeleton.Input active size="small" />
-											</Space>
-
-											<Skeleton.Button active size="small" block />
-											<Skeleton.Button active size="small" block />
-										</Flex>
-									</div>
-									<iframe
-										title="docs"
-										src={docsUrl}
-										className="configure-product-docs-section-iframe"
-										referrerPolicy="unsafe-url"
-										loading="lazy"
-										allow="clipboard-write; encrypted-media; web-share"
-										allowFullScreen
-									/>
-								</div>
-
-								<div className="onboarding-footer">
-									<Button
-										type="default"
-										shape="round"
-										onClick={(): void => {
-											void logEvent(
-												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BACK_BUTTON_CLICKED}`,
-												{
-													dataSource: selectedDataSource?.label,
-													framework: selectedFramework?.label,
-													environment: selectedEnvironment?.label,
-													currentPage: setupStepItems[currentStep]?.title || '',
-												},
-											);
-
-											handleUpdateCurrentStep(1);
-										}}
-									>
-										Back
-									</Button>
-									<Button
-										type="primary"
-										shape="round"
-										onClick={(e): void => {
-											void logEvent(
-												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONTINUE_BUTTON_CLICKED}`,
-												{
-													dataSource: selectedDataSource?.label,
-													framework: selectedFramework?.label,
-													environment: selectedEnvironment?.label,
-													currentPage: setupStepItems[currentStep]?.title || '',
-												},
-											);
-
-											handleFilterByCategory('All');
-											handleUpdateCurrentStep(3, e);
-										}}
-									>
-										Continue
-									</Button>
-								</div>
-							</div>
-						)}
-					</div>
-
-					<div className="onboarding-product-setup-container_right-section">
-						{currentStep === 2 && <OnboardingIngestionDetails />}
-					</div>
 				</div>
+			</Modal>
 
-				<Modal
-					className="invite-team-member-modal"
-					title={<span className="title">Invite a team member</span>}
-					open={showInviteTeamMembersModal}
-					closable
-					onCancel={(): void => setShowInviteTeamMembersModal(false)}
-					width="640px"
-					footer={null}
-					destroyOnClose
-				>
-					<div className="invite-team-member-modal-content">
-						<InviteMembers
-							onSuccess={(): void => {
-								void logEvent(
-									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SUCCESS}`,
-									{},
-								);
-								setShowInviteTeamMembersModal(false);
-
-								toast.success('Invites sent successfully', { position: 'top-center' });
-							}}
-							onPartialSuccess={(): void => {
-								void logEvent(
-									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_PARTIAL_SUCCESS}`,
-									{},
-								);
-							}}
-							onAllFailed={(): void => {
-								void logEvent(
-									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_FAILED}`,
-									{},
-								);
-							}}
-							renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
-								<div className="invite-team-member-modal-footer">
-									<SignozButton
-										size="md"
-										variant="solid"
-										color="secondary"
-										onClick={(): void => setShowInviteTeamMembersModal(false)}
-									>
-										Cancel
-									</SignozButton>
-									<SignozButton
-										size="md"
-										color="primary"
-										variant="solid"
-										onClick={(): void => {
-											void logEvent(
-												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SEND_CLICKED}`,
-												{},
-											);
-											void submit();
-										}}
-										disabled={!canSubmit}
-										disabledTooltip="Add at least one team member to invite"
-										loading={isSubmitting}
-										suffix={<ArrowRight size={14} />}
-									>
-										Send Invites
-									</SignozButton>
-								</div>
-							)}
-						/>
-					</div>
-				</Modal>
-
-				<Modal
-					className="request-data-source-modal"
-					title={<span className="title">Request Data Source</span>}
-					open={showRequestDataSourceModal}
-					closable
-					onCancel={(): void => setShowRequestDataSourceModal(false)}
-					width="640px"
-					footer={[
+			<Modal
+				className="request-data-source-modal"
+				title={<span className="title">Request Data Source</span>}
+				open={showRequestDataSourceModal}
+				closable
+				onCancel={(): void => setShowRequestDataSourceModal(false)}
+				width="640px"
+				footer={
+					<div className="fs-ui tw:flex tw:justify-end tw:gap-2 tw:font-sans">
 						<Button
-							type="default"
-							className="periscope-btn outlined"
-							key="back"
+							variant="outline"
+							className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
 							onClick={(): void => setShowRequestDataSourceModal(false)}
-							icon={<X size={16} />}
 						>
+							<X aria-hidden />
 							Cancel
-						</Button>,
+						</Button>
 						<Button
-							key="submit"
-							type="primary"
-							className="periscope-btn primary"
 							disabled={dataSourceRequest.length <= 0}
 							onClick={handleSubmitDataSourceRequest}
-							icon={<Check size={16} />}
 						>
+							<Check aria-hidden />
 							Submit request
-						</Button>,
-					]}
-					destroyOnClose
-				>
-					<div className="request-data-source-modal-content">
-						<Typography.Text>Enter your request</Typography.Text>
-						<Input
-							placeholder="Eg: Kotlin"
-							className="request-data-source-modal-input"
-							onChange={(e): void => setDataSourceRequest(e.target.value)}
-						/>
+						</Button>
 					</div>
-				</Modal>
-			</Layout>
+				}
+				destroyOnClose
+			>
+				<div className="fs-ui tw:flex tw:flex-col tw:gap-2 tw:py-3 tw:font-sans">
+					<label
+						htmlFor="request-data-source-input"
+						className="tw:text-sm tw:text-foreground"
+					>
+						Enter your request
+					</label>
+					<Input
+						id="request-data-source-input"
+						placeholder="Eg: Kotlin"
+						onChange={(e): void => setDataSourceRequest(e.target.value)}
+					/>
+				</div>
+			</Modal>
 		</div>
 	);
 }

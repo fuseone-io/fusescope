@@ -1,6 +1,4 @@
 import { useMemo } from 'react';
-import { ArrowRight } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import InviteMembers from 'components/InviteMembers/InviteMembers';
 import { InviteMemberRow, InviteResult } from 'components/InviteMembers/types';
@@ -8,9 +6,8 @@ import { useRoles } from 'components/RolesSelect/RolesSelect';
 import { useNotifications } from 'hooks/useNotifications';
 import { getBaseUrl } from 'utils/basePath';
 
-import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
-
-import './InviteTeamMembers.styles.scss';
+import OnboardingNavButton from '../components/OnboardingNavButton';
+import QuestionStep from '../components/QuestionStep';
 
 interface TeamMember {
 	email: string;
@@ -95,64 +92,51 @@ function InviteTeamMembers({
 	};
 
 	return (
-		<div className="questions-container">
-			<OnboardingQuestionHeader
-				title="Invite your team"
-				subtitle="FuseScope is a lot more useful with collaborators on board."
-			/>
+		<QuestionStep
+			title="Invite your team"
+			subtitle="FuseScope is a lot more useful with collaborators on board."
+		>
+			<p className="fs-ui tw:text-sm tw:font-semibold tw:text-foreground">
+				Invite your team to the FuseScope workspace
+			</p>
 
-			<div className="questions-form-container">
-				<div className="questions-form invite-team-members-form">
-					<div className="form-group">
-						<div className="question-label">
-							Invite your team to the FuseScope workspace
+			<InviteMembers
+				onSuccess={handleSuccess}
+				onPartialSuccess={handlePartialSuccess}
+				onAllFailed={handleAllFailed}
+				showHeader
+				renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => {
+					const isButtonDisabled = isSubmitting || isLoading;
+
+					return (
+						<div className="fs-ui tw:flex tw:w-full tw:flex-col tw:gap-2 tw:font-sans">
+							<OnboardingNavButton
+								onClick={(): void => {
+									void submit();
+								}}
+								loading={isButtonDisabled}
+								disabled={!canSubmit}
+								disabledTooltip="Add at least one team member to invite"
+								testId="send-invites-button"
+								showArrow
+							>
+								Send Invites
+							</OnboardingNavButton>
+							<OnboardingNavButton
+								variant="secondary"
+								onClick={handleDoLater}
+								loading={isLoading}
+								disabled={isSubmitting}
+								disabledTooltip="Wait for the invites to be sent"
+								testId="do-later-button"
+							>
+								I&apos;ll do this later
+							</OnboardingNavButton>
 						</div>
-
-						<InviteMembers
-							onSuccess={handleSuccess}
-							onPartialSuccess={handlePartialSuccess}
-							onAllFailed={handleAllFailed}
-							showHeader
-							renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => {
-								const isButtonDisabled = isSubmitting || isLoading;
-
-								return (
-									<div className="onboarding-buttons-container">
-										<Button
-											size="md"
-											variant="solid"
-											color="primary"
-											width="100%"
-											onClick={submit}
-											loading={isButtonDisabled}
-											disabled={!canSubmit}
-											disabledTooltip="Add at least one team member to invite"
-											testId="send-invites-button"
-											suffix={<ArrowRight size={12} />}
-										>
-											Send Invites
-										</Button>
-										<Button
-											size="md"
-											variant="ghost"
-											color="secondary"
-											width="100%"
-											onClick={handleDoLater}
-											loading={isLoading}
-											disabled={isSubmitting}
-											disabledTooltip="Wait for the invites to be sent"
-											testId="do-later-button"
-										>
-											I&apos;ll do this later
-										</Button>
-									</div>
-								);
-							}}
-						/>
-					</div>
-				</div>
-			</div>
-		</div>
+					);
+				}}
+			/>
+		</QuestionStep>
 	);
 }
 

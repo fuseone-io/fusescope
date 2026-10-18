@@ -25,8 +25,6 @@ import OptimiseSignozNeeds, {
 } from './OptimiseSignozNeeds/OptimiseSignozNeeds';
 import OrgQuestions, { OrgDetails } from './OrgQuestions/OrgQuestions';
 
-import './OnboardingQuestionaire.styles.scss';
-
 export const showErrorNotification = (
 	notifications: NotificationInstance,
 	err: Error,
@@ -180,8 +178,8 @@ function OnboardingQuestionaire(): JSX.Element {
 	};
 
 	return (
-		<div className="onboarding-questionaire-container">
-			<div className="onboarding-questionaire-content">
+		<div className="tw:mx-auto tw:flex tw:min-h-full tw:w-full tw:flex-col tw:items-center tw:justify-center tw:py-8">
+			<div className="tw:flex tw:w-full tw:max-w-[576px] tw:flex-col tw:items-center">
 				{currentStep === 1 && (
 					<OrgQuestions
 						orgDetails={{

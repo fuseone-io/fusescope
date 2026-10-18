@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
-import { RadioGroup } from '@signozhq/ui/radio-group';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight } from '@signozhq/icons';
+import { Input } from 'components/ui/input';
 
-import '../OnboardingQuestionaire.styles.scss';
+import ChoiceChip from '../components/ChoiceChip';
+import OnboardingNavButton from '../components/OnboardingNavButton';
+import QuestionField from '../components/QuestionField';
+import QuestionStep from '../components/QuestionStep';
 
 export interface OrgDetails {
 	usesObservability: boolean | null;
@@ -32,6 +31,13 @@ const observabilityTools = {
 	None: 'None/Starting fresh',
 	Others: 'Others',
 };
+
+const OTEL_OPTIONS = [
+	{ value: 'yes', label: 'Yes' },
+	{ value: 'no', label: 'No' },
+];
+
+const CHOICE_GRID = 'tw:grid tw:grid-cols-1 tw:gap-2 tw:sm:grid-cols-2';
 
 const migrationTimelineOptions = {
 	lessThanMonth: 'Less than a month',
@@ -136,94 +142,84 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 	};
 
 	return (
-		<div className="questions-container">
-			<div className="onboarding-header-section">
-				<div className="onboarding-header-icon">🎉</div>
-				<Typography.Title level={4} className="onboarding-header-title">
-					Welcome to FuseScope Cloud
-				</Typography.Title>
-				<Typography.Text className="onboarding-header-subtitle">
-					Let&apos;s get you started
-				</Typography.Text>
-			</div>
-
-			<div className="questions-form-container">
-				<div className="questions-form">
-					<div className="form-group">
-						<label className="question" htmlFor="observabilityTool">
-							Which observability tool do you currently use?
-						</label>
-						<RadioGroup
-							color="primary"
-							textOverflow="visible"
-							value={observabilityTool}
-							onChange={handleObservabilityToolChange}
-							items={Object.entries(observabilityTools).map(([tool, label]) => ({
-								value: tool,
-								label:
-									tool === 'Others' && observabilityTool === 'Others' ? (
-										<Input
-											type="text"
-											className="onboarding-questionaire-other-input"
-											placeholder="What tool do you currently use?"
-											value={otherTool || ''}
-											autoFocus
-											style={{ userSelect: 'text' }}
-											onKeyDown={(e): void => e.stopPropagation()}
-											onChange={(e): void => setOtherTool(e.target.value)}
-										/>
-									) : (
-										label
-									),
-							}))}
-						/>
-					</div>
-
-					{showMigrationQuestion && (
-						<div className="form-group">
-							<div className="question">
-								What is your timeline for migrating to FuseScope?
-							</div>
-							<RadioGroup
-								color="primary"
-								value={migrationTimeline}
-								onChange={setMigrationTimeline}
-								items={Object.entries(migrationTimelineOptions).map(([key, label]) => ({
-									value: key,
-									label,
-								}))}
-							/>
-						</div>
-					)}
-
-					<div className="form-group">
-						<div className="question">Do you already use OpenTelemetry?</div>
-						<RadioGroup
-							color="primary"
-							value={usesOtel === true ? 'yes' : usesOtel === false ? 'no' : null}
-							onChange={handleOtelChange}
-							items={[
-								{ value: 'yes', label: 'Yes' },
-								{ value: 'no', label: 'No' },
-							]}
-						/>
-					</div>
-				</div>
-
-				<Button
-					size="md"
-					variant="solid"
-					color="primary"
-					width="100%"
+		<QuestionStep
+			icon="🎉"
+			title="Welcome to FuseScope Cloud"
+			subtitle="Let's get you started"
+			footer={
+				<OnboardingNavButton
 					onClick={handleNext}
 					disabled={isNextDisabled}
 					disabledTooltip={getNextDisabledReason()}
-					suffix={<ArrowRight size={12} />}
+					showArrow
 				>
 					Next
-				</Button>
-			</div>
-		</div>
+				</OnboardingNavButton>
+			}
+		>
+			<QuestionField question="Which observability tool do you currently use?">
+				<div className={CHOICE_GRID}>
+					{Object.entries(observabilityTools).map(([tool, label]) => (
+						<ChoiceChip
+							key={tool}
+							type="radio"
+							name="observabilityTool"
+							value={tool}
+							checked={observabilityTool === tool}
+							onChange={(): void => handleObservabilityToolChange(tool)}
+						>
+							{label}
+						</ChoiceChip>
+					))}
+				</div>
+				{observabilityTool === 'Others' && (
+					<Input
+						type="text"
+						className="tw:h-10"
+						placeholder="What tool do you currently use?"
+						value={otherTool || ''}
+						autoFocus
+						onChange={(e): void => setOtherTool(e.target.value)}
+					/>
+				)}
+			</QuestionField>
+
+			{showMigrationQuestion && (
+				<QuestionField question="What is your timeline for migrating to FuseScope?">
+					<div className={CHOICE_GRID}>
+						{Object.entries(migrationTimelineOptions).map(([key, label]) => (
+							<ChoiceChip
+								key={key}
+								type="radio"
+								name="migrationTimeline"
+								value={key}
+								checked={migrationTimeline === key}
+								onChange={(): void => setMigrationTimeline(key)}
+							>
+								{label}
+							</ChoiceChip>
+						))}
+					</div>
+				</QuestionField>
+			)}
+
+			<QuestionField question="Do you already use OpenTelemetry?">
+				<div className={CHOICE_GRID}>
+					{OTEL_OPTIONS.map(({ value, label }) => (
+						<ChoiceChip
+							key={value}
+							type="radio"
+							name="usesOtel"
+							value={value}
+							checked={usesOtel === (value === 'yes')}
+							onChange={(): void => handleOtelChange(value)}
+						>
+							{label}
+						</ChoiceChip>
+					))}
+				</div>
+			</QuestionField>
+		</QuestionStep>
 	);
 }
 
