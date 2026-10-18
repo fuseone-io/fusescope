@@ -1,4 +1,25 @@
 .trace-explorer-header {
+	.llm-explorer-toolbar {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
+		padding: 12px 24px 4px;
+	}
+
+	.llm-explorer-toolbar-right {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+
+		.right-toolbar-actions-container {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+	}
+
 	.trace-explorer-run-query {
 		display: flex;
 		flex-direction: row-reverse;

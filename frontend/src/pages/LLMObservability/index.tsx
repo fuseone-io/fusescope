@@ -1,7 +1,8 @@
 import { useLocation } from 'react-router-dom';
-import RouteTab from 'components/RouteTab';
+import ModuleTabsLayout from 'components/PageTemplate/components/ModuleTabsLayout';
 import { TabRoutes } from 'components/RouteTab/types';
 import history from 'lib/history';
+import { Brain } from 'lucide-react';
 
 import {
 	AttributeMapping,
@@ -9,8 +10,6 @@ import {
 	ModelPricing,
 	Overview,
 } from './constants';
-
-import './LLMObservability.styles.scss';
 
 const routes: TabRoutes[] = [
 	Overview,
@@ -23,12 +22,14 @@ function LLMObservabilityPage(): JSX.Element {
 	const { pathname } = useLocation();
 
 	return (
-		<div
-			className="ai-observability-module-container"
-			data-testid="llm-observability-page"
-		>
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
-		</div>
+		<ModuleTabsLayout
+			title="AI Observability"
+			icon={<Brain />}
+			routes={routes}
+			activeKey={pathname}
+			history={history}
+			testId="llm-observability-page"
+		/>
 	);
 }
 

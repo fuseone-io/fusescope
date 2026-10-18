@@ -12,7 +12,6 @@ import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -200,21 +199,16 @@ function Explorer(): JSX.Element {
 			>
 				<div className="trace-explorer">
 					<div className="trace-explorer-header">
-						<Toolbar
-							showAutoRefresh
-							leftActions={
-								<LeftToolbarActions
-									showFilter={isOpen}
-									handleFilterVisibilityChange={(): void => setOpen(!isOpen)}
-									items={TOOLBAR_VIEWS}
-									selectedView={selectedView}
-									onChangeSelectedView={handleChangeSelectedView}
-								/>
-							}
-							warningElement={
-								!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
-							}
-							rightActions={
+						<div className="llm-explorer-toolbar">
+							<LeftToolbarActions
+								showFilter={isOpen}
+								handleFilterVisibilityChange={(): void => setOpen(!isOpen)}
+								items={TOOLBAR_VIEWS}
+								selectedView={selectedView}
+								onChangeSelectedView={handleChangeSelectedView}
+							/>
+							<div className="llm-explorer-toolbar-right">
+								{!isEmpty(warning) && <WarningPopover warningData={warning} />}
 								<RightToolbarActions
 									onStageRunQuery={(): void => {
 										setIsCancelled(false);
@@ -223,8 +217,8 @@ function Explorer(): JSX.Element {
 									isLoadingQueries={isLoadingQueries}
 									handleCancelQuery={handleCancelQuery}
 								/>
-							}
-						/>
+							</div>
+						</div>
 					</div>
 					<ExplorerCard sourcepage={DataSource.TRACES}>
 						<div className="query-section-container">
