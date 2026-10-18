@@ -102,17 +102,19 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 
 	return (
 		<Container className="service-map-container">
-			<ResourceAttributesFilter
-				suffixIcon={
-					<TextToolTip
-						{...{
-							text: `Currently, service map supports filtering of ${whilelistedKeys.join(
-								', ',
-							)} only, in resource attributes`,
-						}}
-					/>
-				}
-			/>
+			<div className="tw:mb-4">
+				<ResourceAttributesFilter
+					suffixIcon={
+						<TextToolTip
+							{...{
+								text: `Currently, service map supports filtering of ${whilelistedKeys.join(
+									', ',
+								)} only, in resource attributes`,
+							}}
+						/>
+					}
+				/>
+			</div>
 
 			{renderBody()}
 		</Container>

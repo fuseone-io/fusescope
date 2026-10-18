@@ -5,7 +5,7 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
-	OPEN_DROPDOWN,
+	OPEN_LISTBOX,
 	openAttributeFilterOn,
 	openSelect,
 	pickOption,
@@ -98,8 +98,7 @@ export const FilterAttributes: Story = {
 			untilLoaded,
 		);
 
-		// The select opens on a press inside it: a click on the wrapper the test id
-		// sits on never reaches the handler that opens the list.
+		// The list opens on a press on the input or anywhere in the field around it.
 		await userEvent.click(within(filter).getByRole('combobox'));
 		await screen.findByText('k8s.cluster.name', undefined, untilLoaded);
 	},
@@ -130,7 +129,7 @@ export const FilterValuesSelected: Story = {
 		await waitFor(
 			() =>
 				expect(
-					document.querySelectorAll('.ant-select-item-option-selected'),
+					document.querySelectorAll('[role="option"][aria-selected="true"]'),
 				).toHaveLength(2),
 			untilLoaded,
 		);
@@ -144,7 +143,7 @@ export const EnvironmentOptions: Story = {
 		await waitFor(
 			() =>
 				expect(
-					document.querySelector(`${OPEN_DROPDOWN} .ant-select-item-option`),
+					document.querySelector(`${OPEN_LISTBOX} [role="option"]`),
 				).not.toBeNull(),
 			untilLoaded,
 		);

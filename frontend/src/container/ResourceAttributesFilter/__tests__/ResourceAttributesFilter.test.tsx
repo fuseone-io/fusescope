@@ -1,13 +1,13 @@
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Router } from 'react-router-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
-import { createMemoryHistory, MemoryHistory } from 'history';
+import { createMemoryHistory } from 'history';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
-import { encode } from 'js-base64';
+import { decode, encode } from 'js-base64';
 
 import ResourceAttributesFilter from '../ResourceAttributesFilter';
 
@@ -17,6 +17,14 @@ jest.mock('lib/history', () => ({
 		push: jest.fn(),
 		location: { search: '', pathname: '/' },
 	},
+}));
+
+const mockSafeNavigate = jest.fn();
+
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+		safeNavigate: mockSafeNavigate,
+	}),
 }));
 
 jest.mock('api/metrics/getResourceAttributes', () => ({
@@ -39,6 +47,8 @@ const mockTagKeys = getResourceAttributesTagKeys as jest.MockedFunction<
 const mockTagValues = getResourceAttributesTagValues as jest.MockedFunction<
 	typeof getResourceAttributesTagValues
 >;
+
+const ENVIRONMENT_KEY = 'resource_deployment.environment';
 
 function tagKeysPayload(keys: string[]): never {
 	return {
@@ -75,7 +85,16 @@ function seedUrl(queries: IResourceAttribute[], pathname: string): void {
 	location.pathname = pathname;
 }
 
-function renderFilter(pathname: string): MemoryHistory {
+/** The filters in the last URL the filter navigated to. */
+function queriesInUrl(): IResourceAttribute[] {
+	const url = mockSafeNavigate.mock.calls.at(-1)?.[0] as string | undefined;
+	const param = url
+		? new URL(url, 'http://localhost').searchParams.get('resourceAttribute')
+		: null;
+	return param ? (JSON.parse(decode(param)) as IResourceAttribute[]) : [];
+}
+
+function renderFilter(pathname: string): void {
 	const routerHistory = createMemoryHistory({
 		initialEntries: [`${pathname}${history.location.search}`],
 	});
@@ -98,18 +117,26 @@ function renderFilter(pathname: string): MemoryHistory {
 			<ResourceAttributesFilter />
 		</Wrapper>,
 	);
-
-	return routerHistory;
 }
+
+const attributeInput = (): HTMLElement =>
+	within(screen.getByTestId('resource-attributes-filter')).getByRole('combobox');
 
 describe('ResourceAttributesFilter', () => {
 	beforeEach(() => {
+		mockSafeNavigate.mockReset();
 		mockTagKeys.mockReset();
 		mockTagValues.mockReset();
-		mockTagKeys.mockResolvedValue(
-			tagKeysPayload(['resource_deployment.environment']),
+		mockTagKeys.mockImplementation(async ({ match }) =>
+			match === ENVIRONMENT_KEY
+				? tagKeysPayload([ENVIRONMENT_KEY])
+				: tagKeysPayload([ENVIRONMENT_KEY, 'resource_k8s.cluster.name']),
 		);
-		mockTagValues.mockResolvedValue(tagValuesPayload(['production', 'staging']));
+		mockTagValues.mockImplementation(async ({ tagKey }) =>
+			tagKey === ENVIRONMENT_KEY
+				? tagValuesPayload(['production', 'staging'])
+				: tagValuesPayload(['prod-us-east', 'prod-eu-west']),
+		);
 		seedUrl([], '/');
 	});
 
@@ -124,7 +151,7 @@ describe('ResourceAttributesFilter', () => {
 				},
 				{
 					id: 'env',
-					tagKey: 'resource_deployment.environment',
+					tagKey: ENVIRONMENT_KEY,
 					operator: 'IN',
 					tagValue: ['production'],
 				},
@@ -137,39 +164,195 @@ describe('ResourceAttributesFilter', () => {
 		await waitFor(() =>
 			expect(screen.getByText(/service\.name/)).toBeInTheDocument(),
 		);
-		await waitFor(() =>
-			expect(
-				screen
-					.getByTestId('resource-environment-filter')
-					.querySelector('.ant-select-selection-item'),
-			).toHaveTextContent('production'),
+		expect(screen.getByTestId('resource-environment-filter')).toHaveTextContent(
+			'production',
 		);
 	});
 
-	it('keeps the environment dropdown open so more than one environment can be picked', async () => {
+	it('keeps the environment list open so more than one environment can be picked', async () => {
 		const user = userEvent.setup();
 		renderFilter('/services');
 
-		const environmentFilter = screen.getByTestId('resource-environment-filter');
-		await user.click(
-			environmentFilter.querySelector('input') as HTMLInputElement,
-		);
-
-		await user.click(await screen.findByTitle('production'));
+		await user.click(screen.getByTestId('resource-environment-filter'));
+		await user.click(await screen.findByRole('option', { name: 'production' }));
+		await user.click(screen.getByRole('option', { name: 'staging' }));
 
 		await waitFor(() =>
-			expect(
-				screen.getByTitle('staging').closest('.ant-select-dropdown'),
-			).not.toHaveClass('ant-select-dropdown-hidden'),
+			expect(queriesInUrl()).toMatchObject([
+				{
+					tagKey: ENVIRONMENT_KEY,
+					operator: 'IN',
+					tagValue: ['production', 'staging'],
+				},
+			]),
+		);
+		expect(screen.getByRole('option', { name: 'staging' })).toHaveAttribute(
+			'aria-selected',
+			'true',
+		);
+		expect(screen.getByTestId('resource-environment-filter')).toHaveTextContent(
+			'production, staging',
+		);
+	});
+
+	it('drops the environment filter when the last environment is unticked', async () => {
+		const user = userEvent.setup();
+		seedUrl(
+			[
+				{
+					id: 'env',
+					tagKey: ENVIRONMENT_KEY,
+					operator: 'IN',
+					tagValue: ['production'],
+				},
+			],
+			'/services',
+		);
+		renderFilter('/services');
+
+		await user.click(screen.getByTestId('resource-environment-filter'));
+		await user.click(await screen.findByRole('option', { name: 'production' }));
+
+		await waitFor(() => expect(queriesInUrl()).toStrictEqual([]));
+	});
+
+	it('builds a key, operator and values filter and applies it when the list closes', async () => {
+		const user = userEvent.setup();
+		renderFilter('/services');
+
+		await user.click(attributeInput());
+		const keys = await screen.findAllByRole('option');
+		expect(keys.map((option) => option.textContent)).toStrictEqual([
+			'k8s.cluster.name',
+		]);
+
+		await user.click(keys[0]);
+		await user.click(await screen.findByRole('option', { name: 'IN' }));
+		await user.click(await screen.findByRole('option', { name: 'prod-us-east' }));
+		await user.click(screen.getByRole('option', { name: 'prod-eu-west' }));
+
+		expect(mockTagValues).toHaveBeenCalledWith({
+			tagKey: 'resource_k8s.cluster.name',
+			metricName: 'signoz_calls_total',
+		});
+		expect(queriesInUrl()).toStrictEqual([]);
+
+		await user.keyboard('{Escape}');
+
+		await waitFor(() =>
+			expect(queriesInUrl()).toMatchObject([
+				{
+					tagKey: 'resource_k8s.cluster.name',
+					operator: 'IN',
+					tagValue: ['prod-us-east', 'prod-eu-west'],
+				},
+			]),
+		);
+		expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+	});
+
+	it('keeps the staged steps when the field around the input is clicked', async () => {
+		const user = userEvent.setup();
+		renderFilter('/services');
+
+		await user.click(attributeInput());
+		await user.click(
+			await screen.findByRole('option', { name: 'k8s.cluster.name' }),
+		);
+		await screen.findByRole('option', { name: 'IN' });
+
+		await user.click(
+			within(screen.getByTestId('resource-attributes-filter')).getByText(
+				'k8s.cluster.name',
+			),
 		);
 
-		await user.click(screen.getByTitle('staging'));
+		expect(attributeInput()).toHaveFocus();
+		expect(screen.getByRole('option', { name: 'IN' })).toBeInTheDocument();
+	});
 
-		await waitFor(() => {
-			const selected = Array.from(
-				environmentFilter.querySelectorAll('.ant-select-selection-item-content'),
-			).map((node) => node.textContent);
-			expect(selected).toStrictEqual(['production', 'staging']);
-		});
+	it('picks options with the keyboard', async () => {
+		const user = userEvent.setup();
+		renderFilter('/services');
+
+		await user.click(attributeInput());
+		await screen.findByRole('option', { name: 'k8s.cluster.name' });
+		await user.keyboard('{Enter}');
+		await screen.findByRole('option', { name: 'Not IN' });
+		await user.keyboard('{ArrowDown}{Enter}');
+		await screen.findByRole('option', { name: 'prod-us-east' });
+		await user.keyboard('{Enter}{Escape}');
+
+		await waitFor(() =>
+			expect(queriesInUrl()).toMatchObject([
+				{
+					tagKey: 'resource_k8s.cluster.name',
+					operator: 'Not IN',
+					tagValue: ['prod-us-east'],
+				},
+			]),
+		);
+	});
+
+	it('narrows the options to the typed text', async () => {
+		const user = userEvent.setup();
+		mockTagKeys.mockResolvedValue(
+			tagKeysPayload(['resource_k8s.cluster.name', 'resource_service.name']),
+		);
+		renderFilter('/services');
+
+		await user.click(attributeInput());
+		await screen.findByRole('option', { name: 'service.name' });
+		await user.type(attributeInput(), 'clus');
+
+		expect(
+			screen.getAllByRole('option').map((option) => option.textContent),
+		).toStrictEqual(['k8s.cluster.name']);
+	});
+
+	it('removes one filter from its chip and every filter with clear', async () => {
+		const user = userEvent.setup();
+		seedUrl(
+			[
+				{
+					id: 'a',
+					tagKey: 'resource_k8s.cluster.name',
+					operator: 'IN',
+					tagValue: ['prod-us-east'],
+				},
+				{
+					id: 'b',
+					tagKey: 'resource_service.name',
+					operator: 'Not IN',
+					tagValue: ['cart', 'checkout'],
+				},
+			],
+			'/services',
+		);
+		renderFilter('/services');
+
+		expect(screen.getByText('cart, checkout')).toBeInTheDocument();
+
+		await user.click(
+			screen.getByRole('button', { name: 'Remove k8s.cluster.name filter' }),
+		);
+		await waitFor(() =>
+			expect(queriesInUrl().map((query) => query.id)).toStrictEqual(['b']),
+		);
+
+		await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+		await waitFor(() => expect(queriesInUrl()).toStrictEqual([]));
+	});
+
+	it('says so when there are no resource attributes to filter on', async () => {
+		const user = userEvent.setup();
+		mockTagKeys.mockResolvedValue(tagKeysPayload([]));
+		renderFilter('/services');
+
+		await user.click(attributeInput());
+
+		await expect(
+			screen.findByText(/No resource attributes available to filter/),
+		).resolves.toBeInTheDocument();
 	});
 });
