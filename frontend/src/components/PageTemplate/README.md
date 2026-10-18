@@ -5,7 +5,7 @@ The parts a new-UI page is built from. Built on `components/ui` and the
 
 | Part | Use |
 | --- | --- |
-| `PageTemplate` | Page column: background, gutters, 1600px max width, 24px rhythm. |
+| `PageTemplate` | Page column: background, 1600px max width, 24px rhythm, and the same padding on every side as the app header's horizontal padding (16px, 32px from `md`). |
 | `PageHeader` | Title (`titleMono` for entity names), icon tile, badges, description, meta row, actions slot. |
 | `PageTabs` + `useQueryParamTab` | Controlled tabs; the hook keeps the value in a query param (`?tab=`). Only the active tab is mounted. |
 | `KpiStrip` + `Stat` | A row of stats in one rounded border, separated by 1px lines. |

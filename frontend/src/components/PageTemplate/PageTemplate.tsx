@@ -24,7 +24,7 @@ function PageTemplate({
 		>
 			<div
 				className={cn(
-					'tw:mx-auto tw:box-border tw:flex tw:w-full tw:max-w-[1600px] tw:flex-col tw:gap-6 tw:px-4 tw:pt-6 tw:pb-12 tw:md:px-8 tw:md:pt-7',
+					'tw:mx-auto tw:box-border tw:flex tw:w-full tw:max-w-[1600px] tw:flex-col tw:gap-6 tw:p-4 tw:md:p-8',
 					className,
 				)}
 			>
