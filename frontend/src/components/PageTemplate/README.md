@@ -11,6 +11,9 @@ The parts a new-UI page is built from. Built on `components/ui` and the
 | `KpiStrip` + `Stat` | A row of stats in one rounded border, separated by 1px lines. |
 | `Panel` | Raised section with optional title, subtitle and actions. |
 | `SortableTableHead`, `TablePagination`, `StatusBadge`, `ImpactBar` | Helpers for `components/ui/table`: sortable headers with `aria-sort`, prev/next pagination, tone badges, share bars. `utils.ts` sorts and pages rows. |
+| `HeaderBandLayout` + `CompactPageHeader` | Explorer-style pages without route tabs (`ModuleTabsLayout` has them): the same full-width band with a one-row header above full-width content. `bounded` hands the remaining viewport height to panes that scroll on their own. |
+| `NumberedTablePagination` | Server-side paging: visible range, numbered pages and a page-size menu. |
+| `RailToggleButton` | Collapses a filter rail, or reopens it from the toolbar. |
 
 ## `fs-ui` scope
 
