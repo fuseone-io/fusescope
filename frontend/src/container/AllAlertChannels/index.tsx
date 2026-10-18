@@ -1,29 +1,25 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { Plus } from '@signozhq/icons';
-import { Tooltip, Flex } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Tooltip } from 'antd';
 import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
+import Panel from 'components/PageTemplate/components/Panel';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
+import { Button } from 'components/ui/button';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
+import { Plus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 
 import AlertChannelsComponent from './AlertChannels';
-import { Button, ButtonContainer, RightActionContainer } from './styles';
-
-import './AllAlertChannels.styles.scss';
-
-const { Text } = Typography;
 
 function AlertChannels(): JSX.Element {
 	const { t } = useTranslation(['channels']);
@@ -52,7 +48,11 @@ function AlertChannels(): JSX.Element {
 	}, [data?.data]);
 
 	if (error) {
-		return <Typography>{error.getErrorMessage()}</Typography>;
+		return (
+			<p className="fs-ui tw:font-sans tw:text-sm tw:text-error-ink">
+				{error.getErrorMessage()}
+			</p>
+		);
 	}
 
 	if (isLoading || isUndefined(data?.data)) {
@@ -60,18 +60,16 @@ function AlertChannels(): JSX.Element {
 	}
 
 	return (
-		<div className="alert-channels-container">
-			<ButtonContainer>
-				<Text truncate={1} color="muted">
+		<div className="tw:flex tw:w-full tw:flex-col tw:gap-3">
+			<div className="fs-ui tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:font-sans">
+				<p className="tw:min-w-0 tw:truncate tw:text-sm tw:text-muted-foreground">
 					{t('sending_channels_note')}
-				</Text>
-
-				<RightActionContainer>
+				</p>
+				<div className="tw:flex tw:items-center tw:gap-2">
 					<TextToolTip
 						text={t('tooltip_notification_channels')}
 						url={fuseScopeDocsUrl('/alerts/notification-channels/')}
 					/>
-
 					<Tooltip
 						title={
 							!addNewChannelPermission
@@ -79,16 +77,23 @@ function AlertChannels(): JSX.Element {
 								: undefined
 						}
 					>
-						<Button onClick={onToggleHandler} disabled={!addNewChannelPermission}>
-							<Flex align="center" justify="center" gap={4}>
-								<Plus size="md" /> {t('button_new_channel')}
-							</Flex>
-						</Button>
+						<span>
+							<Button
+								onClick={onToggleHandler}
+								disabled={!addNewChannelPermission}
+								data-testid="new-alert-channel-button"
+							>
+								<Plus aria-hidden="true" />
+								{t('button_new_channel')}
+							</Button>
+						</span>
 					</Tooltip>
-				</RightActionContainer>
-			</ButtonContainer>
+				</div>
+			</div>
 
-			<AlertChannelsComponent allChannels={data?.data || []} />
+			<Panel testId="alert-channels-panel" className="tw:overflow-hidden">
+				<AlertChannelsComponent allChannels={data?.data || []} />
+			</Panel>
 		</div>
 	);
 }

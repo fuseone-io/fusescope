@@ -1,9 +1,15 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
-import { Button } from 'antd';
-import type { ColumnsType } from 'antd/lib/table';
-import { ResizeTable } from 'components/ResizeTable';
+import { Button } from 'components/ui/button';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from 'components/ui/table';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
@@ -27,46 +33,52 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 		);
 	}, []);
 
-	const columns: ColumnsType<Channels> = [
-		{
-			title: t('column_channel_name'),
-			dataIndex: 'name',
-			key: 'name',
-			width: 100,
-		},
-		{
-			title: t('column_channel_type'),
-			dataIndex: 'type',
-			key: 'type',
-			width: 80,
-		},
-	];
-
-	if (action) {
-		columns.push({
-			title: t('column_channel_action'),
-			dataIndex: 'id',
-			key: 'action',
-			align: 'center',
-			width: 80,
-			render: (id: string): JSX.Element => (
-				<>
-					<Button onClick={(): void => onClickEditHandler(id)} type="link">
-						{t('column_channel_edit')}
-					</Button>
-					<Delete id={id} notifications={notifications} />
-				</>
-			),
-		});
-	}
-
 	return (
-		<ResizeTable
-			columns={columns}
-			dataSource={allChannels}
-			rowKey="id"
-			bordered
-		/>
+		<Table data-testid="alert-channels-table">
+			<TableHeader>
+				<TableRow>
+					<TableHead>{t('column_channel_name')}</TableHead>
+					<TableHead>{t('column_channel_type')}</TableHead>
+					{action && (
+						<TableHead className="tw:text-right">
+							{t('column_channel_action')}
+						</TableHead>
+					)}
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{allChannels.map((channel) => (
+					<TableRow key={channel.id}>
+						<TableCell className="tw:font-medium">{channel.name}</TableCell>
+						<TableCell className="tw:font-mono tw:text-xs tw:text-muted-foreground">
+							{channel.type}
+						</TableCell>
+						{action && (
+							<TableCell className="tw:text-right">
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={(): void => onClickEditHandler(channel.id)}
+								>
+									{t('column_channel_edit')}
+								</Button>
+								<Delete id={channel.id} notifications={notifications} />
+							</TableCell>
+						)}
+					</TableRow>
+				))}
+				{allChannels.length === 0 && (
+					<TableRow>
+						<TableCell
+							colSpan={action ? 3 : 2}
+							className="tw:h-24 tw:text-center tw:text-muted-foreground"
+						>
+							No data
+						</TableCell>
+					</TableRow>
+				)}
+			</TableBody>
+		</Table>
 	);
 }
 
