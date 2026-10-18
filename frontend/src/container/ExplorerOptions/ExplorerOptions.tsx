@@ -37,6 +37,7 @@ import { TelemetryFieldKey } from 'api/v5/v5';
 import axios from 'axios';
 import cx from 'classnames';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
+import { Button as UiButton } from 'components/ui/button';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -769,14 +770,16 @@ function ExplorerOptions({
 			);
 		}
 		return (
-			<Button
+			<UiButton
+				variant="outline"
+				size="sm"
+				className="fs-ui explorer-options-btn"
 				disabled={disabled}
-				shape="round"
 				onClick={(): void => onCreateAlertsHandler(query)}
-				icon={<ConciergeBell size={16} />}
 			>
+				<ConciergeBell size={16} />
 				Create an Alert
-			</Button>
+			</UiButton>
 		);
 	}, [
 		disabled,
@@ -828,15 +831,15 @@ function ExplorerOptions({
 			);
 		}
 		return (
-			<Button
-				type="primary"
+			<UiButton
+				size="sm"
+				className="fs-ui explorer-options-btn"
 				disabled={disabled}
-				shape="round"
 				onClick={onAddToDashboard}
-				icon={<Plus size={16} />}
 			>
+				<Plus size={16} />
 				Add to Dashboard
-			</Button>
+			</UiButton>
 		);
 	}, [disabled, isOneChartPerQuery, onAddToDashboard, splitedQueries]);
 
@@ -938,15 +941,19 @@ function ExplorerOptions({
 							})}
 						</Select>
 
-						<Button
-							shape="round"
+						<UiButton
+							variant="outline"
+							size="sm"
 							onClick={handleSaveViewModalToggle}
-							className={isEditDeleteSupported ? '' : 'hidden'}
+							className={cx(
+								'fs-ui explorer-options-btn',
+								isEditDeleteSupported ? '' : 'hidden',
+							)}
 							disabled={viewsIsLoading || isRefetching}
-							icon={<Disc3 size={16} />}
 						>
+							<Disc3 size={16} />
 							Save this view
-						</Button>
+						</UiButton>
 					</div>
 
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
@@ -977,13 +984,17 @@ function ExplorerOptions({
 						)}
 
 						<Tooltip title="Hide">
-							<Button
+							<UiButton
+								variant="ghost"
+								size="icon-sm"
+								className="fs-ui explorer-options-icon-btn"
+								aria-label="Hide"
 								disabled={disabled}
-								shape="circle"
 								onClick={hideToolbar}
-								icon={<PanelBottomClose size={16} />}
 								data-testid="hide-toolbar"
-							/>
+							>
+								<PanelBottomClose size={16} />
+							</UiButton>
 						</Tooltip>
 					</div>
 				</div>
