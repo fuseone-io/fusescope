@@ -1,6 +1,19 @@
 .pipeline-tabs {
+	> .ant-tabs-nav {
+		padding: 0 16px;
+		margin-bottom: 0;
+
+		@media (min-width: 768px) {
+			padding: 0 24px;
+		}
+	}
+
 	.ant-tabs-content {
 		padding: 0 16px;
+
+		@media (min-width: 768px) {
+			padding: 0 24px;
+		}
 	}
 
 	.ant-tabs-tabpane-hidden {

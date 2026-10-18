@@ -3,49 +3,32 @@ import ROUTES from 'constants/routes';
 import ExplorerPage from 'container/MetricsExplorer/Explorer';
 import SummaryPage from 'container/MetricsExplorer/Summary';
 import VolumeControlTab from 'container/MetricsExplorer/VolumeControl/components/VolumeControlTab/VolumeControlTab';
-import { BarChart, Compass, Gauge, TowerControl } from '@signozhq/icons';
 import SaveView from 'pages/SaveView';
 
 export const Summary: TabRoutes = {
 	Component: SummaryPage,
-	name: (
-		<div className="tab-item">
-			<BarChart size={16} /> Summary
-		</div>
-	),
+	name: 'Summary',
 	route: ROUTES.METRICS_EXPLORER,
 	key: ROUTES.METRICS_EXPLORER,
 };
 
 export const Explorer: TabRoutes = {
 	Component: (): JSX.Element => <ExplorerPage />,
-	name: (
-		<div className="tab-item">
-			<Compass size={16} /> Explorer
-		</div>
-	),
+	name: 'Explorer',
 	route: ROUTES.METRICS_EXPLORER_EXPLORER,
 	key: ROUTES.METRICS_EXPLORER_EXPLORER,
 };
 
 export const Views: TabRoutes = {
 	Component: SaveView,
-	name: (
-		<div className="tab-item">
-			<TowerControl size={16} /> Views
-		</div>
-	),
+	name: 'Views',
 	route: ROUTES.METRICS_EXPLORER_VIEWS,
 	key: ROUTES.METRICS_EXPLORER_VIEWS,
 };
 
 export const VolumeControl: TabRoutes = {
 	Component: VolumeControlTab,
-	name: (
-		<div className="tab-item">
-			<Gauge size={16} /> Volume Control
-		</div>
-	),
+	name: 'Volume Control',
 	route: ROUTES.METRICS_EXPLORER_VOLUME_CONTROL,
 	key: ROUTES.METRICS_EXPLORER_VOLUME_CONTROL,
 };

@@ -173,25 +173,31 @@ describe('AppHeader', () => {
 	});
 
 	describe('time range', () => {
-		it.each([ROUTES.APPLICATION, '/services/checkout-api', ROUTES.SERVICE_MAP])(
-			'shows the global picker with auto refresh on %s',
-			(route) => {
-				renderHeader(route);
+		it.each([
+			ROUTES.APPLICATION,
+			'/services/checkout-api',
+			ROUTES.SERVICE_MAP,
+			ROUTES.METRICS_EXPLORER,
+		])('shows the global picker with auto refresh on %s', (route) => {
+			renderHeader(route);
 
-				expect(within(header()).getByTestId('global-time-picker')).toHaveAttribute(
-					'data-auto-refresh',
-					'true',
-				);
-				expect(
-					within(header()).getByTestId('header-right-section'),
-				).toBeInTheDocument();
-			},
-		);
+			expect(within(header()).getByTestId('global-time-picker')).toHaveAttribute(
+				'data-auto-refresh',
+				'true',
+			);
+			expect(
+				within(header()).getByTestId('header-right-section'),
+			).toBeInTheDocument();
+		});
 
 		it.each([
 			ROUTES.HOME,
 			ROUTES.LOGS_EXPLORER,
 			ROUTES.TRACES_EXPLORER,
+			ROUTES.LOGS_INDEX_FIELDS,
+			ROUTES.METRICS_EXPLORER_EXPLORER,
+			'/traces/funnels/abc',
+			'/trace/abc',
 			'/dashboard/abc',
 			ROUTES.ALERTS_NEW,
 			ROUTES.SETTINGS,
