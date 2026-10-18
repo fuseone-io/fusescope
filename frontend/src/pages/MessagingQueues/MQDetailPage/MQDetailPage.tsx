@@ -4,7 +4,6 @@ import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
@@ -121,7 +120,6 @@ function MQDetailPage(): JSX.Element {
 						]}
 					/>
 				</div>
-				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
 			{selectedView === MessagingQueuesViewType.consumerLag.value ? (
 				<div className="messaging-queue-main-graph">

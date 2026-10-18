@@ -6,19 +6,16 @@
 	.messaging-header {
 		display: flex;
 		min-height: 48px;
-		padding: 10px 16px;
+		padding: 16px 24px 0;
 		justify-content: space-between;
 		align-items: center;
 
-		color: var(--l2-foreground);
-		font-family: 'Geist Mono';
-		font-size: 14px;
+		color: var(--fs-muted-foreground);
+		font-family: Inter;
+		font-size: 13px;
 		font-style: normal;
-		font-weight: 400;
+		font-weight: 500;
 		line-height: 20px;
-		letter-spacing: 0.25px;
-
-		border-bottom: 1px solid var(--l1-border);
 
 		.header-config {
 			display: flex;
@@ -33,9 +30,9 @@
 					align-items: center;
 					gap: 4px;
 
-					border-radius: 2px;
-					border: 1px solid var(--l1-border);
-					background: var(--l3-background);
+					border-radius: 6px;
+					border: 1px solid var(--fs-border);
+					background: var(--fs-card);
 				}
 			}
 		}
@@ -43,7 +40,11 @@
 
 	.messaging-queue-main-graph {
 		display: flex;
-		padding: 24px 16px;
+		margin: 16px 24px 0;
+		padding: 16px;
+		border: 1px solid var(--fs-border);
+		border-radius: 8px;
+		background: var(--fs-card);
 		flex-direction: column;
 		gap: 16px;
 
@@ -71,13 +72,11 @@
 			height: 420px !important;
 			padding: 24px 24px 0 24px;
 		}
-
-		border-bottom: 1px solid var(--l1-border);
 	}
 
 	.messaging-queue-details {
 		display: flex;
-		padding: 16px;
+		padding: 16px 24px 32px;
 	}
 }
 
@@ -86,7 +85,7 @@
 }
 
 .messaging-overview {
-	padding: 24px 16px 10px 16px;
+	padding: 24px 24px 10px;
 
 	.overview-text {
 		color: var(--l1-foreground);
@@ -114,11 +113,8 @@
 	.overview-doc-area {
 		margin: 16px 0 28px 0;
 		display: flex;
-
-		.middle-card {
-			border-left: none !important;
-			border-right: none !important;
-		}
+		flex-wrap: wrap;
+		gap: 12px;
 
 		.overview-info-card {
 			display: flex;
@@ -127,8 +123,9 @@
 			padding: 18px 20px 20px 20px;
 			flex-direction: column;
 			justify-content: space-between;
-			border: 1px solid var(--l1-border);
-			border-radius: 2px;
+			border: 1px solid var(--fs-border);
+			border-radius: 8px;
+			background: var(--fs-card);
 
 			.card-title {
 				color: var(--l1-foreground);
@@ -168,12 +165,6 @@
 					box-shadow: none;
 				}
 			}
-		}
-
-		:nth-child(2),
-		:nth-child(4) {
-			border-left: none !important;
-			border-right: none !important;
 		}
 
 		&.summary-section {

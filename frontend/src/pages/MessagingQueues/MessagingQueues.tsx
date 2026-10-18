@@ -7,7 +7,6 @@ import cx from 'classnames';
 import MessagingQueueHealthCheck from 'components/MessagingQueueHealthCheck/MessagingQueueHealthCheck';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
@@ -80,7 +79,6 @@ function MessagingQueues(): JSX.Element {
 						]}
 					/>
 				</div>
-				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
 			<div className="messaging-overview">
 				<p className="overview-text">{t('overview.title')}</p>
