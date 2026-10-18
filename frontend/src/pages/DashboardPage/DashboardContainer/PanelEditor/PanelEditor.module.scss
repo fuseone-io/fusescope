@@ -6,7 +6,7 @@
 	height: 100%;
 	min-height: 0;
 	overflow: hidden;
-	background: var(--l1-background);
+	background: var(--fs-background);
 }
 
 .left {
@@ -21,8 +21,8 @@
 }
 
 .handle {
-	background: var(--l1-border);
+	background: var(--fs-border);
 	&:hover {
-		background: var(--l2-border);
+		background: var(--fs-primary);
 	}
 }

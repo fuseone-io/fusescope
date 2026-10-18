@@ -78,7 +78,7 @@ function Header({
 					<X size={14} />
 				</Button>
 				<Divider type="vertical" />
-				<Typography.Text>Configure panel</Typography.Text>
+				<h1 className={styles.titleText}>Configure panel</h1>
 				{isDirty && (
 					<Badge
 						variant="solid"

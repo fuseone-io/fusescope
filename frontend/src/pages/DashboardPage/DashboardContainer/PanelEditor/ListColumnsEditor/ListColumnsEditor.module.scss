@@ -3,8 +3,8 @@
 	flex-direction: column;
 	gap: 8px;
 	padding: 12px;
-	border-top: 1px solid var(--l2-border);
-	background-color: var(--l1-background);
+	border-top: 1px solid var(--fs-border);
+	background-color: var(--fs-background);
 }
 
 .header {
@@ -15,7 +15,7 @@
 .title {
 	font-size: 12px;
 	font-weight: 500;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }
 
 .body {
@@ -34,5 +34,5 @@
 
 .hint {
 	font-size: 11px;
-	color: var(--l3-foreground);
+	color: var(--fs-subtle-foreground);
 }

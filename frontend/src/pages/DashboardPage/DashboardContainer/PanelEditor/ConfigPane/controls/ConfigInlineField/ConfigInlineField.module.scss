@@ -12,7 +12,7 @@
 	letter-spacing: 0.1em;
 	text-transform: uppercase;
 	white-space: nowrap;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }
 
 .help {
@@ -20,5 +20,5 @@
 	margin-top: -4px;
 	font-size: 12px;
 	line-height: 17px;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }

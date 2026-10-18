@@ -3,7 +3,7 @@
 		width: 100%;
 	}
 	:global(.ant-select-selector) {
-		border-color: var(--l2-border) !important;
+		border-color: var(--fs-border) !important;
 	}
 }
 
@@ -13,18 +13,18 @@
 	gap: 8px;
 	padding: 12px 14px;
 	border-radius: 4px;
-	background: var(--l2-background);
+	background: var(--fs-card);
 }
 
 .previewLabel {
 	font-size: 12px;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }
 
 .previewValue {
 	font-family: 'Geist Mono', monospace;
 	font-size: 15px;
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 }
 
 // Stacked per-column unit pickers; each column keeps the standard field layout.
@@ -40,7 +40,7 @@
 
 .columnUnitsHint {
 	font-size: 12px;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }
 
 .columnField {
@@ -51,7 +51,7 @@
 
 .columnLabel {
 	font-size: 13px;
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 }
 
 .columnUnitSelector {

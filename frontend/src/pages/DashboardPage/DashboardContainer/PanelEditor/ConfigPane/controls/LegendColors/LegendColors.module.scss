@@ -36,16 +36,16 @@
 	width: 18px;
 	height: 18px;
 	flex: none;
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 4px;
 }
 
 .label {
 	overflow: hidden;
 	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	font-size: 12px;
 	letter-spacing: -0.01em;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }

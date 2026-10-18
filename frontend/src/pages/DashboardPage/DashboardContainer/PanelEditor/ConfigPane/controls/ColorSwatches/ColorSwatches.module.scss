@@ -16,14 +16,14 @@
 	height: 24px;
 	flex: none;
 	padding: 0;
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 4px;
 	background: none;
 	cursor: pointer;
 
 	&:has(.input:focus-visible),
 	&:focus-visible {
-		outline: 2px solid var(--bg-robin-400);
+		outline: 2px solid var(--fs-primary);
 		outline-offset: 2px;
 	}
 }
@@ -39,26 +39,26 @@
 
 .selected,
 .selected:has(.input:focus-visible) {
-	outline: 2px solid var(--l1-foreground);
+	outline: 2px solid var(--fs-foreground);
 	outline-offset: 2px;
 }
 
 .transparent {
-	background-color: var(--l2-background);
+	background-color: var(--fs-card);
 	background-image:
 		linear-gradient(
 			45deg,
-			var(--l2-border) 25%,
+			var(--fs-border) 25%,
 			transparent 25%,
 			transparent 75%,
-			var(--l2-border) 75%
+			var(--fs-border) 75%
 		),
 		linear-gradient(
 			45deg,
-			var(--l2-border) 25%,
+			var(--fs-border) 25%,
 			transparent 25%,
 			transparent 75%,
-			var(--l2-border) 75%
+			var(--fs-border) 75%
 		);
 	background-size: 8px 8px;
 	background-position:
@@ -67,7 +67,7 @@
 }
 
 .surface {
-	background: var(--l2-background);
+	background: var(--fs-card);
 }
 
 .custom {
@@ -76,7 +76,7 @@
 		var(--bg-cherry-400),
 		var(--bg-amber-400),
 		var(--bg-forest-400),
-		var(--bg-robin-400),
+		var(--fs-primary),
 		var(--bg-sakura-400),
 		var(--bg-cherry-400)
 	);
@@ -90,5 +90,5 @@
 	flex: none;
 	width: 1px;
 	height: 18px;
-	background: var(--l2-border);
+	background: var(--fs-border);
 }

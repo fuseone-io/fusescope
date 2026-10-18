@@ -5,7 +5,7 @@
 	flex-direction: column;
 	flex: 1;
 	// padding: 18px 18px 44px;
-	background-color: var(--l1-background);
+	background-color: var(--fs-background);
 	overflow-y: auto;
 	overflow-x: hidden;
 	scrollbar-gutter: stable;
@@ -48,7 +48,7 @@
 	font-size: 12px;
 	letter-spacing: 0.1em;
 	text-transform: uppercase;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }
 
 .group {
@@ -69,11 +69,11 @@
 	// content overflows and the flex column starts shrinking its children.
 	flex-shrink: 0;
 	height: 1px;
-	background: var(--l1-border);
+	background: var(--fs-border);
 }
 
 .sections {
 	display: flex;
 	flex-direction: column;
-	border-bottom: 1px solid var(--l1-border);
+	border-bottom: 1px solid var(--fs-border);
 }

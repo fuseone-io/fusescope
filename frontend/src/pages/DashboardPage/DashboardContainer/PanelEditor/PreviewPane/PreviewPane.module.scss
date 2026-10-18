@@ -4,9 +4,9 @@
 	height: 100%;
 	gap: 16px;
 	padding: 24px;
-	background-image: radial-gradient(var(--l2-border) 1px, transparent 0);
+	background-image: radial-gradient(var(--fs-border) 1px, transparent 0);
 	background-size: 20px 20px;
-	border-bottom: 1px solid var(--l1-border);
+	border-bottom: 1px solid var(--fs-border);
 }
 
 // A static pane never scrolls — the panel card clips, and the renderer scrolls its
@@ -30,7 +30,7 @@
 	align-items: center;
 	gap: 6px;
 	border-radius: 4px;
-	background: var(--l3-background);
+	background: var(--fs-muted);
 	backdrop-filter: blur(6px);
 	width: fit-content;
 }
@@ -46,14 +46,14 @@
 	flex: 1;
 	min-width: 0;
 	min-height: 0;
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 4px;
 	overflow: hidden;
 	display: flex;
 	// Header stacks above the body, flush to the border — mirrors the dashboard
 	// grid's `.panel` so the preview reads as the real panel chrome.
 	flex-direction: column;
-	background: var(--l2-background);
+	background: var(--fs-card);
 }
 
 // Standalone View stacks the graph-manager below the chart inside the surface (it
@@ -66,8 +66,8 @@
 // A static kind's card takes its colours from the background the panel declares,
 // falling back to the same tokens the query surface uses.
 .surfaceStatic {
-	border-color: var(--text-panel-border, var(--l2-border));
-	background: var(--text-panel-surface, var(--l2-background));
+	border-color: var(--text-panel-border, var(--fs-border));
+	background: var(--text-panel-surface, var(--fs-card));
 	color: var(--text-panel-ink, inherit);
 }
 
@@ -77,7 +77,7 @@
 	align-items: center;
 	justify-content: center;
 	padding: 24px;
-	color: var(--l2-forground);
+	color: var(--fs-muted-foreground);
 	font-size: 13px;
 	text-align: center;
 }

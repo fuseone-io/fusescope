@@ -16,10 +16,10 @@
 	min-width: 0;
 	height: 52px;
 	padding: 0 14px;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 4px;
-	background: var(--l2-background);
-	color: var(--l2-foreground);
+	background: var(--fs-card);
+	color: var(--fs-muted-foreground);
 	font: inherit;
 	font-size: 13px;
 	cursor: pointer;
@@ -28,11 +28,11 @@
 		background 150ms;
 
 	&:hover {
-		border-color: var(--l2-border);
+		border-color: var(--fs-border);
 	}
 
 	&:has(:focus-visible) {
-		outline: 1px solid var(--bg-robin-500);
+		outline: 1px solid var(--fs-primary);
 		outline-offset: 1px;
 	}
 }
@@ -46,12 +46,12 @@
 }
 
 .selected {
-	border-color: var(--bg-robin-500);
-	background: color-mix(in srgb, var(--bg-robin-500) 12%, var(--l1-background));
-	color: var(--l1-foreground);
+	border-color: var(--fs-primary);
+	background: color-mix(in srgb, var(--fs-primary) 12%, var(--fs-background));
+	color: var(--fs-foreground);
 
 	&:hover {
-		border-color: var(--bg-robin-500);
+		border-color: var(--fs-primary);
 	}
 }
 

@@ -10,9 +10,9 @@
 	grid-template-columns: repeat(3, 28px);
 	gap: 4px;
 	padding: 6px;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 4px;
-	background: var(--l2-background);
+	background: var(--fs-card);
 }
 
 .cell {
@@ -28,11 +28,11 @@
 	cursor: pointer;
 
 	&:hover {
-		background: var(--l3-background);
+		background: var(--fs-muted);
 	}
 
 	&:has(:focus-visible) {
-		outline: 1px solid var(--bg-robin-500);
+		outline: 1px solid var(--fs-primary);
 	}
 }
 
@@ -48,16 +48,16 @@
 	width: 10px;
 	height: 3px;
 	border-radius: 2px;
-	background: var(--l3-foreground);
+	background: var(--fs-subtle-foreground);
 }
 
 .selected {
-	border-color: var(--bg-robin-500);
-	background: color-mix(in srgb, var(--bg-robin-500) 12%, transparent);
+	border-color: var(--fs-primary);
+	background: color-mix(in srgb, var(--fs-primary) 12%, transparent);
 
 	.mark {
 		width: 14px;
-		background: var(--bg-robin-400);
+		background: var(--fs-primary);
 	}
 }
 
@@ -70,11 +70,11 @@
 
 .label {
 	font-size: 14px;
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 }
 
 .description {
 	font-size: 12px;
 	line-height: 17px;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }

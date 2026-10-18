@@ -2,7 +2,7 @@
    from the collapsible config sections above by the same hairline divider. */
 .divider {
 	height: 1px;
-	background: var(--l1-border);
+	background: var(--fs-border);
 	margin: 18px 0;
 }
 
@@ -17,7 +17,7 @@
 	font-weight: 600;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 }
 
 .list {
@@ -29,7 +29,7 @@
 	display: grid;
 	place-items: center;
 	flex: none;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }
 
 .label {
