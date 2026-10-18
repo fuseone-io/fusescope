@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
-import { Skeleton } from 'antd';
 import {
 	useListAccounts,
 	useListAccountServicesMetadata,
 	useListServicesMetadata,
 } from 'api/generated/services/cloudintegration';
 import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/fuseScope.schemas';
-import cx from 'classnames';
+import { Skeleton } from 'components/ui/skeleton';
 import { IntegrationType } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { cn } from 'lib/utils';
 
-import emptyStateIconUrl from '@/assets/Icons/emptyState.svg';
+import ServicesListGroup from './ServicesListGroup';
 
 interface ServicesListProps {
 	cloudAccountId: string;
@@ -104,81 +104,72 @@ function ServicesList({
 
 	if (isLoading) {
 		return (
-			<div className="services-list-loading">
-				<Skeleton active />
-				<Skeleton active />
+			<div
+				data-testid="services-list-loading"
+				className="tw:flex tw:flex-col tw:gap-2 tw:p-3"
+			>
+				{['a', 'b', 'c', 'd'].map((key) => (
+					<Skeleton key={key} className="tw:h-8 tw:w-full tw:bg-muted" />
+				))}
 			</div>
 		);
 	}
 
 	if (!awsServices?.length) {
 		return (
-			<div className="services-list-empty-message">
-				{' '}
-				<img
-					src={emptyStateIconUrl}
-					alt="no-services-found"
-					className="empty-state-svg"
-				/>{' '}
+			<p className="fs-ui tw:p-4 tw:font-sans tw:text-sm tw:text-muted-foreground">
 				No services found
-			</div>
+			</p>
 		);
 	}
-
-	const isEnabledServicesEmpty = enabledServices.length === 0;
-	const isNotEnabledServicesEmpty = notEnabledServices.length === 0;
 
 	const renderServiceItem = (
 		service: CloudintegrationtypesServiceMetadataDTO,
 	): JSX.Element => {
+		const isActive = service.id === activeService;
 		return (
-			<div
-				className={cx('aws-services-list-view-sidebar-content-item', {
-					active: service.id === activeService,
-				})}
+			<button
+				type="button"
 				key={service.id}
+				aria-current={isActive ? 'true' : undefined}
+				className={cn(
+					'aws-services-list-view-sidebar-content-item tw:flex tw:h-8 tw:w-full tw:cursor-pointer tw:items-center tw:gap-2.5 tw:rounded-md tw:px-2 tw:text-left tw:text-[13px] tw:text-muted-foreground tw:transition-colors tw:hover:bg-muted tw:hover:text-foreground tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:outline-none',
+					isActive && 'active tw:bg-primary-soft tw:font-medium tw:text-primary-ink',
+				)}
 				onClick={(): void => handleActiveService(service.id)}
 			>
 				<img
 					src={service.icon}
 					alt={service.title}
-					className="aws-services-list-view-sidebar-content-item-icon"
+					className="tw:size-5 tw:flex-none tw:object-contain"
 				/>
-				<div className="aws-services-list-view-sidebar-content-item-title">
+				<span className="tw:truncate" title={service.title}>
 					{service.title}
-				</div>
-			</div>
+				</span>
+			</button>
 		);
 	};
 
 	return (
-		<div className="aws-services-list-view">
-			<div className="aws-services-list-view-sidebar">
-				<div className="aws-services-list-view-sidebar-content">
-					<div className="aws-services-enabled">
-						<div className="aws-services-list-view-sidebar-content-header">
-							Enabled
-						</div>
-						{enabledServices.map((service) => renderServiceItem(service))}
+		<nav
+			aria-label="Services"
+			className="aws-services-list-view fs-ui tw:flex tw:flex-col tw:gap-4 tw:p-3 tw:font-sans tw:text-foreground"
+		>
+			<ServicesListGroup label="Enabled">
+				{enabledServices.map((service) => renderServiceItem(service))}
+				{enabledServices.length === 0 && (
+					<p className="tw:px-2 tw:text-xs tw:text-subtle-foreground">
+						No enabled services
+					</p>
+				)}
+			</ServicesListGroup>
 
-						{isEnabledServicesEmpty && (
-							<div className="aws-services-list-view-sidebar-content-item-empty-message">
-								No enabled services
-							</div>
-						)}
-					</div>
-
-					{!isNotEnabledServicesEmpty && (
-						<div className="aws-services-not-enabled">
-							<div className="aws-services-list-view-sidebar-content-header">
-								Not Enabled
-							</div>
-							{notEnabledServices.map((service) => renderServiceItem(service))}
-						</div>
-					)}
-				</div>
-			</div>
-		</div>
+			{notEnabledServices.length > 0 && (
+				<ServicesListGroup label="Not Enabled">
+					{notEnabledServices.map((service) => renderServiceItem(service))}
+				</ServicesListGroup>
+			)}
+		</nav>
 	);
 }
 

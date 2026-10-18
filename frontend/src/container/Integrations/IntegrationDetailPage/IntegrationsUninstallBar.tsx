@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useMutation } from 'react-query';
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import unInstallIntegration from 'api/Integrations/uninstallIntegration';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { Button } from 'components/ui/button';
 import { useNotifications } from 'hooks/useNotifications';
-import { X } from '@signozhq/icons';
+import { X } from 'lucide-react';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from '../constants';
 import { ConnectionStates } from './TestConnection';
@@ -67,19 +68,23 @@ function IntergrationsUninstallBar(
 		setIsModalOpen(false);
 	};
 	return (
-		<div className="uninstall-integration-bar">
-			<div className="unintall-integration-bar-text">
-				<Typography.Text className="heading">Remove Integration</Typography.Text>
-				<Typography.Text className="subtitle">
+		<div
+			data-testid="uninstall-integration-bar"
+			className="uninstall-integration-bar fs-ui tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-4 tw:rounded-lg tw:border tw:border-error-soft tw:bg-surface-raised tw:px-5 tw:py-4 tw:font-sans tw:text-foreground"
+		>
+			<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-1">
+				<h2 className="tw:text-sm tw:font-semibold">Remove Integration</h2>
+				<p className="tw:text-[13px] tw:text-muted-foreground">
 					Removing the {integrationTitle} integration would make your workspace stop
 					listening for data from {integrationTitle} instances.
-				</Typography.Text>
+				</p>
 			</div>
 			<Button
-				className="uninstall-integration-btn"
-				icon={<X size={14} />}
+				variant="destructive"
+				className="uninstall-integration-btn tw:dark:bg-destructive!"
 				onClick={(): void => showModal()}
 			>
+				<X aria-hidden="true" />
 				{removeIntegrationTitle}
 			</Button>
 			<Modal

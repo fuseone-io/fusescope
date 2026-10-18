@@ -47,7 +47,7 @@
 
 				border-radius: 4px;
 				border: 1px solid var(--l3-background);
-				background: var(--l1-background);
+				background: transparent;
 
 				.aws-service-details-overview-configuration-title {
 					display: flex;
@@ -86,7 +86,7 @@
 
 				.aws-service-details-overview-configuration-s3-buckets {
 					padding: 12px;
-					background: var(--l1-background);
+					background: transparent;
 				}
 
 				.aws-service-details-overview-configuration-content {
@@ -95,7 +95,7 @@
 					gap: 16px;
 
 					padding: 12px;
-					background: var(--l1-background);
+					background: transparent;
 
 					.aws-service-details-overview-configuration-content-item {
 						display: flex;
@@ -114,7 +114,7 @@
 					padding: 8px 12px;
 
 					border-top: 1px solid var(--l3-background);
-					background: var(--l1-background);
+					background: transparent;
 				}
 
 				.aws-service-details-overview-configuration-title-text-select-all {
@@ -129,7 +129,7 @@
 
 			.aws-service-details-overview-markdown {
 				padding: 12px;
-				background: var(--l1-background);
+				background: transparent;
 				color: var(--l1-foreground);
 			}
 
@@ -143,7 +143,7 @@
 			.aws-service-dashboards {
 				border-radius: 6px;
 				border: 1px solid var(--l3-background);
-				background: var(--l1-background);
+				background: transparent;
 
 				.aws-service-dashboards-title {
 					display: flex;

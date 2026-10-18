@@ -1,16 +1,17 @@
+import PageTemplate from 'components/PageTemplate/PageTemplate';
 import { IntegrationType } from 'container/Integrations/types';
 
+import BackToIntegrations from '../components/BackToIntegrations';
 import Header from './Header/Header';
 import ServicesTabs from './ServiceTabs/ServicesTabs';
 
-import './CloudIntegration.styles.scss';
-
 const CloudIntegration = ({ type }: { type: IntegrationType }): JSX.Element => {
 	return (
-		<div className="cloud-integration-container">
+		<PageTemplate testId="cloud-integration-page">
+			<BackToIntegrations />
 			<Header type={type} />
 			<ServicesTabs type={type} />
-		</div>
+		</PageTemplate>
 	);
 };
 

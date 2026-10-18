@@ -1,4 +1,5 @@
 import awsDarkLogo from '@/assets/Logos/aws-dark.svg';
+import awsLightLogo from '@/assets/Logos/aws-light.svg';
 import azureOpenaiLogo from '@/assets/Logos/azure-openai.svg';
 import gcpLogo from '@/assets/Logos/gcp.svg';
 
@@ -75,6 +76,11 @@ export const ONE_CLICK_INTEGRATIONS = [
 	AZURE_INTEGRATION,
 	GCP_INTEGRATION,
 ];
+
+/** `icon` is drawn for a dark ground; these replace it on a light one. */
+export const LIGHT_THEME_ICONS: Record<string, string> = {
+	[INTEGRATION_TYPES.AWS]: awsLightLogo,
+};
 
 export const AZURE_REGIONS: AzureRegion[] = [
 	{

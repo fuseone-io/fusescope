@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { Badge } from '@signozhq/ui/badge';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
-import awwSnapIconUrl from '@/assets/Icons/awwSnap.svg';
-import dottedDoubleLineUrl from '@/assets/svgs/dotted-double-line.svg';
-
+import CardGrid from '../components/CardGrid';
+import IntegrationCard from '../components/IntegrationCard';
+import IntegrationsNotFound from '../components/IntegrationsNotFound';
+import SectionLabel from '../components/SectionLabel';
+import { useThemedIntegrationIcon } from '../components/useThemedIntegrationIcon';
 import { ONE_CLICK_INTEGRATIONS } from '../constants';
-
-import './OneClickIntegrations.styles.scss';
 
 interface OneClickIntegrationsProps {
 	searchQuery: string;
@@ -16,6 +16,7 @@ interface OneClickIntegrationsProps {
 
 function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 	const { searchQuery, setSelectedIntegration } = props;
+	const themedIcon = useThemedIntegrationIcon();
 
 	const filteredIntegrations = useMemo(() => {
 		const query = searchQuery.trim().toLowerCase();
@@ -30,74 +31,38 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 		);
 	}, [searchQuery]);
 
-	const handleSelectedIntegration = (integration: IntegrationsProps): void => {
-		setSelectedIntegration(integration);
-	};
-
 	return (
-		<div className="one-click-integrations">
-			<div className="one-click-integrations-header">
-				<div className="one-click-integrations-header-title">
-					One Click Integrations
-				</div>
+		<section className="one-click-integrations fs-ui tw:flex tw:flex-col tw:gap-4 tw:font-sans tw:text-foreground">
+			<SectionLabel>One click integrations</SectionLabel>
 
-				<div className="one-click-integrations-header-dotted-double-line">
-					<img
-						src={dottedDoubleLineUrl}
-						alt="dotted-double-line"
-						width="100%"
-						height="100%"
-					/>
-				</div>
-			</div>
-
-			<div className="one-click-integrations-list">
+			<CardGrid testId="one-click-integrations-list">
 				{filteredIntegrations.length === 0 && searchQuery.trim() ? (
-					<div className="integrations-not-found-container">
-						<div className="integrations-not-found-content">
-							<img
-								src={awwSnapIconUrl}
-								alt="no-integrations"
-								className="integrations-not-found-image"
-							/>
-							<div className="integrations-not-found-text">
-								No integrations found for &ldquo;{searchQuery.trim()}&rdquo;
-							</div>
-						</div>
-					</div>
+					<IntegrationsNotFound query={searchQuery.trim()} />
 				) : (
-					<>
-						{filteredIntegrations.map((integration) => (
-							<div
-								className="one-click-integrations-list-item"
-								key={integration.id}
-								onClick={(): void => handleSelectedIntegration(integration)}
-							>
-								<div className="one-click-integrations-list-item-title">
-									<div className="one-click-integrations-list-item-title-image-container">
-										<img src={integration.icon} alt={integration.title} />
-										<div className="one-click-integrations-list-item-title-text">
-											{integration.title}
-										</div>
-									</div>
-									{integration.is_new && (
-										<div className="one-click-integrations-list-item-new-tag">
-											<Badge color="primary" variant="solid">
-												NEW
-											</Badge>
-										</div>
-									)}
-								</div>
-
-								<div className="one-click-integrations-list-item-description">
-									{integration.description}
-								</div>
-							</div>
-						))}
-					</>
+					filteredIntegrations.map((integration) => (
+						<IntegrationCard
+							key={integration.id}
+							className="one-click-integrations-list-item"
+							icon={themedIcon(integration.id, integration.icon)}
+							iconAlt={integration.title}
+							title={integration.title}
+							description={integration.description}
+							badge={
+								integration.is_new && (
+									<StatusBadge
+										tone="info"
+										className="tw:bg-brand-secondary-soft tw:text-brand-secondary-ink"
+									>
+										New
+									</StatusBadge>
+								)
+							}
+							onClick={(): void => setSelectedIntegration(integration)}
+						/>
+					))
 				)}
-			</div>
-		</div>
+			</CardGrid>
+		</section>
 	);
 }
 

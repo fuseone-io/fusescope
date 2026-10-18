@@ -5,7 +5,6 @@ import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
 import { Switch } from '@signozhq/ui/switch';
 import { Tabs } from '@signozhq/ui/tabs';
-import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
 	getListAccountServicesMetadataQueryKey,
@@ -22,6 +21,7 @@ import {
 } from 'api/generated/services/fuseScope.schemas';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { Skeleton } from 'components/ui/skeleton';
 import ServiceDashboards from 'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards';
 import { IntegrationType, IServiceStatus } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -358,9 +358,12 @@ function ServiceDetails({
 
 	if (isServiceDetailsLoading) {
 		return (
-			<div className="service-details-loading">
-				<Skeleton active />
-				<Skeleton active />
+			<div
+				data-testid="service-details-loading"
+				className="tw:flex tw:flex-col tw:gap-3"
+			>
+				<Skeleton className="tw:h-24 tw:w-full tw:bg-muted" />
+				<Skeleton className="tw:h-48 tw:w-full tw:bg-muted" />
 			</div>
 		);
 	}
