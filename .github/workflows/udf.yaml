@@ -1,0 +1,57 @@
+name: udf
+
+on:
+  push:
+    tags:
+      - "histogram-quantile/v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, e.g. v0.0.1"
+        required: true
+
+permissions: {}
+
+jobs:
+  histogram-quantile:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+      - name: go-install
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: build
+        env:
+          VERSION: ${{ inputs.version || github.ref_name }}
+        run: |
+          version="${VERSION#histogram-quantile/}"
+          if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must look like v1.2.3, got '$version'"
+            exit 1
+          fi
+          mkdir -p dist
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
+            os="${target%/*}"
+            arch="${target#*/}"
+            dir="dist/${os}_${arch}"
+            mkdir -p "$dir"
+            CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w" -o "$dir/histogram-quantile" ./scripts/clickhouse/histogramquantile
+            cp LICENSE README.md "$dir/"
+            tar -C "$dir" -czf "dist/histogram-quantile_${os}_${arch}.tar.gz" LICENSE README.md histogram-quantile
+          done
+          (cd dist && sha256sum ./*.tar.gz > "histogram-quantile_${version#v}_checksums.txt")
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="histogram-quantile/${VERSION}"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --target "$GITHUB_SHA" --latest=false --title "$tag" \
+              --notes "ClickHouse histogramQuantile UDF built from scripts/clickhouse/histogramquantile."
+          fi
+          gh release upload "$tag" dist/*.tar.gz dist/*_checksums.txt --clobber
