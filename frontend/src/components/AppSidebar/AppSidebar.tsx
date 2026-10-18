@@ -1,4 +1,4 @@
-import { MouseEvent } from 'react';
+import { MouseEvent, useMemo } from 'react';
 import logEvent from 'api/common/logEvent';
 import {
 	Sidebar,
@@ -29,11 +29,15 @@ import {
 	NAV_BUTTON_CLASS,
 	SETTINGS_NAV_ITEM,
 } from './constants';
+import {
+	SHORTCUTS_GROUP_KEY,
+	useCollapsedNavGroups,
+} from './hooks/useCollapsedNavGroups';
 import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
 import { useNavShortcuts } from './hooks/useNavShortcuts';
 import { useSidebarNavigation } from './hooks/useSidebarNavigation';
 import { useVisibleNavItems } from './hooks/useVisibleNavItems';
-import { NavItem } from './types';
+import { NavGroup, NavItem } from './types';
 import { openRoute } from './utils';
 
 /** FuseScope's main navigation; render inside `AppSidebarProvider`. */
@@ -46,6 +50,18 @@ function AppSidebar(): JSX.Element {
 	const { groups, integrations, pinnable } = useVisibleNavItems();
 	const { shortcuts, isShortcut, toggleShortcut } = useNavShortcuts(pinnable);
 	useNavigationShortcuts(navigate);
+
+	const sections = useMemo<NavGroup[]>(
+		() =>
+			shortcuts.length > 0
+				? [
+						{ key: SHORTCUTS_GROUP_KEY, label: 'Shortcuts', items: shortcuts },
+						...groups,
+					]
+				: groups,
+		[shortcuts, groups],
+	);
+	const { isOpen, setOpen } = useCollapsedNavGroups(sections, activeKey);
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 	const showNewSource = isCloudUser && user.role !== USER_ROLES.VIEWER;
@@ -93,9 +109,9 @@ function AppSidebar(): JSX.Element {
 					homeUrl={urlFor(ROUTES.HOME)}
 					onHome={(event: MouseEvent): void => navigate(ROUTES.HOME, event)}
 				/>
-				<SidebarContent className="tw:gap-1 tw:py-2 tw:overflow-x-hidden tw:[scrollbar-width:thin] tw:group-data-[collapsible=icon]:overflow-y-auto tw:group-data-[collapsible=icon]:[scrollbar-width:none]">
+				<SidebarContent className="tw:gap-3 tw:px-2 tw:py-2 tw:overflow-x-hidden tw:[scrollbar-width:thin] tw:group-data-[collapsible=icon]:overflow-y-auto tw:group-data-[collapsible=icon]:[scrollbar-width:none]">
 					{showNewSource && (
-						<SidebarGroup className="tw:py-1">
+						<SidebarGroup className="tw:p-0">
 							<SidebarMenu>
 								<SidebarMenuItem>
 									<SidebarMenuButton
@@ -118,46 +134,53 @@ function AppSidebar(): JSX.Element {
 							</SidebarMenu>
 						</SidebarGroup>
 					)}
-					{shortcuts.length > 0 && (
-						<NavGroupSection label="Shortcuts">
-							{shortcuts.map((item) => renderItem(item, 'shortcut'))}
-						</NavGroupSection>
-					)}
-					{groups.map((group) => (
-						<NavGroupSection key={group.key} label={group.label}>
-							{group.items.map((item) => renderItem(item, group.key))}
+					{sections.map((section) => (
+						<NavGroupSection
+							key={section.key}
+							label={section.label}
+							open={isOpen(section.key)}
+							onOpenChange={(open): void => setOpen(section.key, open)}
+						>
+							{section.items.map((item) => renderItem(item, section.key))}
 						</NavGroupSection>
 					))}
 				</SidebarContent>
-				<SidebarFooter className="tw:gap-1 tw:pb-3">
-					<SidebarMenu className="tw:gap-0.5">
-						{isAIAssistantEnabled && (
+				<SidebarFooter className="tw:gap-1 tw:p-2">
+					{(isAIAssistantEnabled || integrations) && (
+						<SidebarMenu className="tw:gap-px">
+							{isAIAssistantEnabled && (
+								<NavMenuItem
+									item={AI_ASSISTANT_NAV_ITEM}
+									href={aiPath}
+									isActive={activeKey === AI_ASSISTANT_NAV_ITEM.key}
+									isDisabled={isWorkspaceBlocked}
+									onNavigate={(event): void => {
+										logClick(AI_ASSISTANT_NAV_ITEM);
+										openRoute(aiPath, event);
+									}}
+								/>
+							)}
+							{integrations && renderItem(integrations, 'footer')}
+						</SidebarMenu>
+					)}
+					<SidebarSeparator className="tw:mx-0" />
+					<div className="tw:flex tw:items-center tw:gap-0.5 tw:group-data-[collapsible=icon]:flex-col-reverse">
+						<UserMenu />
+						<SidebarMenu className="tw:w-auto tw:flex-row tw:gap-0.5 tw:group-data-[collapsible=icon]:flex-col">
+							<HelpMenu />
 							<NavMenuItem
-								item={AI_ASSISTANT_NAV_ITEM}
-								href={aiPath}
-								isActive={activeKey === AI_ASSISTANT_NAV_ITEM.key}
+								item={SETTINGS_NAV_ITEM}
+								href={urlFor(ROUTES.SETTINGS)}
+								isActive={pathname.startsWith(ROUTES.SETTINGS)}
 								isDisabled={isWorkspaceBlocked}
 								onNavigate={(event): void => {
-									logClick(AI_ASSISTANT_NAV_ITEM);
-									openRoute(aiPath, event);
+									logClick(SETTINGS_NAV_ITEM);
+									navigate(ROUTES.SETTINGS, event);
 								}}
+								iconOnly
 							/>
-						)}
-						{integrations && renderItem(integrations, 'footer')}
-						<HelpMenu />
-						<NavMenuItem
-							item={SETTINGS_NAV_ITEM}
-							href={urlFor(ROUTES.SETTINGS)}
-							isActive={pathname.startsWith(ROUTES.SETTINGS)}
-							isDisabled={isWorkspaceBlocked}
-							onNavigate={(event): void => {
-								logClick(SETTINGS_NAV_ITEM);
-								navigate(ROUTES.SETTINGS, event);
-							}}
-						/>
-					</SidebarMenu>
-					<SidebarSeparator className="tw:mx-0" />
-					<UserMenu />
+						</SidebarMenu>
+					</div>
 				</SidebarFooter>
 			</nav>
 			<SidebarRail />

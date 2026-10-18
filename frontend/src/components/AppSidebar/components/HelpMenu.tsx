@@ -19,6 +19,7 @@ import { useAppContext } from 'providers/App/App';
 import { openInNewTab } from 'utils/navigation';
 
 import { NAV_BUTTON_CLASS } from '../constants';
+import { useFooterTooltip } from '../hooks/useFooterTooltip';
 import { useHelpMenuEntries } from '../hooks/useHelpMenuEntries';
 import { HelpMenuEntry } from '../types';
 import { openRoute } from '../utils';
@@ -29,6 +30,7 @@ function HelpMenu(): JSX.Element {
 	const entries = useHelpMenuEntries();
 	const appContext = useAppContext();
 	const { isMobile } = useSidebar();
+	const tooltip = useFooterTooltip(LABEL);
 
 	const select = (
 		entry: Extract<HelpMenuEntry, { type: 'item' }>,
@@ -64,12 +66,12 @@ function HelpMenu(): JSX.Element {
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<SidebarMenuButton
-						tooltip={LABEL}
+						tooltip={tooltip}
 						data-testid="help-support-nav-item"
-						className={NAV_BUTTON_CLASS}
+						className={`${NAV_BUTTON_CLASS} tw:size-8`}
 					>
 						<LifeBuoy />
-						<span>{LABEL}</span>
+						<span className="tw:sr-only">{LABEL}</span>
 					</SidebarMenuButton>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent
