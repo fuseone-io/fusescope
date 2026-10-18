@@ -1,9 +1,9 @@
 .checkboxFilter {
 	display: flex;
 	flex-direction: column;
-	padding: var(--spacing-6);
-	gap: var(--spacing-6);
-	border-bottom: 1px solid var(--l1-border);
+	padding: 0 0 4px;
+	border-bottom: 1px solid var(--fs-border);
+	font-family: var(--tw-font-sans);
 }
 
 .sectionActions {
@@ -45,6 +45,8 @@
 }
 
 .search {
+	padding: 0 12px 8px 30px;
+
 	--input-background: var(--l2-background);
 	--input-hover-background: var(--l2-background);
 	--input-focus-background: var(--l2-background);
@@ -70,12 +72,12 @@
 .values {
 	display: flex;
 	flex-direction: column;
+	gap: 4px;
 }
 
 .sectionValues {
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-4);
 }
 
 .loadingValues {
@@ -90,18 +92,31 @@
 }
 
 .noData {
-	align-self: center;
+	padding: 4px 12px 4px 30px;
+	color: var(--fs-subtle-foreground);
+	font-size: 12px;
 }
 
 .showMore {
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	padding: 2px 12px 2px 22px;
 }
 
 .showMoreText {
-	color: var(--accent-primary);
+	display: inline-flex;
+	align-items: center;
+	height: 26px;
+	padding: 0 8px;
+	border-radius: 6px;
+	color: var(--fs-primary);
+	font-size: 13px;
+	font-weight: 500;
 	cursor: pointer;
+
+	&:hover {
+		background: var(--fs-muted);
+	}
 }
 
 .goToDocs {

@@ -4,11 +4,12 @@ import {
 	SetStateAction,
 	useCallback,
 	useEffect,
+	useId,
 	useMemo,
 	useState,
 } from 'react';
-import { Input } from 'antd';
 import { Slider } from '@signozhq/ui/slider';
+import { Input } from 'components/ui/input';
 import { getMs } from 'utils/timeUtils';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 
@@ -45,6 +46,7 @@ export function DurationSection(props: DurationProps): JSX.Element {
 		};
 	}, [selectedFilters]);
 
+	const inputId = useId();
 	const [preMax, setPreMax] = useState<string>('');
 	const [preMin, setPreMin] = useState<string>('');
 
@@ -102,27 +104,31 @@ export function DurationSection(props: DurationProps): JSX.Element {
 
 	return (
 		<div>
-			<div className="duration-inputs">
-				<Input
-					type="number"
-					addonBefore="MIN"
-					placeholder="0"
-					className="min-max-input"
-					onChange={onChangeMinHandler}
-					value={preMin}
-					data-testid="min-input"
-					addonAfter="ms"
-				/>
-				<Input
-					type="number"
-					addonBefore="MAX"
-					placeholder="100000000"
-					className="min-max-input"
-					onChange={onChangeMaxHandler}
-					value={preMax}
-					data-testid="max-input"
-					addonAfter="ms"
-				/>
+			<div className="duration-inputs fs-ui">
+				<label className="duration-input-label" htmlFor={`${inputId}-min`}>
+					Min (ms)
+					<Input
+						id={`${inputId}-min`}
+						type="number"
+						placeholder="0"
+						className="duration-input"
+						onChange={onChangeMinHandler}
+						value={preMin}
+						data-testid="min-input"
+					/>
+				</label>
+				<label className="duration-input-label" htmlFor={`${inputId}-max`}>
+					Max (ms)
+					<Input
+						id={`${inputId}-max`}
+						type="number"
+						placeholder="Any"
+						className="duration-input"
+						onChange={onChangeMaxHandler}
+						value={preMax}
+						data-testid="max-input"
+					/>
+				</label>
 			</div>
 			<div className="duration-input-slider">
 				<Slider

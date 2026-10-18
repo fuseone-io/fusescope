@@ -2,15 +2,13 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-4);
-	padding: var(--spacing-2) 0;
-
-	margin-bottom: calc(-1 * var(--spacing-4));
+	padding: 4px 12px 4px 30px;
 }
 
 .line {
 	flex: 1;
 	height: 1px;
-	background: var(--l1-border);
+	background: var(--fs-border);
 }
 
 .label {
@@ -18,7 +16,7 @@
 	font-weight: var(--font-weight-semibold);
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
-	color: var(--l3-foreground);
+	color: var(--fs-subtle-foreground);
 	white-space: nowrap;
 }
 

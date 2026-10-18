@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Collapse } from 'antd';
-import { Undo2 } from '@signozhq/icons';
+import { ChevronDown, ChevronRight, Undo2 } from '@signozhq/icons';
 import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';
 import {
 	IQuickFiltersConfig,
@@ -270,36 +269,44 @@ function Duration({
 		}
 	};
 
+	const isOpen = activeKeys.includes('durationNano');
+
 	return (
 		<div className="section-body-header" data-testid="collapse-duration">
-			<Collapse
-				bordered={false}
-				className="collapseContainer"
-				activeKey={activeKeys}
-				onChange={(keys): void => setActiveKeys(keys as string[])}
-				items={[
-					{
-						key: 'durationNano',
-						children: (
-							<DurationSection
-								setSelectedFilters={setSelectedFilters}
-								selectedFilters={selectedFilters}
+			<div className="duration-filter">
+				<div
+					role="button"
+					tabIndex={0}
+					aria-expanded={isOpen}
+					className="duration-filter-header"
+					onClick={(): void => setActiveKeys(isOpen ? [] : ['durationNano'])}
+					onKeyDown={(e): void => {
+						if (e.key === 'Enter' || e.key === ' ') {
+							setActiveKeys(isOpen ? [] : ['durationNano']);
+						}
+					}}
+				>
+					{isOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+					<span className="duration-filter-title">Duration</span>
+					<span className="duration-filter-key">{filter.attributeKey.key}</span>
+					{isOpen && (
+						<div className="duration-reset">
+							<SectionActionButton
+								icon={<Undo2 size={14} />}
+								tooltip="Reset"
+								onClick={onClearHandler}
+								testId="collapse-duration-clearBtn"
 							/>
-						),
-						label: 'Duration',
-						extra: activeKeys.includes('durationNano') ? (
-							<div className="duration-reset">
-								<SectionActionButton
-									icon={<Undo2 size={14} />}
-									tooltip="Reset"
-									onClick={onClearHandler}
-									testId="collapse-duration-clearBtn"
-								/>
-							</div>
-						) : undefined,
-					},
-				]}
-			/>
+						</div>
+					)}
+				</div>
+				{isOpen && (
+					<DurationSection
+						setSelectedFilters={setSelectedFilters}
+						selectedFilters={selectedFilters}
+					/>
+				)}
+			</div>
 		</div>
 	);
 }

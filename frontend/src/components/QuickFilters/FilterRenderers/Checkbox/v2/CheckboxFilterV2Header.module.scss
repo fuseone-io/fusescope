@@ -2,14 +2,17 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	height: 36px;
+	padding: 0 12px;
 	cursor: pointer;
-	gap: var(--spacing-2);
+	gap: 6px;
 }
 
 .leftAction {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-3);
+	gap: 6px;
+	color: var(--fs-subtle-foreground);
 	flex: 1 1 auto;
 	min-width: 0;
 
@@ -20,17 +23,29 @@
 }
 
 .title {
-	color: var(--l2-foreground);
-	font-size: 14px;
-	font-weight: 400;
+	color: var(--fs-foreground);
+	font-size: 13px;
+	font-weight: 500;
 	line-height: 18px;
 	letter-spacing: -0.07px;
 	text-transform: capitalize;
 	// Always ellipsize a long name; on hover the actions take width and it
 	// compresses further.
-	flex: 1 1 auto;
+	flex: 0 1 auto;
 	min-width: 0;
 	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.attributeKey {
+	flex: 1 1 0;
+	min-width: 0;
+	text-align: right;
+	overflow: hidden;
+	color: var(--fs-subtle-foreground);
+	font-family: var(--tw-font-mono);
+	font-size: 11px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }

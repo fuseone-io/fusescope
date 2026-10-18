@@ -17,7 +17,9 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { NON_SELECTED_OPERATORS } from '../checkboxFilterQuery';
 import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';
-import useCheckboxDisclosure from '../useCheckboxDisclosure';
+import useCheckboxDisclosure, {
+	DEFAULT_VISIBLE_ITEMS_COUNT as SHOW_MORE_STEP,
+} from '../useCheckboxDisclosure';
 import useCheckboxFilterActions from '../useCheckboxFilterActions';
 import useCheckboxFilterState from '../useCheckboxFilterState';
 import { useFieldValues } from './useFieldValues';
@@ -170,6 +172,7 @@ export default function CheckboxFilterV2(
 		<div className={styles.checkboxFilter} data-testid="checkbox-filter-v2">
 			<CheckboxFilterV2Header
 				title={filter.title}
+				attributeKey={filter.attributeKey.key}
 				isOpen={isOpen}
 				actionsClassName={classNames(styles.sectionActions, {
 					[styles.sectionActionsPinned]: isSearchOpen,
@@ -249,7 +252,10 @@ export default function CheckboxFilterV2(
 									onClick={onShowMore}
 									data-testid="checkbox-filter-show-more"
 								>
-									Show More...
+									{`Show ${Math.min(
+										SHOW_MORE_STEP,
+										totalCount - visibleItemsCount,
+									)} more`}
 								</Typography.Text>
 							</section>
 						)}

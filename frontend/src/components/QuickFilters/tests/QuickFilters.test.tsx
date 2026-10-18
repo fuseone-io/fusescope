@@ -519,7 +519,7 @@ describe('Quick Filters with custom filters', () => {
 		expect(requestBody.filters).toHaveLength(10);
 	});
 
-	it('should render duration slider for duration_nono filter', async () => {
+	it('should render the min and max duration inputs and slider', async () => {
 		// Use fake timers only in this test (for debounce), and wire them to userEvent
 		jest.useFakeTimers();
 		const user = userEvent.setup({
@@ -540,7 +540,7 @@ describe('Quick Filters with custom filters', () => {
 		expect(minDuration).toHaveValue(null);
 		expect(minDuration).toHaveProperty('placeholder', '0');
 		expect(maxDuration).toHaveValue(null);
-		expect(maxDuration).toHaveProperty('placeholder', '100000000');
+		expect(maxDuration).toHaveProperty('placeholder', 'Any');
 
 		// Type values and advance debounce
 		await user.clear(minDuration);
