@@ -33,7 +33,7 @@ For a behaviour change or bug fix, there must be a test in the diff that fails w
 
 Run them; fix failures before going on. Report each with pass/fail.
 
-- **Go**: `GOTOOLCHAIN=go1.25.7 go build ./...`, `gofmt -l $(git diff --name-only … -- '*.go')` (must print nothing), `GOTOOLCHAIN=go1.25.7 go test ./<touched packages>/...`, `golangci-lint run ./<touched packages>/...`, `go mod tidy` leaves `go.mod`/`go.sum` unchanged.
+- **Go**: `GOTOOLCHAIN=go1.25.14 go build ./...`, `gofmt -l $(git diff --name-only … -- '*.go')` (must print nothing), `GOTOOLCHAIN=go1.25.14 go test ./<touched packages>/...`, `golangci-lint run ./<touched packages>/...`, `go mod tidy` leaves `go.mod`/`go.sum` unchanged.
 - **API contract**: `make gen-openapi-specs`, then `cd frontend && npx pnpm@10 generate:api`. Any resulting change is committed separately (step 5).
 - **Mocks**: interfaces listed in `.mockery.yml` changed → `make gen-mocks`.
 - **SQL**: run the affected integration suite on both stores, from `tests/`:

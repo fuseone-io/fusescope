@@ -31,7 +31,7 @@ Thanks for helping. This page is the short version of how we work; the engineeri
 
   | Area | Checks |
   |---|---|
-  | Go | `GOTOOLCHAIN=go1.25.7 go test ./<pkg>/...`, `gofmt -l`, `golangci-lint run` (v2) |
+  | Go | `GOTOOLCHAIN=go1.25.14 go test ./<pkg>/...`, `gofmt -l`, `golangci-lint run` (v2) |
   | Frontend | `npx pnpm@10 tsgo --noEmit`, `lint`, `fmt`, `test <path>`; `build` when routing, config or dependencies change |
   | API contract | `make gen-openapi-specs`, then `npx pnpm@10 generate:api` in `frontend/` |
   | Integration tests | `make py-fmt`, `make py-lint`, the affected suite on both stores |

@@ -1,6 +1,6 @@
 module github.com/fuseone-io/fusescope/scripts/promqltestcorpus
 
-go 1.25.7
+go 1.25.14
 
 require (
 	github.com/prometheus/common v0.67.5
