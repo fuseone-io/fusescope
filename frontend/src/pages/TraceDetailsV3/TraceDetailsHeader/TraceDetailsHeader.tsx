@@ -9,7 +9,6 @@ import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import history, { hasInAppHistory } from 'lib/history';
 import { ArrowLeft, ChartPie } from '@signozhq/icons';
-import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -115,11 +114,17 @@ function TraceDetailsHeader({
 						>
 							<ArrowLeft size={14} />
 						</Button>
-						<KeyValueLabel
-							badgeKey="Trace ID"
-							badgeValue={traceID}
-							maxCharacters={100}
-						/>
+						<div className="fs-ui tw:flex tw:min-w-0 tw:items-center tw:gap-2.5 tw:font-sans tw:text-foreground">
+							<span className="tw:text-xs tw:font-medium tw:tracking-[0.05em] tw:text-muted-foreground tw:uppercase">
+								Trace
+							</span>
+							<h1
+								data-testid="trace-details-trace-id"
+								className="tw:min-w-0 tw:font-mono tw:text-lg tw:leading-snug tw:font-medium tw:break-all tw:tabular-nums"
+							>
+								{traceID}
+							</h1>
+						</div>
 					</div>
 				)}
 				{showTraceDetailsHeaderOptions && traceSummary && (
