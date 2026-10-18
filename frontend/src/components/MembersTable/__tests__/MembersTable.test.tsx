@@ -113,6 +113,24 @@ describe('MembersTable', () => {
 		);
 	});
 
+	it('sorts rows by email when the name column is sorted', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(
+			<MembersTable
+				{...defaultProps}
+				data={[mockActiveMembers[1], mockActiveMembers[0]]}
+			/>,
+		);
+
+		await user.click(screen.getByTestId('members-sort-name'));
+
+		const emails = screen
+			.getAllByTestId('member-row')
+			.map((row) => row.textContent ?? '');
+		expect(emails[0]).toContain('alice@signoz.io');
+		expect(emails[1]).toContain('bob@signoz.io');
+	});
+
 	it('shows "No members found" empty state when no data and no search query', () => {
 		render(<MembersTable {...defaultProps} data={[]} total={0} searchQuery="" />);
 
@@ -129,7 +147,7 @@ describe('MembersTable', () => {
 	});
 
 	it('hides pagination when total does not exceed pageSize', () => {
-		const { container } = render(
+		render(
 			<MembersTable
 				{...defaultProps}
 				data={mockActiveMembers}
@@ -139,12 +157,12 @@ describe('MembersTable', () => {
 		);
 
 		expect(
-			container.querySelector('.members-table-pagination'),
+			screen.queryByRole('navigation', { name: 'Pagination' }),
 		).not.toBeInTheDocument();
 	});
 
 	it('shows pagination when total exceeds pageSize', () => {
-		const { container } = render(
+		render(
 			<MembersTable
 				{...defaultProps}
 				data={mockActiveMembers}
@@ -154,10 +172,8 @@ describe('MembersTable', () => {
 		);
 
 		expect(
-			container.querySelector('.members-table-pagination'),
+			screen.getByRole('navigation', { name: 'Pagination' }),
 		).toBeInTheDocument();
-		expect(
-			container.querySelector('.members-pagination-total'),
-		).toBeInTheDocument();
+		expect(screen.getByText('1-20 of 25 items')).toBeInTheDocument();
 	});
 });

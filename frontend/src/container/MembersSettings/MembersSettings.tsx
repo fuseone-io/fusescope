@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Check, ChevronDown, Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
-import { Input } from '@signozhq/ui/input';
 import { useListUsers } from 'api/generated/services/users';
+import Panel from 'components/PageTemplate/components/Panel';
+import { Button } from 'components/ui/button';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
 import InviteMembersModal from 'container/MembersSettings/components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { parseAsBoolean, useQueryState } from 'nuqs';
+import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
+import SettingsSearchInput from 'pages/Settings/components/SettingsSearchInput';
+import StatusFilterMenu from 'pages/Settings/components/StatusFilterMenu';
+import { StatusFilterOption } from 'pages/Settings/components/types';
+import { Plus } from 'lucide-react';
 import { toISOString } from 'utils/app';
 
 import { FilterMode, MemberStatus, toMemberStatus } from './utils';
-
-import './MembersSettings.styles.scss';
 
 const PAGE_SIZE = 20;
 
@@ -98,57 +99,16 @@ function MembersSettings(): JSX.Element {
 	).length;
 	const totalCount = allMembers.length;
 
-	const filterMenuItems: DropdownItemType[] = [
-		{
-			type: 'item',
-			value: FilterMode.All,
-			label: (
-				<div className="members-filter-option">
-					<span>All members ⎯ {totalCount}</span>
-					{filterMode === FilterMode.All && <Check size={14} />}
-				</div>
-			),
-			onClick: (): void => {
-				setFilterMode(FilterMode.All);
-				setPage(1);
-			},
-		},
-		{
-			type: 'item',
-			value: FilterMode.Invited,
-			label: (
-				<div className="members-filter-option">
-					<span>Pending invites ⎯ {pendingCount}</span>
-					{filterMode === FilterMode.Invited && <Check size={14} />}
-				</div>
-			),
-			onClick: (): void => {
-				setFilterMode(FilterMode.Invited);
-				setPage(1);
-			},
-		},
-		{
-			type: 'item',
-			value: FilterMode.Deleted,
-			label: (
-				<div className="members-filter-option">
-					<span>Deleted ⎯ {deletedCount}</span>
-					{filterMode === FilterMode.Deleted && <Check size={14} />}
-				</div>
-			),
-			onClick: (): void => {
-				setFilterMode(FilterMode.Deleted);
-				setPage(1);
-			},
-		},
+	const filterOptions: StatusFilterOption<FilterMode>[] = [
+		{ value: FilterMode.All, label: 'All members', count: totalCount },
+		{ value: FilterMode.Invited, label: 'Pending invites', count: pendingCount },
+		{ value: FilterMode.Deleted, label: 'Deleted', count: deletedCount },
 	];
 
-	const filterLabel =
-		filterMode === FilterMode.All
-			? `All members ⎯ ${totalCount}`
-			: filterMode === FilterMode.Invited
-				? `Pending invites ⎯ ${pendingCount}`
-				: `Deleted ⎯ ${deletedCount}`;
+	const handleFilterChange = (mode: FilterMode): void => {
+		setFilterMode(mode);
+		setPage(1);
+	};
 
 	const handleInviteComplete = useCallback((): void => {
 		void refetchUsers();
@@ -167,64 +127,45 @@ function MembersSettings(): JSX.Element {
 	}, [refetchUsers]);
 
 	return (
-		<div className="members-settings-page">
-			<div className="members-settings">
-				<div className="members-settings__header">
-					<h1 className="members-settings__title">Members</h1>
-					<p className="members-settings__subtitle">
-						Overview of people added to this workspace.
-					</p>
-				</div>
-
-				<div className="members-settings__controls">
-					<Dropdown items={filterMenuItems} nativeButton align="end" side="bottom">
-						<Button
-							size="md"
-							variant="solid"
-							color="secondary"
-							suffix={
-								<ChevronDown size={12} className="members-filter-trigger__chevron" />
-							}
-						>
-							<span>{filterLabel}</span>
-						</Button>
-					</Dropdown>
-
-					<div className="members-settings__search">
-						<Input
-							type="search"
-							placeholder="Search by name or email..."
-							value={searchQuery}
-							onChange={(e): void => {
-								setSearchQuery(e.target.value);
-								setPage(1);
-							}}
-							className="members-search-input"
-							name="members-search"
-						/>
-					</div>
-
-					<Button
-						size="md"
-						variant="solid"
-						color="primary"
-						onClick={(): void => void setIsInviteModalOpen(true)}
-						prefix={<Plus size={12} />}
-					>
-						Invite member
-					</Button>
-				</div>
+		<SettingsPageShell
+			testId="members-settings"
+			title="Members"
+			description="Overview of people added to this workspace."
+			actions={
+				<Button onClick={(): void => void setIsInviteModalOpen(true)}>
+					<Plus aria-hidden="true" />
+					Invite member
+				</Button>
+			}
+		>
+			<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+				<StatusFilterMenu
+					options={filterOptions}
+					value={filterMode}
+					onChange={handleFilterChange}
+				/>
+				<SettingsSearchInput
+					name="members-search"
+					placeholder="Search by name or email..."
+					value={searchQuery}
+					onChange={(e): void => {
+						setSearchQuery(e.target.value);
+						setPage(1);
+					}}
+				/>
 			</div>
-			<MembersTable
-				data={filteredMembers}
-				loading={isLoading}
-				total={filteredMembers.length}
-				currentPage={currentPage}
-				pageSize={PAGE_SIZE}
-				searchQuery={searchQuery}
-				onPageChange={setPage}
-				onRowClick={handleRowClick}
-			/>
+			<Panel className="tw:overflow-hidden">
+				<MembersTable
+					data={filteredMembers}
+					loading={isLoading}
+					total={filteredMembers.length}
+					currentPage={currentPage}
+					pageSize={PAGE_SIZE}
+					searchQuery={searchQuery}
+					onPageChange={setPage}
+					onRowClick={handleRowClick}
+				/>
+			</Panel>
 
 			<InviteMembersModal
 				open={isInviteModalOpen}
@@ -238,7 +179,7 @@ function MembersSettings(): JSX.Element {
 				onClose={handleDrawerClose}
 				onComplete={handleMemberEditComplete}
 			/>
-		</div>
+		</SettingsPageShell>
 	);
 }
 

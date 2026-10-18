@@ -1,21 +1,24 @@
-import type React from 'react';
-import { Badge } from '@signozhq/ui/badge';
-import { Table, Tooltip } from 'antd';
-import type { ColumnsType, SorterResult } from 'antd/es/table/interface';
+import { KeyboardEvent } from 'react';
+import SortableTableHead from 'components/PageTemplate/components/SortableTableHead';
+import TablePagination from 'components/PageTemplate/components/TablePagination';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHeader,
+	TableRow,
+} from 'components/ui/table';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { MemberStatus } from 'container/MembersSettings/utils';
+import IdentityCell from 'pages/Settings/components/IdentityCell';
+import ListEmptyState from 'pages/Settings/components/ListEmptyState';
+import LoadingRows from 'pages/Settings/components/LoadingRows';
 import { useTimezone } from 'providers/Timezone';
 
-import './MembersTable.styles.scss';
+import MemberStatusBadge from './MemberStatusBadge';
+import { MemberRow, MemberSortKey } from './types';
+import { useMembersTableRows } from './useMembersTableRows';
 
-export interface MemberRow {
-	id: string;
-	name?: string;
-	email: string;
-	status: MemberStatus;
-	joinedOn: string | null;
-	updatedAt?: string | null;
-}
+export type { MemberRow } from './types';
 
 interface MembersTableProps {
 	data: MemberRow[];
@@ -26,87 +29,13 @@ interface MembersTableProps {
 	searchQuery: string;
 	onPageChange: (page: number) => void;
 	onRowClick?: (member: MemberRow) => void;
-	onSortChange?: (
-		sorter: SorterResult<MemberRow> | SorterResult<MemberRow>[],
-	) => void;
 }
 
-function NameEmailCell({
-	name,
-	email,
-}: {
-	name?: string;
-	email: string;
-}): JSX.Element {
-	return (
-		<div className="member-name-email-cell">
-			{name && (
-				<span className="member-name" title={name}>
-					{name}
-				</span>
-			)}
-			<Tooltip title={email} overlayClassName="member-tooltip">
-				<span className="member-email">{email}</span>
-			</Tooltip>
-		</div>
-	);
-}
-
-function StatusBadge({ status }: { status: MemberRow['status'] }): JSX.Element {
-	if (status === MemberStatus.Active) {
-		return (
-			<Badge color="success" variant="outlined">
-				ACTIVE
-			</Badge>
-		);
-	}
-	if (status === MemberStatus.Deleted) {
-		return (
-			<Badge color="danger" variant="outlined">
-				DELETED
-			</Badge>
-		);
-	}
-
-	if (status === MemberStatus.Invited) {
-		return (
-			<Badge color="warning" variant="outlined">
-				INVITED
-			</Badge>
-		);
-	}
-
-	return (
-		<Badge variant="solid" color="secondary">
-			⎯
-		</Badge>
-	);
-}
-
-function MembersEmptyState({
-	searchQuery,
-}: {
-	searchQuery: string;
-}): JSX.Element {
-	return (
-		<div className="members-empty-state">
-			<span
-				className="members-empty-state__emoji"
-				role="img"
-				aria-label="monocle face"
-			>
-				🧐
-			</span>
-			{searchQuery ? (
-				<p className="members-empty-state__text">
-					No results for <strong>{searchQuery}</strong>
-				</p>
-			) : (
-				<p className="members-empty-state__text">No members found</p>
-			)}
-		</div>
-	);
-}
+const COLUMNS: { key: MemberSortKey; label: string; className?: string }[] = [
+	{ key: 'name', label: 'Name / Email', className: 'tw:w-full' },
+	{ key: 'status', label: 'Status', className: 'tw:w-[120px]' },
+	{ key: 'joinedOn', label: 'Joined On', className: 'tw:w-[220px]' },
+];
 
 function MembersTable({
 	data,
@@ -117,127 +46,97 @@ function MembersTable({
 	searchQuery,
 	onPageChange,
 	onRowClick,
-	onSortChange,
 }: MembersTableProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const { rows, sort, onSort } = useMembersTableRows(
+		data,
+		currentPage,
+		pageSize,
+	);
 
 	const formatJoinedOn = (date: string | null): string => {
-		if (!date) {
-			return '—';
-		}
-		const d = new Date(date);
-		if (Number.isNaN(d.getTime())) {
+		if (!date || Number.isNaN(new Date(date).getTime())) {
 			return '—';
 		}
 		return formatTimezoneAdjustedTimestamp(date, DATE_TIME_FORMATS.DASH_DATETIME);
 	};
 
-	const columns: ColumnsType<MemberRow> = [
-		{
-			title: 'Name / Email',
-			dataIndex: 'name',
-			key: 'name',
-			sorter: (a, b): number => a.email.localeCompare(b.email),
-			render: (_, record): JSX.Element => (
-				<NameEmailCell name={record.name} email={record.email} />
-			),
-		},
-		{
-			title: 'Status',
-			dataIndex: 'status',
-			key: 'status',
-			width: 100,
-			align: 'right' as const,
-			className: 'member-status-cell',
-			sorter: (a, b): number => a.status.localeCompare(b.status),
-			render: (status: MemberRow['status']): JSX.Element => (
-				<StatusBadge status={status} />
-			),
-		},
-		{
-			title: 'Joined On',
-			dataIndex: 'joinedOn',
-			key: 'joinedOn',
-			width: 250,
-			align: 'right' as const,
-			sorter: (a, b): number => {
-				if (!a.joinedOn && !b.joinedOn) {
-					return 0;
-				}
-				if (!a.joinedOn) {
-					return 1;
-				}
-				if (!b.joinedOn) {
-					return -1;
-				}
-				return new Date(a.joinedOn).getTime() - new Date(b.joinedOn).getTime();
-			},
-			render: (joinedOn: string | null): JSX.Element => {
-				const formatted = formatJoinedOn(joinedOn);
-				const isDash = formatted === '—';
-				return (
-					<span className={isDash ? 'member-joined-dash' : 'member-joined-date'}>
-						{formatted}
-					</span>
-				);
-			},
-		},
-	];
+	if (!loading && data.length === 0) {
+		return (
+			<ListEmptyState testId="members-empty-state">
+				{searchQuery ? (
+					<>
+						No results for <strong>{searchQuery}</strong>
+					</>
+				) : (
+					'No members found'
+				)}
+			</ListEmptyState>
+		);
+	}
 
-	const showPaginationTotal = (_total: number, range: number[]): JSX.Element => (
-		<>
-			<span className="members-pagination-range">
-				{range[0]} &#8212; {range[1]}
-			</span>
-			<span className="members-pagination-total"> of {_total}</span>
-		</>
-	);
+	const onRowKeyDown = (
+		event: KeyboardEvent<HTMLTableRowElement>,
+		member: MemberRow,
+	): void => {
+		if (onRowClick && (event.key === 'Enter' || event.key === ' ')) {
+			event.preventDefault();
+			onRowClick(member);
+		}
+	};
 
 	return (
-		<div className="members-table-wrapper">
-			<Table<MemberRow>
-				columns={columns}
-				dataSource={data}
-				rowKey="id"
-				loading={loading}
-				pagination={{
-					current: currentPage,
-					pageSize,
-					total,
-					showTotal: showPaginationTotal,
-					showSizeChanger: false,
-					onChange: onPageChange,
-					className: 'members-table-pagination',
-					hideOnSinglePage: true,
-				}}
-				rowClassName={(_, index): string =>
-					index % 2 === 0 ? 'members-table-row--tinted' : ''
-				}
-				onRow={(record): React.HTMLAttributes<HTMLElement> => {
-					const isClickable = !!onRowClick;
-					return {
-						onClick: (): void => {
-							if (isClickable) {
-								onRowClick(record);
-							}
-						},
-						style: isClickable ? { cursor: 'pointer' } : undefined,
-					};
-				}}
-				onChange={(_, __, sorter): void => {
-					if (onSortChange) {
-						onSortChange(
-							sorter as SorterResult<MemberRow> | SorterResult<MemberRow>[],
-						);
-					}
-				}}
-				showSorterTooltip={false}
-				locale={{
-					emptyText: <MembersEmptyState searchQuery={searchQuery} />,
-				}}
-				className="members-table"
+		<>
+			<Table className="tw:min-w-[640px]" data-testid="members-table">
+				<TableHeader className="tw:bg-surface-sunken">
+					<TableRow>
+						{COLUMNS.map((column) => (
+							<SortableTableHead
+								key={column.key}
+								label={column.label}
+								active={sort?.key === column.key}
+								direction={sort?.direction ?? 'asc'}
+								onSort={(): void => onSort(column.key)}
+								testId={`members-sort-${column.key}`}
+								className={column.className}
+							/>
+						))}
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{loading ? (
+						<LoadingRows columns={COLUMNS.length} />
+					) : (
+						rows.map((member) => (
+							<TableRow
+								key={member.id}
+								data-testid="member-row"
+								tabIndex={onRowClick ? 0 : undefined}
+								className={onRowClick ? 'tw:cursor-pointer' : undefined}
+								onClick={(): void => onRowClick?.(member)}
+								onKeyDown={(event): void => onRowKeyDown(event, member)}
+							>
+								<TableCell className="tw:h-[52px] tw:max-w-0">
+									<IdentityCell name={member.name} email={member.email} />
+								</TableCell>
+								<TableCell>
+									<MemberStatusBadge status={member.status} />
+								</TableCell>
+								<TableCell className="tw:text-xs tw:text-muted-foreground tw:tabular-nums">
+									{formatJoinedOn(member.joinedOn)}
+								</TableCell>
+							</TableRow>
+						))
+					)}
+				</TableBody>
+			</Table>
+			<TablePagination
+				page={currentPage}
+				pageSize={pageSize}
+				total={total}
+				onPageChange={onPageChange}
 			/>
-		</div>
+		</>
 	);
 }
 
