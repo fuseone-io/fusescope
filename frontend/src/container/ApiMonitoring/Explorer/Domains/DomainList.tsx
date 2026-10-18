@@ -12,7 +12,6 @@ import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -140,16 +139,6 @@ function DomainList(): JSX.Element {
 
 	return (
 		<section className={cx('api-module-right-section')}>
-			<Toolbar
-				showAutoRefresh={false}
-				rightActions={
-					<RightToolbarActions
-						onStageRunQuery={handleStageAndRunQuery}
-						isLoadingQueries={isFetching}
-						handleCancelQuery={handleCancelQuery}
-					/>
-				}
-			/>
 			<div className={cx('api-monitoring-list-header')}>
 				<QuerySearch
 					dataSource={DataSource.TRACES}
@@ -157,6 +146,11 @@ function DomainList(): JSX.Element {
 					onChange={handleSearchChange}
 					placeholder="Enter your filter query (e.g., deployment.environment = 'otel-demo' AND service.name = 'frontend')"
 					hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
+				/>
+				<RightToolbarActions
+					onStageRunQuery={handleStageAndRunQuery}
+					isLoadingQueries={isFetching}
+					handleCancelQuery={handleCancelQuery}
 				/>
 			</div>
 			{isCancelled && formattedDataForTable.length === 0 && (
@@ -198,35 +192,40 @@ function DomainList(): JSX.Element {
 					</div>
 				)}
 			{(isFetching || isLoading || formattedDataForTable.length > 0) && (
-				<Table
-					className="api-monitoring-domain-list-table"
-					dataSource={isFetching || isLoading ? [] : formattedDataForTable}
-					columns={columnsConfig}
-					loading={{
-						spinning: isFetching || isLoading,
-						indicator: (
-							<Spin indicator={<Loader size={14} className="animate-spin" />} />
-						),
-					}}
-					scroll={{ x: true }}
-					tableLayout="fixed"
-					onRow={(record, index): { onClick: () => void; className: string } => ({
-						onClick: (): void => {
-							if (index !== undefined) {
-								const dataIndex = formattedDataForTable.findIndex(
-									(item) => item.key === record.key,
-								);
-								setSelectedDomainIndex(dataIndex);
-								setParams({ selectedDomain: record.domainName });
-								logEvent('API Monitoring: Domain name row clicked', {});
-							}
-						},
-						className: 'expanded-clickable-row',
-					})}
-					rowClassName={(_, index): string =>
-						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
-					}
-				/>
+				<div
+					className="api-monitoring-table-panel"
+					data-testid="api-monitoring-domains-table"
+				>
+					<Table
+						className="api-monitoring-domain-list-table"
+						dataSource={isFetching || isLoading ? [] : formattedDataForTable}
+						columns={columnsConfig}
+						loading={{
+							spinning: isFetching || isLoading,
+							indicator: (
+								<Spin indicator={<Loader size={14} className="animate-spin" />} />
+							),
+						}}
+						scroll={{ x: true }}
+						tableLayout="fixed"
+						onRow={(record, index): { onClick: () => void; className: string } => ({
+							onClick: (): void => {
+								if (index !== undefined) {
+									const dataIndex = formattedDataForTable.findIndex(
+										(item) => item.key === record.key,
+									);
+									setSelectedDomainIndex(dataIndex);
+									setParams({ selectedDomain: record.domainName });
+									logEvent('API Monitoring: Domain name row clicked', {});
+								}
+							},
+							className: 'expanded-clickable-row',
+						})}
+						rowClassName={(_, index): string =>
+							index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
+						}
+					/>
+				</div>
 			)}
 			{selectedDomainIndex !== -1 && (
 				<DomainDetails

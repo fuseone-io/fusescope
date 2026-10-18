@@ -1,24 +1,17 @@
-import { useLocation } from 'react-use';
-import RouteTab from 'components/RouteTab';
-import { TabRoutes } from 'components/RouteTab/types';
-import history from 'lib/history';
-
-import { Explorer } from './constants';
-
-import './ApiMonitoringPage.styles.scss';
+import CompactPageHeader from 'components/PageTemplate/components/CompactPageHeader';
+import HeaderBandLayout from 'components/PageTemplate/components/HeaderBandLayout';
+import ExplorerPage from 'container/ApiMonitoring/Explorer/Explorer';
+import { Binoculars } from 'lucide-react';
 
 function ApiMonitoringPage(): JSX.Element {
-	const { pathname } = useLocation();
-
-	const routes: TabRoutes[] = [Explorer];
-
 	return (
-		<RouteTab
-			className="api-monitoring-page"
-			routes={routes}
-			activeKey={pathname}
-			history={history}
-		/>
+		<HeaderBandLayout
+			bounded
+			testId="api-monitoring-page"
+			header={<CompactPageHeader icon={<Binoculars />} title="External APIs" />}
+		>
+			<ExplorerPage />
+		</HeaderBandLayout>
 	);
 }
 

@@ -16,20 +16,30 @@
 	.api-module-right-section {
 		display: flex;
 		flex-direction: column;
+		gap: 16px;
 		width: 100%;
-
-		.toolbar {
-			border-bottom: 1px solid var(--l1-border);
-		}
+		box-sizing: border-box;
+		padding: 16px 24px 32px;
 
 		.api-monitoring-list-header {
 			width: 100%;
-			padding: 8px;
 			display: flex;
 
 			justify-content: space-between;
-			align-items: center;
-			gap: 12px;
+			align-items: flex-start;
+			gap: 8px;
+
+			> :first-child {
+				flex: 1;
+				min-width: 0;
+			}
+		}
+
+		.api-monitoring-table-panel {
+			overflow: hidden;
+			border: 1px solid var(--fs-border);
+			border-radius: 8px;
+			background: var(--fs-card);
 		}
 
 		.query-builder-search-v2 {
@@ -47,36 +57,28 @@
 				line-height: 18px;
 				border-bottom: none;
 
-				color: var(--l2-foreground);
+				color: var(--fs-muted-foreground);
 				font-family: Inter;
-				font-size: 11px;
+				font-size: 12px;
 				font-style: normal;
-				font-weight: 600;
+				font-weight: 500;
 				line-height: 18px;
-				/* 163.636% */
-				letter-spacing: 0.44px;
+				letter-spacing: 0.05em;
 				text-transform: uppercase;
-				background: none;
+				background: var(--fs-muted);
+				border-bottom: 1px solid var(--fs-border);
 
 				&::before {
 					background-color: transparent;
 				}
 			}
 
-			.ant-table-thead > tr > th:has(.domain-list-name-col-header) {
-				background: var(--l2-background);
-			}
-
 			.ant-table-cell {
 				padding: 12px;
 				font-size: 13px;
 				line-height: 20px;
-				color: var(--l1-foreground);
+				color: var(--fs-foreground);
 				border-bottom: none;
-			}
-
-			.ant-table-cell:has(.domain-list-name-col-value) {
-				background: var(--l2-background);
 			}
 
 			.round-metric-tag {
@@ -93,15 +95,7 @@
 			}
 
 			.ant-table-tbody > tr:hover > td {
-				background: color-mix(in srgb, var(--l1-foreground) 4%, transparent);
-			}
-
-			.ant-table-tbody > tr:hover > td:has(.domain-list-name-col-value) {
-				background: color-mix(
-					in srgb,
-					var(--l1-foreground) 4%,
-					var(--l2-background)
-				);
+				background: var(--fs-muted);
 			}
 
 			.ant-table-cell:first-child {
@@ -122,7 +116,7 @@
 			}
 
 			.ant-table-tbody > tr > td {
-				border-bottom: none;
+				border-bottom: 1px solid var(--fs-border);
 			}
 
 			.ant-table-thead
@@ -142,7 +136,7 @@
 			}
 
 			.table-row-dark {
-				background: var(--l2-background);
+				background: none;
 			}
 
 			.expanded-clickable-row {
