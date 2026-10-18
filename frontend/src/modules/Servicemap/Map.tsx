@@ -6,7 +6,12 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { getGraphData, getTooltip, transformLabel } from './utils';
 
-function ServiceMap({ fgRef, serviceMap }: any): JSX.Element {
+function ServiceMap({
+	fgRef,
+	serviceMap,
+	graphWidth,
+	graphHeight,
+}: any): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const { nodes, links } = getGraphData(serviceMap, isDarkMode);
@@ -18,6 +23,8 @@ function ServiceMap({ fgRef, serviceMap }: any): JSX.Element {
 	return (
 		<ForceGraph2D
 			ref={fgRef}
+			width={graphWidth}
+			height={graphHeight}
 			cooldownTicks={100}
 			graphData={graphData}
 			linkLabel={getTooltip}
