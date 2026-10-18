@@ -71,7 +71,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: sigstore/cosign-installer@v4
+      - uses: sigstore/cosign-installer@v4.1.2
       # --recursive also signs each platform manifest, which is what a pull resolves to.
       - name: sign image
         run: cosign sign --yes --recursive "${IMAGE}@${DIGEST}"
