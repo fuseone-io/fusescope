@@ -3,6 +3,17 @@
 	flex-direction: column;
 	flex: 1;
 	min-height: 0;
-	height: calc(100vh - 240px);
-	min-height: 400px;
+	height: calc(100vh - 390px);
+	min-height: 320px;
+}
+
+.panel {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
 }

@@ -9,6 +9,7 @@ export type TracesTableRow = { id: string } & Record<string, unknown>;
 
 export function getFieldColumn(
 	field: TelemetryFieldKey,
+	maxDurationNano?: number,
 ): TableColumnDef<TracesTableRow> {
 	const { name, fieldContext, fieldDataType } = field;
 	const isTimestamp = TIMESTAMP_FIELD_NAMES.has(name);
@@ -21,6 +22,13 @@ export function getFieldColumn(
 		enableRemove: !isTimestamp,
 		canBeHidden: !isTimestamp,
 		width: { min: 192 },
-		cell: ({ value }): JSX.Element => <FieldCell name={name} value={value} />,
+		cell: ({ value, row }): JSX.Element => (
+			<FieldCell
+				name={name}
+				value={value}
+				row={row}
+				maxDurationNano={maxDurationNano}
+			/>
+		),
 	};
 }

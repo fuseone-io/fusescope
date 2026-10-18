@@ -175,3 +175,9 @@ export const transformSpanRows = (data: QueryDataV3[]): TracesTableRow[] => {
 		};
 	}) as TracesTableRow[];
 };
+
+export const getMaxDurationNano = (rows: TracesTableRow[]): number =>
+	rows.reduce((max, row) => {
+		const duration = Number(row.duration_nano ?? row.durationNano);
+		return Number.isFinite(duration) && duration > max ? duration : max;
+	}, 0);

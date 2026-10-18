@@ -16,6 +16,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { QueryTable } from 'container/QueryTable';
+import ViewActionsPortal from 'container/TracesExplorer/ViewActionsPortal';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { AppState } from 'store/reducers';
@@ -32,11 +33,13 @@ function TableView({
 	setIsLoadingQueries,
 	queryKeyRef,
 	headerActions,
+	toolbarTarget,
 }: {
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 	queryKeyRef?: MutableRefObject<any>;
 	headerActions?: ReactNode;
+	toolbarTarget?: HTMLElement | null;
 }): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -105,17 +108,19 @@ function TableView({
 		<Space.Compact block direction="vertical">
 			{isError && error && <ErrorInPlace error={error as APIError} />}
 			{!isError && (
-				<div className="traces-table-view-header">
-					{headerActions}
-					{data && (
-						<ExportMenu
-							dataSource={DataSource.TRACES}
-							data={data}
-							query={stagedQuery || initialQueriesMap.traces}
-							fileName="traces-table"
-						/>
-					)}
-				</div>
+				<ViewActionsPortal target={toolbarTarget}>
+					<div className="traces-table-view-header">
+						{headerActions}
+						{data && (
+							<ExportMenu
+								dataSource={DataSource.TRACES}
+								data={data}
+								query={stagedQuery || initialQueriesMap.traces}
+								fileName="traces-table"
+							/>
+						)}
+					</div>
+				</ViewActionsPortal>
 			)}
 			{!isError && (
 				<QueryTable
@@ -132,6 +137,7 @@ function TableView({
 TableView.defaultProps = {
 	queryKeyRef: undefined,
 	headerActions: undefined,
+	toolbarTarget: undefined,
 };
 
 export default memo(TableView);

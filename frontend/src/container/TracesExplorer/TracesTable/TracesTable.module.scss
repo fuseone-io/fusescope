@@ -6,21 +6,54 @@
 }
 
 .tracesTable {
-	--tanstack-table-row-height: 54px;
-	--tanstack-table-header-height: 54px;
+	--tanstack-table-row-height: 40px;
+	--tanstack-table-header-height: 36px;
 
-	--tanstack-cell-padding-top-override: 5px;
-	--tanstack-cell-padding-bottom-override: 5px;
-	--tanstack-cell-padding-right-override: 15px;
+	--tanstack-cell-padding-top-override: 0;
+	--tanstack-cell-padding-bottom-override: 0;
+	--tanstack-cell-padding-right-override: 12px;
 
-	--tanstack-cell-padding-left-override: 15px;
-	--tanstack-cell-header-padding-left-override: 5px;
+	--tanstack-cell-padding-left-override: 12px;
+	--tanstack-cell-header-padding-left-override: 8px;
 
-	--tanstack-cell-header-padding-left-first-column: 15px;
+	--tanstack-cell-header-padding-left-first-column: 16px;
+	--tanstack-cell-padding-left-first-column: 16px;
 
 	--tanstack-plain-body-line-clamp: 1;
+	--tanstack-plain-cell-font-size: 13px;
 
-	--tanstack-table-cell-bg: var(--l2-background);
-	--tanstack-table-header-cell-bg: var(--l1-background-hover);
-	--tanstack-table-row-hover-bg: var(--l1-background-hover);
+	--tanstack-table-cell-bg: var(--fs-card);
+	--tanstack-table-cell-color: var(--fs-foreground);
+	--tanstack-table-header-cell-bg: var(--fs-muted);
+	--tanstack-table-header-cell-color: var(--fs-muted-foreground);
+	--tanstack-table-header-border-color: var(--fs-border);
+	--tanstack-table-row-hover-bg: var(--fs-muted);
+	--tanstack-table-header-cell-actions-border-color: var(--fs-border);
+
+	font-family: var(--tw-font-sans);
+
+	th {
+		border-bottom: 1px solid var(--fs-border) !important;
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	td {
+		border-bottom: 1px solid var(--fs-border);
+	}
+
+	a {
+		color: var(--fs-primary);
+	}
+}
+
+.mono {
+	font-family: var(--tw-font-mono);
+	font-size: 12px;
+}
+
+.muted {
+	color: var(--fs-muted-foreground);
 }
