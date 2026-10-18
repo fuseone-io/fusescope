@@ -130,38 +130,59 @@ export const useIsDarkMode = (): boolean => {
 	return theme === THEME_MODE.DARK;
 };
 
+const ANTD_PALETTE = {
+	dark: {
+		bgBase: '#0A1628',
+		bgContainer: '#111827',
+		bgHover: '#1F2937',
+		border: '#2B3648',
+		text: '#B8BFCC',
+	},
+	light: {
+		bgBase: '#FFFFFF',
+		bgContainer: '#FFFFFF',
+		bgHover: '#ECEEF2',
+		border: '#D8DCE4',
+		text: '#111827',
+	},
+};
+
 export const useThemeConfig = (): ThemeConfig => {
 	const isDarkMode = useIsDarkMode();
+	const palette = isDarkMode ? ANTD_PALETTE.dark : ANTD_PALETTE.light;
+	const primary = isDarkMode ? '#3D8BE0' : '#0F5FB8';
 
 	return {
 		algorithm: isDarkMode ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
 		token: {
-			borderRadius: 2,
-			borderRadiusLG: 2,
-			borderRadiusSM: 2,
+			borderRadius: 6,
+			borderRadiusLG: 8,
+			borderRadiusSM: 4,
 			borderRadiusXS: 2,
 			fontFamily: 'Inter',
 			fontSize: 13,
-			colorPrimary: '#4E74F8',
-			colorBgBase: isDarkMode ? '#0B0C0E' : '#fff',
-			colorBgContainer: isDarkMode ? '#121317' : '#fff',
-			colorLink: '#4E74F8',
-			colorPrimaryText: '#3F5ECC',
+			colorPrimary: primary,
+			colorBgBase: palette.bgBase,
+			colorBgContainer: palette.bgContainer,
+			colorBorder: palette.border,
+			colorBorderSecondary: palette.border,
+			colorLink: primary,
+			colorPrimaryText: primary,
 		},
 		components: {
 			Dropdown: {
-				colorBgElevated: isDarkMode ? '#121317' : '#fff',
-				controlItemBgHover: isDarkMode ? '#1D212D' : '#fff',
-				colorText: isDarkMode ? '#C0C1C3' : '#121317',
+				colorBgElevated: palette.bgContainer,
+				controlItemBgHover: palette.bgHover,
+				colorText: palette.text,
 				fontSize: 12,
 			},
 			Select: {
-				colorBgElevated: isDarkMode ? '#121317' : '#fff',
-				controlItemBgHover: isDarkMode ? '#1D212D' : '#fff',
+				colorBgElevated: palette.bgContainer,
+				controlItemBgHover: palette.bgHover,
 				boxShadowSecondary: isDarkMode
 					? '4px 10px 16px 2px rgba(0, 0, 0, 0.30)'
-					: '#fff',
-				colorText: isDarkMode ? '#C0C1C3' : '#121317',
+					: '0 6px 16px rgba(17, 24, 39, 0.08)',
+				colorText: palette.text,
 				fontSize: 12,
 			},
 			Button: {
@@ -169,7 +190,7 @@ export const useThemeConfig = (): ThemeConfig => {
 				fontSize: 12,
 			},
 			Input: {
-				colorBorder: isDarkMode ? '#1D212D' : '#E9E9E9',
+				colorBorder: palette.border,
 			},
 			Breadcrumb: {
 				separatorMargin: 4,

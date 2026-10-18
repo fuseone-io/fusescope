@@ -1,0 +1,110 @@
+/*
+ * Repaints @signozhq/design-tokens palettes with the FuseScope palette so
+ * legacy screens (antd, @signozhq/ui, SCSS on --l1-*, --bg-ink-*, …) match
+ * the --fs-* theme in src/styles/tailwind.css. Semantic tokens such as
+ * --l1-background resolve through these scales, so only the scales change.
+ * Must load after signoz-tokens.css.
+ */
+html:root {
+	--bg-robin-50: #e8f0fb;
+	--bg-robin-100: #cfe0f5;
+	--bg-robin-150: #cfe0f5;
+	--bg-robin-200: #9dbbe0;
+	--bg-robin-300: #6d9ad8;
+	--bg-robin-400: #3d8be0;
+	--bg-robin-500: #0f5fb8;
+	--bg-robin-600: #0c4f9a;
+	--bg-robin-700: #093f7c;
+	--bg-robin-800: #062e5c;
+	--bg-robin-900: #031f40;
+	--bg-robin-950: #011228;
+	--text-robin-50: #e8f0fb;
+	--text-robin-100: #cfe0f5;
+	--text-robin-150: #cfe0f5;
+	--text-robin-200: #9dbbe0;
+	--text-robin-300: #6d9ad8;
+	--text-robin-400: #3d8be0;
+	--text-robin-500: #0f5fb8;
+	--text-robin-600: #0c4f9a;
+	--text-robin-700: #093f7c;
+	--text-robin-800: #062e5c;
+	--text-robin-900: #031f40;
+	--text-robin-950: #011228;
+
+	--bg-ink-100: #2b3648;
+	--bg-ink-200: #1f2937;
+	--bg-ink-300: #16202f;
+	--bg-ink-400: #111827;
+	--bg-ink-500: #0a1628;
+	--text-ink-100: #2b3648;
+	--text-ink-200: #1f2937;
+	--text-ink-300: #16202f;
+	--text-ink-400: #111827;
+	--text-ink-500: #0a1628;
+
+	--bg-slate-50: #64707f;
+	--bg-slate-100: #3b475b;
+	--bg-slate-200: #2f3b4f;
+	--bg-slate-300: #283447;
+	--bg-slate-400: #1f2937;
+	--bg-slate-500: #16202f;
+	--text-slate-50: #64707f;
+	--text-slate-100: #3b475b;
+	--text-slate-200: #2f3b4f;
+	--text-slate-300: #283447;
+	--text-slate-400: #1f2937;
+	--text-slate-500: #16202f;
+
+	--bg-vanilla-400: #b8bfcc;
+	--text-vanilla-400: #b8bfcc;
+
+	--bg-neutral-dark-50: #eceef2;
+	--bg-neutral-dark-100: #b8bfcc;
+	--bg-neutral-dark-200: #8e98a8;
+	--bg-neutral-dark-300: #7d8798;
+	--bg-neutral-dark-400: #64707f;
+	--bg-neutral-dark-500: #4b5563;
+	--bg-neutral-dark-600: #3b475b;
+	--bg-neutral-dark-700: #2b3648;
+	--bg-neutral-dark-800: #222d3d;
+	--bg-neutral-dark-900: #1a2433;
+	--bg-neutral-dark-950: #111827;
+	--bg-neutral-dark-1000: #0a1628;
+	--text-neutral-dark-50: #eceef2;
+	--text-neutral-dark-100: #b8bfcc;
+	--text-neutral-dark-200: #8e98a8;
+	--text-neutral-dark-300: #7d8798;
+	--text-neutral-dark-400: #64707f;
+	--text-neutral-dark-500: #4b5563;
+	--text-neutral-dark-600: #3b475b;
+	--text-neutral-dark-700: #2b3648;
+	--text-neutral-dark-800: #222d3d;
+	--text-neutral-dark-900: #1a2433;
+	--text-neutral-dark-950: #111827;
+	--text-neutral-dark-1000: #0a1628;
+
+	--bg-neutral-light-50: #111827;
+	--bg-neutral-light-100: #4b5563;
+	--bg-neutral-light-200: #64707f;
+	--bg-neutral-light-300: #7a8494;
+	--bg-neutral-light-400: #9aa3b2;
+	--bg-neutral-light-500: #b6bdc9;
+	--bg-neutral-light-600: #c9cfd9;
+	--bg-neutral-light-700: #d8dce4;
+	--bg-neutral-light-800: #e3e6ec;
+	--bg-neutral-light-900: #eceef2;
+	--bg-neutral-light-950: #f7f8fa;
+	--bg-neutral-light-1000: #ffffff;
+	--text-neutral-light-50: #111827;
+	--text-neutral-light-100: #4b5563;
+	--text-neutral-light-200: #64707f;
+	--text-neutral-light-300: #7a8494;
+	--text-neutral-light-400: #9aa3b2;
+	--text-neutral-light-500: #b6bdc9;
+	--text-neutral-light-600: #c9cfd9;
+	--text-neutral-light-700: #d8dce4;
+	--text-neutral-light-800: #e3e6ec;
+	--text-neutral-light-900: #eceef2;
+	--text-neutral-light-950: #f7f8fa;
+	--text-neutral-light-1000: #ffffff;
+}
