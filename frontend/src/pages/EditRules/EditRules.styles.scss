@@ -1,5 +1,14 @@
 .edit-rules-container {
-	padding: 0 16px;
+	padding: 16px;
+
+	@media (min-width: 768px) {
+		padding: 32px;
+	}
+
+	.alert-details & {
+		padding: 0;
+	}
+
 	&--error {
 		display: flex;
 		justify-content: center;

@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Divider } from '@signozhq/ui/divider';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
-import RouteTab from 'components/RouteTab';
+import PageTabs from 'components/PageTemplate/components/PageTabs';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -72,11 +71,18 @@ function AlertDetails(): JSX.Element {
 		return <AlertNotFound isTestAlert={isTestAlert} />;
 	}
 
-	const handleTabChange = (route: string): void => {
-		if (route === ROUTES.ALERT_HISTORY) {
+	const handleTabChange = (key: string): void => {
+		if (key === ROUTES.ALERT_HISTORY) {
 			logEvent('Alert History tab: Visited', { ruleId });
 		}
+		const selected = routes.find((route) => route.key === key);
+		if (selected) {
+			history.push(selected.route);
+		}
 	};
+
+	const activeTab =
+		routes.find((route) => route.key === pathname)?.key ?? ROUTES.ALERT_OVERVIEW;
 
 	const isV2Alert = alertRuleDetails?.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
 
@@ -106,14 +112,19 @@ function AlertDetails(): JSX.Element {
 				/>
 
 				{alertRuleDetails && <AlertHeader alertDetails={alertRuleDetails} />}
-				<Divider className="alert-details__divider" />
-				<div className="tabs-and-filters">
-					<RouteTab
-						routes={routes}
-						activeKey={pathname}
-						history={history}
-						onChangeHandler={handleTabChange}
-						tabBarExtraContent={<Filters />}
+				<div className="alert-details__tabs tw:relative">
+					<div className="alert-details__filters">
+						<Filters />
+					</div>
+					<PageTabs
+						label="Alert rule sections"
+						value={activeTab}
+						onValueChange={handleTabChange}
+						tabs={routes.map(({ Component, name, key }) => ({
+							value: key,
+							label: name,
+							content: <Component />,
+						}))}
 					/>
 				</div>
 			</div>
