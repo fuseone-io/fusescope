@@ -13,6 +13,9 @@ FuseScope's main navigation, built on the shadcn `Sidebar` (`components/ui/sideb
 - Items sit in groups (`NAV_GROUPS`); Integrations, Noz, Help & Support, Settings and
   the user menu sit in the footer. Users can pin items to a Shortcuts group
   (`nav_shortcuts` preference).
+- Expanded, each group (Shortcuts included) collapses from its label; the state is
+  kept in localStorage (`fusescope.sidebar.collapsedGroups`). Reaching a route that
+  no open group shows expands its group. The icon rail ignores collapsed groups.
 - Below 768px the sidebar is a sheet opened from the same toggle.
 
 ## Structure
@@ -26,5 +29,5 @@ FuseScope's main navigation, built on the shadcn `Sidebar` (`components/ui/sideb
 | `constants.tsx` | Nav groups and items. |
 | `types.ts` | Nav item and menu types. |
 | `utils.ts` | Initials, role label, modifier-aware navigation. |
-| `stories/` | `Components/App Sidebar`, light/dark × expanded/collapsed. |
+| `stories/` | `Components/App Sidebar`, light/dark × expanded/collapsed/with shortcuts. |
 | `__tests__/` | Behaviour tests. |

@@ -19,14 +19,7 @@ import {
 } from 'components/ui/sidebar';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import {
-	Building2,
-	ChevronsUpDown,
-	Keyboard,
-	LogOut,
-	Shield,
-	User,
-} from 'lucide-react';
+import { Building2, Keyboard, LogOut, Shield, User } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 
 import { NAV_BUTTON_CLASS, WORKSPACE_LOCKED_TOOLTIP } from '../constants';
@@ -91,7 +84,7 @@ function UserMenu(): JSX.Element {
 	);
 
 	return (
-		<SidebarMenu>
+		<SidebarMenu className="tw:min-w-0 tw:flex-1">
 			<SidebarMenuItem>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -99,22 +92,21 @@ function UserMenu(): JSX.Element {
 							size="lg"
 							tooltip={name}
 							data-testid="user-menu-trigger"
-							className={`${NAV_BUTTON_CLASS} tw:h-12 tw:group-data-[collapsible=icon]:p-1!`}
+							className={`${NAV_BUTTON_CLASS} tw:h-10 tw:px-1.5 tw:group-data-[collapsible=icon]:justify-center`}
 						>
-							<Avatar size="sm" className="tw:size-7">
-								<AvatarFallback className="tw:bg-primary-soft tw:text-xs tw:font-semibold tw:text-primary-ink">
+							<Avatar size="sm" className="tw:size-6">
+								<AvatarFallback className="tw:bg-primary-soft tw:text-[10px] tw:font-semibold tw:text-primary-ink">
 									{getInitials(user.displayName, user.email)}
 								</AvatarFallback>
 							</Avatar>
-							<span className="tw:grid tw:flex-1 tw:text-left tw:leading-tight">
+							<span className="tw:grid tw:flex-1 tw:text-left tw:leading-tight tw:group-data-[collapsible=icon]:hidden">
 								<span className="tw:truncate tw:text-[13px] tw:text-foreground">
 									{name}
 								</span>
-								<span className="tw:truncate tw:text-xs tw:font-normal tw:text-subtle-foreground">
+								<span className="tw:truncate tw:text-[11px] tw:font-normal tw:text-subtle-foreground">
 									{formatRole(user.role)}
 								</span>
 							</span>
-							<ChevronsUpDown className="tw:ml-auto tw:size-4!" />
 						</SidebarMenuButton>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent

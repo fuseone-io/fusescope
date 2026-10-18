@@ -219,6 +219,28 @@ describe('AppSidebar', () => {
 		});
 	});
 
+	describe('footer', () => {
+		it.each([
+			{ name: 'Settings', target: (): HTMLElement => navLink('Settings') },
+			{
+				name: 'Help & Support',
+				target: (): HTMLElement =>
+					screen.getByRole('button', { name: 'Help & Support' }),
+			},
+		])(
+			'names the $name icon button in a tooltip when expanded',
+			async ({ name, target }) => {
+				const user = userEvent.setup();
+				renderAppSidebar({ pinned: true });
+
+				target().focus();
+				await user.keyboard('{Shift}');
+
+				await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(name);
+			},
+		);
+	});
+
 	describe('items', () => {
 		it('groups items under section labels', () => {
 			renderAppSidebar({ pinned: true });

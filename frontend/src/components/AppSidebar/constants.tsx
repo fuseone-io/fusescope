@@ -25,7 +25,7 @@ import { NavGroup, NavItem, NavVisibility } from './types';
 
 /** Colours are `!important`: the app's global link styles are unlayered. */
 export const NAV_BUTTON_CLASS =
-	'tw:h-9 tw:gap-2.5 tw:px-2.5 tw:font-medium tw:text-muted-foreground! tw:hover:bg-muted! tw:hover:text-foreground! tw:data-[active=true]:bg-primary-soft! tw:data-[active=true]:text-primary-ink! tw:data-[active=true]:hover:bg-primary-soft! tw:data-[active=true]:hover:text-primary-ink! tw:[&>svg]:size-5 tw:[&>svg]:stroke-[1.5] tw:group-data-[collapsible=icon]:size-9! tw:group-data-[collapsible=icon]:p-2!';
+	'tw:gap-2 tw:rounded-[6px] tw:px-2 tw:text-[13px] tw:font-medium tw:text-muted-foreground! tw:hover:bg-muted! tw:hover:text-foreground! tw:data-[active=true]:bg-primary-soft! tw:data-[active=true]:text-primary-ink! tw:data-[active=true]:hover:bg-primary-soft! tw:data-[active=true]:hover:text-primary-ink! tw:[&>svg]:stroke-[1.75]';
 
 export const WORKSPACE_LOCKED_TOOLTIP =
 	'Unavailable while the workspace is locked';
@@ -144,7 +144,7 @@ export const AI_ASSISTANT_NAV_ITEM: NavItem = {
 	key: AI_ASSISTANT_NAV_KEY,
 	itemKey: 'ai-assistant',
 	label: 'Noz',
-	icon: <Noz size={20} />,
+	icon: <Noz size={16} />,
 	badge: 'Early Access',
 	tooltip: NOZ_TOOLTIP_TITLE,
 };

@@ -5,9 +5,11 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from 'components/ui/sidebar';
+import { cn } from 'lib/utils';
 import { Pin, PinOff } from 'lucide-react';
 
 import { NAV_BUTTON_CLASS } from '../constants';
+import { useFooterTooltip } from '../hooks/useFooterTooltip';
 import { NavItem } from '../types';
 
 interface NavMenuItemProps {
@@ -17,6 +19,8 @@ interface NavMenuItemProps {
 	isDisabled: boolean;
 	onNavigate: (event: MouseEvent) => void;
 	shortcut?: { isShortcut: boolean; onToggle: () => void };
+	/** Icon button named by an always-on tooltip, for the footer row. */
+	iconOnly?: boolean;
 }
 
 function NavMenuItem({
@@ -26,14 +30,18 @@ function NavMenuItem({
 	isDisabled,
 	onNavigate,
 	shortcut,
+	iconOnly,
 }: NavMenuItemProps): JSX.Element {
+	const label = item.tooltip ?? item.label;
+	const footerTooltip = useFooterTooltip(label);
+
 	return (
 		<SidebarMenuItem>
 			<SidebarMenuButton
 				asChild
 				isActive={isActive}
-				tooltip={item.tooltip ?? item.label}
-				className={NAV_BUTTON_CLASS}
+				tooltip={iconOnly ? footerTooltip : label}
+				className={cn(NAV_BUTTON_CLASS, iconOnly && 'tw:size-8')}
 			>
 				<a
 					href={href}
@@ -48,11 +56,13 @@ function NavMenuItem({
 					}}
 				>
 					{item.icon}
-					<span className="tw:flex-1 tw:truncate">{item.label}</span>
+					<span className={iconOnly ? 'tw:sr-only' : 'tw:flex-1 tw:truncate'}>
+						{item.label}
+					</span>
 					{item.badge && (
 						<Badge
 							variant="secondary"
-							className="tw:bg-primary-soft tw:text-primary-ink tw:group-data-[collapsible=icon]:hidden"
+							className="tw:bg-primary-soft tw:px-1.5 tw:py-0 tw:text-[10px] tw:leading-4 tw:text-primary-ink tw:group-data-[collapsible=icon]:hidden"
 						>
 							{item.badge}
 						</Badge>
@@ -64,7 +74,7 @@ function NavMenuItem({
 					showOnHover
 					aria-label={`${shortcut.isShortcut ? 'Remove' : 'Add'} ${item.label} ${shortcut.isShortcut ? 'from' : 'to'} shortcuts`}
 					title={shortcut.isShortcut ? 'Remove from shortcuts' : 'Add to shortcuts'}
-					className="tw:top-2 tw:text-muted-foreground! tw:hover:bg-muted! tw:hover:text-foreground!"
+					className="tw:text-muted-foreground! tw:hover:bg-muted! tw:hover:text-foreground! tw:[&>svg]:size-3.5"
 					onClick={shortcut.onToggle}
 				>
 					{shortcut.isShortcut ? <PinOff /> : <Pin />}
@@ -76,6 +86,7 @@ function NavMenuItem({
 
 NavMenuItem.defaultProps = {
 	shortcut: undefined,
+	iconOnly: false,
 };
 
 export default NavMenuItem;
