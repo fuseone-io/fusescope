@@ -1,14 +1,13 @@
 import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
-import RouteTab from 'components/RouteTab';
+import ModuleTabsLayout from 'components/PageTemplate/components/ModuleTabsLayout';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import history from 'lib/history';
+import { DraftingCompass } from 'lucide-react';
 
 import { tracesExplorer, tracesFunnel, tracesSaveView } from './constants';
-
-import './TracesModulePage.styles.scss';
 
 function TracesModulePage(): JSX.Element {
 	const { pathname } = useLocation();
@@ -27,8 +26,10 @@ function TracesModulePage(): JSX.Element {
 	};
 
 	return (
-		<RouteTab
-			className="traces-module-container"
+		<ModuleTabsLayout
+			title="Traces"
+			icon={<DraftingCompass />}
+			testId="traces-module-page"
 			routes={routes}
 			activeKey={
 				pathname.includes(ROUTES.TRACES_FUNNELS) ? ROUTES.TRACES_FUNNELS : pathname

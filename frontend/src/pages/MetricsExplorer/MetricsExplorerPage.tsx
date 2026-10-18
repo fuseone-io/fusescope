@@ -1,23 +1,21 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-use';
-import cx from 'classnames';
-import RouteTab from 'components/RouteTab';
-import ROUTES from 'constants/routes';
+import ModuleTabsLayout from 'components/PageTemplate/components/ModuleTabsLayout';
 import { TabRoutes } from 'components/RouteTab/types';
+import ROUTES from 'constants/routes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import history from 'lib/history';
+import { ChartColumn } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { Explorer, Summary, Views, VolumeControl } from './constants';
 
-import './MetricsExplorerPage.styles.scss';
-
 function MetricsExplorerPage(): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname = '' } = useLocation();
 	const { isVolumeControlEnabled } = useVolumeControlFeatureGate();
 	const isSavedViewEnabled = useSavedViewEnabled();
 
@@ -46,13 +44,18 @@ function MetricsExplorerPage(): JSX.Element {
 	useShareBuilderUrl({ defaultValue: defaultQuery });
 
 	return (
-		<RouteTab
-			className={cx('metrics-explorer-page', {
-				'is-explorer-tab': pathname === ROUTES.METRICS_EXPLORER_EXPLORER,
-			})}
+		<ModuleTabsLayout
+			title="Metrics"
+			icon={<ChartColumn />}
+			testId="metrics-explorer-page"
 			routes={routes}
 			activeKey={pathname}
 			history={history}
+			contentClassName={
+				pathname === ROUTES.METRICS_EXPLORER_EXPLORER
+					? undefined
+					: 'tw:px-4 tw:py-4 tw:md:px-6'
+			}
 		/>
 	);
 }

@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -61,13 +60,6 @@ function MetricsSearch({
 				isLoadingQueries={isLoading}
 				handleCancelQuery={handleCancelQuery}
 			/>
-			<div className="metrics-search-options">
-				<DateTimeSelectionV2
-					showAutoRefresh={false}
-					showRefreshText={false}
-					hideShareModal
-				/>
-			</div>
 		</div>
 	);
 }
