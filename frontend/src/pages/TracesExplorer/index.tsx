@@ -22,7 +22,6 @@ import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapp
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import Toolbar from 'container/Toolbar/Toolbar';
 import {
 	getExportQueryData,
 	getQueryByPanelType,
@@ -122,6 +121,8 @@ function TracesExplorer(): JSX.Element {
 
 	const [warning, setWarning] = useState<Warning | undefined>();
 	const [isOpen, setOpen] = useState<boolean>(true);
+	const [viewActionsTarget, setViewActionsTarget] =
+		useState<HTMLDivElement | null>(null);
 
 	const defaultQuery = useMemo(
 		(): Query =>
@@ -299,38 +300,39 @@ function TracesExplorer(): JSX.Element {
 				}}
 			>
 				<div className="trace-explorer">
-					<div className="trace-explorer-header">
-						<Toolbar
-							showAutoRefresh
-							leftActions={
-								<LeftToolbarActions
-									showFilter={isOpen}
-									handleFilterVisibilityChange={(): void => setOpen(!isOpen)}
-									items={TOOLBAR_VIEWS}
-									selectedView={selectedView}
-									onChangeSelectedView={handleChangeSelectedView}
-								/>
-							}
-							warningElement={
-								!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
-							}
-							rightActions={
-								<RightToolbarActions
-									onStageRunQuery={(): void => {
-										setIsCancelled(false);
-										handleRunQuery();
-									}}
-									isLoadingQueries={isLoadingQueries}
-									handleCancelQuery={handleCancelQuery}
-								/>
-							}
+					<div className="trace-explorer-query-bar">
+						<ExplorerCard sourcepage={DataSource.TRACES}>
+							<div className="query-section-container">
+								<QuerySection />
+							</div>
+						</ExplorerCard>
+						<div className="trace-explorer-run-query">
+							{!isEmpty(warning) && <WarningPopover warningData={warning} />}
+							<RightToolbarActions
+								onStageRunQuery={(): void => {
+									setIsCancelled(false);
+									handleRunQuery();
+								}}
+								isLoadingQueries={isLoadingQueries}
+								handleCancelQuery={handleCancelQuery}
+							/>
+						</div>
+					</div>
+
+					<div className="trace-explorer-view-bar">
+						<LeftToolbarActions
+							showFilter={isOpen}
+							handleFilterVisibilityChange={(): void => setOpen(!isOpen)}
+							items={TOOLBAR_VIEWS}
+							selectedView={selectedView}
+							onChangeSelectedView={handleChangeSelectedView}
+						/>
+						<div
+							className="trace-explorer-view-actions"
+							ref={setViewActionsTarget}
+							data-testid="trace-explorer-view-actions"
 						/>
 					</div>
-					<ExplorerCard sourcepage={DataSource.TRACES}>
-						<div className="query-section-container">
-							<QuerySection />
-						</div>
-					</ExplorerCard>
 
 					<div className="traces-explorer-views">
 						{isCancelled && (
@@ -345,6 +347,7 @@ function TracesExplorer(): JSX.Element {
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
 									headerActions={explorerActions}
+									toolbarTarget={viewActionsTarget}
 								/>
 							</div>
 						)}
@@ -357,6 +360,7 @@ function TracesExplorer(): JSX.Element {
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
 									headerActions={explorerActions}
+									toolbarTarget={viewActionsTarget}
 								/>
 							</div>
 						)}
@@ -381,6 +385,7 @@ function TracesExplorer(): JSX.Element {
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
 									headerActions={explorerActions}
+									toolbarTarget={viewActionsTarget}
 								/>
 							</div>
 						)}

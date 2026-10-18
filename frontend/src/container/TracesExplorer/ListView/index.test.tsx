@@ -63,9 +63,9 @@ const verifyControlsVisibility = (): void => {
 	expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
 	expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
 
-	// Items per page selector (there are multiple comboboxes, so we check for at least 2)
-	const comboboxes = screen.getAllByRole('combobox');
-	expect(comboboxes.length).toBeGreaterThanOrEqual(2);
+	// Order by select and items per page menu
+	expect(screen.getByRole('combobox')).toBeInTheDocument();
+	expect(screen.getByTestId('traces-list-page-size')).toBeInTheDocument();
 
 	// Options menu (settings button) - check for translation key or actual text
 	expect(screen.getByText(/options_menu.options|options/i)).toBeInTheDocument();
@@ -153,8 +153,8 @@ describe('Traces ListView - Error and Empty States', () => {
 			});
 
 			// Order by controls should be interactive
-			const comboboxes = screen.getAllByRole('combobox');
-			expect(comboboxes.length).toBeGreaterThanOrEqual(2);
+			expect(screen.getByRole('combobox')).toBeEnabled();
+			expect(screen.getByTestId('traces-list-page-size')).toBeEnabled();
 
 			// Pagination controls should be present
 			const previousButton = screen.getByRole('button', { name: /previous/i });
@@ -176,8 +176,8 @@ describe('Traces ListView - Error and Empty States', () => {
 			});
 
 			// All controls should be interactive
-			const comboboxes = screen.getAllByRole('combobox');
-			expect(comboboxes.length).toBeGreaterThanOrEqual(2);
+			expect(screen.getByRole('combobox')).toBeEnabled();
+			expect(screen.getByTestId('traces-list-page-size')).toBeEnabled();
 
 			// Options menu should be clickable
 			const optionsButton = screen.getByText(/options_menu.options|options/i);

@@ -32,6 +32,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
 
 import TraceExplorerControls from '../Controls';
+import ViewActionsPortal from '../ViewActionsPortal';
 import { columns, PER_PAGE_OPTIONS } from './configs';
 
 import styles from './TracesView.module.scss';
@@ -42,6 +43,7 @@ interface TracesViewProps {
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 	queryKeyRef?: MutableRefObject<any>;
 	headerActions?: ReactNode;
+	toolbarTarget?: HTMLElement | null;
 }
 
 function TracesView({
@@ -50,6 +52,7 @@ function TracesView({
 	setIsLoadingQueries,
 	queryKeyRef,
 	headerActions,
+	toolbarTarget,
 }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -157,34 +160,38 @@ function TracesView({
 					</Typography.Link>
 				</Typography>
 
-				<div className="trace-explorer-controls">
-					{headerActions}
-					<DownloadOptionsMenu
-						dataSource={DataSource.TRACES}
-						panelType={PANEL_TYPES.TRACE}
-					/>
+				<ViewActionsPortal target={toolbarTarget}>
+					<div className="trace-explorer-controls">
+						{headerActions}
+						<DownloadOptionsMenu
+							dataSource={DataSource.TRACES}
+							panelType={PANEL_TYPES.TRACE}
+						/>
 
-					<TraceExplorerControls
-						isLoading={isLoading}
-						totalCount={rows.length}
-						perPageOptions={PER_PAGE_OPTIONS}
-					/>
-				</div>
+						<TraceExplorerControls
+							isLoading={isLoading}
+							totalCount={rows.length}
+							perPageOptions={PER_PAGE_OPTIONS}
+						/>
+					</div>
+				</ViewActionsPortal>
 			</div>
 
-			<TracesTable
-				data={rows}
-				columns={columns}
-				columnStorageKey={LOCALSTORAGE.TRACES_VIEW_COLUMNS}
-				respectColumnOrder
-				panelType="TRACE"
-				getRowHref={getTraceLink}
-				isLoading={isLoading}
-				isFetching={isFetching}
-				isError={isError}
-				error={error}
-				isFilterApplied={isFilterApplied}
-			/>
+			<div className={styles.panel}>
+				<TracesTable
+					data={rows}
+					columns={columns}
+					columnStorageKey={LOCALSTORAGE.TRACES_VIEW_COLUMNS}
+					respectColumnOrder
+					panelType="TRACE"
+					getRowHref={getTraceLink}
+					isLoading={isLoading}
+					isFetching={isFetching}
+					isError={isError}
+					error={error}
+					isFilterApplied={isFilterApplied}
+				/>
+			</div>
 		</div>
 	);
 }
@@ -192,6 +199,7 @@ function TracesView({
 TracesView.defaultProps = {
 	queryKeyRef: undefined,
 	headerActions: undefined,
+	toolbarTarget: undefined,
 };
 
 export default memo(TracesView);

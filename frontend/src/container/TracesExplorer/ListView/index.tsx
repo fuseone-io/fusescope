@@ -26,7 +26,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
-import TraceExplorerControls from 'container/TracesExplorer/Controls';
+import ViewActionsPortal from 'container/TracesExplorer/ViewActionsPortal';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -34,7 +34,6 @@ import { Pagination } from 'hooks/queryPagination';
 import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
-import { ArrowUp10, Minus } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
@@ -45,7 +44,9 @@ import {
 	PER_PAGE_OPTIONS,
 	TIMESTAMP_FIELD,
 } from './configs';
-import { getTraceLink, transformSpanRows } from './utils';
+import ColumnsOptionsButton from './ColumnsOptionsButton';
+import ListViewPagination from './ListViewPagination';
+import { getMaxDurationNano, getTraceLink, transformSpanRows } from './utils';
 
 import './ListView.styles.scss';
 
@@ -57,6 +58,8 @@ interface ListViewProps {
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 	queryKeyRef?: MutableRefObject<any>;
 	headerActions?: ReactNode;
+	/** Where the order/download/columns controls render, e.g. the view bar. */
+	toolbarTarget?: HTMLElement | null;
 }
 
 function ListView({
@@ -65,6 +68,7 @@ function ListView({
 	setIsLoadingQueries,
 	queryKeyRef,
 	headerActions,
+	toolbarTarget,
 }: ListViewProps): JSX.Element {
 	const {
 		stagedQuery,
@@ -195,6 +199,13 @@ function ListView({
 		[queryTableDataResult],
 	);
 
+	const rows = useMemo(
+		() => transformSpanRows(queryTableData),
+		[queryTableData],
+	);
+
+	const maxDurationNano = useMemo(() => getMaxDurationNano(rows), [rows]);
+
 	const columns = useMemo<TableColumnDef<TracesTableRow>[]>(() => {
 		const fields = [
 			TIMESTAMP_FIELD,
@@ -202,13 +213,8 @@ function ListView({
 				(field) => field.name !== TIMESTAMP_FIELD.name,
 			),
 		];
-		return fields.map((field) => getFieldColumn(field));
-	}, [options?.selectColumns]);
-
-	const rows = useMemo(
-		() => transformSpanRows(queryTableData),
-		[queryTableData],
-	);
+		return fields.map((field) => getFieldColumn(field, maxDurationNano));
+	}, [options?.selectColumns, maxDurationNano]);
 
 	const handleColumnOrderChange = useCallback(
 		(cols: TableColumnDef<TracesTableRow>[]): void => {
@@ -234,47 +240,51 @@ function ListView({
 
 	return (
 		<div className={styles.container}>
-			<div className="trace-explorer-controls">
-				{headerActions}
-				<div className="order-by-container">
-					<div className="order-by-label">
-						Order by <Minus size={14} /> <ArrowUp10 size={14} />
+			<ViewActionsPortal target={toolbarTarget}>
+				<div className="trace-explorer-controls">
+					{headerActions}
+					<div className="order-by-container">
+						<div className="order-by-label">Order by</div>
+
+						<ListViewOrderBy
+							value={orderBy}
+							onChange={handleOrderChange}
+							dataSource={DataSource.TRACES}
+						/>
 					</div>
 
-					<ListViewOrderBy
-						value={orderBy}
-						onChange={handleOrderChange}
+					<DownloadOptionsMenu
 						dataSource={DataSource.TRACES}
+						selectedColumns={options?.selectColumns}
 					/>
+
+					{config?.fieldsSelector && (
+						<ColumnsOptionsButton fieldsSelector={config.fieldsSelector} />
+					)}
 				</div>
+			</ViewActionsPortal>
 
-				<DownloadOptionsMenu
-					dataSource={DataSource.TRACES}
-					selectedColumns={options?.selectColumns}
+			<div className={styles.panel}>
+				<TracesTable
+					data={rows}
+					columns={columns}
+					columnStorageKey={LOCALSTORAGE.TRACES_LIST_COLUMNS}
+					panelType="LIST"
+					getRowHref={getTraceLink}
+					isLoading={isLoading}
+					isFetching={isFetching}
+					isError={isError}
+					error={error}
+					isFilterApplied={isFilterApplied}
+					onColumnOrderChange={handleColumnOrderChange}
+					onColumnRemove={config?.addColumn?.onRemove}
 				/>
-
-				<TraceExplorerControls
+				<ListViewPagination
+					pageCount={totalCount}
 					isLoading={isFetching}
-					totalCount={totalCount}
-					config={config}
 					perPageOptions={PER_PAGE_OPTIONS}
 				/>
 			</div>
-
-			<TracesTable
-				data={rows}
-				columns={columns}
-				columnStorageKey={LOCALSTORAGE.TRACES_LIST_COLUMNS}
-				panelType="LIST"
-				getRowHref={getTraceLink}
-				isLoading={isLoading}
-				isFetching={isFetching}
-				isError={isError}
-				error={error}
-				isFilterApplied={isFilterApplied}
-				onColumnOrderChange={handleColumnOrderChange}
-				onColumnRemove={config?.addColumn?.onRemove}
-			/>
 		</div>
 	);
 }
@@ -282,6 +292,7 @@ function ListView({
 ListView.defaultProps = {
 	queryKeyRef: undefined,
 	headerActions: undefined,
+	toolbarTarget: undefined,
 };
 
 export default memo(ListView);
