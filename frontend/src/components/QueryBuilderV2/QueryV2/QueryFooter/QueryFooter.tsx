@@ -115,7 +115,9 @@ export default function QueryFooter({
 								icon={<Plus size={16} />}
 								onClick={addNewBuilderQuery}
 								disabled={isAddQueryDisabled}
-							/>
+							>
+								Add Query
+							</Button>
 						</Tooltip>
 					</div>
 				)}

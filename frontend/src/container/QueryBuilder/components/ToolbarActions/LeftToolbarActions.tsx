@@ -1,13 +1,7 @@
-import {
-	ArrowUpToLine,
-	Atom,
-	Filter,
-	SquareMousePointer,
-	Terminal,
-	Binoculars,
-} from '@signozhq/icons';
+import { ArrowUpToLine, Filter, Terminal } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
+import { ChartLine, ChartNoAxesGantt, List, Table } from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
 import './ToolbarActions.styles.scss';
@@ -53,8 +47,8 @@ export default function LeftToolbarActions({
 							)}
 							onClick={(): void => onChangeSelectedView(list.key)}
 						>
-							<SquareMousePointer size={14} data-testid="search-view" />
-							List View
+							<List size={14} data-testid="search-view" />
+							List
 						</Button>
 					</Tooltip>
 				)}
@@ -70,8 +64,8 @@ export default function LeftToolbarActions({
 							)}
 							onClick={(): void => onChangeSelectedView(trace.key)}
 						>
-							<SquareMousePointer size={14} data-testid="trace-view" />
-							Trace View
+							<ChartNoAxesGantt size={14} data-testid="trace-view" />
+							Traces
 						</Button>
 					</Tooltip>
 				)}
@@ -87,8 +81,8 @@ export default function LeftToolbarActions({
 							)}
 							onClick={(): void => onChangeSelectedView(timeseries.key)}
 						>
-							<Atom size={14} data-testid="query-builder-view" />
-							Time Series
+							<ChartLine size={14} data-testid="query-builder-view" />
+							Time series
 						</Button>
 					</Tooltip>
 				)}
@@ -121,7 +115,7 @@ export default function LeftToolbarActions({
 							)}
 							onClick={(): void => onChangeSelectedView(table.key)}
 						>
-							<Binoculars size={14} data-testid="query-builder-view-v2" />
+							<Table size={14} data-testid="query-builder-view-v2" />
 							Table
 						</Button>
 					</Tooltip>
