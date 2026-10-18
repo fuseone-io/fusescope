@@ -192,6 +192,42 @@ describe('AppHeader', () => {
 		});
 
 		it.each([
+			ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+			ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
+			ROUTES.ALL_ERROR,
+			ROUTES.API_MONITORING,
+			ROUTES.MESSAGING_QUEUES_OVERVIEW,
+			ROUTES.MESSAGING_QUEUES_KAFKA,
+			ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
+			ROUTES.MESSAGING_QUEUES_CELERY_TASK,
+			ROUTES.AI_OBSERVABILITY_EXPLORER,
+			ROUTES.METER,
+			ROUTES.METER_EXPLORER,
+		])('moves the global picker of %s into the header', (route) => {
+			renderHeader(route);
+
+			expect(
+				within(header()).getByTestId('global-time-picker'),
+			).toBeInTheDocument();
+		});
+
+		it.each([
+			ROUTES.ERROR_DETAIL,
+			ROUTES.SERVICE_TOP_LEVEL_OPERATIONS,
+			ROUTES.USAGE_EXPLORER,
+			ROUTES.AI_OBSERVABILITY_OVERVIEW,
+			ROUTES.AI_OBSERVABILITY_CONFIGURATION,
+			ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
+			ROUTES.METER_EXPLORER_VIEWS,
+		])('keeps the header picker off %s', (route) => {
+			renderHeader(route);
+
+			expect(
+				within(header()).queryByTestId('global-time-picker'),
+			).not.toBeInTheDocument();
+		});
+
+		it.each([
 			ROUTES.HOME,
 			ROUTES.LOGS_EXPLORER,
 			ROUTES.TRACES_EXPLORER,
