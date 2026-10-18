@@ -1,8 +1,8 @@
 .alert-info {
 	display: flex;
 	justify-content: space-between;
-	align-items: baseline;
-	padding: 0 16px;
+	align-items: flex-start;
+	gap: 16px;
 
 	.alert-header {
 		flex: 1;
