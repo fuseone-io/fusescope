@@ -1,21 +1,29 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
-import cx from 'classnames';
-import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
 import { AuthtypesGettableRoleDTO } from 'api/generated/services/fuseScope.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import Panel from 'components/PageTemplate/components/Panel';
+import TablePagination from 'components/PageTemplate/components/TablePagination';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from 'components/ui/table';
 import ROUTES from 'constants/routes';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 import { RoleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
-import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
-import { useTimezone } from 'providers/Timezone';
+import ListEmptyState from 'pages/Settings/components/ListEmptyState';
 import { RoleType } from 'types/roles';
 import { toAPIError } from 'utils/errorUtils';
 
-import styles from './RolesListingTable.module.scss';
+import RoleRow from './RoleRow';
+import RolesListingSkeleton from './RolesListingSkeleton';
 
 const PAGE_SIZE = 20;
 
@@ -31,7 +39,6 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 	const { isRolesEnabled } = useRolesFeatureGate();
 
 	const { data, isLoading, isError, error } = useListRoles();
-	const { formatTimezoneAdjustedTimestampOptional } = useTimezone();
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
 	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
@@ -136,142 +143,85 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 		[isRolesEnabled, history],
 	);
 
-	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
-		<>
-			<span className="numbers">
-				{range[0]} &#8212; {range[1]}
-			</span>
-			<span className="total"> of {total}</span>
-		</>
-	);
-
 	if (isLoading) {
-		return (
-			<div className={styles.rolesListingTable}>
-				<Skeleton active paragraph={{ rows: 5 }} />
-			</div>
-		);
+		return <RolesListingSkeleton />;
 	}
 
 	if (isError) {
 		return (
-			<div className={styles.rolesListingTable}>
-				<ErrorInPlace
-					error={toAPIError(
-						error,
-						'An unexpected error occurred while fetching roles.',
-					)}
-				/>
-			</div>
+			<ErrorInPlace
+				error={toAPIError(
+					error,
+					'An unexpected error occurred while fetching roles.',
+				)}
+			/>
 		);
 	}
 
 	if (filteredRoles.length === 0) {
 		return (
-			<div className={styles.rolesListingTable}>
-				<div className={styles.emptyState}>
+			<Panel>
+				<ListEmptyState testId="roles-empty-state">
 					{searchQuery ? 'No roles match your search.' : 'No roles found.'}
-				</div>
-			</div>
+				</ListEmptyState>
+			</Panel>
 		);
 	}
 
-	const renderRow = (role: AuthtypesGettableRoleDTO): JSX.Element => (
-		<div
-			key={role.id}
-			className={cx(styles.tableRow, {
-				[styles.tableRowClickable]: isRolesEnabled,
-			})}
-			role={isRolesEnabled ? 'button' : undefined}
-			tabIndex={isRolesEnabled ? 0 : undefined}
-			onClick={
-				isRolesEnabled
-					? (): void => {
-							if (role.id && role.name) {
-								handleRowClick(role.id, role.name);
-							}
-						}
-					: undefined
-			}
-			onKeyDown={
-				isRolesEnabled
-					? (e): void => {
-							if ((e.key === 'Enter' || e.key === ' ') && role.id && role.name) {
-								handleRowClick(role.id, role.name);
-							}
-						}
-					: undefined
-			}
-		>
-			<div className={cx(styles.tableCell, styles.tableCellName)}>
-				{role.name ?? '—'}
-			</div>
-			<div className={cx(styles.tableCell, styles.tableCellDescription)}>
-				<LineClampedText
-					text={role.description ?? '—'}
-					tooltipProps={{ overlayClassName: styles.descriptionTooltip }}
-				/>
-			</div>
-			<div className={cx(styles.tableCell, styles.tableCellUpdatedAt)}>
-				{formatTimezoneAdjustedTimestampOptional(role.updatedAt)}
-			</div>
-			<div className={cx(styles.tableCell, styles.tableCellCreatedAt)}>
-				{formatTimezoneAdjustedTimestampOptional(role.createdAt)}
-			</div>
-		</div>
-	);
-
 	return (
-		<div className={styles.rolesListingTable}>
-			<div className={styles.scrollContainer}>
-				<div className={styles.tableInner}>
-					<div className={styles.tableHeader}>
-						<div className={cx(styles.headerCell, styles.headerCellName)}>Name</div>
-						<div className={cx(styles.headerCell, styles.headerCellDescription)}>
-							Description
-						</div>
-						<div className={cx(styles.headerCell, styles.headerCellUpdatedAt)}>
-							Updated At
-						</div>
-						<div className={cx(styles.headerCell, styles.headerCellCreatedAt)}>
-							Created At
-						</div>
-					</div>
-
+		<Panel className="tw:overflow-hidden">
+			<Table className="tw:min-w-[720px] tw:table-fixed">
+				<TableHeader className="tw:bg-surface-sunken">
+					<TableRow>
+						<TableHead className="tw:w-[24%]">Name</TableHead>
+						<TableHead>Description</TableHead>
+						<TableHead className="tw:w-[200px]">Updated At</TableHead>
+						<TableHead className="tw:w-[200px]">Created At</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
 					{paginatedItems.map((item) =>
 						item.type === 'section' ? (
-							<h3 key={`section-${item.label}`} className={styles.sectionHeader}>
-								{item.label}
-								{item.count !== undefined && (
-									<span className={styles.sectionHeaderCount}>{item.count}</span>
-								)}
-							</h3>
+							<TableRow
+								key={`section-${item.label}`}
+								className="tw:hover:bg-transparent"
+							>
+								<TableCell
+									colSpan={4}
+									className="tw:h-9 tw:text-xs tw:font-medium tw:tracking-[0.05em] tw:text-subtle-foreground tw:uppercase"
+								>
+									<h3 className="tw:inline-flex tw:items-center tw:gap-2">
+										{item.label}
+										{item.count !== undefined && (
+											<span className="tw:rounded-sm tw:bg-muted tw:px-1.5 tw:text-muted-foreground tw:tabular-nums">
+												{item.count}
+											</span>
+										)}
+									</h3>
+								</TableCell>
+							</TableRow>
 						) : (
-							renderRow(item.role)
+							<RoleRow
+								key={item.role.id}
+								role={item.role}
+								clickable={isRolesEnabled}
+								onOpen={handleRowClick}
+							/>
 						),
 					)}
-				</div>
-			</div>
-
-			<Pagination
-				current={currentPage}
+				</TableBody>
+			</Table>
+			<TablePagination
+				page={currentPage}
 				pageSize={PAGE_SIZE}
 				total={totalRoleCount}
-				showTotal={showPaginationItem}
-				showSizeChanger={false}
-				hideOnSinglePage
-				onChange={(page): void => setCurrentPage(page)}
-				className={styles.pagination}
+				onPageChange={setCurrentPage}
 			/>
-		</div>
+		</Panel>
 	);
 }
 
 export default withAuthZContent<RolesListContentProps>(RolesListContent, {
 	checks: [RoleListPermission],
-	fallbackOnLoading: (
-		<div className={styles.rolesListingTable}>
-			<Skeleton active paragraph={{ rows: 5 }} />
-		</div>
-	),
+	fallbackOnLoading: <RolesListingSkeleton />,
 });

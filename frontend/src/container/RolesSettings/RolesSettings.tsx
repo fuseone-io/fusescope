@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Plus } from '@signozhq/icons';
-import { Input } from '@signozhq/ui/input';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -11,10 +10,10 @@ import {
 	RoleListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
+import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
+import SettingsSearchInput from 'pages/Settings/components/SettingsSearchInput';
 
 import RolesListingTable from './RolesComponents/RolesListingTable';
-
-import styles from './RolesSettings.module.scss';
 
 function RolesSettings(): JSX.Element {
 	const [searchQuery, setSearchQuery] = useState('');
@@ -22,10 +21,11 @@ function RolesSettings(): JSX.Element {
 	const { isRolesEnabled } = useRolesFeatureGate();
 
 	return (
-		<div data-testid="roles-settings">
-			<div className={styles.rolesSettingsHeader}>
-				<h3 className={styles.rolesSettingsHeaderTitle}>Roles</h3>
-				<p className={styles.rolesSettingsHeaderDescription}>
+		<SettingsPageShell
+			testId="roles-settings"
+			title="Roles"
+			description={
+				<>
 					<span className="translate-safe">
 						{isRolesEnabled
 							? 'Create and manage custom roles for your team. '
@@ -35,42 +35,41 @@ function RolesSettings(): JSX.Element {
 						href={fuseScopeDocsUrl('/administration/users-and-roles/#roles')}
 						target="_blank"
 						rel="noopener noreferrer"
-						className={styles.rolesSettingsHeaderLearnMore}
+						className="tw:text-primary tw:hover:underline"
 					>
 						Learn more
 					</a>
-				</p>
-			</div>
-			<div className={styles.rolesSettingsContent}>
-				<div className={styles.rolesSettingsToolbar}>
-					<AuthZTooltip
-						checks={[RoleListPermission]}
-						triggerClassName={styles.rolesSettingsSearch}
+				</>
+			}
+			actions={
+				isRolesEnabled && (
+					<AuthZButton
+						size="md"
+						checks={[RoleCreatePermission]}
+						variant="solid"
+						color="primary"
+						onClick={(): void => history.push(ROUTES.ROLE_CREATE)}
+						prefix={<Plus size={14} />}
 					>
-						<Input
-							type="search"
-							placeholder="Search for roles..."
-							value={searchQuery}
-							onChange={(e): void => setSearchQuery(e.target.value)}
-						/>
-					</AuthZTooltip>
-					{isRolesEnabled && (
-						<AuthZButton
-							size="md"
-							checks={[RoleCreatePermission]}
-							variant="solid"
-							color="primary"
-							width={156}
-							onClick={(): void => history.push(ROUTES.ROLE_CREATE)}
-							prefix={<Plus size={14} />}
-						>
-							Custom role
-						</AuthZButton>
-					)}
-				</div>
-				<RolesListingTable searchQuery={searchQuery} />
+						Custom role
+					</AuthZButton>
+				)
+			}
+		>
+			<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+				<AuthZTooltip
+					checks={[RoleListPermission]}
+					triggerClassName="tw:min-w-0 tw:flex-[1_1_280px]"
+				>
+					<SettingsSearchInput
+						placeholder="Search for roles..."
+						value={searchQuery}
+						onChange={(e): void => setSearchQuery(e.target.value)}
+					/>
+				</AuthZTooltip>
 			</div>
-		</div>
+			<RolesListingTable searchQuery={searchQuery} />
+		</SettingsPageShell>
 	);
 }
 
