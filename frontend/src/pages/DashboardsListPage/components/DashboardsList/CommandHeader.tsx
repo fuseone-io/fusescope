@@ -1,31 +1,29 @@
-import { Typography } from '@signozhq/ui/typography';
-
-import NewDashboardButton from './NewDashboardButton';
-
-import styles from './DashboardsList.module.scss';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 
 interface Props {
 	label: string;
 	count: number;
 	isModified: boolean;
-	onCreate: () => void;
 }
 
-function CommandHeader({
-	label,
-	count,
-	isModified,
-	onCreate,
-}: Props): JSX.Element {
+function CommandHeader({ label, count, isModified }: Props): JSX.Element {
 	return (
-		<div className={styles.commandHeader}>
-			<div className={styles.headingBlock}>
-				<Typography.Title className={styles.title}>{label}</Typography.Title>
-				{isModified && <span className={styles.dirtyDot} title="Unsaved changes" />}
-				<span className={styles.countPill}>{count}</span>
-			</div>
-			<div className={styles.grow} />
-			<NewDashboardButton onClick={onCreate} />
+		<div className="fs-ui tw:flex tw:min-w-0 tw:items-center tw:gap-2.5 tw:font-sans">
+			<h2
+				data-testid="dashboards-view-title"
+				className="tw:min-w-0 tw:truncate tw:text-base tw:font-semibold tw:text-foreground"
+			>
+				{label}
+			</h2>
+			{isModified && (
+				<span
+					title="Unsaved changes"
+					className="tw:size-1.5 tw:flex-none tw:rounded-full tw:bg-warning"
+				/>
+			)}
+			<StatusBadge tone="neutral" testId="dashboards-count">
+				{count}
+			</StatusBadge>
 		</div>
 	);
 }

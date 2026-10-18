@@ -120,22 +120,19 @@ function ViewsRail({
 		const active = row.id === activeViewId;
 		return (
 			<div key={row.id} className={cx(styles.row, { [styles.rowActive]: active })}>
-				<Button
-					size="md"
-					variant="ghost"
-					color="secondary"
-					width="100%"
+				<button
+					type="button"
+					className={styles.rowButton}
+					aria-current={active ? 'true' : undefined}
+					data-testid={`dashboards-view-${row.id}`}
 					onClick={(): void => onSelect(row.id)}
-					testId={`dashboards-view-${row.id}`}
-					prefix={<Icon size={16} className={styles.itemIcon} />}
-					suffix={
-						active && isModified ? (
-							<div className={styles.dirtyDot} title="Unsaved changes" />
-						) : undefined
-					}
 				>
-					{row.label}
-				</Button>
+					<Icon size={16} className={styles.itemIcon} />
+					<span className={styles.rowLabel}>{row.label}</span>
+					{active && isModified && (
+						<span className={styles.dirtyDot} title="Unsaved changes" />
+					)}
+				</button>
 				{row.deletable && (
 					<div className={styles.itemActions}>
 						<ViewNamePopover

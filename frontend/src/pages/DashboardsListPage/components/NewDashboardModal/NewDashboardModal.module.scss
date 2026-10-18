@@ -27,12 +27,12 @@
 }
 
 .label {
-	font-size: var(--font-size-sm);
-	color: var(--l2-foreground);
+	font-size: 13px;
+	color: var(--fs-muted-foreground);
 }
 
 .required {
-	color: var(--danger-background);
+	color: var(--fs-error);
 }
 
 // Title row: icon picker joined flush to the left of the name input.
@@ -58,8 +58,8 @@
 }
 
 .hint {
-	font-size: var(--font-size-xs);
-	color: var(--l3-foreground);
+	font-size: 12px;
+	color: var(--fs-subtle-foreground);
 }
 
 .loading {
@@ -68,8 +68,8 @@
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	color: var(--l3-foreground);
-	font-size: var(--font-size-sm);
+	color: var(--fs-subtle-foreground);
+	font-size: 13px;
 }
 
 // "From a template" tab: a centered browse-and-request placeholder until the
@@ -93,7 +93,7 @@
 	height: 44px;
 	margin-bottom: 4px;
 	border-radius: 10px;
-	color: var(--bg-robin-400);
+	color: var(--fs-primary);
 	background: var(--callout-primary-background);
 	border: 1px solid var(--callout-primary-border);
 }
@@ -107,9 +107,9 @@
 	align-items: center;
 	gap: 6px;
 	margin-top: 4px;
-	color: var(--bg-robin-400);
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-medium);
+	color: var(--fs-primary);
+	font-size: 13px;
+	font-weight: 500;
 
 	&:hover {
 		color: var(--bg-robin-300);
@@ -124,11 +124,11 @@
 	max-width: 380px;
 	margin-top: 16px;
 	padding-top: 16px;
-	border-top: 1px solid var(--l2-border);
+	border-top: 1px solid var(--fs-border);
 }
 
 .requestHeader {
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
 }
 
 .requestRow {
@@ -141,8 +141,8 @@
 }
 
 .importHeader {
-	font-size: var(--font-size-sm);
-	color: var(--l2-foreground);
+	font-size: 13px;
+	color: var(--fs-muted-foreground);
 }
 
 .editorWrap {
@@ -157,7 +157,7 @@
 }
 
 .editor {
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--fs-border);
 	border-radius: 6px;
 	overflow: hidden;
 }
@@ -173,8 +173,8 @@
 }
 
 .errorText {
-	color: var(--danger-background);
-	font-size: var(--font-size-sm);
+	color: var(--fs-error);
+	font-size: 13px;
 }
 
 .importFooter {

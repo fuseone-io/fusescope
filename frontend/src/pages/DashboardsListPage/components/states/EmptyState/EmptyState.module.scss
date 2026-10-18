@@ -14,14 +14,14 @@
 
 .noDashboard {
 	composes: bodyText from '../states.module.scss';
-	color: var(--l1-foreground);
-	font-weight: var(--font-weight-medium);
+	color: var(--fs-foreground);
+	font-weight: 500;
 }
 
 .info {
 	composes: bodyText from '../states.module.scss';
-	color: var(--l2-foreground);
-	font-weight: var(--font-weight-normal);
+	color: var(--fs-muted-foreground);
+	font-weight: 400;
 }
 
 .actions {

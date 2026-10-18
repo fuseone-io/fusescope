@@ -1,10 +1,10 @@
 .rail {
 	display: flex;
 	flex-direction: column;
-	width: 300px;
+	width: 248px;
 	flex: none;
-	border-right: 1px solid var(--l2-border);
-	background: var(--l1-background);
+	border-right: 1px solid var(--fs-border);
+	background: var(--fs-card);
 	overflow: hidden;
 	transition: width 0.18s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
@@ -23,26 +23,25 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
-	padding: 14px 12px 10px 16px;
+	padding: 12px 12px 8px;
 }
 
 .headerTitle {
 	margin: 0;
-	font-size: var(--font-size-base);
-	font-weight: var(--font-weight-semibold);
-	letter-spacing: -0.01em;
-	color: var(--l1-foreground);
+	color: var(--fs-foreground);
+	font-size: 14px;
+	font-weight: 600;
 	text-align: left;
 }
 
 .search {
-	padding: 0 12px 10px;
+	padding: 0 12px 6px;
 }
 
 .searchEmpty {
 	padding: 12px;
-	color: var(--l3-foreground);
-	font-size: var(--font-size-xs);
+	color: var(--fs-subtle-foreground);
+	font-size: 12px;
 	text-align: center;
 }
 
@@ -50,91 +49,114 @@
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
-	padding: 0 8px 8px;
+	padding: 0 12px 12px;
 }
 
 .groupLabel {
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	padding: 16px 8px 8px;
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-semibold);
-	letter-spacing: 0.08em;
+	padding: 14px 8px 4px;
+	color: var(--fs-subtle-foreground);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.05em;
 	text-transform: uppercase;
-	color: var(--l3-foreground);
 }
 
 .groupLabelSpaced {
-	margin-top: 10px;
-	border-top: 1px solid var(--l2-border);
-	padding-top: 18px;
+	margin-top: 0;
 }
 
 .groupCount {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-normal);
+	padding: 0 6px;
+	border-radius: 4px;
+	background: var(--fs-muted);
+	color: var(--fs-subtle-foreground);
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	font-weight: 400;
 	letter-spacing: 0;
-	color: var(--l3-foreground);
-	background: var(--l2-background);
-	border-radius: 10px;
-	padding: 1px 6px;
 }
 
 .deleteName {
-	color: var(--danger-background);
-	font-weight: var(--font-weight-medium);
+	color: var(--fs-error);
+	font-weight: 500;
 }
 
 .row {
 	position: relative;
 	display: flex;
 	align-items: center;
-	margin: 3px 0;
+	margin: 1px 0;
 	border-radius: 6px;
 	transition: background 0.12s;
 }
 
 .row:hover {
-	background: var(--l2-background);
+	background: var(--fs-muted);
 }
 
-.rowActive {
-	background: var(--l2-background);
+.rowActive,
+.rowActive:hover {
+	background: var(--fs-primary-soft);
 }
 
-// A left accent bar reads the active row more clearly than background alone.
-.rowActive::before {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 50%;
-	transform: translateY(-50%);
-	width: 3px;
-	height: 18px;
-	border-radius: 0 3px 3px 0;
-	background: var(--primary-background);
+.rowButton {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	height: 32px;
+	padding: 0 8px;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--fs-muted-foreground);
+	font: inherit;
+	font-size: 13px;
+	text-align: left;
+	cursor: pointer;
+
+	&:hover {
+		color: var(--fs-foreground);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--fs-ring);
+		outline-offset: 2px;
+	}
 }
 
-.row > [data-slot='button'] {
-	--button-display: flex;
-	--button-justify-content: flex-start;
+.rowActive .rowButton {
+	color: var(--fs-primary-ink);
+	font-weight: 500;
+}
+
+.rowLabel {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .itemIcon {
 	display: inline-flex;
-	color: var(--l3-foreground);
+	flex: none;
+	color: var(--fs-subtle-foreground);
 }
 
 .rowActive .itemIcon {
-	color: var(--primary-background);
+	color: var(--fs-primary-ink);
 }
 
 .dirtyDot {
 	width: 7px;
 	height: 7px;
 	border-radius: 50%;
-	background: var(--warning-background);
+	background: var(--fs-warning);
 	flex: none;
 }
 
@@ -162,10 +184,10 @@
 .empty {
 	margin: 4px 8px;
 	padding: 12px;
-	border: 1px dashed var(--l2-border);
+	border: 1px dashed var(--fs-border);
 	border-radius: 8px;
-	color: var(--l3-foreground);
-	font-size: var(--font-size-xs);
+	color: var(--fs-subtle-foreground);
+	font-size: 12px;
 	line-height: 1.5;
 	text-align: center;
 }
@@ -173,20 +195,20 @@
 .dirtyPanel {
 	flex: none;
 	padding: 12px 14px;
-	border-top: 1px solid var(--l2-border);
-	background: var(--l2-background);
+	border-top: 1px solid var(--fs-border);
+	background: var(--fs-card);
 }
 
 .dirtyPanelDefault {
-	background: var(--l1-background);
+	background: var(--fs-background);
 }
 
 .dirtyTitle {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-semibold);
+	font-size: 12px;
+	font-weight: 600;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 	margin-bottom: 8px;
 }
 
@@ -205,14 +227,14 @@
 }
 
 .saveTitle {
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-semibold);
-	color: var(--l1-foreground);
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--fs-foreground);
 }
 
 .saveLabel {
-	font-size: var(--font-size-xs);
-	color: var(--l3-foreground);
+	font-size: 12px;
+	color: var(--fs-subtle-foreground);
 	margin-top: 2px;
 }
 

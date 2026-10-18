@@ -5,13 +5,13 @@
 }
 
 .title {
-	color: var(--l1-foreground);
-	font-size: var(--font-size-base);
-	font-weight: var(--font-weight-medium);
+	color: var(--fs-foreground);
+	font-size: 14px;
+	font-weight: 500;
 }
 
 .description {
-	color: var(--l3-foreground);
-	font-size: var(--font-size-sm);
+	color: var(--fs-subtle-foreground);
+	font-size: 13px;
 	text-align: center;
 }
