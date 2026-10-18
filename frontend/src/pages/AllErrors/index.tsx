@@ -1,30 +1,26 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useLocation } from 'react-router-dom';
-import { Filter } from '@signozhq/icons';
-import { Button, Tooltip } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
+import CompactPageHeader from 'components/PageTemplate/components/CompactPageHeader';
+import HeaderBandLayout from 'components/PageTemplate/components/HeaderBandLayout';
+import RailToggleButton from 'components/PageTemplate/components/RailToggleButton';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
-import RouteTab from 'components/RouteTab';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import AllErrorsContainer from 'container/AllError';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import ResourceAttributesFilterV2 from 'container/ResourceAttributeFilterV2/ResourceAttributesFilterV2';
-import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import history from 'lib/history';
 import { isNull } from 'lodash-es';
+import { Bug } from 'lucide-react';
 
-import { routes } from './config';
 import { useAllErrorsQueryState } from './QueryStateContext';
 
 import './AllErrors.styles.scss';
 
 function AllErrors(): JSX.Element {
-	const { pathname } = useLocation();
 	const { handleRunQuery } = useQueryBuilder();
 	const queryClient = useQueryClient();
 
@@ -57,52 +53,43 @@ function AllErrors(): JSX.Element {
 	const quickFilterFieldApis = useSignalFieldApis();
 
 	return (
-		<QuickFiltersLayout
-			className="all-errors-page"
-			contentClassName="all-errors-right-section"
-			showFilters={showFilters}
-			onToggleFilters={handleFilterVisibilityChange}
-			quickFilterProps={{
-				className: 'qf-exceptions',
-				source: QuickFiltersSource.EXCEPTIONS,
-				signal: SignalType.EXCEPTIONS,
-				useFieldApis: quickFilterFieldApis,
-			}}
+		<HeaderBandLayout
+			bounded
+			testId="exceptions-page"
+			header={
+				<CompactPageHeader icon={<Bug />} iconTone="error" title="Exceptions" />
+			}
 		>
-			<Toolbar
-				showAutoRefresh={false}
-				leftActions={
-					!showFilters ? (
-						<Tooltip title="Show Filters">
-							<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-								<Filter size="md" />
-							</Button>
-						</Tooltip>
-					) : undefined
-				}
-				rightActions={
-					<div className="right-toolbar-actions-container">
+			<QuickFiltersLayout
+				className="all-errors-page"
+				contentClassName="all-errors-right-section"
+				showFilters={showFilters}
+				onToggleFilters={handleFilterVisibilityChange}
+				quickFilterProps={{
+					className: 'qf-exceptions',
+					source: QuickFiltersSource.EXCEPTIONS,
+					signal: SignalType.EXCEPTIONS,
+					useFieldApis: quickFilterFieldApis,
+				}}
+			>
+				<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-4 tw:px-4 tw:pt-4 tw:pb-8 tw:md:px-6">
+					<div className="all-errors-toolbar tw:flex tw:items-start tw:gap-2">
+						{!showFilters && (
+							<RailToggleButton open={false} onToggle={handleFilterVisibilityChange} />
+						)}
+						<div className="tw:min-w-0 tw:flex-1">
+							<ResourceAttributesFilterV2 />
+						</div>
 						<RightToolbarActions
 							onStageRunQuery={handleRunQuery}
 							isLoadingQueries={isLoadingQueries}
 							handleCancelQuery={handleCancelQuery}
 						/>
-						<HeaderRightSection
-							enableAnnouncements={false}
-							enableShare
-							enableFeedback
-						/>
 					</div>
-				}
-			/>
-			<ResourceAttributesFilterV2 />
-			<RouteTab
-				routes={routes}
-				activeKey={pathname}
-				history={history}
-				showRightSection={false}
-			/>
-		</QuickFiltersLayout>
+					<AllErrorsContainer />
+				</div>
+			</QuickFiltersLayout>
+		</HeaderBandLayout>
 	);
 }
 

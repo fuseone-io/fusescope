@@ -1,14 +1,21 @@
 .all-errors-page {
-	.all-errors-right-section {
+	.all-errors-toolbar {
+		.resourceAttributesFilter-container-v2 {
+			margin: 0;
+		}
+
+		.ant-select-selector {
+			min-height: 32px;
+			border-radius: 6px;
+			border-color: var(--fs-border) !important;
+			background-color: var(--fs-muted) !important;
+		}
+
 		.right-toolbar-actions-container {
 			display: flex;
 			gap: 8px;
 			align-items: center;
 			justify-content: flex-end;
 		}
-	}
-
-	.ant-tabs {
-		margin: 0 8px;
 	}
 }
