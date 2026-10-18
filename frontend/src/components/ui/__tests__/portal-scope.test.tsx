@@ -10,6 +10,7 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from 'components/ui/hover-card';
+import { Popover, PopoverContent, PopoverTrigger } from 'components/ui/popover';
 import { Sheet, SheetContent, SheetTitle } from 'components/ui/sheet';
 import {
 	Tooltip,
@@ -56,6 +57,17 @@ describe('portalled content', () => {
 		);
 
 		expect(screen.getByTestId('hover-card')).toHaveClass('fs-ui');
+	});
+
+	it('scopes the popover', () => {
+		render(
+			<Popover open>
+				<PopoverTrigger>open</PopoverTrigger>
+				<PopoverContent data-testid="popover">body</PopoverContent>
+			</Popover>,
+		);
+
+		expect(screen.getByTestId('popover')).toHaveClass('fs-ui');
 	});
 
 	it('scopes the sheet and its overlay', () => {

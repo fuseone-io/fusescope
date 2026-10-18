@@ -4,6 +4,7 @@ import { Avatar } from 'components/ui/avatar';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
+import { Popover, PopoverAnchor, PopoverContent } from 'components/ui/popover';
 import { Sheet, SheetOverlay, SheetPortal } from 'components/ui/sheet';
 import { Switch } from 'components/ui/switch';
 import {
@@ -50,6 +51,24 @@ const cases: Case[] = [
 					<SheetOverlay ref={ref as RefObject<HTMLDivElement>} />
 				</SheetPortal>
 			</Sheet>
+		),
+		tag: 'DIV',
+	},
+	{
+		name: 'PopoverContent',
+		element: (ref) => (
+			<Popover open>
+				<PopoverContent ref={ref as RefObject<HTMLDivElement>} />
+			</Popover>
+		),
+		tag: 'DIV',
+	},
+	{
+		name: 'PopoverAnchor',
+		element: (ref) => (
+			<Popover>
+				<PopoverAnchor ref={ref as RefObject<HTMLDivElement>} />
+			</Popover>
 		),
 		tag: 'DIV',
 	},
