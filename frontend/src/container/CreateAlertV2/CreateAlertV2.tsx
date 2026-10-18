@@ -2,13 +2,11 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 
-import AlertCondition from './AlertCondition';
+import AlertSteps from './AlertSteps';
 import { CreateAlertProvider } from './context';
 import { buildInitialAlertDef } from './context/utils';
 import CreateAlertHeader from './CreateAlertHeader';
 import Footer from './Footer';
-import NotificationSettings from './NotificationSettings';
-import QuerySection from './QuerySection';
 import { CreateAlertV2Props } from './types';
 import { Spinner } from './utils';
 
@@ -27,9 +25,7 @@ function CreateAlertV2({ alertType }: CreateAlertV2Props): JSX.Element {
 			<Spinner />
 			<div className="create-alert-v2-container">
 				<CreateAlertHeader />
-				<QuerySection />
-				<AlertCondition />
-				<NotificationSettings />
+				<AlertSteps />
 			</div>
 			<Footer />
 		</CreateAlertProvider>

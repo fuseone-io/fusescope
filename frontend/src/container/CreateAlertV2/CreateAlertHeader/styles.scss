@@ -1,8 +1,13 @@
 .alert-header {
-	background-color: var(--l1-background);
+	--l1-background: var(--fs-card);
+	--l1-border: var(--fs-border);
+
+	background-color: var(--fs-card);
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
 	font-family: inherit;
 	color: var(--l1-foreground);
-	padding: 12px 16px;
+	padding: 16px 20px;
 
 	&__tab-bar {
 		display: flex;
@@ -14,17 +19,10 @@
 	&__tab {
 		display: flex;
 		align-items: center;
-		background-color: var(--l1-background);
 		height: 32px;
-		font-size: 13px;
-		color: var(--l1-foreground);
-	}
-
-	&__tab::before {
-		content: '•';
-		margin-right: 6px;
-		font-size: 13px;
-		color: var(--l3-foreground);
+		font-size: 16px;
+		font-weight: 600;
+		color: var(--fs-foreground);
 	}
 
 	&__content {
@@ -91,19 +89,19 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
-		background-color: #ad7f581a;
-		color: var(--bg-sienna-400);
-		padding: 4px 8px;
-		border-radius: 16px;
+		background-color: var(--fs-primary-soft);
+		color: var(--fs-primary-ink);
+		padding: 2px 6px 2px 8px;
+		border-radius: 4px;
 		font-size: 12px;
-		border: 1px solid var(--bg-sienna-500);
-		font-family: 'Geist Mono';
+		font-weight: 500;
+		font-family: 'JetBrains Mono', 'Fira Code', Consolas, ui-monospace, monospace;
 	}
 
 	&__remove-button {
 		background: none;
 		border: none;
-		color: var(--bg-sienna-400);
+		color: var(--fs-primary-ink);
 		cursor: pointer;
 		padding: 0;
 		display: flex;

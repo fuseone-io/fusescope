@@ -11,6 +11,7 @@ import APIError from 'types/api/error';
 import { useCreateAlertState } from '../context';
 import AdvancedOptions from '../EvaluationSettings/AdvancedOptions';
 import Stepper from '../Stepper';
+import { ALERT_STEP_IDS } from '../StepsNav/constants';
 import AlertThreshold from './AlertThreshold';
 import AnomalyThreshold from './AnomalyThreshold';
 import { ANOMALY_TAB_TOOLTIP, THRESHOLD_TAB_TOOLTIP } from './constants';
@@ -67,7 +68,10 @@ function AlertCondition(): JSX.Element {
 	};
 
 	return (
-		<div className="alert-condition-container">
+		<section
+			id={ALERT_STEP_IDS.CONDITION}
+			className="alert-condition-container alert-step-panel"
+		>
 			<Stepper stepNumber={2} label="Set alert conditions" />
 			<div className="alert-condition">
 				<div className="alert-condition-tabs">
@@ -109,7 +113,7 @@ function AlertCondition(): JSX.Element {
 			<div className="condensed-advanced-options-container">
 				<AdvancedOptions />
 			</div>
-		</div>
+		</section>
 	);
 }
 
