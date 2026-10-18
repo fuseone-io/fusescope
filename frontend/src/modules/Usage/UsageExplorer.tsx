@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import { Select, Space } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Select } from 'antd';
 import Graph from 'components/Graph';
+import PageHeader from 'components/PageTemplate/components/PageHeader';
+import Panel from 'components/PageTemplate/components/Panel';
+import PageTemplate from 'components/PageTemplate/PageTemplate';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import { GetService, getUsageData, UsageDataItem } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -14,8 +16,7 @@ import { GlobalTime } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 import { isOnboardingSkipped } from 'utils/app';
-
-import { Card } from './styles';
+import { ChartColumn } from 'lucide-react';
 
 const { Option } = Select;
 
@@ -106,93 +107,84 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 	};
 
 	return (
-		<>
-			<Space style={{ marginTop: 40, marginLeft: 20 }}>
-				<Space>
-					<Select
-						onSelect={(value): void => {
-							setSelectedTime(
-								// eslint-disable-next-line eqeqeq
-								timeDaysOptions.filter((item) => item.value == parseInt(value))[0],
-							);
-						}}
-						value={selectedTime.label}
-					>
-						{timeDaysOptions.map(({ value, label }) => (
-							<Option key={value} value={value}>
-								{label}
-							</Option>
-						))}
-					</Select>
-				</Space>
-				<Space>
-					<Select
-						onSelect={(value): void => {
-							setSelectedInterval(
-								interval.filter((item) => item.value === parseInt(value))[0],
-							);
-						}}
-						value={selectedInterval.label}
-					>
-						{interval
-							.filter((interval) => interval.applicableOn.includes(selectedTime))
-							.map((item) => (
-								<Option key={item.label} value={item.value}>
-									{item.label}
-								</Option>
-							))}
-					</Select>
-				</Space>
-
-				<Space>
-					<Select
-						onSelect={(value): void => {
-							setSelectedService(value);
-						}}
-						value={selectedService || 'All Services'}
-					>
-						<Option value="">All Services</Option>
-						{services?.map((service) => (
-							<Option key={service.serviceName} value={service.serviceName}>
-								{service.serviceName}
-							</Option>
-						))}
-					</Select>
-				</Space>
-
-				{isOnboardingSkipped() && totalCount === 0 ? (
-					<Space
-						style={{
-							width: '100%',
-							margin: '40px 0',
-							marginLeft: 20,
-							justifyContent: 'center',
-						}}
-					>
-						<Typography>
+		<PageTemplate testId="usage-explorer-page">
+			<PageHeader
+				icon={<ChartColumn />}
+				title="Usage explorer"
+				description={
+					isOnboardingSkipped() && totalCount === 0 ? (
+						<>
 							No spans found. Please add instrumentation (follow this
 							<a
 								href={fuseScopeDocsUrl('/sending-data/instrumentation/')}
 								target="_blank"
-								style={{ marginLeft: 3 }}
+								className="tw:ml-[3px]"
 								rel="noreferrer"
 							>
 								guide
 							</a>
 							)
-						</Typography>
-					</Space>
-				) : (
-					<Space style={{ display: 'block', marginLeft: 20, width: 200 }}>
-						<Typography>{`Total count is ${totalCount}`}</Typography>
-					</Space>
-				)}
-			</Space>
+						</>
+					) : (
+						<span data-testid="usage-total-count">{`Total count is ${totalCount}`}</span>
+					)
+				}
+				actions={
+					<>
+						<Select
+							onSelect={(value): void => {
+								setSelectedTime(
+									// eslint-disable-next-line eqeqeq
+									timeDaysOptions.filter((item) => item.value == parseInt(value))[0],
+								);
+							}}
+							value={selectedTime.label}
+						>
+							{timeDaysOptions.map(({ value, label }) => (
+								<Option key={value} value={value}>
+									{label}
+								</Option>
+							))}
+						</Select>
+						<Select
+							onSelect={(value): void => {
+								setSelectedInterval(
+									interval.filter((item) => item.value === parseInt(value))[0],
+								);
+							}}
+							value={selectedInterval.label}
+						>
+							{interval
+								.filter((interval) => interval.applicableOn.includes(selectedTime))
+								.map((item) => (
+									<Option key={item.label} value={item.value}>
+										{item.label}
+									</Option>
+								))}
+						</Select>
+						<Select
+							onSelect={(value): void => {
+								setSelectedService(value);
+							}}
+							value={selectedService || 'All Services'}
+						>
+							<Option value="">All Services</Option>
+							{services?.map((service) => (
+								<Option key={service.serviceName} value={service.serviceName}>
+									{service.serviceName}
+								</Option>
+							))}
+						</Select>
+					</>
+				}
+			/>
 
-			<Card>
-				<Graph name="usage" data={data} type="bar" />
-			</Card>
-		</>
+			<Panel title="Span Count">
+				<div className="tw:h-[70vh] tw:p-5">
+					<Graph name="usage" data={data} type="bar" />
+				</div>
+			</Panel>
+		</PageTemplate>
 	);
 }
 

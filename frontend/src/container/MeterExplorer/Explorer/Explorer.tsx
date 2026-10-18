@@ -12,7 +12,6 @@ import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -153,7 +152,6 @@ function Explorer(): JSX.Element {
 							</div>
 
 							<div className="explore-header-right-actions">
-								<DateTimeSelector showAutoRefresh />
 								<RightToolbarActions
 									onStageRunQuery={(): void => handleRunQuery()}
 									isLoadingQueries={isLoadingQueries}
