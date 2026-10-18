@@ -31,14 +31,14 @@ function PageTabs({
 		>
 			<TabsPrimitive.List
 				aria-label={label}
-				className="fs-ui tw:flex tw:gap-6 tw:overflow-x-auto tw:border-b tw:border-border tw:font-sans"
+				className="fs-ui tw:flex tw:gap-6 tw:overflow-x-auto tw:overflow-y-hidden tw:font-sans tw:shadow-[inset_0_-1px_0_var(--color-border)]"
 			>
 				{tabs.map((tab) => (
 					<TabsPrimitive.Trigger
 						key={tab.value}
 						value={tab.value}
 						data-testid={`page-tab-${tab.value}`}
-						className="tw:-mb-px tw:inline-flex tw:cursor-pointer tw:items-center tw:gap-1.5 tw:border-b-2 tw:border-transparent tw:py-2.5 tw:text-sm tw:font-medium tw:whitespace-nowrap tw:text-muted-foreground! tw:transition-colors tw:outline-none tw:hover:text-foreground! tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:data-[state=active]:border-primary tw:data-[state=active]:text-primary!"
+						className="tw:inline-flex tw:cursor-pointer tw:items-center tw:gap-1.5 tw:border-b-2 tw:border-transparent tw:py-2.5 tw:text-sm tw:font-medium tw:whitespace-nowrap tw:text-muted-foreground! tw:transition-colors tw:outline-none tw:hover:text-foreground! tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:ring-inset tw:data-[state=active]:border-primary tw:data-[state=active]:text-primary!"
 					>
 						{tab.label}
 						{tab.badge}
