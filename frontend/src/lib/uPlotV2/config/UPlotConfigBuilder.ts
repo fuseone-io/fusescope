@@ -1,3 +1,5 @@
+import { themeColors } from 'constants/theme';
+import { assignSeriesColors } from 'lib/uPlotLib/utils/assignSeriesColors';
 import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
 import { getStoredSeriesVisibility } from 'lib/visualization/panels/utils/legendVisibilityUtils';
 import { partialPointsDrawHook } from 'lib/uPlotV2/hooks/partialPointsDrawHook';
@@ -51,6 +53,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	Partial<Options>
 > {
 	series: UPlotSeriesBuilder[] = [];
+
+	private paletteColors: Record<string, string> | null = null;
 
 	private selectionPreferencesSource: SelectionPreferencesSource =
 		SelectionPreferencesSource.IN_MEMORY;
@@ -179,11 +183,29 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 * Add a series configuration
 	 */
 	addSeries(props: SeriesProps): void {
-		this.series.push(new UPlotSeriesBuilder(props));
+		this.series.push(
+			new UPlotSeriesBuilder(props, (label) => this.paletteColorFor(label)),
+		);
+		this.paletteColors = null;
 		if (props.partialTimestamps?.size && !this.hasPartialPointsHook) {
 			this.hasPartialPointsHook = true;
 			this.addHook('draw', partialPointsDrawHook);
 		}
+	}
+
+	private paletteColorFor(label: string): string | undefined {
+		if (!this.paletteColors) {
+			const paletteSeries = this.series.filter(
+				(s) => s.props.label && !s.props.lineColor,
+			);
+			this.paletteColors = assignSeriesColors(
+				paletteSeries.map((s) => s.props.label ?? ''),
+				paletteSeries[0]?.props.isDarkMode
+					? themeColors.chartcolors
+					: themeColors.lightModeColor,
+			);
+		}
+		return this.paletteColors[label];
 	}
 
 	getSeriesSpanGapsOptions(): SeriesSpanGapsOption[] {

@@ -1,7 +1,7 @@
 import { themeColors } from 'constants/theme';
 import type { PieSlice } from 'lib/visualization/charts/types';
 import getLabelName from 'lib/getLabelName';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { assignSeriesColors } from 'lib/uPlotLib/utils/assignSeriesColors';
 import type { PanelTable } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 export interface PreparePieDataArgs {
@@ -56,11 +56,10 @@ export function preparePieData({
 					label = getLabelName(labels, table.queryName || '', table.legend || '');
 				}
 
-				const color = customColors?.[label] ?? generateColor(label, colorMap);
 				slices.push({
 					label,
 					value: Number(row.data[column.id || column.name]),
-					color,
+					color: '',
 					queryName: column.queryName,
 					labels,
 				});
@@ -68,7 +67,13 @@ export function preparePieData({
 		});
 	});
 
-	return slices.filter(
+	const visible = slices.filter(
 		(slice) => Number.isFinite(slice.value) && slice.value > 0,
 	);
+	const colors = assignSeriesColors(
+		visible.map((slice) => slice.label),
+		colorMap,
+		customColors ?? undefined,
+	);
+	return visible.map((slice) => ({ ...slice, color: colors[slice.label] }));
 }

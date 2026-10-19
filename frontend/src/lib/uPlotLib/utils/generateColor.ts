@@ -24,13 +24,14 @@ export function colorToRgb(color: string): string {
 	return '136, 136, 136';
 }
 
+export function paletteIndex(key: string, paletteSize: number): number {
+	return hashFn(key) % paletteSize;
+}
+
 export function generateColor(
 	key: string,
 	colorMap: Record<string, string>,
 ): string {
-	const hashValue = hashFn(key);
 	const keys = Object.keys(colorMap);
-	const colorIndex = hashValue % keys.length;
-	const selectedKey = keys[colorIndex];
-	return colorMap[selectedKey];
+	return colorMap[keys[paletteIndex(key, keys.length)]];
 }

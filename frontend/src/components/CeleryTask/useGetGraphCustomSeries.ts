@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
 import { drawStyles } from 'lib/uPlotLib/utils/constants';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { assignSeriesColors } from 'lib/uPlotLib/utils/assignSeriesColors';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import { paths } from './CeleryUtils';
@@ -48,21 +48,19 @@ export const useGetGraphCustomSeries = ({
 			{ label: 'Timestamp', stroke: 'purple' },
 		];
 
-		for (let i = 0; i < data.length; i += 1) {
-			const { metric = {}, queryName = '', legend = '' } = data[i] || {};
-			const label = getLabelName(metric, queryName || '', legend || '');
+		const labels = data.map((item) => {
+			const { metric = {}, queryName = '', legend = '' } = item || {};
+			return getLabelName(metric, queryName || '', legend || '');
+		});
+		const colors = assignSeriesColors(
+			labels,
+			isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+			colorMapping,
+		);
 
-			// Check if label exists in colorMapping
-			const color =
-				colorMapping[label] ||
-				generateColor(
-					label,
-					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-				);
-
-			const series = getGraphSeries(color, label);
-			configurations.push(series);
-		}
+		labels.forEach((label) => {
+			configurations.push(getGraphSeries(colors[label], label));
+		});
 		return configurations;
 	};
 

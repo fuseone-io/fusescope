@@ -34,7 +34,10 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 	SeriesProps,
 	ExtendedSeries
 > {
-	constructor(props: SeriesProps) {
+	constructor(
+		props: SeriesProps,
+		private readonly paletteColorFor?: (label: string) => string | undefined,
+	) {
 		super(props);
 		const pathBuilders = uPlot.paths;
 
@@ -211,6 +214,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 		return (
 			lineColor ??
 			colorMapping[label] ??
+			this.paletteColorFor?.(label) ??
 			generateColor(
 				label,
 				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,

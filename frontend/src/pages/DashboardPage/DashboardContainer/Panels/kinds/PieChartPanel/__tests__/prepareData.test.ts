@@ -160,6 +160,27 @@ describe('preparePieData', () => {
 		expect(slices[1].color).not.toBe('#ff0000');
 	});
 
+	it('gives slices whose labels hash alike distinct colours', () => {
+		const table = tableWith(
+			[
+				{
+					name: 'service.name',
+					queryName: 'A',
+					isValueColumn: false,
+					id: 'service.name',
+				},
+				{ name: 'count', queryName: 'A', isValueColumn: true, id: 'A' },
+			],
+			['frontend', 'driver', 'redis-manual'].map((service) => ({
+				data: { 'service.name': service, A: 1 },
+			})),
+		);
+
+		const colors = preparePieData(args([table])).map((s) => s.color);
+
+		expect(new Set(colors).size).toBe(3);
+	});
+
 	it('drops non-positive and non-numeric values', () => {
 		const table = tableWith(
 			[

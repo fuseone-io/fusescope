@@ -179,6 +179,25 @@ describe('preparePieChartData', () => {
 		expect(slices[0].value).toBe('42');
 	});
 
+	it('gives slices whose labels hash alike distinct colours', () => {
+		const payload = makePayload(
+			['frontend', 'driver', 'redis-manual'].map(
+				(service) =>
+					({
+						metric: { 'service.name': service },
+						queryName: 'A',
+						legend: '',
+						values: [[1000, '42']],
+					}) as QueryData,
+			),
+			[],
+		);
+
+		const colors = preparePieChartData(payload, options).map((s) => s.color);
+
+		expect(new Set(colors).size).toBe(3);
+	});
+
 	it('returns no slices for an empty payload', () => {
 		expect(preparePieChartData(undefined, options)).toStrictEqual([]);
 	});

@@ -1,6 +1,7 @@
 // @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { themeColors } from 'constants/theme';
 import { FullViewProps } from 'container/WidgetCard/Card/FullView/types';
 import { saveLegendEntriesToLocalStorage } from 'container/WidgetCard/Card/FullView/utils';
 import { ThresholdProps } from 'types/api/widgets/threshold';
@@ -22,6 +23,7 @@ import uPlot from 'uplot';
 
 import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
 import tooltipPlugin from './plugins/tooltipPlugin';
+import { assignSeriesColors } from './utils/assignSeriesColors';
 import getAxes from './utils/getAxes';
 import getSeries from './utils/getSeriesData';
 import { getXAxisScale } from './utils/getXAxisScale';
@@ -232,6 +234,20 @@ export const getUPlotChartOptions = ({
 	// Calculate dynamic legend configuration based on panel dimensions and series count
 	const seriesCount = (apiResponse?.data?.result || []).length;
 
+	const legendQuery = query || currentQuery;
+	const seriesColors = assignSeriesColors(
+		(apiResponse?.data?.result || []).map((item) => {
+			const baseLabel = getLabelName(
+				item.metric || {},
+				item.queryName || '',
+				item.legend || '',
+			);
+			return legendQuery ? getLegend(item, legendQuery, baseLabel) : baseLabel;
+		}),
+		isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+		colorMapping,
+	);
+
 	const seriesLabels = enhancedLegend
 		? (apiResponse?.data?.result || []).map((item) =>
 				getLegend(
@@ -356,7 +372,7 @@ export const getUPlotChartOptions = ({
 				isDarkMode,
 				stackBarChart,
 				timezone,
-				colorMapping,
+				colorMapping: seriesColors,
 				customTooltipElement,
 				query: query || currentQuery,
 				decimalPrecision,
@@ -809,7 +825,7 @@ export const getUPlotChartOptions = ({
 					stackBarChart,
 					hiddenGraph,
 					isDarkMode,
-					colorMapping,
+					colorMapping: seriesColors,
 				}),
 		axes: getAxes({ isDarkMode, yAxisUnit, panelType, isLogScale }),
 	};

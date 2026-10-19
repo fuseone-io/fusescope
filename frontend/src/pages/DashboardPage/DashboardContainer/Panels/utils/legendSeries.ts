@@ -1,7 +1,7 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { assignSeriesColors } from 'lib/uPlotLib/utils/assignSeriesColors';
 import { preparePieData } from '../kinds/PieChartPanel/prepareData';
 import { getBuilderQueries } from './getBuilderQueries';
 import { resolveSeriesLabelV5 } from './resolveSeriesLabel';
@@ -77,7 +77,7 @@ export function resolvePieLegendSeries({
 
 /**
  * Time-series kinds: resolve each flattened series' label the way the renderer does
- * (`getLabelName` → `resolveSeriesLabelV5`) and color it with `generateColor`.
+ * (`getLabelName` → `resolveSeriesLabelV5`) and color it with `assignSeriesColors`.
  */
 export function resolveTimeSeriesLegendSeries({
 	queries,
@@ -92,14 +92,13 @@ export function resolveTimeSeriesLegendSeries({
 		getTimeSeriesResults(data.response),
 		data.legendMap,
 	);
-	return buildLegendSeries(
-		series.map((s) =>
-			resolveSeriesLabelV5(
-				s,
-				builderQueries,
-				getLabelName(s.labels, s.queryName, s.legend),
-			),
+	const labels = series.map((s) =>
+		resolveSeriesLabelV5(
+			s,
+			builderQueries,
+			getLabelName(s.labels, s.queryName, s.legend),
 		),
-		(label) => generateColor(label, palette),
 	);
+	const colors = assignSeriesColors(labels.filter(Boolean), palette);
+	return buildLegendSeries(labels, (label) => colors[label]);
 }

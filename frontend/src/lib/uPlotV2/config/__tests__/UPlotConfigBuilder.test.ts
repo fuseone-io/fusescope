@@ -477,6 +477,71 @@ describe('UPlotConfigBuilder', () => {
 		expect(config.tzDate).toBe(tzDate);
 	});
 
+	describe('series colours', () => {
+		// Full labels that hash to the same palette slot.
+		const FRONTEND = '{service.name="frontend"}';
+		const DRIVER = '{service.name="driver"}';
+
+		it.each([
+			['dark', true],
+			['light', false],
+		])(
+			'gives colliding series distinct colours in lines and legend (%s)',
+			(_, isDarkMode) => {
+				const builder = new UPlotConfigBuilder({ id: 'colours' });
+				builder.addSeries(createSeriesProps({ label: FRONTEND, isDarkMode }));
+				builder.addSeries(createSeriesProps({ label: DRIVER, isDarkMode }));
+
+				const strokes = (builder.getConfig().series ?? [])
+					.slice(1)
+					.map((s) => s.stroke);
+				const legend = Object.values(builder.getLegendItems()).map(
+					(item) => item.color,
+				);
+
+				expect(new Set(strokes).size).toBe(2);
+				expect(legend).toStrictEqual(strokes);
+			},
+		);
+
+		it('colours the same series set alike whatever order it is added in', () => {
+			const strokesFor = (labels: string[]): Record<string, unknown> => {
+				const builder = new UPlotConfigBuilder({ id: 'colours' });
+				labels.forEach((label) =>
+					builder.addSeries(createSeriesProps({ label, isDarkMode: true })),
+				);
+				return Object.fromEntries(
+					(builder.getConfig().series ?? [])
+						.slice(1)
+						.map((s) => [s.label, s.stroke]),
+				);
+			};
+
+			expect(strokesFor([FRONTEND, DRIVER, 'A'])).toStrictEqual(
+				strokesFor(['A', DRIVER, FRONTEND]),
+			);
+		});
+
+		it('keeps colorMapping and lineColor as given', () => {
+			const builder = new UPlotConfigBuilder({ id: 'colours' });
+			builder.addSeries(
+				createSeriesProps({
+					label: FRONTEND,
+					colorMapping: { [FRONTEND]: '#123456' },
+				}),
+			);
+			builder.addSeries(
+				createSeriesProps({ label: DRIVER, lineColor: '#abcdef' }),
+			);
+
+			const strokes = (builder.getConfig().series ?? [])
+				.slice(1)
+				.map((s) => s.stroke);
+
+			expect(strokes).toStrictEqual(['#123456', '#abcdef']);
+		});
+	});
+
 	it('does not include plugins when none added', () => {
 		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 

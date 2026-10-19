@@ -1,5 +1,6 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import { QueryData } from 'types/api/widgets/getQuery';
 
 import {
 	inputPropsTimeSeries,
@@ -20,6 +21,50 @@ jest.mock('../getSeriesData', () =>
 );
 
 describe('getUPlotChartOptions', () => {
+	describe('series colours', () => {
+		const FRONTEND = '{service.name="frontend"}';
+		const DRIVER = '{service.name="driver"}';
+		const propsFor = (
+			colorMapping?: Record<string, string>,
+		): typeof inputPropsTimeSeries => ({
+			...inputPropsTimeSeries,
+			colorMapping,
+			apiResponse: {
+				data: {
+					resultType: 'matrix',
+					newResult: { data: { result: [], resultType: 'matrix' } },
+					result: ['frontend', 'driver'].map(
+						(service): QueryData => ({
+							metric: { 'service.name': service },
+							queryName: 'A',
+							legend: '',
+							values: [[1708623120, '1']],
+						}),
+					),
+				},
+			},
+		});
+		const lastColorMapping = (path: string): Record<string, string> =>
+			(jest.requireMock(path) as jest.Mock).mock.lastCall[0].colorMapping;
+
+		it('gives the lines and the tooltip the same distinct colours', () => {
+			getUPlotChartOptions(propsFor());
+
+			const lineColors = lastColorMapping('../getSeriesData');
+			expect(lineColors[FRONTEND]).toBeDefined();
+			expect(lineColors[FRONTEND]).not.toBe(lineColors[DRIVER]);
+			expect(lastColorMapping('../../plugins/tooltipPlugin')).toStrictEqual(
+				lineColors,
+			);
+		});
+
+		it('keeps a user colour', () => {
+			getUPlotChartOptions(propsFor({ [DRIVER]: '#123456' }));
+
+			expect(lastColorMapping('../getSeriesData')[DRIVER]).toBe('#123456');
+		});
+	});
+
 	it('should return uPlot options', () => {
 		const options = getUPlotChartOptions(inputPropsTimeSeries);
 		expect(options.legend?.isolate).toBe(true);
