@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Form, Modal } from 'antd';
+import { ConfigProvider, Form } from 'antd';
+import { Button } from 'components/ui/button';
+import { Sheet, SheetContent, SheetTitle } from 'components/ui/sheet';
+import { X } from 'lucide-react';
 import {
 	ActionMode,
 	ActionType,
@@ -9,7 +12,6 @@ import {
 } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
-import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { DEFAULT_PROCESSOR_TYPE, processorFields } from './config';
 import TypeSelect from './FormFields/TypeSelect';
@@ -28,6 +30,10 @@ function AddNewProcessor({
 	const [processorType, setProcessorType] = useState<string>(
 		DEFAULT_PROCESSOR_TYPE,
 	);
+
+	// Remounts the fields once the form holds the processor's values: the sheet
+	// mounts its content before this component's effect fills the form.
+	const [formVersion, setFormVersion] = useState(0);
 
 	const isEdit = isActionType === 'edit-processor';
 	const isAdd = isActionType === 'add-processor';
@@ -49,6 +55,9 @@ function AddNewProcessor({
 			};
 			setProcessorType(updatedProcessorData.type);
 			form.setFieldsValue(updatedProcessorData);
+		}
+		if (isEdit || isAdd) {
+			setFormVersion((version) => version + 1);
 		}
 	}, [form, isEdit, isAdd, selectedProcessorData, expandedPipelineData?.config]);
 
@@ -154,49 +163,86 @@ function AddNewProcessor({
 	);
 
 	return (
-		<Modal
-			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
-			centered
+		<Sheet
 			open={isOpen}
-			width={800}
-			footer={null}
-			onCancel={onCancelModal}
-			destroyOnClose
+			onOpenChange={(open): void => {
+				if (!open) {
+					onCancelModal();
+				}
+			}}
 		>
-			<Form
-				name="add-new-processor"
-				layout="vertical"
-				onFinish={onFinish}
-				autoComplete="off"
-				form={form}
-				onValuesChange={onFormValuesChanged}
+			<SheetContent
+				side="right"
+				showCloseButton={false}
+				aria-describedby={undefined}
+				data-testid="processor-sheet"
+				className="processor-sheet tw:max-w-full tw:gap-0 tw:p-0 tw:sm:max-w-none"
+				style={{ width: PROCESSOR_SHEET_WIDTH }}
 			>
-				<TypeSelect value={processorType} onChange={handleProcessorType} />
-				<ProcessorForm
-					processorType={processorType}
-					selectedProcessorData={selectedProcessorData}
-					isAdd={isAdd}
-				/>
-
-				<Form.Item>
-					<ModalButtonWrapper>
-						<Button
-							key="submit"
-							type="primary"
-							htmlType="submit"
-							onClick={onOkModalHandler}
-						>
-							{isEdit ? t('update') : t('create')}
-						</Button>
-						<Button key="cancel" onClick={onCancelModal}>
-							{t('cancel')}
-						</Button>
-					</ModalButtonWrapper>
-				</Form.Item>
-			</Form>
-		</Modal>
+				{/* antd popups render inside the sheet, which is the only clickable layer. */}
+				<ConfigProvider
+					getPopupContainer={(trigger): HTMLElement =>
+						trigger?.closest<HTMLElement>('.processor-sheet') ?? document.body
+					}
+				>
+					<Form
+						name="add-new-processor"
+						layout="vertical"
+						onFinish={onFinish}
+						autoComplete="off"
+						form={form}
+						onValuesChange={onFormValuesChanged}
+						className="processor-sheet__form"
+					>
+						<div className="processor-sheet__header">
+							<div>
+								<SheetTitle className="processor-sheet__title">{modalTitle}</SheetTitle>
+								{expandedPipelineData?.name && (
+									<p className="processor-sheet__subtitle">
+										In pipeline {expandedPipelineData.name}
+									</p>
+								)}
+							</div>
+							<button
+								type="button"
+								aria-label="Close"
+								className="processor-sheet__close"
+								onClick={onCancelModal}
+							>
+								<X size={16} />
+							</button>
+						</div>
+						<div className="processor-sheet__body">
+							<TypeSelect value={processorType} onChange={handleProcessorType} />
+							<ProcessorForm
+								key={formVersion}
+								processorType={processorType}
+								selectedProcessorData={selectedProcessorData}
+								isAdd={isAdd}
+							/>
+						</div>
+						<div className="processor-sheet__footer">
+							<Button
+								key="cancel"
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={onCancelModal}
+							>
+								{t('cancel')}
+							</Button>
+							<Button key="submit" type="submit" size="sm" onClick={onOkModalHandler}>
+								{isEdit ? t('update') : t('create')}
+							</Button>
+						</div>
+					</Form>
+				</ConfigProvider>
+			</SheetContent>
+		</Sheet>
 	);
 }
+
+const PROCESSOR_SHEET_WIDTH = 520;
 
 AddNewProcessor.defaultProps = {
 	selectedProcessorData: undefined,
