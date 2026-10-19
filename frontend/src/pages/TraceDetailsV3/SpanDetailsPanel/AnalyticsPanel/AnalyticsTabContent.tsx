@@ -54,7 +54,10 @@ function AnalyticsTabContent({
 		<div className={styles.list}>
 			{rows.map((row) => (
 				<Fragment key={row.group}>
-					<div className={styles.dot} style={{ backgroundColor: row.color }} />
+					<div
+						className={styles.dot}
+						style={{ '--group-color': row.color } as React.CSSProperties}
+					/>
 					<span className={styles.serviceName}>{row.group}</span>
 					<div className={styles.barCell}>
 						<div className={styles.bar}>

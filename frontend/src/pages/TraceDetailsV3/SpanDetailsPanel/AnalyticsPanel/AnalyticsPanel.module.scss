@@ -1,11 +1,12 @@
 .body {
-	padding: 12px 6px;
+	padding: 4px 16px 12px;
 	display: flex;
 	flex-direction: column;
 	flex: 1;
 	min-height: 0;
 	overflow: hidden;
-	background: var(--l1-background);
+	background: var(--fs-card);
+	font-family: var(--tw-font-sans);
 
 	// TabsRoot — last direct child div
 	> div:last-child {
@@ -18,6 +19,11 @@
 
 	[role='tablist'] {
 		flex-shrink: 0;
+	}
+
+	[role='tab'] {
+		font-size: 13px;
+		font-weight: 500;
 	}
 
 	[role='tabpanel'] {
@@ -52,21 +58,37 @@
 
 .list {
 	display: grid;
-	grid-template-columns: auto auto 1fr;
-	gap: 4px 8px;
-	padding: 8px 0;
+	grid-template-columns: auto minmax(0, auto) 1fr;
+	column-gap: 8px;
+	padding: 4px 0;
 	align-items: center;
+
+	// One row per group, divided like the design's dense tables.
+	> * {
+		min-height: 32px;
+		display: flex;
+		align-items: center;
+		border-bottom: 1px solid var(--fs-border);
+	}
 }
 
 .dot {
-	width: 8px;
-	height: 8px;
-	border-radius: 2px;
+	align-self: stretch;
+	min-width: 8px;
+
+	&::before {
+		content: '';
+		width: 8px;
+		height: 8px;
+		border-radius: 2px;
+		background: var(--group-color);
+	}
 }
 
 .serviceName {
-	font-size: 13px;
-	color: var(--l1-foreground);
+	font-family: var(--tw-font-mono);
+	font-size: 12px;
+	color: var(--fs-foreground);
 	word-break: break-word;
 }
 
@@ -79,22 +101,23 @@
 .bar {
 	flex: 1;
 	height: 6px;
-	background: var(--l3-background);
-	border-radius: 3px;
+	background: var(--fs-muted);
+	border-radius: 9999px;
 	min-width: 40px;
 }
 
 .barFill {
 	height: 100%;
-	border-radius: 3px;
+	border-radius: 9999px;
 }
 
 .value {
 	flex-shrink: 0;
 	text-align: right;
-	font-size: 13px;
+	font-size: 12px;
 	font-weight: 500;
-	color: var(--l1-foreground);
+	font-variant-numeric: tabular-nums;
+	color: var(--fs-foreground);
 }
 
 .valueWide {

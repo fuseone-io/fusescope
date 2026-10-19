@@ -3,6 +3,7 @@
 	flex-direction: column;
 	gap: var(--spacing-3);
 	padding: var(--spacing-4);
+	font-family: var(--tw-font-sans);
 }
 
 .header {
@@ -18,18 +19,19 @@
 	gap: var(--spacing-2);
 	font-size: var(--paragraph-base-400-font-size);
 	font-weight: var(--font-weight-medium);
-	color: var(--secondary-foreground);
+	color: var(--fs-foreground);
 	white-space: nowrap;
 }
 
 .loader {
-	color: var(--bg-robin-500);
+	color: var(--fs-primary);
 	flex-shrink: 0;
 }
 
 .percent {
 	font-size: var(--paragraph-base-400-font-size);
 	font-weight: var(--font-weight-semibold);
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
+	font-variant-numeric: tabular-nums;
 	flex-shrink: 0;
 }

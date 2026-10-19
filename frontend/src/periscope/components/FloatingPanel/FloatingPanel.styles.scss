@@ -1,9 +1,9 @@
 .floating-panel {
 	z-index: 999;
-	background: var(--l1-background);
-	border: 1px solid var(--l2-border);
-	border-radius: 6px;
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+	background: var(--fs-card);
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	box-shadow: 0 12px 32px rgba(10, 22, 40, 0.18);
 	overflow: hidden;
 
 	// Inner div fills the Rnd-controlled size
@@ -18,5 +18,21 @@
 	// Drag handle — any child with this class becomes the drag target
 	.floating-panel__drag-handle {
 		cursor: move;
+	}
+
+	.details-header {
+		height: 48px;
+		flex-shrink: 0;
+		padding: 0 8px 0 16px;
+		background: var(--fs-card);
+		border-bottom: 1px solid var(--fs-border);
+		--button-ghost-hover-background: var(--fs-muted);
+	}
+
+	.details-header__title {
+		font-family: var(--tw-font-sans);
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--fs-foreground);
 	}
 }
