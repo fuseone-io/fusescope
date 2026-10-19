@@ -15,7 +15,11 @@ import {
 
 import { tableComponents } from '../config';
 import { ModalFooterTitle } from '../styles';
-import { processorColumns } from './config';
+import {
+	PIPELINE_ACTIONS_WIDTH,
+	PIPELINE_ENABLED_WIDTH,
+	processorColumns,
+} from './config';
 import { AlertMessage } from './PipelineListsView';
 import { FooterButton, StyledTable } from './styles';
 import DragAction from './TableComponents/DragAction';
@@ -112,6 +116,8 @@ function PipelineExpandView({
 					title: '',
 					dataIndex: 'action',
 					key: 'action',
+					align: 'right',
+					width: PIPELINE_ACTIONS_WIDTH,
 					render: (_value, record): JSX.Element => (
 						<ProcessorActions
 							editAction={processorEditAction(record)}
@@ -123,6 +129,7 @@ function PipelineExpandView({
 					title: '',
 					dataIndex: 'enabled',
 					key: 'enabled',
+					width: PIPELINE_ENABLED_WIDTH,
 					render: (value, record) => (
 						<DragAction
 							isEnabled={value}
@@ -230,6 +237,7 @@ function PipelineExpandView({
 				locale={getLocales()}
 				isDarkMode={isDarkMode}
 				showHeader={false}
+				tableLayout="fixed"
 				columns={columns}
 				rowKey="id"
 				size="small"

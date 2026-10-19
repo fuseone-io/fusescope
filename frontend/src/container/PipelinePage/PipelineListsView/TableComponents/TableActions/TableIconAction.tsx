@@ -7,7 +7,6 @@ interface TableIconActionProps {
 	onClick: VoidFunction;
 	testId: string;
 	children: ReactNode;
-	small?: boolean;
 	danger?: boolean;
 }
 
@@ -17,14 +16,13 @@ function TableIconAction({
 	onClick,
 	testId,
 	children,
-	small = false,
 	danger = false,
 }: TableIconActionProps): JSX.Element {
 	return (
 		<span className="fs-ui tw:inline-flex">
 			<Button
 				variant="ghost"
-				size={small ? 'icon-xs' : 'icon-sm'}
+				size="icon-sm"
 				aria-label={label}
 				title={label}
 				data-testid={testId}
@@ -38,7 +36,6 @@ function TableIconAction({
 }
 
 TableIconAction.defaultProps = {
-	small: false,
 	danger: false,
 };
 

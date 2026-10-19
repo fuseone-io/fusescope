@@ -149,15 +149,15 @@ export function getUpdatedRow<T>(
 export function getTableColumn<T>(
 	columnData: Array<ColumnType<T>>,
 ): Array<ColumnType<T>> {
-	return columnData.map(({ title, key, dataIndex, ellipsis, width }) => ({
+	return columnData.map(({ title, key, dataIndex, ellipsis, width, align }) => ({
 		title,
 		dataIndex,
 		key,
-		align: key === 'id' ? 'right' : 'left',
+		align: align ?? (key === 'id' ? 'right' : 'left'),
 		ellipsis,
 		width,
-		render: (record: Record): JSX.Element => (
-			<TableComponents columnKey={String(key)} record={record} />
+		render: (record: Record, row: T): JSX.Element => (
+			<TableComponents columnKey={String(key)} record={record} row={row} />
 		),
 	}));
 }

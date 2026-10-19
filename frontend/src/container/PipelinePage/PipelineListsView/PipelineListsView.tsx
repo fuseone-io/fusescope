@@ -31,7 +31,12 @@ import { tableComponents } from '../config';
 import PipelinesSearchSection from '../Layouts/Pipeline/PipelinesSearchSection';
 import AddNewPipeline from './AddNewPipeline';
 import AddNewProcessor from './AddNewProcessor';
-import { pipelineColumns } from './config';
+import {
+	PIPELINE_ACTIONS_WIDTH,
+	PIPELINE_ENABLED_WIDTH,
+	PIPELINE_EXPAND_WIDTH,
+	pipelineColumns,
+} from './config';
 import ModeAndConfiguration from './ModeAndConfiguration';
 import PipelineExpanView from './PipelineExpandView';
 import PipelinesEmptyState from './PipelinesEmptyState';
@@ -219,7 +224,8 @@ function PipelineListsView({
 					title: 'Actions',
 					dataIndex: 'smartAction',
 					key: 'smartAction',
-					align: 'center',
+					align: 'right',
+					width: PIPELINE_ACTIONS_WIDTH,
 					render: (_value, record): JSX.Element => (
 						<PipelineActions
 							pipeline={record}
@@ -229,9 +235,10 @@ function PipelineListsView({
 					),
 				},
 				{
-					title: '',
+					title: 'Enabled',
 					dataIndex: 'enabled',
 					key: 'enabled',
+					width: PIPELINE_ENABLED_WIDTH,
 					render: (value, record) => (
 						<DragAction
 							isEnabled={value}
@@ -247,7 +254,8 @@ function PipelineListsView({
 				title: 'Actions',
 				dataIndex: 'smartAction',
 				key: 'smartAction',
-				align: 'center',
+				align: 'right',
+				width: PIPELINE_ACTIONS_WIDTH,
 				render: (_value, record): JSX.Element => (
 					<PreviewAction pipeline={record} />
 				),
@@ -507,6 +515,7 @@ function PipelineListsView({
 		}) as React.HTMLAttributes<unknown>;
 
 	const expandableConfig: ExpandableConfig<PipelineData> = {
+		columnWidth: PIPELINE_EXPAND_WIDTH,
 		expandedRowKeys,
 		onExpand,
 		expandIcon: ({ expanded, onExpand, record }: ExpandRowConfig) =>
@@ -556,6 +565,7 @@ function PipelineListsView({
 						<DndProvider backend={HTML5Backend}>
 							<Table
 								rowKey="id"
+								tableLayout="fixed"
 								columns={columns}
 								expandedRowRender={expandedRowView}
 								expandable={expandableConfig}

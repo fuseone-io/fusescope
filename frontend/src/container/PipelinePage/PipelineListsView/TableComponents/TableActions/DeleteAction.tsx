@@ -9,7 +9,6 @@ function DeleteAction({
 	return (
 		<TableIconAction
 			label={isPipelineAction ? 'Delete pipeline' : 'Delete processor'}
-			small={!isPipelineAction}
 			danger={true}
 			onClick={deleteAction}
 			testId="pipeline-delete-action"

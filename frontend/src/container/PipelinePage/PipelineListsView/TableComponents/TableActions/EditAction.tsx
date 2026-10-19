@@ -9,7 +9,6 @@ function EditAction({
 	return (
 		<TableIconAction
 			label={isPipelineAction ? 'Edit pipeline' : 'Edit processor'}
-			small={!isPipelineAction}
 			onClick={editAction}
 			testId="pipeline-edit-action"
 		>
