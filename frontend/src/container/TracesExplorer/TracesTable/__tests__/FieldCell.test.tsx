@@ -1,9 +1,25 @@
 import { render, screen } from 'tests/test-utils';
 
+import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
+
 import FieldCell from '../FieldCell';
 import { isErrorSpan } from '../utils';
 
+const toRgb = (hex: string): string => {
+	const n = parseInt(hex.slice(1), 16);
+	return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+};
+
 describe('FieldCell', () => {
+	it('colours the service dot like the service in charts and trace details', () => {
+		render(<FieldCell name="service.name" value="frontend" row={{ id: '1' }} />);
+
+		const { color, colorDark } = generateColorPair('frontend');
+		expect([toRgb(color), toRgb(colorDark)]).toContain(
+			screen.getByTestId('service-dot').style.backgroundColor,
+		);
+	});
+
 	it('shows the HTTP method as a neutral badge', () => {
 		render(<FieldCell name="http_method" value="GET" row={{ id: '1' }} />);
 

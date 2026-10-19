@@ -3,7 +3,9 @@ import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { cn } from 'lib/utils';
+import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import { useTimezone } from 'providers/Timezone';
 
 import {
@@ -17,12 +19,7 @@ import {
 	TRACE_ID_FIELD_NAMES,
 } from './constants';
 import DurationCell from './DurationCell';
-import {
-	isErrorSpan,
-	serviceDotClass,
-	spanStatus,
-	stringifyCellValue,
-} from './utils';
+import { isErrorSpan, spanStatus, stringifyCellValue } from './utils';
 
 import styles from './TracesTable.module.scss';
 
@@ -40,6 +37,7 @@ function FieldCell({
 	maxDurationNano,
 }: FieldCellProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const isDarkMode = useIsDarkMode();
 
 	if (TIMESTAMP_FIELD_NAMES.has(name)) {
 		const ts = value as string | number;
@@ -121,10 +119,13 @@ function FieldCell({
 			<span className="fs-ui tw:flex tw:min-w-0 tw:items-center tw:gap-1.5">
 				<span
 					aria-hidden="true"
-					className={cn(
-						'tw:size-1.5 tw:flex-none tw:rounded-full',
-						serviceDotClass(text),
-					)}
+					data-testid="service-dot"
+					className="tw:size-1.5 tw:flex-none tw:rounded-full"
+					style={{
+						backgroundColor: isDarkMode
+							? generateColorPair(text).color
+							: generateColorPair(text).colorDark,
+					}}
 				/>
 				<TanStackTable.Text data-testid={name} title={text} className={styles.mono}>
 					{text}

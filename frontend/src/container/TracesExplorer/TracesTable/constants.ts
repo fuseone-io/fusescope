@@ -30,14 +30,3 @@ export const TRACE_ID_FIELD_NAMES = new Set(['traceID', 'trace_id']);
 export const SERVICE_FIELD_NAMES = new Set(['service.name', 'serviceName']);
 
 export const MONO_FIELD_NAMES = new Set(['name', 'span_id', 'spanID']);
-
-// Literal class names so Tailwind generates them.
-export const SERVICE_DOT_CLASSES = [
-	'tw:bg-series-1',
-	'tw:bg-series-2',
-	'tw:bg-series-3',
-	'tw:bg-series-4',
-	'tw:bg-series-5',
-	'tw:bg-series-6',
-	'tw:bg-series-7',
-];
