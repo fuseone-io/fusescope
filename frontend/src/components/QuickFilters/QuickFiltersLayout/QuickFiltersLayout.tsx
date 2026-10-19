@@ -9,6 +9,7 @@ import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 
 import QuickFilters from '../QuickFilters';
 import { SIDEBAR_TOOLTIP_DELAY_MS } from './constants';
+import QuickFiltersRail from './QuickFiltersRail';
 
 import styles from './QuickFiltersLayout.module.scss';
 
@@ -106,6 +107,14 @@ function QuickFiltersLayout({
 						</div>
 					</TooltipProvider>
 				</aside>
+			)}
+			{!showSidebar && hasQuickFilters && onToggleFilters && (
+				<QuickFiltersRail
+					source={quickFilterProps.source}
+					signal={quickFilterProps.signal}
+					config={quickFilterProps.config}
+					onShow={onToggleFilters}
+				/>
 			)}
 			<section
 				className={cx(styles.content, contentClassName)}
