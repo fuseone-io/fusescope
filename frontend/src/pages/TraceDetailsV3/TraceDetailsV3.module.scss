@@ -155,10 +155,24 @@
 	}
 }
 
+// Docked at the bottom the panel keeps room for its tabs; the column scrolls
+// instead when the flame graph and waterfall leave less than that.
+.hasDockedPanel {
+	overflow-y: auto;
+
+	.flameCollapse,
+	.waterfallCollapse {
+		flex-shrink: 0;
+	}
+}
+
 .dockedSpanDetails {
-	flex: 1;
-	min-height: 0;
-	overflow: auto;
+	flex: 1 0 auto;
+	display: flex;
+	flex-direction: column;
+	height: 420px;
+	min-height: 360px;
+	overflow: hidden;
 	border: 1px solid var(--fs-border);
 	border-radius: 12px;
 	background: var(--fs-card);
