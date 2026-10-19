@@ -9,7 +9,10 @@ import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
+
+import { countFromResult } from './countFromResult';
 
 import './styles.scss';
 
@@ -37,16 +40,19 @@ function LogsCountInInterval({
 		DEFAULT_ENTITY_VERSION,
 	);
 
-	if (!result.isFetched) {
+	// The v3 count arrives as a series that the legacy `QueryData` type omits.
+	const count = countFromResult(
+		(result?.data?.payload?.data?.newResult?.data?.result?.[0] ??
+			result?.data?.payload?.data?.result?.[0]) as QueryDataV3 | undefined,
+	);
+
+	if (!result.isFetched || count === undefined) {
 		return null;
 	}
 
-	const count =
-		result?.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
-			?.values?.[0]?.value;
 	return (
 		<div className="logs-filter-preview-matched-logs-count">
-			{count} matches in
+			<span>{Number(count).toLocaleString()}</span> matches in
 		</div>
 	);
 }
