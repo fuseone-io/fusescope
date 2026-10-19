@@ -1,28 +1,53 @@
-// Badge — wraps a KeyValueLabel, clickable to toggle panel
+// Badge — clickable to toggle the percentile panel
 .root {
+	display: inline-flex;
+	align-items: stretch;
+	height: 24px;
+	overflow: hidden;
+	border: 1px solid var(--fs-border);
+	border-radius: 6px;
+	background: var(--fs-card);
+	font-family: var(--tw-font-sans);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
 	cursor: pointer;
 
-	// KeyValueLabel renders its key with a global class; recolor only the badge
-	// instance inside this badge wrapper.
-	:global(.key-value-label__key) {
-		color: var(--destructive);
+	&:hover {
+		background: var(--fs-muted);
 	}
+
+	&:focus-visible {
+		outline: 2px solid var(--fs-ring);
+		outline-offset: 2px;
+	}
+}
+
+.key {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 8px;
+	border-right: 1px solid var(--fs-border);
+	background: var(--fs-warning-soft);
+	color: var(--fs-warning-ink);
+	font-weight: 500;
 }
 
 .loader {
 	display: inline-flex;
 	align-items: center;
 	padding: 2px 4px;
-	color: var(--foreground);
+	color: var(--fs-muted-foreground);
 }
 
 .value {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
+	padding: 0 6px 0 8px;
+	color: var(--fs-foreground);
 }
 
 .icon {
 	flex-shrink: 0;
-	color: var(--l2-foreground);
+	color: var(--fs-muted-foreground);
 }

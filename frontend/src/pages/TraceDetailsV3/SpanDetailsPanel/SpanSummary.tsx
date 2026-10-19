@@ -1,6 +1,9 @@
 import { Link2 } from '@signozhq/icons';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import dayjs from 'dayjs';
-import KeyValueLabel from 'periscope/components/KeyValueLabel';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
+import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
@@ -31,15 +34,30 @@ function SpanSummary({
 }: SpanSummaryProps): JSX.Element {
 	const percentile = useSpanPercentile(selectedSpan);
 	const linkedSpans = useLinkedSpans((selectedSpan as any).references);
+	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+	const isDarkMode = useIsDarkMode();
+	const { color, colorDark } = resolveSpanColor(selectedSpan, colorByFieldName);
 
 	return (
-		<>
+		<div className={styles.summary}>
 			<div className={styles.spanRow}>
-				<KeyValueLabel
-					badgeKey="Span name"
-					badgeValue={selectedSpan.name}
-					maxCharacters={50}
-				/>
+				<span className={styles.spanTitle}>
+					<span
+						aria-hidden="true"
+						className={styles.spanDot}
+						style={{ background: isDarkMode ? color : colorDark }}
+					/>
+					<span className={styles.spanName} title={selectedSpan.name}>
+						{selectedSpan.name}
+					</span>
+					{selectedSpan.has_error && (
+						<span className="fs-ui tw:inline-flex">
+							<StatusBadge tone="error" dot>
+								Error
+							</StatusBadge>
+						</span>
+					)}
+				</span>
 				<SpanPercentileBadge
 					loading={percentile.loading}
 					percentileValue={percentile.percentileValue}
@@ -80,23 +98,21 @@ function SpanSummary({
 				isOpen={linkedSpans.isOpen}
 			/>
 
-			<div className={styles.highlightedOptions}>
+			<dl className={styles.highlightedOptions}>
 				{HIGHLIGHTED_OPTIONS.map((option) => {
 					const rendered = option.render(selectedSpan);
 					if (!rendered) {
 						return null;
 					}
 					return (
-						<KeyValueLabel
-							key={option.key}
-							badgeKey={option.label}
-							badgeValue={rendered}
-							direction="column"
-						/>
+						<div key={option.key} className={styles.option}>
+							<dt className={styles.optionLabel}>{option.label}</dt>
+							<dd className={styles.optionValue}>{rendered}</dd>
+						</div>
 					);
 				})}
-			</div>
-		</>
+			</dl>
+		</div>
 	);
 }
 
