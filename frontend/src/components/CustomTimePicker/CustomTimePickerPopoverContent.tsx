@@ -365,7 +365,7 @@ function CustomTimePickerPopoverContent({
 						/>
 
 						<span className="timezone__name">{timezone.name}</span>
-						<span className="timezone__separator">⎯</span>
+						<span className="timezone__separator">—</span>
 						<span className="timezone__offset">{activeTimezoneOffset}</span>
 					</div>
 

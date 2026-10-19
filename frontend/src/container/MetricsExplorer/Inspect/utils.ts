@@ -449,7 +449,7 @@ export const formatTimestampToFullDateTime = (
 		return timePart;
 	}
 
-	return `${datePart} ⎯ ${timePart}`;
+	return `${datePart} — ${timePart}`;
 };
 
 export function onGraphHover(

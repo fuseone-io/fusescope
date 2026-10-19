@@ -103,7 +103,7 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 			title={
 				<div className="changelog-modal-title">
 					<ScrollText size={16} />
-					What’s New ⎯ Changelog : {formattedReleaseDate}
+					What’s New — Changelog : {formattedReleaseDate}
 				</div>
 			}
 			width={820}

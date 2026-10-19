@@ -81,7 +81,7 @@ describe('LogDetail drawer — header', () => {
 
 		// mockLog date is 2024-01-15T09:45:30Z → DASH_DATETIME in UTC.
 		expect(screen.getByTestId('log-details-header-timestamp')).toHaveTextContent(
-			'Jan 15, 2024 ⎯ 09:45:30',
+			'Jan 15, 2024 — 09:45:30',
 		);
 	});
 
@@ -99,7 +99,7 @@ describe('LogDetail drawer — header', () => {
 		});
 
 		expect(screen.getByTestId('log-details-header-timestamp')).toHaveTextContent(
-			'Jan 15, 2024 ⎯ 09:45:30',
+			'Jan 15, 2024 — 09:45:30',
 		);
 	});
 

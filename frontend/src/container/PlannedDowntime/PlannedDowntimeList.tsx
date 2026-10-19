@@ -192,7 +192,7 @@ export function CollapseListContent({
 			{renderItems(
 				'Timeframe',
 				schedule?.startTime ? (
-					<Typography>{`${startTime} ⎯ ${endTime}`}</Typography>
+					<Typography>{`${startTime} — ${endTime}`}</Typography>
 				) : (
 					'-'
 				),
@@ -248,7 +248,7 @@ export function CustomCollapseList(
 	const scheduleTime = schedule?.startTime
 		? dayjs(schedule.startTime).tz(schedule.timezone)
 		: createdAt || '';
-	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(scheduleTime)} ${schedule?.timezone}`;
+	const formattedDateAndTime = `Start time — ${formatDateTime(scheduleTime)} ${schedule?.timezone}`;
 
 	return (
 		<>

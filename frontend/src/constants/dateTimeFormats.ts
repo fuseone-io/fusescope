@@ -48,7 +48,7 @@ export const DATE_TIME_FORMATS = {
 	// Ordinal formats (1st, 2nd, 3rd, etc)
 	ORDINAL_DATE: 'Do MMM YYYY',
 	ORDINAL_ONLY: 'Do',
-	ORDINAL_DATETIME: 'Do MMMM, YYYY ⎯ HH:mm:ss',
+	ORDINAL_DATETIME: 'Do MMMM, YYYY — HH:mm:ss',
 
 	// UTC specific formats
 	UTC_FULL: 'DD/MM/YYYY HH:mm:ss (UTC Z)',
@@ -60,10 +60,10 @@ export const DATE_TIME_FORMATS = {
 	UTC_TIME_DATE: 'HH:mm:ss (UTC Z) MM/DD',
 
 	// Formats with dash separator
-	DASH_DATETIME: 'MMM D, YYYY ⎯ HH:mm:ss',
-	FUNNELS_LIST_DATE: 'MMM D ⎯ HH:mm:ss',
-	DASH_DATETIME_UTC: 'MMM D, YYYY ⎯ HH:mm:ss (UTC Z)',
-	DASH_TIME_DATE: 'HH:mm:ss ⎯ MMM D, YYYY (UTC Z)',
+	DASH_DATETIME: 'MMM D, YYYY — HH:mm:ss',
+	FUNNELS_LIST_DATE: 'MMM D — HH:mm:ss',
+	DASH_DATETIME_UTC: 'MMM D, YYYY — HH:mm:ss (UTC Z)',
+	DASH_TIME_DATE: 'HH:mm:ss — MMM D, YYYY (UTC Z)',
 } as const;
 
 export const convert24hTo12h = (format: string): string =>

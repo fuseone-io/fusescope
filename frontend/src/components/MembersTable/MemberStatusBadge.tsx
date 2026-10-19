@@ -6,7 +6,7 @@ const STATUS: Record<MemberStatus, { tone: StatusTone; label: string }> = {
 	[MemberStatus.Active]: { tone: 'success', label: 'ACTIVE' },
 	[MemberStatus.Invited]: { tone: 'warning', label: 'INVITED' },
 	[MemberStatus.Deleted]: { tone: 'error', label: 'DELETED' },
-	[MemberStatus.Anonymous]: { tone: 'neutral', label: '⎯' },
+	[MemberStatus.Anonymous]: { tone: 'neutral', label: '—' },
 };
 
 function MemberStatusBadge({ status }: { status: MemberStatus }): JSX.Element {

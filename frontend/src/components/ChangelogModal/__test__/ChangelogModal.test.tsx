@@ -69,7 +69,7 @@ describe('ChangelogModal', () => {
 	it('renders modal with changelog data', () => {
 		renderChangelog();
 		expect(
-			screen.getByText('What’s New ⎯ Changelog : June 10, 2025'),
+			screen.getByText('What’s New — Changelog : June 10, 2025'),
 		).toBeInTheDocument();
 		expect(screen.getByText('Feature 1')).toBeInTheDocument();
 		expect(screen.getByText('Description for feature 1')).toBeInTheDocument();

@@ -99,7 +99,7 @@ export const FilterMenuOpen: Story = {
 		await userEvent.click(trigger);
 		// Every active row carries an ACTIVE badge, so the menu option is matched on
 		// its own count suffix.
-		await screen.findByText(/^active ⎯/i, undefined, untilLoaded);
+		await screen.findByText(/^active —/i, undefined, untilLoaded);
 	},
 };
 
