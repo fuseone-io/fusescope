@@ -1,4 +1,4 @@
-import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import uPlot from 'uplot';
 
 import { HeatmapColorResolver } from './colorScale';
@@ -26,8 +26,8 @@ export function createHatchPattern(
 		return null;
 	}
 	tileCtx.strokeStyle = isDarkMode
-		? `${Color.BG_VANILLA_400}59`
-		: `${Color.BG_INK_300}40`;
+		? `${FsChartColor.BG_VANILLA_400}59`
+		: `${FsChartColor.BG_INK_300}40`;
 	tileCtx.lineWidth = Math.max(1, pxRatio);
 	tileCtx.beginPath();
 	// Three strokes keep the pattern continuous across tile seams.
@@ -124,7 +124,9 @@ export function drawOverflowBoundary({
 	ctx.save();
 	ctx.setLineDash(OVERFLOW_DASH);
 	ctx.lineWidth = Math.max(1, uPlot.pxRatio);
-	ctx.strokeStyle = isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_300;
+	ctx.strokeStyle = isDarkMode
+		? FsChartColor.BG_VANILLA_400
+		: FsChartColor.BG_INK_300;
 	ctx.beginPath();
 	ctx.moveTo(u.bbox.left, y);
 	ctx.lineTo(u.bbox.left + u.bbox.width, y);

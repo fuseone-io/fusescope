@@ -1,8 +1,9 @@
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 
 // The bar colours useFunnelGraph paints the chart with.
 const ITEMS = [
-	{ label: 'Total spans', color: Color.BG_ROBIN_500 },
+	{ label: 'Total spans', color: FsChartColor.BG_ROBIN_500 },
 	{ label: 'Error spans', color: Color.BG_CHERRY_500 },
 ];
 

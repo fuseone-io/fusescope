@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import { Button, Card, Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -123,7 +124,7 @@ function StatusCodeBarCharts({
 			'200-299': Color.BG_FOREST_500,
 			'300-399': Color.BG_AMBER_400,
 			'400-499': Color.BG_CHERRY_500,
-			'500-599': Color.BG_ROBIN_500,
+			'500-599': FsChartColor.BG_ROBIN_500,
 			Other: Color.BG_SIENNA_500,
 		}),
 		[],

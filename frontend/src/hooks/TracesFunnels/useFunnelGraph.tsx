@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import { FunnelStepGraphMetrics } from 'api/traceFunnels';
 import { Chart, ChartConfiguration } from 'chart.js';
 import ChangePercentagePill from 'components/ChangePercentagePill/ChangePercentagePill';
@@ -147,7 +148,7 @@ function useFunnelGraph({
 					{
 						label: 'Success spans',
 						data: successSteps,
-						backgroundColor: successSteps.map(() => Color.BG_ROBIN_500),
+						backgroundColor: successSteps.map(() => FsChartColor.BG_ROBIN_500),
 						stack: 'Stack 0',
 						borderRadius: 2,
 						borderSkipped: false,
@@ -186,7 +187,7 @@ function useFunnelGraph({
 				localHoveredBar.index === i &&
 				localHoveredBar.type === 'total'
 					? '#2655ff'
-					: Color.BG_ROBIN_500,
+					: FsChartColor.BG_ROBIN_500,
 			);
 
 			chart.data.datasets[1].backgroundColor = errorSteps.map((_, i) =>

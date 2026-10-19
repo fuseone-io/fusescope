@@ -1,4 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import { Typography } from '@signozhq/ui/typography';
 import { Spin } from 'antd';
 import { useGetMetricReductionRuleTimeseries } from 'api/generated/services/metrics';
@@ -17,7 +18,7 @@ import { buildVolumeChartPayload } from '../../chartUtils';
 import styles from './VolumeControlChart.module.scss';
 
 const COLOR_MAPPING: Record<string, string> = {
-	Ingested: Color.BG_ROBIN_500,
+	Ingested: FsChartColor.BG_ROBIN_500,
 	Retained: Color.BG_FOREST_500,
 };
 

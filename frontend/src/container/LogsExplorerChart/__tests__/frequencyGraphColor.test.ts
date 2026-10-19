@@ -1,15 +1,18 @@
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 
 import { getColorsForSeverityLabels, isRedLike } from '../utils';
 
 describe('getColorsForSeverityLabels', () => {
 	it('should return slate for blank labels', () => {
-		expect(getColorsForSeverityLabels('', 0)).toBe(Color.BG_VANILLA_400);
-		expect(getColorsForSeverityLabels('   ', 0)).toBe(Color.BG_VANILLA_400);
+		expect(getColorsForSeverityLabels('', 0)).toBe(FsChartColor.BG_VANILLA_400);
+		expect(getColorsForSeverityLabels('   ', 0)).toBe(
+			FsChartColor.BG_VANILLA_400,
+		);
 	});
 
 	it('should return correct colors for known severity variants', () => {
-		expect(getColorsForSeverityLabels('INFO', 0)).toBe(Color.BG_ROBIN_600);
+		expect(getColorsForSeverityLabels('INFO', 0)).toBe(FsChartColor.BG_ROBIN_600);
 		expect(getColorsForSeverityLabels('ERROR', 0)).toBe(Color.BG_CHERRY_600);
 		expect(getColorsForSeverityLabels('WARN', 0)).toBe(Color.BG_AMBER_600);
 		expect(getColorsForSeverityLabels('DEBUG', 0)).toBe(Color.BG_AQUA_600);

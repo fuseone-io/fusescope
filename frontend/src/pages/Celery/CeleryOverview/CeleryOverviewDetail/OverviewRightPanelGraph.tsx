@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetGraphCustomSeries } from 'components/CeleryTask/useGetGraphCustomSeries';
@@ -115,8 +116,8 @@ export default function OverviewRightPanelGraph({
 		colorMapping: {
 			True: Color.BG_CHERRY_500,
 			False: Color.BG_FOREST_400,
-			None: Color.BG_SLATE_200,
-			'Request Rate': Color.BG_ROBIN_500,
+			None: FsChartColor.BG_SLATE_200,
+			'Request Rate': FsChartColor.BG_ROBIN_500,
 		},
 	});
 

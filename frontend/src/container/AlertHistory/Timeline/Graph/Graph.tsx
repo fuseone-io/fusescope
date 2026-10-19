@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
-import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -61,7 +61,7 @@ function HorizontalTimelineGraph({
 			axes: [
 				{
 					gap: 10,
-					stroke: isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400,
+					stroke: isDarkMode ? FsChartColor.BG_VANILLA_400 : FsChartColor.BG_INK_400,
 					values: uPlotXAxisValuesFormat,
 				},
 				{ show: false },
@@ -185,7 +185,7 @@ function VerticalTimelineGraph({
 			axes: [
 				{
 					gap: 10,
-					stroke: isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400,
+					stroke: isDarkMode ? FsChartColor.BG_VANILLA_400 : FsChartColor.BG_INK_400,
 				},
 				{ show: false },
 			],

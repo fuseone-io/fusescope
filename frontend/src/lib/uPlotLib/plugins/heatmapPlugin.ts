@@ -1,11 +1,12 @@
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import uPlot from 'uplot';
 
 const bucketIncr = 5;
 
 function heatmapPlugin(): uPlot.Plugin {
 	function fillStyle(count: number): string {
-		const colors = [Color.BG_CHERRY_500, Color.BG_SLATE_400];
+		const colors = [Color.BG_CHERRY_500, FsChartColor.BG_SLATE_400];
 		return colors[count - 1];
 	}
 

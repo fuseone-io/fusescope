@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import { Group } from '@visx/group';
 import { Pie as VisxPie } from '@visx/shape';
 import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip';
@@ -112,7 +112,9 @@ export default function Pie({
 		[visibleData],
 	);
 
-	const labelColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400;
+	const labelColor = isDarkMode
+		? FsChartColor.BG_VANILLA_100
+		: FsChartColor.BG_INK_400;
 	const activeColor =
 		focusedSeriesIndex !== null ? data[focusedSeriesIndex].color : null;
 

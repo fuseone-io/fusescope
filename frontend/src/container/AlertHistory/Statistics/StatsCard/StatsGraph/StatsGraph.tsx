@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import Uplot from 'components/Uplot';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { AlertRuleStats } from 'types/api/alerts/def';
@@ -14,7 +15,7 @@ const getStyle = (
 ): { stroke: string; fill: string } => {
 	if (changeDirection === 0) {
 		return {
-			stroke: Color.BG_ROBIN_500,
+			stroke: FsChartColor.BG_ROBIN_500,
 			fill: 'rgba(78, 116, 248, 0.20)',
 		};
 	}
