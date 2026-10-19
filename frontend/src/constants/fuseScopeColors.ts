@@ -62,6 +62,34 @@ export const FS_SERIES_LIGHT: Record<string, string> = {
 	olive: '#6b7a1f',
 };
 
+/** Hue family of each palette slot; `assignSeriesColors` spreads a chart's series across families. */
+export const FS_SERIES_FAMILIES: Record<string, string> = {
+	amber: 'orange',
+	teal: 'cyan',
+	magenta: 'purple',
+	blue: 'blue',
+	lime: 'green',
+	gold: 'orange',
+	pink: 'pink',
+	sky: 'blue',
+	mint: 'emerald',
+	orchid: 'purple',
+	slate: 'neutral',
+	green: 'emerald',
+	ochre: 'orange',
+	cornflower: 'blue',
+	seafoam: 'cyan',
+	steel: 'neutral',
+	blueDeep: 'blue',
+	cyan: 'cyan',
+	amberDeep: 'orange',
+	violet: 'blue',
+	greenDeep: 'emerald',
+	slateLight: 'neutral',
+	sand: 'orange',
+	olive: 'olive',
+};
+
 /*
  * Stand-ins for the `@signozhq/design-tokens` `Color.BG_*` constants that chart
  * code draws with: the robin scale becomes the FuseScope blue scale, the

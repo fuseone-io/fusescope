@@ -1,5 +1,5 @@
 import getLabelName from 'lib/getLabelName';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { assignSeriesColors } from 'lib/uPlotLib/utils/assignSeriesColors';
 import { isNaN } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
@@ -21,11 +21,6 @@ interface PreparePieChartDataOptions {
 	colorMap: Record<string, string>;
 }
 
-const colorFor = (
-	label: string,
-	{ customLegendColors, colorMap }: PreparePieChartDataOptions,
-): string => customLegendColors?.[label] || generateColor(label, colorMap);
-
 const isPositive = (value: string): boolean =>
 	!!value && !isNaN(parseFloat(value)) && parseFloat(value) > 0;
 
@@ -34,10 +29,7 @@ const isPositive = (value: string): boolean =>
  * original pie behaviour — kept verbatim (same label/value/colour/record) so
  * single-value and grouped panels are unaffected.
  */
-function slicesFromSeries(
-	result: QueryData[],
-	options: PreparePieChartDataOptions,
-): PieChartSlice[] {
+function slicesFromSeries(result: QueryData[]): PieChartSlice[] {
 	return result
 		.filter((d) => d?.values?.[0]?.[1] !== undefined)
 		.map((d) => {
@@ -45,7 +37,7 @@ function slicesFromSeries(
 			return {
 				label,
 				value: d.values[0][1],
-				color: colorFor(label, options),
+				color: '',
 				record: d,
 			};
 		});
@@ -57,10 +49,7 @@ function slicesFromSeries(
  * `count() AS col1, sum() AS col2` renders a slice per column instead of
  * collapsing onto the first; group-by columns become the slice label.
  */
-function slicesFromTables(
-	tables: QueryDataV3[],
-	options: PreparePieChartDataOptions,
-): PieChartSlice[] {
+function slicesFromTables(tables: QueryDataV3[]): PieChartSlice[] {
 	const slices: PieChartSlice[] = [];
 
 	tables.forEach((entry) => {
@@ -102,7 +91,7 @@ function slicesFromTables(
 				slices.push({
 					label,
 					value: String(row.data[column.id || column.name]),
-					color: colorFor(label, options),
+					color: '',
 					record: { queryName: entry.queryName, legend: entry.legend, metric },
 				});
 			});
@@ -137,8 +126,14 @@ export function preparePieChartData(
 	);
 
 	const slices = hasMultipleValueColumns
-		? slicesFromTables(tables, options)
-		: slicesFromSeries(payload?.data?.result || [], options);
+		? slicesFromTables(tables)
+		: slicesFromSeries(payload?.data?.result || []);
 
-	return slices.filter((slice) => isPositive(slice.value));
+	const visible = slices.filter((slice) => isPositive(slice.value));
+	const colors = assignSeriesColors(
+		visible.map((slice) => slice.label),
+		options.colorMap,
+		options.customLegendColors,
+	);
+	return visible.map((slice) => ({ ...slice, color: colors[slice.label] }));
 }

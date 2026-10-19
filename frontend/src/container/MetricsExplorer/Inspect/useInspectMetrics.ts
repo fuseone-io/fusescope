@@ -6,7 +6,7 @@ import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { assignSeriesColors } from 'lib/uPlotLib/utils/assignSeriesColors';
 
 import { INITIAL_INSPECT_METRICS_OPTIONS } from './constants';
 import {
@@ -162,20 +162,18 @@ export function useInspectMetrics(
 
 	const inspectMetricsTimeSeries = useMemo(() => {
 		const series = inspectMetricsData?.series ?? [];
+		const titles = series.map((_, index) => `TS${index + 1}`);
+		const colors = assignSeriesColors(
+			titles,
+			isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+		);
 
-		return series.map((series, index) => {
-			const title = `TS${index + 1}`;
-			const strokeColor = generateColor(
-				title,
-				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-			);
-			return {
-				...series,
-				values: [...series.values].sort((a, b) => a.timestamp - b.timestamp),
-				title,
-				strokeColor,
-			};
-		});
+		return series.map((series, index) => ({
+			...series,
+			values: [...series.values].sort((a, b) => a.timestamp - b.timestamp),
+			title: titles[index],
+			strokeColor: colors[titles[index]],
+		}));
 	}, [inspectMetricsData, isDarkMode]);
 
 	// Evaluate inspection step

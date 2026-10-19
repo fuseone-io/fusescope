@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { assignSeriesColors } from 'lib/uPlotLib/utils/assignSeriesColors';
 import { preparePieData } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/PieChartPanel/prepareData';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
@@ -11,8 +11,10 @@ import { useLegendSeries } from '../useLegendSeries';
 
 jest.mock('hooks/useDarkMode', () => ({ useIsDarkMode: jest.fn() }));
 jest.mock('lib/getLabelName', () => jest.fn(() => 'base'));
-jest.mock('lib/uPlotLib/utils/generateColor', () => ({
-	generateColor: jest.fn((label: string) => `color:${label}`),
+jest.mock('lib/uPlotLib/utils/assignSeriesColors', () => ({
+	assignSeriesColors: jest.fn((labels: string[]) =>
+		Object.fromEntries(labels.map((label) => [label, `color:${label}`])),
+	),
 }));
 jest.mock('constants/theme', () => ({
 	themeColors: { chartcolors: ['dark'], lightModeColor: ['light'] },
@@ -45,7 +47,7 @@ jest.mock(
 const mockUseIsDarkMode = useIsDarkMode as unknown as jest.Mock;
 const mockFlatten = flattenTimeSeries as unknown as jest.Mock;
 const mockResolveLabel = resolveSeriesLabelV5 as unknown as jest.Mock;
-const mockGenerateColor = generateColor as unknown as jest.Mock;
+const mockAssignColors = assignSeriesColors as unknown as jest.Mock;
 const mockPreparePie = preparePieData as unknown as jest.Mock;
 
 const PANEL = {
@@ -93,10 +95,13 @@ describe('useLegendSeries', () => {
 		mockFlatten.mockReturnValue(seriesWithLabels(['a', 'b', 'a', 'c']));
 		const { result } = renderHook(() => useLegendSeries(PANEL, DATA));
 		expect(result.current.map((s) => s.label)).toStrictEqual(['a', 'b', 'c']);
-		// The duplicate 'a' must not generate a second color.
-		expect(
-			mockGenerateColor.mock.calls.filter(([label]) => label === 'a'),
-		).toHaveLength(1);
+	});
+
+	it("colours all of the chart's series together, as the chart does", () => {
+		mockFlatten.mockReturnValue(seriesWithLabels(['a', '', 'b']));
+		renderHook(() => useLegendSeries(PANEL, DATA));
+		expect(mockAssignColors).toHaveBeenCalledTimes(1);
+		expect(mockAssignColors).toHaveBeenLastCalledWith(['a', 'b'], ['dark']);
 	});
 
 	it('skips series that resolve to an empty label', () => {
@@ -137,11 +142,11 @@ describe('useLegendSeries', () => {
 		mockFlatten.mockReturnValue(seriesWithLabels(['a']));
 
 		const dark = renderHook(() => useLegendSeries(PANEL, DATA));
-		expect(mockGenerateColor).toHaveBeenLastCalledWith('a', ['dark']);
+		expect(mockAssignColors).toHaveBeenLastCalledWith(['a'], ['dark']);
 		dark.unmount();
 
 		mockUseIsDarkMode.mockReturnValue(false);
 		renderHook(() => useLegendSeries(PANEL, DATA));
-		expect(mockGenerateColor).toHaveBeenLastCalledWith('a', ['light']);
+		expect(mockAssignColors).toHaveBeenLastCalledWith(['a'], ['light']);
 	});
 });

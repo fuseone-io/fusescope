@@ -5,7 +5,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import { normalizePlotValue } from './dataUtils';
-import { generateColor } from './generateColor';
+import { assignSeriesColors } from './assignSeriesColors';
 
 function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 	const timestamps = new Set<number>();
@@ -175,14 +175,19 @@ const processAnomalyDetectionData = (
 
 			processedData[objKey] = {
 				data: [timestamps, values, predicted, upperBound, lowerBound],
-				color: generateColor(
-					objKey,
-					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-				),
+				color: '',
 				legendLabel: label,
 			};
 		}
 	}
+
+	const colors = assignSeriesColors(
+		Object.keys(processedData),
+		isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+	);
+	Object.entries(processedData).forEach(([key, entry]) => {
+		entry.color = colors[key];
+	});
 
 	return processedData;
 };
