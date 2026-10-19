@@ -166,9 +166,10 @@
 	// Query bar: the query chip, its toggles and the filter editor read as one
 	// 36px input; the footer actions are ghost buttons.
 	--query-builder-v2-background-color: var(--fs-muted);
-	--query-builder-v2-border-color: var(--fs-input);
+	--query-builder-v2-border-color: var(--fs-border);
 	--query-builder-v2-color: var(--fs-foreground);
 	--query-builder-v2-placeholder-color: var(--fs-subtle-foreground);
+	--query-builder-v2-chip-decorator-background-color: var(--fs-primary-soft);
 
 	:global(.query-builder-v2) {
 		gap: 8px;
@@ -478,5 +479,87 @@
 	) {
 		color: inherit;
 		text-transform: none;
+	}
+
+	// Aggregation editor (time series, table): the same single input as the filter.
+	:global(
+		.query-builder-v2 .query-aggregation-select-container .cm-editor .cm-content
+	) {
+		min-height: 36px;
+		padding: 7px 28px 7px 0 !important;
+		border: 1px solid var(--fs-input) !important;
+		border-radius: 8px !important;
+		background: var(--fs-muted) !important;
+	}
+
+	:global(
+		.query-builder-v2 .query-aggregation-select-container .cm-editor .cm-line
+	) {
+		padding-left: 10px;
+		background: transparent !important;
+		line-height: 20px !important;
+	}
+
+	:global(
+		.query-builder-v2
+			.query-aggregation-select-container
+			.cm-editor.cm-focused
+			.cm-content
+	) {
+		border-color: var(--fs-ring) !important;
+	}
+
+	// Saved-view clear / update controls.
+	:global(.explorer-update) {
+		gap: 4px;
+		padding: 6px;
+		border-color: var(--fs-border);
+		border-radius: 12px;
+		background: var(--fs-card);
+		backdrop-filter: none;
+	}
+
+	:global(.explorer-update .action-icon) {
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		border: 0;
+		border-radius: 6px;
+		background: transparent;
+		color: var(--fs-muted-foreground);
+	}
+
+	:global(.explorer-update .action-icon:not(:disabled):hover) {
+		background: var(--fs-muted) !important;
+		color: var(--fs-foreground) !important;
+	}
+
+	:global(.explorer-update .explorer-options-container__divider) {
+		height: 20px;
+		border-color: var(--fs-border);
+	}
+
+	:global(.render-options) {
+		color: var(--fs-foreground);
+		font-family: var(--tw-font-sans);
+		font-size: 13px;
+	}
+
+	:global(.render-options .dot) {
+		margin-left: 0;
+		box-shadow: none !important;
+	}
+
+	:global(
+		.query-builder-v2 .query-aggregation-select-container .chip-decorator
+	) {
+		color: var(--fs-primary-ink) !important;
+		font-weight: 500;
+	}
+
+	:global(.query-builder-v2 .query-add-ons [data-slot='button']),
+	:global(.query-builder-v2 .query-add-ons button) {
+		font-family: var(--tw-font-sans);
+		font-size: 13px;
 	}
 }

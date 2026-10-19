@@ -6,7 +6,6 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -15,7 +14,6 @@ import { QueryProps } from 'container/QueryBuilder/type';
 import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { Copy, Ellipsis, Trash } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -29,6 +27,7 @@ import {
 
 import MetricsAggregateSection from './MerticsAggregateSection/MetricsAggregateSection';
 import { MetricsSelect } from './MetricsSelect/MetricsSelect';
+import QueryActionsMenu from './QueryActionsMenu';
 import QueryAddOns from './QueryAddOns/QueryAddOns';
 import QueryAggregation from './QueryAggregation/QueryAggregation';
 import QuerySearch from './QuerySearch/QuerySearch';
@@ -90,26 +89,6 @@ export const QueryV2 = forwardRef(function QueryV2(
 	const handleCloneEntity = (): void => {
 		cloneQuery('query', query);
 	};
-
-	const queryActionItems: DropdownItemType[] = [
-		{
-			type: 'item',
-			label: 'Clone',
-			value: 'clone-query',
-			prefix: <Copy size={14} />,
-			onClick: handleCloneEntity,
-		},
-	];
-
-	if (queriesCount && queriesCount > 1) {
-		queryActionItems.push({
-			type: 'item',
-			label: 'Delete',
-			value: 'delete-query',
-			prefix: <Trash size={14} />,
-			onClick: handleDeleteQuery,
-		});
-	}
 
 	const showReduceTo = useMemo(
 		() =>
@@ -244,14 +223,13 @@ export const QueryV2 = forwardRef(function QueryV2(
 							)}
 
 							{isMultiQueryAllowed && (
-								<Dropdown
-									items={queryActionItems}
-									nativeButton={false}
-									align="end"
-									side="bottom"
-								>
-									<Ellipsis size={16} />
-								</Dropdown>
+								<QueryActionsMenu
+									queryName={query.queryName}
+									onClone={handleCloneEntity}
+									onDelete={
+										queriesCount && queriesCount > 1 ? handleDeleteQuery : undefined
+									}
+								/>
 							)}
 						</div>
 					</div>
