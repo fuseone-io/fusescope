@@ -2,6 +2,7 @@ import { BaseSyntheticEvent, Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from 'antd';
 import { debounce } from 'lodash-es';
+import { Search } from 'lucide-react';
 
 function PipelinesSearchSection({
 	setPipelineSearchValue,
@@ -18,6 +19,8 @@ function PipelinesSearchSection({
 		<Input
 			type="text"
 			allowClear
+			className="pipelines-search"
+			prefix={<Search size={14} aria-hidden="true" />}
 			placeholder={t('search_pipeline_placeholder')}
 			onChange={debouncedHandleSearch}
 		/>

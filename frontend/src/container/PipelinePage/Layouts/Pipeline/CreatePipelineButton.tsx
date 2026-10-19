@@ -1,17 +1,14 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import logEvent from 'api/common/logEvent';
-import TextToolTip from 'components/TextToolTip';
+import { Button } from 'components/ui/button';
 import { fuseScopeDocsUrl } from 'constants/docs';
-import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
+import { ExternalLink, PencilLine } from 'lucide-react';
+import { ActionMode, Pipeline } from 'types/api/pipeline/def';
 
-import { ButtonContainer, CustomButton } from '../../styles';
 import { checkDataLength } from '../utils';
-import { PencilLine, Plus } from '@signozhq/icons';
-import { Flex } from 'antd';
 
 function CreatePipelineButton({
-	setActionType,
 	isActionMode,
 	setActionMode,
 	pipelineData,
@@ -31,39 +28,34 @@ function CreatePipelineButton({
 			source: 'signoz-ui',
 		});
 	};
-	const onAddNewPipeline = (): void => {
-		setActionMode(ActionMode.Editing);
-		setActionType(ActionType.AddPipeline);
-
-		logEvent('Logs: Pipelines: Clicked Add New Pipeline', {
-			source: 'signoz-ui',
-		});
-	};
-
 	return (
-		<ButtonContainer>
-			<TextToolTip
-				text={t('learn_more')}
-				url={fuseScopeDocsUrl('/sending-data/log-pipelines/')}
-			/>
+		<div className="fs-ui tw:flex tw:flex-wrap tw:items-center tw:gap-3 tw:font-sans">
+			<a
+				href={fuseScopeDocsUrl('/sending-data/log-pipelines/')}
+				target="_blank"
+				rel="noopener noreferrer"
+				className="tw:inline-flex tw:items-center tw:gap-1.5 tw:text-[13px] tw:text-primary tw:hover:underline"
+			>
+				{t('learn_more')}
+				<ExternalLink aria-hidden="true" className="tw:size-3.5" />
+			</a>
 			{isAddNewPipelineVisible && (
-				<CustomButton onClick={onEnterEditMode} disabled={isDisabled}>
-					<Flex align="center" gap={4}>
-						<PencilLine size="md" />
-						{t('enter_edit_mode')}
-					</Flex>
-				</CustomButton>
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={onEnterEditMode}
+					disabled={isDisabled}
+				>
+					<PencilLine />
+					{t('enter_edit_mode')}
+				</Button>
 			)}
-			{!isAddNewPipelineVisible && (
-				<CustomButton icon={<Plus />} onClick={onAddNewPipeline} type="primary">
-					{t('new_pipeline')}
-				</CustomButton>
-			)}
-		</ButtonContainer>
+		</div>
 	);
 }
 
 interface CreatePipelineButtonProps {
+	/** Unused since the empty state creates the first pipeline. */
 	setActionType: (actionType: string) => void;
 	isActionMode: string;
 	setActionMode: (actionMode: string) => void;

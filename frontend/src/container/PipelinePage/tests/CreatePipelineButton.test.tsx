@@ -59,8 +59,8 @@ describe('PipelinePage container test', () => {
 		);
 	});
 
-	it('CreatePipelineButton - add new mode & tracking', async () => {
-		const { getByText } = render(
+	it('leaves creating the first pipeline to the empty state', () => {
+		const { queryByText } = render(
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
@@ -74,16 +74,8 @@ describe('PipelinePage container test', () => {
 				</Provider>
 			</MemoryRouter>,
 		);
-		// new_pipeline click and track event data
-		const editButton = getByText('new_pipeline');
-		expect(editButton).toBeInTheDocument();
-		await userEvent.click(editButton);
 
-		expect(logEventMock).toHaveBeenCalledWith(
-			'Logs: Pipelines: Clicked Add New Pipeline',
-			{
-				source: 'signoz-ui',
-			},
-		);
+		expect(queryByText('new_pipeline')).not.toBeInTheDocument();
+		expect(queryByText('enter_edit_mode')).not.toBeInTheDocument();
 	});
 });

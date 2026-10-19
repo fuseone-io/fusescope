@@ -97,6 +97,7 @@ function AddNewPipeline({
 			width={800}
 			footer={null}
 			onCancel={onCancelModalHandler}
+			className="pipelines-modal"
 		>
 			<Form
 				name="add-new-pipeline"

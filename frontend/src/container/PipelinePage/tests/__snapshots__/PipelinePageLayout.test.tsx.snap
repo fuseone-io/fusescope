@@ -2,96 +2,387 @@
 
 exports[`PipelinePage container test should render PipelinePageLayout section 1`] = `
 <DocumentFragment>
-  .c0.c0.c0 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-pack: end;
-  -webkit-justify-content: flex-end;
-  -ms-flex-pack: end;
-  justify-content: flex-end;
-  margin-bottom: 2rem;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-
-.c1.c1.c1 {
-  margin-left: 1rem;
-}
-
-<div
-    class="c0"
+  <div
+    class="fs-ui tw:flex tw:flex-wrap tw:items-center tw:gap-3 tw:font-sans"
   >
-    <svg
-      aria-label="Help"
-      role="img"
-      style="font-size: 1rem; color: rgba(255, 255, 255, 0.835);"
-    />
-    <button
-      class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-primary c1"
-      type="button"
+    <a
+      class="tw:inline-flex tw:items-center tw:gap-1.5 tw:text-[13px] tw:text-primary tw:hover:underline"
+      href="https://fuseone-io.github.io/fusescope-docs/sending-data/log-pipelines/"
+      rel="noopener noreferrer"
+      target="_blank"
     >
-      <span
-        class="ant-btn-icon"
+      learn_more
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-external-link tw:size-3.5"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        <svg />
-      </span>
-      <span>
-        new_pipeline
-      </span>
-    </button>
+        <path
+          d="M15 3h6v6"
+        />
+        <path
+          d="M10 14 21 3"
+        />
+        <path
+          d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+        />
+      </svg>
+    </a>
   </div>
-  .c0 {
-  margin-top: 3rem;
-}
-
-<div
-    class="c0"
+  <section
+    aria-labelledby="pipelines-empty-title"
+    class="fs-ui tw:flex tw:flex-col tw:items-center tw:rounded-xl tw:border tw:border-border tw:bg-card tw:px-6 tw:py-14 tw:text-center tw:font-sans tw:text-foreground"
   >
     <div
-      class="logs-pipelines-empty-state-centered-container"
+      aria-hidden="true"
+      class="tw:mb-6 tw:flex tw:flex-wrap tw:items-center tw:justify-center tw:gap-2.5"
     >
       <div
-        class="ant-card ant-card-bordered ant-card-small css-dev-only-do-not-override-2i2tap"
+        class="tw:flex tw:items-center tw:gap-2.5"
       >
         <div
-          class="ant-card-body"
+          class="tw:flex tw:flex-col tw:items-center tw:gap-1.5 tw:text-xs tw:text-muted-foreground"
         >
-          <div
-            class="logs-pipelines-empty-state-centered-container"
+          <span
+            class="tw:flex tw:size-10 tw:items-center tw:justify-center tw:rounded-lg tw:border tw:bg-muted tw:text-muted-foreground tw:border-border"
           >
-            <iframe
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen=""
-              class="logs-pipelines-empty-state-video-iframe"
-              frameborder="0"
-              sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-              src="https://www.youtube.com/embed/OneENGNmLd0"
-              title="learn_more"
-            />
-            <div>
-              <p
-                class="_typography_i5nbo_1"
-                data-slot="typography"
-                data-variant="text"
-              >
-                learn_more 
-                <a
-                  href="https://fuseone-io.github.io/fusescope-docs/sending-data/log-pipelines/"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  here
-                </a>
-              </p>
-            </div>
-          </div>
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-inbox tw:size-[18px]"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <polyline
+                points="22 12 16 12 14 15 10 15 8 12 2 12"
+              />
+              <path
+                d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"
+              />
+            </svg>
+          </span>
+          Incoming logs
+        </div>
+      </div>
+      <div
+        class="tw:flex tw:items-center tw:gap-2.5"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-right tw:size-4 tw:text-subtle-foreground"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5 12h14"
+          />
+          <path
+            d="m12 5 7 7-7 7"
+          />
+        </svg>
+        <div
+          class="tw:flex tw:flex-col tw:items-center tw:gap-1.5 tw:text-xs tw:text-muted-foreground"
+        >
+          <span
+            class="tw:flex tw:size-10 tw:items-center tw:justify-center tw:rounded-lg tw:border tw:bg-primary-soft tw:text-primary-ink tw:border-transparent"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-funnel lucide-filter tw:size-[18px]"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"
+              />
+            </svg>
+          </span>
+          Filter
+        </div>
+      </div>
+      <div
+        class="tw:flex tw:items-center tw:gap-2.5"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-right tw:size-4 tw:text-subtle-foreground"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5 12h14"
+          />
+          <path
+            d="m12 5 7 7-7 7"
+          />
+        </svg>
+        <div
+          class="tw:flex tw:flex-col tw:items-center tw:gap-1.5 tw:text-xs tw:text-muted-foreground"
+        >
+          <span
+            class="tw:flex tw:size-10 tw:items-center tw:justify-center tw:rounded-lg tw:border tw:bg-brand-secondary-soft tw:text-brand-secondary-ink tw:border-transparent"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-workflow tw:size-[18px]"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="3"
+                y="3"
+              />
+              <path
+                d="M7 11v4a2 2 0 0 0 2 2h4"
+              />
+              <rect
+                height="8"
+                rx="2"
+                width="8"
+                x="13"
+                y="13"
+              />
+            </svg>
+          </span>
+          Processors
+        </div>
+      </div>
+      <div
+        class="tw:flex tw:items-center tw:gap-2.5"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-right tw:size-4 tw:text-subtle-foreground"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5 12h14"
+          />
+          <path
+            d="m12 5 7 7-7 7"
+          />
+        </svg>
+        <div
+          class="tw:flex tw:flex-col tw:items-center tw:gap-1.5 tw:text-xs tw:text-muted-foreground"
+        >
+          <span
+            class="tw:flex tw:size-10 tw:items-center tw:justify-center tw:rounded-lg tw:border tw:bg-success-soft tw:text-success-ink tw:border-transparent"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-database tw:size-[18px]"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <ellipse
+                cx="12"
+                cy="5"
+                rx="9"
+                ry="3"
+              />
+              <path
+                d="M3 5V19A9 3 0 0 0 21 19V5"
+              />
+              <path
+                d="M3 12A9 3 0 0 0 21 12"
+              />
+            </svg>
+          </span>
+          Stored logs
         </div>
       </div>
     </div>
-  </div>
+    <h2
+      class="tw:m-0 tw:text-lg tw:font-semibold"
+      id="pipelines-empty-title"
+    >
+      No pipelines yet
+    </h2>
+    <p
+      class="tw:mt-2 tw:mb-0 tw:max-w-[560px] tw:text-sm tw:text-muted-foreground"
+    >
+      Pipelines transform logs before they are stored. Each pipeline picks logs with a filter and runs its processors in order to parse fields out of the body, normalize severity, add, move or remove attributes, and link logs to traces.
+    </p>
+    <ul
+      class="tw:mt-4 tw:mb-0 tw:flex tw:max-w-[560px] tw:list-none tw:flex-wrap tw:justify-center tw:gap-1.5 tw:p-0"
+    >
+      <li
+        class="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-brand-secondary-soft tw:px-2 tw:text-xs tw:font-medium tw:text-brand-secondary-ink"
+      >
+        Grok
+      </li>
+      <li
+        class="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-brand-secondary-soft tw:px-2 tw:text-xs tw:font-medium tw:text-brand-secondary-ink"
+      >
+        Regex
+      </li>
+      <li
+        class="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-brand-secondary-soft tw:px-2 tw:text-xs tw:font-medium tw:text-brand-secondary-ink"
+      >
+        Json Parser
+      </li>
+      <li
+        class="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-brand-secondary-soft tw:px-2 tw:text-xs tw:font-medium tw:text-brand-secondary-ink"
+      >
+        Trace Parser
+      </li>
+      <li
+        class="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-brand-secondary-soft tw:px-2 tw:text-xs tw:font-medium tw:text-brand-secondary-ink"
+      >
+        Timestamp Parser
+      </li>
+      <li
+        class="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-brand-secondary-soft tw:px-2 tw:text-xs tw:font-medium tw:text-brand-secondary-ink"
+      >
+        Severity Parser
+      </li>
+      <li
+        class="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-brand-secondary-soft tw:px-2 tw:text-xs tw:font-medium tw:text-brand-secondary-ink"
+      >
+        Add
+      </li>
+      <li
+        class="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-brand-secondary-soft tw:px-2 tw:text-xs tw:font-medium tw:text-brand-secondary-ink"
+      >
+        Remove
+      </li>
+      <li
+        class="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-brand-secondary-soft tw:px-2 tw:text-xs tw:font-medium tw:text-brand-secondary-ink"
+      >
+        Move
+      </li>
+      <li
+        class="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-brand-secondary-soft tw:px-2 tw:text-xs tw:font-medium tw:text-brand-secondary-ink"
+      >
+        Copy
+      </li>
+    </ul>
+    <div
+      class="tw:mt-6 tw:flex tw:flex-wrap tw:justify-center tw:gap-2"
+    >
+      <button
+        class="tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:gap-2 tw:rounded-md tw:text-sm tw:font-medium tw:whitespace-nowrap tw:transition-all tw:outline-none tw:focus-visible:border-ring tw:focus-visible:ring-[3px] tw:focus-visible:ring-ring/50 tw:disabled:pointer-events-none tw:disabled:opacity-50 tw:aria-invalid:border-destructive tw:aria-invalid:ring-destructive/20 tw:dark:aria-invalid:ring-destructive/40 tw:[&_svg]:pointer-events-none tw:[&_svg]:shrink-0 tw:[&_svg:not([class*=size-])]:size-4 tw:bg-primary tw:text-primary-foreground tw:hover:bg-primary/90 tw:h-9 tw:px-4 tw:py-2 tw:has-[>svg]:px-3"
+        data-size="default"
+        data-slot="button"
+        data-variant="default"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-plus"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5 12h14"
+          />
+          <path
+            d="M12 5v14"
+          />
+        </svg>
+        new_pipeline
+      </button>
+      <a
+        class="tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:gap-2 tw:rounded-md tw:text-sm tw:font-medium tw:whitespace-nowrap tw:transition-all tw:outline-none tw:focus-visible:border-ring tw:focus-visible:ring-[3px] tw:focus-visible:ring-ring/50 tw:disabled:pointer-events-none tw:disabled:opacity-50 tw:aria-invalid:border-destructive tw:aria-invalid:ring-destructive/20 tw:dark:aria-invalid:ring-destructive/40 tw:[&_svg]:pointer-events-none tw:[&_svg]:shrink-0 tw:[&_svg:not([class*=size-])]:size-4 tw:border tw:bg-background tw:shadow-xs tw:hover:bg-accent tw:hover:text-accent-foreground tw:dark:border-input tw:dark:bg-input/30 tw:dark:hover:bg-input/50 tw:h-9 tw:px-4 tw:py-2 tw:has-[>svg]:px-3"
+        data-size="default"
+        data-slot="button"
+        data-variant="outline"
+        href="https://fuseone-io.github.io/fusescope-docs/sending-data/log-pipelines/"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        Read the docs
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-external-link"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M15 3h6v6"
+          />
+          <path
+            d="M10 14 21 3"
+          />
+          <path
+            d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+          />
+        </svg>
+      </a>
+    </div>
+  </section>
 </DocumentFragment>
 `;

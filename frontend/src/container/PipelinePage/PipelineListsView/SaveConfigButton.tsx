@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from 'antd';
-
-import { SaveConfigWrapper } from './styles';
+import { Button } from 'components/ui/button';
+import { Check } from 'lucide-react';
 
 function SaveConfigButton({
 	showSaveButton,
@@ -11,21 +10,34 @@ function SaveConfigButton({
 	const { t } = useTranslation('pipeline');
 
 	return (
-		<SaveConfigWrapper>
-			{showSaveButton && (
+		<div className="fs-ui tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:px-4 tw:py-3 tw:font-sans">
+			<span className="tw:text-[13px] tw:text-muted-foreground">
+				{showSaveButton
+					? 'You have unsaved changes. Saving deploys a new configuration version to the collectors.'
+					: 'Drag rows to reorder, toggle to enable or disable, or add a new pipeline.'}
+			</span>
+			<div className="tw:flex tw:gap-2">
 				<Button
-					key="submit"
-					type="primary"
-					htmlType="submit"
-					onClick={onSaveConfigurationHandler}
+					key="cancel"
+					variant="outline"
+					size="sm"
+					onClick={onCancelConfigurationHandler}
 				>
-					{t('save_configuration')}
+					{t('cancel')}
 				</Button>
-			)}
-			<Button key="cancel" onClick={onCancelConfigurationHandler}>
-				{t('cancel')}
-			</Button>
-		</SaveConfigWrapper>
+				{showSaveButton && (
+					<Button
+						key="submit"
+						size="sm"
+						type="submit"
+						onClick={onSaveConfigurationHandler}
+					>
+						<Check />
+						{t('save_configuration')}
+					</Button>
+				)}
+			</div>
+		</div>
 	);
 }
 export interface SaveConfigButtonTypes {

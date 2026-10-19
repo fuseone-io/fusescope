@@ -9,12 +9,10 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, Plus } from '@signozhq/icons';
-import { Card, Form, Modal, Table } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Form, Modal, Table } from 'antd';
 import type { ExpandableConfig } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import savePipeline from 'api/pipeline/post';
-import { fuseScopeDocsUrl } from 'constants/docs';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEqual, isUndefined } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -36,13 +34,9 @@ import AddNewProcessor from './AddNewProcessor';
 import { pipelineColumns } from './config';
 import ModeAndConfiguration from './ModeAndConfiguration';
 import PipelineExpanView from './PipelineExpandView';
+import PipelinesEmptyState from './PipelinesEmptyState';
 import SaveConfigButton from './SaveConfigButton';
-import {
-	AlertContentWrapper,
-	AlertModalTitle,
-	Container,
-	FooterButton,
-} from './styles';
+import { AlertContentWrapper, AlertModalTitle, FooterButton } from './styles';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
 import PreviewAction from './TableComponents/PipelineActions/components/PreviewAction';
@@ -59,39 +53,6 @@ import {
 } from './utils';
 
 import './styles.scss';
-
-function PipelinesListEmptyState(): JSX.Element {
-	const { t } = useTranslation(['pipeline']);
-	return (
-		<div className="logs-pipelines-empty-state-centered-container">
-			<Card size="small">
-				<div className="logs-pipelines-empty-state-centered-container">
-					<iframe
-						className="logs-pipelines-empty-state-video-iframe"
-						sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-						src="https://www.youtube.com/embed/OneENGNmLd0"
-						frameBorder="0"
-						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-						allowFullScreen
-						title={t('learn_more')}
-					/>
-					<div>
-						<Typography>
-							{t('learn_more')}&nbsp;
-							<a
-								href={fuseScopeDocsUrl('/sending-data/log-pipelines/')}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								here
-							</a>
-						</Typography>
-					</div>
-				</div>
-			</Card>
-		</div>
-	);
-}
 
 function PipelineListsView({
 	isActionType,
@@ -403,6 +364,16 @@ function PipelineListsView({
 		});
 	}, [setActionType, pipelineForm]);
 
+	const onAddFirstPipeline = useCallback((): void => {
+		setActionMode(ActionMode.Editing);
+		setActionType(ActionType.AddPipeline);
+		pipelineForm.resetFields();
+
+		logEvent('Logs: Pipelines: Clicked Add New Pipeline', {
+			source: 'signoz-ui',
+		});
+	}, [setActionMode, setActionType, pipelineForm]);
+
 	const footer = useCallback((): JSX.Element | undefined => {
 		if (isEditingActionMode) {
 			return (
@@ -573,13 +544,15 @@ function PipelineListsView({
 				setExpandedPipelineData={setExpandedPipelineData}
 			/>
 			{prevPipelineData?.length > 0 || currPipelineData?.length > 0 ? (
-				<>
-					<PipelinesSearchSection setPipelineSearchValue={setPipelineSearchValue} />
-					<Container>
+				<div className="pipelines-list">
+					<div className="pipelines-list__toolbar">
+						<PipelinesSearchSection setPipelineSearchValue={setPipelineSearchValue} />
 						<ModeAndConfiguration
 							isActionMode={isActionMode}
 							version={pipelineData?.version}
 						/>
+					</div>
+					<section className="pipelines-list__panel" aria-label="Pipelines">
 						<DndProvider backend={HTML5Backend}>
 							<Table
 								rowKey="id"
@@ -593,19 +566,17 @@ function PipelineListsView({
 								pagination={false}
 							/>
 						</DndProvider>
-						{isEditingActionMode && (
-							<SaveConfigButton
-								showSaveButton={Boolean(showSaveButton)}
-								onSaveConfigurationHandler={onSaveConfigurationHandler}
-								onCancelConfigurationHandler={onCancelConfigurationHandler}
-							/>
-						)}
-					</Container>
-				</>
+					</section>
+					{isEditingActionMode && (
+						<SaveConfigButton
+							showSaveButton={Boolean(showSaveButton)}
+							onSaveConfigurationHandler={onSaveConfigurationHandler}
+							onCancelConfigurationHandler={onCancelConfigurationHandler}
+						/>
+					)}
+				</div>
 			) : (
-				<Container>
-					<PipelinesListEmptyState />
-				</Container>
+				<PipelinesEmptyState onAddNewPipeline={onAddFirstPipeline} />
 			)}
 		</>
 	);

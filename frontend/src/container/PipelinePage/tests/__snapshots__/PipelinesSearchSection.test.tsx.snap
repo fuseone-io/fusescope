@@ -3,8 +3,34 @@
 exports[`PipelinePage container test should render PipelinesSearchSection section 1`] = `
 <DocumentFragment>
   <span
-    class="ant-input-affix-wrapper css-dev-only-do-not-override-2i2tap"
+    class="ant-input-affix-wrapper pipelines-search css-dev-only-do-not-override-2i2tap"
   >
+    <span
+      class="ant-input-prefix"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-search"
+        fill="none"
+        height="14"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="14"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m21 21-4.34-4.34"
+        />
+        <circle
+          cx="11"
+          cy="11"
+          r="8"
+        />
+      </svg>
+    </span>
     <input
       class="ant-input css-dev-only-do-not-override-2i2tap"
       placeholder="search_pipeline_placeholder"

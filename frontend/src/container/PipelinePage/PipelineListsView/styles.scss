@@ -1,19 +1,6 @@
 // Define the color variable (referencing the theme for consistency)
 $modal-icon-color: #d89614; // Matches themeColors.gamboge
 
-.logs-pipelines-empty-state-centered-container {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-}
-
-.logs-pipelines-empty-state-video-iframe {
-	width: min(90vw, 640px);
-	height: min(68vw, 480px);
-	margin-bottom: 1em;
-}
-
 .modal-icon-container {
 	margin-inline-end: 12px;
 	// ant design uses svg icons with currentColor, so we can change the color of the icon by changing the text color of the container
@@ -21,4 +8,239 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 	// ant design add margin to the title of the modal, so we need to add it to the icon container to align the icon with the title.
 	margin-block-end: 0.67em;
 	margin-block-start: 0.67em;
+}
+
+// Toolbar, table panel and save bar, as on the pipelines board.
+.pipelines-list {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	font-family: var(--tw-font-sans);
+}
+
+.pipelines-list__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.pipelines-search.ant-input-affix-wrapper {
+	flex: 0 1 420px;
+	height: 36px;
+	border-radius: 8px;
+
+	.ant-input-prefix {
+		margin-inline-end: 8px;
+		color: var(--fs-subtle-foreground);
+	}
+}
+
+.pipelines-list__panel {
+	overflow: hidden;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
+
+	.ant-table {
+		background: transparent;
+		color: var(--fs-foreground);
+		font-family: var(--tw-font-sans);
+		font-size: 13px;
+	}
+
+	.ant-table-thead > tr > th {
+		height: 36px;
+		padding: 0 12px;
+		border-bottom: 1px solid var(--fs-border);
+		background: var(--fs-muted);
+		color: var(--fs-muted-foreground);
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+
+		&::before {
+			display: none;
+		}
+	}
+
+	.ant-table-tbody > tr > td {
+		height: 52px;
+		padding: 8px 12px;
+		border-bottom: 1px solid var(--fs-border);
+		background: transparent;
+	}
+
+	.ant-table-tbody > tr.ant-table-row:hover > td {
+		background: var(--fs-muted);
+	}
+
+	// The processors of an expanded pipeline, on a sunken ground.
+	.ant-table-tbody > tr.ant-table-expanded-row > td {
+		padding: 4px 20px 12px 88px;
+		background: var(--fs-muted);
+	}
+
+	.ant-table-expanded-row .ant-table,
+	.ant-table-expanded-row .ant-table-content {
+		background: transparent !important;
+	}
+
+	.ant-table-expanded-row .ant-table-tbody > tr > td {
+		height: 40px;
+		padding: 4px 8px;
+		border-bottom: 1px solid var(--fs-border) !important;
+	}
+
+	.ant-table-expanded-row .ant-table-tbody > tr:hover > td {
+		background: transparent;
+	}
+
+	.ant-table-footer {
+		padding: 8px 12px;
+		border-top: 1px solid var(--fs-border);
+		background: transparent;
+	}
+
+	.ant-table-expanded-row .ant-table-footer {
+		padding: 6px 0 0;
+		border-top: 0;
+	}
+
+	.ant-table-footer .ant-btn-link {
+		margin-left: 0;
+		color: var(--fs-primary);
+		font-size: 13px;
+		font-weight: 500;
+	}
+
+	[data-testid='pipeline-row-expand'],
+	[data-testid='pipeline-row-collapse'] {
+		width: 32px;
+		height: 32px;
+		border-radius: 6px;
+		color: var(--fs-muted-foreground);
+		cursor: pointer;
+
+		&:hover {
+			background: var(--fs-muted);
+			color: var(--fs-foreground);
+		}
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+	}
+}
+
+// Row order, numbered in a small square.
+.pipeline-order-index {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border: 1px solid var(--fs-border);
+	border-radius: 4px;
+	background: var(--fs-muted);
+	color: var(--fs-muted-foreground);
+	font-size: 11px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+
+	&--small {
+		width: 20px;
+		height: 20px;
+		font-size: 10px;
+	}
+}
+
+.pipelines-list__panel .ant-table-expanded-row .pipeline-order-index {
+	background: var(--fs-card);
+}
+
+.pipeline-processor-type {
+	color: var(--fs-subtle-foreground);
+	font-size: 12px;
+}
+
+// Pipeline form and preview dialogs.
+.pipelines-modal {
+	.ant-modal-content {
+		padding: 0;
+		overflow: hidden;
+		border: 1px solid var(--fs-border);
+		border-radius: 12px;
+		background: var(--fs-card);
+	}
+
+	.ant-modal-header {
+		margin: 0;
+		padding: 16px 20px;
+		border-bottom: 1px solid var(--fs-border);
+		background: var(--fs-card);
+	}
+
+	.ant-modal-title {
+		color: var(--fs-foreground);
+		font-family: var(--tw-font-sans);
+		font-size: 16px;
+		font-weight: 600;
+	}
+
+	.ant-modal-body {
+		padding: 16px 20px;
+		font-family: var(--tw-font-sans);
+	}
+
+	.ant-modal-close {
+		top: 14px;
+	}
+
+	.ant-form-item-label > label {
+		color: var(--fs-foreground);
+		font-size: 13px;
+		font-weight: 500;
+	}
+}
+
+// Deployment stage: the word, with its icon in the stage's colour.
+.pipeline-deploy-stage {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--fs-muted-foreground);
+
+	&[data-stage='deployed'] {
+		color: var(--fs-success);
+	}
+
+	&[data-stage='failed'] {
+		color: var(--fs-error);
+	}
+
+	&[data-stage='dirty'] {
+		color: var(--fs-warning);
+	}
+
+	&[data-stage='in_progress'] {
+		color: var(--fs-primary);
+	}
+}
+
+.pipeline-deploy-stage__label {
+	color: var(--fs-foreground);
+	font-weight: 500;
+}
+
+.pipelines-list__panel .ant-table-footer:empty {
+	display: none;
+}
+
+.pipeline-deploy-stage svg {
+	width: 14px;
+	height: 14px;
 }

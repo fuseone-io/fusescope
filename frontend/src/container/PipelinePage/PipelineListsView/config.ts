@@ -10,6 +10,7 @@ import {
 
 import DeploymentStage from '../Layouts/ChangeHistory/DeploymentStage';
 import DeploymentTime from '../Layouts/ChangeHistory/DeploymentTime';
+import EditedBy from '../Layouts/ChangeHistory/EditedBy';
 import DescriptionTextArea from './AddNewPipeline/FormFields/DescriptionTextArea';
 import FilterInput from './AddNewPipeline/FormFields/FilterInput';
 import NameInput from './AddNewPipeline/FormFields/NameInput';
@@ -83,6 +84,12 @@ export const processorColumns: Array<
 		title: '',
 		dataIndex: 'name',
 	},
+	{
+		key: 'type',
+		title: '',
+		dataIndex: 'type',
+		width: 160,
+	},
 ];
 
 export const changeHistoryColumns: Array<
@@ -115,6 +122,7 @@ export const changeHistoryColumns: Array<
 		key: 'createdByName',
 		title: 'Edited by',
 		dataIndex: 'createdByName',
+		render: EditedBy,
 	},
 ];
 
@@ -124,6 +132,4 @@ export const formValidationRules = [
 	},
 ];
 
-export const iconStyle = { fontSize: '1rem' };
-export const smallIconStyle = { fontSize: '0.75rem' };
-export const holdIconStyle = { ...iconStyle, cursor: 'move' };
+export const holdIconStyle = { fontSize: '1rem', cursor: 'move' };

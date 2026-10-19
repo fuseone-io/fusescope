@@ -1,22 +1,94 @@
-.pipeline-tabs {
-	> .ant-tabs-nav {
-		padding: 0 16px;
-		margin-bottom: 0;
+.pipelines-page {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 24px 16px;
+	color: var(--fs-foreground);
+	font-family: var(--tw-font-sans);
 
-		@media (min-width: 768px) {
-			padding: 0 24px;
-		}
+	@media (min-width: 768px) {
+		padding: 24px;
 	}
 
-	.ant-tabs-content {
-		padding: 0 16px;
+	[role='tabpanel'][hidden] {
+		display: none;
+	}
+}
 
-		@media (min-width: 768px) {
-			padding: 0 24px;
-		}
+.pipelines-page__bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+// Segmented switch, as in the explorer's view switch.
+.pipelines-page__sections {
+	display: inline-flex;
+	gap: 2px;
+	padding: 2px;
+	border: 1px solid var(--fs-border);
+	border-radius: 8px;
+	background: var(--fs-muted);
+}
+
+.pipelines-page__section {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 10px;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--fs-muted-foreground);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+
+	svg {
+		width: 14px;
+		height: 14px;
 	}
 
-	.ant-tabs-tabpane-hidden {
-		display: none !important;
+	&:hover {
+		color: var(--fs-foreground);
 	}
+
+	&:focus-visible {
+		outline: 2px solid var(--fs-ring);
+		outline-offset: 2px;
+	}
+
+	&--active {
+		border-color: var(--fs-border);
+		background: var(--fs-card);
+		color: var(--fs-foreground);
+		box-shadow: 0 1px 2px 0
+			color-mix(in srgb, var(--fs-foreground) 5%, transparent);
+	}
+}
+
+.pipelines-page__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+
+	&:empty,
+	&[hidden] {
+		display: none;
+	}
+}
+
+.pipelines-page__meta {
+	color: var(--fs-muted-foreground);
+	font-size: 13px;
+}
+
+.pipelines-page__meta-count {
+	color: var(--fs-foreground);
+	font-variant-numeric: tabular-nums;
 }

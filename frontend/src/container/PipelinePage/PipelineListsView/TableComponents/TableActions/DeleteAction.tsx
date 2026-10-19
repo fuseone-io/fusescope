@@ -1,30 +1,21 @@
-import { Trash2 } from '@signozhq/icons';
+import { Trash2 } from 'lucide-react';
 
-import { iconStyle, smallIconStyle } from '../../config';
+import TableIconAction from './TableIconAction';
 
 function DeleteAction({
 	isPipelineAction,
 	deleteAction,
 }: DeleteActionProps): JSX.Element {
-	if (isPipelineAction) {
-		return (
-			<Trash2
-				size="lg"
-				onClick={deleteAction}
-				style={iconStyle}
-				data-testid="pipeline-delete-action"
-			/>
-		);
-	}
 	return (
-		<span key="delete-action">
-			<Trash2
-				size="lg"
-				onClick={deleteAction}
-				style={smallIconStyle}
-				data-testid="pipeline-delete-action"
-			/>
-		</span>
+		<TableIconAction
+			label={isPipelineAction ? 'Delete pipeline' : 'Delete processor'}
+			small={!isPipelineAction}
+			danger={true}
+			onClick={deleteAction}
+			testId="pipeline-delete-action"
+		>
+			<Trash2 />
+		</TableIconAction>
 	);
 }
 

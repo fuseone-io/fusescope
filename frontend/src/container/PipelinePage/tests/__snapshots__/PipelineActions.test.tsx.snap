@@ -7,7 +7,7 @@ exports[`PipelinePage container test should render PipelineActions section 1`] =
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  gap: 1rem;
+  gap: 2px;
   -webkit-box-pack: end;
   -webkit-justify-content: flex-end;
   -ms-flex-pack: end;
@@ -17,18 +17,122 @@ exports[`PipelinePage container test should render PipelineActions section 1`] =
 <div
     class="c0"
   >
-    <svg
-      data-testid="pipeline-preview-action"
-      style="font-size: 1rem;"
-    />
-    <svg
-      data-testid="pipeline-edit-action"
-      style="font-size: 1rem;"
-    />
-    <svg
-      data-testid="pipeline-delete-action"
-      style="font-size: 1rem;"
-    />
+    <span
+      class="fs-ui tw:inline-flex"
+    >
+      <button
+        aria-label="Preview Apache common parser"
+        class="tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:gap-2 tw:rounded-md tw:text-sm tw:font-medium tw:whitespace-nowrap tw:transition-all tw:outline-none tw:focus-visible:border-ring tw:focus-visible:ring-[3px] tw:focus-visible:ring-ring/50 tw:disabled:pointer-events-none tw:disabled:opacity-50 tw:aria-invalid:border-destructive tw:aria-invalid:ring-destructive/20 tw:dark:aria-invalid:ring-destructive/40 tw:[&_svg]:pointer-events-none tw:[&_svg]:shrink-0 tw:[&_svg:not([class*=size-])]:size-4 tw:hover:bg-accent tw:hover:text-accent-foreground tw:dark:hover:bg-accent/50 tw:size-8 tw:text-muted-foreground"
+        data-size="icon-sm"
+        data-slot="button"
+        data-testid="pipeline-preview-action"
+        data-variant="ghost"
+        title="Preview Apache common parser"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-eye"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+          />
+          <circle
+            cx="12"
+            cy="12"
+            r="3"
+          />
+        </svg>
+      </button>
+    </span>
+    <span
+      class="fs-ui tw:inline-flex"
+    >
+      <button
+        aria-label="Edit pipeline"
+        class="tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:gap-2 tw:rounded-md tw:text-sm tw:font-medium tw:whitespace-nowrap tw:transition-all tw:outline-none tw:focus-visible:border-ring tw:focus-visible:ring-[3px] tw:focus-visible:ring-ring/50 tw:disabled:pointer-events-none tw:disabled:opacity-50 tw:aria-invalid:border-destructive tw:aria-invalid:ring-destructive/20 tw:dark:aria-invalid:ring-destructive/40 tw:[&_svg]:pointer-events-none tw:[&_svg]:shrink-0 tw:[&_svg:not([class*=size-])]:size-4 tw:hover:bg-accent tw:hover:text-accent-foreground tw:dark:hover:bg-accent/50 tw:size-8 tw:text-muted-foreground"
+        data-size="icon-sm"
+        data-slot="button"
+        data-testid="pipeline-edit-action"
+        data-variant="ghost"
+        title="Edit pipeline"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pencil-line"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M13 21h8"
+          />
+          <path
+            d="m15 5 4 4"
+          />
+          <path
+            d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
+          />
+        </svg>
+      </button>
+    </span>
+    <span
+      class="fs-ui tw:inline-flex"
+    >
+      <button
+        aria-label="Delete pipeline"
+        class="tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:gap-2 tw:rounded-md tw:text-sm tw:font-medium tw:whitespace-nowrap tw:transition-all tw:outline-none tw:focus-visible:border-ring tw:focus-visible:ring-[3px] tw:focus-visible:ring-ring/50 tw:disabled:pointer-events-none tw:disabled:opacity-50 tw:aria-invalid:border-destructive tw:aria-invalid:ring-destructive/20 tw:dark:aria-invalid:ring-destructive/40 tw:[&_svg]:pointer-events-none tw:[&_svg]:shrink-0 tw:[&_svg:not([class*=size-])]:size-4 tw:hover:bg-accent tw:dark:hover:bg-accent/50 tw:size-8 tw:text-muted-foreground tw:hover:text-error"
+        data-size="icon-sm"
+        data-slot="button"
+        data-testid="pipeline-delete-action"
+        data-variant="ghost"
+        title="Delete pipeline"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-trash lucide-trash-2"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M10 11v6"
+          />
+          <path
+            d="M14 11v6"
+          />
+          <path
+            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
+          />
+          <path
+            d="M3 6h18"
+          />
+          <path
+            d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+          />
+        </svg>
+      </button>
+    </span>
   </div>
 </DocumentFragment>
 `;

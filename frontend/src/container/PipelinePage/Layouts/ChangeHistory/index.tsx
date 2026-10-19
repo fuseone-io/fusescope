@@ -2,19 +2,23 @@ import { Table } from 'antd';
 import { Pipeline } from 'types/api/pipeline/def';
 
 import { changeHistoryColumns } from '../../PipelineListsView/config';
-import { HistoryTableWrapper } from '../../styles';
 import { historyPagination } from '../config';
+
+import '../../PipelineListsView/styles.scss';
 
 function ChangeHistory({ pipelineData }: ChangeHistoryProps): JSX.Element {
 	return (
-		<HistoryTableWrapper>
+		<section
+			className="pipelines-list__panel"
+			aria-label="Configuration versions"
+		>
 			<Table
 				columns={changeHistoryColumns}
 				dataSource={pipelineData?.history ?? []}
 				rowKey="id"
 				pagination={historyPagination}
 			/>
-		</HistoryTableWrapper>
+		</section>
 	);
 }
 
