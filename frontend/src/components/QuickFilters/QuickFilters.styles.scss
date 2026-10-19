@@ -4,16 +4,6 @@
 	position: relative;
 	flex: 1;
 	min-height: 0;
-
-	.quick-filters-settings-container {
-		flex: 0 0 0;
-		width: 0;
-		min-width: 0;
-		overflow: visible;
-		position: relative;
-		align-self: stretch;
-		clip-path: inset(0 -100vw 0 0);
-	}
 }
 
 .quick-filters {

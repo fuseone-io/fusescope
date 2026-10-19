@@ -385,8 +385,10 @@ describe('Quick Filters with custom filters', () => {
 
 		// Adding one variant removes only that one; the other stays.
 		const firstLevel = within(otherSection).getAllByText('level')[0];
-		const addButton = firstLevel.parentElement?.querySelector('button');
-		await user.click(addButton as HTMLButtonElement);
+		const addButton = firstLevel
+			.closest('.qf-filter-item')
+			?.querySelector('input');
+		await user.click(addButton as HTMLInputElement);
 
 		const addedSection = screen.getByText(ADDED_FILTERS_LABEL).parentElement!;
 		await waitFor(() => {
@@ -406,9 +408,11 @@ describe('Quick Filters with custom filters', () => {
 		await user.click(settingsButton);
 
 		const otherFilterItem = await screen.findByText(FILTER_K8S_DEPLOYMENT_NAME);
-		const addButton = otherFilterItem.parentElement?.querySelector('button');
+		const addButton = otherFilterItem
+			.closest('.qf-filter-item')
+			?.querySelector('input');
 		expect(addButton).not.toBeNull();
-		await user.click(addButton as HTMLButtonElement);
+		await user.click(addButton as HTMLInputElement);
 
 		const addedSection = screen.getByText(ADDED_FILTERS_LABEL).parentElement!;
 		await waitFor(() => {
@@ -428,10 +432,10 @@ describe('Quick Filters with custom filters', () => {
 
 		const addedSection = screen.getByText(ADDED_FILTERS_LABEL).parentElement!;
 		const target = await screen.findByText(FILTER_OS_DESCRIPTION);
-		const removeBtn = target.parentElement?.querySelector('button');
+		const removeBtn = target.closest('.qf-filter-item')?.querySelector('input');
 		expect(removeBtn).not.toBeNull();
 
-		await user.click(removeBtn as HTMLButtonElement);
+		await user.click(removeBtn as HTMLInputElement);
 
 		await waitFor(() => {
 			expect(addedSection).not.toContainElement(
@@ -457,9 +461,9 @@ describe('Quick Filters with custom filters', () => {
 
 		const addedSection = screen.getByText(ADDED_FILTERS_LABEL).parentElement!;
 		const target = await screen.findByText(FILTER_OS_DESCRIPTION);
-		const removeBtn = target.parentElement?.querySelector('button');
+		const removeBtn = target.closest('.qf-filter-item')?.querySelector('input');
 		expect(removeBtn).not.toBeNull();
-		await user.click(removeBtn as HTMLButtonElement);
+		await user.click(removeBtn as HTMLInputElement);
 
 		const otherSection = screen.getByText(OTHER_FILTERS_LABEL).parentElement!;
 		await waitFor(() => {
@@ -498,9 +502,9 @@ describe('Quick Filters with custom filters', () => {
 		await user.click(settingsButton);
 
 		const target = await screen.findByText(FILTER_OS_DESCRIPTION);
-		const removeBtn = target.parentElement?.querySelector('button');
+		const removeBtn = target.closest('.qf-filter-item')?.querySelector('input');
 		expect(removeBtn).not.toBeNull();
-		await user.click(removeBtn as HTMLButtonElement);
+		await user.click(removeBtn as HTMLInputElement);
 
 		const saveBtn = screen
 			.getByText(SAVE_CHANGES_TEXT)
@@ -648,9 +652,9 @@ describe('Quick Filters refetch behavior', () => {
 		await user.click(settingsButton);
 
 		const target = await screen.findByText(FILTER_OS_DESCRIPTION);
-		const removeBtn = target.parentElement?.querySelector(
-			'button',
-		) as HTMLButtonElement;
+		const removeBtn = target
+			.closest('.qf-filter-item')
+			?.querySelector('input') as HTMLInputElement;
 		await user.click(removeBtn);
 
 		await user.click(screen.getByText(SAVE_CHANGES_TEXT));
@@ -701,9 +705,9 @@ describe('Quick Filters refetch behavior', () => {
 
 		// Make a minimal change so Save button appears
 		const target = await screen.findByText(FILTER_OS_DESCRIPTION);
-		const removeBtn = target.parentElement?.querySelector(
-			'button',
-		) as HTMLButtonElement;
+		const removeBtn = target
+			.closest('.qf-filter-item')
+			?.querySelector('input') as HTMLInputElement;
 		await user.click(removeBtn);
 
 		await user.click(screen.getByText(SAVE_CHANGES_TEXT));

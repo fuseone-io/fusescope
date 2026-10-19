@@ -9,8 +9,8 @@ const SETTINGS_ICON_TEST_ID = 'settings-icon';
 const SETTINGS_CLOSE_TEST_ID = 'quick-filters-settings-close';
 const ANNOUNCEMENT_DISMISSED_KEY = 'QUICK_FILTERS_SETTINGS_ANNOUNCEMENT';
 /**
- * Conservative lower bound for the open panel width. The panel is 342px in
- * QuickFiltersSettings.styles.scss; 300 leaves slack for sub-pixel rounding.
+ * Conservative lower bound for the open panel width. The sheet is 420px wide
+ * (narrower only on small viewports); 300 leaves slack.
  */
 const SETTINGS_PANEL_MIN_WIDTH_PX = 300;
 
@@ -94,14 +94,12 @@ export async function gotoExplorerWithQuickFilters(
 	await page.getByTestId(SETTINGS_ICON_TEST_ID).waitFor({ state: 'visible' });
 }
 
-/** Settings drawer is closed — content unmounted and gear not active. */
+/** Settings sheet is closed — its content is unmounted. */
 export async function assertQuickFiltersSettingsDrawerClosed(
 	page: Page,
 ): Promise<void> {
 	await expect(page.getByText(SETTINGS_PANEL_TITLE)).toBeHidden();
-	// Collapsed panel keeps the `hidden` class (width: 0). Assert the class, not
-	// toBeVisible() — a zero-width element is never "visible" to Playwright.
-	await expect(page.locator('.quick-filters-settings')).toHaveClass(/hidden/);
+	await expect(page.locator('.quick-filters-settings')).toHaveCount(0);
 }
 
 /**
@@ -122,10 +120,8 @@ export async function assertQuickFiltersSettingsDrawerOpen(
 	seededFilters: QuickFilterDefinition[] = DEFAULT_CUSTOM_FILTERS,
 ): Promise<void> {
 	const panel = settingsPanel(page);
-	const filtersColumn = page.locator('.quick-filters');
 
 	await expect(panel).toBeVisible();
-	await expect(panel).not.toHaveClass(/hidden/);
 	await expect(page.getByText(SETTINGS_PANEL_TITLE)).toBeVisible();
 	await expect(page.getByPlaceholder('Search for a filter...')).toBeVisible();
 	await expect(panel.getByTestId(SETTINGS_CLOSE_TEST_ID)).toBeVisible();
@@ -147,15 +143,19 @@ export async function assertQuickFiltersSettingsDrawerOpen(
 		panel.locator('.qf-other-filters-list .other-filters-item').first(),
 	).toBeVisible();
 
-	const [panelBox, columnBox] = await Promise.all([
-		panel.boundingBox(),
-		filtersColumn.boundingBox(),
-	]);
-	expect(panelBox?.width ?? 0).toBeGreaterThanOrEqual(
-		SETTINGS_PANEL_MIN_WIDTH_PX,
-	);
-	expect(columnBox).not.toBeNull();
-	expect(panelBox!.x).toBeGreaterThanOrEqual(columnBox!.x);
+	// A right-side sheet: full width on screen and flush with the viewport edge
+	// once its slide-in animation settles.
+	const viewport = page.viewportSize();
+	expect(viewport).not.toBeNull();
+	await expect(async () => {
+		const panelBox = await panel.boundingBox();
+		expect(panelBox?.width ?? 0).toBeGreaterThanOrEqual(
+			SETTINGS_PANEL_MIN_WIDTH_PX,
+		);
+		expect(
+			Math.abs(panelBox!.x + panelBox!.width - viewport!.width),
+		).toBeLessThanOrEqual(1);
+	}).toPass();
 }
 
 /** Close via the drawer header X and confirm state resets. */

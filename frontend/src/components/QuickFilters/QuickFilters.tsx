@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Sheet, SheetContent } from 'components/ui/sheet';
 import {
 	ArrowUpToLine,
 	Frown,
@@ -410,13 +411,21 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					filtersContent
 				)}
 			</div>
-			<div className="quick-filters-settings-container">
-				<div
+			<Sheet
+				open={isSettingsOpen}
+				onOpenChange={(open): void => {
+					if (!open) {
+						setIsSettingsOpen(false);
+					}
+				}}
+			>
+				<SheetContent
+					side="right"
+					showCloseButton={false}
+					aria-describedby={undefined}
+					data-testid="quick-filters-settings-sheet"
 					className={classNames(
-						'quick-filters-settings',
-						{
-							hidden: !isSettingsOpen,
-						},
+						'quick-filters-settings tw:w-[420px] tw:max-w-full tw:gap-0 tw:p-0 tw:sm:max-w-[420px]',
 						className,
 					)}
 				>
@@ -428,8 +437,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							refetchCustomFilters={refetchCustomFilters}
 						/>
 					)}
-				</div>
-			</div>
+				</SheetContent>
+			</Sheet>
 		</div>
 	);
 }

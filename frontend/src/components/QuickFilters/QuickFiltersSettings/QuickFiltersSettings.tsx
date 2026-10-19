@@ -2,6 +2,7 @@ import { Button as SignozButton } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Button } from 'antd';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
+import { SheetTitle } from 'components/ui/sheet';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { SignalType } from '../types';
@@ -43,10 +44,10 @@ function QuickFiltersSettings({
 	return (
 		<>
 			<div className="qf-header">
-				<div className="qf-title">
+				<SheetTitle className="qf-title">
 					<TableColumnsSplit size={16} />
 					Edit quick filters
-				</div>
+				</SheetTitle>
 				<SignozButton
 					variant="ghost"
 					color="secondary"
