@@ -1,43 +1,9 @@
-// Source-of-truth doc: ./COLOR_PALETTE.md
-//
-// Color system for TraceDetailsV3 (waterfall + flamegraph). Returns a base
-// color (deterministic per group name) plus a darkened variant used as the
-// light-mode foreground / fill. Reuses the shared djb2 `hashFn`.
+// Color system for TraceDetailsV3 (waterfall + flamegraph). Returns a group's
+// dark-theme colour plus its light-theme counterpart from the chart series
+// palette, so a service has the same colour here as in every chart.
 
-import { hashFn } from 'lib/uPlotLib/utils/generateColor';
-
-// 28 colors from the doc's "Updated Colour Palette" (Section 1), in doc order.
-// Hash output `% PALETTE.length` adjusts automatically if entries are added.
-export const PALETTE_V3: readonly string[] = [
-	'#4D6BD8', // Slate blue
-	'#84B270', // Sage
-	'#EB9E40', // Amber
-	'#D58998', // Dusty pink
-	'#8278D5', // Lavender
-	'#E69C6F', // Peach
-	'#3CB4DA', // Sky teal
-	'#E85DA8', // Fuchsia
-	'#D4694A', // Terracotta
-	'#4FCC8E', // Forest
-	'#5BA2D6', // Cornflower
-	'#9D57D0', // Iris
-	'#D4B638', // Olive gold
-	'#6CC4A4', // Mint
-	'#D188CB', // Mauve
-	'#2FB59B', // Dusty teal
-	'#E68340', // Burnt orange
-	'#B8C474', // Pistachio
-	'#3C84E5', // Periwinkle
-	'#E29F8E', // Coral blush
-	'#C56330', // Sienna
-	'#4E8CF8', // Robin
-	'#E8B752', // Sandy gold
-	'#8DBEDF', // Powder blue
-	'#8B7544', // Umber
-	'#23E0E8', // Aqua
-	'#CB874A', // Warm tan
-	'#C886A9', // Antique rose
-];
+import { FS_SERIES_DARK, FS_SERIES_LIGHT } from 'constants/fuseScopeColors';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 
 // Reserved status colors per spec section 8. Error is wired today;
 // warning + OK are exported for future use (no render path consumes them yet).
@@ -106,10 +72,9 @@ export function generateColorPair(name: string): ColorPair {
 	if (hit) {
 		return hit;
 	}
-	const base = PALETTE_V3[hashFn(name) % PALETTE_V3.length];
 	const result: ColorPair = {
-		color: base,
-		colorDark: darkenHex(base, 0.22),
+		color: generateColor(name, FS_SERIES_DARK),
+		colorDark: generateColor(name, FS_SERIES_LIGHT),
 	};
 	cache.set(name, result);
 	return result;

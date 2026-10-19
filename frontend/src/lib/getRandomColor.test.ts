@@ -7,8 +7,8 @@ import { colors, spanServiceNameToColorMapping } from './getRandomColor';
 describe('spanServiceNameToColorMapping', () => {
 	it('should map span services to colors', () => {
 		const expectedServiceToColorMap = {
-			serviceA: themeColors.chartcolors.turquoise,
-			serviceB: themeColors.chartcolors.turquoise,
+			serviceA: themeColors.chartcolors.amber,
+			serviceB: themeColors.chartcolors.amber,
 			serviceC: colors[2], // 2 is because we have already used 0 and 1 in the above services,
 		};
 

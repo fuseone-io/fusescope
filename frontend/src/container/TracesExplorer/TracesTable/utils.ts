@@ -1,4 +1,4 @@
-import { RESPONSE_CODE_FIELD_NAMES, SERVICE_DOT_CLASSES } from './constants';
+import { RESPONSE_CODE_FIELD_NAMES } from './constants';
 
 export function stringifyCellValue(value: unknown): string {
 	if (value == null) {
@@ -29,14 +29,6 @@ export function isErrorSpan(row: Record<string, unknown>): boolean {
 	return [...RESPONSE_CODE_FIELD_NAMES].some(
 		(field) => Number(row[field]) >= 500,
 	);
-}
-
-export function serviceDotClass(service: string): string {
-	let hash = 0;
-	for (let i = 0; i < service.length; i += 1) {
-		hash = (hash * 31 + service.charCodeAt(i)) % 997;
-	}
-	return SERVICE_DOT_CLASSES[hash % SERVICE_DOT_CLASSES.length];
 }
 
 /** Badge for `has_error` / `status_code_string`. */
