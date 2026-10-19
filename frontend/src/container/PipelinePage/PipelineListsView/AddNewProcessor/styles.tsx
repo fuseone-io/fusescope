@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { Badge } from '@signozhq/ui/badge';
 import { Select } from 'antd';
 import styled from 'styled-components';
 
@@ -9,9 +8,9 @@ export function PipelineIndexIcon({
 	children: ReactNode;
 }): JSX.Element {
 	return (
-		<Badge variant="solid" color="primary">
+		<span className="pipeline-order-index pipeline-order-index--step">
 			{children}
-		</Badge>
+		</span>
 	);
 }
 

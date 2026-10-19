@@ -25,9 +25,9 @@ function PipelineProcessingPreview({
 	const { logs: sampleLogs } = sampleLogsResponse;
 
 	return (
-		<div>
+		<div className="pipeline-preview">
 			<div className="pipeline-preview-section-header">
-				<div>Sample logs</div>
+				<span className="pipeline-preview-section-title">Sample logs</span>
 				<PreviewIntervalSelector
 					previewFilter={pipeline.filter}
 					value={logsSampleQueryInterval}
@@ -38,7 +38,7 @@ function PipelineProcessingPreview({
 				<SampleLogsResponseDisplay response={sampleLogsResponse} />
 			</div>
 			<div className="pipeline-preview-section-header">
-				<div>Processed Output</div>
+				<span className="pipeline-preview-section-title">Processed Output</span>
 			</div>
 			<div className="pipeline-preview-logs-container">
 				<LogsProcessingSimulator inputLogs={sampleLogs} pipeline={pipeline} />

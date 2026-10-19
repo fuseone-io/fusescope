@@ -22,7 +22,13 @@ function PreviewIntervalSelector({
 				<LogsCountInInterval filter={previewFilter} timeInterval={value} />
 			)}
 			<div>
-				<Select value={value} onSelect={onSelectInterval}>
+				<Select
+					size="small"
+					className="pipelines-interval-select"
+					popupMatchSelectWidth={false}
+					value={value}
+					onSelect={onSelectInterval}
+				>
 					{RelativeDurationOptions.map(({ value, label }) => (
 						<Select.Option key={value + label} value={value}>
 							{label}

@@ -15,9 +15,9 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 	const isEmptyFilter = (filter?.items?.length || 0) < 1;
 
 	return (
-		<div>
-			<div className="logs-filter-preview-header">
-				<div>Filtered Logs Preview</div>
+		<div className="pipelines-preview-box">
+			<div className="pipelines-preview-box__header">
+				<span className="pipelines-preview-box__title">Filtered Logs Preview</span>
 				<PreviewIntervalSelector
 					previewFilter={filter}
 					value={previewTimeInterval}

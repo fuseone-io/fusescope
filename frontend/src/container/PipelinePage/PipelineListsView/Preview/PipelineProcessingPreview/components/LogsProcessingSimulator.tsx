@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button } from 'antd';
+import { Button } from 'components/ui/button';
+import { Play } from 'lucide-react';
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
 
@@ -14,12 +15,13 @@ function LogsProcessingSimulator({
 	const simulate = (): void => setSimulationInput(inputLogs);
 	if (simulationInput !== inputLogs) {
 		return (
-			<div>
+			<div className="fs-ui">
 				<Button
+					size="sm"
 					disabled={(inputLogs?.length || 0) < 1}
-					type="primary"
 					onClick={simulate}
 				>
+					<Play />
 					Simulate Processing
 				</Button>
 			</div>

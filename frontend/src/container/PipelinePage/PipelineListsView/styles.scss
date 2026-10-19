@@ -244,3 +244,17 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 	width: 14px;
 	height: 14px;
 }
+
+// Numbered steps of the processor form.
+.pipeline-order-index--step {
+	margin-top: 2px;
+	border-color: transparent;
+	background: var(--fs-primary-soft);
+	color: var(--fs-primary-ink);
+}
+
+.pipelines-modal .ant-select-selector,
+.pipelines-modal .ant-input,
+.pipelines-modal textarea {
+	border-radius: 8px !important;
+}

@@ -1,8 +1,31 @@
-.logs-filter-preview-header {
+// Bordered box: a sunken header with the interval, then the sample rows.
+.pipelines-preview-box {
+	overflow: hidden;
+	border: 1px solid var(--fs-border);
+	border-radius: 8px;
+	background: var(--fs-card);
+
+	.logs-preview-list-container {
+		border: 0;
+		border-radius: 0;
+	}
+}
+
+.pipelines-preview-box__header {
 	display: flex;
-	justify-content: space-between;
+	flex-wrap: wrap;
 	align-items: center;
-	padding-bottom: 8px;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--fs-border);
+	background: var(--fs-muted);
+}
+
+.pipelines-preview-box__title {
+	color: var(--fs-foreground);
+	font-size: 13px;
+	font-weight: 500;
 }
 
 .logs-filter-preview-content {
@@ -10,9 +33,9 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-
 	width: 100%;
 	height: 12em;
 	overflow: hidden;
-	border: 1px solid color-mix(in srgb, var(--card) 12%, transparent);
+	color: var(--fs-muted-foreground);
+	font-size: 13px;
 }

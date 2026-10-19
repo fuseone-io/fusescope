@@ -1,9 +1,23 @@
+.pipeline-preview {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	font-family: var(--tw-font-sans);
+}
+
 .pipeline-preview-section-header {
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: space-between;
 	align-items: center;
-	padding-bottom: 0.4rem;
-	margin: 1.2rem 0 0.4rem 0;
+	gap: 8px;
+	padding-top: 4px;
+}
+
+.pipeline-preview-section-title {
+	color: var(--fs-foreground);
+	font-size: 13px;
+	font-weight: 600;
 }
 
 .pipeline-preview-logs-container {
@@ -11,9 +25,17 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-
 	width: 100%;
 	height: 12em;
 	overflow: hidden;
-	border: 1px solid color-mix(in srgb, var(--card) 12%, transparent);
+	border: 1px solid var(--fs-border);
+	border-radius: 8px;
+	background: var(--fs-card);
+	color: var(--fs-muted-foreground);
+	font-size: 13px;
+
+	.logs-preview-list-container {
+		border: 0;
+		border-radius: 0;
+	}
 }
