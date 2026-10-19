@@ -1,11 +1,10 @@
-import { Spin } from 'antd';
 import {
+	CircleAlert,
+	CircleCheck,
 	CircleMinus,
-	Loader,
-	SolidCheckCircle2,
-	SolidAlertOctagon,
-	SolidXCircle,
-} from '@signozhq/icons';
+	CircleX,
+	LoaderCircle,
+} from 'lucide-react';
 
 export function getDeploymentStage(value: string): string {
 	switch (value) {
@@ -28,21 +27,19 @@ export function getDeploymentStageIcon(value: string): JSX.Element {
 	switch (value) {
 		case 'in_progress':
 			return (
-				<Spin
+				<LoaderCircle
 					data-testid="deployment-icon-in-progress"
-					indicator={<Loader style={{ fontSize: 15 }} className="animate-spin" />}
+					className="animate-spin"
 				/>
 			);
 		case 'deployed':
-			return (
-				<SolidCheckCircle2 size="md" data-testid="deployment-icon-deployed" />
-			);
+			return <CircleCheck data-testid="deployment-icon-deployed" />;
 		case 'dirty':
-			return <SolidAlertOctagon size="md" data-testid="deployment-icon-dirty" />;
+			return <CircleAlert data-testid="deployment-icon-dirty" />;
 		case 'failed':
-			return <SolidXCircle size="md" data-testid="deployment-icon-failed" />;
+			return <CircleX data-testid="deployment-icon-failed" />;
 		case 'unknown':
-			return <CircleMinus size="md" data-testid="deployment-icon-unknown" />;
+			return <CircleMinus data-testid="deployment-icon-unknown" />;
 		default:
 			return <span />;
 	}

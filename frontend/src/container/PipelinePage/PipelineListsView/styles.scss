@@ -60,6 +60,7 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 		font-weight: 500;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
+		white-space: nowrap;
 
 		&::before {
 			display: none;
@@ -257,4 +258,25 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 .pipelines-modal .ant-input,
 .pipelines-modal textarea {
 	border-radius: 8px !important;
+}
+
+// Change history: versions beside the picked version's details.
+.pipelines-history {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 16px;
+
+	> .pipelines-list__panel {
+		flex: 999 1 640px;
+		min-width: 0;
+	}
+}
+
+.pipelines-history__row {
+	cursor: pointer;
+
+	&--selected > td {
+		background: var(--fs-primary-soft) !important;
+	}
 }
