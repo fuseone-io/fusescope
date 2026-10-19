@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react';
-import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 
+import SegmentedControl from '../SegmentedControl/SegmentedControl';
 import StepsTransitionMetrics from './StepsTransitionMetrics';
 import TopSlowestTraces from './TopSlowestTraces';
 import TopTracesWithErrors from './TopTracesWithErrors';
-
-import './StepsTransitionResults.styles.scss';
 
 export interface StepTransition {
 	value: string;
@@ -33,21 +31,21 @@ function StepsTransitionResults(): JSX.Element {
 	}, [selectedTransition]);
 
 	return (
-		<div className="steps-transition-results">
-			<div className="steps-transition-results__steps-selector">
-				<SignozRadioGroup
-					value={selectedTransition}
-					options={stepTransitions}
-					onChange={setSelectedTransition}
-				/>
-			</div>
-			<div className="steps-transition-results__results">
-				<StepsTransitionMetrics
-					selectedTransition={selectedTransition}
-					transitions={stepTransitions}
-					startStep={stepAOrder}
-					endStep={stepBOrder}
-				/>
+		<div className="steps-transition-results tw:flex tw:flex-col tw:gap-4">
+			<SegmentedControl
+				label="Step transition"
+				value={selectedTransition}
+				options={stepTransitions}
+				onChange={setSelectedTransition}
+				className="tw:self-start"
+			/>
+			<StepsTransitionMetrics
+				selectedTransition={selectedTransition}
+				transitions={stepTransitions}
+				startStep={stepAOrder}
+				endStep={stepBOrder}
+			/>
+			<div className="tw:grid tw:grid-cols-[repeat(auto-fit,minmax(320px,1fr))] tw:gap-4">
 				<TopSlowestTraces
 					funnelId={funnelId}
 					stepAOrder={stepAOrder}

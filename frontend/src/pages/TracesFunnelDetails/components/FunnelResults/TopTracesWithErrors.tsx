@@ -17,6 +17,7 @@ function TopTracesWithErrors(props: TopTracesWithErrorsProps): JSX.Element {
 			title="Traces with errors"
 			tooltip="A list of the traces with errors in the funnel"
 			useQueryHook={useFunnelErrorTraces}
+			markErrors
 		/>
 	);
 }

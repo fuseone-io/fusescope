@@ -1,8 +1,6 @@
-import SignozModal from 'components/SignozModal/SignozModal';
-import { Trash2, X } from '@signozhq/icons';
+import { Trash2 } from 'lucide-react';
+import FunnelDialog from 'pages/TracesFunnels/components/FunnelDialog/FunnelDialog';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-
-import './DeleteFunnelStep.styles.scss';
 
 interface DeleteFunnelStepProps {
 	isOpen: boolean;
@@ -23,33 +21,19 @@ function DeleteFunnelStep({
 	};
 
 	return (
-		<SignozModal
+		<FunnelDialog
 			open={isOpen}
 			title="Delete this step"
-			width={390}
 			onCancel={onClose}
-			rootClassName="funnel-modal delete-funnel-modal"
-			cancelText="Cancel"
-			okText="Delete Step"
-			okButtonProps={{
-				icon: <Trash2 size={14} />,
-				type: 'primary',
-				className: 'funnel-modal__ok-btn',
+			className="tw:max-w-[390px]"
+			description="Deleting this step would stop further analytics using this step of the funnel."
+			confirm={{
+				label: 'Delete Step',
+				icon: <Trash2 className="tw:size-3.5" />,
 				onClick: handleStepRemoval,
+				destructive: true,
 			}}
-			cancelButtonProps={{
-				icon: <X size={14} />,
-				type: 'text',
-				className: 'funnel-modal__cancel-btn',
-				onClick: onClose,
-			}}
-			destroyOnClose
-		>
-			<div className="delete-funnel-modal-content">
-				Deleting this step would stop further analytics using this step of the
-				funnel.
-			</div>
-		</SignozModal>
+		/>
 	);
 }
 

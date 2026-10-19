@@ -1,15 +1,16 @@
 import { useIsMutating } from 'react-query';
-import { Button, Skeleton } from 'antd';
+import { Button } from 'components/ui/button';
+import { Skeleton } from 'components/ui/skeleton';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { Check, Cone } from '@signozhq/icons';
+import { Check, Funnel, LoaderCircle } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-
-import './StepsFooter.styles.scss';
 
 interface StepsFooterProps {
 	stepsCount: number;
 	isSaving: boolean;
 }
+
+const WARNING = 'tw:text-warning-ink tw:dark:text-warning';
 
 function ValidTracesCount(): JSX.Element {
 	const {
@@ -26,32 +27,27 @@ function ValidTracesCount(): JSX.Element {
 	]);
 
 	if (hasAllEmptyStepFields) {
-		return (
-			<span className="steps-footer__valid-traces">No service / span names</span>
-		);
+		return <span>No service / span names</span>;
 	}
 
 	if (hasIncompleteStepFields) {
-		return (
-			<span className="steps-footer__valid-traces">
-				Missing service / span names
-			</span>
-		);
+		return <span className={WARNING}>Missing service / span names</span>;
 	}
 
 	if (isValidateStepsLoading || isFunnelUpdateMutating) {
-		return <Skeleton.Button size="small" />;
-	}
-
-	if (validTracesCount === 0) {
 		return (
-			<span className="steps-footer__valid-traces steps-footer__valid-traces--none">
-				No valid traces found
-			</span>
+			<Skeleton
+				data-testid="valid-traces-loading"
+				className="tw:h-4 tw:w-24 tw:bg-muted"
+			/>
 		);
 	}
 
-	return <span className="steps-footer__valid-traces">Valid traces found</span>;
+	if (validTracesCount === 0) {
+		return <span className={WARNING}>No valid traces found</span>;
+	}
+
+	return <span>Valid traces found</span>;
 }
 
 function StepsFooter({ stepsCount, isSaving }: StepsFooterProps): JSX.Element {
@@ -59,25 +55,23 @@ function StepsFooter({ stepsCount, isSaving }: StepsFooterProps): JSX.Element {
 		useFunnelContext();
 
 	return (
-		<div className="steps-footer">
-			<div className="steps-footer__left">
-				<Cone className="funnel-icon" size={14} />
-				<span>{stepsCount} steps</span>
-				<span>·</span>
+		<div className="steps-footer fs-ui tw:flex tw:flex-none tw:flex-wrap tw:items-center tw:justify-between tw:gap-2 tw:border-t tw:border-border tw:bg-surface-raised tw:px-4 tw:py-2.5 tw:font-sans">
+			<span className="tw:flex tw:items-center tw:gap-1.5 tw:text-xs tw:text-muted-foreground">
+				<Funnel aria-hidden="true" className="tw:size-3.5" />
+				<span className="tw:tabular-nums">{stepsCount} steps</span>
+				<span aria-hidden="true">·</span>
 				<ValidTracesCount />
-			</div>
-			<div className="steps-footer__right">
-				<Button
-					disabled={hasIncompleteStepFields || !hasUnsavedChanges}
-					onClick={handleSaveFunnel}
-					type="primary"
-					className="steps-footer__button steps-footer__button--run"
-					icon={<Check size={14} />}
-					loading={isSaving}
-				>
-					Save funnel
-				</Button>
-			</div>
+			</span>
+			<Button
+				type="button"
+				size="sm"
+				disabled={hasIncompleteStepFields || !hasUnsavedChanges || isSaving}
+				onClick={handleSaveFunnel}
+				aria-busy={isSaving || undefined}
+			>
+				{isSaving ? <LoaderCircle className="tw:animate-spin" /> : <Check />}
+				<span>Save funnel</span>
+			</Button>
 		</div>
 	);
 }

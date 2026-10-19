@@ -1,13 +1,12 @@
 .traces-funnel-details {
 	display: flex;
 	height: 100%;
+	min-height: 0;
 
 	&__steps-config {
 		flex-shrink: 0;
-		width: 600px;
-		border-right: 1px solid var(--l1-border);
-		// Positioning context for the absolute .steps-footer.
-		position: relative;
+		width: 480px;
+		border-right: 1px solid var(--fs-border);
 		display: flex;
 		flex-direction: column;
 
@@ -20,12 +19,10 @@
 			flex-direction: column;
 		}
 	}
-	&__steps-results {
-		width: 100%;
-		overflow-y: auto;
 
-		&::-webkit-scrollbar {
-			width: 0.1rem;
-		}
+	&__steps-results {
+		flex: 1;
+		min-width: 0;
+		overflow-y: auto;
 	}
 }

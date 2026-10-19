@@ -10,7 +10,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FunnelStepData } from 'types/api/traceFunnels';
 
 import FunnelTable from './FunnelTable';
-import { topTracesTableColumns } from './utils';
+import { TopTraceRow } from './types';
 
 interface FunnelTopTracesTableProps {
 	funnelId: string;
@@ -26,6 +26,7 @@ interface FunnelTopTracesTableProps {
 		Error
 	>;
 	steps: FunnelStepData[];
+	markErrors?: boolean;
 }
 
 function FunnelTopTracesTable({
@@ -36,6 +37,7 @@ function FunnelTopTracesTable({
 	tooltip,
 	steps,
 	useQueryHook,
+	markErrors,
 }: FunnelTopTracesTableProps): JSX.Element {
 	const { startTime, endTime } = useFunnelContext();
 	const payload = useMemo(
@@ -55,7 +57,7 @@ function FunnelTopTracesTable({
 		isFetching,
 	} = useQueryHook(funnelId, payload);
 
-	const data = useMemo(() => {
+	const data = useMemo((): TopTraceRow[] => {
 		if (!response?.payload?.data) {
 			return [];
 		}
@@ -70,9 +72,9 @@ function FunnelTopTracesTable({
 		<FunnelTable
 			title={title}
 			tooltip={tooltip}
-			columns={topTracesTableColumns}
 			data={data}
 			loading={isLoading || isFetching}
+			markErrors={markErrors}
 		/>
 	);
 }

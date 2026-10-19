@@ -1,0 +1,22 @@
+// Lets the shared time picker shrink to the configuration column.
+.funnel-steps-time-picker {
+	min-width: 0;
+
+	.date-time-selector,
+	.date-time-selector form,
+	.date-time-selector form > div,
+	.custom-time-picker {
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	.timeSelection-input {
+		min-width: 0;
+
+		input {
+			width: auto;
+			min-width: 0;
+			flex: 1;
+		}
+	}
+}

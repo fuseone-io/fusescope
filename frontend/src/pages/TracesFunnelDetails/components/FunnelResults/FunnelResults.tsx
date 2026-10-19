@@ -8,8 +8,6 @@ import FunnelGraph from './FunnelGraph';
 import OverallMetrics from './OverallMetrics';
 import StepsTransitionResults from './StepsTransitionResults';
 
-import './FunnelResults.styles.scss';
-
 function FunnelResults(): JSX.Element {
 	const {
 		validTracesCount,
@@ -38,7 +36,11 @@ function FunnelResults(): JSX.Element {
 	}
 
 	if (isValidateStepsLoading || isFunnelUpdateMutating) {
-		return <Spinner size="large" />;
+		return (
+			<div className="tw:flex tw:h-full tw:items-center tw:justify-center">
+				<Spinner size="large" />
+			</div>
+		);
 	}
 
 	if (validTracesCount === 0) {
@@ -51,7 +53,7 @@ function FunnelResults(): JSX.Element {
 	}
 
 	return (
-		<div className="funnel-results">
+		<div className="funnel-results tw:flex tw:flex-col tw:gap-4">
 			<OverallMetrics />
 			<FunnelGraph />
 			<StepsTransitionResults />
