@@ -3,7 +3,7 @@
 	background: var(--fs-card);
 	border: 1px solid var(--fs-border);
 	border-radius: 12px;
-	box-shadow: 0 12px 32px rgba(10, 22, 40, 0.18);
+	box-shadow: var(--fs-menu-shadow);
 	overflow: hidden;
 
 	// Inner div fills the Rnd-controlled size

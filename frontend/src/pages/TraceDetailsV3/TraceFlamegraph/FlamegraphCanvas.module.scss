@@ -36,7 +36,7 @@
 	background-color: var(--fs-popover);
 	padding: 8px 12px;
 	border-radius: 8px;
-	box-shadow: 0 8px 24px rgba(10, 22, 40, 0.16);
+	box-shadow: var(--fs-menu-shadow);
 	border: 1px solid var(--fs-border);
 	color: var(--fs-popover-foreground);
 	font-family: var(--tw-font-sans);
