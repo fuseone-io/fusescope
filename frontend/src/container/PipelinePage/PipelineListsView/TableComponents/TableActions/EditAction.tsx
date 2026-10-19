@@ -1,29 +1,20 @@
-import { PencilLine } from '@signozhq/icons';
-import { iconStyle, smallIconStyle } from '../../config';
+import { PencilLine } from 'lucide-react';
+
+import TableIconAction from './TableIconAction';
 
 function EditAction({
 	isPipelineAction,
 	editAction,
 }: EditActionProps): JSX.Element {
-	if (isPipelineAction) {
-		return (
-			<PencilLine
-				size="lg"
-				style={iconStyle}
-				onClick={editAction}
-				data-testid="pipeline-edit-action"
-			/>
-		);
-	}
 	return (
-		<span key="edit-action">
-			<PencilLine
-				size="lg"
-				style={smallIconStyle}
-				onClick={editAction}
-				data-testid="pipeline-edit-action"
-			/>
-		</span>
+		<TableIconAction
+			label={isPipelineAction ? 'Edit pipeline' : 'Edit processor'}
+			small={!isPipelineAction}
+			onClick={editAction}
+			testId="pipeline-edit-action"
+		>
+			<PencilLine />
+		</TableIconAction>
 	);
 }
 

@@ -1,10 +1,20 @@
+// Each filter condition as a mono chip.
 .pipeline-filter-preview-condition {
-	padding: 0 0.2em;
+	display: inline-flex;
+	align-items: center;
+	height: 22px;
+	padding: 0 8px;
+	border: 1px solid var(--fs-border);
+	border-radius: 4px;
+	background: var(--fs-muted);
+	color: var(--fs-foreground);
+	font-family: var(--tw-font-mono);
+	font-size: 11px;
+	white-space: nowrap;
 }
 
 .pipeline-filter-preview-container {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.4em;
-	font-size: 0.75rem;
+	gap: 4px;
 }

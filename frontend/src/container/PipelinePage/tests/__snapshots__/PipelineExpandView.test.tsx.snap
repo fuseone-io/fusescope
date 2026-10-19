@@ -49,6 +49,10 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                   <col
                     style="width: 150px;"
                   />
+                  <col />
+                  <col
+                    style="width: 160px;"
+                  />
                 </colgroup>
                 <tbody
                   class="ant-table-tbody"
@@ -63,22 +67,9 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_u1hg9_1"
-                        data-base-ui-tooltip-trigger=""
-                        data-color="primary"
-                        data-single-char="true"
-                        data-slot="badge"
-                        data-text-overflow="ellipsis"
-                        data-text-transform="uppercase"
-                        data-variant="solid"
-                        id="base-ui-:r1:"
+                        class="pipeline-order-index pipeline-order-index--small"
                       >
-                        <span
-                          class="_badge__label_u1hg9_133"
-                          data-slot="badge-label"
-                        >
-                          1
-                        </span>
+                        1
                       </span>
                     </td>
                     <td
@@ -91,6 +82,16 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                         grok use common asd
                       </div>
                     </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
+                    >
+                      <span
+                        class="pipeline-processor-type"
+                      >
+                        Grok
+                      </span>
+                    </td>
                   </tr>
                   <tr
                     class="ant-table-row ant-table-row-level-0"
@@ -102,22 +103,9 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_u1hg9_1"
-                        data-base-ui-tooltip-trigger=""
-                        data-color="primary"
-                        data-single-char="true"
-                        data-slot="badge"
-                        data-text-overflow="ellipsis"
-                        data-text-transform="uppercase"
-                        data-variant="solid"
-                        id="base-ui-:r3:"
+                        class="pipeline-order-index pipeline-order-index--small"
                       >
-                        <span
-                          class="_badge__label_u1hg9_133"
-                          data-slot="badge-label"
-                        >
-                          2
-                        </span>
+                        2
                       </span>
                     </td>
                     <td
@@ -130,6 +118,16 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                         rename auth
                       </div>
                     </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
+                    >
+                      <span
+                        class="pipeline-processor-type"
+                      >
+                        Move
+                      </span>
+                    </td>
                   </tr>
                   <tr
                     class="ant-table-row ant-table-row-level-0"
@@ -141,22 +139,9 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_u1hg9_1"
-                        data-base-ui-tooltip-trigger=""
-                        data-color="primary"
-                        data-single-char="true"
-                        data-slot="badge"
-                        data-text-overflow="ellipsis"
-                        data-text-transform="uppercase"
-                        data-variant="solid"
-                        id="base-ui-:r5:"
+                        class="pipeline-order-index pipeline-order-index--small"
                       >
-                        <span
-                          class="_badge__label_u1hg9_133"
-                          data-slot="badge-label"
-                        >
-                          3
-                        </span>
+                        3
                       </span>
                     </td>
                     <td
@@ -168,6 +153,16 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       >
                         json parser
                       </div>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
+                    >
+                      <span
+                        class="pipeline-processor-type"
+                      >
+                        Json Parser
+                      </span>
                     </td>
                   </tr>
                 </tbody>

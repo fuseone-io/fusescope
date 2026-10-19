@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { EyeOpen } from '@signozhq/icons';
 import { Modal } from 'antd';
-import { Divider } from '@signozhq/ui/divider';
 import logEvent from 'api/common/logEvent';
 import PipelineProcessingPreview from 'container/PipelinePage/PipelineListsView/Preview/PipelineProcessingPreview';
+import { Eye } from 'lucide-react';
 import { PipelineData } from 'types/api/pipeline/def';
 
-import { iconStyle } from '../../../config';
+import TableIconAction from '../../TableActions/TableIconAction';
 
 function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 	const [previewKey, setPreviewKey] = useState<string | null>(null);
@@ -29,12 +28,13 @@ function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 
 	return (
 		<>
-			<EyeOpen
-				size="xl"
-				style={iconStyle}
+			<TableIconAction
+				label={`Preview ${pipeline.name}`}
 				onClick={onOpenPreview}
-				data-testid="pipeline-preview-action"
-			/>
+				testId="pipeline-preview-action"
+			>
+				<Eye />
+			</TableIconAction>
 			<Modal
 				open={isModalOpen}
 				onCancel={closeModal}
@@ -42,8 +42,8 @@ function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 				width={800}
 				footer={null}
 				title={`Logs processing preview for ${pipeline.name}`}
+				className="pipelines-modal"
 			>
-				<Divider />
 				{isModalOpen && (
 					<PipelineProcessingPreview pipeline={pipeline} key={previewKey} />
 				)}

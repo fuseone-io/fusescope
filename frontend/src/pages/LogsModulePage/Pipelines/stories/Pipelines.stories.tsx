@@ -91,7 +91,9 @@ export const AddPipeline: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await enterEditMode(canvasElement);
 		await userEvent.click(
-			await within(canvasElement).findByText(/add a new pipeline/i),
+			await within(canvasElement).findByRole('button', {
+				name: /add a new pipeline/i,
+			}),
 		);
 		await screen.findByText(/create new pipeline/i);
 	},

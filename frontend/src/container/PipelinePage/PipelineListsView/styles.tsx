@@ -18,7 +18,7 @@ export const FooterButton = styled(Button)`
 
 export const IconListStyle = styled.div`
 	display: flex;
-	gap: 1rem;
+	gap: 2px;
 	justify-content: flex-end;
 `;
 
@@ -76,15 +76,12 @@ export const AlertModalTitle = styled.h1`
 	line-height: 1rem;
 `;
 
-export const Container = styled.div`
-	margin-top: 3rem;
-`;
-
 export const LastActionColumn = styled.div`
 	display: flex;
 	justify-content: center;
-	gap: 1.25rem;
+	gap: 0.625rem;
 	align-items: center;
+	color: var(--fs-subtle-foreground);
 `;
 
 export const ModalTitle = styled(Typography.Title)`
@@ -98,20 +95,4 @@ export const ModalButtonWrapper = styled.div`
 	display: flex;
 	flex-direction: row-reverse;
 	gap: 0.625rem;
-`;
-
-export const ModeAndConfigWrapper = styled.div`
-	display: flex;
-	gap: 0.5rem;
-	justify-content: flex-end;
-	color: ${themeColors.gamboge};
-	margin: 0.125rem;
-	padding: 0.313rem;
-`;
-
-export const SaveConfigWrapper = styled.div`
-	display: flex;
-	justify-content: flex-end;
-	gap: 0.938rem;
-	margin-top: 1.25rem;
 `;
