@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import usePersistedFiltersVisibility from 'components/QuickFilters/hooks/usePersistedFiltersVisibility';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
@@ -90,7 +92,9 @@ function Explorer(): JSX.Element {
 	);
 
 	const [warning, setWarning] = useState<Warning | undefined>();
-	const [isOpen, setOpen] = useState<boolean>(true);
+	const [isOpen, toggleFilters] = usePersistedFiltersVisibility(
+		LOCALSTORAGE.SHOW_LLM_QUICK_FILTERS,
+	);
 
 	const { startUnixMilli, endUnixMilli } = useSignalFieldApis();
 	// existingQuery is left unset so related values auto-extract from the current query
@@ -189,7 +193,7 @@ function Explorer(): JSX.Element {
 				className="trace-explorer-page"
 				testId="llm-observability-explorer"
 				showFilters={isOpen}
-				onToggleFilters={(): void => setOpen(!isOpen)}
+				onToggleFilters={toggleFilters}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
 					source: QuickFiltersSource.AI_OBSERVABILITY,
@@ -202,7 +206,7 @@ function Explorer(): JSX.Element {
 						<div className="llm-explorer-toolbar">
 							<LeftToolbarActions
 								showFilter={isOpen}
-								handleFilterVisibilityChange={(): void => setOpen(!isOpen)}
+								handleFilterVisibilityChange={toggleFilters}
 								items={TOOLBAR_VIEWS}
 								selectedView={selectedView}
 								onChangeSelectedView={handleChangeSelectedView}

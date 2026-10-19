@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import usePersistedFiltersVisibility from 'components/QuickFilters/hooks/usePersistedFiltersVisibility';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
@@ -120,7 +121,9 @@ function TracesExplorer(): JSX.Element {
 	);
 
 	const [warning, setWarning] = useState<Warning | undefined>();
-	const [isOpen, setOpen] = useState<boolean>(true);
+	const [isOpen, toggleFilters] = usePersistedFiltersVisibility(
+		LOCALSTORAGE.SHOW_TRACES_QUICK_FILTERS,
+	);
 	const [viewActionsTarget, setViewActionsTarget] =
 		useState<HTMLDivElement | null>(null);
 
@@ -290,7 +293,7 @@ function TracesExplorer(): JSX.Element {
 			<QuickFiltersLayout
 				className={cx('trace-explorer-page', explorerChrome.explorerChrome)}
 				showFilters={isOpen}
-				onToggleFilters={(): void => setOpen(!isOpen)}
+				onToggleFilters={toggleFilters}
 				savedViewProps={{ source: SavedviewtypesSourceDTO.traces }}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
@@ -322,7 +325,7 @@ function TracesExplorer(): JSX.Element {
 					<div className="trace-explorer-view-bar">
 						<LeftToolbarActions
 							showFilter={isOpen}
-							handleFilterVisibilityChange={(): void => setOpen(!isOpen)}
+							handleFilterVisibilityChange={toggleFilters}
 							items={TOOLBAR_VIEWS}
 							selectedView={selectedView}
 							onChangeSelectedView={handleChangeSelectedView}
