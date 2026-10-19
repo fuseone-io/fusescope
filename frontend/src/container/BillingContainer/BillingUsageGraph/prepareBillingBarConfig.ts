@@ -1,4 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
@@ -8,7 +9,7 @@ import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 const BILLING_SERIES_COLORS = [
 	Color.BG_FOREST_300,
-	Color.BG_ROBIN_500,
+	FsChartColor.BG_ROBIN_500,
 	Color.BG_SAKURA_500,
 ];
 

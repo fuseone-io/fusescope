@@ -1,4 +1,4 @@
-import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import uPlot from 'uplot';
 
 import { HeatmapYAxis } from './types';
@@ -47,7 +47,7 @@ export function createHoverOverlay(isDarkMode: boolean): HeatmapHoverOverlay {
 	container.setAttribute('data-testid', 'heatmap-hover-overlay');
 
 	const dimColor = `${
-		isDarkMode ? Color.BG_INK_500 : Color.BG_VANILLA_100
+		isDarkMode ? FsChartColor.BG_INK_500 : FsChartColor.BG_VANILLA_100
 	}${DIM_ALPHA}`;
 	const dims = Array.from({ length: 4 }, () => {
 		const dim = createOverlayElement();
@@ -58,7 +58,7 @@ export function createHoverOverlay(isDarkMode: boolean): HeatmapHoverOverlay {
 
 	const highlight = createOverlayElement();
 	highlight.style.border = `${HIGHLIGHT_BORDER_WIDTH}px solid ${
-		isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_300
+		isDarkMode ? FsChartColor.BG_VANILLA_100 : FsChartColor.BG_INK_300
 	}`;
 	highlight.style.boxSizing = 'border-box';
 	container.appendChild(highlight);

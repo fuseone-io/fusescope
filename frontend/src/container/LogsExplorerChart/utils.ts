@@ -1,4 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import { colors } from 'lib/getRandomColor';
 
 // Function to determine if a color is "red-like" based on its RGB values
@@ -24,11 +25,11 @@ const SEVERITY_VARIANT_COLORS: Record<string, string> = {
 	dbg: Color.BG_AQUA_300,
 	Dbg: Color.BG_AQUA_200,
 
-	INFO: Color.BG_ROBIN_600,
-	Info: Color.BG_ROBIN_500,
-	info: Color.BG_ROBIN_400,
-	Information: Color.BG_ROBIN_300,
-	information: Color.BG_ROBIN_200,
+	INFO: FsChartColor.BG_ROBIN_600,
+	Info: FsChartColor.BG_ROBIN_500,
+	info: FsChartColor.BG_ROBIN_400,
+	Information: FsChartColor.BG_ROBIN_300,
+	information: FsChartColor.BG_ROBIN_200,
 
 	WARN: Color.BG_AMBER_600,
 	Warn: Color.BG_AMBER_500,
@@ -69,7 +70,7 @@ export function getSeverityColor(severityText: string): string {
 		return variantColor;
 	}
 
-	return Color.BG_ROBIN_500; // Default fallback
+	return FsChartColor.BG_ROBIN_500; // Default fallback
 }
 
 export function getColorsForSeverityLabels(
@@ -79,7 +80,7 @@ export function getColorsForSeverityLabels(
 	const trimmed = label.trim();
 
 	if (!trimmed) {
-		return Color.BG_VANILLA_400; // Default color for empty labels
+		return FsChartColor.BG_VANILLA_400; // Default color for empty labels
 	}
 
 	const variantColor = SEVERITY_VARIANT_COLORS[trimmed];
@@ -102,7 +103,7 @@ export function getColorsForSeverityLabels(
 		lowerCaseLabel.includes(`{severity_text="info"}`) ||
 		lowerCaseLabel.includes(`{severity_text=""}`)
 	) {
-		return Color.BG_ROBIN_500;
+		return FsChartColor.BG_ROBIN_500;
 	}
 
 	if (lowerCaseLabel.includes(`{severity_text="warn"}`)) {
@@ -119,6 +120,6 @@ export function getColorsForSeverityLabels(
 
 	return (
 		SAFE_FALLBACK_COLORS[index % SAFE_FALLBACK_COLORS.length] ||
-		Color.BG_VANILLA_400
+		FsChartColor.BG_VANILLA_400
 	);
 }

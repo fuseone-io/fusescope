@@ -1,4 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import { RuletypesAlertStateDTO } from 'api/generated/services/fuseScope.schemas';
 
 export const ALERT_STATUS: Record<RuletypesAlertStateDTO, number> & {
@@ -24,8 +25,8 @@ export const STATE_VS_COLOR: {
 		1: { stroke: Color.BG_FOREST_500, fill: Color.BG_FOREST_500 },
 		2: { stroke: Color.BG_AMBER_500, fill: Color.BG_AMBER_500 },
 		3: { stroke: Color.BG_SIENNA_400, fill: Color.BG_SIENNA_400 },
-		4: { stroke: Color.BG_VANILLA_400, fill: Color.BG_VANILLA_400 },
-		5: { stroke: Color.BG_INK_100, fill: Color.BG_INK_100 },
+		4: { stroke: FsChartColor.BG_VANILLA_400, fill: FsChartColor.BG_VANILLA_400 },
+		5: { stroke: FsChartColor.BG_INK_100, fill: FsChartColor.BG_INK_100 },
 	},
 ];
 

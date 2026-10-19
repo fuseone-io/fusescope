@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import { Button, Skeleton } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
@@ -82,7 +83,7 @@ function GraphView({
 			},
 			axes: [
 				{
-					stroke: isDarkMode ? Color.TEXT_VANILLA_400 : Color.BG_SLATE_400,
+					stroke: isDarkMode ? Color.TEXT_VANILLA_400 : FsChartColor.BG_SLATE_400,
 					grid: {
 						show: false,
 					},
@@ -100,10 +101,12 @@ function GraphView({
 				},
 				{
 					label: metricUnit || '',
-					stroke: isDarkMode ? Color.TEXT_VANILLA_400 : Color.BG_SLATE_400,
+					stroke: isDarkMode ? Color.TEXT_VANILLA_400 : FsChartColor.BG_SLATE_400,
 					grid: {
 						show: true,
-						stroke: isDarkMode ? Color.BG_SLATE_500 : Color.BG_SLATE_200,
+						stroke: isDarkMode
+							? FsChartColor.BG_SLATE_500
+							: FsChartColor.BG_SLATE_200,
 					},
 					values: (_, vals): string[] =>
 						vals.map((v) => formatNumberIntoHumanReadableFormat(v, false)),

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import { Group } from '@visx/group';
 import { Pie } from '@visx/shape';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
@@ -260,7 +260,11 @@ function PiePanelWrapper({
 																	y1={centroidY}
 																	x2={lineEndX}
 																	y2={lineEndY}
-																	stroke={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+																	stroke={
+																		isDarkMode
+																			? FsChartColor.BG_VANILLA_100
+																			: FsChartColor.BG_INK_400
+																	}
 																	strokeWidth={1}
 																/>
 
@@ -270,7 +274,11 @@ function PiePanelWrapper({
 																	y1={lineEndY}
 																	x2={labelX}
 																	y2={labelY}
-																	stroke={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+																	stroke={
+																		isDarkMode
+																			? FsChartColor.BG_VANILLA_100
+																			: FsChartColor.BG_INK_400
+																	}
 																	strokeWidth={1}
 																/>
 
@@ -279,7 +287,11 @@ function PiePanelWrapper({
 																	x={labelX}
 																	y={labelY - 8}
 																	dy=".33em"
-																	fill={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+																	fill={
+																		isDarkMode
+																			? FsChartColor.BG_VANILLA_100
+																			: FsChartColor.BG_INK_400
+																	}
 																	fontSize={10}
 																	textAnchor={textAnchor}
 																	pointerEvents="none"
@@ -292,7 +304,11 @@ function PiePanelWrapper({
 																	x={labelX}
 																	y={labelY + 8}
 																	dy=".33em"
-																	fill={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+																	fill={
+																		isDarkMode
+																			? FsChartColor.BG_VANILLA_100
+																			: FsChartColor.BG_INK_400
+																	}
 																	fontSize={10}
 																	fontWeight="bold"
 																	textAnchor={textAnchor}
@@ -319,7 +335,9 @@ function PiePanelWrapper({
 								<text
 									textAnchor="middle"
 									dominantBaseline="central"
-									fill={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+									fill={
+										isDarkMode ? FsChartColor.BG_VANILLA_100 : FsChartColor.BG_INK_400
+									}
 								>
 									<tspan fontSize={numericFontSize} fontWeight="bold">
 										{numericTotal}
@@ -338,8 +356,12 @@ function PiePanelWrapper({
 								left={tooltipLeft}
 								style={{
 									...tooltipStyles,
-									background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
-									color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400,
+									background: isDarkMode
+										? FsChartColor.BG_INK_400
+										: FsChartColor.BG_VANILLA_100,
+									color: isDarkMode
+										? FsChartColor.BG_VANILLA_100
+										: FsChartColor.BG_INK_400,
 								}}
 								className="piechart-tooltip"
 							>

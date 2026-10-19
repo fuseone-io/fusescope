@@ -1,4 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
+import { FsChartColor } from 'constants/fuseScopeColors';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { prepareBillingBarConfig } from '../prepareBillingBarConfig';
@@ -44,7 +45,7 @@ describe('prepareBillingBarConfig', () => {
 		expect(config.series?.[1]?.label).toBe('Logs');
 		expect(config.series?.[1]?.stroke).toBe(Color.BG_FOREST_300);
 		expect(config.series?.[2]?.label).toBe('Traces');
-		expect(config.series?.[2]?.stroke).toBe(Color.BG_ROBIN_500);
+		expect(config.series?.[2]?.stroke).toBe(FsChartColor.BG_ROBIN_500);
 		expect(config.series?.[3]?.label).toBe('Metrics');
 		expect(config.series?.[3]?.stroke).toBe(Color.BG_SAKURA_500);
 	});
