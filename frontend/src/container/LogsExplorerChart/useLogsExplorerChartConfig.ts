@@ -74,7 +74,7 @@ export function useLogsExplorerChartConfig({
 			);
 
 			const color = isLogsExplorerViews
-				? getColorsForSeverityLabels(label, index)
+				? getColorsForSeverityLabels(label, index, isDarkMode)
 				: colors[index % colors.length] || themeColors.red;
 
 			builder.addSeries({

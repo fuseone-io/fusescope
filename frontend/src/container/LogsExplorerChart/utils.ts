@@ -1,4 +1,9 @@
-import { Color } from '@signozhq/design-tokens';
+import { QueryData } from 'types/api/widgets/getQuery';
+import {
+	NormalizedSeverity,
+	normalizeSeverity,
+	SEVERITY_LEVELS,
+} from 'utils/logSeverity';
 import { FsChartColor } from 'constants/fuseScopeColors';
 import { colors } from 'lib/getRandomColor';
 
@@ -12,70 +17,107 @@ export function isRedLike(hex: string): boolean {
 
 const SAFE_FALLBACK_COLORS = colors.filter((c) => !isRedLike(c));
 
-const SEVERITY_VARIANT_COLORS: Record<string, string> = {
-	TRACE: Color.BG_FOREST_600,
-	Trace: Color.BG_FOREST_500,
-	trace: Color.BG_FOREST_400,
-	trc: Color.BG_FOREST_300,
-	Trc: Color.BG_FOREST_200,
+type Severity = 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
 
-	DEBUG: Color.BG_AQUA_600,
-	Debug: Color.BG_AQUA_500,
-	debug: Color.BG_AQUA_400,
-	dbg: Color.BG_AQUA_300,
-	Dbg: Color.BG_AQUA_200,
-
-	INFO: FsChartColor.BG_ROBIN_600,
-	Info: FsChartColor.BG_ROBIN_500,
-	info: FsChartColor.BG_ROBIN_400,
-	Information: FsChartColor.BG_ROBIN_300,
-	information: FsChartColor.BG_ROBIN_200,
-
-	WARN: Color.BG_AMBER_600,
-	Warn: Color.BG_AMBER_500,
-	warn: Color.BG_AMBER_400,
-	warning: Color.BG_AMBER_300,
-	Warning: Color.BG_AMBER_200,
-	wrn: Color.BG_AMBER_300,
-	Wrn: Color.BG_AMBER_200,
-
-	ERROR: Color.BG_CHERRY_600,
-	Error: Color.BG_CHERRY_500,
-	error: Color.BG_CHERRY_400,
-	err: Color.BG_CHERRY_300,
-	Err: Color.BG_CHERRY_200,
-	ERR: Color.BG_CHERRY_600,
-	fail: Color.BG_CHERRY_400,
-	Fail: Color.BG_CHERRY_300,
-	FAIL: Color.BG_CHERRY_600,
-
-	FATAL: Color.BG_SAKURA_600,
-	Fatal: Color.BG_SAKURA_500,
-	fatal: Color.BG_SAKURA_400,
-	critical: Color.BG_SAKURA_300,
-	Critical: Color.BG_SAKURA_200,
-	CRITICAL: Color.BG_SAKURA_600,
-	crit: Color.BG_SAKURA_300,
-	Crit: Color.BG_SAKURA_200,
-	CRIT: Color.BG_SAKURA_600,
-	panic: Color.BG_SAKURA_400,
-	Panic: Color.BG_SAKURA_300,
-	PANIC: Color.BG_SAKURA_600,
+// The `--fs-*` severity tokens per theme; uPlot needs concrete colours.
+const SEVERITY_PALETTE: Record<'dark' | 'light', Record<Severity, string>> = {
+	dark: {
+		TRACE: '#8e98a8',
+		DEBUG: '#b8bfcc',
+		INFO: '#3d8be0',
+		WARN: '#d97706',
+		ERROR: '#dc2626',
+		FATAL: '#c04fe0',
+	},
+	light: {
+		TRACE: '#64707f',
+		DEBUG: '#4b5563',
+		INFO: '#0f5fb8',
+		WARN: '#d97706',
+		ERROR: '#dc2626',
+		FATAL: '#950fb8',
+	},
 };
 
-// Simple function to get severity color for any component
-export function getSeverityColor(severityText: string): string {
-	const variantColor = SEVERITY_VARIANT_COLORS[severityText.trim()];
-	if (variantColor) {
-		return variantColor;
-	}
+const SEVERITY_VARIANTS: Record<string, Severity> = {
+	TRACE: 'TRACE',
+	Trace: 'TRACE',
+	trace: 'TRACE',
+	trc: 'TRACE',
+	Trc: 'TRACE',
 
-	return FsChartColor.BG_ROBIN_500; // Default fallback
+	DEBUG: 'DEBUG',
+	Debug: 'DEBUG',
+	debug: 'DEBUG',
+	dbg: 'DEBUG',
+	Dbg: 'DEBUG',
+
+	INFO: 'INFO',
+	Info: 'INFO',
+	info: 'INFO',
+	Information: 'INFO',
+	information: 'INFO',
+
+	WARN: 'WARN',
+	Warn: 'WARN',
+	warn: 'WARN',
+	warning: 'WARN',
+	Warning: 'WARN',
+	WARNING: 'WARN',
+	wrn: 'WARN',
+	Wrn: 'WARN',
+
+	ERROR: 'ERROR',
+	Error: 'ERROR',
+	error: 'ERROR',
+	err: 'ERROR',
+	Err: 'ERROR',
+	ERR: 'ERROR',
+	fail: 'ERROR',
+	Fail: 'ERROR',
+	FAIL: 'ERROR',
+
+	FATAL: 'FATAL',
+	Fatal: 'FATAL',
+	fatal: 'FATAL',
+	critical: 'FATAL',
+	Critical: 'FATAL',
+	CRITICAL: 'FATAL',
+	crit: 'FATAL',
+	Crit: 'FATAL',
+	CRIT: 'FATAL',
+	panic: 'FATAL',
+	Panic: 'FATAL',
+	PANIC: 'FATAL',
+};
+
+const LEGACY_LABEL_SEVERITIES: [string, Severity][] = [
+	['{severity_text="trace"}', 'TRACE'],
+	['{severity_text="debug"}', 'DEBUG'],
+	['{severity_text="info"}', 'INFO'],
+	['{severity_text=""}', 'INFO'],
+	['{severity_text="warn"}', 'WARN'],
+	['{severity_text="error"}', 'ERROR'],
+	['{severity_text="fatal"}', 'FATAL'],
+];
+
+function paletteFor(isDarkMode: boolean): Record<Severity, string> {
+	return SEVERITY_PALETTE[isDarkMode ? 'dark' : 'light'];
+}
+
+// Simple function to get severity color for any component
+export function getSeverityColor(
+	severityText: string,
+	isDarkMode = true,
+): string {
+	const severity = SEVERITY_VARIANTS[severityText.trim()];
+	return paletteFor(isDarkMode)[severity ?? 'INFO'];
 }
 
 export function getColorsForSeverityLabels(
 	label: string,
 	index: number,
+	isDarkMode = true,
 ): string {
 	const trimmed = label.trim();
 
@@ -83,43 +125,57 @@ export function getColorsForSeverityLabels(
 		return FsChartColor.BG_VANILLA_400; // Default color for empty labels
 	}
 
-	const variantColor = SEVERITY_VARIANT_COLORS[trimmed];
-	if (variantColor) {
-		return variantColor;
+	const palette = paletteFor(isDarkMode);
+	if (trimmed === 'UNKNOWN') {
+		return FsChartColor.BG_SLATE_50;
 	}
-
-	const lowerCaseLabel = label.toLowerCase();
+	const severity = SEVERITY_VARIANTS[trimmed];
+	if (severity) {
+		return palette[severity];
+	}
 
 	// Fallback to old format for backward compatibility
-	if (lowerCaseLabel.includes(`{severity_text="trace"}`)) {
-		return Color.BG_FOREST_400;
-	}
-
-	if (lowerCaseLabel.includes(`{severity_text="debug"}`)) {
-		return Color.BG_AQUA_500;
-	}
-
-	if (
-		lowerCaseLabel.includes(`{severity_text="info"}`) ||
-		lowerCaseLabel.includes(`{severity_text=""}`)
-	) {
-		return FsChartColor.BG_ROBIN_500;
-	}
-
-	if (lowerCaseLabel.includes(`{severity_text="warn"}`)) {
-		return Color.BG_AMBER_500;
-	}
-
-	if (lowerCaseLabel.includes(`{severity_text="error"}`)) {
-		return Color.BG_CHERRY_500;
-	}
-
-	if (lowerCaseLabel.includes(`{severity_text="fatal"}`)) {
-		return Color.BG_SAKURA_500;
+	const lowerCaseLabel = label.toLowerCase();
+	const legacy = LEGACY_LABEL_SEVERITIES.find(([needle]) =>
+		lowerCaseLabel.includes(needle),
+	);
+	if (legacy) {
+		return palette[legacy[1]];
 	}
 
 	return (
 		SAFE_FALLBACK_COLORS[index % SAFE_FALLBACK_COLORS.length] ||
 		FsChartColor.BG_VANILLA_400
 	);
+}
+
+/**
+ * Regroups series split by `severity_text` (and `severity_number`) into one
+ * series per normalised level, summing every spelling, in severity order.
+ */
+export function groupSeriesBySeverity(series: QueryData[]): QueryData[] {
+	const byLevel = new Map<NormalizedSeverity, Map<number, number>>();
+
+	series.forEach((item) => {
+		const level = normalizeSeverity(
+			Number(item.metric?.severity_number) || 0,
+			item.metric?.severity_text,
+		);
+		const totals = byLevel.get(level) ?? new Map<number, number>();
+		item.values.forEach(([timestamp, value]) => {
+			totals.set(timestamp, (totals.get(timestamp) ?? 0) + (Number(value) || 0));
+		});
+		byLevel.set(level, totals);
+	});
+
+	const template = series[0];
+	return [...SEVERITY_LEVELS, 'UNKNOWN' as const]
+		.filter((level) => byLevel.has(level))
+		.map((level) => ({
+			...template,
+			metric: { severity_text: level },
+			values: [...(byLevel.get(level)?.entries() ?? [])]
+				.sort(([a], [b]) => a - b)
+				.map(([timestamp, total]): [number, string] => [timestamp, String(total)]),
+		}));
 }

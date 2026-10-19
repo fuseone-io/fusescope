@@ -16,6 +16,7 @@ import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import FrequencyLegend from './FrequencyLegend';
 import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
 import { useLogsExplorerChartConfig } from './useLogsExplorerChartConfig';
 
@@ -31,6 +32,7 @@ function LogsExplorerChart({
 	className,
 	isLogsExplorerViews = false,
 	isShowingLiveLogs = false,
+	legendTarget,
 }: LogsExplorerChartProps): JSX.Element {
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
@@ -108,12 +110,16 @@ function LogsExplorerChart({
 					width={dimensions.width}
 					height={dimensions.height}
 					stack={isLogsExplorerViews ? StackMode.Normal : StackMode.None}
-					showLegend={isLabelEnabled}
+					showLegend={isLabelEnabled && !legendTarget}
 					legendConfig={{ position: LegendPosition.BOTTOM }}
 					timezone={timezone}
 					data-testid="logs-frequency-chart"
 					yAxisUnit={Y_AXIS_UNIT}
-				/>
+				>
+					{isLabelEnabled && legendTarget && (
+						<FrequencyLegend config={config} target={legendTarget} />
+					)}
+				</BarChart>
 			)}
 		</div>
 	);
