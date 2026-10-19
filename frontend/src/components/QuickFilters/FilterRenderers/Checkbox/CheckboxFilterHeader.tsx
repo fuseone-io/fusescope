@@ -1,8 +1,12 @@
 import { Typography } from '@signozhq/ui/typography';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 
+import FilterIcon from '../../FilterIcon';
+
 interface CheckboxFilterHeaderProps {
 	title: string;
+	attributeKey?: string;
+	dataType?: string;
 	isOpen: boolean;
 	showClearAll: boolean;
 	onToggleOpen: () => void;
@@ -11,6 +15,8 @@ interface CheckboxFilterHeaderProps {
 
 function CheckboxFilterHeader({
 	title,
+	attributeKey,
+	dataType,
 	isOpen,
 	showClearAll,
 	onToggleOpen,
@@ -23,6 +29,13 @@ function CheckboxFilterHeader({
 					<ChevronDown size={13} cursor="pointer" />
 				) : (
 					<ChevronRight size={13} cursor="pointer" />
+				)}
+				{attributeKey && (
+					<FilterIcon
+						attributeKey={attributeKey}
+						dataType={dataType}
+						className="filter-icon"
+					/>
 				)}
 				<Typography.Text className="title">{title}</Typography.Text>
 			</section>

@@ -173,6 +173,7 @@ export default function CheckboxFilterV2(
 			<CheckboxFilterV2Header
 				title={filter.title}
 				attributeKey={filter.attributeKey.key}
+				dataType={filter.attributeKey.dataType}
 				isOpen={isOpen}
 				actionsClassName={classNames(styles.sectionActions, {
 					[styles.sectionActionsPinned]: isSearchOpen,

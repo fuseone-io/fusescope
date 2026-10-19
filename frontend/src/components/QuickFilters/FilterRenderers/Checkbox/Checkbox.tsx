@@ -98,6 +98,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		<div className="checkbox-filter">
 			<CheckboxFilterHeader
 				title={filter.title}
+				attributeKey={filter.attributeKey.key}
+				dataType={filter.attributeKey.dataType}
 				isOpen={isOpen}
 				showClearAll={!!attributeValues.length}
 				onToggleOpen={onToggleOpen}

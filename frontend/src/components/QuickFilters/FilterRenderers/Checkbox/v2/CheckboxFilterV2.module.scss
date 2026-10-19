@@ -45,7 +45,7 @@
 }
 
 .search {
-	padding: 0 12px 8px 30px;
+	padding: 0 12px 8px 52px;
 
 	--input-background: var(--l2-background);
 	--input-hover-background: var(--l2-background);
@@ -92,7 +92,7 @@
 }
 
 .noData {
-	padding: 4px 12px 4px 30px;
+	padding: 4px 12px 4px 52px;
 	color: var(--fs-subtle-foreground);
 	font-size: 12px;
 }
@@ -100,7 +100,7 @@
 .showMore {
 	display: flex;
 	align-items: center;
-	padding: 2px 12px 2px 22px;
+	padding: 2px 12px 2px 44px;
 }
 
 .showMoreText {

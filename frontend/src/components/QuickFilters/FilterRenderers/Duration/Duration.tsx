@@ -20,6 +20,7 @@ import { v4 as uuid } from 'uuid';
 
 import { clearFilterFromQuery } from '../shared/filterQuery';
 import { SectionActionButton } from '../shared/SectionActionButton/SectionActionButton';
+import FilterIcon from '../../FilterIcon';
 import { DurationSection } from './DurationSection';
 import { FilterType, HandleRunProps, unionTagFilterItems } from './utils';
 
@@ -287,6 +288,11 @@ function Duration({
 					}}
 				>
 					{isOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+					<FilterIcon
+						attributeKey={filter.attributeKey.key}
+						dataType={filter.attributeKey.dataType}
+						className="duration-filter-icon"
+					/>
 					<span className="duration-filter-title">Duration</span>
 					<span className="duration-filter-key">{filter.attributeKey.key}</span>
 					{isOpen && (

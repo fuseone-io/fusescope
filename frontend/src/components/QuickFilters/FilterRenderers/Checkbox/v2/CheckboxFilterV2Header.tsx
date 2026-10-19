@@ -6,12 +6,14 @@ import { ChevronDown, ChevronRight, Search, Undo2 } from '@signozhq/icons';
 import { SectionActionButton } from '../../shared/SectionActionButton/SectionActionButton';
 
 import classNames from 'classnames';
+import FilterIcon from '../../../FilterIcon';
 
 import styles from './CheckboxFilterV2Header.module.scss';
 
 interface CheckboxFilterHeaderProps {
 	title: string;
 	attributeKey?: string;
+	dataType?: string;
 	isOpen: boolean;
 	actionsClassName?: string;
 	resetActionClassName?: string;
@@ -23,6 +25,7 @@ interface CheckboxFilterHeaderProps {
 export function CheckboxFilterV2Header({
 	title,
 	attributeKey,
+	dataType,
 	isOpen,
 	actionsClassName,
 	resetActionClassName,
@@ -63,6 +66,13 @@ export function CheckboxFilterV2Header({
 					<ChevronDown size={13} cursor="pointer" />
 				) : (
 					<ChevronRight size={13} cursor="pointer" />
+				)}
+				{attributeKey && (
+					<FilterIcon
+						attributeKey={attributeKey}
+						dataType={dataType}
+						className={styles.icon}
+					/>
 				)}
 				<Tooltip title={isTitleTruncated ? title : undefined}>{titleText}</Tooltip>
 				{attributeKey && (
