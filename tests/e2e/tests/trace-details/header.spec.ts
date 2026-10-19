@@ -5,16 +5,17 @@ import {
 	seedTracesViaSeeder,
 } from '../../helpers/trace-details';
 
-// §1 header — the Analytics FloatingPanel. The action cluster (Analytics button
-// + options menu) only renders once trace data is loaded, which gotoTraceUntilLoaded
-// guarantees by waiting for the root waterfall row.
+// §1 header — the Analytics sheet. The action cluster (Analytics button
+// + options menu, shown in the app header) only renders once trace data is
+// loaded, which gotoTraceUntilLoaded guarantees by waiting for the root
+// waterfall row.
 //
 // Not covered here: subheader summary (presentational → unit test), colour-by /
 // options menu / trace-id copy (unit), Noz button (feature-flagged, lives in the
-// filter bar). Resize is deferred — react-rnd's resize handles have no stable hook.
+// filter bar).
 const trace = loadLargeTrace();
 
-test.describe('Trace details — header analytics panel', () => {
+test.describe('Trace details — header analytics sheet', () => {
 	test.beforeAll(async ({ playwright }) => {
 		const request = await playwright.request.newContext();
 		await seedTracesViaSeeder(request, trace.spans);
@@ -29,29 +30,17 @@ test.describe('Trace details — header analytics panel', () => {
 		);
 	});
 
-	test('TC-01 the analytics panel can be dragged by its header', async ({
+	test('TC-01 the analytics sheet opens with its tabs and closes', async ({
 		authedPage: page,
 	}) => {
 		await page.getByRole('button', { name: 'Analytics' }).click();
-		const panel = page.getByTestId('trace-analytics-panel');
-		await expect(panel).toBeVisible();
+		const sheet = page.getByRole('dialog', { name: 'Analytics' });
+		await expect(sheet).toBeVisible();
+		await expect(sheet.getByTestId('trace-analytics-panel')).toBeVisible();
+		await expect(sheet.getByRole('tab', { name: '% exec time' })).toBeVisible();
+		await expect(sheet.getByRole('tab', { name: 'Spans' })).toBeVisible();
 
-		const zero = { x: 0, y: 0, width: 0, height: 0 };
-		const before = (await panel.boundingBox()) ?? zero;
-		const hb =
-			(await page.locator('.floating-panel__drag-handle').boundingBox()) ?? zero;
-
-		// Drag the header left + down.
-		await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
-		await page.mouse.down();
-		await page.mouse.move(hb.x + hb.width / 2 - 120, hb.y + hb.height / 2 + 60, {
-			steps: 8,
-		});
-		await page.mouse.up();
-
-		// Panel shifted left.
-		await expect
-			.poll(async () => Math.round(((await panel.boundingBox()) ?? before).x))
-			.toBeLessThan(Math.round(before.x));
+		await sheet.getByRole('button', { name: 'Close' }).click();
+		await expect(sheet).toBeHidden();
 	});
 });
