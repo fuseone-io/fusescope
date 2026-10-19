@@ -2,6 +2,7 @@ import { useLocation } from 'react-router-dom';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 
 import GlobalTimeControls from './components/GlobalTimeControls';
+import { HeaderPageActionsSlot } from './components/HeaderPageActions';
 import HeaderBreadcrumb from './components/HeaderBreadcrumb';
 import SearchTrigger from './components/SearchTrigger';
 import SidebarToggle from './components/SidebarToggle';
@@ -25,6 +26,7 @@ function AppHeader(): JSX.Element {
 			<div className="fs-ui tw:flex tw:shrink tw:items-center tw:font-sans tw:md:w-80 tw:md:min-w-48">
 				<SearchTrigger />
 			</div>
+			<HeaderPageActionsSlot />
 			{showsGlobalTimePicker(pathname) && <GlobalTimeControls />}
 			{showsHeaderActionsOnly(pathname) && (
 				<div className={styles.timeControls} data-testid="app-header-actions">
