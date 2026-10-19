@@ -14,6 +14,7 @@ The parts a new-UI page is built from. Built on `components/ui` and the
 | `HeaderBandLayout` + `CompactPageHeader` | Explorer-style pages without route tabs (`ModuleTabsLayout` has them): the same full-width band with a one-row header above full-width content. `bounded` hands the remaining viewport height to panes that scroll on their own. |
 | `NumberedTablePagination` | Server-side paging: visible range, numbered pages and a page-size menu. |
 | `RailToggleButton` | Collapses a filter rail, or reopens it from the toolbar. |
+| `UserAvatarCell` | A user in a table cell: their initial in a circle, then their email. |
 
 ## `fs-ui` scope
 
@@ -26,5 +27,7 @@ legacy chart or table in a panel body renders as before.
 
 - Services list (`pages/Services/components/ServicesList`)
 - Service detail (`pages/MetricsApplication`, `container/MetricsApplication`)
+- Traces funnels and funnel detail (`pages/TracesFunnels`, `pages/TracesFunnelDetails`)
+- Saved views of every explorer (`pages/SaveView`)
 
 Stories: `Components/Page Template` (light and dark).
