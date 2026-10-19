@@ -1,5 +1,3 @@
-import { blue } from '@ant-design/colors';
-import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Space } from 'antd';
 import { FontSize } from 'container/OptionsMenu/types';
 import { Info } from '@signozhq/icons';
@@ -47,14 +45,12 @@ export const RawLogViewContainer = styled(Row)<{
 		$isActiveLog
 			? getActiveLogBackground($isActiveLog, $isDarkMode, $logType)
 			: !$isReadOnly
-				? `&:hover { ${getActiveLogBackground(true, $isDarkMode, $logType)} }`
+				? `&:hover { background-color: var(--fs-muted); }`
 				: ''}
 
-	${({ $isHightlightedLog, $isDarkMode }): string =>
+	${({ $isHightlightedLog }): string =>
 		$isHightlightedLog
-			? `background-color: ${
-					$isDarkMode ? Color.BG_ROBIN_600 : Color.BG_VANILLA_400
-				};
+			? `background-color: var(--fs-primary-soft);
 			  transition: background-color 2s ease-in;`
 			: ''}
 
@@ -72,20 +68,18 @@ export const InfoIconWrapper = styled(Info)`
 `;
 
 export const ExpandIconWrapper = styled(Col)`
-	color: ${blue[6]};
+	color: var(--fs-primary);
 	padding: 0.25rem 0.375rem;
 	cursor: pointer;
 `;
 
 export const RawLogContent = styled.div<RawLogContentProps>`
 	margin-bottom: 0;
-	font-family: 'SF Mono', monospace;
-	font-family: 'Geist Mono';
-	letter-spacing: -0.07px;
+	font-family: var(--tw-font-mono);
+	letter-spacing: 0;
 	padding: 4px;
 	text-align: left;
-	color: ${({ $isDarkMode }): string =>
-		$isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400};
+	color: var(--fs-foreground);
 
 	${({ $isTextOverflowEllipsisDisabled, linesPerRow }): string =>
 		$isTextOverflowEllipsisDisabled

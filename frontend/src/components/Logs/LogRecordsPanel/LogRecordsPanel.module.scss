@@ -1,0 +1,78 @@
+// The log records sit in one raised panel, like the traces list.
+.panel {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
+
+	:global(.ant-card-body) {
+		background: var(--fs-card);
+	}
+}
+
+// Raw and default formats render each record as a row in this card.
+.rows {
+	width: 100%;
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	font-family: var(--tw-font-mono);
+	font-size: 12px;
+}
+
+.logsTable {
+	--tanstack-table-row-height: 30px;
+	--tanstack-table-header-height: 34px;
+
+	--tanstack-cell-padding-top-override: 0;
+	--tanstack-cell-padding-bottom-override: 0;
+	--tanstack-cell-padding-right-override: 12px;
+	--tanstack-cell-padding-left-override: 12px;
+	--tanstack-cell-header-padding-left-override: 8px;
+
+	--tanstack-table-cell-bg: var(--fs-card);
+	--tanstack-table-cell-color: var(--fs-foreground);
+	--tanstack-table-header-cell-bg: var(--fs-muted);
+	--tanstack-table-header-cell-color: var(--fs-muted-foreground);
+	--tanstack-table-header-border-color: var(--fs-border);
+	--tanstack-table-row-hover-bg: var(--fs-muted);
+	--tanstack-table-header-cell-actions-border-color: var(--fs-border);
+
+	font-family: var(--tw-font-mono);
+
+	th {
+		border-bottom: 1px solid var(--fs-border) !important;
+		font-family: var(--tw-font-sans);
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	td {
+		border-bottom: 1px solid var(--fs-border);
+	}
+
+	// The severity colour runs the full height of the row, flush left.
+	td:first-child {
+		padding: 0 !important;
+		vertical-align: stretch;
+	}
+
+	td:first-child :global(.log-state-indicator) {
+		height: 100%;
+		padding: 0;
+	}
+
+	td:first-child :global(.log-state-indicator .line) {
+		width: 4px;
+		min-height: var(--tanstack-table-row-height);
+		margin: 0;
+		border-radius: 0;
+	}
+}

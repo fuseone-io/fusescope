@@ -17,17 +17,13 @@ export const Container = styled(Card)<{
 	$logType: string;
 	fontSize: FontSize;
 }>`
+	position: relative;
 	width: 100% !important;
-	margin-bottom: 0.3rem;
-
-	${({ fontSize }): string =>
-		fontSize === FontSize.SMALL
-			? `margin-bottom:0.1rem;`
-			: fontSize === FontSize.MEDIUM
-				? `margin-bottom: 0.2rem;`
-				: fontSize === FontSize.LARGE
-					? `margin-bottom:0.3rem;`
-					: ``}
+	margin: 0;
+	border: 0;
+	border-bottom: 1px solid var(--fs-border);
+	border-radius: 0;
+	background: transparent;
 	cursor: pointer;
 
 	&:not(:hover) .log-line-action-buttons {
@@ -35,24 +31,24 @@ export const Container = styled(Card)<{
 	}
 
 	.ant-card-body {
-		padding: 0.3rem 0.6rem;
+		border-radius: 0;
+		padding: 4px 16px 4px 0;
 
 		${({ fontSize }): string =>
 			fontSize === FontSize.SMALL
-				? `padding:0.1rem 0.6rem;`
-				: fontSize === FontSize.MEDIUM
-					? `padding: 0.2rem 0.6rem;`
-					: fontSize === FontSize.LARGE
-						? `padding:0.3rem 0.6rem;`
-						: ``}
-
-		${({ $isActiveLog, $isDarkMode, $logType }): string =>
-			getActiveLogBackground($isActiveLog, $isDarkMode, $logType)}
+				? `padding: 2px 16px 2px 0;`
+				: fontSize === FontSize.LARGE
+					? `padding: 6px 16px 6px 0;`
+					: ``}
 	}
 
 	&:hover .ant-card-body {
-		${({ $isDarkMode, $logType }): string =>
-			getActiveLogBackground(true, $isDarkMode, $logType)}
+		background-color: var(--fs-muted);
+	}
+
+	.ant-card-body {
+		${({ $isActiveLog, $isDarkMode, $logType }): string =>
+			getActiveLogBackground($isActiveLog, $isDarkMode, $logType)}
 	}
 `;
 
