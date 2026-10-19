@@ -9,7 +9,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import {
@@ -20,7 +19,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import cx from 'classnames';
-import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
+import HttpStatusCodeBadge from 'components/PageTemplate/components/HttpStatusCodeBadge';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
@@ -33,6 +32,7 @@ import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
 import { useCrosshair } from 'pages/TraceDetailsV3/hooks/useCrosshair';
+import { getDurationLabelPlacement } from 'pages/TraceDetailsV3/TraceWaterfall/utils';
 import { ResizableBox } from 'periscope/components/ResizableBox';
 import { EventV3, SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
@@ -102,6 +102,7 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 	return (
 		<Tooltip
 			open
+			data-trace-card=""
 			title={
 				<EventTooltipContent
 					eventName={event.name}
@@ -309,11 +310,7 @@ const SpanOverview = memo(function SpanOverview({
 			</span>
 			<span className={styles.subtreeCountSlot}>
 				{span.has_children && (
-					<span className={styles.subtreeCount}>
-						<Badge variant="solid" color="secondary">
-							{span.sub_tree_node_count}
-						</Badge>
-					</span>
+					<span className={styles.subtreeCount}>{span.sub_tree_node_count}</span>
 				)}
 			</span>
 
@@ -329,9 +326,10 @@ const SpanOverview = memo(function SpanOverview({
 
 			{/* Span name + service name */}
 			<span className={styles.treeLabel}>
-				{span.name}
+				<span className={styles.treeSpanName}>{span.name}</span>
 				<span className={styles.treeServiceName}>{span['service.name']}</span>
 			</span>
+			{span.has_error && <span className={styles.errorBadge}>Error</span>}
 
 			{/* Action buttons — shown on hover via CSS, right-aligned */}
 			<span className={styles.rowActions}>
@@ -386,6 +384,7 @@ export const SpanDuration = memo(function SpanDuration({
 	const spread = traceMetadata.endTime - traceMetadata.startTime;
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.duration_nano * 1e2) / (spread * 1e6);
+	const labelPlacement = getDurationLabelPlacement(leftOffset, width);
 
 	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
 	const isDarkMode = useIsDarkMode();
@@ -433,15 +432,21 @@ export const SpanDuration = memo(function SpanDuration({
 						'--span-text-color': spanTextColor,
 					} as React.CSSProperties
 				}
-			>
-				<span className={styles.spanInfo}>
-					<span className={styles.spanName}>{span.name}</span>
-					<span className={styles.spanDurationText}>{`${toFixed(
-						time,
-						2,
-					)} ${timeUnitName}`}</span>
-				</span>
-			</div>
+			/>
+			<span
+				className={cx(styles.spanDurationText, {
+					[styles.isLabelInside]: labelPlacement.side === 'inside',
+					[styles.isLabelBefore]: labelPlacement.side === 'before',
+				})}
+				title={span.name}
+				style={
+					{
+						[labelPlacement.side === 'after' ? 'left' : 'right']:
+							`${labelPlacement.offsetPercent}%`,
+						'--span-text-color': spanTextColor,
+					} as React.CSSProperties
+				}
+			>{`${toFixed(time, 2)} ${timeUnitName}`}</span>
 			{span.events?.map((event) => {
 				const eventTimeMs = event.timeUnixNano / 1e6;
 				const spanDurationMs = span.duration_nano / 1e6;
@@ -830,7 +835,9 @@ function Success(props: ISuccessProps): JSX.Element {
 					<div
 						className={styles.sidebarHeader}
 						style={{ width: sidebarWidth, flexShrink: 0 }}
-					/>
+					>
+						Span
+					</div>
 					<div className={styles.resizeHandleHeader} />
 					<div className={styles.statusHeader} />
 					<div className={styles.timelineHeader}>
@@ -945,7 +952,7 @@ function Success(props: ISuccessProps): JSX.Element {
 									onClick={(): void => handleSpanClick(span)}
 								>
 									{span.response_status_code && (
-										<HttpStatusBadge statusCode={span.response_status_code} />
+										<HttpStatusCodeBadge statusCode={span.response_status_code} />
 									)}
 								</div>
 							);

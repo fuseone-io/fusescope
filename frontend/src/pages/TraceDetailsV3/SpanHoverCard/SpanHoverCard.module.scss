@@ -8,9 +8,11 @@
 	pointer-events: none;
 }
 
+// Rendered both in the inverted tooltip (waterfall) and the flame graph's
+// popover, so colours derive from the surrounding text colour.
 .content {
 	font-size: 12px;
-	color: var(--l1-foreground);
+	color: inherit;
 }
 
 .name {
@@ -20,7 +22,8 @@
 
 .row {
 	line-height: 1.5;
-	color: var(--l2-foreground);
+	opacity: 0.75;
+	font-variant-numeric: tabular-nums;
 }
 
 .preview {
@@ -28,9 +31,21 @@
 }
 
 .previewKey {
-	color: var(--l2-foreground);
+	opacity: 0.75;
 }
 
 .previewValue {
-	color: var(--l1-foreground);
+	color: inherit;
+}
+
+// Span and event cards read as popovers rather than inverted tooltips, so
+// the span's own colour stays legible in both themes.
+:global([data-trace-card]) {
+	--tooltip-background: var(--fs-popover);
+	--tooltip-border: var(--fs-border);
+	--tooltip-label: var(--fs-popover-foreground);
+	--tooltip-max-height: none;
+	--tooltip-padding: 8px 12px;
+	--tooltip-border-radius: 8px;
+	--tooltip-box-shadow: 0 8px 24px rgba(10, 22, 40, 0.16);
 }

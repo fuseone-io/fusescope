@@ -60,3 +60,29 @@ export function getAncestorSpanIds(
 
 	return ancestors;
 }
+
+// Past this share of the timeline a label after the bar would be clipped.
+const LABEL_AFTER_LIMIT = 85;
+// A bar starting before this share leaves no room for a label in front of it.
+const LABEL_BEFORE_MIN = 15;
+
+export interface DurationLabelPlacement {
+	side: 'after' | 'before' | 'inside';
+	/** `left` for `after`; `right` for `before` and `inside`. Percent of the timeline. */
+	offsetPercent: number;
+}
+
+/** Where a span's duration label sits relative to its bar, given the bar's left and width in percent. */
+export function getDurationLabelPlacement(
+	leftPercent: number,
+	widthPercent: number,
+): DurationLabelPlacement {
+	const end = leftPercent + widthPercent;
+	if (end <= LABEL_AFTER_LIMIT) {
+		return { side: 'after', offsetPercent: end };
+	}
+	if (leftPercent >= LABEL_BEFORE_MIN) {
+		return { side: 'before', offsetPercent: 100 - leftPercent };
+	}
+	return { side: 'inside', offsetPercent: Math.max(0, 100 - end) };
+}

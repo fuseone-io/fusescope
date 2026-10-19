@@ -1,6 +1,6 @@
 .root {
 	font-size: 12px;
-	color: var(--l1-foreground);
+	color: inherit;
 	max-width: 300px;
 }
 
@@ -8,36 +8,37 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
-	border-radius: 3px;
+	background: transparent;
+	border: 1px solid currentColor;
+	border-radius: 4px;
+	opacity: 0.75;
 	padding: 2px 6px;
 	font-size: 10px;
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
-	color: var(--l2-foreground);
 	margin-bottom: 6px;
 }
 
 .name {
 	font-weight: 600;
 	margin-bottom: 2px;
-	color: var(--text-robin-400);
+	color: inherit;
 }
 
 .hasError {
-	color: var(--destructive);
+	color: var(--fs-error);
 }
 
 .time {
 	font-size: 11px;
-	color: var(--l2-foreground);
+	opacity: 0.75;
 	margin-bottom: 4px;
 }
 
 .divider {
-	border-top: 1px solid var(--l2-border);
+	border-top: 1px solid currentColor;
+	opacity: 0.25;
 	margin: 6px 0;
 }
 
@@ -52,9 +53,9 @@
 }
 
 .key {
-	color: var(--l2-foreground);
+	opacity: 0.75;
 }
 
 .value {
-	color: var(--l1-foreground);
+	color: inherit;
 }
