@@ -9,6 +9,12 @@ import ROUTES from 'constants/routes';
 
 import { logSaveView, logsExplorer, logsPipelines } from './constants';
 import LogsRecordCountLine from './LogsRecordCountLine';
+import PipelinesCountLine from './PipelinesCountLine';
+
+const DESCRIPTIONS: Record<string, JSX.Element> = {
+	[ROUTES.LOGS_EXPLORER]: <LogsRecordCountLine />,
+	[ROUTES.LOGS_PIPELINES]: <PipelinesCountLine />,
+};
 
 export default function LogsModulePage(): JSX.Element {
 	const { pathname = '' } = useLocation();
@@ -24,9 +30,7 @@ export default function LogsModulePage(): JSX.Element {
 		<ModuleTabsLayout
 			title="Logs"
 			icon={<ScrollText />}
-			description={
-				pathname === ROUTES.LOGS_EXPLORER ? <LogsRecordCountLine /> : undefined
-			}
+			description={DESCRIPTIONS[pathname]}
 			testId="logs-module-page"
 			routes={routes}
 			activeKey={pathname}
