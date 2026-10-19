@@ -211,6 +211,66 @@ export const DockModeSwitched: Story = {
 	},
 };
 
+const clickDockMode = async (mode: string): Promise<void> => {
+	const option = await screen.findByTestId(
+		`dock-mode-${mode}`,
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(option.querySelector('button') ?? option);
+};
+
+/** Waits for the span panel in `variant` and checks it is laid out with room for its tabs. */
+const expectOpenPanel = async (variant: string): Promise<HTMLElement> => {
+	const panel = await waitFor(() => {
+		const found = document.querySelector<HTMLElement>(
+			`[data-testid="span-details-panel"][data-variant="${variant}"]`,
+		);
+
+		if (!found) {
+			throw new Error(`no ${variant} span panel`);
+		}
+
+		return found;
+	}, untilLoaded);
+
+	await waitFor(() =>
+		expect(panel.getBoundingClientRect().height).toBeGreaterThan(200),
+	);
+
+	return panel;
+};
+
+/**
+ * Every dock mode in turn: docked at the bottom the panel keeps enough height to
+ * show its tabs and switch between them, then it moves to the right edge and
+ * floats.
+ */
+export const DockModesCycle: Story = {
+	play: async (): Promise<void> => {
+		// The dock mode persists, so an earlier story may have left another one.
+		await clickDockMode('right');
+		await expectOpenPanel('right');
+
+		await clickDockMode('docked');
+		const docked = await expectOpenPanel('docked');
+		await userEvent.click(within(docked).getByRole('tab', { name: /events/i }));
+		await waitFor(() =>
+			expect(within(docked).getByRole('tab', { name: /events/i })).toHaveAttribute(
+				'aria-selected',
+				'true',
+			),
+		);
+
+		await clickDockMode('right');
+		await expectOpenPanel('right');
+
+		await clickDockMode('dialog');
+		await expectOpenPanel('dialog');
+	},
+};
+
 /** The span's percentile badge expanded into the distribution it was ranked in. */
 export const SpanPercentileOpen: Story = {
 	play: async ({ canvasElement }): Promise<void> => {

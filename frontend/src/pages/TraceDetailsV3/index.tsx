@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Info } from '@signozhq/icons';
-import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
@@ -25,6 +24,7 @@ import {
 	SpanDetailVariant,
 } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
+import { readSpanDetailVariant } from './SpanDetailsPanel/spanDetailVariant';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import { FLAMEGRAPH_SPAN_LIMIT } from './TraceFlamegraph/constants';
 import FlameGraphLegend from './TraceFlamegraph/FlameGraphLegend';
@@ -192,9 +192,7 @@ function TraceDetailsV3(): JSX.Element {
 			[TraceDetailEventKeys.HadErrors]: (payload.totalErrorSpansCount || 0) > 0,
 			[TraceDetailEventKeys.FlamegraphSampled]:
 				totalSpansCount > FLAMEGRAPH_SPAN_LIMIT,
-			[TraceDetailEventKeys.SpanPanelVariant]:
-				getLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION) ||
-				SpanDetailVariant.DOCKED_RIGHT,
+			[TraceDetailEventKeys.SpanPanelVariant]: readSpanDetailVariant(),
 			[TraceDetailEventKeys.ColorByField]: colorByField.name,
 			[TraceDetailEventKeys.PreviewFieldsCount]: previewFieldsCount,
 		});
@@ -299,10 +297,7 @@ function TraceDetailsV3(): JSX.Element {
 	};
 
 	const [spanDetailVariant, setSpanDetailVariant] = useState<SpanDetailVariant>(
-		() =>
-			(getLocalStorageKey(
-				LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION,
-			) as SpanDetailVariant) || SpanDetailVariant.DOCKED_RIGHT,
+		readSpanDetailVariant,
 	);
 
 	const RIGHT_DOCK_MIN = SPAN_DETAILS_PANEL_MIN_WIDTH;
@@ -328,6 +323,15 @@ function TraceDetailsV3(): JSX.Element {
 	const isRightDocked = spanDetailVariant === SpanDetailVariant.DOCKED_RIGHT;
 	const isWaterfallDocked = panelState.isOpen && isDocked;
 	const showRightDock = panelState.isOpen && isRightDocked;
+
+	const dockedPanelRef = useRef<HTMLDivElement>(null);
+	// The bottom dock sits under the flame graph and waterfall; bring it into
+	// view when it opens or the selected span changes.
+	useEffect(() => {
+		if (isWaterfallDocked) {
+			dockedPanelRef.current?.scrollIntoView?.({ block: 'nearest' });
+		}
+	}, [isWaterfallDocked, selectedSpanId]);
 
 	const waterfallChildren = (
 		<ResizableBox
@@ -369,7 +373,11 @@ function TraceDetailsV3(): JSX.Element {
 				) : (
 					<>
 						<div className={styles.layoutRow}>
-							<div className={styles.content}>
+							<div
+								className={cx(styles.content, {
+									[styles.hasDockedPanel]: isWaterfallDocked,
+								})}
+							>
 								<Collapse
 									// @ts-expect-error motion is passed through to rc-collapse to disable animation
 									motion={false}
@@ -440,7 +448,7 @@ function TraceDetailsV3(): JSX.Element {
 								/>
 
 								{panelState.isOpen && isDocked && (
-									<div className={styles.dockedSpanDetails}>
+									<div className={styles.dockedSpanDetails} ref={dockedPanelRef}>
 										<SpanDetailsPanel
 											panelState={panelState}
 											selectedSpan={selectedSpan}
