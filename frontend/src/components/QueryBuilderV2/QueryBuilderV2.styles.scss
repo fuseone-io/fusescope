@@ -514,3 +514,80 @@
 		}
 	}
 }
+
+// FuseScope skin for the builder's composite fields (editors with a label or a
+// unit), shared by every page that embeds the builder.
+.query-builder-v2 {
+	.code-mirror-where-clause .cm-editor .cm-content,
+	.query-aggregation-select-container .cm-editor .cm-content {
+		border-color: var(--fs-input);
+		border-radius: 6px;
+	}
+
+	.code-mirror-where-clause .cm-editor.cm-focused,
+	.query-aggregation-select-container .cm-editor.cm-focused {
+		outline: 0;
+	}
+
+	.code-mirror-where-clause .cm-editor.cm-focused .cm-content,
+	.query-aggregation-select-container .cm-editor.cm-focused .cm-content {
+		border-color: var(--fs-ring);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--fs-ring) 50%, transparent);
+	}
+
+	.qb-trace-operator-label-with-input {
+		overflow: hidden;
+		border-color: var(--fs-input);
+		border-radius: 6px;
+		background: var(--fs-card);
+
+		.label {
+			align-self: stretch;
+			display: flex;
+			align-items: center;
+			border-right-color: var(--fs-input);
+			background: var(--fs-muted);
+			color: var(--fs-muted-foreground);
+			font-weight: 500;
+		}
+
+		.cm-editor .cm-content {
+			border: 0;
+			border-radius: 0;
+			box-shadow: none;
+		}
+	}
+
+	.qb-trace-operator-container {
+		--input-background: var(--fs-card);
+		--input-hover-background: var(--fs-card);
+		--input-focus-background: var(--fs-card);
+		--input-border-color: var(--fs-input);
+		--input-hover-border-color: var(--fs-input);
+		--input-focus-border-color: var(--fs-ring);
+	}
+
+	.qb-trace-operator-label-with-input:focus-within {
+		border-color: var(--fs-ring);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--fs-ring) 50%, transparent);
+	}
+}
+
+// Query and formula name chips in the FuseScope palette.
+.query-builder-v2 .qb-entity-options .options .query-name,
+.query-builder-v2 .query-names-section .query-name {
+	border-color: transparent !important;
+	background: var(--fs-primary-soft) !important;
+	color: var(--fs-primary-ink) !important;
+	font-family: var(--tw-font-sans);
+	font-weight: 600;
+}
+
+.query-builder-v2 .qb-entity-options .options .formula-name,
+.query-builder-v2 .query-names-section .formula-name {
+	border-color: transparent !important;
+	background: var(--fs-brand-secondary-soft) !important;
+	color: var(--fs-brand-secondary-ink) !important;
+	font-family: var(--tw-font-sans);
+	font-weight: 600;
+}

@@ -136,21 +136,55 @@ const ANTD_PALETTE = {
 		bgContainer: '#111827',
 		bgHover: '#1F2937',
 		border: '#2B3648',
+		input: '#64707F',
 		text: '#B8BFCC',
+		textStrong: '#ECEEF2',
+		textMuted: '#B8BFCC',
+		primary: '#3D8BE0',
+		primarySoft: '#031F40',
+		primaryInk: '#9DBBE0',
+		ring: 'rgba(109, 154, 216, 0.5)',
+		menuShadow:
+			'0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4)',
 	},
 	light: {
 		bgBase: '#FFFFFF',
 		bgContainer: '#FFFFFF',
 		bgHover: '#ECEEF2',
 		border: '#D8DCE4',
+		input: '#64707F',
 		text: '#111827',
+		textStrong: '#111827',
+		textMuted: '#4B5563',
+		primary: '#0F5FB8',
+		primarySoft: '#E8F0FB',
+		primaryInk: '#0F5FB8',
+		ring: 'rgba(15, 95, 184, 0.5)',
+		menuShadow:
+			'0 4px 6px -1px rgba(17, 24, 39, 0.1), 0 2px 4px -2px rgba(17, 24, 39, 0.1)',
 	},
 };
 
 export const useThemeConfig = (): ThemeConfig => {
 	const isDarkMode = useIsDarkMode();
 	const palette = isDarkMode ? ANTD_PALETTE.dark : ANTD_PALETTE.light;
-	const primary = isDarkMode ? '#3D8BE0' : '#0F5FB8';
+	const { primary } = palette;
+	const focusRing = `0 0 0 3px ${palette.ring}`;
+	const field = {
+		colorBorder: palette.input,
+		hoverBorderColor: palette.input,
+		activeBorderColor: primary,
+		activeShadow: focusRing,
+	};
+	const menu = {
+		colorBgElevated: palette.bgContainer,
+		controlItemBgHover: palette.bgHover,
+		controlItemBgActive: palette.primarySoft,
+		controlItemBgActiveHover: palette.primarySoft,
+		boxShadowSecondary: palette.menuShadow,
+		colorText: palette.text,
+		fontSize: 13,
+	};
 
 	return {
 		algorithm: isDarkMode ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
@@ -159,6 +193,7 @@ export const useThemeConfig = (): ThemeConfig => {
 			borderRadiusLG: 8,
 			borderRadiusSM: 4,
 			borderRadiusXS: 2,
+			controlHeight: 32,
 			fontFamily: 'Inter',
 			fontSize: 13,
 			colorPrimary: primary,
@@ -168,29 +203,74 @@ export const useThemeConfig = (): ThemeConfig => {
 			colorBorderSecondary: palette.border,
 			colorLink: primary,
 			colorPrimaryText: primary,
+			controlOutline: palette.ring,
+			controlOutlineWidth: 3,
 		},
 		components: {
-			Dropdown: {
-				colorBgElevated: palette.bgContainer,
-				controlItemBgHover: palette.bgHover,
-				colorText: palette.text,
-				fontSize: 12,
-			},
+			Dropdown: { ...menu },
 			Select: {
-				colorBgElevated: palette.bgContainer,
-				controlItemBgHover: palette.bgHover,
-				boxShadowSecondary: isDarkMode
-					? '4px 10px 16px 2px rgba(0, 0, 0, 0.30)'
-					: '0 6px 16px rgba(17, 24, 39, 0.08)',
-				colorText: palette.text,
-				fontSize: 12,
+				...menu,
+				colorBorder: palette.input,
+				colorPrimaryHover: palette.input,
+				controlOutline: palette.ring,
+				optionActiveBg: palette.bgHover,
+				optionSelectedBg: palette.primarySoft,
+				optionSelectedColor: palette.primaryInk,
+				optionSelectedFontWeight: 500,
+				optionHeight: 32,
+				optionPadding: '6px 8px',
+				selectorBg: palette.bgContainer,
 			},
+			Input: { ...field },
+			InputNumber: { ...field },
+			Cascader: { ...menu, optionSelectedBg: palette.primarySoft },
+			TreeSelect: { ...menu, nodeSelectedBg: palette.primarySoft },
 			Button: {
 				paddingInline: 12,
-				fontSize: 12,
+				fontSize: 13,
+				fontWeight: 500,
+				defaultBorderColor: palette.input,
+				defaultColor: palette.textStrong,
+				defaultBg: palette.bgContainer,
+				defaultShadow: 'none',
+				primaryShadow: 'none',
+				dangerShadow: 'none',
+				textHoverBg: palette.bgHover,
 			},
-			Input: {
-				colorBorder: palette.border,
+			Checkbox: {
+				colorBorder: palette.input,
+				borderRadiusSM: 4,
+			},
+			Radio: {
+				colorBorder: palette.input,
+				buttonCheckedBg: palette.primarySoft,
+				buttonSolidCheckedBg: primary,
+			},
+			Segmented: {
+				itemColor: palette.textMuted,
+				itemHoverColor: palette.textStrong,
+				itemHoverBg: 'transparent',
+				itemSelectedBg: palette.bgContainer,
+				itemSelectedColor: palette.textStrong,
+				borderRadius: 6,
+				borderRadiusSM: 4,
+			},
+			Tabs: {
+				inkBarColor: primary,
+				itemColor: palette.textMuted,
+				itemHoverColor: palette.textStrong,
+				itemSelectedColor: primary,
+				itemActiveColor: primary,
+			},
+			Popover: {
+				colorBgElevated: palette.bgContainer,
+				boxShadowSecondary: palette.menuShadow,
+			},
+			Modal: {
+				contentBg: palette.bgContainer,
+				headerBg: palette.bgContainer,
+				footerBg: palette.bgContainer,
+				borderRadiusLG: 12,
 			},
 			Breadcrumb: {
 				separatorMargin: 4,

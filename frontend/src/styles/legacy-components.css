@@ -1,0 +1,273 @@
+/*
+ * Skins @signozhq/ui controls like src/components/ui (shadcn): 6px radius,
+ * 32px controls, --fs-* colours and focus ring. Only the library's component
+ * tokens are set, so per-component overrides further down the tree still win.
+ * The doubled attribute selector outranks signoz-tokens.css, which sets these
+ * on the [data-theme] element. Must load after legacy-theme.css.
+ */
+html:root,
+[data-theme][data-theme] {
+	--fs-control-shadow: 0 1px 2px 0
+		color-mix(in srgb, var(--fs-foreground) 5%, transparent);
+	--fs-menu-shadow:
+		0 4px 6px -1px color-mix(in srgb, var(--fs-foreground) 10%, transparent),
+		0 2px 4px -2px color-mix(in srgb, var(--fs-foreground) 10%, transparent);
+	--fs-ring-soft: color-mix(in srgb, var(--fs-ring) 50%, transparent);
+
+	/* Button */
+	--button-border-radius: 6px;
+	--button-focus-ring: var(--fs-ring);
+	--button-ghost-glow-opacity: 0;
+	--button-primary-background: var(--fs-primary);
+	--button-primary-background-hover: color-mix(
+		in srgb,
+		var(--fs-primary) 90%,
+		transparent
+	);
+	--button-primary-label: var(--fs-primary-foreground);
+	--button-primary-link: var(--fs-primary);
+	--button-primary-link-hover: var(--fs-primary-strong);
+	--button-secondary-background: var(--fs-secondary);
+	--button-secondary-background-hover: color-mix(
+		in srgb,
+		var(--fs-secondary) 80%,
+		var(--fs-foreground) 5%
+	);
+	--button-secondary-label: var(--fs-secondary-foreground);
+	--button-secondary-link: var(--fs-muted-foreground);
+	--button-secondary-link-hover: var(--fs-foreground);
+	--button-secondary-ghost-label: var(--fs-muted-foreground);
+	--button-secondary-ghost-label-hover: var(--fs-accent-foreground);
+	--button-secondary-ghost-background-hover: var(--fs-accent);
+	--button-secondary-outlined-background: var(--fs-card);
+	--button-secondary-outlined-background-hover: var(--fs-accent);
+	--button-secondary-outlined-border: var(--fs-input);
+	--button-secondary-outlined-label: var(--fs-foreground);
+	--button-secondary-outlined-label-hover: var(--fs-accent-foreground);
+	--button-secondary-dashed-label: var(--fs-muted-foreground);
+	--button-secondary-dashed-label-hover: var(--fs-foreground);
+	--button-secondary-dashed-stroke: var(--fs-input);
+	--button-secondary-dashed-stroke-hover: var(--fs-ring);
+	--button-danger-background: var(--fs-destructive);
+	--button-danger-background-hover: color-mix(
+		in srgb,
+		var(--fs-destructive) 90%,
+		transparent
+	);
+	--button-danger-label: var(--fs-destructive-foreground);
+	--button-danger-link: var(--fs-error);
+	--button-danger-link-hover: var(--fs-error-ink);
+	--button-group-secondary-outlined-background: var(--fs-card);
+	--button-group-secondary-outlined-background-hover: var(--fs-accent);
+	--button-group-secondary-outlined-border: var(--fs-input);
+	--button-group-secondary-outlined-label: var(--fs-foreground);
+	--button-group-secondary-outlined-label-hover: var(--fs-accent-foreground);
+	--button-group-focus-ring: var(--fs-ring);
+
+	/* Input */
+	--input-height: 32px;
+	--input-border-radius: 6px;
+	--input-border-color: var(--fs-input);
+	--input-hover-border-color: var(--fs-input);
+	--input-focus-border-color: var(--fs-ring);
+	--input-focus-outline-color: var(--fs-ring-soft);
+	--input-focus-outline-width: 3px;
+	--input-focus-outline-offset: 0;
+	--input-foreground: var(--fs-foreground);
+	--input-placeholder-color: var(--fs-muted-foreground);
+	--input-box-shadow: var(--fs-control-shadow);
+
+	/* Select and combobox */
+	--select-trigger-height: 32px;
+	--select-trigger-border-radius: 6px;
+	--select-trigger-border-color: var(--fs-input);
+	--select-trigger-box-shadow: var(--fs-control-shadow);
+	--select-trigger-outline-color: var(--fs-ring-soft);
+	--select-trigger-outline-offset: 0;
+	--select-trigger-placeholder-color: var(--fs-muted-foreground);
+	--select-content-background: var(--fs-popover);
+	--select-content-color: var(--fs-popover-foreground);
+	--select-content-border-color: var(--fs-border);
+	--select-content-border-radius: 6px;
+	--select-content-box-shadow: var(--fs-menu-shadow);
+	--select-arrow-fill: var(--fs-popover);
+	--select-item-border-radius: 4px;
+	--select-item-highlight-background: var(--fs-accent);
+	--select-item-highlight-color: var(--fs-accent-foreground);
+	--select-label-color: var(--fs-muted-foreground);
+	--select-pill-background: var(--fs-secondary);
+	--select-pill-color: var(--fs-secondary-foreground);
+	--combobox-trigger-height: 32px;
+	--combobox-trigger-border-radius: 6px;
+	--combobox-trigger-border-color: var(--fs-input);
+	--combobox-trigger-box-shadow: var(--fs-control-shadow);
+	--combobox-trigger-outline-color: var(--fs-ring-soft);
+	--combobox-trigger-outline-offset: 0;
+	--combobox-trigger-placeholder-color: var(--fs-muted-foreground);
+	--combobox-pill-background: var(--fs-secondary);
+	--combobox-pill-color: var(--fs-secondary-foreground);
+	--combobox-pill-overflow-background: var(--fs-secondary);
+	--combobox-pill-overflow-color: var(--fs-secondary-foreground);
+
+	/* Dropdown menu */
+	--dropdown-background: var(--fs-popover);
+	--dropdown-border: var(--fs-border);
+	--dropdown-border-radius: 6px;
+	--dropdown-shadow: var(--fs-menu-shadow);
+	--dropdown-backdrop-filter: none;
+	--dropdown-item-border-radius: 4px;
+	--dropdown-item-label: var(--fs-popover-foreground);
+	--dropdown-item-label-hover: var(--fs-accent-foreground);
+	--dropdown-item-label-disabled: var(--fs-subtle-foreground);
+	--dropdown-item-background: transparent;
+	--dropdown-item-background-hover: var(--fs-accent);
+	--dropdown-item-icon: var(--fs-muted-foreground);
+	--dropdown-item-icon-hover: var(--fs-accent-foreground);
+	--dropdown-item-danger-label: var(--fs-error);
+	--dropdown-item-danger-label-hover: var(--fs-error);
+	--dropdown-item-danger-background-hover: var(--fs-error-soft);
+	--dropdown-item-focus-ring: var(--fs-ring);
+	--dropdown-group-label: var(--fs-muted-foreground);
+	--dropdown-separator: var(--fs-border);
+	--dropdown-search-placeholder: var(--fs-muted-foreground);
+	--dropdown-search-icon: var(--fs-muted-foreground);
+	--dropdown-search-border: var(--fs-border);
+	--dropdown-item-control-border: var(--fs-input);
+	--dropdown-item-control-border-hover: var(--fs-primary);
+	--dropdown-item-control-checked-background: var(--fs-primary);
+	--dropdown-item-control-checked-foreground: var(--fs-primary-foreground);
+
+	/* Popover and tooltip */
+	--popover-background: var(--fs-popover);
+	--popover-foreground: var(--fs-popover-foreground);
+	--popover-border-color: var(--fs-border);
+	--popover-border-radius: 6px;
+	--popover-box-shadow: var(--fs-menu-shadow);
+	--tooltip-background: var(--fs-foreground);
+	--tooltip-border: var(--fs-foreground);
+	--tooltip-label: var(--fs-background);
+
+	/* Checkbox and switch */
+	--checkbox-border: var(--fs-input);
+	--checkbox-border-radius: 4px;
+	--checkbox-focus-ring: var(--fs-ring);
+	--checkbox-label: var(--fs-foreground);
+	--checkbox-primary-background: var(--fs-primary);
+	--checkbox-primary-border-hover: var(--fs-primary);
+	--checkbox-primary-foreground: var(--fs-primary-foreground);
+	--checkbox-secondary-background: var(--fs-foreground);
+	--checkbox-secondary-border-hover: var(--fs-foreground);
+	--checkbox-secondary-foreground: var(--fs-background);
+	--switch-track-background: var(--fs-input);
+	--switch-track-hover-background: color-mix(
+		in srgb,
+		var(--fs-input) 80%,
+		var(--fs-foreground)
+	);
+	--switch-primary-background: var(--fs-primary);
+	--switch-primary-hover-background: var(--fs-primary-strong);
+	--switch-thumb-background: var(--fs-card);
+	--switch-label: var(--fs-foreground);
+	--switch-description: var(--fs-muted-foreground);
+	--switch-focus-ring: var(--fs-ring);
+
+	/* Tabs and toggle group */
+	--tabs-border: var(--fs-border);
+	--tabs-label: var(--fs-muted-foreground);
+	--tabs-label-hover: var(--fs-foreground);
+	--tabs-primary-label: var(--fs-muted-foreground);
+	--tabs-primary-label-hover: var(--fs-foreground);
+	--tabs-primary-indicator: var(--fs-primary);
+	--tabs-primary-background-hover: var(--fs-muted);
+	--tabs-primary-radius: 6px;
+	--tabs-secondary-background: var(--fs-muted);
+	--tabs-secondary-background-hover: var(--fs-card);
+	--tabs-secondary-label: var(--fs-muted-foreground);
+	--tabs-secondary-label-hover: var(--fs-foreground);
+	--tabs-secondary-label-active: var(--fs-foreground);
+	--tabs-focus-ring: var(--fs-ring);
+	--toggle-group-border: var(--fs-input);
+	--toggle-group-border-color: var(--fs-input);
+	--toggle-group-border-radius: 6px;
+	--toggle-group-secondary-outlined-background: var(--fs-card);
+	--toggle-group-secondary-outlined-background-hover: var(--fs-muted);
+	--toggle-group-secondary-outlined-background-active: var(--fs-card);
+	--toggle-group-secondary-outlined-label: var(--fs-muted-foreground);
+	--toggle-group-secondary-outlined-label-hover: var(--fs-foreground);
+	--toggle-group-secondary-outlined-label-active: var(--fs-foreground);
+	--toggle-group-focus-ring: var(--fs-ring);
+
+	/* App-level composites: labelled inputs and periscope buttons */
+	--input-with-label-background-color: var(--fs-card);
+	--input-with-label-border-color: var(--fs-input);
+	--input-with-label-color: var(--fs-foreground);
+	--periscope-btn-background-color: var(--fs-card);
+	--periscope-btn-border-color: var(--fs-input);
+
+	/* Dialog */
+	--dialog-header-border-color: var(--fs-border);
+	--dialog-footer-border-color: var(--fs-border);
+	--dialog-title-font-size: 16px;
+	--dialog-title-font-weight: 600;
+	--dialog-title-line-height: 1.25;
+	--dialog-title-color: var(--fs-foreground);
+	--dialog-subtitle-color: var(--fs-muted-foreground);
+
+	/* Badge */
+	--badge-secondary-background: var(--fs-muted);
+	--badge-secondary-foreground: var(--fs-muted-foreground);
+	--badge-secondary-border: var(--fs-border);
+	--badge-secondary-outlined-border: var(--fs-border);
+	--badge-secondary-outlined-label: var(--fs-muted-foreground);
+}
+
+/* Composites without radius or label-colour variables. */
+.periscope-btn {
+	border-radius: 6px;
+}
+
+.periscope-btn-group .periscope-btn {
+	border-radius: 0;
+}
+
+.periscope-btn-group .periscope-btn:first-child {
+	border-radius: 6px 0 0 6px;
+}
+
+.periscope-btn-group .periscope-btn:last-child {
+	border-radius: 0 6px 6px 0;
+}
+
+.input-with-label .label,
+.periscope-input-with-label .label {
+	border-radius: 6px 0 0 6px;
+	background: var(--fs-muted);
+	color: var(--fs-muted-foreground);
+}
+
+.input-with-label > :last-child,
+.periscope-input-with-label > :last-child {
+	border-top-right-radius: 6px;
+	border-bottom-right-radius: 6px;
+}
+
+.input-with-label.labelAfter .label {
+	border-radius: 0 6px 6px 0;
+}
+
+.input-with-label.labelAfter > :first-child {
+	border-top-left-radius: 6px;
+	border-bottom-left-radius: 6px;
+}
+
+/* Dialog surface: no variables for its radius, border or background. */
+[class*='_dialog__content_'] {
+	border-color: var(--fs-border);
+	border-radius: 12px;
+	background-color: var(--fs-popover);
+	color: var(--fs-popover-foreground);
+	box-shadow:
+		0 10px 15px -3px color-mix(in srgb, var(--fs-foreground) 10%, transparent),
+		0 4px 6px -4px color-mix(in srgb, var(--fs-foreground) 10%, transparent);
+	overflow: hidden;
+}

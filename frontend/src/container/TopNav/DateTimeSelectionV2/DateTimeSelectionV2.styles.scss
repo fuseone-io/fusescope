@@ -405,14 +405,18 @@
 		}
 
 		.time-btns {
-			color: var(--l2-foreground);
-			background-color: var(--l3-background);
+			color: var(--fs-muted-foreground);
+			background-color: var(--fs-muted);
 			font-size: 12px;
 			line-height: 16px;
-			letter-spacing: 0.04em;
 			text-align: left;
-			border-radius: 2px;
+			border-radius: 6px;
 			padding: 4px 8px;
+
+			&:hover {
+				background-color: var(--fs-accent) !important;
+				color: var(--fs-accent-foreground) !important;
+			}
 		}
 	}
 }
