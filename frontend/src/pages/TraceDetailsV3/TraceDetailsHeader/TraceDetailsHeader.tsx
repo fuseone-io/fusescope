@@ -2,9 +2,11 @@ import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import { Skeleton } from 'antd';
 import cx from 'classnames';
 import FieldsSelector from 'components/FieldsSelector';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import { Button as UiButton } from 'components/ui/button';
+import { Skeleton } from 'components/ui/skeleton';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import history, { hasInAppHistory } from 'lib/history';
@@ -31,21 +33,15 @@ interface TraceDetailsHeaderProps {
 	showTraceDetailsHeaderOptions?: boolean;
 }
 
-const SKELETON_COUNT = 3;
+const SKELETON_KEYS = ['service', 'duration', 'started'];
 
 function DetailsLoader(): JSX.Element {
 	return (
-		<>
-			{Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-				<Skeleton.Input
-					// eslint-disable-next-line react/no-array-index-key
-					key={i}
-					active
-					size="small"
-					className={styles.skeleton}
-				/>
+		<div className="fs-ui tw:flex tw:items-center tw:gap-4">
+			{SKELETON_KEYS.map((key) => (
+				<Skeleton key={key} className="tw:h-5 tw:w-40 tw:bg-muted" />
 			))}
-		</>
+		</div>
 	);
 }
 
@@ -58,7 +54,8 @@ function TraceDetailsHeader({
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
-	const { data: traceSummary } = useTraceSummary(traceID);
+	const { data: traceSummary, isError: isTraceSummaryError } =
+		useTraceSummary(traceID);
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
@@ -98,23 +95,24 @@ function TraceDetailsHeader({
 	const durationMs = traceSummary
 		? traceSummary.endTimestampMillis - traceSummary.startTimestampMillis
 		: 0;
+	const errorCount = traceSummary?.totalErrorSpansCount ?? 0;
 
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				{!isFilterExpanded && (
 					<div className={styles.traceIdSection}>
-						<Button
-							variant="solid"
-							color="secondary"
-							size="sm"
-							icon
-							onClick={handlePreviousBtnClick}
-							aria-label="Back"
-						>
-							<ArrowLeft size={14} />
-						</Button>
-						<div className="fs-ui tw:flex tw:min-w-0 tw:items-center tw:gap-2.5 tw:font-sans tw:text-foreground">
+						<span className="fs-ui tw:inline-flex">
+							<UiButton
+								variant="outline"
+								size="icon-sm"
+								onClick={handlePreviousBtnClick}
+								aria-label="Back"
+							>
+								<ArrowLeft size={16} />
+							</UiButton>
+						</span>
+						<div className="fs-ui tw:flex tw:min-w-0 tw:flex-wrap tw:items-center tw:gap-2.5 tw:font-sans tw:text-foreground">
 							<span className="tw:text-xs tw:font-medium tw:tracking-[0.05em] tw:text-muted-foreground tw:uppercase">
 								Trace
 							</span>
@@ -124,6 +122,11 @@ function TraceDetailsHeader({
 							>
 								{traceID}
 							</h1>
+							{errorCount > 0 && (
+								<StatusBadge tone="error" dot testId="trace-details-error-count">
+									{errorCount === 1 ? '1 error' : `${errorCount} errors`}
+								</StatusBadge>
+							)}
 						</div>
 					</div>
 				)}
@@ -177,7 +180,7 @@ function TraceDetailsHeader({
 				)}
 			</div>
 
-			{showTraceDetails && (
+			{showTraceDetails && !isTraceSummaryError && (
 				<div className={styles.subHeader}>
 					{traceSummary ? (
 						<EntityMetadataRow
@@ -187,6 +190,7 @@ function TraceDetailsHeader({
 								entryPoint: traceSummary.rootServiceEntryPoint,
 							}}
 							durationMs={durationMs}
+							spanCount={traceSummary.totalSpansCount}
 							timestamp={dayjs(traceSummary.startTimestampMillis).format(
 								DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
 							)}

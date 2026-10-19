@@ -3,7 +3,12 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
+	min-width: 0;
 	white-space: nowrap;
 	cursor: default;
-	color: inherit;
+	color: var(--fs-muted-foreground);
+}
+
+.label {
+	color: var(--fs-muted-foreground);
 }

@@ -1,10 +1,13 @@
 import { useLocation } from 'react-router-dom';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 
 import GlobalTimeControls from './components/GlobalTimeControls';
 import HeaderBreadcrumb from './components/HeaderBreadcrumb';
 import SearchTrigger from './components/SearchTrigger';
 import SidebarToggle from './components/SidebarToggle';
-import { showsGlobalTimePicker } from './utils';
+import { showsGlobalTimePicker, showsHeaderActionsOnly } from './utils';
+
+import styles from './AppHeader.module.scss';
 
 /** The top bar of every page with the sidebar; render inside `AppSidebarProvider`. */
 function AppHeader(): JSX.Element {
@@ -23,6 +26,15 @@ function AppHeader(): JSX.Element {
 				<SearchTrigger />
 			</div>
 			{showsGlobalTimePicker(pathname) && <GlobalTimeControls />}
+			{showsHeaderActionsOnly(pathname) && (
+				<div className={styles.timeControls} data-testid="app-header-actions">
+					<HeaderRightSection
+						enableShare
+						enableFeedback
+						enableAnnouncements={false}
+					/>
+				</div>
+			)}
 		</header>
 	);
 }

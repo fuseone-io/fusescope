@@ -271,8 +271,10 @@ function Filters({
 	const pill = (
 		/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
 		<div className={styles.pill} onClick={onExpand}>
-			<Search size={12} />
-			<span className={styles.pillText}>{expression || 'Search...'}</span>
+			<Search size={14} />
+			<span className={cx(styles.pillText, expression && styles.hasExpression)}>
+				{expression || 'Search...'}
+			</span>
 			{expression && <span className={styles.pillIndicator} />}
 		</div>
 	);

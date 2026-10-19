@@ -15,6 +15,7 @@ The parts a new-UI page is built from. Built on `components/ui` and the
 | `NumberedTablePagination` | Server-side paging: visible range, numbered pages and a page-size menu. |
 | `RailToggleButton` | Collapses a filter rail, or reopens it from the toolbar. |
 | `UserAvatarCell` | A user in a table cell: their initial in a circle, then their email. |
+| `HttpStatusCodeBadge` | An HTTP status code as a `StatusBadge`; `httpStatusTone` maps a code to its tone. |
 
 ## `fs-ui` scope
 
@@ -29,5 +30,6 @@ legacy chart or table in a panel body renders as before.
 - Service detail (`pages/MetricsApplication`, `container/MetricsApplication`)
 - Traces funnels and funnel detail (`pages/TracesFunnels`, `pages/TracesFunnelDetails`)
 - Saved views of every explorer (`pages/SaveView`)
+- Trace details (`pages/TraceDetailsV3`)
 
 Stories: `Components/Page Template` (light and dark).

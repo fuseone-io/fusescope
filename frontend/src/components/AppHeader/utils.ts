@@ -46,6 +46,15 @@ export function showsGlobalTimePicker(pathname: string): boolean {
 	);
 }
 
+/** Pages without the global picker whose share and feedback live in the header. */
+const ROUTES_WITH_HEADER_ACTIONS_ONLY = [ROUTES.TRACE_DETAIL];
+
+export function showsHeaderActionsOnly(pathname: string): boolean {
+	return ROUTES_WITH_HEADER_ACTIONS_ONLY.some((path) =>
+		matchesExactly(pathname, path),
+	);
+}
+
 /** The route template `pathname` matches in `CRUMB_ROUTES`, with its params. */
 export function matchCrumbRoute(
 	pathname: string,
