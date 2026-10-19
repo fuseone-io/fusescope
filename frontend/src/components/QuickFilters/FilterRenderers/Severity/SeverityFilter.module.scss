@@ -1,0 +1,51 @@
+.severityFilter {
+	display: flex;
+	flex-direction: column;
+	border-bottom: 1px solid var(--fs-border);
+}
+
+// Levels are a closed set, so the facet has no value search.
+.actions [data-testid='checkbox-filter-search-toggle'] {
+	display: none;
+}
+
+.values {
+	display: flex;
+	flex-direction: column;
+	padding-bottom: 4px;
+}
+
+.loading,
+.empty {
+	padding: 4px 16px 12px 34px;
+	color: var(--fs-muted-foreground);
+	font-size: 13px;
+}
+
+.level {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.swatch {
+	width: 8px;
+	height: 8px;
+	flex: none;
+	border-radius: 2px;
+}
+
+.label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.count {
+	margin-left: auto;
+	color: var(--fs-subtle-foreground);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}

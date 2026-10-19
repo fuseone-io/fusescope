@@ -38,6 +38,8 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import useActiveQueryIndex from './hooks/useActiveQueryIndex';
 import CheckboxV2 from './FilterRenderers/Checkbox/v2/CheckboxFilterV2';
+import SeverityFilter from './FilterRenderers/Severity/SeverityFilter';
+import { isLogsSeverityFilter } from './FilterRenderers/Severity/isLogsSeverityFilter';
 import Duration from './FilterRenderers/Duration/Duration';
 import Slider from './FilterRenderers/Slider/Slider';
 import useFilterConfig from './hooks/useFilterConfig';
@@ -310,6 +312,17 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			)}
 			<section className="filters">
 				{filterConfig.map((filter) => {
+					if (isLogsSeverityFilter(source, filter)) {
+						return (
+							<SeverityFilter
+								key={filter.attributeKey.key}
+								source={source}
+								filter={filter}
+								onFilterChange={onFilterChange}
+								onQuickFilterChange={onQuickFilterChange}
+							/>
+						);
+					}
 					switch (filter.type) {
 						case FiltersType.CHECKBOX:
 							return useFieldApis ? (
