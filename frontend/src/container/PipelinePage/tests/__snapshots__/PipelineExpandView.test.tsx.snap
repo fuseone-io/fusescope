@@ -2,17 +2,7 @@
 
 exports[`PipelinePage should render PipelineExpandView section 1`] = `
 <DocumentFragment>
-  .c1 {
-  margin: 0.125rem;
-  padding: 0.313rem;
-  border: none;
-  font-style: normal;
-  font-weight: 400;
-  font-size: 0.75rem;
-  line-height: 1.25rem;
-}
-
-.c0 .ant-table-tbody > tr > td {
+  .c0 .ant-table-tbody > tr > td {
   border: none;
 }
 
@@ -34,7 +24,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
         class="ant-spin-container"
       >
         <div
-          class="ant-table ant-table-small"
+          class="ant-table ant-table-small ant-table-layout-fixed"
         >
           <div
             class="ant-table-container"
@@ -43,15 +33,14 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
               class="ant-table-content"
             >
               <table
-                style="table-layout: auto;"
+                style="table-layout: fixed;"
               >
                 <colgroup>
                   <col
-                    style="width: 150px;"
+                    style="width: 96px;"
                   />
-                  <col />
                   <col
-                    style="width: 160px;"
+                    style="width: 44%;"
                   />
                 </colgroup>
                 <tbody
@@ -64,7 +53,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                   >
                     <td
                       class="ant-table-cell"
-                      style="text-align: right;"
+                      style="text-align: left;"
                     >
                       <span
                         class="pipeline-order-index pipeline-order-index--small"
@@ -76,15 +65,59 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       class="ant-table-cell"
                       style="text-align: left;"
                     >
-                      <div
-                        class="c1"
+                      <span
+                        class="pipeline-processor-name"
                       >
-                        grok use common asd
-                      </div>
+                        <span
+                          aria-hidden="true"
+                          class="pipeline-processor-type__icon"
+                        >
+                          <svg
+                            aria-hidden="true"
+                            class="lucide lucide-scan-text"
+                            fill="none"
+                            height="24"
+                            stroke="currentColor"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            viewBox="0 0 24 24"
+                            width="24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M3 7V5a2 2 0 0 1 2-2h2"
+                            />
+                            <path
+                              d="M17 3h2a2 2 0 0 1 2 2v2"
+                            />
+                            <path
+                              d="M21 17v2a2 2 0 0 1-2 2h-2"
+                            />
+                            <path
+                              d="M7 21H5a2 2 0 0 1-2-2v-2"
+                            />
+                            <path
+                              d="M7 8h8"
+                            />
+                            <path
+                              d="M7 12h10"
+                            />
+                            <path
+                              d="M7 16h6"
+                            />
+                          </svg>
+                        </span>
+                        <span
+                          class="pipeline-name-cell__name"
+                        >
+                          grok use common asd
+                        </span>
+                      </span>
                     </td>
                     <td
                       class="ant-table-cell"
-                      style="text-align: left;"
+                      style="text-align: right;"
                     >
                       <span
                         class="pipeline-processor-type"
@@ -100,7 +133,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                   >
                     <td
                       class="ant-table-cell"
-                      style="text-align: right;"
+                      style="text-align: left;"
                     >
                       <span
                         class="pipeline-order-index pipeline-order-index--small"
@@ -112,15 +145,44 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       class="ant-table-cell"
                       style="text-align: left;"
                     >
-                      <div
-                        class="c1"
+                      <span
+                        class="pipeline-processor-name"
                       >
-                        rename auth
-                      </div>
+                        <span
+                          aria-hidden="true"
+                          class="pipeline-processor-type__icon"
+                        >
+                          <svg
+                            aria-hidden="true"
+                            class="lucide lucide-move-right"
+                            fill="none"
+                            height="24"
+                            stroke="currentColor"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            viewBox="0 0 24 24"
+                            width="24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M18 8L22 12L18 16"
+                            />
+                            <path
+                              d="M2 12H22"
+                            />
+                          </svg>
+                        </span>
+                        <span
+                          class="pipeline-name-cell__name"
+                        >
+                          rename auth
+                        </span>
+                      </span>
                     </td>
                     <td
                       class="ant-table-cell"
-                      style="text-align: left;"
+                      style="text-align: right;"
                     >
                       <span
                         class="pipeline-processor-type"
@@ -136,7 +198,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                   >
                     <td
                       class="ant-table-cell"
-                      style="text-align: right;"
+                      style="text-align: left;"
                     >
                       <span
                         class="pipeline-order-index pipeline-order-index--small"
@@ -148,15 +210,44 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       class="ant-table-cell"
                       style="text-align: left;"
                     >
-                      <div
-                        class="c1"
+                      <span
+                        class="pipeline-processor-name"
                       >
-                        json parser
-                      </div>
+                        <span
+                          aria-hidden="true"
+                          class="pipeline-processor-type__icon"
+                        >
+                          <svg
+                            aria-hidden="true"
+                            class="lucide lucide-braces lucide-curly-braces"
+                            fill="none"
+                            height="24"
+                            stroke="currentColor"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            viewBox="0 0 24 24"
+                            width="24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"
+                            />
+                            <path
+                              d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"
+                            />
+                          </svg>
+                        </span>
+                        <span
+                          class="pipeline-name-cell__name"
+                        >
+                          json parser
+                        </span>
+                      </span>
                     </td>
                     <td
                       class="ant-table-cell"
-                      style="text-align: left;"
+                      style="text-align: right;"
                     >
                       <span
                         class="pipeline-processor-type"

@@ -15,6 +15,17 @@ import DescriptionTextArea from './AddNewPipeline/FormFields/DescriptionTextArea
 import FilterInput from './AddNewPipeline/FormFields/FilterInput';
 import NameInput from './AddNewPipeline/FormFields/NameInput';
 
+// Shared by the pipelines table and its processors, so their columns line up.
+export const PIPELINE_EXPAND_WIDTH = 48;
+export const PIPELINE_ORDER_WIDTH = 48;
+export const PIPELINE_NAME_WIDTH = '24%';
+export const PIPELINE_FILTER_WIDTH = '20%';
+export const PIPELINE_EDITED_WIDTH = 172;
+// A processor's name spans its pipeline's name and filters columns.
+export const PROCESSOR_NAME_WIDTH = '44%';
+export const PIPELINE_ACTIONS_WIDTH = 120;
+export const PIPELINE_ENABLED_WIDTH = 88;
+
 export const pipelineFields = [
 	{
 		id: 1,
@@ -46,22 +57,26 @@ export const pipelineColumns: Array<
 		key: 'orderId',
 		title: '',
 		dataIndex: 'orderId',
+		width: PIPELINE_ORDER_WIDTH,
 	},
 	{
 		key: 'name',
 		title: 'Pipeline Name',
 		dataIndex: 'name',
+		width: PIPELINE_NAME_WIDTH,
 	},
 	{
 		key: 'filter',
 		title: 'Filters',
 		dataIndex: 'filter',
+		width: PIPELINE_FILTER_WIDTH,
 	},
 
 	{
 		key: 'createdAt',
 		title: 'Last Edited',
 		dataIndex: 'createdAt',
+		width: PIPELINE_EDITED_WIDTH,
 	},
 	{
 		key: 'createdBy',
@@ -77,18 +92,20 @@ export const processorColumns: Array<
 		key: 'id',
 		title: '',
 		dataIndex: 'orderId',
-		width: 150,
+		width: PIPELINE_EXPAND_WIDTH + PIPELINE_ORDER_WIDTH,
+		align: 'left',
 	},
 	{
 		key: 'name',
 		title: '',
 		dataIndex: 'name',
+		width: PROCESSOR_NAME_WIDTH,
 	},
 	{
 		key: 'type',
 		title: '',
 		dataIndex: 'type',
-		width: 160,
+		align: 'right',
 	},
 ];
 

@@ -11,9 +11,15 @@
 	font-family: var(--tw-font-mono);
 	font-size: 11px;
 	white-space: nowrap;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: inline-block;
+	line-height: 20px;
 }
 
 .pipeline-filter-preview-container {
+	min-width: 0;
 	display: flex;
 	flex-wrap: wrap;
 	gap: 4px;

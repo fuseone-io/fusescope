@@ -50,7 +50,8 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 		font-size: 13px;
 	}
 
-	.ant-table-thead > tr > th {
+	.ant-table-thead > tr > th,
+	.ant-table-thead > tr > td {
 		height: 36px;
 		padding: 0 12px;
 		border-bottom: 1px solid var(--fs-border);
@@ -78,9 +79,10 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 		background: var(--fs-muted);
 	}
 
-	// The processors of an expanded pipeline, on a sunken ground.
+	// The processors of an expanded pipeline, on a sunken ground, in the same
+	// columns as their pipeline.
 	.ant-table-tbody > tr.ant-table-expanded-row > td {
-		padding: 4px 20px 12px 88px;
+		padding: 0;
 		background: var(--fs-muted);
 	}
 
@@ -89,10 +91,20 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 		background: transparent !important;
 	}
 
+	// antd indents a nested table; here it spans the row like its pipeline.
+	.ant-table-expanded-row .ant-table-wrapper .ant-table {
+		margin: 0 !important;
+	}
+
 	.ant-table-expanded-row .ant-table-tbody > tr > td {
-		height: 40px;
-		padding: 4px 8px;
+		height: 52px;
+		padding: 8px 12px;
 		border-bottom: 1px solid var(--fs-border) !important;
+	}
+
+	// Lines the processor index up under its pipeline's index.
+	.ant-table-expanded-row .ant-table-tbody > tr > td:first-child {
+		padding-left: 60px;
 	}
 
 	.ant-table-expanded-row .ant-table-tbody > tr:hover > td {
@@ -106,7 +118,7 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 	}
 
 	.ant-table-expanded-row .ant-table-footer {
-		padding: 6px 0 0;
+		padding: 6px 12px 8px 108px;
 		border-top: 0;
 	}
 
@@ -137,16 +149,16 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 	}
 }
 
-// Row order, numbered in a small square.
+// Row order, numbered in an outlined circle.
 .pipeline-order-index {
 	display: inline-flex;
+	flex: none;
 	align-items: center;
 	justify-content: center;
 	width: 22px;
 	height: 22px;
-	border: 1px solid var(--fs-border);
-	border-radius: 4px;
-	background: var(--fs-muted);
+	border: 1px solid var(--fs-input);
+	border-radius: 9999px;
 	color: var(--fs-muted-foreground);
 	font-size: 11px;
 	font-weight: 600;
@@ -157,15 +169,6 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 		height: 20px;
 		font-size: 10px;
 	}
-}
-
-.pipelines-list__panel .ant-table-expanded-row .pipeline-order-index {
-	background: var(--fs-card);
-}
-
-.pipeline-processor-type {
-	color: var(--fs-subtle-foreground);
-	font-size: 12px;
 }
 
 // Pipeline form and preview dialogs.
@@ -249,9 +252,6 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 // Numbered steps of the processor form.
 .pipeline-order-index--step {
 	margin-top: 2px;
-	border-color: transparent;
-	background: var(--fs-primary-soft);
-	color: var(--fs-primary-ink);
 }
 
 .pipelines-modal .ant-select-selector,
@@ -278,5 +278,62 @@ $modal-icon-color: #d89614; // Matches themeColors.gamboge
 
 	&--selected > td {
 		background: var(--fs-primary-soft) !important;
+	}
+}
+
+// Every header cell, the expand column's included, on one ground.
+.pipelines-list__panel .ant-table-thead > tr > .ant-table-cell {
+	background: var(--fs-muted) !important;
+}
+
+.pipeline-name-cell {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.pipeline-name-cell__name {
+	overflow: hidden;
+	color: var(--fs-foreground);
+	font-size: 13px;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.pipeline-name-cell__description {
+	overflow: hidden;
+	color: var(--fs-subtle-foreground);
+	font-size: 12px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.pipeline-processor-type {
+	color: var(--fs-subtle-foreground);
+	font-size: 12px;
+}
+
+.pipeline-processor-name {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+}
+
+.pipeline-processor-type__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 24px;
+	height: 24px;
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--fs-brand-secondary) 14%, transparent);
+	color: var(--fs-brand-secondary-ink);
+
+	svg {
+		width: 14px;
+		height: 14px;
 	}
 }

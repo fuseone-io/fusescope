@@ -4,9 +4,11 @@ import { useTimezone } from 'providers/Timezone';
 import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import UserAvatarCell from 'components/PageTemplate/components/UserAvatarCell';
+import { Workflow } from 'lucide-react';
 
 import { processorTypes } from '../AddNewProcessor/config';
-import { ColumnDataStyle, ListDataStyle } from '../styles';
+import { ColumnDataStyle } from '../styles';
+import { PROCESSOR_TYPE_ICONS } from './processorTypeIcons';
 import PipelineFilterSummary from './PipelineFilterSummary';
 
 function CreatedAtComponent({ record }: { record: Record }): JSX.Element {
@@ -55,23 +57,48 @@ const componentMap: ComponentMap = {
 				String(record ?? '')}
 		</span>
 	),
-	name: ({ record }) => <ListDataStyle>{record}</ListDataStyle>,
+	name: ({ record, row }) => {
+		const processorType = (row as ProcessorData | undefined)?.type;
+		if (processorType) {
+			const Icon = PROCESSOR_TYPE_ICONS[processorType] ?? Workflow;
+			return (
+				<span className="pipeline-processor-name">
+					<span className="pipeline-processor-type__icon" aria-hidden="true">
+						<Icon />
+					</span>
+					<span className="pipeline-name-cell__name">{record}</span>
+				</span>
+			);
+		}
+		const description = (row as PipelineData | undefined)?.description;
+		return (
+			<span className="pipeline-name-cell">
+				<span className="pipeline-name-cell__name">{record}</span>
+				{description && (
+					<span className="pipeline-name-cell__description" title={description}>
+						{description}
+					</span>
+				)}
+			</span>
+		);
+	},
 	filter: ({ record }) => <PipelineFilterSummary filter={record} />,
 };
 
 function TableComponents({
 	columnKey,
 	record,
+	row,
 }: TableComponentsProps): JSX.Element {
 	const Component =
 		componentMap[columnKey] ??
 		(({ record }): JSX.Element => <ColumnDataStyle>{record}</ColumnDataStyle>);
 
-	return <Component record={record} />;
+	return <Component record={record} row={row} />;
 }
 
 type ComponentMap = {
-	[key: string]: React.FC<{ record: Record }>;
+	[key: string]: React.FC<{ record: Record; row?: unknown }>;
 };
 
 export type Record = PipelineData['orderId'] &
@@ -81,6 +108,8 @@ export type Record = PipelineData['orderId'] &
 interface TableComponentsProps {
 	columnKey: string;
 	record: Record;
+	/** The whole row, for cells that show more than their own field. */
+	row?: unknown;
 }
 
 export default TableComponents;
