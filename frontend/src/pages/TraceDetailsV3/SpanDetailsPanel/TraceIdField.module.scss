@@ -1,7 +1,24 @@
 .traceId {
-	color: var(--accent-primary);
+	color: var(--fs-primary);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	display: block;
+	font-family: var(--tw-font-mono);
+	font-size: 12px;
+}
+
+// The copy button reads as the mono id in the primary colour.
+.copyButton {
+	display: flex;
+	min-width: 0;
+
+	button {
+		max-width: 100%;
+		height: auto;
+		padding: 0;
+		font-family: var(--tw-font-mono);
+		font-size: 12px;
+		color: var(--fs-primary);
+	}
 }

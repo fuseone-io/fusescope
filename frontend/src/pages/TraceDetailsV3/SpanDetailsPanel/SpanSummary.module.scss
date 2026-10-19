@@ -1,3 +1,10 @@
+.summary {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	font-family: var(--tw-font-sans);
+}
+
 .spanRow {
 	display: flex;
 	align-items: center;
@@ -6,38 +13,78 @@
 	justify-content: space-between;
 }
 
-// Metadata and the linked-spans line share one column so every line has the
-// same vertical gap and line-height as the rows inside MetadataRow.
+.spanTitle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	flex: 1;
+}
+
+.spanDot {
+	width: 8px;
+	height: 8px;
+	flex: none;
+	border-radius: 9999px;
+}
+
+.spanName {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-family: var(--tw-font-mono);
+	font-size: 15px;
+	font-weight: 500;
+	color: var(--fs-foreground);
+}
+
+// Metadata and the linked-spans line share one row so every item has the
+// same gap and line-height as the items inside MetadataRow.
 .spanMetaGroup {
 	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	padding: 8px 0;
-	--typography-line-height: var(--line-height-20);
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 18px;
 }
 
 .spanInfoItem {
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	font-size: var(--periscope-font-size-base);
-	line-height: var(--line-height-20);
-	color: var(--l2-foreground);
+	font-size: 13px;
+	line-height: 20px;
+	color: var(--fs-muted-foreground);
 	white-space: nowrap;
 }
 
 .highlightedOptions {
-	padding: 8px 0;
+	margin: 0;
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 0;
+	gap: 12px;
+}
 
-	// Constrain KeyValueLabel inside the grid so values can ellipsize cleanly.
-	:global(.key-value-label) {
-		width: auto;
-		min-width: 0;
-		overflow: hidden;
-	}
+.option {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.optionLabel {
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--fs-muted-foreground);
+}
+
+.optionValue {
+	margin: 0;
+	min-width: 0;
+	font-size: 13px;
+	color: var(--fs-foreground);
 }
 
 .serviceDot {
@@ -45,14 +92,23 @@
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	background: var(--accent-forest);
+	background: var(--service-dot-color, var(--fs-success));
 	flex-shrink: 0;
 }
 
-// Truncating text inside a badge (service name, status message).
+// Truncating text inside a value (service name, status message).
 .badgeEllipsisText {
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.monoValue {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	max-width: 100%;
+	font-family: var(--tw-font-mono);
+	font-size: 12px;
 }

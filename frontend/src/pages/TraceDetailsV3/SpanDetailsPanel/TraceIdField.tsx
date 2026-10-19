@@ -36,17 +36,19 @@ export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
 		};
 
 		return (
-			<Tooltip title="Click to copy trace ID">
-				<Button
-					size="md"
-					variant="link"
-					color="secondary"
-					maxWidth="100%"
-					onClick={handleCopy}
-				>
-					{span.trace_id}
-				</Button>
-			</Tooltip>
+			<span className={styles.copyButton}>
+				<Tooltip title="Click to copy trace ID">
+					<Button
+						size="md"
+						variant="link"
+						color="secondary"
+						maxWidth="100%"
+						onClick={handleCopy}
+					>
+						{span.trace_id}
+					</Button>
+				</Tooltip>
+			</span>
 		);
 	}
 

@@ -3,6 +3,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Tabs, type TabsItemProps } from '@signozhq/ui/tabs';
 import { Bookmark, ChartColumnBig, List, ScrollText } from '@signozhq/icons';
 import { Skeleton } from 'antd';
+import cx from 'classnames';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
@@ -290,7 +291,9 @@ function SpanDetailsContent({
 			prefixIcon: <Bookmark size={14} />,
 			children: (
 				<>
-					{isWide && summary}
+					{isWide && (
+						<div className={cx(styles.detailsSection, styles.isInTab)}>{summary}</div>
+					)}
 					<DataViewer
 						data={spanDisplayData}
 						drawerKey="trace-details"
@@ -372,7 +375,7 @@ function SpanDetailsContent({
 
 				<div className={styles.tabsSection}>
 					<Tabs
-						variant="secondary"
+						variant="primary"
 						orientation="horizontal"
 						alignment="start"
 						className={styles.tabsScroll}
@@ -469,7 +472,15 @@ function SpanDetailsPanel({
 		variant === SpanDetailVariant.DOCKED ||
 		variant === SpanDetailVariant.DOCKED_RIGHT
 	) {
-		return <div className={styles.panel}>{content}</div>;
+		return (
+			<div
+				className={styles.panel}
+				data-testid="span-details-panel"
+				data-variant={variant}
+			>
+				{content}
+			</div>
+		);
 	}
 
 	if (variant === SpanDetailVariant.DRAWER) {
@@ -506,7 +517,13 @@ function SpanDetailsPanel({
 				topLeft: false,
 			}}
 		>
-			{content}
+			<div
+				className={styles.panel}
+				data-testid="span-details-panel"
+				data-variant={variant}
+			>
+				{content}
+			</div>
 		</FloatingPanel>
 	);
 }

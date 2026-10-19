@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { Badge } from '@signozhq/ui/badge';
 import ExpandableValue from 'periscope/components/ExpandableValue';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
@@ -18,28 +17,18 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		label: 'SERVICE',
 		render: (span): ReactNode | null =>
 			span['service.name'] ? (
-				<Badge
-					textTransform="none"
-					variant="solid"
-					color="secondary"
-					maxWidth="100%"
-				>
-					<span className={styles.serviceDot} />
+				<span className={styles.monoValue}>
 					<span className={styles.badgeEllipsisText} title={span['service.name']}>
 						{span['service.name']}
 					</span>
-				</Badge>
+				</span>
 			) : null,
 	},
 	{
 		key: 'statusCode',
 		label: 'STATUS CODE',
 		render: (span): ReactNode | null =>
-			span.status_code_string ? (
-				<Badge textTransform="none" variant="solid" color="secondary">
-					{span.status_code_string}
-				</Badge>
-			) : null,
+			span.status_code_string ? <span>{span.status_code_string}</span> : null,
 	},
 	{
 		key: 'traceId',
@@ -51,11 +40,7 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		key: 'spanKind',
 		label: 'SPAN KIND',
 		render: (span): ReactNode | null =>
-			span.kind_string ? (
-				<Badge textTransform="none" variant="solid" color="secondary">
-					{span.kind_string}
-				</Badge>
-			) : null,
+			span.kind_string ? <span>{span.kind_string}</span> : null,
 	},
 	{
 		key: 'statusMessage',
@@ -63,14 +48,9 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		render: (span): ReactNode | null =>
 			span.status_message ? (
 				<ExpandableValue value={span.status_message} title="Status message">
-					<Badge
-						textTransform="none"
-						variant="solid"
-						color="secondary"
-						maxWidth="100%"
-					>
+					<span className={styles.monoValue}>
 						<span className={styles.badgeEllipsisText}>{span.status_message}</span>
-					</Badge>
+					</span>
 				</ExpandableValue>
 			) : null,
 	},

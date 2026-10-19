@@ -3,14 +3,98 @@
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	background: var(--fs-card);
+	color: var(--fs-foreground);
+	font-family: var(--tw-font-sans);
 
 	:global(.details-header) {
-		height: 39px;
+		height: 48px;
+		flex-shrink: 0;
+		padding: 0 8px 0 16px;
+		background: var(--fs-card);
+		border-bottom: 1px solid var(--fs-border);
+		--button-ghost-hover-background: var(--fs-muted);
+	}
+
+	:global(.details-header__title) {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--fs-foreground);
+	}
+
+	// Pretty / JSON switch and copy, then the tree in a bordered box.
+	:global(.data-viewer__toolbar) {
+		padding-bottom: 12px;
+	}
+
+	:global(.data-viewer__content) {
+		overflow: hidden;
+		border: 1px solid var(--fs-border);
+		border-radius: 8px;
+	}
+
+	:global(.pretty-view) {
+		font-family: var(--tw-font-mono);
+		color: var(--fs-foreground);
+	}
+
+	:global(.pretty-view__search-wrapper) {
+		padding: 8px;
+		background: var(--fs-card);
+		border-bottom: 1px solid var(--fs-border);
+	}
+
+	// Border on the input itself: it is a plain input, not a scroller.
+	:global(.pretty-view__search-input) {
+		height: 32px;
+		padding: 0 10px !important;
+		border: 1px solid var(--fs-input) !important;
+		border-radius: 8px !important;
+		background: var(--fs-card) !important;
+		color: var(--fs-foreground) !important;
+		font-family: var(--tw-font-sans) !important;
+		font-size: 13px !important;
+
+		&:focus {
+			border-color: var(--fs-ring) !important;
+		}
+	}
+
+	:global(.pretty-view > ul),
+	:global(.pretty-view__pinned) {
+		padding: 4px 8px !important;
+	}
+
+	:global(.pretty-view__row:hover::before),
+	:global(.pretty-view__nested-row:hover::before) {
+		background: var(--fs-muted);
+	}
+
+	:global(.pretty-view__pinned) {
+		border-bottom-color: var(--fs-border);
+	}
+
+	:global(.pretty-view__pinned-header) {
+		font-family: var(--tw-font-sans);
+		color: var(--fs-muted-foreground);
+	}
+
+	:global(.pretty-view__pinned-icon) {
+		color: var(--fs-primary);
+		fill: var(--fs-primary);
+	}
+
+	:global(.pretty-view__actions) {
+		color: var(--fs-muted-foreground);
+
+		&:hover {
+			color: var(--fs-foreground);
+		}
 	}
 }
 
 .panelBody {
-	padding: 12px;
+	padding: 16px;
 	display: flex;
 	flex-direction: column;
 	flex: 1;
@@ -18,7 +102,7 @@
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	scrollbar-width: none;
-	background: var(--l1-background);
+	background: var(--fs-card);
 	font-size: 14px;
 	gap: 16px;
 
@@ -32,6 +116,8 @@
 .detailsSection {
 	flex-shrink: 0;
 	min-width: 0;
+	padding-bottom: 16px;
+	border-bottom: 1px solid var(--fs-border);
 }
 
 // Logs-tab footer. Sibling of the scrolling .panelBody inside .panel, so it's
@@ -42,12 +128,12 @@
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
-	// Inset to match panelBody's 12px padding so the border-top aligns with
+	// Inset to match panelBody's 16px padding so the border-top aligns with
 	// the content edges instead of bleeding to the panel border.
-	margin: 0 12px;
-	padding: 8px 0 12px;
-	border-top: 1px solid var(--l2-border);
-	background: var(--l1-background);
+	margin: 0 16px;
+	padding: 12px 0;
+	border-top: 1px solid var(--fs-border);
+	background: var(--fs-card);
 }
 
 // Single scroll: when the summary sits above (non-docked modes) it scrolls away
@@ -61,6 +147,7 @@
 	top: 0;
 	flex: 0 0 auto;
 	height: 100%;
+	background: var(--fs-card);
 
 	// TabsRoot — direct child of tabs-section
 	> div {
@@ -79,6 +166,11 @@
 		--badge-padding: 0 var(--spacing-3);
 	}
 
+	[role='tab'] {
+		font-size: 13px;
+		font-weight: 500;
+	}
+
 	[class*='tabs__list-wrapper'] {
 		padding-left: 0 !important;
 		flex-shrink: 0;
@@ -94,10 +186,14 @@
 	flex-direction: column;
 
 	[role='tabpanel'] {
-		padding: 0;
+		padding: 12px 0 0;
 		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
 		scrollbar-width: none;
 	}
+}
+
+.isInTab {
+	margin-bottom: 16px;
 }

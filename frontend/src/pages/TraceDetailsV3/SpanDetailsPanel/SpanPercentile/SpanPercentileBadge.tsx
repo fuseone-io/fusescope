@@ -1,5 +1,4 @@
 import { ChevronDown, ChevronUp, Loader } from '@signozhq/icons';
-import KeyValueLabel from 'periscope/components/KeyValueLabel';
 
 import { UseSpanPercentileReturn } from './useSpanPercentile';
 
@@ -47,19 +46,15 @@ function SpanPercentileBadge({
 				}
 			}}
 		>
-			<KeyValueLabel
-				badgeKey={`p${percentileValue}`}
-				badgeValue={
-					<span className={styles.value}>
-						{duration}
-						{isOpen ? (
-							<ChevronUp size={14} className={styles.icon} />
-						) : (
-							<ChevronDown size={14} className={styles.icon} />
-						)}
-					</span>
-				}
-			/>
+			<span className={styles.key}>{`p${percentileValue}`}</span>
+			<span className={styles.value}>
+				{duration}
+				{isOpen ? (
+					<ChevronUp size={14} className={styles.icon} />
+				) : (
+					<ChevronDown size={14} className={styles.icon} />
+				)}
+			</span>
 		</div>
 	);
 }
