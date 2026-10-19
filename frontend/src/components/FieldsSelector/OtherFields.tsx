@@ -15,6 +15,7 @@ import {
 import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 import { mergeExtraFields } from 'utils/extraFields';
 
+import FilterIcon from 'components/QuickFilters/FilterIcon';
 import styles from './FieldsSelector.module.scss';
 
 const EMPTY_EXTRA_FIELDS: TelemetryFieldKey[] = [];
@@ -135,6 +136,11 @@ function OtherFields({
 									key={attr.key}
 									className={cx(styles.fieldItem, styles.otherFieldItem)}
 								>
+									<FilterIcon
+										attributeKey={attr.name}
+										dataType={attr.fieldDataType}
+										className={styles.fieldIcon}
+									/>
 									<span className={styles.fieldKey}>{attr.name}</span>
 									{!isAtLimit && (
 										<Button
