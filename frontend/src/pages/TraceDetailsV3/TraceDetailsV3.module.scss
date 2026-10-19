@@ -25,7 +25,8 @@
 	gap: 16px;
 	flex: 1;
 	min-width: 0;
-	overflow: hidden;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 
 .rightDock {
@@ -75,7 +76,9 @@
 	}
 
 	:global(.ant-collapse-extra) {
+		flex: 1 1 0;
 		min-width: 0;
+		overflow: hidden;
 		margin-left: 16px;
 	}
 
@@ -117,6 +120,12 @@
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
+
+	// Room for a few rows when the flame graph and a narrow column leave little;
+	// the column scrolls instead of squeezing the waterfall away.
+	&:has(:global(.ant-collapse-item-active)) {
+		min-height: 240px;
+	}
 
 	:global(.ant-collapse-item) {
 		flex: 1;

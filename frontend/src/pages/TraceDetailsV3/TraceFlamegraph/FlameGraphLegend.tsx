@@ -43,21 +43,23 @@ function FlameGraphLegend({
 		<ul
 			aria-label={`Colour by ${colorByField.name}`}
 			data-testid="flame-graph-legend"
-			className="fs-ui tw:m-0 tw:flex tw:min-w-0 tw:list-none tw:flex-wrap tw:items-center tw:justify-end tw:gap-x-3 tw:gap-y-1.5 tw:p-0 tw:font-sans tw:text-xs tw:text-muted-foreground"
+			title={legend.items.map((item) => item.label).join(', ')}
+			className="fs-ui tw:m-0 tw:flex tw:min-w-0 tw:list-none tw:flex-nowrap tw:items-center tw:justify-start tw:gap-x-3 tw:overflow-hidden tw:p-0 tw:font-sans tw:text-xs tw:whitespace-nowrap tw:text-muted-foreground"
 		>
 			{visible.map((item) => (
-				<li key={item.label} className="tw:inline-flex tw:items-center tw:gap-1.5">
+				<li
+					key={item.label}
+					className="tw:inline-flex tw:flex-none tw:items-center tw:gap-1.5 tw:first:ms-auto"
+				>
 					<Swatch color={isDarkMode ? item.color : item.colorDark} />
 					<span className="tw:font-mono">{item.label}</span>
 				</li>
 			))}
 			{hidden.length > 0 && (
-				<li title={hidden.map((item) => item.label).join(', ')}>
-					+{hidden.length} more
-				</li>
+				<li className="tw:flex-none">+{hidden.length} more</li>
 			)}
 			{legend.hasErrors && (
-				<li className="tw:inline-flex tw:items-center tw:gap-1.5">
+				<li className="tw:inline-flex tw:flex-none tw:items-center tw:gap-1.5 tw:first:ms-auto">
 					<Swatch color={legend.errorColor} />
 					Error
 				</li>
