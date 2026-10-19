@@ -65,6 +65,8 @@ import { v4 } from 'uuid';
 import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 
 import LogsActionsContainer from './LogsActionsContainer';
+import { sumSeriesTotal } from './recordCount';
+import { useLogsRecordCount } from './useLogsRecordCount';
 
 import './LogsExplorerViews.styles.scss';
 
@@ -163,6 +165,7 @@ function LogsExplorerViewsContainer({
 		data: listChartData,
 		isFetching: isFetchingListChartData,
 		isLoading: isLoadingListChartData,
+		isError: isListChartError,
 	} = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
@@ -417,6 +420,25 @@ function LogsExplorerViewsContainer({
 		isLoadingListChartData,
 		setIsLoadingQueries,
 	]);
+
+	const setRecordCount = useLogsRecordCount((state) => state.setCount);
+	const isRecordCountShown =
+		showFrequencyChart &&
+		!showLiveLogs &&
+		selectedPanelType === PANEL_TYPES.LIST &&
+		!isListChartError &&
+		!isFetchingListChartData &&
+		!isLoadingListChartData;
+
+	useEffect(() => {
+		setRecordCount(
+			isRecordCountShown && listChartData
+				? sumSeriesTotal(listChartData.payload.data?.result || [])
+				: null,
+		);
+	}, [isRecordCountShown, listChartData, setRecordCount]);
+
+	useEffect(() => (): void => setRecordCount(null), [setRecordCount]);
 
 	const handleToggleFrequencyChart = useCallback(() => {
 		const newShowFrequencyChart = !showFrequencyChart;
