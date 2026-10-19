@@ -1,12 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@signozhq/ui/button';
+import { Button } from 'components/ui/button';
 import { Form, FormInstance, Modal } from 'antd';
 import { useAppContext } from 'providers/App/App';
 import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
-import { ModalButtonWrapper } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { renderPipelineForm } from './utils';
 
@@ -110,27 +109,20 @@ function AddNewPipeline({
 				{renderPipelineForm()}
 
 				<Form.Item>
-					<ModalButtonWrapper>
+					<div className="fs-ui tw:flex tw:justify-end tw:gap-2">
 						<Button
-							size="md"
-							key="submit"
-							type="submit"
-							variant="solid"
-							color="primary"
-							onClick={onOkModalHandler}
-						>
-							{isEdit ? t('update') : t('create')}
-						</Button>
-						<Button
-							size="md"
 							key="cancel"
-							variant="solid"
-							color="secondary"
+							type="button"
+							variant="outline"
+							size="sm"
 							onClick={onCancelModalHandler}
 						>
 							{t('cancel')}
 						</Button>
-					</ModalButtonWrapper>
+						<Button key="submit" type="submit" size="sm" onClick={onOkModalHandler}>
+							{isEdit ? t('update') : t('create')}
+						</Button>
+					</div>
 				</Form.Item>
 			</Form>
 		</Modal>

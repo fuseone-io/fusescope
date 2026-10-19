@@ -1,5 +1,3 @@
-import { ReactNode } from 'react';
-import { Badge } from '@signozhq/ui/badge';
 import { Button, Table, TableProps } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { themeColors } from 'constants/theme';
@@ -35,18 +33,6 @@ export const ListDataStyle = styled.div`
 	font-size: 0.75rem;
 	line-height: 1.25rem;
 `;
-
-export function ProcessorIndexIcon({
-	children,
-}: {
-	children: ReactNode;
-}): JSX.Element {
-	return (
-		<Badge variant="solid" color="primary">
-			{children}
-		</Badge>
-	);
-}
 
 export const StyledTable: React.FC<TableProps<any> & { isDarkMode: boolean }> =
 	styled(Table)`
