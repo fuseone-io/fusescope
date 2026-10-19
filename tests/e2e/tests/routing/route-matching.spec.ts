@@ -54,7 +54,7 @@ test.describe('Routing — route matching', () => {
 		await routing.goto(`${PATH.services}?relativeTime=30m`);
 		await expect(routing.globalTimePicker()).toBeVisible();
 
-		// LOGS_EXPLORER is in `routesToDisable`.
+		// LOGS_EXPLORER is in `routesToDisable`: its own picker owns Live tail.
 		await routing.gotoLogsExplorer();
 		await expect(routing.globalTimePicker()).toHaveCount(0);
 

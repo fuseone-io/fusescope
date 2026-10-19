@@ -191,8 +191,9 @@ export function routingDriver(page: Page): Routing {
 				`.ant-tabs-tab[data-node-key="${route}"] [role="tab"][aria-selected="true"], [role="tab"][data-route-key="${route}"][aria-selected="true"]`,
 			),
 
+		// The app's global picker, not a page's own picker rendered in the header.
 		globalTimePicker: () =>
-			page.getByTestId('app-header').getByTestId('dropDown'),
+			page.getByTestId('app-header-time-controls').getByTestId('dropDown'),
 
 		// A click before the picker is interactive is dropped silently, so retry the
 		// open. The popover unmounts on close, which is what proves the selection
