@@ -18,17 +18,19 @@ function ColumnsOptionsButton({
 
 	return (
 		<>
-			<Button
-				variant="ghost"
-				size="icon-sm"
-				title="Columns and options"
-				data-testid="traces-list-columns-options"
-				className="fs-ui tw:text-muted-foreground"
-				onClick={(): void => setIsOpen(true)}
-			>
-				<SlidersHorizontal />
-				<span className="tw:sr-only">{t('options_menu.options')}</span>
-			</Button>
+			<span className="fs-ui tw:inline-flex">
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					title="Columns and options"
+					data-testid="traces-list-columns-options"
+					className="tw:text-muted-foreground"
+					onClick={(): void => setIsOpen(true)}
+				>
+					<SlidersHorizontal />
+					<span className="tw:sr-only">{t('options_menu.options')}</span>
+				</Button>
+			</span>
 			<FieldsSelector
 				isOpen={isOpen}
 				title="Edit columns"
