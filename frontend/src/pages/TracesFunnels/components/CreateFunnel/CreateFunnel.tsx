@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { generatePath, matchPath, useLocation } from 'react-router-dom';
-import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import axios from 'axios';
-import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { useCreateFunnel } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Check, X } from '@signozhq/icons';
+import { Check } from 'lucide-react';
 
-import '../RenameFunnel/RenameFunnel.styles.scss';
+import FunnelDialog from '../FunnelDialog/FunnelDialog';
+import FunnelTextField from '../FunnelTextField/FunnelTextField';
 
 interface CreateFunnelProps {
 	isOpen: boolean;
@@ -89,55 +88,36 @@ function CreateFunnel({
 		onClose();
 	};
 
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		setFunnelName(e.target.value);
+	const handleInputChange = (value: string): void => {
+		setFunnelName(value);
 		if (inputError) {
 			setInputError('');
 		}
 	};
 
 	return (
-		<SignozModal
+		<FunnelDialog
 			open={isOpen}
 			title="Create new funnel"
-			width={384}
 			onCancel={handleCancel}
-			rootClassName="funnel-modal"
-			cancelText="Cancel"
-			okText="Create Funnel"
-			okButtonProps={{
-				icon: <Check size={14} />,
-				loading: createFunnelMutation.isLoading,
-				type: 'primary',
-				className: 'funnel-modal__ok-btn',
+			confirm={{
+				label: 'Create Funnel',
+				icon: <Check className="tw:size-3.5" />,
 				onClick: handleCreate,
 				disabled: !funnelName.trim(),
+				loading: createFunnelMutation.isLoading,
 			}}
-			cancelButtonProps={{
-				icon: <X size={14} />,
-				type: 'text',
-				className: 'funnel-modal__cancel-btn',
-				onClick: handleCancel,
-			}}
-			getContainer={document.getElementById('root') || undefined}
-			destroyOnClose
 		>
-			<div className="funnel-modal-content">
-				<span className="funnel-modal-content__label">Enter funnel name</span>
-				<Input
-					className={`funnel-modal-content__input${
-						inputError ? ' funnel-modal-content__input--error' : ''
-					}`}
-					value={funnelName}
-					onChange={handleInputChange}
-					placeholder="Eg. checkout dropoff funnel"
-					autoFocus
-				/>
-				{inputError && (
-					<span className="funnel-modal-content__error">{inputError}</span>
-				)}
-			</div>
-		</SignozModal>
+			<FunnelTextField
+				id="create-funnel-name"
+				label="Enter funnel name"
+				value={funnelName}
+				onChange={handleInputChange}
+				placeholder="Eg. checkout dropoff funnel"
+				error={inputError}
+				autoFocus
+			/>
+		</FunnelDialog>
 	);
 }
 

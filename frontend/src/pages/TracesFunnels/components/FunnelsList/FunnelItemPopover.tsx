@@ -1,11 +1,18 @@
-import { useState } from 'react';
-import { Button, Popover, Tooltip } from 'antd';
-import cx from 'classnames';
-import { Ellipsis, PencilLine, Trash2 } from '@signozhq/icons';
+import { MouseEvent, useRef, useState } from 'react';
+import { Button } from 'components/ui/button';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from 'components/ui/dropdown-menu';
+import { Ellipsis, PencilLine, Trash2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { FunnelData } from 'types/api/traceFunnels';
 
+import { FLOATING_LAYER_CLASS } from '../../constants';
 import DeleteFunnel from '../DeleteFunnel/DeleteFunnel';
+import HintTooltip from '../HintTooltip/HintTooltip';
 import RenameFunnel from '../RenameFunnel/RenameFunnel';
 
 interface FunnelItemPopoverProps {
@@ -15,106 +22,96 @@ interface FunnelItemPopoverProps {
 	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
 }
 
-interface FunnelItemActionsProps {
-	setIsPopoverOpen: (isOpen: boolean) => void;
-	setIsRenameModalOpen: (isOpen: boolean) => void;
-	setIsDeleteModalOpen: (isOpen: boolean) => void;
-}
-
-function FunnelItemActions({
-	setIsPopoverOpen,
-	setIsRenameModalOpen,
-	setIsDeleteModalOpen,
-}: FunnelItemActionsProps): JSX.Element {
-	return (
-		<div className="funnel-item__actions">
-			<Button
-				type="text"
-				className="funnel-item__action-btn"
-				icon={<PencilLine size={14} />}
-				onClick={(): void => {
-					setIsPopoverOpen(false);
-					setIsRenameModalOpen(true);
-				}}
-			>
-				Rename
-			</Button>
-			<Button
-				type="text"
-				className="funnel-item__action-btn funnel-item__action-btn--delete"
-				icon={<Trash2 size={14} />}
-				onClick={(): void => {
-					setIsPopoverOpen(false);
-					setIsDeleteModalOpen(true);
-				}}
-			>
-				Delete
-			</Button>
-		</div>
-	);
-}
+// The menu sits inside a clickable row or link. React bubbles clicks from the
+// portalled dialogs through it too; those must keep their default action.
+const stopRowClick = (e: MouseEvent<HTMLElement>): void => {
+	e.stopPropagation();
+	if (e.currentTarget.contains(e.target as Node)) {
+		e.preventDefault();
+	}
+};
 
 function FunnelItemPopover({
 	isPopoverOpen,
 	setIsPopoverOpen,
 	funnel,
-	shouldRedirectToTracesListOnDeleteSuccess,
+	shouldRedirectToTracesListOnDeleteSuccess = true,
 }: FunnelItemPopoverProps): JSX.Element {
 	const [isRenameModalOpen, setIsRenameModalOpen] = useState<boolean>(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 	const { hasEditPermission } = useAppContext();
-
-	const handleRenameCancel = (): void => {
-		setIsRenameModalOpen(false);
-	};
-
-	const preventDefault = (e: React.MouseEvent | React.KeyboardEvent): void => {
-		e.preventDefault();
-		e.stopPropagation();
-	};
+	// Dialogs open once the menu has closed, so the menu does not take their focus.
+	const pendingDialog = useRef<(() => void) | null>(null);
 
 	if (!hasEditPermission) {
 		return (
-			<Tooltip title="You need editor or admin access to edit funnels">
+			<HintTooltip title="You need editor or admin access to edit funnels">
 				<Button
-					type="text"
-					className="funnel-item__action-btn"
-					icon={<Ellipsis size={14} />}
+					type="button"
+					variant="ghost"
+					size="icon-sm"
+					aria-label="Funnel actions"
 					disabled
-				/>
-			</Tooltip>
+				>
+					<Ellipsis />
+				</Button>
+			</HintTooltip>
 		);
 	}
 
 	return (
-		<div
-			onClick={preventDefault}
-			role="button"
-			tabIndex={0}
-			className="funnel-item__actions-popover"
-		>
-			<Popover
-				trigger="click"
-				rootClassName="funnel-item__actions"
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+		<span onClick={stopRowClick} className="fs-ui tw:inline-flex">
+			<DropdownMenu
+				modal={false}
 				open={isPopoverOpen}
 				onOpenChange={setIsPopoverOpen}
-				content={
-					<FunnelItemActions
-						setIsDeleteModalOpen={setIsDeleteModalOpen}
-						setIsPopoverOpen={setIsPopoverOpen}
-						setIsRenameModalOpen={setIsRenameModalOpen}
-					/>
-				}
-				placement="bottomRight"
-				arrow={false}
 			>
-				<Ellipsis
-					className={cx('funnel-item__action-icon', {
-						'funnel-item__action-icon--active': isPopoverOpen,
-					})}
-					size={14}
-				/>
-			</Popover>
+				<DropdownMenuTrigger asChild>
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon-sm"
+						aria-label="Funnel actions"
+						data-testid="funnel-actions"
+						className="tw:text-muted-foreground tw:hover:text-foreground"
+					>
+						<Ellipsis />
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent
+					onCloseAutoFocus={(event): void => {
+						if (pendingDialog.current) {
+							event.preventDefault();
+							pendingDialog.current();
+							pendingDialog.current = null;
+						}
+					}}
+					align="end"
+					aria-label="Funnel actions"
+					className={`tw:min-w-[140px] ${FLOATING_LAYER_CLASS}`}
+				>
+					<DropdownMenuItem
+						className="tw:text-[13px]"
+						onSelect={(): void => {
+							pendingDialog.current = (): void => setIsRenameModalOpen(true);
+						}}
+					>
+						<PencilLine className="tw:size-3.5" />
+						Rename
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						variant="destructive"
+						className="tw:text-[13px]"
+						onSelect={(): void => {
+							pendingDialog.current = (): void => setIsDeleteModalOpen(true);
+						}}
+					>
+						<Trash2 className="tw:size-3.5" />
+						Delete
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
 
 			<DeleteFunnel
 				shouldRedirectToTracesListOnDeleteSuccess={
@@ -127,15 +124,12 @@ function FunnelItemPopover({
 
 			<RenameFunnel
 				isOpen={isRenameModalOpen}
-				onClose={handleRenameCancel}
+				onClose={(): void => setIsRenameModalOpen(false)}
 				funnelId={funnel.funnel_id}
 				initialName={funnel.funnel_name}
 			/>
-		</div>
+		</span>
 	);
 }
 
-FunnelItemPopover.defaultProps = {
-	shouldRedirectToTracesListOnDeleteSuccess: true,
-};
 export default FunnelItemPopover;

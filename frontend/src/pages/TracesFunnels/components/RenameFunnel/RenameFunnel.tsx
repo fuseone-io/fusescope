@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Input } from '@signozhq/ui/input';
-import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useRenameFunnel } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check, X } from '@signozhq/icons';
+import { Check } from 'lucide-react';
 
-import './RenameFunnel.styles.scss';
+import FunnelDialog from '../FunnelDialog/FunnelDialog';
+import FunnelTextField from '../FunnelTextField/FunnelTextField';
 
 interface RenameFunnelProps {
 	isOpen: boolean;
@@ -61,41 +60,26 @@ function RenameFunnel({
 	};
 
 	return (
-		<SignozModal
+		<FunnelDialog
 			open={isOpen}
 			title="Rename Funnel"
-			width={384}
 			onCancel={handleCancel}
-			rootClassName="funnel-modal"
-			cancelText="Cancel"
-			okText="Rename Funnel"
-			okButtonProps={{
-				icon: <Check size={14} />,
-				loading: renameFunnelMutation.isLoading,
-				type: 'primary',
-				className: 'funnel-modal__ok-btn',
+			confirm={{
+				label: 'Rename Funnel',
+				icon: <Check className="tw:size-3.5" />,
 				onClick: handleRename,
 				disabled: newFunnelName === initialName,
+				loading: renameFunnelMutation.isLoading,
 			}}
-			cancelButtonProps={{
-				icon: <X size={14} />,
-				type: 'text',
-				className: 'funnel-modal__cancel-btn',
-				onClick: handleCancel,
-			}}
-			getContainer={document.getElementById('root') || undefined}
-			destroyOnClose
 		>
-			<div className="funnel-modal-content">
-				<span className="funnel-modal-content__label">Enter a new name</span>
-				<Input
-					className="funnel-modal-content__input"
-					value={newFunnelName}
-					onChange={(e): void => setNewFunnelName(e.target.value)}
-					autoFocus
-				/>
-			</div>
-		</SignozModal>
+			<FunnelTextField
+				id={`rename-funnel-${funnelId}`}
+				label="Enter a new name"
+				value={newFunnelName}
+				onChange={setNewFunnelName}
+				autoFocus
+			/>
+		</FunnelDialog>
 	);
 }
 

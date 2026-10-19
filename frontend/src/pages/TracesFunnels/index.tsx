@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Skeleton } from 'antd';
+import PageTemplate from 'components/PageTemplate/PageTemplate';
 import { useFunnelsList } from 'hooks/TracesFunnels/useFunnels';
 import useHandleTraceFunnelsSearch from 'hooks/TracesFunnels/useHandleTraceFunnelsSearch';
 import useHandleTraceFunnelsSort from 'hooks/TracesFunnels/useHandleTraceFunnelsSort';
@@ -8,6 +9,7 @@ import { FunnelData } from 'types/api/traceFunnels';
 import CreateFunnel from './components/CreateFunnel/CreateFunnel';
 import FunnelsEmptyState from './components/FunnelsEmptyState/FunnelsEmptyState';
 import FunnelsList from './components/FunnelsList/FunnelsList';
+import FunnelsTable from './components/FunnelsTable/FunnelsTable';
 import Header from './components/Header/Header';
 import SearchBar from './components/SearchBar/SearchBar';
 import { filterFunnelsByQuery } from './utils';
@@ -91,28 +93,29 @@ function TracesFunnels(): JSX.Element {
 	};
 
 	return (
-		<div className="traces-funnels">
-			<div className="traces-funnels__content">
-				<Header />
-				<SearchBar
-					searchQuery={searchQuery}
-					sortOrder={sortOrder}
-					onSearch={handleSearch}
-					onSort={handleSort}
-					onCreateFunnel={handleCreateFunnel}
-				/>
-				<TracesFunnelsContentRenderer
-					isError={isError}
-					isLoading={isLoading}
-					data={filteredData}
-					onCreateFunnel={handleCreateFunnel}
-				/>
-				<CreateFunnel
-					isOpen={isCreateModalOpen}
-					onClose={(): void => setIsCreateModalOpen(false)}
-				/>
-			</div>
-		</div>
+		<PageTemplate
+			testId="traces-funnels-page"
+			className="tw:mx-0 tw:max-w-[1120px] tw:gap-4 tw:md:p-6"
+		>
+			<Header />
+			<SearchBar
+				searchQuery={searchQuery}
+				sortOrder={sortOrder}
+				onSearch={handleSearch}
+				onSort={handleSort}
+				onCreateFunnel={handleCreateFunnel}
+			/>
+			<FunnelsTable
+				isError={isError}
+				isLoading={isLoading}
+				data={filteredData}
+				onCreateFunnel={handleCreateFunnel}
+			/>
+			<CreateFunnel
+				isOpen={isCreateModalOpen}
+				onClose={(): void => setIsCreateModalOpen(false)}
+			/>
+		</PageTemplate>
 	);
 }
 
