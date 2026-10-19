@@ -29,10 +29,10 @@ function TracesFunnelDetails(): JSX.Element {
 	return (
 		<FunnelProvider funnelId={funnelId}>
 			<div className="traces-funnel-details">
-				<div className="traces-funnel-details__steps-config">
+				<div className="traces-funnel-details__steps-config tw:bg-surface-raised">
 					<FunnelConfiguration funnel={data.payload} />
 				</div>
-				<div className="traces-funnel-details__steps-results">
+				<div className="traces-funnel-details__steps-results tw:px-6 tw:pt-4 tw:pb-6">
 					<FunnelResults />
 				</div>
 			</div>

@@ -1,10 +1,9 @@
-import { Divider } from '@signozhq/ui/divider';
-import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import HintTooltip from 'pages/TracesFunnels/components/HintTooltip/HintTooltip';
 import { useAppContext } from 'providers/App/App';
 import { FunnelStepData, LatencyOptions } from 'types/api/traceFunnels';
 
-import './InterStepConfig.styles.scss';
+import SegmentedControl from '../SegmentedControl/SegmentedControl';
 
 function InterStepConfig({
 	index,
@@ -21,28 +20,35 @@ function InterStepConfig({
 	}));
 
 	return (
-		<div className="inter-step-config">
-			<div className="inter-step-config__label">Latency type</div>
-			<div className="inter-step-config__divider">
-				<Divider dashed />
-			</div>
-			<div className="inter-step-config__latency-options">
-				<SignozRadioGroup
+		<div className="inter-step-config fs-ui tw:flex tw:items-center tw:gap-2.5 tw:pt-2.5 tw:pb-0.5 tw:font-sans">
+			<span className="tw:text-xs tw:whitespace-nowrap tw:text-muted-foreground">
+				Latency type
+			</span>
+			<span
+				aria-hidden="true"
+				className="tw:flex-1 tw:border-t tw:border-dashed tw:border-border"
+			/>
+			<HintTooltip
+				title={
+					!hasEditPermission
+						? 'You need edit permissions to change the latency type'
+						: ''
+				}
+			>
+				<SegmentedControl
+					label="Latency type"
+					size="sm"
 					value={step.latency_type ?? LatencyOptions.P99}
 					options={options}
 					disabled={!hasEditPermission}
-					disabledTooltip="You need edit permissions to change the latency type"
-					onChange={
-						hasEditPermission
-							? (value): void =>
-									onStepChange(index, {
-										...step,
-										latency_type: value as LatencyOptions,
-									})
-							: (): void => {}
+					onChange={(value): void =>
+						onStepChange(index, {
+							...step,
+							latency_type: value as LatencyOptions,
+						})
 					}
 				/>
-			</div>
+			</HintTooltip>
 		</div>
 	);
 }

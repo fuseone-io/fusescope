@@ -1,7 +1,14 @@
-import { useState } from 'react';
-import { Button, Popover, Tooltip } from 'antd';
-import cx from 'classnames';
-import { Ellipsis, PencilLine, Trash2 } from '@signozhq/icons';
+import { MouseEvent, useRef, useState } from 'react';
+import { Button } from 'components/ui/button';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from 'components/ui/dropdown-menu';
+import { Ellipsis, PencilLine, Trash2 } from 'lucide-react';
+import { FLOATING_LAYER_CLASS } from 'pages/TracesFunnels/constants';
+import HintTooltip from 'pages/TracesFunnels/components/HintTooltip/HintTooltip';
 import { useAppContext } from 'providers/App/App';
 import { FunnelStepData } from 'types/api/traceFunnels';
 
@@ -11,7 +18,6 @@ import DeleteFunnelStep from './DeleteFunnelStep';
 export interface FunnelStepPopoverProps {
 	isPopoverOpen: boolean;
 	setIsPopoverOpen: (isOpen: boolean) => void;
-	className?: string;
 	stepData: {
 		step_order: FunnelStepData['step_order'];
 		name?: FunnelStepData['name'];
@@ -23,69 +29,12 @@ export interface FunnelStepPopoverProps {
 	setIsAddDetailsModalOpen: (isOpen: boolean) => void;
 }
 
-interface FunnelStepActionsProps {
-	setIsPopoverOpen: (isOpen: boolean) => void;
-	setIsAddDetailsModalOpen: (isOpen: boolean) => void;
-	setIsDeleteModalOpen: (isOpen: boolean) => void;
-	stepsCount: number;
-	hasEditPermission: boolean;
-}
-
-function FunnelStepActions({
-	setIsPopoverOpen,
-	setIsAddDetailsModalOpen,
-	setIsDeleteModalOpen,
-	stepsCount,
-	hasEditPermission,
-}: FunnelStepActionsProps): JSX.Element {
-	return (
-		<div className="funnel-item__actions">
-			<Button
-				type="text"
-				className="funnel-item__action-btn"
-				icon={<PencilLine size={14} />}
-				disabled={!hasEditPermission}
-				onClick={(): void => {
-					setIsPopoverOpen(false);
-					setIsAddDetailsModalOpen(true);
-				}}
-			>
-				Add details
-			</Button>
-
-			<Tooltip
-				title={
-					!hasEditPermission
-						? 'You need editor or admin access to delete steps'
-						: stepsCount <= 2
-							? 'Minimum 2 steps required'
-							: 'Delete'
-				}
-			>
-				<Button
-					type="text"
-					className="funnel-item__action-btn funnel-item__action-btn--delete"
-					icon={<Trash2 size={14} />}
-					disabled={stepsCount <= 2 || !hasEditPermission}
-					onClick={(): void => {
-						if (stepsCount > 2) {
-							setIsPopoverOpen(false);
-							setIsDeleteModalOpen(true);
-						}
-					}}
-				>
-					Delete
-				</Button>
-			</Tooltip>
-		</div>
-	);
-}
+const ICON_BUTTON = 'tw:text-muted-foreground tw:hover:text-foreground';
 
 function FunnelStepPopover({
 	isPopoverOpen,
 	setIsPopoverOpen,
 	stepData,
-	className,
 	onStepRemove,
 	stepsCount,
 	isAddDetailsModalOpen,
@@ -93,52 +42,93 @@ function FunnelStepPopover({
 }: FunnelStepPopoverProps): JSX.Element {
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 	const { hasEditPermission } = useAppContext();
-
-	const preventDefault = (e: React.MouseEvent | React.KeyboardEvent): void => {
-		e.preventDefault();
-		e.stopPropagation();
-	};
+	// Dialogs open once the menu has closed, so the menu does not take their focus.
+	const pendingDialog = useRef<(() => void) | null>(null);
+	const canDelete = stepsCount > 2;
 
 	if (!hasEditPermission) {
 		return (
-			<Tooltip title="You need editor or admin access to add details to step">
+			<HintTooltip title="You need editor or admin access to add details to step">
 				<Button
-					type="text"
-					className="funnel-item__action-btn"
-					icon={<Ellipsis size={14} />}
+					type="button"
+					variant="ghost"
+					size="icon-sm"
+					aria-label="Step actions"
+					className={ICON_BUTTON}
 					disabled
-				/>
-			</Tooltip>
+				>
+					<Ellipsis className="tw:size-3.5" />
+				</Button>
+			</HintTooltip>
 		);
 	}
 
 	return (
-		<div onClick={preventDefault} role="button" tabIndex={0}>
-			<Popover
-				trigger="click"
-				rootClassName="funnel-item__actions"
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+		<span
+			className="tw:inline-flex"
+			onClick={(e: MouseEvent): void => e.stopPropagation()}
+		>
+			<DropdownMenu
+				modal={false}
 				open={isPopoverOpen}
 				onOpenChange={setIsPopoverOpen}
-				content={
-					<FunnelStepActions
-						setIsDeleteModalOpen={setIsDeleteModalOpen}
-						setIsPopoverOpen={setIsPopoverOpen}
-						setIsAddDetailsModalOpen={setIsAddDetailsModalOpen}
-						stepsCount={stepsCount}
-						hasEditPermission={hasEditPermission}
-					/>
-				}
-				placement="bottomRight"
-				arrow={false}
-				destroyTooltipOnHide
 			>
-				<Ellipsis
-					className={cx('funnel-item__action-icon', className, {
-						'funnel-item__action-icon--active': isPopoverOpen,
-					})}
-					size={14}
-				/>
-			</Popover>
+				<DropdownMenuTrigger asChild>
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon-sm"
+						aria-label="Step actions"
+						className={ICON_BUTTON}
+					>
+						<Ellipsis className="tw:size-3.5" />
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent
+					onCloseAutoFocus={(event): void => {
+						if (pendingDialog.current) {
+							event.preventDefault();
+							pendingDialog.current();
+							pendingDialog.current = null;
+						}
+					}}
+					align="end"
+					aria-label="Step actions"
+					className={`tw:min-w-[150px] ${FLOATING_LAYER_CLASS}`}
+				>
+					<DropdownMenuItem
+						className="tw:text-[13px]"
+						onSelect={(): void => {
+							pendingDialog.current = (): void => setIsAddDetailsModalOpen(true);
+						}}
+					>
+						<PencilLine className="tw:size-3.5" />
+						Add details
+					</DropdownMenuItem>
+					<HintTooltip
+						title={canDelete ? 'Delete' : 'Minimum 2 steps required'}
+						className="tw:flex tw:flex-col"
+						side="right"
+					>
+						<DropdownMenuItem
+							variant="destructive"
+							aria-disabled={!canDelete}
+							className="tw:text-[13px] tw:aria-disabled:cursor-not-allowed tw:aria-disabled:opacity-50"
+							onSelect={(event): void => {
+								if (!canDelete) {
+									event.preventDefault();
+									return;
+								}
+								pendingDialog.current = (): void => setIsDeleteModalOpen(true);
+							}}
+						>
+							<Trash2 className="tw:size-3.5" />
+							Delete
+						</DropdownMenuItem>
+					</HintTooltip>
+				</DropdownMenuContent>
+			</DropdownMenu>
 
 			<DeleteFunnelStep
 				isOpen={isDeleteModalOpen}
@@ -151,12 +141,8 @@ function FunnelStepPopover({
 				onClose={(): void => setIsAddDetailsModalOpen(false)}
 				stepData={stepData}
 			/>
-		</div>
+		</span>
 	);
 }
-
-FunnelStepPopover.defaultProps = {
-	className: '',
-};
 
 export default FunnelStepPopover;

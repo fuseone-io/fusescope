@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Input } from 'antd';
-import SignozModal from 'components/SignozModal/SignozModal';
 import { useUpdateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check, X } from '@signozhq/icons';
+import { Check } from 'lucide-react';
+import FunnelDialog from 'pages/TracesFunnels/components/FunnelDialog/FunnelDialog';
+import FunnelTextField from 'pages/TracesFunnels/components/FunnelTextField/FunnelTextField';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 
 import { FunnelStepPopoverProps } from './FunnelStepPopover';
-
-import './AddFunnelStepDetailsModal.styles.scss';
 
 interface AddFunnelStepDetailsModalProps {
 	isOpen: boolean;
@@ -84,56 +82,38 @@ function AddFunnelStepDetailsModal({
 	};
 
 	return (
-		<SignozModal
+		<FunnelDialog
 			open={isOpen}
 			title="Add funnel step details"
-			width={384}
 			onCancel={handleCancel}
-			rootClassName="funnel-step-modal funnel-modal signoz-modal"
-			cancelText="Cancel"
-			okText="Save changes"
-			okButtonProps={{
-				icon: <Check size={14} />,
-				type: 'primary',
-				className: 'funnel-step-modal__ok-btn',
+			cancelDisabled={isLoading}
+			confirm={{
+				label: 'Save changes',
+				icon: <Check className="tw:size-3.5" />,
 				onClick: handleSave,
 				disabled: !stepName.trim(),
 				loading: isLoading,
 			}}
-			cancelButtonProps={{
-				icon: <X size={14} />,
-				type: 'text',
-				className: 'funnel-step-modal__cancel-btn',
-				onClick: handleCancel,
-				disabled: isLoading,
-			}}
-			destroyOnClose
 		>
-			<div className="funnel-step-modal-content">
-				<div className="funnel-step-modal-content__field">
-					<span className="funnel-step-modal-content__label">Step name</span>
-					<Input
-						className="funnel-step-modal-content__input"
-						placeholder="Eg. checkout-dropoff-funnel-step1"
-						value={stepName}
-						onChange={(e): void => setStepName(e.target.value)}
-						autoFocus
-						disabled={isLoading}
-					/>
-				</div>
-				<div className="funnel-step-modal-content__field">
-					<span className="funnel-step-modal-content__label">Description</span>
-					<Input.TextArea
-						className="funnel-step-modal-content__input"
-						placeholder="Eg. checkout dropoff funnel"
-						value={description}
-						onChange={(e): void => setDescription(e.target.value)}
-						autoSize={{ minRows: 3, maxRows: 5 }}
-						disabled={isLoading}
-					/>
-				</div>
-			</div>
-		</SignozModal>
+			<FunnelTextField
+				id={`funnel-step-name-${stepData.step_order}`}
+				label="Step name"
+				placeholder="Eg. checkout-dropoff-funnel-step1"
+				value={stepName}
+				onChange={setStepName}
+				disabled={isLoading}
+				autoFocus
+			/>
+			<FunnelTextField
+				id={`funnel-step-description-${stepData.step_order}`}
+				label="Description"
+				placeholder="Eg. checkout dropoff funnel"
+				value={description}
+				onChange={setDescription}
+				disabled={isLoading}
+				multiline
+			/>
+		</FunnelDialog>
 	);
 }
 
