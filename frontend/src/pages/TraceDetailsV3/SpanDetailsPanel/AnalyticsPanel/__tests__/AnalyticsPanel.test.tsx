@@ -16,17 +16,6 @@ jest.mock('hooks/trace/useGetTraceAggregations', () => ({
 	default: jest.fn(),
 }));
 
-// Isolate the panel's own logic from the floating-panel chrome.
-jest.mock('periscope/components/FloatingPanel', () => ({
-	__esModule: true,
-	FloatingPanel: ({ children }: { children: React.ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-}));
-jest.mock('components/DetailsPanel', () => ({
-	__esModule: true,
-	DetailsHeader: (): JSX.Element => <div data-testid="details-header" />,
-}));
 jest.mock('components/Spinner', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="spinner" />,

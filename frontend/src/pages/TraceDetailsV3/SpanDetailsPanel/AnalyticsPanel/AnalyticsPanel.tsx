@@ -1,11 +1,16 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Tabs } from '@signozhq/ui/tabs';
-import { DetailsHeader } from 'components/DetailsPanel';
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+} from 'components/ui/sheet';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useGetTraceAggregations from 'hooks/trace/useGetTraceAggregations';
 import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
-import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import {
 	SpantypesSpanAggregationDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
@@ -26,11 +31,6 @@ interface AnalyticsPanelProps {
 	onClose: () => void;
 	onTabChange: (tab: string) => void;
 }
-
-const PANEL_WIDTH = 350;
-const PANEL_MARGIN_RIGHT = 100;
-const PANEL_MARGIN_TOP = 50;
-const PANEL_MARGIN_BOTTOM = 50;
 
 function AnalyticsPanel({
 	isOpen,
@@ -118,75 +118,69 @@ function AnalyticsPanel({
 	}
 
 	return (
-		<FloatingPanel
-			isOpen
-			width={PANEL_WIDTH}
-			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
-			defaultPosition={{
-				x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,
-				y: PANEL_MARGIN_TOP,
-			}}
-			enableResizing={{
-				top: true,
-				bottom: true,
-				left: false,
-				right: false,
-				topLeft: false,
-				topRight: false,
-				bottomLeft: false,
-				bottomRight: false,
+		<Sheet
+			open
+			onOpenChange={(open): void => {
+				if (!open) {
+					onClose();
+				}
 			}}
 		>
-			<DetailsHeader
-				title="Analytics"
-				onClose={onClose}
-				className="floating-panel__drag-handle"
-			/>
-
-			<div className={styles.body} data-testid="trace-analytics-panel">
-				<Tabs
-					variant="primary"
-					orientation="horizontal"
-					alignment="start"
-					className={styles.tabsScroll}
-					defaultValue="exec-time"
-					onChange={onTabChange}
-					noTabContentPadding
-					items={[
-						{
-							key: 'exec-time',
-							label: '% exec time',
-							children: (
-								<div className={styles.tabsScroll}>
-									<AnalyticsTabContent
-										isLoading={isLoading}
-										isError={isError}
-										fieldName={colorByFieldName}
-										rows={execTimeRows}
-										valueVariant="wide"
-									/>
-								</div>
-							),
-						},
-						{
-							key: 'spans',
-							label: 'Spans',
-							children: (
-								<div className={styles.tabsScroll}>
-									<AnalyticsTabContent
-										isLoading={isLoading}
-										isError={isError}
-										fieldName={colorByFieldName}
-										rows={spanCountRows}
-										valueVariant="narrow"
-									/>
-								</div>
-							),
-						},
-					]}
-				/>
-			</div>
-		</FloatingPanel>
+			<SheetContent
+				side="right"
+				className="fs-ui tw:w-[400px] tw:max-w-full tw:gap-0 tw:font-sans tw:sm:max-w-[400px]"
+			>
+				<SheetHeader className="tw:border-b tw:border-border tw:px-5 tw:py-4">
+					<SheetTitle className="tw:text-base">Analytics</SheetTitle>
+					<SheetDescription className="tw:text-xs">
+						Execution time and span count by {colorByFieldName}
+					</SheetDescription>
+				</SheetHeader>
+				<div className={styles.body} data-testid="trace-analytics-panel">
+					<Tabs
+						variant="primary"
+						orientation="horizontal"
+						alignment="start"
+						className={styles.tabsScroll}
+						defaultValue="exec-time"
+						onChange={onTabChange}
+						noTabContentPadding
+						items={[
+							{
+								key: 'exec-time',
+								label: '% exec time',
+								children: (
+									<div className={styles.tabsScroll}>
+										<AnalyticsTabContent
+											isLoading={isLoading}
+											isError={isError}
+											fieldName={colorByFieldName}
+											rows={execTimeRows}
+											valueVariant="wide"
+										/>
+									</div>
+								),
+							},
+							{
+								key: 'spans',
+								label: 'Spans',
+								children: (
+									<div className={styles.tabsScroll}>
+										<AnalyticsTabContent
+											isLoading={isLoading}
+											isError={isError}
+											fieldName={colorByFieldName}
+											rows={spanCountRows}
+											valueVariant="narrow"
+										/>
+									</div>
+								),
+							},
+						]}
+					/>
+				</div>
+			</SheetContent>
+		</Sheet>
 	);
 }
 

@@ -1,11 +1,11 @@
 .body {
-	padding: 4px 16px 12px;
+	padding: 4px 20px 12px;
 	display: flex;
 	flex-direction: column;
 	flex: 1;
 	min-height: 0;
 	overflow: hidden;
-	background: var(--fs-card);
+	background: transparent;
 	font-family: var(--tw-font-sans);
 
 	// TabsRoot — last direct child div
