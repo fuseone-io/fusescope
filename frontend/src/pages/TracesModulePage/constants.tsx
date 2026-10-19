@@ -1,6 +1,7 @@
 import { matchPath } from 'react-router-dom';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
+import { Bookmark, Compass, Funnel } from 'lucide-react';
 import SaveView from 'pages/SaveView';
 import TracesExplorer from 'pages/TracesExplorer';
 import TracesFunnelDetails from 'pages/TracesFunnelDetails';
@@ -9,6 +10,7 @@ import TracesFunnels from 'pages/TracesFunnels';
 export const tracesExplorer: TabRoutes = {
 	Component: (): JSX.Element => <TracesExplorer />,
 	name: 'Explorer',
+	icon: <Compass />,
 	route: ROUTES.TRACES_EXPLORER,
 	key: ROUTES.TRACES_EXPLORER,
 };
@@ -20,6 +22,7 @@ export const tracesFunnel = (pathname: string): TabRoutes => ({
 		return isFunnelDetails ? <TracesFunnelDetails /> : <TracesFunnels />;
 	},
 	name: 'Funnels',
+	icon: <Funnel />,
 	route: ROUTES.TRACES_FUNNELS,
 	key: ROUTES.TRACES_FUNNELS,
 });
@@ -27,6 +30,7 @@ export const tracesFunnel = (pathname: string): TabRoutes => ({
 export const tracesSaveView: TabRoutes = {
 	Component: SaveView,
 	name: 'Views',
+	icon: <Bookmark />,
 	route: ROUTES.TRACES_SAVE_VIEWS,
 	key: ROUTES.TRACES_SAVE_VIEWS,
 };

@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import { ComponentType, ReactNode } from 'react';
 import { TabsProps } from 'antd';
 import { History } from 'history';
 
@@ -7,6 +7,8 @@ export type TabRoutes = {
 	route: string;
 	Component: ComponentType;
 	key: string;
+	/** Shown before the name by tab bars that support it (`ModuleTabsLayout`). */
+	icon?: ReactNode;
 };
 
 export interface RouteTabProps {

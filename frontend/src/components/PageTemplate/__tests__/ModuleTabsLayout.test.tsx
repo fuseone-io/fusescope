@@ -1,5 +1,5 @@
 import { Router } from 'react-router-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { TabRoutes } from 'components/RouteTab/types';
 import { createMemoryHistory, MemoryHistory } from 'history';
 
@@ -99,6 +99,21 @@ describe('ModuleTabsLayout', () => {
 		);
 		expect(screen.getByText('views body')).toBeInTheDocument();
 		expect(screen.queryByText('explorer body')).not.toBeInTheDocument();
+	});
+
+	it('renders a route icon before its name, keeping the accessible name', () => {
+		renderLayout('/logs/explorer', {
+			routes: [
+				{ ...routes[0], icon: <svg data-testid="explorer-tab-icon" /> },
+				routes[1],
+			],
+		});
+
+		const tab = screen.getByRole('tab', { name: 'Explorer' });
+		expect(within(tab).getByTestId('explorer-tab-icon')).toBeInTheDocument();
+		expect(
+			within(screen.getByRole('tab', { name: 'Views' })).queryByRole('img'),
+		).not.toBeInTheDocument();
 	});
 
 	it('falls back to activeKey when no route matches the path', () => {

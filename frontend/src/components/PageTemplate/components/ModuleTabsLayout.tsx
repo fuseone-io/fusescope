@@ -127,6 +127,14 @@ function ModuleTabsLayout({
 							data-route-key={route.key}
 							className="tw:-mb-px tw:inline-flex tw:cursor-pointer tw:items-center tw:gap-1.5 tw:border-b-2 tw:border-transparent tw:py-2.5 tw:text-sm tw:font-medium tw:whitespace-nowrap tw:text-muted-foreground! tw:transition-colors tw:outline-none tw:hover:text-foreground! tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:ring-inset tw:data-[state=active]:border-primary tw:data-[state=active]:text-primary!"
 						>
+							{route.icon && (
+								<span
+									aria-hidden="true"
+									className="tw:inline-flex tw:[&_svg:not([class*=size-])]:size-4"
+								>
+									{route.icon}
+								</span>
+							)}
 							{route.name}
 						</TabsPrimitive.Trigger>
 					))}
