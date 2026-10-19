@@ -50,6 +50,8 @@ export function showsGlobalTimePicker(pathname: string): boolean {
 const ROUTES_WITH_HEADER_ACTIONS_ONLY = [
 	ROUTES.TRACE_DETAIL,
 	ROUTES.LOGS_EXPLORER,
+	ROUTES.LOGS_PIPELINES,
+	ROUTES.LOGS_SAVE_VIEWS,
 ];
 
 export function showsHeaderActionsOnly(pathname: string): boolean {

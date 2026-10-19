@@ -248,19 +248,21 @@ describe('AppHeader', () => {
 			).not.toBeInTheDocument();
 		});
 
-		it.each(['/trace/abc', ROUTES.LOGS_EXPLORER])(
-			'shows the page actions without a global picker on %s',
-			(route) => {
-				renderHeader(route);
+		it.each([
+			'/trace/abc',
+			ROUTES.LOGS_EXPLORER,
+			ROUTES.LOGS_PIPELINES,
+			ROUTES.LOGS_SAVE_VIEWS,
+		])('shows the page actions without a global picker on %s', (route) => {
+			renderHeader(route);
 
-				expect(
-					within(header()).queryByTestId('global-time-picker'),
-				).not.toBeInTheDocument();
-				expect(
-					within(header()).getByTestId('header-right-section'),
-				).toBeInTheDocument();
-			},
-		);
+			expect(
+				within(header()).queryByTestId('global-time-picker'),
+			).not.toBeInTheDocument();
+			expect(
+				within(header()).getByTestId('header-right-section'),
+			).toBeInTheDocument();
+		});
 	});
 
 	describe('page actions', () => {
