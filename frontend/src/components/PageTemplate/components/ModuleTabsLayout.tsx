@@ -5,7 +5,10 @@ import {
 	useLocation,
 	useParams,
 } from 'react-router-dom';
-import { showsGlobalTimePicker } from 'components/AppHeader/utils';
+import {
+	showsGlobalTimePicker,
+	showsHeaderActionsOnly,
+} from 'components/AppHeader/utils';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { TabRoutes } from 'components/RouteTab/types';
@@ -73,7 +76,9 @@ function ModuleTabsLayout({
 	};
 
 	const pageActions =
-		actions === undefined && !showsGlobalTimePicker(pathname) ? (
+		actions === undefined &&
+		!showsGlobalTimePicker(pathname) &&
+		!showsHeaderActionsOnly(pathname) ? (
 			<HeaderRightSection enableAnnouncements={false} enableShare enableFeedback />
 		) : (
 			actions

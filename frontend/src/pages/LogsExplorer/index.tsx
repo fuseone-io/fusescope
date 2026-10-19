@@ -19,7 +19,6 @@ import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViewsContainer from 'container/LogsExplorerViews';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
@@ -43,6 +42,7 @@ import {
 	logsRunQueryAction,
 	logsSaveViewAction,
 } from './aiActions';
+import LogsTimeControls from './LogsTimeControls';
 import { ExplorerViews } from './utils';
 
 import './LogsExplorer.styles.scss';
@@ -113,6 +113,8 @@ function LogsExplorer(): JSX.Element {
 	}, [queryClient]);
 
 	const [warning, setWarning] = useState<Warning | undefined>();
+	const [viewActionsTarget, setViewActionsTarget] =
+		useState<HTMLDivElement | null>(null);
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
@@ -239,9 +241,32 @@ function LogsExplorer(): JSX.Element {
 					}}
 				>
 					<section className="log-module-right-section">
-						<Toolbar
-							showAutoRefresh={false}
-							leftActions={
+						<LogsTimeControls
+							showLiveLogs={showLiveLogs}
+							onGoLive={handleShowLiveLogs}
+							onExitLiveLogs={handleExitLiveLogs}
+						/>
+
+						<div className="log-explorer-query-container">
+							<div className="logs-explorer-query-bar">
+								<ExplorerCard sourcepage={DataSource.LOGS}>
+									<LogExplorerQuerySection selectedView={selectedView} />
+								</ExplorerCard>
+								<div className="logs-explorer-run-query">
+									{!isEmpty(warning) && <WarningPopover warningData={warning} />}
+									<RightToolbarActions
+										onStageRunQuery={(): void => {
+											setIsCancelled(false);
+											handleRunQuery();
+										}}
+										isLoadingQueries={isLoadingQueries}
+										handleCancelQuery={handleCancelQuery}
+										showLiveLogs={showLiveLogs}
+									/>
+								</div>
+							</div>
+
+							<div className="logs-explorer-view-bar">
 								<LeftToolbarActions
 									showFilter={showFilters}
 									handleFilterVisibilityChange={handleFilterVisibilityChange}
@@ -249,32 +274,13 @@ function LogsExplorer(): JSX.Element {
 									selectedView={selectedView}
 									onChangeSelectedView={handleChangeSelectedView}
 								/>
-							}
-							warningElement={
-								!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
-							}
-							rightActions={
-								<RightToolbarActions
-									onStageRunQuery={(): void => {
-										setIsCancelled(false);
-										handleRunQuery();
-									}}
-									isLoadingQueries={isLoadingQueries}
-									handleCancelQuery={handleCancelQuery}
-									showLiveLogs={showLiveLogs}
+								<div
+									className="logs-explorer-view-actions"
+									ref={setViewActionsTarget}
+									data-testid="logs-explorer-view-actions"
 								/>
-							}
-							showLiveLogs={showLiveLogs}
-							onGoLive={handleShowLiveLogs}
-							onExitLiveLogs={handleExitLiveLogs}
-						/>
-
-						<div className="log-explorer-query-container">
-							<div>
-								<ExplorerCard sourcepage={DataSource.LOGS}>
-									<LogExplorerQuerySection selectedView={selectedView} />
-								</ExplorerCard>
 							</div>
+
 							<div className="logs-explorer-views">
 								{isCancelled ? (
 									<QueryCancelledPlaceholder subText='Click "Run Query" to load logs.' />
@@ -286,6 +292,7 @@ function LogsExplorer(): JSX.Element {
 										setWarning={setWarning}
 										showLiveLogs={showLiveLogs}
 										handleChangeSelectedView={handleChangeSelectedView}
+										toolbarTarget={viewActionsTarget}
 									/>
 								)}
 							</div>

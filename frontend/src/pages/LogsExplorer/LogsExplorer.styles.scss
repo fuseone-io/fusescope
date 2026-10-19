@@ -9,6 +9,7 @@
 		flex-direction: column;
 		height: 100%;
 		min-height: 0;
+		background: var(--fs-background);
 
 		.log-explorer-query-container {
 			// Meant to fix the query builder colors
@@ -21,8 +22,10 @@
 
 			display: flex;
 			flex-direction: column;
+			gap: 12px;
 			flex: 1;
 			min-height: 0;
+			padding: 16px 24px 0;
 			overflow-y: auto;
 			overflow-x: hidden;
 
@@ -32,6 +35,289 @@
 				display: flex;
 				flex-direction: column;
 			}
+		}
+	}
+}
+
+.logs-explorer-query-bar {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+
+	> :first-child {
+		flex: 1;
+		min-width: 0;
+	}
+}
+
+.logs-explorer-run-query {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 8px;
+	min-height: 36px;
+
+	[data-run-query-btn] {
+		--button-height: 36px;
+		--button-min-height: 36px;
+		--button-border-radius: 8px;
+		--button-padding: 0 14px;
+		--button-font-size: 14px;
+		--button-gap: 8px;
+	}
+
+	.cmd-hint {
+		border: 1px solid currentColor;
+		background: transparent;
+		color: inherit;
+		opacity: 0.8;
+	}
+}
+
+.logs-explorer-view-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 12px;
+}
+
+.logs-explorer-view-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	font-family: var(--tw-font-sans);
+
+	&:empty {
+		display: none;
+	}
+}
+
+// The active view's actions, portalled into the view bar beside the switch.
+.logs-explorer-view-actions {
+	.logs-actions-container,
+	.logs-actions-container .tab-options,
+	.logs-actions-container .tab-options-left,
+	.logs-actions-container .tab-options-right,
+	.table-view-container-header {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.frequency-chart-view-controller {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		color: var(--fs-muted-foreground);
+		font-family: var(--tw-font-sans);
+		font-size: 13px;
+		cursor: pointer;
+	}
+
+	.tab-options-left::after {
+		content: '';
+		width: 1px;
+		height: 20px;
+		margin-left: 4px;
+		background: var(--fs-border);
+	}
+
+	.order-by-container {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.order-by-label {
+		color: var(--fs-muted-foreground);
+		font-size: 13px;
+	}
+
+	.ant-select {
+		height: 32px;
+	}
+
+	.order-by-container .ant-select {
+		min-width: 180px;
+	}
+
+	.ant-select .ant-select-selector {
+		height: 32px !important;
+		padding: 0 10px !important;
+		border: 1px solid var(--fs-input) !important;
+		border-radius: 6px !important;
+		background: var(--fs-card) !important;
+		box-shadow: 0 1px 2px 0
+			color-mix(in srgb, var(--fs-foreground) 5%, transparent) !important;
+		color: var(--fs-foreground);
+		font-size: 13px;
+	}
+
+	.ant-select-focused .ant-select-selector {
+		border-color: var(--fs-ring) !important;
+	}
+
+	.ant-select .ant-select-selection-item,
+	.ant-select .ant-select-selection-search-input {
+		line-height: 30px !important;
+		height: 30px !important;
+	}
+
+	.ant-select .ant-select-arrow {
+		color: var(--fs-muted-foreground);
+	}
+
+	[data-testid^='periscope-btn-download'],
+	[data-testid='periscope-btn-format-options'] {
+		width: 32px;
+		height: 32px;
+		border: 0;
+		border-radius: 6px;
+		background: transparent;
+		box-shadow: none;
+		color: var(--fs-muted-foreground);
+
+		&:hover {
+			background: var(--fs-muted) !important;
+			color: var(--fs-foreground) !important;
+		}
+	}
+}
+
+// The saved-views toolbar is the page's sticky full-width footer here.
+.logs-module-page .log-explorer-query-container {
+	.explorer-options-container {
+		position: sticky;
+		bottom: var(--bottom-strip-height, 0px);
+		left: auto;
+		z-index: 3;
+		margin: 0 -24px;
+		transform: none;
+		background: var(--fs-card);
+		border-top: 1px solid var(--fs-border);
+	}
+
+	.explorer-update {
+		align-self: center;
+		margin-left: 18px;
+		padding: 0;
+		border: 0;
+		background: transparent;
+	}
+
+	.explorer-options {
+		flex: 1;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 8px;
+		padding: 10px 24px;
+		border: 0;
+		border-radius: 0;
+		box-shadow: none;
+		backdrop-filter: none;
+		// The selected view's colour shows on its dot, not as a glow.
+		background-image: none !important;
+
+		.view-options {
+			flex: 1;
+			justify-content: space-between;
+		}
+	}
+}
+
+.logs-module-page .logs-explorer-views-container {
+	margin-bottom: 0;
+
+	.logs-explorer-views-types {
+		gap: 12px;
+		padding-bottom: 16px;
+	}
+
+	.logs-frequency-chart-container {
+		padding: 0;
+	}
+
+	.log-field-key,
+	.log-field-key-colon,
+	.log-value {
+		font-family: var(--tw-font-mono);
+	}
+
+	.log-value {
+		color: var(--fs-foreground);
+	}
+}
+
+// The frequency chart sits in a raised panel with a title, like the board.
+.logs-module-page .logs-frequency-panel {
+	display: flex;
+	flex-direction: column;
+	height: auto;
+	min-height: 0;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
+	font-family: var(--tw-font-sans);
+
+	&__header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 16px 20px 0;
+	}
+
+	&__legend {
+		flex: 0 1 60%;
+		min-width: 0;
+	}
+
+	&__title {
+		margin: 0;
+		color: var(--fs-foreground);
+		font-size: 14px;
+		font-weight: 600;
+	}
+
+	&__subtitle {
+		margin: 2px 0 0;
+		color: var(--fs-muted-foreground);
+		font-size: 12px;
+
+		code {
+			padding: 0;
+			background: transparent;
+			color: inherit;
+			font-family: var(--tw-font-mono);
+		}
+	}
+
+	.logs-frequency-chart {
+		height: 160px;
+		min-height: 160px;
+		margin: 8px 12px 12px 8px;
+		padding: 0;
+		border-bottom: 0;
+	}
+}
+
+// Live tail keeps its chart and records in the same panels as the list.
+.logs-module-page .live-logs-container {
+	.live-logs-chart-container {
+		height: auto;
+		min-height: 0;
+		padding: 8px 12px 12px 8px;
+		border: 1px solid var(--fs-border);
+		border-radius: 12px;
+		background: var(--fs-card);
+
+		.logs-frequency-chart-container {
+			height: 200px;
+			min-height: 200px;
+			border-bottom: 0;
 		}
 	}
 }

@@ -47,7 +47,10 @@ export function showsGlobalTimePicker(pathname: string): boolean {
 }
 
 /** Pages without the global picker whose share and feedback live in the header. */
-const ROUTES_WITH_HEADER_ACTIONS_ONLY = [ROUTES.TRACE_DETAIL];
+const ROUTES_WITH_HEADER_ACTIONS_ONLY = [
+	ROUTES.TRACE_DETAIL,
+	ROUTES.LOGS_EXPLORER,
+];
 
 export function showsHeaderActionsOnly(pathname: string): boolean {
 	return ROUTES_WITH_HEADER_ACTIONS_ONLY.some((path) =>

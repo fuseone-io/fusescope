@@ -11,9 +11,11 @@ jest.mock('components/HeaderRightSection/HeaderRightSection', () => ({
 }));
 
 const mockShowsGlobalTimePicker = jest.fn(() => false);
+const mockShowsHeaderActionsOnly = jest.fn(() => false);
 
 jest.mock('components/AppHeader/utils', () => ({
 	showsGlobalTimePicker: (): boolean => mockShowsGlobalTimePicker(),
+	showsHeaderActionsOnly: (): boolean => mockShowsHeaderActionsOnly(),
 }));
 
 jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
@@ -144,6 +146,12 @@ describe('ModuleTabsLayout', () => {
 
 	it('leaves the page actions to the app header when it shows the picker', () => {
 		mockShowsGlobalTimePicker.mockReturnValueOnce(true);
+		renderLayout('/logs/explorer');
+		expect(screen.queryByTestId('header-right-section')).not.toBeInTheDocument();
+	});
+
+	it('leaves the page actions to the app header when it shows them alone', () => {
+		mockShowsHeaderActionsOnly.mockReturnValueOnce(true);
 		renderLayout('/logs/explorer');
 		expect(screen.queryByTestId('header-right-section')).not.toBeInTheDocument();
 	});

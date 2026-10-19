@@ -1,6 +1,4 @@
-import { ReactNode, useState } from 'react';
-import { Switch } from '@signozhq/ui/switch';
-import { Typography } from '@signozhq/ui/typography';
+import { ReactNode, useId, useState } from 'react';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import FieldsSelector from 'components/FieldsSelector';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
@@ -8,7 +6,7 @@ import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { LOGS_REQUIRED_COLUMNS } from 'container/OptionsMenu/constants';
-import { ArrowUp10, Minus } from '@signozhq/icons';
+import { Switch } from 'components/ui/switch';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 function LogsActionsContainer({
@@ -33,6 +31,7 @@ function LogsActionsContainer({
 	});
 
 	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
+	const frequencySwitchId = useId();
 
 	const formatItems = [
 		{
@@ -59,23 +58,21 @@ function LogsActionsContainer({
 		<div className="logs-actions-container">
 			<div className="tab-options">
 				<div className="tab-options-left">
-					<div className="frequency-chart-view-controller">
-						<Typography>Frequency chart</Typography>
+					<span className="frequency-chart-view-controller fs-ui">
 						<Switch
-							color="primary"
-							textPlacement="right"
-							value={showFrequencyChart}
-							onChange={handleToggleFrequencyChart}
+							id={frequencySwitchId}
+							size="sm"
+							checked={showFrequencyChart}
+							onCheckedChange={handleToggleFrequencyChart}
 						/>
-					</div>
+						<label htmlFor={frequencySwitchId}>Frequency chart</label>
+					</span>
 				</div>
 
 				<div className="tab-options-right">
 					{explorerActions}
 					<div className="order-by-container">
-						<div className="order-by-label">
-							Order by <Minus size={14} /> <ArrowUp10 size={14} />
-						</div>
+						<div className="order-by-label">Order by</div>
 
 						<ListViewOrderBy
 							value={orderBy}
