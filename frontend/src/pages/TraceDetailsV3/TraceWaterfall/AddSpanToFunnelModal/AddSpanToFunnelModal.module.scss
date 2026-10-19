@@ -4,37 +4,38 @@
 .container {
 	:global(.ant-modal-content),
 	:global(.ant-modal-header) {
-		background: var(--l1-background);
+		background: var(--fs-card);
+	}
+
+	:global(.ant-modal-content) {
+		overflow: hidden;
+		border: 1px solid var(--fs-border);
+		border-radius: 12px;
 	}
 
 	:global(.ant-modal-header) {
-		border-bottom: none;
+		padding: 16px 20px !important;
+		border-bottom: 1px solid var(--fs-border);
 
 		:global(.ant-modal-title) {
-			color: var(--l1-foreground);
+			color: var(--fs-foreground);
+			font-size: 16px;
+			font-weight: 600;
 		}
 	}
 
 	:global(.ant-modal-body) {
-		padding: 14px 16px !important;
+		padding: 16px 20px !important;
 		padding-bottom: 0 !important;
 		border-bottom-left-radius: 0;
 		border-bottom-right-radius: 0;
 	}
 
 	:global(.ant-modal-footer) {
-		margin-top: 0;
-		background: var(--l2-background);
-		border-top: 1px solid var(--l2-border);
-		padding: 16px !important;
-
-		:global(.ant-btn) {
-			border-radius: 2px;
-			padding: 4px 8px;
-			margin: 0 !important;
-			border: none;
-			box-shadow: none;
-		}
+		margin-top: 16px;
+		background: var(--fs-card);
+		border-top: 1px solid var(--fs-border);
+		padding: 12px 20px !important;
 	}
 }
 
@@ -64,23 +65,6 @@
 			}
 		}
 	}
-
-	:global(.funnel-item) {
-		padding: 8px 8px 12px 16px;
-
-		&,
-		&:first-child {
-			border-radius: 6px;
-		}
-
-		:global(.funnel-item__header) {
-			line-height: 20px;
-		}
-
-		:global(.funnel-item__details) {
-			line-height: 18px;
-		}
-	}
 }
 
 .loadingSpinner {
@@ -93,55 +77,24 @@
 .search {
 	display: flex;
 	gap: 12px;
-	margin-bottom: 14px;
+	margin-bottom: 12px;
 	align-items: center;
-	background: var(--l3-background);
 }
 
 .searchInput {
 	flex: 1;
-	padding: 6px 8px;
-	background: var(--l3-background);
-
-	height: 18px;
-	margin-inline-end: 6px;
 
 	svg {
-		opacity: 0.4;
-	}
-
-	input {
-		font-size: 14px;
-		line-height: 18px;
-		letter-spacing: -0.07px;
-		font-weight: 400;
-		background: var(--l3-background);
-	}
-
-	input::placeholder {
-		color: var(--l2-foreground);
-		opacity: 0.6;
+		color: var(--fs-subtle-foreground);
 	}
 }
 
 .list {
 	max-height: 400px;
-	overflow-y: scroll;
+	overflow-y: auto;
 
 	:global(.funnels-empty__content) {
 		padding: 0;
-	}
-
-	:global(.funnels-list) {
-		gap: 8px;
-
-		:global(.funnel-item) {
-			padding: 8px 16px 12px;
-
-			:global(.funnel-item__details) {
-				margin-top: 8px;
-			}
-		}
 	}
 }
 

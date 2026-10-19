@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { generatePath, Link } from 'react-router-dom';
-import { Button } from 'antd';
+import UserAvatarCell from 'components/PageTemplate/components/UserAvatarCell';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
-import { CalendarClock, DecimalsArrowRight } from '@signozhq/icons';
+import { CalendarClock, DecimalsArrowRight, Funnel } from 'lucide-react';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import FunnelItemPopover from './FunnelItemPopover';
 
-import './FunnelsList.styles.scss';
+const ITEM_CLASS =
+	'funnel-item fs-ui tw:flex tw:w-full tw:flex-col tw:gap-2 tw:rounded-lg tw:border tw:border-solid tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3 tw:text-left tw:font-sans tw:text-foreground tw:no-underline! tw:transition-colors tw:hover:bg-muted';
 
 interface FunnelListItemProps {
 	funnel: FunnelData;
@@ -31,19 +32,24 @@ export function FunnelListItem({
 
 	const content = (
 		<>
-			<div className="funnel-item__header">
-				<div className="funnel-item__title">
-					<div>{funnel.funnel_name}</div>
-				</div>
+			<div className="tw:flex tw:min-h-6 tw:items-center tw:justify-between tw:gap-3">
+				<span className="tw:flex tw:min-w-0 tw:items-center tw:gap-2.5">
+					<span
+						aria-hidden="true"
+						className="tw:flex tw:size-6 tw:flex-none tw:items-center tw:justify-center tw:rounded-md tw:bg-primary-soft tw:text-primary-ink"
+					>
+						<Funnel className="tw:size-3.5" />
+					</span>
+					<span className="tw:truncate tw:text-sm tw:font-medium tw:text-primary">
+						{funnel.funnel_name}
+					</span>
+				</span>
 
 				{isSpanDetailsPage ? (
-					<Button
-						type="default"
-						className="funnel-item__open-button"
-						icon={<DecimalsArrowRight size={12} />}
-					>
+					<span className="tw:inline-flex tw:h-7 tw:flex-none tw:items-center tw:gap-1.5 tw:rounded-md tw:border tw:border-solid tw:border-input tw:bg-surface-raised tw:px-2.5 tw:text-xs tw:font-medium tw:text-foreground">
+						<DecimalsArrowRight className="tw:size-3.5" />
 						Open funnel
-					</Button>
+					</span>
 				) : (
 					<FunnelItemPopover
 						isPopoverOpen={isPopoverOpen}
@@ -56,22 +62,19 @@ export function FunnelListItem({
 				)}
 			</div>
 
-			<div className="funnel-item__details">
-				<div className="funnel-item__created-at">
-					<CalendarClock size={14} />
-					<div>
+			<div className="tw:flex tw:min-w-0 tw:flex-wrap tw:items-center tw:gap-x-6 tw:gap-y-1 tw:pl-[34px]">
+				<span className="tw:inline-flex tw:items-center tw:gap-1.5 tw:text-xs tw:text-muted-foreground">
+					<CalendarClock
+						aria-hidden="true"
+						className="tw:size-3.5 tw:flex-none tw:text-subtle-foreground"
+					/>
+					<span className="tw:font-mono tw:tabular-nums">
 						{dayjs(funnel.created_at).format(DATE_TIME_FORMATS.FUNNELS_LIST_DATE)}
-					</div>
-				</div>
-
-				<div className="funnel-item__user">
-					{funnel.user_email && (
-						<div className="funnel-item__user-avatar">
-							{funnel.user_email.substring(0, 1).toUpperCase()}
-						</div>
-					)}
-					<div>{funnel.user_email}</div>
-				</div>
+					</span>
+				</span>
+				<span className="tw:min-w-0">
+					<UserAvatarCell email={funnel.user_email} />
+				</span>
 			</div>
 		</>
 	);
@@ -79,13 +82,13 @@ export function FunnelListItem({
 	return onFunnelClick ? (
 		<button
 			type="button"
-			className="funnel-item"
+			className={`${ITEM_CLASS} tw:cursor-pointer`}
 			onClick={(): void => onFunnelClick(funnel)}
 		>
 			{content}
 		</button>
 	) : (
-		<Link to={funnelDetailsLink} className="funnel-item">
+		<Link to={funnelDetailsLink} className={ITEM_CLASS}>
 			{content}
 		</Link>
 	);
@@ -109,7 +112,7 @@ function FunnelsList({
 	shouldRedirectToTracesListOnDeleteSuccess,
 }: FunnelsListProps): JSX.Element {
 	return (
-		<div className="funnels-list">
+		<div className="funnels-list tw:flex tw:flex-col tw:gap-2">
 			{data?.map((funnel) => (
 				<FunnelListItem
 					key={funnel.funnel_id}
