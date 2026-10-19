@@ -1,6 +1,7 @@
-import { renderHook } from '@testing-library/react';
+import { render, renderHook, screen } from '@testing-library/react';
 import { FontSize } from 'container/OptionsMenu/types';
 import { IField } from 'types/api/logs/fields';
+import { ILog } from 'types/api/logs/log';
 
 import { useLogsTableColumns } from '../useLogsTableColumns';
 
@@ -163,5 +164,39 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		);
 
 		expect(result.current.map((c) => c.id)).toStrictEqual(['state-indicator']);
+	});
+});
+
+describe('useLogsTableColumns — severity column', () => {
+	it('renders severity_text as a badge toned by the log severity', () => {
+		const { result } = renderHook(() =>
+			useLogsTableColumns({
+				fields: [field('severity_text')],
+				fontSize: FontSize.SMALL,
+			}),
+		);
+		const column = result.current.find((c) => c.id === 'severity_text');
+		const row = {
+			severity_text: 'Err',
+			severity_number: 17,
+		} as unknown as ILog;
+
+		render(
+			<>
+				{column?.cell({
+					row,
+					value: 'Err',
+					isActive: false,
+					rowIndex: 0,
+					rowId: '0',
+					isExpanded: false,
+					canExpand: false,
+					toggleExpanded: jest.fn(),
+				})}
+			</>,
+		);
+
+		// Every spelling reads as its normalised level.
+		expect(screen.getByText('ERROR')).toHaveAttribute('data-tone', 'error');
 	});
 });

@@ -12,11 +12,16 @@ import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { getLogFieldValue } from 'lib/logs/flatLogData';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
+import { normalizeSeverity } from 'utils/logSeverity';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 import type { TableColumnDef } from '../../TanStackTableView/types';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
+import { getLogIndicatorType } from '../LogStateIndicator/utils';
+import SeverityBadge from '../SeverityBadge/SeverityBadge';
+
+const SEVERITY_TEXT_FIELD = 'severity_text';
 
 type UseLogsTableColumnsProps = {
 	fields: IField[];
@@ -58,7 +63,7 @@ export function useLogsTableColumns({
 			accessorFn: (log): unknown => log.timestamp,
 			canBeHidden: false,
 			enableRemove: false,
-			width: { default: 170, min: 170 },
+			width: { default: 196, min: 196 },
 			cell: ({ value }): ReactElement => {
 				const ts = value as string | number;
 				const formatted =
@@ -98,9 +103,19 @@ export function useLogsTableColumns({
 				getLogFieldValue(log, f.name, isBodyJsonEnabled),
 			enableRemove: true,
 			width: { min: 192 },
-			cell: ({ value }): ReactElement => (
-				<TanStackTable.Text>{String(value ?? '')}</TanStackTable.Text>
-			),
+			cell: ({ value, row }): ReactElement => {
+				if (f.name === SEVERITY_TEXT_FIELD && value) {
+					return (
+						<span className="fs-ui tw:inline-flex">
+							<SeverityBadge
+								logType={getLogIndicatorType(row)}
+								label={normalizeSeverity(row.severity_number, String(value))}
+							/>
+						</span>
+					);
+				}
+				return <TanStackTable.Text>{String(value ?? '')}</TanStackTable.Text>;
+			},
 		});
 
 		// Match body/timestamp by composite key, not bare name — else a variant

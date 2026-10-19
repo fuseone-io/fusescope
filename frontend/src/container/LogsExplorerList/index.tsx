@@ -7,6 +7,7 @@ import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import LogDetail from 'components/LogDetail';
+import styles from 'components/Logs/LogRecordsPanel/LogRecordsPanel.module.scss';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
 import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
@@ -25,7 +26,6 @@ import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { FontSize } from 'container/OptionsMenu/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
@@ -200,6 +200,7 @@ function LogsExplorerList({
 		if (options.format === 'table') {
 			return (
 				<TanStackTable<ILog>
+					className={styles.logsTable}
 					ref={ref as React.Ref<TanStackTableHandle>}
 					columns={logsColumns}
 					columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
@@ -249,24 +250,8 @@ function LogsExplorerList({
 				/>
 			);
 		}
-		function getMarginTop(): string {
-			switch (options.fontSize) {
-				case FontSize.SMALL:
-					return '10px';
-				case FontSize.MEDIUM:
-					return '12px';
-				case FontSize.LARGE:
-					return '15px';
-				default:
-					return '15px';
-			}
-		}
-
 		return (
-			<Card
-				style={{ width: '100%', marginTop: getMarginTop() }}
-				bodyStyle={CARD_BODY_STYLE}
-			>
+			<Card className={styles.rows} bodyStyle={CARD_BODY_STYLE}>
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
 						key={activeLogIndex || 'logs-virtuoso'}
@@ -372,9 +357,11 @@ function LogsExplorerList({
 
 			{!isLoading && !isError && logs.length > 0 && (
 				<>
-					<InfinityWrapperStyled data-testid="logs-list-virtuoso">
-						{renderContent}
-					</InfinityWrapperStyled>
+					<div className={styles.panel}>
+						<InfinityWrapperStyled data-testid="logs-list-virtuoso">
+							{renderContent}
+						</InfinityWrapperStyled>
+					</div>
 
 					{selectedTab && activeLog && (
 						<LogDetail
