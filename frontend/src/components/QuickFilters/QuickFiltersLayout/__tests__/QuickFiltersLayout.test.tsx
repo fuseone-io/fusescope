@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
@@ -17,6 +18,7 @@ jest.mock('../QuickFiltersLayout.module.scss', () => ({
 		isOpen: 'isOpen',
 		content: 'content',
 		contentInner: 'contentInner',
+		rail: 'rail',
 	},
 }));
 
@@ -90,6 +92,44 @@ describe('QuickFiltersLayout', () => {
 			'content',
 		);
 		expect(screen.queryByTestId('saved-views-header')).not.toBeInTheDocument();
+	});
+
+	it('collapses the hidden filters into a rail that restores them', async () => {
+		const user = userEvent.setup();
+		function Stateful(): JSX.Element {
+			const [showFilters, setShowFilters] = useState(true);
+			return (
+				<QuickFiltersLayout
+					showFilters={showFilters}
+					onToggleFilters={(): void => setShowFilters((open) => !open)}
+					quickFilterProps={quickFilterProps}
+				>
+					<div>content</div>
+				</QuickFiltersLayout>
+			);
+		}
+		render(<Stateful />);
+
+		await user.click(screen.getByTestId('quick-filters-collapse'));
+
+		expect(screen.queryByTestId('quick-filters')).not.toBeInTheDocument();
+		const restore = screen.getByRole('button', { name: 'Show filters' });
+		expect(screen.getByTestId('quick-filters-rail')).toContainElement(restore);
+
+		await user.click(restore);
+
+		expect(screen.getByTestId('quick-filters')).toBeInTheDocument();
+		expect(screen.queryByTestId('quick-filters-rail')).not.toBeInTheDocument();
+	});
+
+	it('shows no rail when the page cannot restore the filters', () => {
+		render(
+			<QuickFiltersLayout showFilters={false} quickFilterProps={quickFilterProps}>
+				<div>content</div>
+			</QuickFiltersLayout>,
+		);
+
+		expect(screen.queryByTestId('quick-filters-rail')).not.toBeInTheDocument();
 	});
 
 	it('does not render the filters pane when showFilters is false', () => {
