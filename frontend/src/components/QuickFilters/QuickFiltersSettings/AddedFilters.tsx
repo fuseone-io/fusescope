@@ -14,10 +14,11 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical } from '@signozhq/icons';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+
+import FilterIcon from '../FilterIcon';
 
 function SortableFilter({
 	filter,
@@ -44,21 +45,24 @@ function SortableFilter({
 			style={style}
 			className={`qf-filter-item ${allowDrag ? 'drag-enabled' : 'drag-disabled'}`}
 		>
-			<div {...attributes} {...listeners} className="drag-handle">
-				{allowDrag && <GripVertical size={16} />}
-				{filter.name}
-			</div>
-			{allowRemove && (
-				<Button
-					className="remove-filter-btn periscope-btn"
-					size="small"
-					onClick={(): void => {
-						onRemove(filter);
-					}}
-				>
-					Remove
-				</Button>
-			)}
+			<span {...attributes} {...listeners} className="drag-handle">
+				{allowDrag && <GripVertical size={14} />}
+			</span>
+			<label className="qf-filter-label" title={filter.name}>
+				<input
+					type="checkbox"
+					checked
+					disabled={!allowRemove}
+					data-testid={`qf-added-filter-${filter.name}`}
+					onChange={(): void => onRemove(filter)}
+				/>
+				<FilterIcon
+					attributeKey={filter.name}
+					dataType={filter.fieldDataType}
+					className="qf-filter-icon"
+				/>
+				<span className="qf-filter-name">{filter.name}</span>
+			</label>
 		</div>
 	);
 }

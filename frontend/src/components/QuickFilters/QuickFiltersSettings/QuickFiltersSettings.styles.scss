@@ -1,41 +1,28 @@
+// Content of the right-side sheet; the sheet itself sizes and positions it.
 .quick-filters-settings {
 	display: flex;
 	flex-direction: column;
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: 999;
-	width: 342px;
 	height: 100%;
-	background: var(--l1-background);
-	border-right: 1px solid var(--l1-border);
 	overflow: hidden;
-	color: var(--l1-foreground);
-	transition:
-		transform 0.2s ease-in-out,
-		visibility 0s;
+	background: var(--fs-card);
+	color: var(--fs-foreground);
+	font-family: var(--tw-font-sans);
 
-	&.hidden {
-		transform: translateX(-100%);
-		visibility: hidden;
-		pointer-events: none;
-		transition:
-			transform 0.2s ease-in-out,
-			visibility 0s 0.2s;
-	}
 	.qf-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: var(--spacing-2) var(--spacing-5);
-		border-bottom: 1px solid var(--l1-border);
+		min-height: 56px;
+		padding: 0 12px 0 20px;
+		border-bottom: 1px solid var(--fs-border);
 
 		.qf-title {
 			display: flex;
 			align-items: center;
-			gap: var(--spacing-6);
-			color: var(--l2-foreground);
-			font-size: var(--font-size-sm);
+			gap: 10px;
+			color: var(--fs-foreground);
+			font-size: 16px;
+			font-weight: 600;
 		}
 	}
 
@@ -43,6 +30,7 @@
 		&.added-filters {
 			max-height: 40%;
 		}
+
 		&.other-filters {
 			flex: 1;
 			display: flex;
@@ -52,36 +40,38 @@
 	}
 
 	.search {
-		--input-height: var(--spacing-20);
-		--input-border-radius: 0;
-		--input-border-color: transparent;
-		--input-hover-border-color: transparent;
-		--input-focus-border-color: transparent;
-		--input-focus-outline-width: 0;
-		--input-background: var(--l1-background);
-		--input-hover-background: var(--l1-background);
-		--input-focus-background: var(--l1-background);
+		padding: 12px 20px;
+		border-bottom: 1px solid var(--fs-border);
 
-		border-bottom: 1px solid var(--l1-border);
+		--input-height: 36px;
+		--input-border-radius: 8px;
+		--input-border-color: var(--fs-input);
+		--input-hover-border-color: var(--fs-input);
+		--input-focus-border-color: var(--fs-ring);
+		--input-background: var(--fs-muted);
+		--input-hover-background: var(--fs-muted);
+		--input-focus-background: var(--fs-muted);
 	}
 
 	.qf-other-filters-list {
 		.ant-skeleton-input {
 			width: 300px;
-			margin: 8px 12px;
+			margin: 8px 20px;
 		}
 	}
 
 	.qf-footer {
 		display: flex;
-		gap: 12px;
-		padding: 12px;
-		border-top: 1px solid var(--l1-border);
+		gap: 8px;
+		padding: 12px 20px;
+		border-top: 1px solid var(--fs-border);
+
 		button {
 			display: flex;
 			align-items: center;
 			justify-content: center;
 			width: 50%;
+			border-radius: 8px;
 
 			.ant-btn-icon {
 				margin: 3px !important;
@@ -90,89 +80,103 @@
 	}
 }
 
-//ADDED FILTERS AND OTHER FILTERS COMMON STYLES
+// ADDED FILTERS AND OTHER FILTERS COMMON STYLES
 .qf-filters {
 	display: flex;
 	flex-direction: column;
+
 	.qf-filters-header {
-		color: var(--muted-foreground);
-		font-family: Inter;
-		font-size: 11px;
-		font-style: normal;
+		padding: 12px 20px 6px;
+		color: var(--fs-muted-foreground);
+		font-size: 12px;
 		font-weight: 500;
-		line-height: 18px;
-		letter-spacing: 0.88px;
+		letter-spacing: 0.05em;
 		text-transform: uppercase;
-		padding: 8px 12px;
 	}
 }
 
 .no-values-found {
-	padding: 8px;
-	text-align: center;
+	padding: 8px 20px;
+	color: var(--fs-subtle-foreground);
+	font-size: 13px;
 }
 
-.qf-added-filters-list {
-	margin-bottom: 12px;
-	overflow: hidden;
-}
-
+.qf-added-filters-list,
 .qf-other-filters-list {
-	margin-bottom: 12px;
+	margin-bottom: 8px;
 	overflow: hidden;
 }
 
 .qf-filter-item {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	padding: 8px;
-	border-radius: 4px;
-	color: var(--l2-foreground);
+	gap: 8px;
+	min-height: 32px;
+	padding: 0 20px 0 8px;
+	color: var(--fs-foreground);
+	font-size: 13px;
 	user-select: none;
-	transition: background-color 0.2s ease-in-out;
+
+	&:hover {
+		background-color: var(--fs-muted);
+	}
 
 	.drag-handle {
 		display: flex;
+		flex: none;
 		align-items: center;
-		gap: 8px;
-		flex-grow: 1;
+		justify-content: center;
+		width: 14px;
+		color: var(--fs-subtle-foreground);
 	}
 
-	.qf-filter-content {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
-
-	&.other-filters-item {
-		padding: 8px 12px;
-		height: 32px;
-	}
-
-	&.drag-enabled {
+	&.drag-enabled .drag-handle {
 		cursor: grab;
+
 		&:active {
 			cursor: grabbing;
 		}
 	}
 
-	&.drag-disabled {
-		padding: 8px 12px;
+	&.other-filters-item {
+		padding-left: 30px;
+		cursor: pointer;
 	}
 
-	.remove-filter-btn,
-	.add-filter-btn {
-		padding: 6px 12px;
-		opacity: 0;
-		transition: opacity 0.2s ease-in-out;
+	.qf-filter-label {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		gap: 8px;
+		min-width: 0;
+		min-height: 32px;
+		cursor: pointer;
 	}
 
-	&:hover {
-		background-color: var(--l2-background);
-		.remove-filter-btn,
-		.add-filter-btn {
-			opacity: 1;
+	input[type='checkbox'] {
+		flex: none;
+		width: 14px;
+		height: 14px;
+		margin: 0;
+		accent-color: var(--fs-primary);
+		cursor: pointer;
+
+		&:disabled {
+			cursor: not-allowed;
 		}
+	}
+
+	.qf-filter-icon {
+		flex: none;
+		color: var(--fs-muted-foreground);
+	}
+
+	.qf-filter-name,
+	.qf-filter-key {
+		overflow: hidden;
+		font-family: var(--tw-font-mono);
+		font-size: 12px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 }

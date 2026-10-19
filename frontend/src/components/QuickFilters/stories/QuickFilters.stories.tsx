@@ -76,7 +76,8 @@ export const SettingsOpen: Story = {
 export const SettingsDirtyFooter: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(await settingsControl(canvasElement));
-		await userEvent.click(await screen.findByRole('button', { name: 'Add' }));
+		const [addFilter] = await screen.findAllByTestId(/^qf-other-filter-/);
+		await userEvent.click(addFilter);
 		await screen.findByRole('button', { name: 'Save changes' });
 	},
 };

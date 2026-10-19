@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import { FieldKeysConfig } from 'api/querySuggestions/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -14,6 +14,8 @@ import {
 	TelemetryFieldKey,
 } from 'types/api/v5/queryRange';
 import { DATA_SOURCE_TO_SIGNAL } from 'types/common/queryBuilder';
+
+import FilterIcon from '../FilterIcon';
 
 function OtherFiltersSkeleton(): JSX.Element {
 	return (
@@ -96,16 +98,24 @@ function OtherFilters({
 		}
 
 		return otherFilters.map((filter) => (
-			<div key={filter.key} className="qf-filter-item other-filters-item">
-				<div className="qf-filter-key">{filter.name}</div>
-				<Button
-					className="add-filter-btn periscope-btn"
-					size="small"
-					onClick={(): void => handleAddFilter(filter)}
-				>
-					Add
-				</Button>
-			</div>
+			<label
+				key={filter.key}
+				className="qf-filter-item other-filters-item"
+				title={filter.name}
+			>
+				<input
+					type="checkbox"
+					checked={false}
+					data-testid={`qf-other-filter-${filter.key}`}
+					onChange={(): void => handleAddFilter(filter)}
+				/>
+				<FilterIcon
+					attributeKey={filter.name}
+					dataType={filter.fieldDataType}
+					className="qf-filter-icon"
+				/>
+				<span className="qf-filter-key">{filter.name}</span>
+			</label>
 		));
 	};
 

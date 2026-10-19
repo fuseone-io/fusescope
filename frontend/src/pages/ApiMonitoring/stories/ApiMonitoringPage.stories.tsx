@@ -79,10 +79,8 @@ const openQuickFiltersSettings = async (): Promise<void> => {
 const dirtyQuickFiltersSettings = async (): Promise<void> => {
 	await openQuickFiltersSettings();
 
-	// One Remove per added filter; the first row's is the one clicked.
-	const [removeFilter] = await screen.findAllByRole('button', {
-		name: 'Remove',
-	});
+	// One checked row per added filter; unchecking the first removes it.
+	const [removeFilter] = await screen.findAllByTestId(/^qf-added-filter-/);
 
 	await userEvent.click(removeFilter);
 	await screen.findByRole('button', { name: 'Save changes' });
