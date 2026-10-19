@@ -76,6 +76,11 @@ export const Timeseries: Story = {
 	args: { view: ExplorerViews.TIMESERIES },
 };
 
+/** The chart grouped by service: one series, and one colour, per HotROD service. */
+export const TimeseriesByService: Story = {
+	args: { view: ExplorerViews.TIMESERIES, seriesPerService: true },
+};
+
 /** The aggregation-table view of the same trace query. */
 export const AggregationTable: Story = {
 	args: { view: ExplorerViews.TABLE },
