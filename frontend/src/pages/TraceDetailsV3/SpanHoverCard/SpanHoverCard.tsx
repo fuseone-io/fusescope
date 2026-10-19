@@ -148,6 +148,7 @@ export function SpanHoverCard({
 			side="right"
 			align="start"
 			sideOffset={8}
+			data-trace-card=""
 			title={
 				hoverCardData ? <SpanTooltipContent {...hoverCardData.tooltip} /> : null
 			}

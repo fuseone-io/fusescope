@@ -20,7 +20,7 @@
 
 .loadingBar {
 	height: 2px;
-	background: var(--primary);
+	background: var(--fs-primary);
 	animation: waterfallLoading 1.5s ease-in-out infinite;
 	flex-shrink: 0;
 }
@@ -40,7 +40,7 @@
 	min-height: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
-	padding: 0px 20px 0px 20px;
+	padding: 0;
 
 	&::-webkit-scrollbar {
 		width: 0.1rem;
@@ -50,17 +50,27 @@
 .splitHeader {
 	position: sticky;
 	top: 0;
-	z-index: 2;
+	z-index: 3;
 	display: flex;
-	height: 25px;
-	background-color: var(--l1-background);
+	height: 28px;
+	background-color: var(--fs-muted);
+	border-bottom: 1px solid var(--fs-border);
 }
 
 .sidebarHeader {
 	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	padding: 0 12px;
+	font-family: var(--tw-font-sans);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--fs-muted-foreground);
 	// Matches the body `.sidebar` border-right so the span-name / timeline
 	// divider is continuous from the top of the container through the ruler.
-	border-right: 1px solid var(--l2-border);
+	border-right: 1px solid var(--fs-border);
 }
 
 .resizeHandleHeader {
@@ -106,7 +116,7 @@
 	overflow-x: auto;
 	overflow-y: hidden;
 	flex-shrink: 0;
-	border-right: 1px solid var(--l2-border);
+	border-right: 1px solid var(--fs-border);
 
 	// ResizableBox child renders with a global `.resizable-box__content` class
 	// — give it independent horizontal scrolling.
@@ -129,7 +139,7 @@
 
 		&:hover,
 		&:active {
-			background: var(--primary);
+			background: var(--fs-primary);
 		}
 	}
 
@@ -138,7 +148,7 @@
 	}
 
 	&::-webkit-scrollbar-thumb {
-		background: var(--l3-background);
+		background: var(--fs-border);
 		border-radius: 4px;
 	}
 }
@@ -151,12 +161,14 @@
 .treeRow {
 	display: flex;
 	align-items: center;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--fs-border);
 }
 
 .treeCell {
 	display: flex;
 	width: 100%;
-	height: 28px;
+	height: 27px;
 	align-items: center;
 	overflow: visible;
 	padding: 0;
@@ -164,14 +176,8 @@
 
 .treeRow:hover,
 .treeRow.hoveredSpan {
-	// Left end of the row band — round only the outer (left) corners so the
-	// highlight joins the status + timeline segments into one continuous band.
-	border-radius: 4px 0 0 4px;
-	background: color-mix(
-		in srgb,
-		var(--l3-background) 60%,
-		transparent
-	) !important;
+	// The row band joins the name, status and timeline segments into one row.
+	background: var(--fs-muted) !important;
 
 	.spanOverview {
 		background: unset !important;
@@ -190,7 +196,7 @@
 
 	&:hover,
 	&:active {
-		background: rgba(35, 196, 248, 0.2);
+		background: var(--fs-primary-soft);
 	}
 }
 
@@ -204,32 +210,21 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--fs-border);
 	cursor: pointer;
-
-	--badge-border-radius: 2px;
-	--badge-padding: 3px 6px;
-	--badge-line-height: 12px;
-	--badge-border-width: 0px;
 
 	&.hoveredSpan {
 		// Middle segment of the row band — square so it butts up against the
 		// name and timeline segments (no rounded corner at the badge column).
 		border-radius: 0;
-		background: color-mix(
-			in srgb,
-			var(--l3-background) 60%,
-			transparent
-		) !important;
+		background: var(--fs-muted) !important;
 	}
 
 	&.isInterested,
 	&.isSelectedNonMatching {
 		border-radius: 0;
-		background: color-mix(
-			in srgb,
-			var(--l3-background) 80%,
-			transparent
-		) !important;
+		background: var(--fs-primary-soft) !important;
 	}
 
 	&.isDimmed {
@@ -248,7 +243,8 @@
 	top: 0;
 	bottom: 0;
 	width: 1px;
-	background: var(--l3-background);
+	background: var(--fs-subtle-foreground);
+	opacity: 0.5;
 	pointer-events: none;
 	z-index: 1;
 }
@@ -256,28 +252,19 @@
 .timelineRow {
 	display: flex;
 	align-items: center;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--fs-border);
 	// Match timelineHeader's 15px padding so bars align with ticks
 	padding: 0 15px;
 
 	&:hover,
 	&.hoveredSpan {
-		// Right end of the row band — round only the outer (right) corners.
-		border-radius: 0 4px 4px 0;
-		background: color-mix(
-			in srgb,
-			var(--l3-background) 60%,
-			transparent
-		) !important;
+		background: var(--fs-muted) !important;
 	}
 
 	&:has(.isInterested),
 	&:has(.isSelectedNonMatching) {
-		border-radius: 0 4px 4px 0;
-		background: color-mix(
-			in srgb,
-			var(--l3-background) 80%,
-			transparent
-		) !important;
+		background: var(--fs-primary-soft) !important;
 	}
 }
 
@@ -298,13 +285,7 @@
 
 	&.isInterested,
 	&.isSelectedNonMatching {
-		// Left end of the row band — outer (left) corners only.
-		border-radius: 4px 0 0 4px;
-		background: color-mix(
-			in srgb,
-			var(--l3-background) 80%,
-			transparent
-		) !important;
+		background: var(--fs-primary-soft) !important;
 	}
 }
 
@@ -315,7 +296,7 @@
 
 .treeLine {
 	position: absolute;
-	background-color: var(--l2-border);
+	background-color: var(--fs-border);
 	pointer-events: none;
 }
 
@@ -323,8 +304,8 @@
 	position: absolute;
 	width: 14px;
 	height: 50%;
-	border-left: 1px solid var(--l2-border);
-	border-bottom: 1px solid var(--l2-border);
+	border-left: 1px solid var(--fs-border);
+	border-bottom: 1px solid var(--fs-border);
 	border-bottom-left-radius: 6px;
 	pointer-events: none;
 }
@@ -347,11 +328,12 @@
 	height: 18px;
 	flex-shrink: 0;
 	cursor: pointer;
-	color: var(--l1-foreground);
+	color: var(--fs-subtle-foreground);
 	border-radius: 4px;
 
 	&:hover {
-		background: var(--l3-background);
+		background: var(--fs-border);
+		color: var(--fs-foreground);
 	}
 }
 
@@ -371,47 +353,72 @@
 	display: inline-flex;
 	align-items: center;
 	flex-shrink: 0;
-
-	:global(.badge) {
-		font-size: 10px;
-		line-height: 14px;
-		padding: 0 4px;
-		height: 14px;
-	}
+	height: 16px;
+	padding: 0 5px;
+	border-radius: 4px;
+	background: var(--fs-muted);
+	border: 1px solid var(--fs-border);
+	font-family: var(--tw-font-sans);
+	font-size: 10px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	color: var(--fs-muted-foreground);
 }
 
 .treeIcon {
 	display: inline-block;
-	width: 7px;
-	height: 7px;
+	width: 8px;
+	height: 8px;
 	border-radius: 50%;
 	flex-shrink: 0;
 	margin: 0 6px;
 	background-color: var(--service-dot-color);
 
 	&.hasError {
-		box-shadow: 0 0 0 2px rgba(255, 70, 70, 0.3);
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--fs-error) 30%, transparent);
 	}
 }
 
 .treeLabel {
-	color: var(--l1-foreground);
-	font-family: 'Inter';
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 28px;
-	letter-spacing: 0.01em;
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
 	overflow: hidden;
-	text-overflow: ellipsis;
 	white-space: nowrap;
 	flex: 1;
 	min-width: 0;
+	line-height: 27px;
+}
+
+.treeSpanName {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--fs-foreground);
+	font-family: var(--tw-font-mono);
+	font-size: 12px;
 }
 
 .treeServiceName {
-	margin-left: 18px;
-	color: var(--l3-foreground);
-	font-weight: 400;
+	flex-shrink: 0;
+	color: var(--fs-subtle-foreground);
+	font-family: var(--tw-font-sans);
+	font-size: 12px;
+}
+
+.errorBadge {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	height: 16px;
+	margin: 0 8px;
+	padding: 0 5px;
+	border-radius: 4px;
+	background: var(--fs-error-soft);
+	color: var(--fs-error-ink);
+	font-family: var(--tw-font-sans);
+	font-size: 10px;
+	font-weight: 500;
 }
 
 .rowActions {
@@ -425,7 +432,7 @@
 	padding-left: 8px;
 	flex-shrink: 0;
 	height: 100%;
-	background: linear-gradient(to left, var(--l2-background) 40%, transparent);
+	background: linear-gradient(to left, var(--fs-muted) 60%, transparent);
 	z-index: 2;
 	opacity: 0;
 	pointer-events: none;
@@ -441,7 +448,7 @@
 .spanDuration {
 	display: flex;
 	align-items: center;
-	height: 28px;
+	height: 27px;
 	position: relative;
 	width: 100%;
 	padding: 0 15px;
@@ -450,46 +457,34 @@
 
 .spanBar {
 	position: absolute;
-	height: 18px;
-	top: 3px;
+	height: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	min-width: 2px;
 	border-radius: 2px;
-	display: flex;
-	align-items: center;
-	padding: 0 8px;
-	overflow: hidden;
 	cursor: pointer;
-	white-space: nowrap;
-	// Theme-resolved in JS: dark text on the bright dark-mode fill, white text on
-	// the darkened light-mode fill. See SpanDuration in Success.tsx.
-	color: var(--span-text-color);
 	background-color: var(--span-color);
-	border: 1px solid transparent;
-}
-
-.spanInfo {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	width: 100%;
-	overflow: hidden;
-	z-index: 1;
-}
-
-.spanName {
-	font-weight: 500;
-	font-size: 11px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	flex-grow: 1;
-	min-width: 0;
 }
 
 .spanDurationText {
-	color: inherit;
-	font-size: 10px;
-	margin-left: 8px;
-	flex-shrink: 0;
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	padding: 0 6px;
+	font-family: var(--tw-font-sans);
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	line-height: 16px;
+	color: var(--fs-muted-foreground);
+	white-space: nowrap;
+	pointer-events: none;
+	z-index: 1;
+
+	// Inside the bar the label takes the text colour picked for the fill.
+	&.isLabelInside {
+		color: var(--span-text-color);
+		font-weight: 500;
+	}
 }
 
 .eventDot {
@@ -498,14 +493,14 @@
 	transform: translate(-50%, -50%) rotate(45deg);
 	width: 5px;
 	height: 5px;
-	background-color: var(--event-dot-bg, var(--bg-robin-500));
-	border: 1px solid var(--event-dot-border, var(--bg-robin-600));
+	background-color: var(--event-dot-bg, var(--fs-primary));
+	border: 1px solid var(--event-dot-border, var(--fs-primary-strong));
 	cursor: pointer;
 	z-index: 1;
 
 	&.hasError {
-		background-color: var(--destructive);
-		border-color: var(--destructive);
+		background-color: var(--fs-error);
+		border-color: var(--fs-error);
 	}
 
 	&:hover {
@@ -513,22 +508,20 @@
 	}
 }
 
-// Hover state: solid l2-background fill + border (matches flamegraph)
+// Hover state: the bar keeps its fill and gains a ring in its own colour.
 .timelineRow:hover .spanBar,
 .timelineRow.hoveredSpan .spanBar {
-	color: var(--span-color);
-	background-color: var(--l2-background);
-	background-image: none;
-	border: 1px solid var(--span-color);
+	box-shadow:
+		0 0 0 1px var(--fs-card),
+		0 0 0 2px var(--span-color);
 }
 
-// Selected state: solid l3-background fill + dashed border (matches flamegraph)
+// Selected state: a ring in the foreground colour (matches flamegraph)
 .isInterested .spanBar,
 .isSelectedNonMatching .spanBar {
-	color: var(--span-color);
-	background-color: var(--l2-background);
-	background-image: none;
-	border: 1px dashed var(--span-color);
+	box-shadow:
+		0 0 0 1px var(--fs-card),
+		0 0 0 2px var(--fs-foreground);
 }
 
 .isDimmed {
