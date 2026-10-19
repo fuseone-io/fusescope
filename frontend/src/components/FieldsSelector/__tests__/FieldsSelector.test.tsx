@@ -18,14 +18,6 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
-// FloatingPanel is a react-rnd/portal shell — presentation only. Render its
-// children directly so the test exercises the column-editing behavior.
-jest.mock('periscope/components/FloatingPanel', () => ({
-	FloatingPanel: ({ children }: { children: React.ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-}));
-
 const mockSuggestions = (names: string[]): void => {
 	(useFieldKeysSuggestion as jest.Mock).mockReturnValue({
 		data: names.map((name) => ({

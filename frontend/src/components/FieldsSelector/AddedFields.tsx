@@ -21,6 +21,7 @@ import { GripVertical } from '@signozhq/icons';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { Typography } from '@signozhq/ui/typography';
 
+import FilterIcon from 'components/QuickFilters/FilterIcon';
 import styles from './FieldsSelector.module.scss';
 
 function SortableField({
@@ -53,6 +54,11 @@ function SortableField({
 		>
 			<div {...attributes} {...listeners} className={styles.dragHandle}>
 				{allowDrag && <GripVertical size={14} />}
+				<FilterIcon
+					attributeKey={field.name}
+					dataType={field.fieldDataType}
+					className={styles.fieldIcon}
+				/>
 				<span className={styles.fieldKey}>{field.name}</span>
 			</div>
 			{!isRequired && (

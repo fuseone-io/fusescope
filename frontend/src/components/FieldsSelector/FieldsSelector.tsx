@@ -4,7 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
-import { FloatingPanel } from 'periscope/components/FloatingPanel';
+import { Sheet, SheetContent, SheetTitle } from 'components/ui/sheet';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { FieldKeysConfigProp } from 'api/querySuggestions/types';
 import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
@@ -15,10 +15,7 @@ import OtherFields from './OtherFields';
 
 import styles from './FieldsSelector.module.scss';
 
-const DEFAULT_PANEL_WIDTH = 350;
-const DEFAULT_PANEL_HEIGHT_OFFSET = 100;
-const DEFAULT_PANEL_RIGHT_INSET = 100;
-const DEFAULT_PANEL_TOP_INSET = 50;
+const DEFAULT_PANEL_WIDTH = 420;
 
 interface FieldsSelectorProps {
 	isOpen: boolean;
@@ -36,7 +33,9 @@ interface FieldsSelectorProps {
 	builderQueryType?: BuilderQueryType;
 	extraFields?: TelemetryFieldKey[];
 	width?: number;
+	/** Unused since the selector became a right-side sheet; kept for callers. */
 	height?: number;
+	/** Unused since the selector became a right-side sheet; kept for callers. */
 	defaultPosition?: { x: number; y: number };
 }
 
@@ -58,16 +57,7 @@ function FieldsSelectorContent({
 	builderQueryType,
 	extraFields,
 	width = DEFAULT_PANEL_WIDTH,
-	height,
-	defaultPosition,
 }: FieldsSelectorContentProps): JSX.Element {
-	const resolvedHeight =
-		height ?? window.innerHeight - DEFAULT_PANEL_HEIGHT_OFFSET;
-	const resolvedPosition = defaultPosition ?? {
-		x: window.innerWidth - width - DEFAULT_PANEL_RIGHT_INSET,
-		y: DEFAULT_PANEL_TOP_INSET,
-	};
-
 	const [draftFields, setDraftFields] = useState<TelemetryFieldKey[]>(fields);
 	const [inputValue, setInputValue] = useState('');
 	const [debouncedInputValue, setDebouncedInputValue] = useState('');
@@ -124,76 +114,93 @@ function FieldsSelectorContent({
 	const isAtLimit = maxFields !== undefined && draftFields.length >= maxFields;
 
 	return (
-		<FloatingPanel
-			isOpen
-			width={width}
-			height={resolvedHeight}
-			defaultPosition={resolvedPosition}
-			enableResizing={false}
+		<Sheet
+			open
+			onOpenChange={(open): void => {
+				if (!open) {
+					onClose();
+				}
+			}}
 		>
-			<div className={styles.root}>
-				<div className={styles.header}>
-					<div className={styles.title}>
-						<TableColumnsSplit size={16} />
-						{title}
+			<SheetContent
+				side="right"
+				showCloseButton={false}
+				aria-describedby={undefined}
+				data-testid="fields-selector-sheet"
+				className="tw:max-w-full tw:gap-0 tw:p-0 tw:sm:max-w-none"
+				style={{ width }}
+			>
+				<div className={styles.root}>
+					<div className={styles.header}>
+						<SheetTitle className={styles.title}>
+							<TableColumnsSplit size={16} />
+							{title}
+						</SheetTitle>
+						<button
+							type="button"
+							aria-label="Close"
+							className={styles.closeButton}
+							onClick={onClose}
+						>
+							<X size={16} />
+						</button>
 					</div>
-					<X className={styles.closeIcon} size={16} onClick={onClose} />
-				</div>
 
-				<section>
-					<Input
-						className={styles.searchInput}
-						type="text"
-						value={inputValue}
-						placeholder="Search for a field..."
-						onChange={handleInputChange}
+					<section>
+						<Input
+							className={styles.searchInput}
+							type="text"
+							value={inputValue}
+							placeholder="Search for a field..."
+							onChange={handleInputChange}
+						/>
+					</section>
+
+					<AddedFields
+						inputValue={inputValue}
+						fields={draftFields}
+						onFieldsChange={setDraftFields}
+						maxFields={maxFields}
+						requiredFields={requiredFields}
 					/>
-				</section>
 
-				<AddedFields
-					inputValue={inputValue}
-					fields={draftFields}
-					onFieldsChange={setDraftFields}
-					maxFields={maxFields}
-					requiredFields={requiredFields}
-				/>
+					<OtherFields
+						signal={signal}
+						debouncedInputValue={debouncedInputValue}
+						addedFields={draftFields}
+						onAdd={handleAdd}
+						isAtLimit={isAtLimit}
+						allowCustomFields={allowCustomFields}
+						fieldKeysConfig={fieldKeysConfig}
+						builderQueryType={builderQueryType}
+						extraFields={extraFields}
+					/>
 
-				<OtherFields
-					signal={signal}
-					debouncedInputValue={debouncedInputValue}
-					addedFields={draftFields}
-					onAdd={handleAdd}
-					isAtLimit={isAtLimit}
-					allowCustomFields={allowCustomFields}
-					fieldKeysConfig={fieldKeysConfig}
-					builderQueryType={builderQueryType}
-					extraFields={extraFields}
-				/>
-
-				{hasUnsavedChanges && (
-					<div className={styles.footer}>
-						<Button
-							size="md"
-							variant="outlined"
-							color="secondary"
-							onClick={handleDiscard}
-							prefix={<X width={14} height={14} />}
-						>
-							Discard
-						</Button>
-						<Button
-							size="md"
-							variant="solid"
-							color="primary"
-							onClick={handleSave}
-							prefix={<Check width={14} height={14} />}
-						>
-							Save changes
-						</Button>
-					</div>
-				)}
-			</div>
-		</FloatingPanel>
+					{hasUnsavedChanges && (
+						<div className={styles.footer}>
+							<Button
+								size="md"
+								variant="outlined"
+								color="secondary"
+								onClick={handleDiscard}
+								prefix={<X width={14} height={14} />}
+							>
+								Discard
+							</Button>
+							<Button
+								size="md"
+								variant="solid"
+								color="primary"
+								onClick={handleSave}
+								prefix={<Check width={14} height={14} />}
+							>
+								Save changes
+							</Button>
+						</div>
+					)}
+				</div>
+			</SheetContent>
+		</Sheet>
 	);
 }
 
