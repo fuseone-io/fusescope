@@ -1,13 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-	ChartNoAxesGantt,
-	ChevronDown,
-	ChevronRight,
-	Info,
-	TriangleAlert,
-} from '@signozhq/icons';
+import { ChevronDown, ChevronRight, Info } from '@signozhq/icons';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { Collapse } from 'antd';
@@ -33,6 +27,7 @@ import {
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import { FLAMEGRAPH_SPAN_LIMIT } from './TraceFlamegraph/constants';
+import FlameGraphLegend from './TraceFlamegraph/FlameGraphLegend';
 import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall from './TraceWaterfall/TraceWaterfall';
 import { IInterestedSpan } from './TraceWaterfall/types';
@@ -387,44 +382,23 @@ function TraceDetailsV3(): JSX.Element {
 										{
 											key: 'flame',
 											label: (
-												<div className={styles.collapseLabel}>
-													<span className={styles.collapseTitle}>
-														Flame Graph
-														{traceData?.payload?.totalSpansCount &&
-															traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
-																<WarningPopover
-																	message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans in flamegraph."
-																	placement="bottomLeft"
-																>
-																	<Info
-																		size={16}
-																		color="var(--l2-foreground)"
-																		style={{ cursor: 'pointer' }}
-																	/>
-																</WarningPopover>
-															)}
-													</span>
-													{traceData?.payload?.totalSpansCount ? (
-														<span className={styles.collapseCount}>
-															<span className={styles.collapseCountItem}>
-																<ChartNoAxesGantt size={13} />
-																Spans: {traceData.payload.totalSpansCount}
-															</span>
-															<span
-																className={cx(styles.collapseCountItem, {
-																	[styles.hasErrors]: traceData.payload.totalErrorSpansCount > 0,
-																})}
-															>
-																<TriangleAlert size={13} />
-																Errors:{' '}
-																{traceData.payload.totalErrorSpansCount ?? (
-																	<span className="translate-safe">{0}</span>
-																)}
-															</span>
-														</span>
-													) : null}
-												</div>
+												<span className={styles.collapseTitle}>
+													Flame graph
+													{totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
+														<WarningPopover
+															message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans in flamegraph."
+															placement="bottomLeft"
+														>
+															<Info
+																size={14}
+																color="var(--fs-warning)"
+																style={{ cursor: 'pointer' }}
+															/>
+														</WarningPopover>
+													)}
+												</span>
 											),
+											extra: <FlameGraphLegend spans={allSpans} />,
 											children: (
 												<ResizableBox defaultHeight={300} minHeight={100} maxHeight={400}>
 													<TraceFlamegraph
@@ -452,7 +426,12 @@ function TraceDetailsV3(): JSX.Element {
 									items={[
 										{
 											key: 'waterfall',
-											label: 'Waterfall',
+											label: <span className={styles.collapseTitle}>Waterfall</span>,
+											extra: (
+												<span className={styles.collapseHint}>
+													Click a span to see its details
+												</span>
+											),
 											children: activeKeys.includes('waterfall')
 												? waterfallChildren
 												: null,

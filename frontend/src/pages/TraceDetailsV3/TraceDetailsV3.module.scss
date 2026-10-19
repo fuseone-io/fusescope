@@ -10,12 +10,19 @@
 	display: flex;
 	flex: 1;
 	min-height: 0;
+	gap: 16px;
+	padding: 0 16px 16px;
 	overflow: hidden;
+
+	@media (min-width: 768px) {
+		padding: 0 24px 24px;
+	}
 }
 
 .content {
 	display: flex;
 	flex-direction: column;
+	gap: 16px;
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
@@ -25,27 +32,51 @@
 	display: flex;
 	flex-direction: column;
 	min-width: 0;
-	border-top: 1px solid var(--fs-border);
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
 	background: var(--fs-card);
+	overflow: hidden;
 }
 
 // Shared Ant Collapse chrome reset for both the flamegraph and waterfall
-// collapse panels.
+// collapse panels, dressed as bordered panels.
 .flameCollapse,
 .waterfallCollapse {
-	border: none;
-	border-radius: 0;
-	background: transparent;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
+	overflow: hidden;
 
 	:global(.ant-collapse-item) {
 		border: none;
+		border-radius: 0 !important;
 	}
 
 	:global(.ant-collapse-header) {
-		border-top: 1px solid var(--fs-border);
-		border-bottom: 1px solid var(--fs-border);
+		align-items: center !important;
+		min-height: 48px;
+		padding: 8px 16px 8px 12px !important;
 		border-radius: 0 !important;
 		background: var(--fs-card);
+		color: var(--fs-foreground) !important;
+	}
+
+	:global(.ant-collapse-item-active > .ant-collapse-header) {
+		border-bottom: 1px solid var(--fs-border);
+	}
+
+	:global(.ant-collapse-expand-icon) {
+		color: var(--fs-muted-foreground);
+	}
+
+	:global(.ant-collapse-header-text) {
+		flex: none !important;
+		margin-right: auto;
+	}
+
+	:global(.ant-collapse-extra) {
+		min-width: 0;
+		margin-left: 16px;
 	}
 
 	:global(.ant-collapse-content) {
@@ -57,46 +88,27 @@
 	}
 }
 
-.collapseLabel {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	width: 100%;
-}
-
 .collapseTitle {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
 	color: var(--fs-foreground);
+	font-family: var(--tw-font-sans);
 	font-size: 14px;
 	font-weight: 600;
 }
 
-.collapseCount {
-	display: flex;
-	gap: 12px;
-	align-items: center;
+.collapseHint {
+	font-family: var(--tw-font-sans);
 	font-size: 12px;
-	font-weight: 400;
-	color: var(--fs-muted-foreground);
-}
-
-.collapseCountItem {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-}
-
-.hasErrors {
-	color: var(--destructive);
+	color: var(--fs-subtle-foreground);
 }
 
 .flameCollapse {
 	flex-shrink: 0;
 
 	:global(.ant-collapse-content-box) {
-		padding: 0 !important;
+		padding: 8px 0 0 !important;
 	}
 }
 
@@ -104,14 +116,7 @@
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
-
-	// The flamegraph's ResizableBox above renders a 1px resize handle at its
-	// bottom edge; drop the header's own top border so the two don't stack
-	// into a double border at the flamegraph/waterfall juncture.
-	:global(.ant-collapse-header) {
-		border-top: none;
-	}
+	min-height: 0;
 
 	:global(.ant-collapse-item) {
 		flex: 1;
@@ -152,6 +157,9 @@
 
 .dockedSpanDetails {
 	flex: 1;
-	overflow: auto;
 	min-height: 0;
+	overflow: auto;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
 }
