@@ -1,17 +1,15 @@
 import { useQueryClient } from 'react-query';
 import { useHistory } from 'react-router-dom';
-import SignozModal from 'components/SignozModal/SignozModal';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { useDeleteFunnel } from 'hooks/TracesFunnels/useFunnels';
 import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
-import { Trash2, X } from '@signozhq/icons';
+import { Trash2 } from 'lucide-react';
 import { FunnelStepData } from 'types/api/traceFunnels';
 
-import '../RenameFunnel/RenameFunnel.styles.scss';
-import './DeleteFunnel.styles.scss';
+import FunnelDialog from '../FunnelDialog/FunnelDialog';
 
 interface DeleteFunnelProps {
 	isOpen: boolean;
@@ -75,34 +73,20 @@ function DeleteFunnel({
 	};
 
 	return (
-		<SignozModal
+		<FunnelDialog
 			open={isOpen}
 			title="Delete this funnel"
-			width={390}
 			onCancel={handleCancel}
-			rootClassName="funnel-modal delete-funnel-modal"
-			cancelText="Cancel"
-			okText="Delete Funnel"
-			okButtonProps={{
-				icon: <Trash2 size={14} />,
-				loading: deleteFunnelMutation.isLoading,
-				type: 'primary',
-				className: 'funnel-modal__ok-btn',
+			className="tw:max-w-[390px]"
+			description="Deleting the funnel would stop further analytics using this funnel. This is irreversible and cannot be undone."
+			confirm={{
+				label: 'Delete Funnel',
+				icon: <Trash2 className="tw:size-3.5" />,
 				onClick: handleDelete,
+				loading: deleteFunnelMutation.isLoading,
+				destructive: true,
 			}}
-			cancelButtonProps={{
-				icon: <X size={14} />,
-				type: 'text',
-				className: 'funnel-modal__cancel-btn',
-				onClick: handleCancel,
-			}}
-			destroyOnClose
-		>
-			<div className="delete-funnel-modal-content">
-				Deleting the funnel would stop further analytics using this funnel. This is
-				irreversible and cannot be undone.
-			</div>
-		</SignozModal>
+		/>
 	);
 }
 
