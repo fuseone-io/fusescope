@@ -1,7 +1,7 @@
 import { StatusFilterOption } from './types';
 
 export const optionText = (option: StatusFilterOption<string>): string =>
-	`${option.label} ⎯ ${option.count}`;
+	`${option.label} — ${option.count}`;
 
 /** Up to two letters: first and last word of a name, or the start of an email. */
 export function initialsOf(value: string): string {

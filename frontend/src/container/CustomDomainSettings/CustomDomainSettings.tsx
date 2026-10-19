@@ -276,7 +276,7 @@ export default function CustomDomainSettings(): JSX.Element {
 					className="custom-domain-callout"
 					size="small"
 					icon={<SolidAlertCircle size={13} color="primary" />}
-					title={`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
+					title={`Updating your URL to — ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
 				/>
 			)}
 

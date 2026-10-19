@@ -79,7 +79,7 @@ function DataSourceInfo({
 		description = (
 			<>
 				You’re not sending any data yet. <br />
-				FuseScope is so much better with your data ⎯ start by sending your telemetry
+				FuseScope is so much better with your data — start by sending your telemetry
 				data to FuseScope.
 			</>
 		);

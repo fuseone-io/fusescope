@@ -94,7 +94,7 @@ function FunnelMetricsTable({
 					<span className="tw:inline-flex tw:items-center tw:gap-1.5 tw:text-[13px] tw:text-muted-foreground">
 						{subtitle.label}
 						<span aria-hidden="true" className="tw:text-subtle-foreground">
-							⎯
+							—
 						</span>
 						<span className="tw:font-semibold tw:text-success tw:tabular-nums">
 							{subtitle.value}

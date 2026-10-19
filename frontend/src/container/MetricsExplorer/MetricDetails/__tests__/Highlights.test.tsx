@@ -34,7 +34,7 @@ describe('Highlights', () => {
 		const lastReceived = screen.getByTestId('metric-highlights-last-received');
 
 		expect(dataPoints.textContent).toBe('1M+');
-		expect(timeSeriesTotal.textContent).toBe('1M total ⎯ 1M active');
+		expect(timeSeriesTotal.textContent).toBe('1M total — 1M active');
 		expect(lastReceived.textContent).toBe(
 			formatTimestampToReadableDate('2026-01-24T00:00:00Z'),
 		);

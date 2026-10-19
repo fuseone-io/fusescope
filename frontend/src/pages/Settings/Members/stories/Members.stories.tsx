@@ -104,7 +104,7 @@ export const DeletedOnly: Story = {
 		await userEvent.click(
 			// The unfiltered table already shows a DELETED badge, so the menu option
 			// is matched on its own count suffix.
-			await screen.findByText(/^deleted ⎯/i, undefined, untilLoaded),
+			await screen.findByText(/^deleted —/i, undefined, untilLoaded),
 		);
 		await screen.findAllByText('DELETED', undefined, untilLoaded);
 	},

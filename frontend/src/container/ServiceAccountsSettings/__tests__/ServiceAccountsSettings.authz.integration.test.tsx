@@ -96,7 +96,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		await user.click(screen.getByRole('button', { name: /All accounts/i }));
 
-		const activeOption = await screen.findByText(/Active ⎯/i);
+		const activeOption = await screen.findByText(/Active —/i);
 		await user.click(activeOption);
 
 		await screen.findByText('CI Bot');

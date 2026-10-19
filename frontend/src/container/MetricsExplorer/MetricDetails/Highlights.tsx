@@ -116,7 +116,7 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 								title="Active time series are those that have received data points in the last 1 hour."
 								side="top"
 							>
-								<span>{`${timeSeriesTotal} total ⎯ ${timeSeriesActive} active`}</span>
+								<span>{`${timeSeriesTotal} total — ${timeSeriesActive} active`}</span>
 							</Tooltip>
 						</Typography.Text>
 						<Typography.Text
