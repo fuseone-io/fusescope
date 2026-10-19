@@ -1,4 +1,3 @@
-import { Color } from '@signozhq/design-tokens';
 import { FsChartColor } from 'constants/fuseScopeColors';
 
 import { getColorsForSeverityLabels, isRedLike } from '../utils';
@@ -11,13 +10,31 @@ describe('getColorsForSeverityLabels', () => {
 		);
 	});
 
-	it('should return correct colors for known severity variants', () => {
-		expect(getColorsForSeverityLabels('INFO', 0)).toBe(FsChartColor.BG_ROBIN_600);
-		expect(getColorsForSeverityLabels('ERROR', 0)).toBe(Color.BG_CHERRY_600);
-		expect(getColorsForSeverityLabels('WARN', 0)).toBe(Color.BG_AMBER_600);
-		expect(getColorsForSeverityLabels('DEBUG', 0)).toBe(Color.BG_AQUA_600);
-		expect(getColorsForSeverityLabels('TRACE', 0)).toBe(Color.BG_FOREST_600);
-		expect(getColorsForSeverityLabels('FATAL', 0)).toBe(Color.BG_SAKURA_600);
+	it('paints severities with the FuseScope palette of the dark theme', () => {
+		expect(getColorsForSeverityLabels('INFO', 0)).toBe('#3d8be0');
+		expect(getColorsForSeverityLabels('ERROR', 0)).toBe('#dc2626');
+		expect(getColorsForSeverityLabels('WARN', 0)).toBe('#d97706');
+		expect(getColorsForSeverityLabels('DEBUG', 0)).toBe('#b8bfcc');
+		expect(getColorsForSeverityLabels('TRACE', 0)).toBe('#8e98a8');
+		expect(getColorsForSeverityLabels('FATAL', 0)).toBe('#c04fe0');
+	});
+
+	it('paints severities with the FuseScope palette of the light theme', () => {
+		expect(getColorsForSeverityLabels('INFO', 0, false)).toBe('#0f5fb8');
+		expect(getColorsForSeverityLabels('ERROR', 0, false)).toBe('#dc2626');
+		expect(getColorsForSeverityLabels('WARN', 0, false)).toBe('#d97706');
+		expect(getColorsForSeverityLabels('DEBUG', 0, false)).toBe('#4b5563');
+		expect(getColorsForSeverityLabels('TRACE', 0, false)).toBe('#64707f');
+		expect(getColorsForSeverityLabels('FATAL', 0, false)).toBe('#950fb8');
+	});
+
+	it('gives every spelling of a severity the same colour', () => {
+		['Error', 'error', 'err', 'ERR', 'FAIL'].forEach((label) => {
+			expect(getColorsForSeverityLabels(label, 0)).toBe('#dc2626');
+		});
+		['Warning', 'warning', 'wrn'].forEach((label) => {
+			expect(getColorsForSeverityLabels(label, 0)).toBe('#d97706');
+		});
 	});
 
 	it('should return non-red colors for unrecognized labels at any index', () => {

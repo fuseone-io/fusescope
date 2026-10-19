@@ -77,6 +77,12 @@ export const getFrequencyChartData = (
 				type: '',
 				id: 'severity_text--string----true',
 			},
+			{
+				key: 'severity_number',
+				dataType: DataTypes.Int64,
+				type: '',
+				id: 'severity_number--int64----true',
+			},
 		],
 		legend: '{{severity_text}}',
 		orderBy: [],

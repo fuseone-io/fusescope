@@ -28,6 +28,7 @@ import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapp
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
+import { groupSeriesBySeverity } from 'container/LogsExplorerChart/utils';
 import LogsExplorerList from 'container/LogsExplorerList';
 import ExportMenu from 'components/ExportMenu/ExportMenu';
 import LogsExplorerTable from 'container/LogsExplorerTable';
@@ -39,6 +40,7 @@ import {
 } from 'container/LogsExplorerViews/explorerUtils';
 import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import ViewActionsPortal from 'container/TracesExplorer/ViewActionsPortal';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
@@ -74,6 +76,7 @@ function LogsExplorerViewsContainer({
 	setWarning,
 	showLiveLogs,
 	handleChangeSelectedView,
+	toolbarTarget,
 }: {
 	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
 	listQueryKeyRef: MutableRefObject<any>;
@@ -81,6 +84,8 @@ function LogsExplorerViewsContainer({
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	showLiveLogs: boolean;
 	handleChangeSelectedView: ChangeViewFunctionType;
+	/** The page's view bar, which hosts the active view's actions. */
+	toolbarTarget?: HTMLElement | null;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const isSavedViewEnabled = useSavedViewEnabled();
@@ -91,6 +96,8 @@ function LogsExplorerViewsContainer({
 	);
 
 	const { activeLogId } = useCopyLogLink();
+	const [frequencyLegendTarget, setFrequencyLegendTarget] =
+		useState<HTMLDivElement | null>(null);
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
@@ -370,7 +377,7 @@ function LogsExplorerViewsContainer({
 
 		if (selectedPanelType === PANEL_TYPES.LIST) {
 			if (listChartData && listChartData.payload.data?.result.length > 0) {
-				return listChartData.payload.data.result;
+				return groupSeriesBySeverity(listChartData.payload.data.result);
 			}
 			return [];
 		}
@@ -427,27 +434,45 @@ function LogsExplorerViewsContainer({
 		<div className="logs-explorer-views-container">
 			<div className="logs-explorer-views-types">
 				{!showLiveLogs && selectedPanelType === PANEL_TYPES.LIST && (
-					<LogsActionsContainer
-						listQuery={listQuery}
-						showFrequencyChart={showFrequencyChart}
-						handleToggleFrequencyChart={handleToggleFrequencyChart}
-						orderBy={orderBy}
-						onOrderChange={handleOrderChange}
-						explorerActions={explorerActions}
-					/>
+					<ViewActionsPortal target={toolbarTarget}>
+						<LogsActionsContainer
+							listQuery={listQuery}
+							showFrequencyChart={showFrequencyChart}
+							handleToggleFrequencyChart={handleToggleFrequencyChart}
+							orderBy={orderBy}
+							onOrderChange={handleOrderChange}
+							explorerActions={explorerActions}
+						/>
+					</ViewActionsPortal>
 				)}
 
 				{selectedPanelType === PANEL_TYPES.LIST &&
 					showFrequencyChart &&
 					!showLiveLogs && (
-						<div className="logs-frequency-chart-container">
+						<section
+							className="logs-frequency-chart-container logs-frequency-panel"
+							aria-label="Log frequency"
+						>
+							<div className="logs-frequency-panel__header">
+								<div>
+									<h2 className="logs-frequency-panel__title">Frequency</h2>
+									<p className="logs-frequency-panel__subtitle">
+										Log count, stacked by severity
+									</p>
+								</div>
+								<div
+									className="logs-frequency-panel__legend"
+									ref={setFrequencyLegendTarget}
+								/>
+							</div>
 							<LogsExplorerChart
 								className="logs-frequency-chart"
 								isLoading={isFetchingListChartData || isLoadingListChartData}
 								data={chartData}
 								isLogsExplorerViews={selectedPanelType === PANEL_TYPES.LIST}
+								legendTarget={frequencyLegendTarget}
 							/>
-						</div>
+						</section>
 					)}
 
 				<div
@@ -490,17 +515,19 @@ function LogsExplorerViewsContainer({
 					)}
 					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
 						<div className="table-view-container">
-							<div className="table-view-container-header">
-								{explorerActions}
-								{data && !isError && (
-									<ExportMenu
-										dataSource={DataSource.LOGS}
-										data={data}
-										query={stagedQuery || initialQueriesMap.metrics}
-										fileName="logs-table"
-									/>
-								)}
-							</div>
+							<ViewActionsPortal target={toolbarTarget}>
+								<div className="table-view-container-header">
+									{explorerActions}
+									{data && !isError && (
+										<ExportMenu
+											dataSource={DataSource.LOGS}
+											data={data}
+											query={stagedQuery || initialQueriesMap.metrics}
+											fileName="logs-table"
+										/>
+									)}
+								</div>
+							</ViewActionsPortal>
 							<LogsExplorerTable
 								data={
 									(data?.payload?.data?.newResult?.data?.result ||
@@ -530,5 +557,9 @@ function LogsExplorerViewsContainer({
 		</div>
 	);
 }
+
+LogsExplorerViewsContainer.defaultProps = {
+	toolbarTarget: undefined,
+};
 
 export default memo(LogsExplorerViewsContainer);

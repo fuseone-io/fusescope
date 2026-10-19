@@ -330,6 +330,8 @@ describe('LogsExplorerViews -', () => {
 					// Transformations
 					expect(first.aggregateOperator).toBe(LogsAggregatorOperator.COUNT);
 					expect(first.groupBy?.[0]?.key).toBe('severity_text');
+					// The number lets the chart group every spelling into its level.
+					expect(first.groupBy?.[1]?.key).toBe('severity_number');
 					expect(first.legend).toBe('{{severity_text}}');
 					expect(Array.isArray(first.orderBy) && first.orderBy.length === 0).toBe(
 						true,
