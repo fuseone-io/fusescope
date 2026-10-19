@@ -58,14 +58,16 @@ const useSampleLogs = ({
 	const errorMsg = data?.error || '';
 	const isError = response.isError || Boolean(errorMsg);
 
-	let logs: ILog[] = [];
-	if (!(isLoading || isError)) {
+	const logs = useMemo((): ILog[] => {
+		if (isLoading || isError) {
+			return [];
+		}
 		const logsList = data?.payload?.data?.newResult?.data?.result[0]?.list || [];
-		logs = logsList.map((item) => ({
+		return logsList.map((item) => ({
 			...item.data,
 			timestamp: item.timestamp,
 		}));
-	}
+	}, [data, isLoading, isError]);
 
 	return { isLoading, logs, isError };
 };
