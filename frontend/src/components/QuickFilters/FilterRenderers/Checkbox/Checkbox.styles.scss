@@ -21,6 +21,10 @@
 		}
 	}
 
+	.filter-header-checkbox:hover .filter-icon {
+		color: var(--fs-primary);
+	}
+
 	.filter-header-checkbox {
 		display: flex;
 		align-items: center;
@@ -31,6 +35,11 @@
 			display: flex;
 			align-items: center;
 			gap: 6px;
+
+			.filter-icon {
+				flex: none;
+				color: var(--fs-muted-foreground);
+			}
 
 			.title {
 				color: var(--l2-foreground);
