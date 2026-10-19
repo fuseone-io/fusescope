@@ -1,4 +1,3 @@
-import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
@@ -28,19 +27,9 @@ export default function LeftToolbarActions({
 	items,
 	selectedView,
 	onChangeSelectedView,
-	showFilter,
-	handleFilterVisibilityChange,
 }: LeftToolbarActionsProps): JSX.Element {
 	return (
 		<div className="left-toolbar">
-			{!showFilter && (
-				<Tooltip title="Show Filters">
-					<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-						<Filter size={12} />
-						<ArrowUpToLine size={12} style={{ transform: 'rotate(90deg)' }} />
-					</Button>
-				</Tooltip>
-			)}
 			{/* Buttons render in the order the caller declares its views. */}
 			<div className="left-toolbar-query-actions">
 				{Object.values(items).map((item) => {

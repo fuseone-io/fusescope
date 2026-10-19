@@ -3,7 +3,6 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import usePersistedFiltersVisibility from 'components/QuickFilters/hooks/usePersistedFiltersVisibility';
 import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
-import { Button, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
@@ -20,7 +19,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
-import { Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -143,17 +141,7 @@ function Explorer(): JSX.Element {
 				<div className="meter-explorer-content-section">
 					<div className="meter-explorer-explore-content">
 						<div className="explore-header">
-							<div className="explore-header-left-actions">
-								{!showQuickFilters && (
-									<Tooltip title="Show Quick Filters" placement="right" arrow={false}>
-										<Button
-											className="periscope-btn outline"
-											icon={<Filter size={16} />}
-											onClick={toggleQuickFilters}
-										/>
-									</Tooltip>
-								)}
-							</div>
+							<div className="explore-header-left-actions"></div>
 
 							<div className="explore-header-right-actions">
 								<RightToolbarActions

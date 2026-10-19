@@ -1,4 +1,4 @@
-import { ArrowUpToLine, Filter, Terminal } from '@signozhq/icons';
+import { Terminal } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { ChartLine, ChartNoAxesGantt, List, Table } from 'lucide-react';
@@ -20,21 +20,11 @@ export default function LeftToolbarActions({
 	items,
 	selectedView,
 	onChangeSelectedView,
-	showFilter,
-	handleFilterVisibilityChange,
 }: LeftToolbarActionsProps): JSX.Element {
 	const { clickhouse, list, timeseries, table, trace } = items;
 
 	return (
 		<div className="left-toolbar">
-			{!showFilter && (
-				<Tooltip title="Show Filters">
-					<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-						<Filter size={12} />
-						<ArrowUpToLine size={12} style={{ transform: 'rotate(90deg)' }} />
-					</Button>
-				</Tooltip>
-			)}
 			<div className="left-toolbar-query-actions">
 				{list?.show && (
 					<Tooltip title="List View">
