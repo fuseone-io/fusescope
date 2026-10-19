@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
+import { Tabs, type TabsItemProps } from '@signozhq/ui/tabs';
 import { Drawer, Tooltip } from 'antd';
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -21,7 +20,6 @@ import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { cloneDeep } from 'lodash-es';
 import {
 	ArrowDown,
@@ -30,7 +28,6 @@ import {
 	Histogram,
 	Table,
 	TextSelect,
-	X,
 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { ILogBody } from 'types/api/logs/log';
@@ -151,8 +148,6 @@ function LogDetailInner({
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 
-	const isDarkMode = useIsDarkMode();
-
 	const handleModeChange = (value: string): void => {
 		setSelectedView(value as VIEWS);
 		setIsEdit(false);
@@ -262,6 +257,86 @@ function LogDetailInner({
 		}
 	};
 
+	const contextFilter = isFilterVisible &&
+		contextQuery?.builder.queryData[0] && (
+			<div className="log-detail-drawer-query-container">
+				<QuerySearch
+					onChange={(value): void => handleQueryExpressionChange(value, 0)}
+					dataSource={DataSource.LOGS}
+					queryData={contextQuery?.builder.queryData[0]}
+					onRun={handleRunQuery}
+				/>
+			</div>
+		);
+
+	const viewTabs: TabsItemProps[] = [
+		{
+			key: VIEW_TYPES.OVERVIEW,
+			label: 'Overview',
+			prefixIcon: <Table size={14} />,
+			children: (
+				<>
+					<Overview
+						logData={log}
+						isListViewPanel={isListViewPanel}
+						handleChangeSelectedView={handleChangeSelectedView}
+						onApplyLogFilter={onApplyLogFilter}
+					/>
+					<div className="log-detail-drawer__footer-hint">
+						<div className="log-detail-drawer__footer-hint-content">
+							<Typography.Text
+								color="muted"
+								className="log-detail-drawer__footer-hint-text"
+							>
+								Use
+							</Typography.Text>
+							<ArrowUp size={14} className="log-detail-drawer__footer-hint-icon" />
+							<span>/</span>
+							<ArrowDown size={14} className="log-detail-drawer__footer-hint-icon" />
+							<Typography.Text
+								color="muted"
+								className="log-detail-drawer__footer-hint-text"
+							>
+								to view previous/next log
+							</Typography.Text>
+						</div>
+					</div>
+				</>
+			),
+		},
+		{
+			key: VIEW_TYPES.CONTEXT,
+			label: 'Context',
+			prefixIcon: <TextSelect size={14} />,
+			children: (
+				<>
+					{contextFilter}
+					<ContextView
+						log={log}
+						filters={filters}
+						contextQuery={contextQuery}
+						isEdit={isEdit}
+					/>
+				</>
+			),
+		},
+		{
+			key: VIEW_TYPES.INFRAMETRICS,
+			label: 'Metrics',
+			prefixIcon: <Histogram size={14} />,
+			children: (
+				<InfraMetrics
+					clusterName={log.resources_string?.[RESOURCE_KEYS.CLUSTER_NAME] || ''}
+					podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
+					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
+					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
+					timestamp={log.timestamp.toString()}
+					dataSource={DataSource.LOGS}
+				/>
+			),
+		},
+	];
+
 	return (
 		<Drawer
 			width="60%"
@@ -277,18 +352,16 @@ function LogDetailInner({
 					isNextDisabled={isNextDisabled}
 					showOpenInExplorer={!!handleOpenInExplorer}
 					onOpenInExplorer={handleOpenInExplorer}
+					onClose={drawerCloseHandler}
 				/>
 			}
 			placement="right"
 			onClose={drawerCloseHandler}
 			open={log !== null}
-			style={{
-				overscrollBehavior: 'contain',
-				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
-			}}
+			style={{ overscrollBehavior: 'contain' }}
 			className="log-detail-drawer"
 			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			closable={false}
 		>
 			<OverlayScrollbar style={{ height: '100%' }}>
 				<div
@@ -318,126 +391,41 @@ function LogDetailInner({
 					<div className="log-detail-drawer__section-divider" />
 
 					<div className="tabs-and-search">
-						<ToggleGroup
-							variant="outlined"
-							color="secondary"
-							size="sm"
-							type="single"
+						<Tabs
+							variant="primary"
+							orientation="horizontal"
+							alignment="start"
 							testId="log-detail-views-tabs"
-							onChange={handleModeChange}
+							className="log-detail-drawer__tabs"
 							value={selectedView}
-							items={[
-								{
-									value: VIEW_TYPES.OVERVIEW,
-									label: (
-										<div className="view-title">
-											<Table size={14} />
-											Overview
-										</div>
-									),
-								},
-								{
-									value: VIEW_TYPES.CONTEXT,
-									label: (
-										<div className="view-title">
-											<TextSelect size={14} />
-											Context
-										</div>
-									),
-								},
-								{
-									value: VIEW_TYPES.INFRAMETRICS,
-									label: (
-										<div className="view-title">
-											<Histogram size="md" />
-											Metrics
-										</div>
-									),
-								},
-							]}
+							onChange={handleModeChange}
+							noTabContentPadding
+							items={viewTabs}
+							tabBarEndContent={
+								selectedView === VIEW_TYPES.CONTEXT ? (
+									<div className="log-detail-drawer__actions">
+										<Tooltip
+											title="Show Filters"
+											placement="topLeft"
+											aria-label="Show Filters"
+											mouseLeaveDelay={0}
+										>
+											<Button
+												variant="link"
+												color="secondary"
+												size="sm"
+												icon
+												aria-label="Show Filters"
+												onClick={handleFilterVisible}
+											>
+												<Filter size="lg" />
+											</Button>
+										</Tooltip>
+									</div>
+								) : undefined
+							}
 						/>
-
-						<div className="log-detail-drawer__actions">
-							{selectedView === VIEW_TYPES.CONTEXT && (
-								<Tooltip
-									title="Show Filters"
-									placement="topLeft"
-									aria-label="Show Filters"
-									mouseLeaveDelay={0}
-								>
-									<Button
-										variant="link"
-										color="secondary"
-										size="sm"
-										icon
-										aria-label="Show Filters"
-										onClick={handleFilterVisible}
-									>
-										<Filter size="lg" />
-									</Button>
-								</Tooltip>
-							)}
-						</div>
 					</div>
-					{isFilterVisible && contextQuery?.builder.queryData[0] && (
-						<div className="log-detail-drawer-query-container">
-							<QuerySearch
-								onChange={(value): void => handleQueryExpressionChange(value, 0)}
-								dataSource={DataSource.LOGS}
-								queryData={contextQuery?.builder.queryData[0]}
-								onRun={handleRunQuery}
-							/>
-						</div>
-					)}
-
-					{selectedView === VIEW_TYPES.OVERVIEW && (
-						<Overview
-							logData={log}
-							isListViewPanel={isListViewPanel}
-							handleChangeSelectedView={handleChangeSelectedView}
-							onApplyLogFilter={onApplyLogFilter}
-						/>
-					)}
-					{selectedView === VIEW_TYPES.CONTEXT && (
-						<ContextView
-							log={log}
-							filters={filters}
-							contextQuery={contextQuery}
-							isEdit={isEdit}
-						/>
-					)}
-					{selectedView === VIEW_TYPES.INFRAMETRICS && (
-						<InfraMetrics
-							clusterName={log.resources_string?.[RESOURCE_KEYS.CLUSTER_NAME] || ''}
-							podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
-							nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
-							hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
-							timestamp={log.timestamp.toString()}
-							dataSource={DataSource.LOGS}
-						/>
-					)}
-
-					{selectedView === VIEW_TYPES.OVERVIEW && (
-						<div className="log-detail-drawer__footer-hint">
-							<div className="log-detail-drawer__footer-hint-content">
-								<Typography.Text
-									color="muted"
-									className="log-detail-drawer__footer-hint-text"
-								>
-									Use
-								</Typography.Text>
-								<ArrowUp size={14} className="log-detail-drawer__footer-hint-icon" />
-								<span>/</span>
-								<ArrowDown size={14} className="log-detail-drawer__footer-hint-icon" />
-								<Typography.Text
-									color="muted"
-									className="log-detail-drawer__footer-hint-text"
-								>
-									to view previous/next log
-								</Typography.Text>
-							</div>
-						</div>
-					)}
 				</div>
 			</OverlayScrollbar>
 		</Drawer>

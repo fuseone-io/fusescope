@@ -1,222 +1,231 @@
+// Right-side panel with the trace span panel's look: header row, summary,
+// underlined tabs with icons, and the attribute tree in a bordered box.
 .log-detail-drawer {
-	border-left: 1px solid var(--l1-border);
-	background: var(--l2-background);
-	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+	border-left: 1px solid var(--fs-border);
+	background: var(--fs-card);
+	color: var(--fs-foreground);
+	font-family: var(--tw-font-sans);
+	box-shadow: -8px 0 24px -12px
+		color-mix(in srgb, var(--fs-foreground) 24%, transparent);
 
-	.log-detail-drawer__title {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-
-		.log-detail-drawer__title-left {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-		}
-
-		.log-detail-drawer__title-right {
-			display: flex;
-			align-items: center;
-			.ant-btn {
-				display: flex;
-				align-items: center;
-			}
-		}
+	.ant-drawer-content {
+		background: var(--fs-card);
 	}
 
 	.ant-drawer-header {
-		padding: 8px 16px;
-		border-bottom: none;
-
-		align-items: stretch;
-
-		border-bottom: 1px solid var(--l1-border);
-		background: var(--l2-background);
-	}
-
-	.ant-drawer-close {
-		margin-inline-end: 0px;
+		min-height: 48px;
+		padding: 8px 8px 8px 16px;
+		align-items: center;
+		border-bottom: 1px solid var(--fs-border);
+		background: var(--fs-card);
 	}
 
 	.ant-drawer-body {
 		display: flex;
 		flex-direction: column;
 		padding: 0 16px;
+		background: var(--fs-card);
 		// OverlayScrollbar owns the scroll. A native scrollbar here changes the
 		// body width when it toggles and shifts the header grid.
 		overflow: hidden;
 	}
 
-	.title {
-		color: var(--l2-foreground);
-		font-family: Inter;
-		font-size: var(--font-size-sm);
-		font-style: normal;
-		font-weight: var(--font-weight-normal);
-		line-height: 20px; /* 142.857% */
-		letter-spacing: -0.07px;
-	}
-
-	.radio-button {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding-top: var(--padding-1);
-		border: 1px solid var(--l1-border);
-		background: var(--l3-background);
-		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-	}
-
 	&-query-container {
-		margin-bottom: 16px;
+		margin: 12px 0;
 	}
 
 	.log-detail-drawer__content {
 		min-height: 100%;
 	}
 
+	// The log line, coloured by severity like the list row it came from.
 	.log-detail-drawer__log {
 		width: 100%;
 		display: flex;
-		align-items: center;
-		gap: 4px;
+		align-items: stretch;
+		gap: 8px;
 		position: relative;
 		margin-top: 16px;
+		padding: 8px 12px 8px 0;
+		overflow: hidden;
+		border: 1px solid var(--fs-border);
+		border-radius: 8px;
+		background: var(--fs-muted);
+
+		.log-state-indicator {
+			display: flex;
+		}
+
+		.log-state-indicator .line {
+			width: 4px;
+			min-height: 20px;
+			margin: -8px 4px -8px 0;
+			border-radius: 0;
+		}
 
 		.log-body {
-			font-family: 'SF Mono';
-			font-family: 'Geist Mono';
-
-			font-size: var(--font-size-sm);
-			font-weight: var(--font-weight-normal);
-			line-height: 18px;
-			letter-spacing: -0.07px;
+			font-family: var(--tw-font-mono);
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 20px;
 			white-space: nowrap;
 			text-overflow: ellipsis;
 			overflow: hidden;
-			color: var(--l2-foreground);
-			opacity: 0.6;
-		}
-
-		.log-type-indicator {
-			height: 24px;
-			border: 2px solid var(--l1-border);
-			border-radius: 5px;
-			margin-left: 0;
-
-			&.INFO {
-				border-color: var(--l1-border);
-			}
-
-			&.WARNING {
-				border-color: var(--bg-amber-400);
-			}
-
-			&.ERROR {
-				border-color: var(--danger-background);
-			}
+			color: var(--fs-foreground);
 		}
 
 		.log-overflow-shadow {
-			background: linear-gradient(270deg, var(--card) 10.4%, transparent 100%);
-
-			width: 196px;
-			position: absolute;
-			right: 0;
+			display: none;
 		}
 	}
 
 	.log-detail-drawer__section-divider {
-		height: 8px;
-		margin: 12px 0;
-		background-image:
-			radial-gradient(circle, var(--l3-border) 1px, transparent 1px),
-			radial-gradient(circle, var(--l3-border) 1px, transparent 1px);
-		background-size: 6px 2px;
-		background-position:
-			left top,
-			left bottom;
-		background-repeat: repeat-x;
+		height: 1px;
+		margin: 16px 0 0;
+		background: var(--fs-border);
 	}
 
 	.tabs-and-search {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin: 16px 0;
+		flex-direction: column;
+		margin: 8px 0 0;
 
-		.action-btn {
+		[role='tablist'] {
+			flex-shrink: 0;
+		}
+
+		[role='tab'] {
+			font-size: 13px;
+			font-weight: 500;
+		}
+
+		// Inside the drawer Base UI cannot place its sliding indicator, so the
+		// active tab draws the same 2px underline itself.
+		[role='tab'][data-active]::after {
+			content: '';
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: calc(-1 * var(--spacing-4));
+			height: 2px;
 			border-radius: 2px;
-			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
-			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-			display: flex;
-			align-items: center;
-			justify-content: center;
+			background: var(--fs-primary);
+		}
+
+		[class*='tabs__list-wrapper'] {
+			padding-left: 0 !important;
+		}
+
+		[role='tabpanel'] {
+			padding: 12px 0 0;
 		}
 
 		.log-detail-drawer__actions {
 			display: flex;
+			align-items: center;
 			gap: 4px;
 		}
 	}
 
-	.view-title {
-		display: flex;
-		gap: var(--margin-2);
-		align-items: center;
-		justify-content: center;
-		font-size: var(--font-size-xs);
-		font-style: normal;
-		font-weight: var(--font-weight-normal);
+	// Pretty / JSON switch and copy, then the tree in a bordered box.
+	.data-viewer__toolbar {
+		padding-bottom: 12px;
 	}
 
-	.search-input {
-		margin-top: var(--margin-2);
-		border: 1px solid var(--l1-border);
-		height: 46px;
-		padding: var(--padding-1) var(--padding-2);
-		box-shadow: none;
-		border-radius: 0;
+	.data-viewer__content {
+		overflow: hidden;
+		border: 1px solid var(--fs-border);
+		border-radius: 8px;
 	}
 
-	.ant-drawer-close {
-		padding: 0px;
+	.pretty-view {
+		font-family: var(--tw-font-mono);
+		color: var(--fs-foreground);
 	}
+
+	.pretty-view__search-wrapper {
+		padding: 8px;
+		background: var(--fs-card);
+		border-bottom: 1px solid var(--fs-border);
+	}
+
+	// Border on the input itself: it is a plain input, not a scroller.
+	.pretty-view__search-input {
+		height: 32px;
+		padding: 0 10px !important;
+		border: 1px solid var(--fs-input) !important;
+		border-radius: 8px !important;
+		background: var(--fs-card) !important;
+		color: var(--fs-foreground) !important;
+		font-family: var(--tw-font-sans) !important;
+		font-size: 13px !important;
+
+		&:focus {
+			border-color: var(--fs-ring) !important;
+		}
+	}
+
+	.pretty-view > ul,
+	.pretty-view__pinned {
+		padding: 4px 8px !important;
+	}
+
+	.pretty-view__row:hover::before,
+	.pretty-view__nested-row:hover::before {
+		background: var(--fs-muted);
+	}
+
+	.pretty-view__pinned {
+		border-bottom-color: var(--fs-border);
+	}
+
+	.pretty-view__pinned-header {
+		font-family: var(--tw-font-sans);
+		color: var(--fs-muted-foreground);
+	}
+
+	.pretty-view__pinned-icon {
+		color: var(--fs-primary);
+		fill: var(--fs-primary);
+	}
+
+	.pretty-view__actions {
+		color: var(--fs-muted-foreground);
+
+		&:hover {
+			color: var(--fs-foreground);
+		}
+	}
+
 	.log-detail-drawer__footer-hint {
 		position: sticky;
 		bottom: 0;
 		left: 0;
 		right: 0;
+		margin: 12px -16px 0;
 		padding: 8px 16px;
+		border-top: 1px solid var(--fs-border);
 		text-align: left;
-		color: var(--l3-foreground);
-		background: var(--l2-background);
+		color: var(--fs-subtle-foreground);
+		background: var(--fs-card);
 		z-index: 10;
 
 		.log-detail-drawer__footer-hint-content {
 			display: flex;
 			align-items: center;
 			gap: 4px;
+			font-size: 12px;
 		}
 
 		.log-detail-drawer__footer-hint-icon {
 			display: inline;
 			vertical-align: middle;
-			color: var(--l3-foreground);
+			color: var(--fs-subtle-foreground);
 		}
 
 		.log-detail-drawer__footer-hint-text {
-			font-size: 13px;
+			font-size: 12px;
 			margin: 0;
 		}
-	}
-	.log-arrows {
-		display: flex;
-		box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
-		border-radius: 6px;
-		padding: 2px 6px;
-		align-items: center;
-		margin-left: 8px;
 	}
 }

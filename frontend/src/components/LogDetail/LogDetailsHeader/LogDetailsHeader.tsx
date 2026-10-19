@@ -1,5 +1,4 @@
 import { Button } from '@signozhq/ui/button';
-import { Divider } from '@signozhq/ui/divider';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Typography } from '@signozhq/ui/typography';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -14,7 +13,12 @@ import {
 	Copy,
 	Ellipsis,
 	Link,
+	Waypoints,
+	X,
 } from '@signozhq/icons';
+import SeverityBadge from 'components/Logs/SeverityBadge/SeverityBadge';
+import { normalizeSeverity } from 'utils/logSeverity';
+import { openInNewTab } from 'utils/navigation';
 import { useTimezone } from 'providers/Timezone';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 import { ILog } from 'types/api/logs/log';
@@ -31,6 +35,7 @@ interface LogDetailsHeaderProps {
 	isNextDisabled: boolean;
 	showOpenInExplorer?: boolean;
 	onOpenInExplorer?: MouseEventHandler;
+	onClose?: MouseEventHandler;
 }
 
 function LogDetailsHeader({
@@ -41,6 +46,7 @@ function LogDetailsHeader({
 	isNextDisabled,
 	showOpenInExplorer = false,
 	onOpenInExplorer,
+	onClose,
 }: LogDetailsHeaderProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 	const { onLogCopy } = useCopyLogLink(log?.id);
@@ -68,6 +74,14 @@ function LogDetailsHeader({
 		},
 	];
 
+	const severity = normalizeSeverity(log.severity_number, log.severity_text);
+	const traceId = log.trace_id || log.traceId;
+	const spanId = log.span_id || log.spanID;
+	const handleViewTrace = (): void => {
+		const search = spanId ? `?spanId=${encodeURIComponent(spanId)}` : '';
+		openInNewTab(`/trace/${encodeURIComponent(traceId)}${search}`);
+	};
+
 	const rawTimestamp = log.date ?? log.timestamp;
 	const displayTimestamp = Number.isNaN(Number(rawTimestamp))
 		? rawTimestamp
@@ -76,7 +90,16 @@ function LogDetailsHeader({
 	return (
 		<div className={styles.header} data-log-detail-ignore="true">
 			<div className={styles.leftSection}>
-				<Divider type="vertical" className={styles.divider} />
+				<span className={styles.title}>Log details</span>
+				{severity !== 'UNKNOWN' && (
+					<span className="fs-ui tw:inline-flex">
+						<SeverityBadge
+							logType={severity}
+							label={severity}
+							testId="log-details-header-severity"
+						/>
+					</span>
+				)}
 				<Typography.Text
 					className={styles.timestamp}
 					data-testid="log-details-header-timestamp"
@@ -89,6 +112,18 @@ function LogDetailsHeader({
 			</div>
 
 			<div className={styles.actions}>
+				{traceId && (
+					<Button
+						size="md"
+						variant="outlined"
+						color="secondary"
+						prefix={<Waypoints size={16} />}
+						onClick={handleViewTrace}
+					>
+						View trace
+					</Button>
+				)}
+
 				{showOpenInExplorer && (
 					<Button
 						size="md"
@@ -153,6 +188,20 @@ function LogDetailsHeader({
 						</Button>
 					</Tooltip>
 				</div>
+
+				{onClose && (
+					<Button
+						size="md"
+						variant="ghost"
+						color="secondary"
+						icon
+						aria-label="Close"
+						testId="log-details-header-close"
+						onClick={onClose}
+					>
+						<X size={16} />
+					</Button>
+				)}
 			</div>
 		</div>
 	);
@@ -161,6 +210,7 @@ function LogDetailsHeader({
 LogDetailsHeader.defaultProps = {
 	showOpenInExplorer: false,
 	onOpenInExplorer: undefined,
+	onClose: undefined,
 };
 
 export default LogDetailsHeader;

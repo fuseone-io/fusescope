@@ -1,32 +1,43 @@
+// Same pattern as the trace span panel header: title and status, then actions
+// and close on the right.
 .header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
+	min-height: 32px;
 	gap: 8px;
+	font-family: var(--tw-font-sans);
 }
 
 .leftSection {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	min-width: 0;
 }
 
-.divider {
-	height: 16px;
-	margin: 0;
+.title {
+	color: var(--fs-foreground);
+	font-size: 14px;
+	font-weight: 600;
+	white-space: nowrap;
 }
 
 .timestamp {
-	font-family: 'Geist Mono', monospace;
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-normal);
-	color: var(--l1-foreground);
-	letter-spacing: -0.07px;
+	overflow: hidden;
+	color: var(--fs-muted-foreground);
+	font-family: var(--tw-font-mono);
+	font-size: 12px;
+	font-weight: 400;
+	font-variant-numeric: tabular-nums;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .actions {
 	display: flex;
+	flex: none;
 	align-items: center;
 	gap: 8px;
 }
@@ -35,7 +46,4 @@
 	display: flex;
 	align-items: center;
 	gap: 2px;
-	padding: 2px 6px;
-	border-radius: 6px;
-	box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
 }

@@ -1,4 +1,3 @@
-import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { ILog } from 'types/api/logs/log';
 
 import { LOG_HIGHLIGHTS } from './config';
@@ -20,16 +19,14 @@ function LogHighlights({ log }: LogHighlightsProps): JSX.Element | null {
 	}
 
 	return (
-		<div className={styles.highlights} data-testid="log-details-highlights">
+		<dl className={styles.highlights} data-testid="log-details-highlights">
 			{fields.map((field) => (
-				<KeyValueLabel
-					key={field.key}
-					badgeKey={field.label}
-					badgeValue={field.value}
-					direction="column"
-				/>
+				<div key={field.key} className={styles.option}>
+					<dt className={styles.optionLabel}>{field.label}</dt>
+					<dd className={styles.optionValue}>{field.value}</dd>
+				</div>
 			))}
-		</div>
+		</dl>
 	);
 }
 
