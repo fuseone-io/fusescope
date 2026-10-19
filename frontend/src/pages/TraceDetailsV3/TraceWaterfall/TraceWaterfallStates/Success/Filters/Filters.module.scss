@@ -33,6 +33,44 @@
 	display: flex;
 	align-items: center;
 	flex-shrink: 0;
+
+	// Segmented control: one sunken track, the active category raised in the
+	// primary tint.
+	:global([data-slot='toggle-group-list']) {
+		gap: 2px;
+		height: 36px;
+		padding: 3px;
+		border: 1px solid var(--fs-border);
+		border-radius: 8px;
+		background: var(--fs-muted);
+	}
+
+	:global([data-slot='toggle-group-button']) {
+		height: 28px;
+		padding: 0 10px;
+		border: 1px solid transparent !important;
+		border-radius: 6px !important;
+		background: transparent;
+		box-shadow: none;
+		color: var(--fs-muted-foreground);
+		font-family: var(--tw-font-sans);
+		font-size: 12px;
+		font-weight: 500;
+
+		&:hover {
+			color: var(--fs-foreground);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--fs-ring);
+			outline-offset: 1px;
+		}
+	}
+
+	:global([data-slot='toggle-group-button'][aria-pressed='true']) {
+		background: var(--fs-primary-soft);
+		color: var(--fs-primary-ink);
+	}
 }
 
 .searchInput {
@@ -56,6 +94,67 @@
 .searchContainer {
 	flex: 1;
 	min-width: 0;
+	display: flex;
+	min-height: 36px;
+	border: 1px solid var(--fs-input);
+	border-radius: 8px;
+	background: var(--fs-muted);
+	font-family: var(--tw-font-mono);
+
+	// One box like the explorer filter: the border and focus ring live here,
+	// since the CodeMirror scroller clips anything drawn on .cm-content.
+	&:has(:global(.cm-focused)) {
+		border-color: var(--fs-ring);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--fs-ring) 35%, transparent);
+	}
+
+	&:has(:global(.hasErrors)) {
+		border-color: var(--fs-error);
+	}
+
+	:global(.code-mirror-where-clause),
+	:global(.query-where-clause-editor-container),
+	:global(.query-where-clause-editor) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	:global(.cm-editor),
+	:global(.cm-editor .cm-scroller),
+	:global(.cm-editor .cm-content),
+	:global(.cm-editor .cm-line),
+	:global(.cm-editor .cm-gutters) {
+		border: 0 !important;
+		border-radius: 0 !important;
+		background: transparent !important;
+		box-shadow: none !important;
+	}
+
+	:global(.cm-editor.cm-focused) {
+		outline: 0;
+	}
+
+	:global(.cm-editor .cm-content) {
+		min-height: 34px;
+		padding: 7px 32px 7px 0 !important;
+		font-size: 12px;
+	}
+
+	:global(.cm-editor .cm-line) {
+		padding-left: 10px;
+		line-height: 20px !important;
+	}
+
+	:global(.cm-editor .cm-placeholder) {
+		color: var(--fs-subtle-foreground);
+	}
+
+	// The syntax help link sits inside the box, clear of the text.
+	:global(.query-where-clause-editor-container > a) {
+		top: 9px !important;
+		right: 10px !important;
+		color: var(--fs-subtle-foreground) !important;
+	}
 }
 
 .resultActions {
