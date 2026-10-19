@@ -1,32 +1,31 @@
 import { ReactNode } from 'react';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
 
 import styles from './EntityMetadataItem.module.scss';
 
 interface EntityMetadataItemProps {
 	tooltip: string;
-	icon?: ReactNode;
+	label?: string;
 	children: ReactNode;
 }
 
 function EntityMetadataItem({
 	tooltip,
-	icon,
+	label,
 	children,
 }: EntityMetadataItemProps): JSX.Element {
 	return (
 		<Tooltip title={tooltip}>
 			<span className={styles.item}>
-				{icon}
-				<Typography.Text as="span">{children}</Typography.Text>
+				{label && <span className={styles.label}>{label}</span>}
+				{children}
 			</span>
 		</Tooltip>
 	);
 }
 
 EntityMetadataItem.defaultProps = {
-	icon: null,
+	label: undefined,
 };
 
 export default EntityMetadataItem;

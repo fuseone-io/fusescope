@@ -1,74 +1,78 @@
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
+import SystemPagePanel from 'components/SystemPagePanel/SystemPagePanel';
+import { Button } from 'components/ui/button';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { LifeBuoy, RefreshCw } from '@signozhq/icons';
+import {
+	Construction,
+	LifeBuoy,
+	RefreshCw,
+	SearchX,
+	Trash2,
+} from 'lucide-react';
 
-import broomUrl from '@/assets/Icons/broom.svg';
-import constructionUrl from '@/assets/Icons/construction.svg';
-import noDataUrl from '@/assets/Icons/no-data.svg';
-
-import styles from './NoData.module.scss';
+const REASONS = [
+	{
+		key: 'not-rendered',
+		icon: <Construction aria-hidden="true" className="tw:size-4" />,
+		text:
+			'The trace data has not been rendered on your FuseScope server yet. You can wait for a bit and refresh this page if this is the case.',
+	},
+	{
+		key: 'retention',
+		icon: <Trash2 aria-hidden="true" className="tw:size-4" />,
+		text:
+			'The trace has been deleted as the data has crossed it’s retention period.',
+	},
+];
 
 function NoData(): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	return (
-		<div className={styles.notFoundTrace} data-testid="trace-no-data">
-			<section className={styles.description}>
-				<img src={noDataUrl} alt="no-data" className={styles.notFoundImg} />
-				<Typography.Text className={styles.notFoundText1}>
-					Uh-oh! We cannot show the selected trace.
-					<span className={styles.notFoundText2}>
-						This can happen in either of the two scenarios -
-					</span>
-				</Typography.Text>
-			</section>
-			<section className={styles.reasons}>
-				<div className={styles.reason}>
-					<img src={constructionUrl} alt="no-data" className={styles.reasonImg} />
-					<Typography.Text className={styles.reasonText}>
-						The trace data has not been rendered on your FuseScope server yet. You can
-						wait for a bit and refresh this page if this is the case.
-					</Typography.Text>
-				</div>
-				<div className={styles.reason}>
-					<img src={broomUrl} alt="no-data" className={styles.reasonImg} />
-					<Typography.Text className={styles.reasonText}>
-						The trace has been deleted as the data has crossed it’s retention period.
-					</Typography.Text>
-				</div>
-			</section>
-			<section className={styles.noneOfAbove}>
-				<Typography.Text className={styles.noneText}>
-					If you feel the issue is none of the above, please contact support.
-				</Typography.Text>
-				<div className={styles.actionBtns}>
+		<SystemPagePanel
+			testId="trace-no-data"
+			className="tw:flex-1"
+			icon={<SearchX />}
+			tone="neutral"
+			eyebrow="Trace"
+			title="Uh-oh! We cannot show the selected trace."
+			description="This can happen in either of the two scenarios -"
+			actions={
+				<>
 					<Button
-						size="md"
-						variant="outlined"
-						color="secondary"
-						width="160px"
-						prefix={<RefreshCw size={14} />}
+						variant="outline"
+						data-testid="trace-no-data-refresh-button"
 						onClick={(): void => window.location.reload()}
-						testId="trace-no-data-refresh-button"
 					>
+						<RefreshCw />
 						Refresh this page
 					</Button>
 					<Button
-						size="md"
-						variant="outlined"
-						color="secondary"
-						width="160px"
-						prefix={<LifeBuoy size={14} />}
+						variant="outline"
+						data-testid="trace-no-data-contact-support-button"
 						onClick={(): void => handleContactSupport(isCloudUserVal)}
-						testId="trace-no-data-contact-support-button"
 					>
+						<LifeBuoy />
 						Contact Support
 					</Button>
-				</div>
-			</section>
-		</div>
+				</>
+			}
+			footer="If you feel the issue is none of the above, please contact support."
+		>
+			<ul className="fs-ui tw:m-0 tw:flex tw:list-none tw:flex-col tw:gap-2 tw:p-0 tw:font-sans">
+				{REASONS.map((reason) => (
+					<li
+						key={reason.key}
+						className="tw:flex tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:bg-background tw:p-3 tw:text-[13px] tw:leading-relaxed tw:text-muted-foreground"
+					>
+						<span className="tw:mt-0.5 tw:flex-none tw:text-subtle-foreground">
+							{reason.icon}
+						</span>
+						{reason.text}
+					</li>
+				))}
+			</ul>
+		</SystemPagePanel>
 	);
 }
 

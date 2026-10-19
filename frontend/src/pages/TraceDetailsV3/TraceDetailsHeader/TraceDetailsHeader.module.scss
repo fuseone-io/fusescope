@@ -1,20 +1,24 @@
 .wrapper {
 	flex-shrink: 0;
 	position: relative;
-	border-bottom: 1px solid var(--fs-border);
-	background: var(--fs-card);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px 16px 12px;
+	background: var(--fs-background);
+
+	@media (min-width: 768px) {
+		padding: 20px 24px 16px;
+	}
 }
 
 .header {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	padding: 12px 16px 8px;
-	gap: 8px 12px;
-	min-height: 56px;
-
-	@media (min-width: 768px) {
-		padding: 12px 24px 8px;
-	}
+	justify-content: space-between;
+	gap: 8px 16px;
+	min-height: 32px;
 }
 
 .traceIdSection {
@@ -35,7 +39,7 @@
 .headerActions {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 4px;
 	flex-shrink: 0;
 }
 
@@ -48,23 +52,11 @@
 	flex: 1;
 }
 
+// Indented under the trace id, past the back button and its gap.
 .subHeader {
 	display: flex;
 	align-items: center;
 	gap: 16px;
-	padding: 0 16px 12px 56px;
-	font-size: 13px;
-	color: var(--fs-muted-foreground);
-
-	@media (min-width: 768px) {
-		padding: 0 24px 12px 64px;
-	}
-}
-
-.skeleton {
-	:global(.ant-skeleton-input) {
-		width: 160px !important;
-		min-height: 20px !important;
-		height: 20px !important;
-	}
+	min-width: 0;
+	padding-left: 44px;
 }

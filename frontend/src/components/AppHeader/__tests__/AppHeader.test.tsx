@@ -234,7 +234,6 @@ describe('AppHeader', () => {
 			ROUTES.LOGS_INDEX_FIELDS,
 			ROUTES.METRICS_EXPLORER_EXPLORER,
 			'/traces/funnels/abc',
-			'/trace/abc',
 			'/dashboard/abc',
 			ROUTES.SETTINGS,
 			'/ai-assistant/abc',
@@ -247,6 +246,17 @@ describe('AppHeader', () => {
 			expect(
 				within(header()).queryByTestId('header-right-section'),
 			).not.toBeInTheDocument();
+		});
+
+		it('shows the page actions without a picker on the trace detail', () => {
+			renderHeader('/trace/abc');
+
+			expect(
+				within(header()).queryByTestId('global-time-picker'),
+			).not.toBeInTheDocument();
+			expect(
+				within(header()).getByTestId('header-right-section'),
+			).toBeInTheDocument();
 		});
 	});
 

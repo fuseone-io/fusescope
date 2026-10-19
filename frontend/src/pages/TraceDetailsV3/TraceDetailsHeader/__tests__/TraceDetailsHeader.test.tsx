@@ -8,7 +8,11 @@ import TraceDetailsHeader from '../TraceDetailsHeader';
 import { useTraceSummary } from '../useTraceSummary';
 
 jest.mock('../useTraceSummary', () => ({
-	useTraceSummary: jest.fn(() => ({ data: undefined, isLoading: false })),
+	useTraceSummary: jest.fn(() => ({
+		data: undefined,
+		isLoading: false,
+		isError: false,
+	})),
 }));
 
 const mockGoBack = jest.fn();
@@ -105,19 +109,19 @@ describe('TraceDetailsHeader – action cluster', () => {
 		mockReplace.mockClear();
 		jest
 			.mocked(useTraceSummary)
-			.mockReturnValue({ data: SUMMARY, isLoading: false });
+			.mockReturnValue({ data: SUMMARY, isLoading: false, isError: false });
 	});
 
 	afterEach(() => {
 		jest
 			.mocked(useTraceSummary)
-			.mockReturnValue({ data: undefined, isLoading: false });
+			.mockReturnValue({ data: undefined, isLoading: false, isError: false });
 	});
 
 	it('does not render the action buttons until the summary loads', () => {
 		jest
 			.mocked(useTraceSummary)
-			.mockReturnValue({ data: undefined, isLoading: true });
+			.mockReturnValue({ data: undefined, isLoading: true, isError: false });
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(
@@ -178,8 +182,10 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		totalErrorSpansCount: 0,
 	};
 
-	const mockSummary = (data?: typeof traceMetadata): void => {
-		jest.mocked(useTraceSummary).mockReturnValue({ data, isLoading: false });
+	const mockSummary = (data?: typeof traceMetadata, isError = false): void => {
+		jest
+			.mocked(useTraceSummary)
+			.mockReturnValue({ data, isLoading: false, isError });
 	};
 
 	afterEach(() => {
@@ -230,6 +236,41 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		);
 
 		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
-		expect(container.querySelectorAll('.ant-skeleton-input')).toHaveLength(3);
+		expect(container.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(3);
+	});
+
+	it('shows neither metadata nor skeletons when the summary fails to load', () => {
+		mockSummary(undefined, true);
+		const { container } = render(
+			<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />,
+		);
+
+		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
+		expect(container.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(0);
+	});
+
+	it('shows the span count with the metadata', () => {
+		mockSummary(traceMetadata);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('42')).toBeInTheDocument();
+	});
+
+	it('shows the error count next to the trace id', () => {
+		mockSummary({ ...traceMetadata, totalErrorSpansCount: 3 });
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByTestId('trace-details-error-count')).toHaveTextContent(
+			'3 errors',
+		);
+	});
+
+	it('omits the error count for a trace without errors', () => {
+		mockSummary(traceMetadata);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(
+			screen.queryByTestId('trace-details-error-count'),
+		).not.toBeInTheDocument();
 	});
 });

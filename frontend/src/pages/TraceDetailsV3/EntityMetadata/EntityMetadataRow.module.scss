@@ -2,9 +2,34 @@
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
-	gap: 4px 16px;
-	font-size: var(--periscope-font-size-base);
-	color: var(--l2-foreground);
-	// Keep Typography.Text at the row's size (it reads this var, not inherited font-size).
-	--typography-font-size: var(--periscope-font-size-base);
+	gap: 6px 18px;
+	font-family: var(--tw-font-sans);
+	font-size: 13px;
+	line-height: 20px;
+	color: var(--fs-muted-foreground);
+}
+
+.value {
+	color: var(--fs-foreground);
+	font-variant-numeric: tabular-nums;
+}
+
+.strong {
+	font-weight: 500;
+}
+
+.mono {
+	font-family: var(--tw-font-mono);
+	font-size: 12px;
+	color: var(--fs-foreground);
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.dot {
+	width: 8px;
+	height: 8px;
+	flex: none;
+	border-radius: 9999px;
+	background: var(--service-dot-color, var(--fs-primary));
 }
