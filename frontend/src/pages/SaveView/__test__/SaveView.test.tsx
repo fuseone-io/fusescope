@@ -30,13 +30,11 @@ describe('SaveView', () => {
 		render(<SaveView />);
 		await expect(screen.findByText('Table View')).resolves.toBeInTheDocument();
 
-		const savedViews = screen.getAllByRole('row');
+		const savedViews = screen.getAllByTestId('saved-view-row');
 		expect(savedViews).toHaveLength(2);
 
 		// assert row 1
-		expect(
-			within(document.querySelector('.view-tag') as HTMLElement).getByText('T'),
-		).toBeInTheDocument();
+		expect(within(savedViews[0]).getByText('T')).toBeInTheDocument();
 		expect(screen.getByText('test-user-1')).toBeInTheDocument();
 
 		// assert row 2
@@ -91,7 +89,7 @@ describe('SaveView', () => {
 		await expect(screen.findByText('R-test panel')).resolves.toBeInTheDocument();
 
 		// Table View should not be present now
-		const savedViews = screen.getAllByRole('row');
+		const savedViews = screen.getAllByTestId('saved-view-row');
 		expect(savedViews).toHaveLength(1);
 	});
 
@@ -170,6 +168,6 @@ describe('SaveView', () => {
 		);
 		render(<SaveView />);
 
-		expect(screen.getByText('No data')).toBeInTheDocument();
+		await expect(screen.findByText('No data')).resolves.toBeInTheDocument();
 	});
 });

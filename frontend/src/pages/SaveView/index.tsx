@@ -2,18 +2,14 @@ import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
-import { ColorPicker, Modal, Table, TableProps } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
 	getViewDetailsUsingViewKey,
 	showErrorNotification,
 } from 'components/ExplorerCard/utils';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import PageTemplate from 'components/PageTemplate/PageTemplate';
+import { Input } from 'components/ui/input';
 import { fuseScopeDocsUrl } from 'constants/docs';
-import { getRandomColor } from 'container/ExplorerOptions/utils';
 import {
 	MeterExplorerEventKeys,
 	MeterExplorerEvents,
@@ -28,26 +24,18 @@ import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
-import {
-	CalendarClock,
-	Check,
-	Compass,
-	PenLine,
-	Search,
-	Trash2,
-	X,
-} from '@signozhq/icons';
+import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useTimezone } from 'providers/Timezone';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 
+import DeleteViewDialog from './components/DeleteViewDialog';
+import EditViewDialog from './components/EditViewDialog';
+import ViewsTable from './components/ViewsTable';
 import { ROUTES_VS_SOURCEPAGE, SOURCEPAGE_VS_ROUTES } from './constants';
 import { deleteViewHandler } from './utils';
-
-import './SaveView.styles.scss';
 
 const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
@@ -222,190 +210,74 @@ function SaveView(): JSX.Element {
 		}
 	};
 
-	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-
-	const columns: TableProps<ViewProps>['columns'] = [
-		{
-			title: 'Save View',
-			key: 'view',
-			render: (view: ViewProps): JSX.Element => {
-				const extraData = view.extraData !== '' ? JSON.parse(view.extraData) : '';
-				let bgColor = getRandomColor();
-				if (extraData !== '') {
-					bgColor = extraData.color;
-				}
-
-				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
-					view.createdAt,
-					DATE_TIME_FORMATS.DASH_TIME_DATE,
-				);
-
-				const isEditDeleteSupported = allowedRoles.includes(user.role as string);
-
-				return (
-					<div className="column-render">
-						<div className="title-with-action">
-							<div className="save-view-title">
-								<span
-									className="dot"
-									style={{
-										background: bgColor,
-										boxShadow: `0px 0px 6px 0px ${bgColor}`,
-									}}
-								/>{' '}
-								<Typography.Text>{view.name}</Typography.Text>
-							</div>
-
-							<div className="action-btn">
-								<PenLine
-									size={14}
-									className={isEditDeleteSupported ? '' : 'hidden'}
-									data-testid="edit-view"
-									onClick={(): void => handleEditModelOpen(view, bgColor)}
-								/>
-								<Compass
-									size={14}
-									onClick={(): void => handleRedirectQuery(view)}
-									data-testid="go-to-explorer"
-								/>
-								<Trash2
-									size={14}
-									className={isEditDeleteSupported ? '' : 'hidden'}
-									color={Color.BG_CHERRY_500}
-									data-testid="delete-view"
-									onClick={(): void => handleDeleteModelOpen(view.id, view.name)}
-								/>
-							</div>
-						</div>
-						<div className="view-details">
-							<div className="view-tag">
-								<Typography.Text className="tag-text">
-									{view.createdBy.substring(0, 1).toUpperCase()}
-								</Typography.Text>
-							</div>
-							<Typography.Text className="view-created-by">
-								{view.createdBy}
-							</Typography.Text>
-							<div className="view-created-at">
-								<CalendarClock size={14} />
-								<Typography.Text>{formattedDateAndTime}</Typography.Text>
-							</div>
-						</div>
-					</div>
-				);
-			},
-		},
-	];
-
-	const paginationConfig = { pageSize: 5, hideOnSinglePage: true };
+	const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
 	return (
-		<div className="save-view-container">
-			<div className="save-view-content">
-				<Typography.Title className="title">Views</Typography.Title>
-				<Typography.Text className="subtitle">
+		<PageTemplate
+			testId="saved-views-page"
+			className="tw:mx-0 tw:max-w-[1120px] tw:gap-4 tw:md:p-6"
+		>
+			<div className="fs-ui tw:flex tw:flex-col tw:gap-0.5 tw:font-sans">
+				<h2 className="tw:m-0 tw:text-base tw:font-semibold tw:text-foreground">
+					Views
+				</h2>
+				<p className="tw:m-0 tw:text-[13px] tw:text-muted-foreground">
 					Manage your saved views for {ROUTES_VS_SOURCEPAGE[pathname]}.{' '}
-					<Typography.Link
-						className="learn-more"
+					<a
 						href={fuseScopeDocsUrl('/explore/metrics/#chart-a-metric')}
 						target="_blank"
+						rel="noreferrer"
+						className="tw:text-primary! tw:hover:text-primary-strong! tw:hover:underline"
 					>
 						Learn more
-					</Typography.Link>
-				</Typography.Text>
-				<div className="search-input-container">
-					<Input
-						placeholder="Search for views..."
-						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-						value={searchValue}
-						onChange={handleSearch}
-						className="search-input"
-					/>
-				</div>
-
-				<Table
-					columns={columns}
-					dataSource={dataSource}
-					loading={isLoading || isRefetching}
-					showHeader={false}
-					pagination={paginationConfig}
+					</a>
+				</p>
+			</div>
+			<div className="fs-ui tw:relative tw:w-full tw:max-w-[480px] tw:font-sans">
+				<Search
+					aria-hidden="true"
+					className="tw:pointer-events-none tw:absolute tw:top-1/2 tw:left-2.5 tw:size-3.5 tw:-translate-y-1/2 tw:text-subtle-foreground"
+				/>
+				<Input
+					type="search"
+					aria-label="Search for views"
+					placeholder="Search for views..."
+					value={searchValue}
+					onChange={handleSearch}
+					className="tw:h-8 tw:border-input tw:bg-surface-raised tw:pl-8 tw:text-[13px] tw:dark:bg-surface-raised"
 				/>
 			</div>
 
-			<Modal
-				className="delete-view-modal"
-				title={<span className="title">Delete view</span>}
-				open={isDeleteModalOpen}
-				closable={false}
-				onCancel={hideDeleteViewModal}
-				footer={[
-					<Button
-						size="md"
-						key="cancel"
-						variant="solid"
-						color="secondary"
-						onClick={hideDeleteViewModal}
-						prefix={<X size={16} />}
-					>
-						Cancel
-					</Button>,
-					<Button
-						size="md"
-						key="submit"
-						variant="solid"
-						color="danger"
-						prefix={<Trash2 size={16} />}
-						onClick={onDeleteHandler}
-						loading={isDeleteLoading}
-						testId="confirm-delete"
-					>
-						Delete view
-					</Button>,
-				]}
-			>
-				<Typography.Text className="delete-text">
-					{t('delete_confirm_message', {
-						viewName: activeViewName,
-					})}
-				</Typography.Text>
-			</Modal>
+			<ViewsTable
+				views={dataSource}
+				loading={isLoading || isRefetching}
+				canEdit={isEditDeleteSupported}
+				onEdit={handleEditModelOpen}
+				onOpen={handleRedirectQuery}
+				onDelete={(view): void => handleDeleteModelOpen(view.id, view.name)}
+			/>
 
-			<Modal
-				className="save-view-modal"
-				title={<span className="title">Edit view details</span>}
+			<DeleteViewDialog
+				open={isDeleteModalOpen}
+				message={t('delete_confirm_message', {
+					viewName: activeViewName,
+				})}
+				loading={isDeleteLoading}
+				onCancel={hideDeleteViewModal}
+				onConfirm={onDeleteHandler}
+			/>
+
+			<EditViewDialog
 				open={isEditModalOpen}
-				closable={false}
+				name={newViewName}
+				color={color}
+				saving={isViewUpdating}
+				onNameChange={setNewViewName}
+				onColorChange={setColor}
 				onCancel={hideEditViewModal}
-				footer={[
-					<Button
-						size="md"
-						key="submit"
-						variant="solid"
-						color="primary"
-						prefix={<Check size={16} color={Color.BG_VANILLA_100} />}
-						onClick={onUpdateQueryHandler}
-						loading={isViewUpdating}
-						testId="save-view"
-					>
-						Save changes
-					</Button>,
-				]}
-			>
-				<Typography.Text>Label</Typography.Text>
-				<div className="save-view-input">
-					<ColorPicker
-						value={color}
-						onChange={(value, hex): void => setColor(hex)}
-					/>
-					<Input
-						placeholder="e.g. Crash landing view"
-						value={newViewName}
-						data-testid="view-name"
-						onChange={(e): void => setNewViewName(e.target.value)}
-					/>
-				</div>
-			</Modal>
-		</div>
+				onSave={onUpdateQueryHandler}
+			/>
+		</PageTemplate>
 	);
 }
 
