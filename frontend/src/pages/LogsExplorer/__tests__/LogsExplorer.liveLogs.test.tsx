@@ -15,9 +15,9 @@ jest.mock('react-router-dom', () => ({
 }));
 
 jest.mock(
-	'container/Toolbar/Toolbar',
+	'pages/LogsExplorer/LogsTimeControls',
 	() =>
-		function Toolbar({
+		function LogsTimeControls({
 			showLiveLogs,
 			onGoLive,
 		}: {

@@ -47,7 +47,8 @@ export async function setLogsFormat(
 		await expect(page).toHaveURL(appliedMode, { timeout: 3_000 });
 	}).toPass({ timeout: 20_000 });
 
-	await trigger.click();
+	// The options open in a modal sheet, which Escape closes.
+	await page.keyboard.press('Escape');
 	await expect(popover).toBeHidden();
 }
 

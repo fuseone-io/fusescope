@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, InputNumber, Popover, Tooltip } from 'antd';
+import { Button, InputNumber } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
+import { Button as UIButton } from 'components/ui/button';
+import { Sheet, SheetContent, SheetTitle } from 'components/ui/sheet';
 import { LogViewMode } from 'container/OptionsMenu/types';
 import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
 import {
@@ -10,10 +12,13 @@ import {
 	ChevronRight,
 	Minus,
 	Plus,
-	SlidersVertical,
+	X,
 } from '@signozhq/icons';
+import { SlidersHorizontal } from 'lucide-react';
 
 import './LogsFormatOptionsMenu.styles.scss';
+
+const OPTIONS_SHEET_WIDTH = 360;
 
 interface LogsFormatOptionsMenuProps {
 	items: any;
@@ -257,33 +262,57 @@ function LogsFormatOptionsMenu({
 	onOpenColumns,
 }: LogsFormatOptionsMenuProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+	const closePopover = (): void => setIsPopoverOpen(false);
+
 	return (
-		<Popover
-			content={
-				<OptionsMenu
-					items={items}
-					selectedOptionFormat={selectedOptionFormat}
-					config={config}
-					onOpenColumns={onOpenColumns}
-					closePopover={(): void => setIsPopoverOpen(false)}
-				/>
-			}
-			trigger="click"
-			placement="bottomRight"
-			arrow={false}
-			open={isPopoverOpen}
-			onOpenChange={setIsPopoverOpen}
-			rootClassName="format-options-popover"
-			destroyTooltipOnHide
-		>
-			<Tooltip title="Options">
-				<Button
-					className="periscope-btn ghost"
-					icon={<SlidersVertical size="md" />}
+		<>
+			<span className="fs-ui tw:inline-flex">
+				<UIButton
+					variant="ghost"
+					size="icon-sm"
+					title="Format and columns"
+					className="tw:text-muted-foreground"
 					data-testid="periscope-btn-format-options"
-				/>
-			</Tooltip>
-		</Popover>
+					onClick={(): void => setIsPopoverOpen(true)}
+				>
+					<SlidersHorizontal />
+					<span className="tw:sr-only">Options</span>
+				</UIButton>
+			</span>
+			<Sheet open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+				<SheetContent
+					side="right"
+					showCloseButton={false}
+					aria-describedby={undefined}
+					className="format-options-popover tw:max-w-full tw:gap-0 tw:p-0 tw:sm:max-w-none"
+					style={{ width: OPTIONS_SHEET_WIDTH }}
+				>
+					<div className="format-options-sheet">
+						<div className="format-options-sheet__header">
+							<SheetTitle className="format-options-sheet__title">
+								<SlidersHorizontal size={16} />
+								Format and columns
+							</SheetTitle>
+							<button
+								type="button"
+								aria-label="Close"
+								className="format-options-sheet__close"
+								onClick={closePopover}
+							>
+								<X size={16} />
+							</button>
+						</div>
+						<OptionsMenu
+							items={items}
+							selectedOptionFormat={selectedOptionFormat}
+							config={config}
+							onOpenColumns={onOpenColumns}
+							closePopover={closePopover}
+						/>
+					</div>
+				</SheetContent>
+			</Sheet>
+		</>
 	);
 }
 

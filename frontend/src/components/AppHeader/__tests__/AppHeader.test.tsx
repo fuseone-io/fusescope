@@ -231,7 +231,6 @@ describe('AppHeader', () => {
 
 		it.each([
 			ROUTES.HOME,
-			ROUTES.LOGS_EXPLORER,
 			ROUTES.LOGS_INDEX_FIELDS,
 			ROUTES.METRICS_EXPLORER_EXPLORER,
 			'/traces/funnels/abc',
@@ -249,16 +248,19 @@ describe('AppHeader', () => {
 			).not.toBeInTheDocument();
 		});
 
-		it('shows the page actions without a picker on the trace detail', () => {
-			renderHeader('/trace/abc');
+		it.each(['/trace/abc', ROUTES.LOGS_EXPLORER])(
+			'shows the page actions without a global picker on %s',
+			(route) => {
+				renderHeader(route);
 
-			expect(
-				within(header()).queryByTestId('global-time-picker'),
-			).not.toBeInTheDocument();
-			expect(
-				within(header()).getByTestId('header-right-section'),
-			).toBeInTheDocument();
-		});
+				expect(
+					within(header()).queryByTestId('global-time-picker'),
+				).not.toBeInTheDocument();
+				expect(
+					within(header()).getByTestId('header-right-section'),
+				).toBeInTheDocument();
+			},
+		);
 	});
 
 	describe('page actions', () => {
