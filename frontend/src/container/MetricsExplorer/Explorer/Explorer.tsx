@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import usePersistedFiltersVisibility from 'components/QuickFilters/hooks/usePersistedFiltersVisibility';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
@@ -73,7 +75,9 @@ function Explorer(): JSX.Element {
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
-	const [showSidebar, setShowSidebar] = useState(true);
+	const [showSidebar, toggleSidebar] = usePersistedFiltersVisibility(
+		LOCALSTORAGE.SHOW_METRICS_QUICK_FILTERS,
+	);
 
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
@@ -358,7 +362,7 @@ function Explorer(): JSX.Element {
 			<QuickFiltersLayout
 				className={explorerChrome.explorerChrome}
 				showFilters={showSidebar}
-				onToggleFilters={(): void => setShowSidebar(!showSidebar)}
+				onToggleFilters={toggleSidebar}
 				savedViewProps={{ source: SavedviewtypesSourceDTO.metrics }}
 			>
 				<div className="metrics-explorer-explore-container">
@@ -372,7 +376,7 @@ function Explorer(): JSX.Element {
 										size="sm"
 										icon
 										aria-label="Show Views"
-										onClick={(): void => setShowSidebar(true)}
+										onClick={toggleSidebar}
 										testId="metrics-explorer-show-sidebar"
 									>
 										<Filter size={16} />

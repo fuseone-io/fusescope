@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import usePersistedFiltersVisibility from 'components/QuickFilters/hooks/usePersistedFiltersVisibility';
 import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { Button, Tooltip } from 'antd';
@@ -56,7 +58,9 @@ function Explorer(): JSX.Element {
 		setIsCancelled(true);
 	}, [queryClient]);
 
-	const [showQuickFilters, setShowQuickFilters] = useState(true);
+	const [showQuickFilters, toggleQuickFilters] = usePersistedFiltersVisibility(
+		LOCALSTORAGE.SHOW_METER_QUICK_FILTERS,
+	);
 
 	const defaultQuery = useMemo(
 		() =>
@@ -125,7 +129,7 @@ function Explorer(): JSX.Element {
 			<QuickFiltersLayout
 				className="meter-explorer-container"
 				showFilters={showQuickFilters}
-				onToggleFilters={(): void => setShowQuickFilters(!showQuickFilters)}
+				onToggleFilters={toggleQuickFilters}
 				savedViewProps={{ source: SavedviewtypesSourceDTO.meter }}
 				quickFilterProps={{
 					className: 'qf-meter-explorer',
@@ -145,7 +149,7 @@ function Explorer(): JSX.Element {
 										<Button
 											className="periscope-btn outline"
 											icon={<Filter size={16} />}
-											onClick={(): void => setShowQuickFilters(!showQuickFilters)}
+											onClick={toggleQuickFilters}
 										/>
 									</Tooltip>
 								)}
