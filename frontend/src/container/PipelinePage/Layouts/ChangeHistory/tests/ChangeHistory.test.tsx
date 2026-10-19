@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { render } from '@testing-library/react';
+import { fireEvent, render, within } from '@testing-library/react';
 import TimezoneProvider from 'providers/Timezone';
 import i18n from 'ReactI18';
 import store from 'store';
@@ -21,7 +21,7 @@ const queryClient = new QueryClient({
 
 describe('ChangeHistory test', () => {
 	it('should render changeHistory correctly', () => {
-		const { getAllByText, getByText } = render(
+		const { getByRole } = render(
 			<MemoryRouter>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={store}>
@@ -35,6 +35,7 @@ describe('ChangeHistory test', () => {
 			</MemoryRouter>,
 		);
 
+		const table = within(getByRole('table'));
 		// change History table headers
 		[
 			'Version',
@@ -42,15 +43,15 @@ describe('ChangeHistory test', () => {
 			'Last Deploy Message',
 			'Last Deployed Time',
 			'Edited by',
-		].forEach((text) => expect(getByText(text)).toBeInTheDocument());
+		].forEach((text) => expect(table.getByText(text)).toBeInTheDocument());
 
 		// table content
-		expect(getAllByText('test-user')).toHaveLength(2);
-		expect(getAllByText('Deployment was successful')).toHaveLength(2);
+		expect(table.getAllByText('test-user')).toHaveLength(2);
+		expect(table.getAllByText('Deployment was successful')).toHaveLength(2);
 	});
 
 	it('test deployment stage and icon based on history data', () => {
-		const { getByText, container } = render(
+		const { getByRole, container } = render(
 			<MemoryRouter>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={store}>
@@ -69,27 +70,62 @@ describe('ChangeHistory test', () => {
 			</MemoryRouter>,
 		);
 
+		const table = getByRole('table');
+		const { getByText } = within(table);
 		// assertion for different deployment stages
 		expect(
-			container.querySelector('[data-testid="deployment-icon-in-progress"]'),
+			table.querySelector('[data-testid="deployment-icon-in-progress"]'),
 		).toBeInTheDocument();
 		expect(getByText('In Progress')).toBeInTheDocument();
 
 		expect(
-			container.querySelector('[data-testid="deployment-icon-dirty"]'),
+			table.querySelector('[data-testid="deployment-icon-dirty"]'),
 		).toBeInTheDocument();
 		expect(getByText('Dirty')).toBeInTheDocument();
 
 		expect(
-			container.querySelector('[data-testid="deployment-icon-failed"]'),
+			table.querySelector('[data-testid="deployment-icon-failed"]'),
 		).toBeInTheDocument();
 		expect(getByText('Failed')).toBeInTheDocument();
 
 		expect(
-			container.querySelector('[data-testid="deployment-icon-unknown"]'),
+			table.querySelector('[data-testid="deployment-icon-unknown"]'),
 		).toBeInTheDocument();
 		expect(getByText('Unknown')).toBeInTheDocument();
 
 		expect(container.querySelectorAll('.ant-table-row')).toHaveLength(5);
+	});
+
+	it('shows the details of the version picked in the table', () => {
+		const history = pipelineDataHistory.map((item, index) => ({
+			...item,
+			version: 10 - index,
+			deployResult: `message of version ${10 - index}`,
+		}));
+		const { getByRole, getByTestId } = render(
+			<MemoryRouter>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<I18nextProvider i18n={i18n}>
+							<TimezoneProvider>
+								<ChangeHistory pipelineData={{ ...pipelineData, history }} />
+							</TimezoneProvider>
+						</I18nextProvider>
+					</Provider>
+				</QueryClientProvider>
+			</MemoryRouter>,
+		);
+
+		const details = getByTestId('pipeline-version-details');
+		// The latest version is shown first.
+		expect(
+			within(details).getByText('message of version 10'),
+		).toBeInTheDocument();
+
+		const [, secondRow] = within(getByRole('table')).getAllByRole('row').slice(1);
+		fireEvent.click(secondRow);
+
+		expect(within(details).getByText('v9')).toBeInTheDocument();
+		expect(within(details).getByText('message of version 9')).toBeInTheDocument();
 	});
 });
