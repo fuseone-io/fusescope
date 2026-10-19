@@ -518,8 +518,7 @@
 // FuseScope skin for the builder's composite fields (editors with a label or a
 // unit), shared by every page that embeds the builder.
 .query-builder-v2 {
-	.code-mirror-where-clause .cm-editor .cm-content,
-	.query-aggregation-select-container .cm-editor .cm-content {
+	.code-mirror-where-clause .cm-editor .cm-content {
 		border-color: var(--fs-input);
 		border-radius: 6px;
 	}
@@ -529,10 +528,33 @@
 		outline: 0;
 	}
 
-	.code-mirror-where-clause .cm-editor.cm-focused .cm-content,
-	.query-aggregation-select-container .cm-editor.cm-focused .cm-content {
+	.code-mirror-where-clause .cm-editor.cm-focused .cm-content {
 		border-color: var(--fs-ring);
 		box-shadow: 0 0 0 3px color-mix(in srgb, var(--fs-ring) 50%, transparent);
+	}
+
+	// Border on the editor: the scroller clips .cm-content's box.
+	.query-aggregation-container
+		.query-aggregation-select-container
+		.query-aggregation-select-editor
+		.cm-editor {
+		border: 1px solid var(--fs-input);
+		border-radius: 6px;
+		background: var(
+			--query-builder-v2-background-color,
+			var(--l2-background)
+		) !important;
+
+		&.cm-focused {
+			border-color: var(--fs-ring);
+			box-shadow: 0 0 0 3px color-mix(in srgb, var(--fs-ring) 50%, transparent);
+		}
+
+		.cm-content {
+			border: 0 !important;
+			border-radius: 6px;
+			background: transparent !important;
+		}
 	}
 
 	.qb-trace-operator-label-with-input {
