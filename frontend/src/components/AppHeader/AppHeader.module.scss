@@ -32,3 +32,19 @@
 		background: var(--l2-background);
 	}
 }
+
+.pageActions {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 4px;
+	margin-left: auto;
+
+	&:empty {
+		display: none;
+	}
+}
+
+.pageActions:not(:empty) ~ .timeControls {
+	margin-left: 0;
+}

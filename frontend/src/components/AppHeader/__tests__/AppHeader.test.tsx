@@ -15,6 +15,7 @@ import {
 } from 'tests/test-utils';
 
 import AppHeader from '../AppHeader';
+import HeaderPageActions from '../components/HeaderPageActions';
 
 jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	__esModule: true,
@@ -257,6 +258,21 @@ describe('AppHeader', () => {
 			expect(
 				within(header()).getByTestId('header-right-section'),
 			).toBeInTheDocument();
+		});
+	});
+
+	describe('page actions', () => {
+		it('shows actions a page hands to the header inside the header', async () => {
+			renderHeader(
+				'/trace/abc',
+				<HeaderPageActions>
+					<button type="button">Analytics</button>
+				</HeaderPageActions>,
+			);
+
+			await expect(
+				within(header()).findByRole('button', { name: 'Analytics' }),
+			).resolves.toBeInTheDocument();
 		});
 	});
 

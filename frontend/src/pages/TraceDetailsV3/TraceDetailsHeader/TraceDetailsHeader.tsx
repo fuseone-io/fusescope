@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
+import HeaderPageActions from 'components/AppHeader/components/HeaderPageActions';
 import FieldsSelector from 'components/FieldsSelector';
 import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import { Button as UiButton } from 'components/ui/button';
@@ -137,31 +138,29 @@ function TraceDetailsHeader({
 							isFilterExpanded && styles.isExpanded,
 						)}
 					>
-						{!isFilterExpanded && (
-							<div className={styles.headerActions}>
-								<Tooltip title="Analytics">
-									<Button
-										variant="ghost"
-										size="sm"
-										icon
-										color="secondary"
-										aria-label="Analytics"
-										onClick={handleToggleAnalytics}
-									>
-										<ChartPie size={14} />
-									</Button>
-								</Tooltip>
-								<TraceOptionsMenu
-									showTraceDetails={showTraceDetails}
-									onToggleTraceDetails={handleToggleTraceDetails}
-									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
-									traceId={traceID}
-									startTime={startTime}
-									endTime={endTime}
-									totalSpansCount={traceSummary.totalSpansCount}
-								/>
-							</div>
-						)}
+						<HeaderPageActions>
+							<Tooltip title="Analytics">
+								<Button
+									variant="ghost"
+									size="sm"
+									icon
+									color="secondary"
+									aria-label="Analytics"
+									onClick={handleToggleAnalytics}
+								>
+									<ChartPie size={14} />
+								</Button>
+							</Tooltip>
+							<TraceOptionsMenu
+								showTraceDetails={showTraceDetails}
+								onToggleTraceDetails={handleToggleTraceDetails}
+								onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
+								traceId={traceID}
+								startTime={startTime}
+								endTime={endTime}
+								totalSpansCount={traceSummary.totalSpansCount}
+							/>
+						</HeaderPageActions>
 						<div
 							key="filter"
 							className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}
