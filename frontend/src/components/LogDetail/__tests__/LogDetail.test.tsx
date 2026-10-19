@@ -11,6 +11,11 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
+const mockOpenInNewTab = jest.fn();
+jest.mock('utils/navigation', () => ({
+	openInNewTab: (path: string): void => mockOpenInNewTab(path),
+}));
+
 // DataViewer pulls in react-json-tree (ESM) + Monaco; mock it (as trace's tests
 // do). These drawer tests assert the header/highlights, not the Overview body.
 jest.mock('periscope/components/DataViewer', () => ({
@@ -155,6 +160,7 @@ describe('LogDetail drawer — header', () => {
 		const logWithMeta = {
 			...mockLog,
 			severity_text: 'ERROR',
+			severity_number: 17,
 			trace_id: 'trace-abc',
 			resources_string: {
 				'service.name': 'checkout',
@@ -188,6 +194,52 @@ describe('LogDetail drawer — header', () => {
 		const link = screen.getByRole('link', { name: 'trace-abc' });
 		expect(link).toHaveAttribute('target', '_blank');
 		expect(link.getAttribute('href')).toContain('/trace/trace-abc');
+	});
+
+	it('titles the panel and shows the normalised severity beside the title', () => {
+		renderDrawer({
+			log: { ...mockLog, severity_text: 'CRITICAL', severity_number: 21 },
+		});
+
+		expect(screen.getByText('Log details')).toBeInTheDocument();
+		expect(screen.getByTestId('log-details-header-severity')).toHaveTextContent(
+			/^FATAL$/,
+		);
+	});
+
+	it('closes from the close button in the header', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onClose = jest.fn();
+
+		renderDrawer({ onClose });
+
+		await user.click(screen.getByTestId('log-details-header-close'));
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('opens the log span in its trace from "View trace"', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		renderDrawer({
+			log: {
+				...mockLog,
+				trace_id: 'trace-abc',
+				span_id: 'span-1',
+			} as unknown as ILog,
+		});
+
+		await user.click(screen.getByRole('button', { name: /View trace/ }));
+		expect(mockOpenInNewTab).toHaveBeenCalledWith(
+			'/trace/trace-abc?spanId=span-1',
+		);
+	});
+
+	it('hides "View trace" when the log has no trace id', () => {
+		renderDrawer();
+
+		expect(
+			screen.queryByRole('button', { name: /View trace/ }),
+		).not.toBeInTheDocument();
 	});
 
 	it('navigates to the next / previous log with the Down / Up arrow keys', async () => {

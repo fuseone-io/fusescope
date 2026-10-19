@@ -1,21 +1,11 @@
 import { ReactNode } from 'react';
-import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
-import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
+import SeverityBadge from 'components/Logs/SeverityBadge/SeverityBadge';
 import { ILog } from 'types/api/logs/log';
+import { normalizeSeverity } from 'utils/logSeverity';
 
 import styles from './LogHighlights.module.scss';
 import TraceIdField from './TraceIdField';
-
-// Severity badge color mirrors the LogStateIndicator bar
-const SEVERITY_COLOR: Record<string, BadgeColorType> = {
-	[LogType.TRACE]: 'success',
-	[LogType.DEBUG]: 'info',
-	[LogType.INFO]: 'primary',
-	[LogType.WARN]: 'warning',
-	[LogType.ERROR]: 'danger',
-	[LogType.FATAL]: 'highlight-danger',
-};
 
 export interface LogHighlightConfig {
 	key: string;
@@ -30,20 +20,13 @@ const getAttr = (log: ILog, key: string): string =>
 	(log.attributes_string as unknown as Record<string, string>)?.[key] ||
 	'';
 
-const valueBadge = (
-	value: string,
-	options?: { prefix?: ReactNode; color?: BadgeColorType },
-): ReactNode => (
-	<Badge
-		variant="solid"
-		color={options?.color ?? 'secondary'}
-		textTransform="none"
-	>
-		{options?.prefix}
+const monoValue = (value: string, options?: { dot?: boolean }): ReactNode => (
+	<span className={styles.monoValue}>
+		{options?.dot && <span className={styles.serviceDot} />}
 		<span className={styles.badgeText} title={value}>
 			{value}
 		</span>
-	</Badge>
+	</span>
 );
 
 export const LOG_HIGHLIGHTS: LogHighlightConfig[] = [
@@ -52,11 +35,7 @@ export const LOG_HIGHLIGHTS: LogHighlightConfig[] = [
 		label: 'SERVICE',
 		render: (log): ReactNode | null => {
 			const value = getAttr(log, 'service.name');
-			return value
-				? valueBadge(value, {
-						prefix: <span className={styles.serviceDot} />,
-					})
-				: null;
+			return value ? monoValue(value, { dot: true }) : null;
 		},
 	},
 	{
@@ -66,9 +45,14 @@ export const LOG_HIGHLIGHTS: LogHighlightConfig[] = [
 			if (!log.severity_text) {
 				return null;
 			}
-			return valueBadge(log.severity_text, {
-				color: SEVERITY_COLOR[getLogIndicatorType(log)] ?? 'vanilla',
-			});
+			return (
+				<span className="fs-ui tw:inline-flex">
+					<SeverityBadge
+						logType={getLogIndicatorType(log)}
+						label={normalizeSeverity(log.severity_number, log.severity_text)}
+					/>
+				</span>
+			);
 		},
 	},
 	{
@@ -76,7 +60,7 @@ export const LOG_HIGHLIGHTS: LogHighlightConfig[] = [
 		label: 'NAMESPACE',
 		render: (log): ReactNode | null => {
 			const value = getAttr(log, 'service.namespace');
-			return value ? valueBadge(value) : null;
+			return value ? monoValue(value) : null;
 		},
 	},
 	{
@@ -84,7 +68,7 @@ export const LOG_HIGHLIGHTS: LogHighlightConfig[] = [
 		label: 'ENVIRONMENT',
 		render: (log): ReactNode | null => {
 			const value = getAttr(log, 'deployment.environment');
-			return value ? valueBadge(value) : null;
+			return value ? monoValue(value) : null;
 		},
 	},
 	{
@@ -100,7 +84,7 @@ export const LOG_HIGHLIGHTS: LogHighlightConfig[] = [
 		label: 'SPAN ID',
 		render: (log): ReactNode | null => {
 			const spanId = log.span_id || log.spanID;
-			return spanId ? valueBadge(spanId) : null;
+			return spanId ? monoValue(spanId) : null;
 		},
 	},
 ];
