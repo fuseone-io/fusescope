@@ -770,16 +770,18 @@ function ExplorerOptions({
 			);
 		}
 		return (
-			<UiButton
-				variant="outline"
-				size="sm"
-				className="fs-ui explorer-options-btn"
-				disabled={disabled}
-				onClick={(): void => onCreateAlertsHandler(query)}
-			>
-				<ConciergeBell size={16} />
-				Create an Alert
-			</UiButton>
+			<span className="fs-ui tw:inline-flex">
+				<UiButton
+					variant="outline"
+					size="sm"
+					className="explorer-options-btn"
+					disabled={disabled}
+					onClick={(): void => onCreateAlertsHandler(query)}
+				>
+					<ConciergeBell size={16} />
+					Create an Alert
+				</UiButton>
+			</span>
 		);
 	}, [
 		disabled,
@@ -831,15 +833,17 @@ function ExplorerOptions({
 			);
 		}
 		return (
-			<UiButton
-				size="sm"
-				className="fs-ui explorer-options-btn"
-				disabled={disabled}
-				onClick={onAddToDashboard}
-			>
-				<Plus size={16} />
-				Add to Dashboard
-			</UiButton>
+			<span className="fs-ui tw:inline-flex">
+				<UiButton
+					size="sm"
+					className="explorer-options-btn"
+					disabled={disabled}
+					onClick={onAddToDashboard}
+				>
+					<Plus size={16} />
+					Add to Dashboard
+				</UiButton>
+			</span>
 		);
 	}, [disabled, isOneChartPerQuery, onAddToDashboard, splitedQueries]);
 
@@ -941,19 +945,21 @@ function ExplorerOptions({
 							})}
 						</Select>
 
-						<UiButton
-							variant="outline"
-							size="sm"
-							onClick={handleSaveViewModalToggle}
-							className={cx(
-								'fs-ui explorer-options-btn',
-								isEditDeleteSupported ? '' : 'hidden',
-							)}
-							disabled={viewsIsLoading || isRefetching}
-						>
-							<Disc3 size={16} />
-							Save this view
-						</UiButton>
+						<span className="fs-ui tw:inline-flex">
+							<UiButton
+								variant="outline"
+								size="sm"
+								onClick={handleSaveViewModalToggle}
+								className={cx(
+									'explorer-options-btn',
+									isEditDeleteSupported ? '' : 'hidden',
+								)}
+								disabled={viewsIsLoading || isRefetching}
+							>
+								<Disc3 size={16} />
+								Save this view
+							</UiButton>
+						</span>
 					</div>
 
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
@@ -984,17 +990,19 @@ function ExplorerOptions({
 						)}
 
 						<Tooltip title="Hide">
-							<UiButton
-								variant="ghost"
-								size="icon-sm"
-								className="fs-ui explorer-options-icon-btn"
-								aria-label="Hide"
-								disabled={disabled}
-								onClick={hideToolbar}
-								data-testid="hide-toolbar"
-							>
-								<PanelBottomClose size={16} />
-							</UiButton>
+							<span className="fs-ui tw:inline-flex">
+								<UiButton
+									variant="ghost"
+									size="icon-sm"
+									className="explorer-options-icon-btn"
+									aria-label="Hide"
+									disabled={disabled}
+									onClick={hideToolbar}
+									data-testid="hide-toolbar"
+								>
+									<PanelBottomClose size={16} />
+								</UiButton>
+							</span>
 						</Tooltip>
 					</div>
 				</div>

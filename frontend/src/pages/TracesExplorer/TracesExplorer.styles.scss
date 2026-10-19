@@ -173,8 +173,11 @@
 	}
 
 	.explorer-update {
-		margin-left: 24px;
 		align-self: center;
+		margin-left: 18px;
+		padding: 0;
+		border: 0;
+		background: transparent;
 	}
 
 	.explorer-options {
@@ -187,6 +190,8 @@
 		border-radius: 0;
 		box-shadow: none;
 		backdrop-filter: none;
+		// The selected view's colour shows on its dot, not as a glow.
+		background-image: none !important;
 
 		.view-options {
 			flex: 1;
