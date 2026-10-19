@@ -5,8 +5,11 @@
 
 import { rest } from 'msw';
 import { QueryParams } from 'constants/query';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 import { explorerViewToPanelType } from 'utils/explorerUtils';
 
@@ -26,6 +29,7 @@ import {
 
 import {
 	exportDashboardsResponse,
+	HOTROD_SERVICES,
 	savedTraceViewsResponse,
 	traceAttributeValuesResponse,
 	traceFieldKeysResponse,
@@ -47,9 +51,26 @@ const SAVED = 'Traces · saved';
 interface RouteValues {
 	tab: TracesTab;
 	view: ExplorerViews;
+	seriesPerService: boolean;
 }
 
-const tracesRoute = ({ tab, view }: RouteValues): string => {
+const queryByService = (): Query => {
+	const base = initialQueriesMap.traces;
+	return {
+		...base,
+		builder: {
+			...base.builder,
+			queryData: base.builder.queryData.map((query) => ({
+				...query,
+				groupBy: [
+					{ key: 'service.name', dataType: DataTypes.String, type: 'resource' },
+				],
+			})),
+		},
+	};
+};
+
+const tracesRoute = ({ tab, view, seriesPerService }: RouteValues): string => {
 	if (tab === 'funnels') {
 		return ROUTES.TRACES_FUNNELS;
 	}
@@ -62,6 +83,9 @@ const tracesRoute = ({ tab, view }: RouteValues): string => {
 		[QueryParams.panelTypes]: JSON.stringify(explorerViewToPanelType[view]),
 		[QueryParams.selectedExplorerView]: view,
 	});
+	if (seriesPerService) {
+		params.set(QueryParams.compositeQuery, JSON.stringify(queryByService()));
+	}
 
 	return `${ROUTES.TRACES_EXPLORER}?${params.toString()}`;
 };
@@ -92,6 +116,12 @@ export const tracesMocks = defineStoryMocks({
 				'Which of the explorer views renders: spans, root spans, a chart or an aggregation table.',
 			options: TRACES_EXPLORER_VIEWS,
 			value: ExplorerViews.LIST,
+		}),
+		seriesPerService: toggleControl('Series per service', {
+			group: VIEW,
+			description:
+				'Answers the chart with one series per HotROD service, as a query grouped by `service.name` returns.',
+			value: false,
 		}),
 		spans: countControl('Spans', {
 			group: LIST,
@@ -213,25 +243,32 @@ export const tracesMocks = defineStoryMocks({
 					return queryRangeV5ScalarResponse(values.spans, 'A', { warning });
 				}
 
-				return queryRangeV5TimeSeriesResponse(
-					[
-						{
-							queryName: 'A',
-							series: [
-								{
-									labels: [],
-									values: timeSeriesPoints({
-										start,
-										end,
-										base: 420,
-										amplitude: 120,
-									}),
-								},
-							],
-						},
-					],
-					{ warning },
-				);
+				const series = values.seriesPerService
+					? HOTROD_SERVICES.map((service, index) => ({
+							labels: [{ key: { name: 'service.name' }, value: service }],
+							values: timeSeriesPoints({
+								start,
+								end,
+								base: 80 + index * 40,
+								amplitude: 30,
+								seed: index,
+							}),
+						}))
+					: [
+							{
+								labels: [],
+								values: timeSeriesPoints({
+									start,
+									end,
+									base: 420,
+									amplitude: 120,
+								}),
+							},
+						];
+
+				return queryRangeV5TimeSeriesResponse([{ queryName: 'A', series }], {
+					warning,
+				});
 			}),
 		),
 	],

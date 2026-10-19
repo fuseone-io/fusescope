@@ -373,3 +373,14 @@ export const exportDashboardsResponse = (): Record<string, unknown> => ({
 		})),
 	},
 });
+
+export const HOTROD_SERVICES = [
+	'customer',
+	'driver',
+	'frontend',
+	'mysql',
+	'payment',
+	'redis',
+	'redis-manual',
+	'route',
+];
