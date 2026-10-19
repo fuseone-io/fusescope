@@ -145,7 +145,7 @@ function AnalyticsPanel({
 
 			<div className={styles.body} data-testid="trace-analytics-panel">
 				<Tabs
-					variant="secondary"
+					variant="primary"
 					orientation="horizontal"
 					alignment="start"
 					className={styles.tabsScroll}
