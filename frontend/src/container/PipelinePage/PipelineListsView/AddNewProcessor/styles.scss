@@ -28,3 +28,78 @@
 .enable-flattening-switch .ant-form-item-control-input {
 	min-height: unset !important;
 }
+
+// Right-side sheet, laid out like the explorer's columns sheet.
+.processor-sheet__form {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--fs-card);
+	color: var(--fs-foreground);
+	font-family: var(--tw-font-sans);
+}
+
+.processor-sheet__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 16px 12px 16px 20px;
+	border-bottom: 1px solid var(--fs-border);
+}
+
+.processor-sheet__title {
+	margin: 0;
+	color: var(--fs-foreground);
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.processor-sheet__subtitle {
+	margin: 2px 0 0;
+	color: var(--fs-muted-foreground);
+	font-size: 12px;
+}
+
+.processor-sheet__close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--fs-muted-foreground);
+	cursor: pointer;
+
+	&:hover {
+		background: var(--fs-muted);
+		color: var(--fs-foreground);
+	}
+}
+
+.processor-sheet__body {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 20px;
+
+	.ant-form-item-label > label {
+		color: var(--fs-foreground);
+		font-size: 13px;
+		font-weight: 500;
+	}
+
+	.compact-processor-field-container {
+		margin-left: 2.25rem;
+	}
+}
+
+.processor-sheet__footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	padding: 12px 20px;
+	border-top: 1px solid var(--fs-border);
+}
