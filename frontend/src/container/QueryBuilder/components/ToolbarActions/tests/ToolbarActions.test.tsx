@@ -57,6 +57,23 @@ describe('ToolbarActions', () => {
 		expect(handleChangeSelectedView).toHaveBeenCalled();
 	});
 
+	it('leaves restoring hidden filters to the filters rail', () => {
+		render(
+			<LeftToolbarActions
+				items={defaultItems}
+				selectedView={ExplorerViews.LIST}
+				onChangeSelectedView={jest.fn()}
+				showFilter={false}
+				handleFilterVisibilityChange={mockHandleFilterVisibilityChange}
+			/>,
+		);
+
+		expect(
+			document.querySelector('.left-toolbar .filter-btn'),
+		).not.toBeInTheDocument();
+		expect(screen.getByTestId('search-view')).toBeInTheDocument();
+	});
+
 	it('renders - clickhouse view and test view switching', async () => {
 		const handleChangeSelectedView = jest.fn();
 		const clickhouseItems = {

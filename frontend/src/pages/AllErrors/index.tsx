@@ -4,7 +4,6 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import CompactPageHeader from 'components/PageTemplate/components/CompactPageHeader';
 import HeaderBandLayout from 'components/PageTemplate/components/HeaderBandLayout';
-import RailToggleButton from 'components/PageTemplate/components/RailToggleButton';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
@@ -74,9 +73,6 @@ function AllErrors(): JSX.Element {
 			>
 				<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-4 tw:px-4 tw:pt-4 tw:pb-8 tw:md:px-6">
 					<div className="all-errors-toolbar tw:flex tw:items-start tw:gap-2">
-						{!showFilters && (
-							<RailToggleButton open={false} onToggle={handleFilterVisibilityChange} />
-						)}
 						<div className="tw:min-w-0 tw:flex-1">
 							<ResourceAttributesFilterV2 />
 						</div>
