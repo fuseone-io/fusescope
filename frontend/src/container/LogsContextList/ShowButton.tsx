@@ -1,4 +1,3 @@
-import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import cx from 'classnames';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
@@ -21,17 +20,9 @@ function ShowButton({
 }: ShowButtonProps): JSX.Element {
 	const getIcons = (): JSX.Element => {
 		if (order === ORDERBY_FILTERS.ASC) {
-			return isDisabled ? (
-				<Ban size={14} style={{ color: Color.BG_VANILLA_400 }} />
-			) : (
-				<ArrowUp size={14} />
-			);
+			return isDisabled ? <Ban size={14} /> : <ArrowUp size={14} />;
 		}
-		return isDisabled ? (
-			<Ban size={14} style={{ color: Color.BG_VANILLA_400 }} />
-		) : (
-			<ArrowDown size={14} />
-		);
+		return isDisabled ? <Ban size={14} /> : <ArrowDown size={14} />;
 	};
 
 	return (

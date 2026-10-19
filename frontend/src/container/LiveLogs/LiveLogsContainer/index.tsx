@@ -1,9 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useId,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useLocation } from 'react-router-dom';
-import { Switch } from '@signozhq/ui/switch';
-import { Typography } from '@signozhq/ui/typography';
 import FieldsSelector from 'components/FieldsSelector';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
+import { Switch } from 'components/ui/switch';
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
@@ -221,6 +227,8 @@ function LiveLogsContainer({
 		[handleCloseConnection],
 	);
 
+	const frequencySwitchId = useId();
+
 	const handleToggleFrequencyChart = useCallback(() => {
 		setShowLiveLogsFrequencyChart(!showLiveLogsFrequencyChart);
 	}, [showLiveLogsFrequencyChart]);
@@ -229,15 +237,15 @@ function LiveLogsContainer({
 		<div className="live-logs-container">
 			<div className="live-logs-content">
 				<div className="live-logs-settings-panel">
-					<div className="live-logs-frequency-chart-view-controller">
-						<Typography>Frequency chart</Typography>
+					<span className="live-logs-frequency-chart-view-controller fs-ui">
 						<Switch
-							color="primary"
-							textPlacement="right"
-							value={showLiveLogsFrequencyChart}
-							onChange={handleToggleFrequencyChart}
+							id={frequencySwitchId}
+							size="sm"
+							checked={showLiveLogsFrequencyChart}
+							onCheckedChange={handleToggleFrequencyChart}
 						/>
-					</div>
+						<label htmlFor={frequencySwitchId}>Frequency chart</label>
+					</span>
 
 					<LogsFormatOptionsMenu
 						items={formatItems}

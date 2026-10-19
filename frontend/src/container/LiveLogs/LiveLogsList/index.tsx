@@ -6,6 +6,7 @@ import { toast } from '@signozhq/ui/sonner';
 import { Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import LogDetail from 'components/LogDetail';
+import styles from 'components/Logs/LogRecordsPanel/LogRecordsPanel.module.scss';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
 import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
@@ -191,67 +192,70 @@ function LiveLogsList({
 				renderLoading()}
 
 			{formattedLogs.length !== 0 && (
-				<InfinityWrapperStyled>
-					{options.format === OptionFormatTypes.TABLE ? (
-						<TanStackTable<ILog>
-							ref={ref as React.Ref<TanStackTableHandle>}
-							columns={logsColumns}
-							columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
-							respectColumnOrder={false}
-							onColumnRemove={config?.addColumn?.onRemove}
-							plainTextCellLineClamp={options.maxLines}
-							cellTypographySize={options.fontSize}
-							data={formattedLogs}
-							isLoading={false}
-							isRowActive={(log): boolean => log.id === activeLog?.id}
-							getRowClassName={(log): string =>
-								log.id === activeLogId ? 'logs-linked-row' : ''
-							}
-							getRowStyle={(log): CSSProperties =>
-								({
-									'--row-active-bg': getRowBackgroundColor(
-										isDarkMode,
-										getLogIndicatorType(log),
-									),
-									'--row-hover-bg': getRowBackgroundColor(
-										isDarkMode,
-										getLogIndicatorType(log),
-									),
-								}) as CSSProperties
-							}
-							onRowClick={(log, _itemKey, { isActive }): void => {
-								if (isActive) {
-									handleCloseLogDetail();
-								} else {
-									handleSetActiveLog(log);
+				<div className={styles.panel}>
+					<InfinityWrapperStyled>
+						{options.format === OptionFormatTypes.TABLE ? (
+							<TanStackTable<ILog>
+								className={styles.logsTable}
+								ref={ref as React.Ref<TanStackTableHandle>}
+								columns={logsColumns}
+								columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
+								respectColumnOrder={false}
+								onColumnRemove={config?.addColumn?.onRemove}
+								plainTextCellLineClamp={options.maxLines}
+								cellTypographySize={options.fontSize}
+								data={formattedLogs}
+								isLoading={false}
+								isRowActive={(log): boolean => log.id === activeLog?.id}
+								getRowClassName={(log): string =>
+									log.id === activeLogId ? 'logs-linked-row' : ''
 								}
-							}}
-							activeRowIndex={activeLogIndex}
-							renderRowActions={(log): ReactNode => (
-								<LogLinesActionButtons
-									handleShowContext={(e): void => {
-										e.preventDefault();
-										e.stopPropagation();
-										handleSetActiveLog(log, VIEW_TYPES.CONTEXT);
-									}}
-									onLogCopy={makeOnLogCopy(log)}
-								/>
-							)}
-						/>
-					) : (
-						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
-							<OverlayScrollbar isVirtuoso>
-								<Virtuoso
-									ref={ref as React.Ref<VirtuosoHandle>}
-									initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
-									data={formattedLogs}
-									totalCount={formattedLogs.length}
-									itemContent={getItemContent}
-								/>
-							</OverlayScrollbar>
-						</Card>
-					)}
-				</InfinityWrapperStyled>
+								getRowStyle={(log): CSSProperties =>
+									({
+										'--row-active-bg': getRowBackgroundColor(
+											isDarkMode,
+											getLogIndicatorType(log),
+										),
+										'--row-hover-bg': getRowBackgroundColor(
+											isDarkMode,
+											getLogIndicatorType(log),
+										),
+									}) as CSSProperties
+								}
+								onRowClick={(log, _itemKey, { isActive }): void => {
+									if (isActive) {
+										handleCloseLogDetail();
+									} else {
+										handleSetActiveLog(log);
+									}
+								}}
+								activeRowIndex={activeLogIndex}
+								renderRowActions={(log): ReactNode => (
+									<LogLinesActionButtons
+										handleShowContext={(e): void => {
+											e.preventDefault();
+											e.stopPropagation();
+											handleSetActiveLog(log, VIEW_TYPES.CONTEXT);
+										}}
+										onLogCopy={makeOnLogCopy(log)}
+									/>
+								)}
+							/>
+						) : (
+							<Card className={styles.rows} bodyStyle={CARD_BODY_STYLE}>
+								<OverlayScrollbar isVirtuoso>
+									<Virtuoso
+										ref={ref as React.Ref<VirtuosoHandle>}
+										initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
+										data={formattedLogs}
+										totalCount={formattedLogs.length}
+										itemContent={getItemContent}
+									/>
+								</OverlayScrollbar>
+							</Card>
+						)}
+					</InfinityWrapperStyled>
+				</div>
 			)}
 
 			{activeLog && selectedTab && (
