@@ -17,7 +17,7 @@ import { useServicesTable } from './useServicesTable';
 interface ServicesListProps {
 	services: ServicesListType[];
 	loading: boolean;
-	/** Span metrics report p99 in ns; traces in ms. */
+	/** Span metrics report p99 in ms; traces in ns. */
 	isMetricData: boolean;
 }
 
