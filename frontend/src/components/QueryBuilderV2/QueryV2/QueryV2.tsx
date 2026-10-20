@@ -26,6 +26,7 @@ import {
 } from '../queryBuilderFields.utils';
 
 import MetricsAggregateSection from './MerticsAggregateSection/MetricsAggregateSection';
+import { useQueryPresenter } from '../QueryPresenterContext';
 import { useMetricSelectAddon } from './MetricsSelect/MetricSelectAddonContext';
 import { MetricsSelect } from './MetricsSelect/MetricsSelect';
 import QueryActionsMenu from './QueryActionsMenu';
@@ -61,6 +62,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 ): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
 	const metricSelectAddon = useMetricSelectAddon();
+	const presenter = useQueryPresenter();
 
 	const hasQueryFunctions = query?.functions?.length > 0;
 	const { dataSource, builderQueryType } = query;
@@ -160,7 +162,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		[handleChangeQueryData],
 	);
 
-	return (
+	const editor = (
 		<div
 			className={cx('query-v2', { 'where-clause-view': showOnlyWhereClause })}
 			ref={ref}
@@ -319,6 +321,29 @@ export const QueryV2 = forwardRef(function QueryV2(
 				)}
 			</div>
 		</div>
+	);
+
+	if (!presenter) {
+		return editor;
+	}
+	return (
+		<>
+			{presenter.renderQuery({
+				query,
+				index,
+				editor,
+				onToggleVisibility: handleToggleDisableQuery,
+				actionsMenu: isMultiQueryAllowed ? (
+					<QueryActionsMenu
+						queryName={query.queryName}
+						onClone={handleCloneEntity}
+						onDelete={
+							queriesCount && queriesCount > 1 ? handleDeleteQuery : undefined
+						}
+					/>
+				) : null,
+			})}
+		</>
 	);
 });
 
