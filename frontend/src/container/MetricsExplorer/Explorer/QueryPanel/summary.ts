@@ -2,6 +2,7 @@ import {
 	IBuilderFormula,
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { metricQueryFunctionOptions } from 'constants/queryFunctionOptions';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { pluralize } from 'utils/pluralize';
 
@@ -97,4 +98,47 @@ export function cardSummary(summary: QuerySummary): string {
 	]
 		.filter(Boolean)
 		.join(' · ');
+}
+
+/** The Aggregation section's reading: `rate · 60s · sum by service.name`. */
+export function aggregationSummary(query: IBuilderQuery): string {
+	const { overTime, across } = summarizeQuery(query);
+	const breakdown = query.groupBy?.length ? across : `${across} · no breakdown`;
+	return `${overTime} · ${breakdown}`;
+}
+
+const functionLabels = new Map(
+	metricQueryFunctionOptions.map((option) => [option.value, option.label]),
+);
+
+/** The Functions section's reading: `EWMA 5 → Clamp Max 100`, or None. */
+export function functionsSummary(query: IBuilderQuery): string {
+	const functions = query.functions ?? [];
+	if (!functions.length) {
+		return 'None';
+	}
+	return functions
+		.map((fn) => {
+			const args = ((fn.args ?? []) as unknown[])
+				.map((arg) =>
+					arg && typeof arg === 'object' ? (arg as { value: unknown }).value : arg,
+				)
+				.filter((value) => value !== '' && value !== undefined && value !== null);
+			return [functionLabels.get(fn.name) ?? fn.name, ...args].join(' ');
+		})
+		.join(' → ');
+}
+
+/** The Result section's reading, the set options only, or Defaults. */
+export function resultSummary(item: IBuilderQuery | IBuilderFormula): string {
+	const options = new Map(
+		optionsOf(item as IBuilderQuery).map((option) => [option.key, option.value]),
+	);
+	const parts = [
+		options.has('limit') ? `limit ${options.get('limit')}` : '',
+		options.has('order by') ? `order by ${options.get('order by')}` : '',
+		options.has('having') ? `having ${options.get('having')}` : '',
+		options.has('legend') ? 'legend' : '',
+	].filter(Boolean);
+	return parts.length ? parts.join(' · ') : 'Defaults';
 }

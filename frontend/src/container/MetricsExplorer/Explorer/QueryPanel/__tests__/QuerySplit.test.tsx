@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import store from 'store';
@@ -14,6 +15,7 @@ import {
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import QuerySplit from '../QuerySplit';
+import { SECTIONS_KEY } from '../QuerySection';
 import { PANEL_LAYOUT_KEY } from '../usePanelLayout';
 
 jest.mock('hooks/useDimensions', () => ({
@@ -300,8 +302,8 @@ describe('QuerySplit', () => {
 	it("edits a query's functions with the builder's function editor", () => {
 		render(ui());
 
+		fireEvent.click(screen.getByTestId('query-section-A-functions'));
 		const functions = screen.getByTestId('query-functions-A');
-		expect(functions).toHaveTextContent('Functions');
 		fireEvent.click(
 			functions.querySelector('.add-function-btn') as HTMLButtonElement,
 		);
@@ -313,5 +315,84 @@ describe('QuerySplit', () => {
 				functions: [expect.objectContaining({ args: [] })],
 			}),
 		);
+	});
+
+	describe('card sections', () => {
+		const expanded = (name: string, kind: string): boolean =>
+			screen
+				.getByTestId(`query-section-${name}-${kind}`)
+				.getAttribute('aria-expanded') === 'true';
+
+		it('starts collapsed with a summary when the values are the defaults', () => {
+			render(ui());
+
+			expect(expanded('A', 'aggregation')).toBe(false);
+			expect(expanded('A', 'functions')).toBe(false);
+			expect(expanded('A', 'result')).toBe(false);
+			expect(screen.getByTestId('query-section-A-aggregation')).toHaveTextContent(
+				'rate · 60s · sum · no breakdown',
+			);
+			expect(screen.getByTestId('query-section-A-functions')).toHaveTextContent(
+				'None',
+			);
+			expect(screen.getByTestId('query-section-A-result')).toHaveTextContent(
+				'Defaults',
+			);
+			expect(screen.getByTestId('query-functions-A')).not.toBeVisible();
+		});
+
+		it('opens the sections that hold set values', () => {
+			const query = boardQuery();
+			query.builder.queryData[0] = {
+				...query.builder.queryData[0],
+				groupBy: [
+					{ key: 'service.name', dataType: 'string', type: 'tag' },
+				] as IBuilderQuery['groupBy'],
+				limit: 10,
+			};
+			mockBuilder(query);
+			render(ui());
+
+			expect(expanded('A', 'aggregation')).toBe(true);
+			expect(expanded('A', 'functions')).toBe(false);
+			expect(expanded('A', 'result')).toBe(true);
+		});
+
+		it('remembers a toggled section per kind across cards', () => {
+			render(ui());
+			fireEvent.click(screen.getByTestId('query-section-A-result'));
+			expect(expanded('A', 'result')).toBe(true);
+			expect(JSON.parse(localStorage.getItem(SECTIONS_KEY) || '{}')).toStrictEqual(
+				{
+					result: true,
+				},
+			);
+
+			fireEvent.click(screen.getByTestId('query-card-toggle-B'));
+			expect(expanded('B', 'result')).toBe(true);
+			expect(expanded('B', 'aggregation')).toBe(false);
+		});
+
+		it('toggles from the keyboard and names what it controls', async () => {
+			render(ui());
+			const toggle = screen.getByTestId('query-section-A-aggregation');
+			const panelId = toggle.getAttribute('aria-controls') as string;
+
+			toggle.focus();
+			await userEvent.keyboard('{Enter}');
+			expect(expanded('A', 'aggregation')).toBe(true);
+			expect(document.getElementById(panelId)).toBeInTheDocument();
+
+			await userEvent.keyboard(' ');
+			expect(expanded('A', 'aggregation')).toBe(false);
+		});
+
+		it('gives formulas a collapsible result', () => {
+			render(ui());
+			fireEvent.click(screen.getByTestId('query-card-toggle-F1'));
+
+			expect(expanded('F1', 'result')).toBe(false);
+			expect(screen.getByLabelText('Formula F1 expression')).toBeInTheDocument();
+		});
 	});
 });

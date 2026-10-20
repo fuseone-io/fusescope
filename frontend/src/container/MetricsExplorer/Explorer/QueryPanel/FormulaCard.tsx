@@ -15,6 +15,8 @@ import { getFormatedLegend } from 'utils/getFormatedLegend';
 
 import CardHead from './CardHead';
 import EditorActions from './EditorActions';
+import QuerySection from './QuerySection';
+import { resultSummary } from './summary';
 
 interface FormulaCardProps {
 	formula: IBuilderFormula;
@@ -116,8 +118,13 @@ function FormulaCard({
 							/>
 						</span>
 					</label>
-					<div className="qsec">
-						<span className="esec">Result</span>
+					<QuerySection
+						name={formula.queryName}
+						kind="result"
+						title="Result"
+						summary={resultSummary(formula)}
+						isSet={resultSummary(formula) !== 'Defaults'}
+					>
 						<div className="egrid sm">
 							<div className="field">
 								<span className="flabel">Order by</span>
@@ -161,7 +168,7 @@ function FormulaCard({
 								/>
 							</label>
 						</div>
-					</div>
+					</QuerySection>
 					<EditorActions
 						letter={formula.queryName}
 						onReset={onReset}
