@@ -24,6 +24,7 @@ import { QueryV2 } from './QueryV2/QueryV2';
 import TraceOperator from './QueryV2/TraceOperator/TraceOperator';
 
 import './QueryBuilderV2.styles.scss';
+import './QueryBuilderV2.blocks.scss';
 
 // Raw rows come from logs or spans; metrics only exist aggregated.
 const RAW_QUERY_SIGNALS = [
