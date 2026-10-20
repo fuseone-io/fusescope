@@ -47,6 +47,7 @@ import {
 	handleNonInQueryRange,
 	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
+	withErrorSeverity,
 } from './util';
 
 function Application(): JSX.Element {
@@ -182,22 +183,10 @@ function Application(): JSX.Element {
 		[dispatch, pathname, urlQuery],
 	);
 
-	const logErrorQuery = useGetAPMToLogsQueries({
-		servicename,
-		filters: [
-			{
-				id: uuid().slice(0, 8),
-				key: {
-					key: 'severity_text',
-					dataType: DataTypes.String,
-					type: '',
-					id: 'severity_text--string----true',
-				},
-				op: 'in',
-				value: ['ERROR', 'FATAL', 'error', 'fatal'],
-			},
-		],
-	});
+	const logErrorQuery = useMemo(
+		() => withErrorSeverity(apmToLogsQuery),
+		[apmToLogsQuery],
+	);
 	const errorTrackQuery = useGetAPMToTracesQueries({
 		servicename,
 		filters: [
