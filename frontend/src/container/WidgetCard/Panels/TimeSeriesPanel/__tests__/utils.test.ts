@@ -270,6 +270,31 @@ describe('TimeSeriesPanel utils', () => {
 			expect(series!.points?.show).toBe(false);
 		});
 
+		it('draws the series of dashedQueryNames dashed and the rest solid', () => {
+			const apiResponse = createApiResponse(
+				['A', 'D'].map(
+					(queryName) =>
+						({
+							metric: {},
+							queryName,
+							values: [
+								[1000, '1'],
+								[2000, '2'],
+							],
+						}) as MetricRangePayloadProps['data']['result'][0],
+				),
+			);
+
+			const config = prepareUPlotConfig({
+				...baseParams,
+				widget: createWidget({ dashedQueryNames: ['D'] }),
+				apiResponse,
+			}).getConfig();
+
+			expect(config.series?.[1].dash).toBeUndefined();
+			expect(config.series?.[2].dash).toStrictEqual([10, 10]);
+		});
+
 		it('uses DrawStyle.Points and shows points when series has only one valid point', () => {
 			const apiResponse = createApiResponse([
 				{

@@ -70,4 +70,8 @@ export interface Widgets extends IBaseWidget {
 	renderColumnCell?: QueryTableProps['renderColumnCell'];
 	customColTitles?: Record<string, string>;
 	hiddenColumns?: string[];
+	/** Time series drawn dashed, e.g. a previous-period overlay; not persisted. */
+	dashedQueryNames?: string[];
+	/** False hides the chart's own legend when its panel draws one; not persisted. */
+	showLegend?: boolean;
 }
