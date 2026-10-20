@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
-import { LockKeyhole, Pin, PinOff } from '@signozhq/icons';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { LockKeyhole, Pin, PinOff } from 'lucide-react';
 import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
@@ -114,12 +113,9 @@ function DashboardRow({
 	const titleLink = (
 		<div className={styles.titleLink} onClick={onClickHandler}>
 			<img src={image} alt="dashboard-image" className={styles.icon} />
-			<Typography.Text
-				data-testid={`dashboard-title-${index}`}
-				className={styles.title}
-			>
+			<span data-testid={`dashboard-title-${index}`} className={styles.title}>
 				{name}
-			</Typography.Text>
+			</span>
 		</div>
 	);
 
@@ -136,7 +132,7 @@ function DashboardRow({
 							[styles.pinButtonOn]: isPinned && !isLegacy,
 						})}
 					>
-						<Tooltip title={isLegacy ? undefined : pinLabel} side="top">
+						<TitleTooltip title={isLegacy ? undefined : pinLabel} side="top">
 							<Button
 								disabledTooltip={legacyPinTooltip}
 								type="button"
@@ -152,41 +148,40 @@ function DashboardRow({
 							>
 								{isPinned ? (
 									<>
-										<Pin size={14} className={styles.pinnedIcon} />
-										<PinOff size={14} className={styles.unpinIcon} />
+										<Pin size={15} className={styles.pinnedIcon} />
+										<PinOff size={15} className={styles.unpinIcon} />
 									</>
 								) : (
-									<Pin size={14} />
+									<Pin size={15} />
 								)}
 							</Button>
-						</Tooltip>
+						</TitleTooltip>
 					</span>
 				</span>
 
 				<span role="cell" className={styles.nameCell}>
 					<span className={styles.titleBlock}>
-						<Tooltip title={name.length > 50 ? name : undefined} side="bottom">
+						<TitleTooltip title={name.length > 50 ? name : undefined} side="bottom">
 							{titleLink}
-						</Tooltip>
+						</TitleTooltip>
 						{isLocked && (
-							<Tooltip title="This dashboard is locked" side="top">
+							<TitleTooltip title="This dashboard is locked" side="top">
 								<span
 									className={styles.lockIcon}
 									data-testid={`dashboard-lock-${index}`}
 								>
-									<LockKeyhole size={14} />
+									<LockKeyhole size={14} aria-label="Locked" role="img" />
 								</span>
-							</Tooltip>
+							</TitleTooltip>
 						)}
 						{isLegacy && (
-							<Badge
-								color="warning"
-								variant="outlined"
+							<StatusBadge
+								tone="warning"
 								testId={`dashboard-legacy-${index}`}
-								textTransform="none"
+								className="tw:h-[18px] tw:px-1.5 tw:text-[11px]"
 							>
 								Legacy
-							</Badge>
+							</StatusBadge>
 						)}
 					</span>
 					{description && (

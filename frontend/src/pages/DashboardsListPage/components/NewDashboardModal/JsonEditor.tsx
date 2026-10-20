@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import { Maximize2 } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
+import { Maximize2 } from 'lucide-react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import styles from './NewDashboardModal.module.scss';
@@ -48,8 +53,8 @@ function JsonEditor({
 				readOnly,
 				scrollbar: { alwaysConsumeMouseWheel: false },
 				minimap: { enabled: false },
-				fontSize: 14,
-				fontFamily: 'Space Mono',
+				fontSize: 13,
+				fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
 			}}
 			theme={isDarkMode ? 'my-theme' : 'light'}
 			beforeMount={defineTheme}
@@ -58,33 +63,40 @@ function JsonEditor({
 
 	return (
 		<div className={styles.editorWrap}>
-			<div className={styles.expandBtn}>
+			<div className={`fs-ui ${styles.expandBtn}`}>
 				<Button
+					type="button"
 					variant="ghost"
-					color="secondary"
-					size="sm"
-					icon
+					size="icon-sm"
 					aria-label="Expand editor"
-					testId="json-editor-expand"
+					data-testid="json-editor-expand"
 					onClick={(): void => setExpanded(true)}
 				>
-					<Maximize2 size={14} />
+					<Maximize2 />
 				</Button>
 			</div>
 			<div className={styles.editor}>{renderEditor(height)}</div>
 
-			<DialogWrapper
-				title={readOnly ? 'Preview JSON' : 'Edit JSON'}
+			<Dialog
 				open={expanded}
-				width="extra-wide"
 				onOpenChange={(next): void => {
 					if (!next) {
 						setExpanded(false);
 					}
 				}}
 			>
-				<div className={styles.editorExpanded}>{renderEditor('70vh')}</div>
-			</DialogWrapper>
+				<DialogContent
+					aria-describedby={undefined}
+					className="tw:max-w-[min(1200px,calc(100%-2rem))]"
+				>
+					<DialogHeader>
+						<DialogTitle>{readOnly ? 'Preview JSON' : 'Edit JSON'}</DialogTitle>
+					</DialogHeader>
+					<div className={`${styles.editor} ${styles.editorExpanded}`}>
+						{renderEditor('70vh')}
+					</div>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

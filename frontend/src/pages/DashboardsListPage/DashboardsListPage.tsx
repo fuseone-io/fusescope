@@ -1,5 +1,4 @@
 import Spinner from 'components/Spinner';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
 import DashboardsList from './components/DashboardsList/DashboardsList';
 
@@ -12,19 +11,7 @@ function DashboardsListPage(): JSX.Element {
 			data-testid="dashboards-list-page"
 			className="tw:flex tw:min-h-0 tw:w-full tw:flex-1 tw:flex-col tw:bg-background tw:text-foreground"
 		>
-			{isLoading ? (
-				<Spinner tip="Loading dashboards..." />
-			) : (
-				<DashboardsList
-					headerActions={
-						<HeaderRightSection
-							enableAnnouncements={false}
-							enableShare
-							enableFeedback
-						/>
-					}
-				/>
-			)}
+			{isLoading ? <Spinner tip="Loading dashboards..." /> : <DashboardsList />}
 		</div>
 	);
 }

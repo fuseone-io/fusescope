@@ -1,9 +1,8 @@
 import { type ChangeEvent, type ReactNode, useEffect, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from 'components/ui/popover';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
 
 import styles from './ViewsRail.module.scss';
 
@@ -52,21 +51,30 @@ function ViewNamePopover({
 		}
 	};
 
+	const disabledReason =
+		trimmed.length === 0
+			? 'Enter a view name first'
+			: `Use at most ${VIEW_NAME_MAX_LENGTH} characters`;
+
 	return (
 		<Popover open={open} onOpenChange={onOpenChange}>
-			<Tooltip title={tooltip}>
+			<TitleTooltip title={open ? undefined : tooltip}>
 				<PopoverTrigger asChild>{trigger}</PopoverTrigger>
-			</Tooltip>
-			<PopoverContent align="start">
+			</TitleTooltip>
+			<PopoverContent align="start" className="tw:w-auto tw:p-3">
 				<div className={styles.savePopover}>
 					<div className={styles.saveTitle}>{title}</div>
-					<Typography.Text className={styles.saveLabel}>Name</Typography.Text>
+					<label htmlFor={`${testIdPrefix}-name`} className={styles.saveLabel}>
+						Name
+					</label>
 					<Input
+						id={`${testIdPrefix}-name`}
 						value={name}
 						autoFocus
 						maxLength={VIEW_NAME_MAX_LENGTH}
 						placeholder="e.g. Prod alerts"
-						testId={`${testIdPrefix}-name`}
+						data-testid={`${testIdPrefix}-name`}
+						className="tw:h-8 tw:border-input tw:bg-surface-raised tw:text-[13px] tw:dark:bg-surface-raised"
 						onChange={(e: ChangeEvent<HTMLInputElement>): void =>
 							setName(e.target.value)
 						}
@@ -78,28 +86,26 @@ function ViewNamePopover({
 					/>
 					<div className={styles.saveActions}>
 						<Button
+							type="button"
 							variant="ghost"
-							color="secondary"
 							size="sm"
 							onClick={(): void => onOpenChange(false)}
 						>
 							Cancel
 						</Button>
-						<Button
-							disabledTooltip={
-								trimmed.length === 0
-									? 'Enter a view name first'
-									: `Use at most ${VIEW_NAME_MAX_LENGTH} characters`
-							}
-							variant="solid"
-							color="primary"
-							size="sm"
-							disabled={!canSave}
-							testId={`${testIdPrefix}-confirm`}
-							onClick={handleSave}
-						>
-							{confirmLabel}
-						</Button>
+						<TitleTooltip title={canSave ? undefined : disabledReason}>
+							<span className="tw:inline-flex">
+								<Button
+									type="button"
+									size="sm"
+									disabled={!canSave}
+									data-testid={`${testIdPrefix}-confirm`}
+									onClick={handleSave}
+								>
+									{confirmLabel}
+								</Button>
+							</span>
+						</TitleTooltip>
 					</div>
 				</div>
 			</PopoverContent>

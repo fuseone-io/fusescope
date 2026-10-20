@@ -1,11 +1,5 @@
-import {
-	DashboardtypesListOrderDTO,
-	DashboardtypesListSortDTO,
-} from 'api/generated/services/fuseScope.schemas';
-
 import type { DashboardListItem } from '../../utils/helpers';
 import { noResultsCopy } from '../../utils/views';
-import ListHeader from '../ListHeader/ListHeader';
 import ErrorState from '../states/ErrorState/ErrorState';
 import LoadingState from '../states/LoadingState/LoadingState';
 import NoResultsState from '../states/NoResultsState/NoResultsState';
@@ -22,10 +16,6 @@ interface Props {
 	activeViewId: string;
 	searchValue: string;
 	hasFilters: boolean;
-	sortColumn: DashboardtypesListSortDTO;
-	onSortChange: (column: DashboardtypesListSortDTO) => void;
-	sortOrder: DashboardtypesListOrderDTO;
-	onOrderChange: (order: DashboardtypesListOrderDTO) => void;
 	page: number;
 	pageSize: number;
 	total: number;
@@ -46,10 +36,6 @@ function DashboardsResults({
 	activeViewId,
 	searchValue,
 	hasFilters,
-	sortColumn,
-	onSortChange,
-	sortOrder,
-	onOrderChange,
 	page,
 	pageSize,
 	total,
@@ -76,24 +62,16 @@ function DashboardsResults({
 		return <NoResultsState title={copy.title} description={copy.description} />;
 	}
 	return (
-		<>
-			<ListHeader
-				sortColumn={sortColumn}
-				onSortChange={onSortChange}
-				sortOrder={sortOrder}
-				onOrderChange={onOrderChange}
-			/>
-			<DashboardsListContent
-				dashboards={dashboards}
-				page={page}
-				pageSize={pageSize}
-				total={total}
-				onPageChange={onPageChange}
-				showUpdatedAt={showUpdatedAt}
-				showUpdatedBy={showUpdatedBy}
-				loading={loading}
-			/>
-		</>
+		<DashboardsListContent
+			dashboards={dashboards}
+			page={page}
+			pageSize={pageSize}
+			total={total}
+			onPageChange={onPageChange}
+			showUpdatedAt={showUpdatedAt}
+			showUpdatedBy={showUpdatedBy}
+			loading={loading}
+		/>
 	);
 }
 

@@ -10,7 +10,9 @@
 
 .extraTags {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
+	flex-direction: column;
+	gap: 2px;
 	max-width: 320px;
+	font-family: 'JetBrains Mono', 'Fira Code', Consolas, ui-monospace, monospace;
+	overflow-wrap: anywhere;
 }

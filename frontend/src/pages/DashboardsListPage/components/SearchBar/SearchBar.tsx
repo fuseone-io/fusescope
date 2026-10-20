@@ -6,9 +6,8 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import cx from 'classnames';
-import { Button } from '@signozhq/ui/button';
-import { Color } from '@signozhq/design-tokens';
-import { ChevronUp, Command, CornerDownLeft, Search } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import { Search } from 'lucide-react';
 import CodeMirror, {
 	EditorView,
 	keymap,
@@ -49,15 +48,17 @@ const editorTheme = EditorView.theme({
 	'&': { fontSize: '13px', backgroundColor: 'transparent' },
 	'&.cm-focused': { outline: 'none' },
 	'.cm-content': {
-		// Leave room for the overlaid lead icon (left) and Run button (right).
-		padding: '8px 120px 8px 30px',
-		fontFamily: "'Space Mono', monospace",
-		color: 'var(--l1-foreground)',
-		caretColor: 'var(--l1-foreground)',
+		// Leave room for the overlaid lead icon (left) and shortcut hint (right).
+		padding: '8px 56px 8px 34px',
+		fontFamily:
+			"'JetBrains Mono', 'Fira Code', Consolas, ui-monospace, monospace",
+		fontSize: '12px',
+		color: 'var(--fs-foreground)',
+		caretColor: 'var(--fs-foreground)',
 	},
 	'.cm-line': { padding: '0' },
-	'.cm-scroller': { fontFamily: 'inherit', lineHeight: '1.5' },
-	'.cm-placeholder': { color: 'var(--l3-foreground)' },
+	'.cm-scroller': { fontFamily: 'inherit', lineHeight: '18px' },
+	'.cm-placeholder': { color: 'var(--fs-subtle-foreground)' },
 });
 
 const BASIC_SETUP = {
@@ -154,11 +155,7 @@ function SearchBar({
 	return (
 		<div className={styles.wrapper}>
 			<div className={cx(styles.field, { [styles.disabled]: disabled })}>
-				<Search
-					size={12}
-					color={Color.BG_VANILLA_400}
-					className={styles.leadIcon}
-				/>
+				<Search aria-hidden="true" className={styles.leadIcon} />
 				<CodeMirror
 					ref={editorRef}
 					className={styles.editor}
@@ -171,38 +168,33 @@ function SearchBar({
 					data-testid="dashboards-list-search"
 					onChange={(next): void => onChange(next.replace(/\n/g, ' '))}
 				/>
-				<span
-					className={styles.submit}
-					onMouseDown={(e: MouseEvent<HTMLSpanElement>): void => e.preventDefault()}
-				>
-					<Button
-						disabledTooltip={undefined}
-						variant="outlined"
-						color="secondary"
-						size="sm"
-						aria-label="Run search"
-						disabled={disabled}
-						testId="dashboards-list-search-submit"
-						onClick={handleSubmit}
-						prefix={
-							dirty ? (
-								<span
-									className={styles.dirtyDot}
-									data-testid="dashboards-list-search-dirty"
-								/>
-							) : undefined
-						}
-						suffix={
-							<span className={styles.cmdHint}>
-								{isMac ? <Command size={12} /> : <ChevronUp size={12} />}
-								<CornerDownLeft size={12} />
-							</span>
-						}
-					>
-						Run query
-					</Button>
-				</span>
+				<kbd className={styles.cmdHint} aria-hidden="true">
+					{isMac ? '⌘↵' : 'Ctrl ↵'}
+				</kbd>
 			</div>
+			<span
+				className="fs-ui tw:flex-none"
+				onMouseDown={(e: MouseEvent<HTMLSpanElement>): void => e.preventDefault()}
+			>
+				<Button
+					type="button"
+					variant="outline"
+					aria-label="Run search"
+					aria-disabled={disabled || undefined}
+					disabled={disabled}
+					data-testid="dashboards-list-search-submit"
+					className="tw:h-9 tw:rounded-lg tw:border-input tw:bg-surface-raised tw:font-sans tw:shadow-xs tw:dark:bg-surface-raised"
+					onClick={handleSubmit}
+				>
+					{dirty && (
+						<span
+							className={styles.dirtyDot}
+							data-testid="dashboards-list-search-dirty"
+						/>
+					)}
+					<span>Run query</span>
+				</Button>
+			</span>
 		</div>
 	);
 }

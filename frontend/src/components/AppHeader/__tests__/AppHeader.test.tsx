@@ -249,6 +249,7 @@ describe('AppHeader', () => {
 		});
 
 		it.each([
+			ROUTES.ALL_DASHBOARD,
 			'/trace/abc',
 			ROUTES.LOGS_EXPLORER,
 			ROUTES.LOGS_PIPELINES,

@@ -1,13 +1,9 @@
-import { useState } from 'react';
+import { type ChangeEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
-import { red } from '@ant-design/colors';
-// eslint-disable-next-line signoz/no-antd-components -- Upload has no @signozhq/ui equivalent yet
-import { Upload, UploadProps } from 'antd';
-import { Button } from '@signozhq/ui/button';
+import { Button } from 'components/ui/button';
 import { toast } from '@signozhq/ui/sonner';
-import { Typography } from '@signozhq/ui/typography';
-import { CircleAlert, MonitorDot, MoveRight } from '@signozhq/icons';
+import { CircleAlert, LoaderCircle, MoveRight, Upload } from 'lucide-react';
 import logEvent from 'api/common/logEvent';
 import { createDashboardV2 } from 'api/generated/services/dashboard';
 import ROUTES from 'constants/routes';
@@ -37,9 +33,13 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 	const [isCreateError, setIsCreateError] = useState(false);
 	const [isCreating, setIsCreating] = useState(false);
 
-	const handleUpload: UploadProps['onChange'] = (info) => {
-		const lastFile = info.fileList[info.fileList.length - 1];
-		if (!lastFile?.originFileObj) {
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const handleUpload = (event: ChangeEvent<HTMLInputElement>): void => {
+		const file = event.target.files?.[0];
+		// Reset so picking the same file again still fires a change.
+		event.target.value = '';
+		if (!file) {
 			return;
 		}
 		const reader = new FileReader();
@@ -57,7 +57,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 				void logEvent(DashboardListEvents.ImportFailed, { reason: 'parse' });
 			}
 		};
-		reader.readAsText(lastFile.originFileObj);
+		reader.readAsText(file);
 	};
 
 	const handleImport = async (): Promise<void> => {
@@ -98,54 +98,54 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 
 	return (
 		<div className={styles.panel}>
-			<Typography.Text className={styles.importHeader}>
-				{t('import_json')}
-			</Typography.Text>
+			<span className={styles.importHeader}>{t('import_json')}</span>
 
 			<JsonEditor value={editorValue} onChange={setEditorValue} height="280px" />
 
 			{(isCreateError || isUploadError) && (
-				<div className={styles.jsonError}>
-					<CircleAlert size="md" color={red[7]} />
-					<Typography className={styles.errorText}>
+				<div className={styles.jsonError} role="alert">
+					<CircleAlert size={16} />
+					<span className={styles.errorText}>
 						{isUploadError ? t('error_upload_json') : t('error_loading_json')}
-					</Typography>
+					</span>
 				</div>
 			)}
 
 			<div className={styles.importFooter}>
-				<Upload
+				<input
+					ref={fileInputRef}
+					type="file"
 					accept=".json"
-					showUploadList={false}
-					multiple={false}
+					hidden
+					data-testid="upload-json-input"
 					onChange={handleUpload}
-					beforeUpload={(): boolean => false}
-					action="none"
+				/>
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					data-testid="upload-json-file"
+					className="tw:border-input tw:bg-surface-raised tw:dark:bg-surface-raised"
+					onClick={(): void => {
+						logEvent('Dashboard List V2: Upload JSON file clicked', {});
+						fileInputRef.current?.click();
+					}}
 				>
-					<Button
-						variant="outlined"
-						color="secondary"
-						size="md"
-						prefix={<MonitorDot size={14} />}
-						testId="upload-json-file"
-						onClick={(): void => {
-							logEvent('Dashboard List V2: Upload JSON file clicked', {});
-						}}
-					>
-						{t('upload_json_file')}
-					</Button>
-				</Upload>
+					<Upload />
+					{t('upload_json_file')}
+				</Button>
 
 				<Button
-					variant="solid"
-					color="primary"
-					size="md"
-					loading={isCreating}
-					suffix={<MoveRight size={14} />}
-					testId="import-json-submit"
+					type="button"
+					size="sm"
+					disabled={isCreating}
+					aria-busy={isCreating || undefined}
+					data-testid="import-json-submit"
 					onClick={handleImport}
 				>
-					{t('import_and_next')}
+					{isCreating && <LoaderCircle className="tw:animate-spin" />}
+					<span>{t('import_and_next')}</span>
+					<MoveRight />
 				</Button>
 			</div>
 		</div>

@@ -39,6 +39,7 @@ import type { SuggestionSource } from '../../utils/dslSuggestions';
 import type { DashboardListItem } from '../../utils/helpers';
 import { applyClientView } from '../../utils/views';
 import FilterZone from '../FilterZone/FilterZone';
+import ListHeader from '../ListHeader/ListHeader';
 import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
 import StatusBar from '../StatusBar/StatusBar';
 import ViewsRail from '../ViewsRail/ViewsRail';
@@ -46,6 +47,8 @@ import CommandHeader from './CommandHeader';
 import DashboardsListHeader from './DashboardsListHeader';
 import DashboardsResults from './DashboardsResults';
 import WorkspaceEmptyState from './WorkspaceEmptyState';
+
+import cx from 'classnames';
 
 import styles from './DashboardsList.module.scss';
 
@@ -294,7 +297,7 @@ function DashboardsList({ headerActions }: Props): JSX.Element {
 	const isWorkspaceEmpty = showWorkspaceEmpty && !isLoading;
 
 	return (
-		<div className={styles.page}>
+		<div className={cx('fs-ui tw:font-sans', styles.page)}>
 			<DashboardsListHeader
 				showCreate={!isWorkspaceEmpty}
 				onCreate={openCreate}
@@ -334,6 +337,14 @@ function DashboardsList({ headerActions }: Props): JSX.Element {
 										source={source}
 										disabled={!canList}
 										onQueryChange={handleQueryChange}
+										resultControls={
+											<ListHeader
+												sortColumn={sortColumn}
+												onSortChange={onSortChange}
+												sortOrder={sortOrder}
+												onOrderChange={onOrderChange}
+											/>
+										}
 									/>
 								</div>
 								<div className={styles.viewContent}>
@@ -355,10 +366,6 @@ function DashboardsList({ headerActions }: Props): JSX.Element {
 											activeViewId={activeViewId}
 											searchValue={query}
 											hasFilters={!filtersEmpty}
-											sortColumn={sortColumn}
-											onSortChange={onSortChange}
-											sortOrder={sortOrder}
-											onOrderChange={onOrderChange}
 											page={page}
 											pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
 											total={total}

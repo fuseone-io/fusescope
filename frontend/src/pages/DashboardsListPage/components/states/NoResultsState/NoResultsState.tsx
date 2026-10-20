@@ -1,8 +1,6 @@
-import { Typography } from '@signozhq/ui/typography';
+import { SearchX } from 'lucide-react';
 
-import emptyStateUrl from '@/assets/Icons/emptyState.svg';
-
-import styles from './NoResultsState.module.scss';
+import StateCard from '../StateCard';
 
 interface Props {
 	title: string;
@@ -11,15 +9,13 @@ interface Props {
 
 function NoResultsState({ title, description }: Props): JSX.Element {
 	return (
-		<div className={styles.wrapper}>
-			<img src={emptyStateUrl} alt="" height={32} width={32} />
-			<Typography.Text className={styles.title}>{title}</Typography.Text>
-			{description && (
-				<Typography.Text className={styles.description}>
-					{description}
-				</Typography.Text>
-			)}
-		</div>
+		<StateCard
+			testId="dashboards-no-results"
+			tone="neutral"
+			icon={<SearchX />}
+			title={title}
+			description={description}
+		/>
 	);
 }
 

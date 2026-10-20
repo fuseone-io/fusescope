@@ -1,9 +1,16 @@
-// eslint-disable-next-line signoz/no-antd-components -- Popover/Tooltip not yet migrated for this menu
-import { Popover, Tooltip } from 'antd';
-import { Button } from '@signozhq/ui/button';
-import { Switch } from '@signozhq/ui/switch';
-import { Typography } from '@signozhq/ui/typography';
-import { ArrowDown, ArrowUp, Check, Columns3 } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuLabel,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from 'components/ui/dropdown-menu';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { ArrowDown, ArrowUp, Columns3 } from 'lucide-react';
 
 import logEvent from 'api/common/logEvent';
 import {
@@ -16,8 +23,6 @@ import {
 	type DashboardDynamicColumns,
 	useDashboardsListVisibleColumnsStore,
 } from '../../store/useVisibleColumnsStore';
-
-import styles from './ListHeader.module.scss';
 
 interface Props {
 	sortColumn: DashboardtypesListSortDTO;
@@ -32,6 +37,38 @@ const SORT_LABELS: Record<DashboardtypesListSortDTO, string> = {
 	[DashboardtypesListSortDTO.name]: 'Name',
 };
 
+const SORT_OPTIONS: {
+	value: DashboardtypesListSortDTO;
+	testId: string;
+}[] = [
+	{ value: DashboardtypesListSortDTO.name, testId: 'sort-by-name' },
+	{
+		value: DashboardtypesListSortDTO.created_at,
+		testId: 'sort-by-last-created',
+	},
+	{
+		value: DashboardtypesListSortDTO.updated_at,
+		testId: 'sort-by-last-updated',
+	},
+];
+
+const ORDER_OPTIONS: {
+	value: DashboardtypesListOrderDTO;
+	label: string;
+	testId: string;
+}[] = [
+	{
+		value: DashboardtypesListOrderDTO.asc,
+		label: 'Ascending',
+		testId: 'sort-order-asc',
+	},
+	{
+		value: DashboardtypesListOrderDTO.desc,
+		label: 'Descending',
+		testId: 'sort-order-desc',
+	},
+];
+
 // Created-at / created-by are always shown; only the "updated" columns toggle.
 const METADATA_COLUMNS: {
 	key: keyof DashboardDynamicColumns;
@@ -41,6 +78,10 @@ const METADATA_COLUMNS: {
 	{ key: 'updatedBy', label: 'Updated by' },
 ];
 
+const TRIGGER =
+	'tw:rounded-lg tw:border-input tw:bg-surface-raised tw:font-sans tw:font-normal tw:shadow-xs tw:dark:bg-surface-raised';
+
+/** The list's sort and column controls, at the right end of the filters row. */
 function ListHeader({
 	sortColumn,
 	onSortChange,
@@ -54,162 +95,102 @@ function ListHeader({
 		(s) => s.setVisibleColumns,
 	);
 
-	const metadataContent = (
-		<div className={styles.metaPanel}>
-			<Typography.Text className={styles.sortHeading}>Columns</Typography.Text>
-			{METADATA_COLUMNS.map((col) => (
-				<div key={col.key} className={styles.metaRow}>
-					<Typography.Text className={styles.metaLabel}>{col.label}</Typography.Text>
-					<Switch
-						color="primary"
-						textPlacement="right"
-						value={visibleColumns[col.key]}
-						testId={`metadata-toggle-${col.key}`}
-						onChange={(checked): void => {
-							void logEvent(DashboardListEvents.ColumnsToggled, {
-								column: col.key,
-								visible: checked,
-							});
-							setVisibleColumns({ ...visibleColumns, [col.key]: checked });
-						}}
-					/>
-				</div>
-			))}
-		</div>
-	);
-
 	return (
-		<div className={styles.wrapper}>
-			<Typography.Text className={styles.label}>Results</Typography.Text>
-			<section className={styles.rightActions}>
-				<Popover
-					trigger="click"
-					content={
-						<div className={styles.sortContent}>
-							<Typography.Text className={styles.sortHeading}>Sort By</Typography.Text>
-							<Button
-								size="md"
-								variant="ghost"
-								color="secondary"
-								width="100%"
-								onClick={(): void => onSortChange(DashboardtypesListSortDTO.name)}
-								testId="sort-by-name"
-								suffix={
-									sortColumn === DashboardtypesListSortDTO.name ? (
-										<Check size={14} />
-									) : undefined
-								}
-							>
-								Name
-							</Button>
-							<Button
-								size="md"
-								variant="ghost"
-								color="secondary"
-								width="100%"
-								onClick={(): void => onSortChange(DashboardtypesListSortDTO.created_at)}
-								testId="sort-by-last-created"
-								suffix={
-									sortColumn === DashboardtypesListSortDTO.created_at ? (
-										<Check size={14} />
-									) : undefined
-								}
-							>
-								Last created
-							</Button>
-							<Button
-								size="md"
-								variant="ghost"
-								color="secondary"
-								width="100%"
-								onClick={(): void => onSortChange(DashboardtypesListSortDTO.updated_at)}
-								testId="sort-by-last-updated"
-								suffix={
-									sortColumn === DashboardtypesListSortDTO.updated_at ? (
-										<Check size={14} />
-									) : undefined
-								}
-							>
-								Last updated
-							</Button>
-							<div className={styles.sortDivider} />
-							<Typography.Text className={styles.sortHeading}>Order</Typography.Text>
-							<Button
-								size="md"
-								variant="ghost"
-								color="secondary"
-								width="100%"
-								onClick={(): void => onOrderChange(DashboardtypesListOrderDTO.asc)}
-								testId="sort-order-asc"
-								suffix={
-									sortOrder === DashboardtypesListOrderDTO.asc ? (
-										<Check size={14} />
-									) : undefined
-								}
-							>
-								Ascending
-							</Button>
-							<Button
-								size="md"
-								variant="ghost"
-								color="secondary"
-								width="100%"
-								onClick={(): void => onOrderChange(DashboardtypesListOrderDTO.desc)}
-								testId="sort-order-desc"
-								suffix={
-									sortOrder === DashboardtypesListOrderDTO.desc ? (
-										<Check size={14} />
-									) : undefined
-								}
-							>
-								Descending
-							</Button>
-						</div>
-					}
-					rootClassName="sortDashboardsPopover"
-					placement="bottomRight"
-					arrow={false}
-				>
+		<div className="fs-ui tw:flex tw:items-center tw:gap-2 tw:font-sans">
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
 					<Button
-						variant="outlined"
-						color="secondary"
+						type="button"
+						variant="outline"
 						size="sm"
-						testId="sort-by"
 						aria-label="Sort"
-						suffix={
-							sortOrder === DashboardtypesListOrderDTO.asc ? (
-								<ArrowUp size={12} />
-							) : (
-								<ArrowDown size={12} />
-							)
+						data-testid="sort-by"
+						className={TRIGGER}
+					>
+						<span className="tw:text-subtle-foreground">Sort</span>
+						{SORT_LABELS[sortColumn]}
+						{sortOrder === DashboardtypesListOrderDTO.asc ? (
+							<ArrowUp />
+						) : (
+							<ArrowDown />
+						)}
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="end" className="tw:min-w-44">
+					<DropdownMenuLabel>Sort by</DropdownMenuLabel>
+					<DropdownMenuRadioGroup
+						value={sortColumn}
+						onValueChange={(value): void =>
+							onSortChange(value as DashboardtypesListSortDTO)
 						}
 					>
-						<Typography.Text className={styles.sortPrefix}>Sort:</Typography.Text>{' '}
-						{SORT_LABELS[sortColumn]}{' '}
-					</Button>
-				</Popover>
+						{SORT_OPTIONS.map((option) => (
+							<DropdownMenuRadioItem
+								key={option.value}
+								value={option.value}
+								data-testid={option.testId}
+							>
+								{SORT_LABELS[option.value]}
+							</DropdownMenuRadioItem>
+						))}
+					</DropdownMenuRadioGroup>
+					<DropdownMenuSeparator />
+					<DropdownMenuLabel>Order</DropdownMenuLabel>
+					<DropdownMenuRadioGroup
+						value={sortOrder}
+						onValueChange={(value): void =>
+							onOrderChange(value as DashboardtypesListOrderDTO)
+						}
+					>
+						{ORDER_OPTIONS.map((option) => (
+							<DropdownMenuRadioItem
+								key={option.value}
+								value={option.value}
+								data-testid={option.testId}
+							>
+								{option.label}
+							</DropdownMenuRadioItem>
+						))}
+					</DropdownMenuRadioGroup>
+				</DropdownMenuContent>
+			</DropdownMenu>
 
-				<Popover
-					trigger="click"
-					content={metadataContent}
-					rootClassName="configureGroupPopover"
-					placement="bottomRight"
-					arrow={false}
-				>
-					<Tooltip title="Columns">
+			<DropdownMenu>
+				<TitleTooltip title="Columns">
+					<DropdownMenuTrigger asChild>
 						<Button
-							variant="ghost"
-							color="secondary"
-							size="sm"
-							icon
+							type="button"
+							variant="outline"
+							size="icon-sm"
 							aria-label="Columns"
-							testId="configure-columns-trigger"
+							data-testid="configure-columns-trigger"
+							className={TRIGGER}
 						>
-							<Columns3 size={14} />
+							<Columns3 />
 						</Button>
-					</Tooltip>
-				</Popover>
-			</section>
+					</DropdownMenuTrigger>
+				</TitleTooltip>
+				<DropdownMenuContent align="end" className="tw:min-w-44">
+					<DropdownMenuLabel>Columns</DropdownMenuLabel>
+					{METADATA_COLUMNS.map((col) => (
+						<DropdownMenuCheckboxItem
+							key={col.key}
+							checked={visibleColumns[col.key]}
+							data-testid={`metadata-toggle-${col.key}`}
+							onSelect={(event): void => event.preventDefault()}
+							onCheckedChange={(checked): void => {
+								void logEvent(DashboardListEvents.ColumnsToggled, {
+									column: col.key,
+									visible: checked,
+								});
+								setVisibleColumns({ ...visibleColumns, [col.key]: checked });
+							}}
+						>
+							{col.label}
+						</DropdownMenuCheckboxItem>
+					))}
+				</DropdownMenuContent>
+			</DropdownMenu>
 		</div>
 	);
 }

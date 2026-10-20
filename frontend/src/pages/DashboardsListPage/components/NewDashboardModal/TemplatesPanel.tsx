@@ -1,18 +1,20 @@
 import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
-import { Check, LayoutDashboard, SquareArrowOutUpRight } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
+import {
+	Check,
+	LayoutDashboard,
+	LoaderCircle,
+	SquareArrowOutUpRight,
+} from 'lucide-react';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
 import { toast } from '@signozhq/ui/sonner';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import styles from './NewDashboardModal.module.scss';
 
-const TEMPLATES_DOCS_URL = signozDocsUrl(
-	'/dashboards/dashboard-templates/overview/',
-);
+const TEMPLATES_DOCS_URL = fuseScopeDocsUrl('/reference/dashboard-json/');
 
 // Templates aren't served by the BE yet, so this tab is a browse-and-request
 // placeholder: link out to the published template library, and let cloud users
@@ -52,18 +54,11 @@ function TemplatesPanel(): JSX.Element {
 			<span className={styles.templatesIcon}>
 				<LayoutDashboard size={20} />
 			</span>
-			<Typography variant="title" size="lg" weight="semibold">
-				Dashboard templates
-			</Typography>
-			<Typography
-				variant="text"
-				size="sm"
-				color="muted"
-				className={styles.templatesDesc}
-			>
+			<h3 className={styles.templatesTitle}>Dashboard templates</h3>
+			<p className={styles.templatesDesc}>
 				Browse our library of ready-made dashboards, or request a new one and
 				we&apos;ll build it for you.
-			</Typography>
+			</p>
 
 			<a
 				className={styles.browseLink}
@@ -77,20 +72,14 @@ function TemplatesPanel(): JSX.Element {
 
 			{isCloudUser && (
 				<div className={styles.requestForm}>
-					<Typography
-						variant="text"
-						size="sm"
-						weight="semibold"
-						className={styles.requestHeader}
-					>
-						Request a new template
-					</Typography>
+					<span className={styles.requestHeader}>Request a new template</span>
 					<div className={styles.requestRow}>
 						<Input
-							className={styles.requestInput}
+							className="tw:h-8 tw:flex-1 tw:border-input tw:bg-surface-raised tw:text-[13px] tw:dark:bg-surface-raised"
 							placeholder="Enter dashboard name..."
+							aria-label="Dashboard name"
 							value={name}
-							testId="request-dashboard-name"
+							data-testid="request-dashboard-name"
 							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
 								setName(e.target.value)
 							}
@@ -101,18 +90,19 @@ function TemplatesPanel(): JSX.Element {
 							}}
 						/>
 						<Button
-							disabledTooltip="Enter a dashboard name first"
-							variant="solid"
-							color="primary"
-							size="md"
-							disabled={requestName.length === 0}
-							loading={submitting}
-							testId="request-dashboard-submit"
-							prefix={<Check size={14} />}
+							type="button"
+							size="sm"
+							title={
+								requestName.length === 0 ? 'Enter a dashboard name first' : undefined
+							}
+							disabled={requestName.length === 0 || submitting}
+							aria-busy={submitting || undefined}
+							data-testid="request-dashboard-submit"
 							onClick={(): void => {
 								void handleRequest();
 							}}
 						>
+							{submitting ? <LoaderCircle className="tw:animate-spin" /> : <Check />}
 							Submit
 						</Button>
 					</div>
