@@ -171,6 +171,20 @@ func TestExtractShiftFromBuilderQuery(t *testing.T) {
 			expectedShiftBy: 3600,
 		},
 		{
+			name: "extract from timeShift function with object value",
+			spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Functions: []qbtypes.Function{
+					{
+						Name: qbtypes.FunctionNameTimeShift,
+						Args: []qbtypes.FunctionArg{
+							{Value: map[string]any{"value": "7200"}},
+						},
+					},
+				},
+			},
+			expectedShiftBy: 7200,
+		},
+		{
 			name: "no timeShift function",
 			spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Functions: []qbtypes.Function{

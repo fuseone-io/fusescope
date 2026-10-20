@@ -256,8 +256,8 @@ func ApplyFunction(fn v3.Function, result *v3.Result) *v3.Result {
 
 	switch fn.Name {
 	case v3.FunctionNameCutOffMin, v3.FunctionNameCutOffMax, v3.FunctionNameClampMin, v3.FunctionNameClampMax:
-		threshold, ok := fn.Args[0].(float64)
-		if !ok {
+		threshold, err := fn.FirstNumericArg()
+		if err != nil {
 			return result
 		}
 		switch fn.Name {
@@ -281,8 +281,8 @@ func ApplyFunction(fn v3.Function, result *v3.Result) *v3.Result {
 	case v3.FunctionNameCumSum:
 		return funcCumSum(result)
 	case v3.FunctionNameEWMA3, v3.FunctionNameEWMA5, v3.FunctionNameEWMA7:
-		alpha, ok := fn.Args[0].(float64)
-		if !ok {
+		alpha, err := fn.FirstNumericArg()
+		if err != nil {
 			// alpha = 2 / (n + 1) where n is the window size
 			if fn.Name == v3.FunctionNameEWMA3 {
 				alpha = 0.5 // 2 / (3 + 1)
@@ -300,8 +300,8 @@ func ApplyFunction(fn v3.Function, result *v3.Result) *v3.Result {
 	case v3.FunctionNameMedian7:
 		return funcMedian7(result)
 	case v3.FunctionNameTimeShift:
-		shift, ok := fn.Args[0].(float64)
-		if !ok {
+		shift, err := fn.FirstNumericArg()
+		if err != nil {
 			return result
 		}
 		return funcTimeShift(result, shift)
