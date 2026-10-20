@@ -138,24 +138,67 @@ describe('QuerySplit', () => {
 		);
 	});
 
-	it('opens every card, with the filter editor inline, and collapses one to its summary', () => {
+	it('opens one card at a time, with the filter editor inline, and collapses it to its summary', () => {
 		render(ui());
 
-		expect(isOpen('A') && isOpen('B') && isOpen('F1')).toBe(true);
+		expect([isOpen('A'), isOpen('B'), isOpen('F1')]).toStrictEqual([
+			true,
+			false,
+			false,
+		]);
+
+		fireEvent.click(screen.getByTestId('query-card-toggle-B'));
+		expect([isOpen('A'), isOpen('B'), isOpen('F1')]).toStrictEqual([
+			false,
+			true,
+			false,
+		]);
 		expect(
 			within(screen.getByTestId('query-where-B')).getAllByText(
 				/STATUS_CODE_ERROR/,
 			)[0],
 		).toBeInTheDocument();
 
-		fireEvent.click(screen.getByTestId('query-card-toggle-B'));
-		expect(isOpen('B')).toBe(false);
+		fireEvent.click(screen.getByTestId('query-card-toggle-F1'));
+		expect([isOpen('A'), isOpen('B'), isOpen('F1')]).toStrictEqual([
+			false,
+			false,
+			true,
+		]);
 		expect(screen.getByTestId('query-card-B')).toHaveTextContent(
 			"rate · 60s · sum · where status.code = 'STATUS_CODE_ERROR'",
 		);
 
-		fireEvent.click(screen.getByTestId('query-card-done-A'));
-		expect(isOpen('A')).toBe(false);
+		fireEvent.click(screen.getByTestId('query-card-done-F1'));
+		expect([isOpen('A'), isOpen('B'), isOpen('F1')]).toStrictEqual([
+			false,
+			false,
+			false,
+		]);
+	});
+
+	it('opens only a newly added query or formula', () => {
+		const { rerender } = render(ui());
+		fireEvent.click(screen.getByTestId('query-card-toggle-B'));
+
+		mockBuilder(boardQuery([metricQuery('C')]));
+		rerender(ui());
+		expect([isOpen('A'), isOpen('B'), isOpen('C'), isOpen('F1')]).toStrictEqual([
+			false,
+			false,
+			true,
+			false,
+		]);
+
+		const withFormula = boardQuery([metricQuery('C')]);
+		withFormula.builder.queryFormulas = [
+			formula,
+			{ ...formula, queryName: 'F2', expression: 'A * 2' },
+		];
+		mockBuilder(withFormula);
+		rerender(ui());
+		expect(isOpen('F2')).toBe(true);
+		expect(isOpen('C')).toBe(false);
 	});
 
 	it('collapses to a rail of letters, remembered, and a letter opens just that query', () => {
@@ -224,6 +267,7 @@ describe('QuerySplit', () => {
 		rerender(ui());
 
 		fireEvent.click(screen.getByTestId('query-card-reset-A'));
+		fireEvent.click(screen.getByTestId('query-card-toggle-F1'));
 		fireEvent.click(screen.getByTestId('query-card-reset-F1'));
 
 		expect(setters.handleSetQueryData).toHaveBeenCalledWith(

@@ -68,13 +68,15 @@ function QueryPanel({
 						)}
 					</span>
 				</div>
-				<Button
-					variant="ghost"
-					size="sm"
-					onClick={(): void => presenter.setAllOpen(!presenter.isAnyOpen)}
-				>
-					{presenter.isAnyOpen ? 'Collapse all' : 'Expand all'}
-				</Button>
+				{presenter.isAnyOpen && (
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={(): void => presenter.setAllOpen(false)}
+					>
+						Collapse all
+					</Button>
+				)}
 			</div>
 			<div className="qpanel-body" data-testid="query-panel-body">
 				<QueryPresenterProvider value={presenter.presenter}>

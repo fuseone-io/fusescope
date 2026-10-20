@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { Button } from 'components/ui/button';
 import { cn } from 'lib/utils';
 import { ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
@@ -28,8 +28,16 @@ function CardHead({
 	onToggleVisibility,
 	actions,
 }: CardHeadProps): JSX.Element {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (isOpen) {
+			ref.current?.scrollIntoView?.({ block: 'nearest' });
+		}
+	}, [isOpen]);
+
 	return (
-		<div className="qhead fs-ui">
+		<div className="qhead fs-ui" ref={ref}>
 			<Button
 				variant="ghost"
 				size="icon-sm"

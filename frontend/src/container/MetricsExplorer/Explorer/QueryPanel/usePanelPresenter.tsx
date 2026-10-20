@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	FormulaPresentationArgs,
 	QueryPresentationArgs,
@@ -16,9 +16,10 @@ import QueryCard from './QueryCard';
 type Snapshot = IBuilderQuery | IBuilderFormula;
 
 /**
- * Cards for each query and formula, open unless collapsed (so new ones open).
- * Presentation only: state changes come from the fields, or from Reset putting
- * back what the card held when it was last opened or shown.
+ * Cards for each query and formula, one open at a time: the first to begin
+ * with, then whichever was last opened or added. Presentation only: state
+ * changes come from the fields, or from Reset putting back what the card held
+ * when it was last opened or shown.
  */
 export function usePanelPresenter(): {
 	presenter: QueryPresenter;
@@ -29,7 +30,6 @@ export function usePanelPresenter(): {
 } {
 	const { currentQuery, handleSetQueryData, handleSetFormulaData } =
 		useQueryBuilder();
-	const [closed, setClosed] = useState<Record<string, boolean>>({});
 	const [resets, setResets] = useState<Record<string, number>>({});
 	const snapshots = useRef(new Map<string, Snapshot>());
 
@@ -41,6 +41,39 @@ export function usePanelPresenter(): {
 		[currentQuery.builder.queryData, currentQuery.builder.queryFormulas],
 	);
 
+	const [openName, setOpenName] = useState<string | null>(names[0] ?? null);
+	const known = useRef(new Set(names));
+
+	useEffect(() => {
+		const added = names.filter((name) => !known.current.has(name));
+		known.current = new Set(names);
+		if (added.length) {
+			setOpenName(added[added.length - 1]);
+		}
+	}, [names]);
+
+	const entities = useMemo(
+		() =>
+			new Map<string, Snapshot>(
+				[
+					...currentQuery.builder.queryData,
+					...currentQuery.builder.queryFormulas,
+				].map((item) => [item.queryName, item]),
+			),
+		[currentQuery.builder.queryData, currentQuery.builder.queryFormulas],
+	);
+
+	const open = useCallback(
+		(name: string | null): void => {
+			const current = name ? entities.get(name) : undefined;
+			if (name && current) {
+				snapshots.current.set(name, current);
+			}
+			setOpenName(name);
+		},
+		[entities],
+	);
+
 	const snapshotOf = (name: string, current: Snapshot): Snapshot => {
 		if (!snapshots.current.has(name)) {
 			snapshots.current.set(name, current);
@@ -48,26 +81,16 @@ export function usePanelPresenter(): {
 		return snapshots.current.get(name) as Snapshot;
 	};
 
-	const toggle = useCallback((name: string, current: Snapshot): void => {
-		setClosed((prev) => {
-			const willOpen = Boolean(prev[name]);
-			if (willOpen) {
-				snapshots.current.set(name, current);
-			}
-			return { ...prev, [name]: !willOpen };
-		});
-	}, []);
-
-	const focus = useCallback(
-		(name: string): void =>
-			setClosed(Object.fromEntries(names.map((item) => [item, item !== name]))),
-		[names],
+	const toggle = useCallback(
+		(name: string): void => open(openName === name ? null : name),
+		[open, openName],
 	);
 
+	const focus = useCallback((name: string): void => open(name), [open]);
+
 	const setAllOpen = useCallback(
-		(open: boolean): void =>
-			setClosed(Object.fromEntries(names.map((item) => [item, !open]))),
-		[names],
+		(isOpen: boolean): void => open(isOpen ? (names[0] ?? null) : null),
+		[open, names],
 	);
 
 	const bumpReset = useCallback((name: string): void => {
@@ -86,9 +109,9 @@ export function usePanelPresenter(): {
 				<QueryCard
 					query={query}
 					index={index}
-					isOpen={!closed[query.queryName]}
+					isOpen={openName === query.queryName}
 					editorKey={resets[query.queryName] ?? 0}
-					onToggleOpen={(): void => toggle(query.queryName, query)}
+					onToggleOpen={(): void => toggle(query.queryName)}
 					onToggleVisibility={onToggleVisibility}
 					actionsMenu={actionsMenu}
 					onReset={(): void => {
@@ -99,7 +122,7 @@ export function usePanelPresenter(): {
 			);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[closed, resets, toggle, handleSetQueryData, bumpReset],
+		[openName, resets, toggle, handleSetQueryData, bumpReset],
 	);
 
 	const renderFormula = useCallback(
@@ -112,9 +135,9 @@ export function usePanelPresenter(): {
 						currentQuery.builder.queryData[index] || currentQuery.builder.queryData[0]
 					}
 					index={index}
-					isOpen={!closed[formula.queryName]}
+					isOpen={openName === formula.queryName}
 					editorKey={resets[formula.queryName] ?? 0}
-					onToggleOpen={(): void => toggle(formula.queryName, formula)}
+					onToggleOpen={(): void => toggle(formula.queryName)}
 					onReset={(): void => {
 						handleSetFormulaData(index, snapshot as IBuilderFormula);
 						bumpReset(formula.queryName);
@@ -124,7 +147,7 @@ export function usePanelPresenter(): {
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
-			closed,
+			openName,
 			resets,
 			toggle,
 			handleSetFormulaData,
@@ -142,6 +165,6 @@ export function usePanelPresenter(): {
 		presenter,
 		focus,
 		setAllOpen,
-		isAnyOpen: names.some((name) => !closed[name]),
+		isAnyOpen: openName !== null && names.includes(openName),
 	};
 }
