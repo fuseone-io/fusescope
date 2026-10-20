@@ -938,15 +938,11 @@ func (b *BuilderQuery) SetShiftByFromFunc() {
 				fns = append(fns, b.Functions[idx+1:]...)
 				b.Functions = fns
 				if len(function.Args) > 0 {
-					if shift, ok := function.Args[0].(float64); ok {
-						timeShiftBy = int64(shift)
-					} else if shift, ok := function.Args[0].(string); ok {
-						shiftBy, err := strconv.ParseFloat(shift, 64)
-						if err != nil {
-							slog.Error("failed to parse time shift by", "shift", shift, signozerrors.Attr(err))
-						}
-						timeShiftBy = int64(shiftBy)
+					shiftBy, err := function.FirstNumericArg()
+					if err != nil {
+						slog.Error("failed to parse time shift by", "shift", function.Args[0], signozerrors.Attr(err))
 					}
+					timeShiftBy = int64(shiftBy)
 				}
 				break
 			}
@@ -1106,62 +1102,13 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 		return fmt.Errorf("expression is required")
 	}
 
-	if len(b.Functions) > 0 {
-		for _, function := range b.Functions {
-			if err := function.Name.Validate(); err != nil {
-				return fmt.Errorf("function name is invalid: %w", err)
-			}
-			if function.Name == FunctionNameTimeShift {
-				if len(function.Args) == 0 {
-					return fmt.Errorf("timeShiftBy param missing in query")
-				}
-				_, ok := function.Args[0].(float64)
-				if !ok {
-					// if string, attempt to convert to float
-					timeShiftBy, err := strconv.ParseFloat(function.Args[0].(string), 64)
-					if err != nil {
-						return fmt.Errorf("timeShiftBy param should be a number")
-					}
-					function.Args[0] = timeShiftBy
-				}
-			} else if function.Name == FunctionNameEWMA3 ||
-				function.Name == FunctionNameEWMA5 ||
-				function.Name == FunctionNameEWMA7 {
-				if len(function.Args) == 0 {
-					return fmt.Errorf("alpha param missing in query")
-				}
-				alpha, ok := function.Args[0].(float64)
-				if !ok {
-					// if string, attempt to convert to float
-					alpha, err := strconv.ParseFloat(function.Args[0].(string), 64)
-					if err != nil {
-						return fmt.Errorf("alpha param should be a float")
-					}
-					function.Args[0] = alpha
-				}
-				if alpha < 0 || alpha > 1 {
-					return fmt.Errorf("alpha param should be between 0 and 1")
-				}
-			} else if function.Name == FunctionNameCutOffMax ||
-				function.Name == FunctionNameCutOffMin ||
-				function.Name == FunctionNameClampMax ||
-				function.Name == FunctionNameClampMin {
-				if len(function.Args) == 0 {
-					return fmt.Errorf("threshold param missing in query")
-				}
-				_, ok := function.Args[0].(float64)
-				if !ok {
-					// if string, attempt to convert to float
-					if _, ok := function.Args[0].(string); !ok {
-						return fmt.Errorf("threshold param should be a float")
-					}
-					threshold, err := strconv.ParseFloat(function.Args[0].(string), 64)
-					if err != nil {
-						return fmt.Errorf("threshold param should be a float")
-					}
-					function.Args[0] = threshold
-				}
-			}
+	for idx := range b.Functions {
+		function := &b.Functions[idx]
+		if err := function.Name.Validate(); err != nil {
+			return fmt.Errorf("function name is invalid: %w", err)
+		}
+		if err := function.validateArgs(); err != nil {
+			return err
 		}
 	}
 

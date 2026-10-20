@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -115,7 +114,7 @@ func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 		if len(args) == 0 {
 			return result
 		}
-		threshold, err := parseFloat64Arg(args[0].Value)
+		threshold, err := ParseFunctionArgNumber(args[0].Value)
 		if err != nil {
 			return result
 		}
@@ -152,7 +151,7 @@ func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 		if len(args) == 0 {
 			return result
 		}
-		shift, err := parseFloat64Arg(args[0].Value)
+		shift, err := ParseFunctionArgNumber(args[0].Value)
 		if err != nil {
 			return result
 		}
@@ -166,15 +165,15 @@ func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 		if len(args) < 3 {
 			return result
 		}
-		start, err := parseFloat64Arg(args[0].Value)
+		start, err := ParseFunctionArgNumber(args[0].Value)
 		if err != nil {
 			return result
 		}
-		end, err := parseFloat64Arg(args[1].Value)
+		end, err := ParseFunctionArgNumber(args[1].Value)
 		if err != nil {
 			return result
 		}
-		step, err := parseFloat64Arg(args[2].Value)
+		step, err := ParseFunctionArgNumber(args[2].Value)
 		if err != nil || step <= 0 {
 			return result
 		}
@@ -198,7 +197,7 @@ func (fn Function) ValidateArgs() error {
 				name.StringValue(),
 			)
 		}
-		_, err := parseFloat64Arg(args[0].Value)
+		_, err := ParseFunctionArgNumber(args[0].Value)
 		if err != nil {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -210,7 +209,7 @@ func (fn Function) ValidateArgs() error {
 		if len(args) == 0 {
 			return nil // alpha is optional for EWMA functions
 		}
-		_, err := parseFloat64Arg(args[0].Value)
+		_, err := ParseFunctionArgNumber(args[0].Value)
 		if err != nil {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -226,7 +225,7 @@ func (fn Function) ValidateArgs() error {
 				name.StringValue(),
 			)
 		}
-		_, err := parseFloat64Arg(args[0].Value)
+		_, err := ParseFunctionArgNumber(args[0].Value)
 		if err != nil {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -238,27 +237,11 @@ func (fn Function) ValidateArgs() error {
 	return nil
 }
 
-// parseFloat64Arg parses an argument to float64.
-func parseFloat64Arg(value any) (float64, error) {
-	switch v := value.(type) {
-	case float64:
-		return v, nil
-	case int64:
-		return float64(v), nil
-	case int:
-		return float64(v), nil
-	case string:
-		return strconv.ParseFloat(v, 64)
-	default:
-		return 0, strconv.ErrSyntax
-	}
-}
-
 // getEWMAAlpha calculates the alpha value for EWMA functions.
 func getEWMAAlpha(name FunctionName, args []FunctionArg) float64 {
 	// Try to get alpha from arguments first
 	if len(args) > 0 {
-		if alpha, err := parseFloat64Arg(args[0].Value); err == nil {
+		if alpha, err := ParseFunctionArgNumber(args[0].Value); err == nil {
 			return alpha
 		}
 	}

@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFuncCutOffMin(t *testing.T) {
@@ -666,6 +668,35 @@ func TestFuncRunningDiff(t *testing.T) {
 					}
 				}
 			}
+		})
+	}
+}
+
+func TestApplyFunction_MalformedArgs(t *testing.T) {
+	testCases := []struct {
+		name          string
+		fn            v3.Function
+		wantValue     float64
+		wantTimestamp int64
+	}{
+		{name: "TimeShift_ObjectWithNumber", fn: v3.Function{Name: v3.FunctionNameTimeShift, Args: []interface{}{map[string]interface{}{"value": 60.0}}}, wantValue: 5, wantTimestamp: 61000},
+		{name: "TimeShift_NumericString", fn: v3.Function{Name: v3.FunctionNameTimeShift, Args: []interface{}{"60"}}, wantValue: 5, wantTimestamp: 61000},
+		{name: "TimeShift_MissingArg", fn: v3.Function{Name: v3.FunctionNameTimeShift}, wantValue: 5, wantTimestamp: 1000},
+		{name: "TimeShift_Bool", fn: v3.Function{Name: v3.FunctionNameTimeShift, Args: []interface{}{true}}, wantValue: 5, wantTimestamp: 1000},
+		{name: "ClampMax_ObjectWithNumericString", fn: v3.Function{Name: v3.FunctionNameClampMax, Args: []interface{}{map[string]interface{}{"value": "2"}}}, wantValue: 2, wantTimestamp: 1000},
+		{name: "ClampMax_MissingArg", fn: v3.Function{Name: v3.FunctionNameClampMax}, wantValue: 5, wantTimestamp: 1000},
+		{name: "EWMA3_MissingArg", fn: v3.Function{Name: v3.FunctionNameEWMA3}, wantValue: 5, wantTimestamp: 1000},
+		{name: "EWMA3_NestedArray", fn: v3.Function{Name: v3.FunctionNameEWMA3, Args: []interface{}{[]interface{}{[]interface{}{0.5}}}}, wantValue: 5, wantTimestamp: 1000},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result := &v3.Result{Series: []*v3.Series{{Points: []v3.Point{{Timestamp: 1000, Value: 5}}}}}
+			require.NotPanics(t, func() { result = ApplyFunction(testCase.fn, result) })
+			require.Len(t, result.Series, 1)
+			require.Len(t, result.Series[0].Points, 1)
+			assert.Equal(t, testCase.wantValue, result.Series[0].Points[0].Value)
+			assert.Equal(t, testCase.wantTimestamp, result.Series[0].Points[0].Timestamp)
 		})
 	}
 }

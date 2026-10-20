@@ -581,6 +581,56 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 			hasShiftBy: true,
 			shiftBy:    3600,
 		},
+		{
+			desc: "builder query with shift by as object",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         "logs",
+						AggregateOperator:  "sum",
+						AggregateAttribute: v3.AttributeKey{Key: "attribute"},
+						GroupBy:            []v3.AttributeKey{{Key: "group_key"}},
+						Expression:         "A",
+						Functions: []v3.Function{
+							{
+								Name: v3.FunctionNameTimeShift,
+								Args: []interface{}{map[string]interface{}{"value": 86400}},
+							},
+						},
+					},
+				},
+			},
+			hasShiftBy: true,
+			shiftBy:    86400,
+		},
+		{
+			desc: "builder query with shift by as bool",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         "logs",
+						AggregateOperator:  "sum",
+						AggregateAttribute: v3.AttributeKey{Key: "attribute"},
+						GroupBy:            []v3.AttributeKey{{Key: "group_key"}},
+						Expression:         "A",
+						Functions: []v3.Function{
+							{
+								Name: v3.FunctionNameTimeShift,
+								Args: []interface{}{true},
+							},
+						},
+					},
+				},
+			},
+			expectErr: true,
+			errMsg:    "timeShiftBy param of function timeShift should be a number",
+		},
 	}
 
 	for _, tc := range reqCases {
