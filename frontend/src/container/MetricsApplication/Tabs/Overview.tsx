@@ -109,8 +109,10 @@ function Application(): JSX.Element {
 
 	const tagFilterItems = useMemo(
 		() =>
-			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
-		[queries],
+			handleNonInQueryRange(
+				resourceAttributesToTagFilterItems(queries, !isSpanMetricEnabled),
+			) || [],
+		[queries, isSpanMetricEnabled],
 	);
 
 	const topLevelOperationsRoute = useMemo(
@@ -131,6 +133,7 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
+						isSpanMetricEnable: isSpanMetricEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -140,7 +143,7 @@ function Application(): JSX.Element {
 				yAxisUnit: 'ops',
 				id: SERVICE_CHART_ID.rps,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems, topLevelOperationsRoute, isSpanMetricEnabled],
 	);
 
 	const errorPercentageWidget = useMemo(
@@ -153,6 +156,7 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
+						isSpanMetricEnable: isSpanMetricEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -163,7 +167,7 @@ function Application(): JSX.Element {
 				id: SERVICE_CHART_ID.errorPercentage,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems, topLevelOperationsRoute, isSpanMetricEnabled],
 	);
 
 	const onDragSelect = useCallback(

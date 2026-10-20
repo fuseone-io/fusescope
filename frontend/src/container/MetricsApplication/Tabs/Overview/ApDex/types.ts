@@ -15,4 +15,6 @@ export interface ApDexDataSwitcherProps extends ApDexApplicationProps {
 export interface ApDexMetricsProps extends ApDexDataSwitcherProps {
 	delta?: boolean;
 	metricsBuckets?: number[];
+	/** Off, apdex is counted from the service's top-level spans. */
+	isSpanMetricEnable?: boolean;
 }

@@ -17,7 +17,10 @@ import {
 	SERVICE_CHART_ID,
 } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
-import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
+import {
+	apDexMetricsQueryBuilderQueries,
+	apDexTracesQueryBuilderQueries,
+} from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
@@ -32,6 +35,7 @@ function ApDexMetrics({
 	tagFilterItems,
 	topLevelOperationsRoute,
 	pointMenu,
+	isSpanMetricEnable = true,
 }: ApDexMetricsProps): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -41,14 +45,21 @@ function ApDexMetrics({
 				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
-					builder: apDexMetricsQueryBuilderQueries({
-						servicename,
-						tagFilterItems,
-						topLevelOperationsRoute,
-						threashold: thresholdValue || 0,
-						delta: delta || false,
-						metricsBuckets: metricsBuckets || [],
-					}),
+					builder: isSpanMetricEnable
+						? apDexMetricsQueryBuilderQueries({
+								servicename,
+								tagFilterItems,
+								topLevelOperationsRoute,
+								threashold: thresholdValue || 0,
+								delta: delta || false,
+								metricsBuckets: metricsBuckets || [],
+							})
+						: apDexTracesQueryBuilderQueries({
+								servicename,
+								tagFilterItems,
+								topLevelOperationsRoute,
+								threashold: thresholdValue || 0,
+							}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
@@ -68,6 +79,7 @@ function ApDexMetrics({
 			}),
 		[
 			delta,
+			isSpanMetricEnable,
 			metricsBuckets,
 			servicename,
 			tagFilterItems,
@@ -85,9 +97,8 @@ function ApDexMetrics({
 
 	const isQueryEnabled =
 		topLevelOperationsRoute.length > 0 &&
-		!!metricsBuckets &&
-		metricsBuckets?.length > 0 &&
-		delta !== undefined;
+		(!isSpanMetricEnable ||
+			(!!metricsBuckets && metricsBuckets?.length > 0 && delta !== undefined));
 
 	return (
 		<Graph
@@ -104,6 +115,7 @@ function ApDexMetrics({
 ApDexMetrics.defaultProps = {
 	delta: undefined,
 	le: undefined,
+	isSpanMetricEnable: true,
 };
 
 export default ApDexMetrics;
