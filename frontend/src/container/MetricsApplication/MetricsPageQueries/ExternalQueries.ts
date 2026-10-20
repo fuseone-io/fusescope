@@ -28,6 +28,21 @@ const groupBy: BaseAutocompleteData[] = [
 	},
 ];
 
+/**
+ * Drops addresses with no usable host: empty, unspecified (0.0.0.0) or
+ * ending in a bare colon. Character classes avoid backslash escaping.
+ */
+const validAddressFilter: TagFilterItem = {
+	id: '',
+	key: {
+		dataType: DataTypes.String,
+		key: WidgetKeys.Address,
+		type: MetricsType.Tag,
+	},
+	op: 'nregex',
+	value: '^(0[.]0[.]0[.]0)?(:[0-9]*)?$|:$',
+};
+
 export const externalCallErrorPercent = ({
 	servicename,
 	legend,
@@ -65,6 +80,7 @@ export const externalCallErrorPercent = ({
 			op: OPERATORS.IN,
 			value: ['STATUS_CODE_ERROR'],
 		},
+		validAddressFilter,
 		...tagFilterItems,
 	];
 	const additionalItemsB: TagFilterItem[] = [
@@ -78,6 +94,7 @@ export const externalCallErrorPercent = ({
 			op: OPERATORS.IN,
 			value: [servicename],
 		},
+		validAddressFilter,
 		...tagFilterItems,
 	];
 	const legendFormulas = [legend];
@@ -195,6 +212,7 @@ export const externalCallRpsByAddress = ({
 				op: OPERATORS.IN,
 				value: [servicename],
 			},
+			validAddressFilter,
 			...tagFilterItems,
 		],
 	];
@@ -245,6 +263,7 @@ export const externalCallDurationByAddress = ({
 			op: OPERATORS.IN,
 			value: [servicename],
 		},
+		validAddressFilter,
 		...tagFilterItems,
 	];
 
