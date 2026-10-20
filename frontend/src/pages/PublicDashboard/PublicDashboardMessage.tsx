@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { Typography } from '@signozhq/ui/typography';
 
 import fuseScopeBrandLogoUrl from '@/assets/Logos/fusescope-brand-logo.svg';
 
@@ -29,28 +28,20 @@ function PublicDashboardMessage({
 				<div className="brand">
 					<img src={fuseScopeBrandLogoUrl} alt="FuseScope" className="brand-logo" />
 
-					<Typography.Title level={2} className="brand-title">
-						FuseScope
-					</Typography.Title>
+					<span className="brand-title">FuseScope</span>
 				</div>
 
-				<div className="brand-tagline">
-					<Typography.Text>
-						OpenTelemetry-Native Logs, Metrics and Traces in a single pane
-					</Typography.Text>
-				</div>
+				<p className="brand-tagline">
+					OpenTelemetry-Native Logs, Metrics and Traces in a single pane
+				</p>
 			</div>
 
 			<div className="public-dashboard-error-content">
-				<Typography.Title level={4} className="public-dashboard-error-message-icon">
+				<span aria-hidden="true" className="public-dashboard-error-message-icon">
 					{icon}
-				</Typography.Title>
-				<Typography.Title level={4} className="public-dashboard-error-message">
-					{title}
-				</Typography.Title>
-				<Typography.Text className="public-dashboard-error-message-description">
-					{description}
-				</Typography.Text>
+				</span>
+				<h1 className="public-dashboard-error-message">{title}</h1>
+				<p className="public-dashboard-error-message-description">{description}</p>
 			</div>
 		</div>
 	);
