@@ -15,10 +15,6 @@
 	}
 }
 
-.dashboardPageToolbarSubContainer {
-	width: 100%;
-}
-
 .dashboardInfoWithActions {
 	display: flex;
 	flex-wrap: wrap;
@@ -34,19 +30,4 @@
 	align-items: center;
 	justify-content: flex-end;
 	gap: 8px;
-}
-
-.toolbarRow {
-	width: 100%;
-
-	&::after {
-		display: block;
-		clear: both;
-		content: '';
-	}
-}
-
-.timeCluster {
-	float: right;
-	margin: 0 0 0 16px;
 }
