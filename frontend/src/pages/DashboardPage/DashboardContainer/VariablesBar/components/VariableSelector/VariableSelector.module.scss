@@ -1,18 +1,30 @@
+// Not `overflow: hidden`: the selects mount their dropdown inside the control,
+// so clipping the pill would clip the open list too. The segments round
+// themselves instead.
 .variableItem {
 	position: relative;
 	display: flex;
 	align-items: stretch;
 	width: 260px;
 	height: 32px;
-	overflow: hidden;
 	border: 1px solid var(--fs-input);
 	border-radius: 8px;
 	background: var(--fs-card);
 	font-size: 13px;
 
-	&:hover,
-	&:focus-within {
+	&:hover {
 		border-color: var(--fs-primary);
+	}
+
+	// The ring belongs to the pill, never to the select or input inside it.
+	&:focus-within {
+		border-color: var(--fs-ring);
+		box-shadow: 0 0 0 3px var(--fs-ring-soft);
+	}
+
+	:focus,
+	:focus-visible {
+		outline: none;
 	}
 }
 
@@ -26,7 +38,7 @@
 	left: 0;
 	height: 2px;
 	overflow: hidden;
-	border-radius: 0 0 2px 2px;
+	border-radius: 0 0 7px 7px;
 	background: color-mix(in srgb, var(--fs-primary) 20%, transparent);
 	pointer-events: none;
 }
@@ -71,6 +83,7 @@
 	overflow: hidden;
 	padding: 0 10px;
 	border-right: 1px solid var(--fs-border);
+	border-radius: 7px 0 0 7px;
 	background-color: var(--fs-muted);
 	color: var(--fs-muted-foreground);
 	font-family: 'JetBrains Mono', 'Fira Code', Consolas, ui-monospace, monospace;
@@ -98,6 +111,7 @@
 	flex: 1;
 	min-width: 0;
 	align-items: center;
+	overflow: visible;
 	color: var(--fs-foreground);
 	font-size: 12px;
 }

@@ -66,6 +66,34 @@
 .control {
 	width: 100%;
 	min-width: 120px;
+	height: 30px;
+
+	// Fill the pill's inner height exactly, so the value centres and nothing
+	// pokes past the rounded border.
+	:global(.ant-select-selector),
+	&:global(.ant-input) {
+		height: 30px !important;
+		min-height: 30px !important;
+		align-items: center;
+	}
+
+	&:global(.ant-select-single) :global(.ant-select-selection-item),
+	&:global(.ant-select-single) :global(.ant-select-selection-placeholder),
+	&:global(.ant-select-single) :global(.ant-select-selection-search-input) {
+		line-height: 28px !important;
+	}
+
+	&:global(.ant-select-multiple) :global(.ant-select-selection-item) {
+		display: inline-flex;
+		align-items: center;
+		height: 22px;
+		margin-block: 0;
+		line-height: 20px;
+	}
+
+	:global(.ant-select-selection-overflow) {
+		align-items: center;
+	}
 
 	:global(.ant-select-selector),
 	:global(.ant-input),

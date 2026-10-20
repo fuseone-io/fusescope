@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Info } from '@signozhq/icons';
 // eslint-disable-next-line signoz/no-antd-components -- lightweight description tooltip, matches V1
 import { Tooltip } from 'antd';
@@ -9,6 +9,7 @@ import type {
 	VariableSelectionMap,
 } from '../../selectionTypes';
 import { textDefault } from '../../utils/resolveVariableSelection';
+import { selectionTitle } from '../../utils/selectionTitle';
 import { computeVariableDependencies } from '../../utils/variableDependencies';
 import TextSelector from '../selectors/TextSelector';
 import VariableValueControl from '../selectors/VariableValueControl';
@@ -47,6 +48,10 @@ function VariableSelector({
 			usedBy: graph[variable.name] ?? [],
 		};
 	}, [variable.name, variables]);
+
+	// The full value as a hover hint, off while the control is in use so it
+	// never sits over the open list.
+	const [hasFocus, setHasFocus] = useState(false);
 
 	const hasTooltip =
 		!!variable.description || dependsOn.length > 0 || usedBy.length > 0;
@@ -104,7 +109,18 @@ function VariableSelector({
 				) : null}
 			</span>
 
-			<div className={styles.variableValue}>{renderControl()}</div>
+			<div
+				className={styles.variableValue}
+				title={hasFocus ? undefined : selectionTitle(selection)}
+				onFocus={(): void => setHasFocus(true)}
+				onBlur={(event): void => {
+					if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+						setHasFocus(false);
+					}
+				}}
+			>
+				{renderControl()}
+			</div>
 
 			{isFetchingOptions ? (
 				<span
