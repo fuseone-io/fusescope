@@ -31,3 +31,15 @@
 	align-items: center;
 	gap: 8px;
 }
+
+// The y-axis unit picker reads as the design's `.sel`.
+.header
+	:global(.ant-select:not(.ant-select-customize-input) .ant-select-selector) {
+	height: 32px !important;
+	padding: 0 10px !important;
+	border: 1px solid var(--fs-input) !important;
+	border-radius: 8px !important;
+	background: var(--fs-card) !important;
+	box-shadow: none !important;
+	font-size: 13px;
+}

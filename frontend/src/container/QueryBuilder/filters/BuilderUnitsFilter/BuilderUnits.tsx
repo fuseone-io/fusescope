@@ -16,7 +16,8 @@ function BuilderUnitsFilter({
 	const getPopupContainer = useSelectPopupContainer();
 	const { currentQuery, handleOnUnitsChange } = useQueryBuilder();
 
-	const selectedValue = yAxisUnit || currentQuery?.unit;
+	// An empty unit is no unit, so the placeholder shows.
+	const selectedValue = yAxisUnit || currentQuery?.unit || undefined;
 
 	const allOptions = categoryToSupport.map((category) => ({
 		label: category,
