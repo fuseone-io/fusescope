@@ -639,9 +639,12 @@
 		}
 	}
 
+	// Select and argument share the row equally; the argument's column stays
+	// empty for functions without one so selects line up across rows.
 	.qp-functions .query-function {
 		position: static;
-		display: flex !important;
+		display: grid !important;
+		grid-template-columns: 20px 18px minmax(0, 1fr) minmax(0, 1fr) 28px;
 		align-items: center !important;
 		gap: 8px;
 		min-height: 44px;
@@ -657,13 +660,16 @@
 		&::before,
 		&::after {
 			position: static;
-			flex: none;
-			order: -2;
+			grid-row: 1;
+		}
+
+		&::before {
+			grid-column: 1;
 		}
 
 		&::after {
 			content: 'fx';
-			order: -1;
+			grid-column: 2;
 			width: 18px;
 			height: auto;
 			background: none;
@@ -695,7 +701,9 @@
 		}
 
 		.query-function-name-selector {
-			flex: 1 1 140px;
+			grid-row: 1;
+			grid-column: 3;
+			width: auto;
 			min-width: 0;
 
 			.ant-select-selector {
@@ -712,10 +720,16 @@
 			}
 		}
 
+		.query-function-value {
+			grid-row: 1;
+			grid-column: 4;
+			min-width: 0;
+		}
+
 		.query-function-value,
 		.query-function-value input {
-			flex: none;
-			width: 110px;
+			width: 100% !important;
+			max-width: none;
 			height: 32px;
 			padding: 0 10px;
 			border: 1px solid var(--fs-input) !important;
@@ -731,7 +745,8 @@
 		}
 
 		.query-function-delete-btn {
-			flex: none;
+			grid-row: 1;
+			grid-column: 5;
 			width: 28px;
 			min-width: 28px;
 			height: 28px;
