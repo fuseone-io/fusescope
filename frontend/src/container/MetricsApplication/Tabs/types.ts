@@ -10,6 +10,7 @@ export interface IServiceName {
 
 export interface TopOperationQueryFactoryProps {
 	servicename: IServiceName['servicename'];
+	tagFilterItems: TagFilterItem[];
 }
 
 export interface ExternalCallDurationByAddressProps extends ExternalCallProps {

@@ -21,6 +21,7 @@ import { getQueryBuilderQuerieswithFormula } from './MetricsPageQueriesFactory';
 
 export const topOperationQueries = ({
 	servicename,
+	tagFilterItems,
 }: TopOperationQueryFactoryProps): QueryBuilderData => {
 	const latencyAutoCompleteData: BaseAutocompleteData = {
 		key: WidgetKeys.SignozLatencyBucket,
@@ -51,6 +52,7 @@ export const topOperationQueries = ({
 			value: [servicename],
 			op: OPERATORS.IN,
 		},
+		...tagFilterItems,
 	];
 
 	const errorRateAdditionalItemsA: TagFilterItem[] = [
@@ -74,6 +76,7 @@ export const topOperationQueries = ({
 			op: OPERATORS.IN,
 			value: ['STATUS_CODE_ERROR'],
 		},
+		...tagFilterItems,
 	];
 
 	const errorRateAdditionalItemsB = latencyAndNumberOfCallAdditionalItems;

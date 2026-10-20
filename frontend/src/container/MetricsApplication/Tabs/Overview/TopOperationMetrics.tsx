@@ -12,7 +12,10 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import {
+	convertRawQueriesToTraceSelectedTags,
+	resourceAttributesToTagFilterItems,
+} from 'hooks/useResourceAttribute/utils';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { AppState } from 'store/reducers';
 import { EQueryType } from 'types/common/dashboard';
@@ -20,6 +23,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from '../types';
+import { handleNonInQueryRange } from '../util';
 import { title } from './config';
 import ColumnWithLink from './TableRenderer/ColumnWithLink';
 import { getTableColumnRenderer } from './TableRenderer/TableColumnRenderer';
@@ -42,6 +46,11 @@ function TopOperationMetrics(): JSX.Element {
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
 
+	const tagFilterItems = useMemo(
+		() => handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)),
+		[queries],
+	);
+
 	const keyOperationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -50,13 +59,14 @@ function TopOperationMetrics(): JSX.Element {
 					promql: [],
 					builder: topOperationQueries({
 						servicename,
+						tagFilterItems,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
 				panelTypes: PANEL_TYPES.TABLE,
 			}),
-		[servicename],
+		[servicename, tagFilterItems],
 	);
 
 	const updatedQuery = updateStepInterval(keyOperationWidget.query);
