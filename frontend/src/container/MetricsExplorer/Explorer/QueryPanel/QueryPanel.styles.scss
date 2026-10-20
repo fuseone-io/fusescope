@@ -424,11 +424,19 @@
 	}
 
 	// Where and formula expressions: one sunken box, editor bare inside.
+	// Grows with a wrapped filter up to 8 lines, then scrolls inside.
 	.where {
 		@include box;
 
 		display: flex;
 		align-items: center;
+
+		&:has(.cm-editor) {
+			align-items: flex-start;
+			height: auto;
+			min-height: 32px;
+		}
+
 		gap: 8px;
 		min-width: 0;
 		padding: 0 10px;
@@ -470,15 +478,20 @@
 			box-shadow: none !important;
 		}
 
+		.cm-editor .cm-scroller {
+			max-height: 158px;
+			overflow-y: auto;
+		}
+
 		.cm-editor .cm-content {
 			min-height: 0;
-			padding: 0 24px 0 0 !important;
+			padding: 6px 24px 6px 0 !important;
 			font-size: 12px;
 		}
 
 		.cm-editor .cm-line {
 			padding: 0;
-			line-height: 30px;
+			line-height: 18px !important;
 		}
 
 		.query-status-container {
@@ -568,7 +581,14 @@
 		.having-filter-select-editor {
 			flex: 1;
 			overflow: hidden;
+			height: auto;
+			min-height: 32px;
 			padding: 0 10px;
+		}
+
+		.cm-editor .cm-scroller {
+			max-height: 158px;
+			overflow-y: auto;
 		}
 
 		.cm-editor,
@@ -592,8 +612,12 @@
 			font-size: 12px;
 		}
 
+		.cm-editor .cm-content {
+			padding: 6px 0 !important;
+		}
+
 		.cm-editor .cm-line {
-			line-height: 30px !important;
+			line-height: 18px !important;
 		}
 
 		.cm-editor,

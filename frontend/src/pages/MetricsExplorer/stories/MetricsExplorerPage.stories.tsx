@@ -1,10 +1,11 @@
+import { EditorView } from '@codemirror/view';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
 	findSuggestion,
 	openKeySuggestions,
 	typeFilter,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
-import { screen, within } from 'storybook/test';
+import { expect, screen, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -157,4 +158,60 @@ export const UnitSaveErrorToast: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await saveUnit(canvasElement, 'Failed to save unit');
 	},
+};
+
+const LONG_FILTER =
+	"exporter = 'logs' AND host.name CONTAINS 'signoz-host' OR le CONTAINS '1000' OR os.type ILIKE 'linux' OR server.port != '8888' AND service.instance.id CONTAINS 'b2c4e6f8-1a3c-4e5f-9a7b-0c1d2e3f4a5b'";
+
+/**
+ * A where clause too long for one line grows its field, line by line, and
+ * pushes the sections below it down instead of spilling over them.
+ */
+const growWhere = async (canvasElement: HTMLElement): Promise<void> => {
+	const card = await within(canvasElement).findByTestId(
+		'query-card-A',
+		{},
+		{ timeout: 15000 },
+	);
+	const where = await waitFor(() => {
+		const box = card.querySelector<HTMLElement>('.where');
+		const content = box?.querySelector<HTMLElement>('.cm-content');
+		const view = content && EditorView.findFromDOM(content);
+		expect(view).toBeTruthy();
+		return { box: box as HTMLElement, view: view as EditorView };
+	});
+	const single = where.box.getBoundingClientRect().height;
+
+	where.view.dispatch({
+		changes: { from: 0, to: where.view.state.doc.length, insert: LONG_FILTER },
+	});
+
+	await waitFor(() => {
+		const box = where.box.getBoundingClientRect();
+		const label = where.box.parentElement
+			?.querySelector('.flabel')
+			?.getBoundingClientRect();
+		const next = card.querySelector('.esec')?.getBoundingClientRect();
+		const lines = where.box.querySelectorAll('.cm-line');
+		const text = lines[lines.length - 1]?.getBoundingClientRect();
+
+		expect(single).toBe(32);
+		expect(box.height).toBeGreaterThan(single);
+		expect(label?.bottom ?? 0).toBeLessThanOrEqual(box.top);
+		expect(text?.bottom ?? Infinity).toBeLessThanOrEqual(box.bottom);
+		expect(box.bottom).toBeLessThanOrEqual(next?.top ?? 0);
+	});
+};
+
+/** The explorer's where clause holding a long filter, in the dark theme. */
+export const ExplorerLongFilter: Story = {
+	args: { tab: 'explorer' },
+	play: async ({ canvasElement }): Promise<void> => growWhere(canvasElement),
+};
+
+/** The same long filter in the light theme. */
+export const ExplorerLongFilterLight: Story = {
+	args: { tab: 'explorer' },
+	globals: { theme: 'light' },
+	play: async ({ canvasElement }): Promise<void> => growWhere(canvasElement),
 };
