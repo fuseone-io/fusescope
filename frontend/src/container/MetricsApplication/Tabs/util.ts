@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useMemo, useRef } from 'react';
+import { Dispatch, SetStateAction, useMemo, useRef } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -21,38 +21,14 @@ import {
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { Tags } from 'hooks/useResourceAttribute/types';
-import { isModifierKeyPressed } from 'utils/app';
-import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
-export const dbSystemTags: Tags[] = [
-	{
-		Key: 'db.system.(string)',
-		StringValues: [''],
-		NumberValues: [],
-		BoolValues: [],
-		Operator: 'Exists',
-	},
-];
-
-interface OnViewTracePopupClickProps {
-	servicename: string | undefined;
-	selectedTraceTags: string;
-	timestamp: number;
-	apmToTraceQuery: Query;
-	isViewLogsClicked?: boolean;
-	stepInterval?: number;
-	safeNavigate: (url: string, options?: { newTab?: boolean }) => void;
-}
-
-interface OnViewAPIMonitoringPopupClickProps {
+interface ExternalApisPathProps {
 	servicename: string;
-	timestamp: number;
-	stepInterval?: number;
 	domainName: string;
 	isError: boolean;
-	safeNavigate: (url: string, options?: { newTab?: boolean }) => void;
+	startTime: number;
+	endTime: number;
 }
 
 export function generateExplorerPath(
@@ -72,54 +48,43 @@ export function generateExplorerPath(
 	}=${JSONCompositeQuery}&${queryString.join('&')}`;
 }
 
-// TODO(@rahul-signoz): update the name of this function once we have view logs button in every panel
+interface ServiceExplorerPathProps {
+	isLogs: boolean;
+	search: string;
+	servicename: string;
+	selectedTraceTags: string;
+	query: Query;
+	startTimeMs: number;
+	endTimeMs: number;
+}
 
-/**
- * Handles click events for viewing trace/logs popup
- * @param selectedTraceTags - Selected trace tags
- * @param servicename - Name of the service
- * @param timestamp - Timestamp in seconds
- * @param apmToTraceQuery - Query object
- * @param isViewLogsClicked - Whether this is for viewing logs vs traces
- * @param stepInterval - Time interval in seconds
- * @param safeNavigate - Navigation function
- 
- */
-export function onViewTracePopupClick({
-	selectedTraceTags,
+/** The traces or logs explorer for `query` over the given range. */
+export function serviceExplorerPath({
+	isLogs,
+	search,
 	servicename,
-	timestamp,
-	apmToTraceQuery,
-	isViewLogsClicked,
-	stepInterval,
-	safeNavigate,
-}: OnViewTracePopupClickProps): (e?: React.MouseEvent) => void {
-	return (e?: React.MouseEvent): void => {
-		const endTime = secondsToMilliseconds(timestamp);
-		const startTime = secondsToMilliseconds(timestamp - (stepInterval || 60));
+	selectedTraceTags,
+	query,
+	startTimeMs,
+	endTimeMs,
+}: ServiceExplorerPathProps): string {
+	const urlParams = new URLSearchParams(search);
+	urlParams.set(QueryParams.startTime, startTimeMs.toString());
+	urlParams.set(QueryParams.endTime, endTimeMs.toString());
+	urlParams.delete(QueryParams.relativeTime);
+	const queryString = getQueryString(
+		routeConfig[ROUTES.TRACES_EXPLORER],
+		urlParams,
+	);
 
-		const urlParams = new URLSearchParams(window.location.search);
-		urlParams.set(QueryParams.startTime, startTime.toString());
-		urlParams.set(QueryParams.endTime, endTime.toString());
-		urlParams.delete(QueryParams.relativeTime);
-		const avialableParams = routeConfig[ROUTES.TRACES_EXPLORER];
-		const queryString = getQueryString(avialableParams, urlParams);
-
-		const JSONCompositeQuery = encodeURIComponent(
-			JSON.stringify(apmToTraceQuery),
-		);
-
-		const newPath = generateExplorerPath(
-			isViewLogsClicked,
-			urlParams,
-			servicename,
-			selectedTraceTags,
-			JSONCompositeQuery,
-			queryString,
-		);
-
-		safeNavigate(newPath, { newTab: !!e && isModifierKeyPressed(e) });
-	};
+	return generateExplorerPath(
+		isLogs,
+		urlParams,
+		servicename,
+		selectedTraceTags,
+		encodeURIComponent(JSON.stringify(query)),
+		queryString,
+	);
 }
 
 const generateAPIMonitoringPath = (
@@ -142,56 +107,45 @@ const generateAPIMonitoringPath = (
 		}),
 	})}`;
 };
-export function onViewAPIMonitoringPopupClick({
+/** External APIs for `domainName` as called by the service; times in seconds. */
+export function externalApisPath({
 	servicename,
-	timestamp,
 	domainName,
 	isError,
-	stepInterval,
-	safeNavigate,
-}: OnViewAPIMonitoringPopupClickProps): (e?: React.MouseEvent) => void {
-	return (e?: React.MouseEvent): void => {
-		const endTime = timestamp + (stepInterval || 60);
-		const startTime = timestamp - (stepInterval || 60);
-		const filters = {
-			items: [
-				...(isError
-					? [
-							{
-								id: uuid().slice(0, 8),
-								key: {
-									key: 'hasError',
-									dataType: DataTypes.bool,
-									type: 'tag',
-									id: 'hasError--bool--tag--true',
-								},
-								op: 'in',
-								value: ['true'],
+	startTime,
+	endTime,
+}: ExternalApisPathProps): string {
+	const filters = {
+		items: [
+			...(isError
+				? [
+						{
+							id: uuid().slice(0, 8),
+							key: {
+								key: 'hasError',
+								dataType: DataTypes.bool,
+								type: 'tag',
+								id: 'hasError--bool--tag--true',
 							},
-						]
-					: []),
-				{
-					id: uuid().slice(0, 8),
-					key: {
-						key: 'service.name',
-						dataType: DataTypes.String,
-						type: 'resource',
-					},
-					op: '=',
-					value: servicename,
+							op: 'in',
+							value: ['true'],
+						},
+					]
+				: []),
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'service.name',
+					dataType: DataTypes.String,
+					type: 'resource',
 				},
-			],
-			op: 'AND',
-		};
-		const newPath = generateAPIMonitoringPath(
-			domainName,
-			startTime,
-			endTime,
-			filters,
-		);
-
-		safeNavigate(newPath, { newTab: !!e && isModifierKeyPressed(e) });
+				op: '=',
+				value: servicename,
+			},
+		],
+		op: 'AND',
 	};
+	return generateAPIMonitoringPath(domainName, startTime, endTime, filters);
 }
 
 export function useGraphClickHandler(
@@ -294,31 +248,34 @@ export function useGetAPMToLogsQueries({
 	servicename: string;
 	filters?: TagFilterItem[];
 }): Query {
-	const finalFilters: TagFilterItem[] = [];
 	const { updateAllQueriesOperators } = useQueryBuilder();
-	let updatedQuery = updateAllQueriesOperators(
-		initialQueriesMap.logs,
-		PANEL_TYPES.LIST,
-		DataSource.LOGS,
-	);
-	const serviceName = {
-		id: 'service.name--string--resource--true',
-		dataType: DataTypes.String,
-		key: 'service.name',
-		type: 'resource',
-	};
+	const { queries } = useResourceAttribute();
 
-	if (filters?.length) {
-		finalFilters.push(...filters);
-	}
-	updatedQuery = prepareQueryWithDefaultTimestamp(updatedQuery);
-	return handleQueryChange(
-		updatedQuery,
-		serviceName,
-		servicename,
-		finalFilters,
-		true,
-	);
+	return useMemo(() => {
+		const updatedQuery = prepareQueryWithDefaultTimestamp(
+			updateAllQueriesOperators(
+				initialQueriesMap.logs,
+				PANEL_TYPES.LIST,
+				DataSource.LOGS,
+			),
+		);
+		const serviceName = {
+			id: 'service.name--string--resource--true',
+			dataType: DataTypes.String,
+			key: 'service.name',
+			type: 'resource',
+		};
+
+		return handleQueryChange(
+			updatedQuery,
+			serviceName,
+			servicename,
+			[...(filters ?? []), ...resourceAttributesToTracesFilterItems(queries)],
+			true,
+		);
+		// Callers pass fixed filters with fresh ids every render.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [servicename, queries, updateAllQueriesOperators]);
 }
 
 export function useGetAPMToTracesQueries({

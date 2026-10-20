@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
@@ -13,46 +13,34 @@ import {
 } from 'container/MetricsApplication/MetricsPageQueries/DBCallQueries';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
-	convertRawQueriesToTraceSelectedTags,
 	getResourceDeploymentKeys,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import getStep from 'lib/getStep';
 import history from 'lib/history';
-import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import {
-	GraphTitle,
-	MENU_ITEMS,
-	SERVICE_CHART_ID,
-	SERVICE_DETAIL_DRILLDOWN_ENABLED,
-} from '../constant';
+import { GraphTitle, MENU_ITEMS, SERVICE_CHART_ID } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import ChartCell from '../components/ChartCell';
 import ChartGrid from '../components/ChartGrid';
 import ChartPanel from '../components/ChartPanel';
+import { useServiceChartMenu } from '../hooks/useServiceChartMenu';
 import { GraphContainer } from '../styles';
-import { Button } from './styles';
 import { IServiceName } from './types';
 import {
-	dbSystemTags,
 	handleNonInQueryRange,
-	onViewTracePopupClick,
+	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
-	useGraphClickHandler,
 } from './util';
 
 function DBCall(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 
 	const servicename = decodeURIComponent(encodedServiceName);
-	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
 	const urlQuery = useUrlQuery();
 	const { pathname } = useLocation();
@@ -78,14 +66,6 @@ function DBCall(): JSX.Element {
 	const tagFilterItems: TagFilterItem[] = useMemo(
 		() =>
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
-		[queries],
-	);
-
-	const selectedTraceTags: string = useMemo(
-		() =>
-			JSON.stringify(
-				convertRawQueriesToTraceSelectedTags(queries).concat(...dbSystemTags) || [],
-			),
 		[queries],
 	);
 
@@ -135,16 +115,6 @@ function DBCall(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
-	const stepInterval = useMemo(
-		() =>
-			getStep({
-				end: store.getState().globalTime.maxTime,
-				inputFormat: 'ns',
-				start: store.getState().globalTime.minTime,
-			}),
-		[],
-	);
-
 	const logEventCalledRef = useRef(false);
 
 	useEffect(() => {
@@ -167,83 +137,37 @@ function DBCall(): JSX.Element {
 		servicename,
 		isDBCall: true,
 	});
-	const { safeNavigate } = useSafeNavigate();
-
-	const onGraphClickHandler = useGraphClickHandler(setSelectedTimeStamp);
+	const apmToLogsQuery = useGetAPMToLogsQueries({ servicename });
+	const menuFor = useServiceChartMenu(servicename);
+	const pointMenu = useMemo(
+		() => menuFor({ tracesQuery: apmToTraceQuery, logsQuery: apmToLogsQuery }),
+		[menuFor, apmToTraceQuery, apmToLogsQuery],
+	);
 
 	return (
 		<ChartGrid>
 			<ChartCell>
-				<Button
-					type="default"
-					size="small"
-					id="database_call_rps_button"
-					onClick={onViewTracePopupClick({
-						servicename,
-						selectedTraceTags,
-						timestamp: selectedTimeStamp,
-						apmToTraceQuery,
-						stepInterval,
-						safeNavigate,
-					})}
-				>
-					View Traces
-				</Button>
 				<ChartPanel testId="database_call_rps">
 					<GraphContainer>
 						<Graph
 							widget={databaseCallsRPSWidget}
-							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-								onGraphClickHandler(
-									xValue,
-									yValue,
-									mouseX,
-									mouseY,
-									'database_call_rps',
-								);
-							}}
+							pointMenu={pointMenu}
 							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
-							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
 				</ChartPanel>
 			</ChartCell>
 
 			<ChartCell>
-				<Button
-					type="default"
-					size="small"
-					id="database_call_avg_duration_button"
-					onClick={onViewTracePopupClick({
-						servicename,
-						selectedTraceTags,
-						timestamp: selectedTimeStamp,
-						apmToTraceQuery,
-						stepInterval,
-						safeNavigate,
-					})}
-				>
-					View Traces
-				</Button>
-
 				<ChartPanel testId="database_call_avg_duration">
 					<GraphContainer>
 						<Graph
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}
-							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-								onGraphClickHandler(
-									xValue,
-									yValue,
-									mouseX,
-									mouseY,
-									'database_call_avg_duration',
-								);
-							}}
+							pointMenu={pointMenu}
 							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
-							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
 				</ChartPanel>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,31 +11,20 @@ import Panel from 'components/PageTemplate/components/Panel';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
-import { routeConfig } from 'container/SideNav/config';
-import { getQueryString } from 'container/SideNav/helper';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
-	convertRawQueriesToTraceSelectedTags,
 	getResourceDeploymentKeys,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import getStep from 'lib/getStep';
 import history from 'lib/history';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isModifierKeyPressed } from 'utils/app';
-import { openInNewTab } from 'utils/navigation';
-import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
 import { GraphTitle, SERVICE_CHART_ID } from '../constant';
@@ -46,22 +35,18 @@ import {
 } from '../MetricsPageQueries/OverviewQueries';
 import ChartCell from '../components/ChartCell';
 import ChartGrid from '../components/ChartGrid';
+import { useServiceChartMenu } from '../hooks/useServiceChartMenu';
 import ApDex from './Overview/ApDex';
-import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel';
 import ServiceKpis from './Overview/ServiceKpis';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
 import TopOperationMetrics from './Overview/TopOperationMetrics';
-import { Button } from './styles';
 import { IServiceName } from './types';
 import {
-	generateExplorerPath,
 	handleNonInQueryRange,
-	onViewTracePopupClick,
 	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
-	useGraphClickHandler,
 } from './util';
 
 function Application(): JSX.Element {
@@ -72,8 +57,7 @@ function Application(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-	const { search, pathname } = useLocation();
+	const { pathname } = useLocation();
 	const { queries } = useResourceAttribute();
 	const urlQuery = useUrlQuery();
 
@@ -82,20 +66,7 @@ function Application(): JSX.Element {
 		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
 			?.active || false;
 
-	const handleSetTimeStamp = useCallback((selectTime: number) => {
-		setSelectedTimeStamp(selectTime);
-	}, []);
-
-	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
-
 	const dispatch = useDispatch();
-	const handleGraphClick = useCallback(
-		(type: string): OnClickPluginOpts['onClick'] =>
-			(xValue, yValue, mouseX, mouseY): Promise<void> =>
-				onGraphClickHandler(xValue, yValue, mouseX, mouseY, type),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[handleSetTimeStamp],
-	);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
@@ -132,11 +103,8 @@ function Application(): JSX.Element {
 		keepPreviousData: true,
 	});
 
-	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(queries) || [],
-	);
-
 	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
+	const apmToLogsQuery = useGetAPMToLogsQueries({ servicename });
 
 	const tagFilterItems = useMemo(
 		() =>
@@ -197,16 +165,6 @@ function Application(): JSX.Element {
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
-	const stepInterval = useMemo(
-		() =>
-			getStep({
-				end: maxTime,
-				inputFormat: 'ns',
-				start: minTime,
-			}),
-		[maxTime, minTime],
-	);
-
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
 			const startTimestamp = Math.trunc(start);
@@ -222,53 +180,6 @@ function Application(): JSX.Element {
 			}
 		},
 		[dispatch, pathname, urlQuery],
-	);
-
-	/**
-	 *
-	 * @param timestamp - The timestamp in seconds
-	 * @param apmToTraceQuery - query object
-	 * @param isViewLogsClicked - Whether this is for viewing logs vs traces
-	 * @returns A callback function that handles the navigation when executed
-	 */
-	const onErrorTrackHandler = useCallback(
-		(
-			timestamp: number,
-			apmToTraceQuery: Query,
-			isViewLogsClicked?: boolean,
-		): ((e: React.MouseEvent) => void) =>
-			(e: React.MouseEvent): void => {
-				const endTime = secondsToMilliseconds(timestamp);
-				const startTime = secondsToMilliseconds(timestamp - stepInterval);
-
-				const urlParams = new URLSearchParams(search);
-				urlParams.set(QueryParams.startTime, startTime.toString());
-				urlParams.set(QueryParams.endTime, endTime.toString());
-				urlParams.delete(QueryParams.relativeTime);
-				const avialableParams = routeConfig[ROUTES.TRACES_EXPLORER];
-				const queryString = getQueryString(avialableParams, urlParams);
-
-				const JSONCompositeQuery = encodeURIComponent(
-					JSON.stringify(apmToTraceQuery),
-				);
-
-				const newPath = generateExplorerPath(
-					isViewLogsClicked,
-					urlParams,
-					servicename,
-					selectedTraceTags,
-					JSONCompositeQuery,
-					queryString,
-				);
-
-				if (isModifierKeyPressed(e)) {
-					openInNewTab(newPath);
-				} else {
-					history.push(newPath);
-				}
-			},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[stepInterval],
 	);
 
 	const logErrorQuery = useGetAPMToLogsQueries({
@@ -303,7 +214,15 @@ function Application(): JSX.Element {
 			},
 		],
 	});
-	const { safeNavigate } = useSafeNavigate();
+	const menuFor = useServiceChartMenu(servicename);
+	const serviceMenu = useMemo(
+		() => menuFor({ tracesQuery: apmToTraceQuery, logsQuery: apmToLogsQuery }),
+		[menuFor, apmToTraceQuery, apmToLogsQuery],
+	);
+	const errorMenu = useMemo(
+		() => menuFor({ tracesQuery: errorTrackQuery, logsQuery: logErrorQuery }),
+		[menuFor, errorTrackQuery, logErrorQuery],
+	);
 
 	return (
 		<div className="tw:flex tw:flex-col tw:gap-4">
@@ -312,61 +231,27 @@ function Application(): JSX.Element {
 				<ChartCell>
 					<ServiceOverview
 						onDragSelect={onDragSelect}
-						handleGraphClick={handleGraphClick}
-						selectedTimeStamp={selectedTimeStamp}
-						selectedTraceTags={selectedTraceTags}
+						pointMenu={serviceMenu}
 						topLevelOperationsRoute={topLevelOperationsRoute}
 						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
-						stepInterval={stepInterval}
 					/>
 				</ChartCell>
 
 				<ChartCell>
-					<Button
-						type="default"
-						size="small"
-						id="Rate_button"
-						onClick={onViewTracePopupClick({
-							servicename,
-							selectedTraceTags,
-							timestamp: selectedTimeStamp,
-							apmToTraceQuery,
-							stepInterval,
-							safeNavigate,
-						})}
-					>
-						View Traces
-					</Button>
 					<TopLevelOperation
-						handleGraphClick={handleGraphClick}
+						pointMenu={serviceMenu}
 						onDragSelect={onDragSelect}
 						topLevelOperationsError={topLevelOperationsError}
 						topLevelOperationsIsError={topLevelOperationsIsError}
 						name="operations_per_sec"
 						widget={operationPerSecWidget}
-						opName="Rate"
 						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
 					/>
 				</ChartCell>
 
 				<ChartCell>
-					<Button
-						type="default"
-						size="small"
-						id="ApDex_button"
-						onClick={onViewTracePopupClick({
-							servicename,
-							selectedTraceTags,
-							timestamp: selectedTimeStamp,
-							apmToTraceQuery,
-							stepInterval,
-							safeNavigate,
-						})}
-					>
-						View Traces
-					</Button>
 					<ApDex
-						handleGraphClick={handleGraphClick}
+						pointMenu={serviceMenu}
 						onDragSelect={onDragSelect}
 						topLevelOperationsRoute={topLevelOperationsRoute}
 						tagFilterItems={tagFilterItems}
@@ -374,27 +259,13 @@ function Application(): JSX.Element {
 				</ChartCell>
 
 				<ChartCell>
-					<GraphControlsPanel
-						id="Error_button"
-						onViewLogsClick={onErrorTrackHandler(
-							selectedTimeStamp,
-							logErrorQuery,
-							true,
-						)}
-						onViewTracesClick={onErrorTrackHandler(
-							selectedTimeStamp,
-							errorTrackQuery,
-						)}
-					/>
-
 					<TopLevelOperation
-						handleGraphClick={handleGraphClick}
+						pointMenu={errorMenu}
 						onDragSelect={onDragSelect}
 						topLevelOperationsError={topLevelOperationsError}
 						topLevelOperationsIsError={topLevelOperationsIsError}
 						name="error_percentage_%"
 						widget={errorPercentageWidget}
-						opName="Error"
 						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
 					/>
 				</ChartCell>

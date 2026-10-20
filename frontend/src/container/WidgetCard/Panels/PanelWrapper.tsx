@@ -25,6 +25,7 @@ function PanelWrapper({
 	customOnRowClick,
 	panelMode,
 	enableDrillDown = false,
+	pointMenu,
 	onColumnWidthsChange,
 	hidePagination,
 }: PanelWrapperProps): JSX.Element {
@@ -75,6 +76,7 @@ function PanelWrapper({
 			customOnRowClick={customOnRowClick}
 			customSeries={customSeries}
 			enableDrillDown={enableDrillDown}
+			pointMenu={pointMenu}
 			onColumnWidthsChange={onColumnWidthsChange}
 			groupByPerQuery={groupByPerQuery}
 			hidePagination={hidePagination}

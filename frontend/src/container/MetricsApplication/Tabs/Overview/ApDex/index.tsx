@@ -11,7 +11,7 @@ import ApDexMetricsApplication from './ApDexMetricsApplication';
 import { ApDexApplicationProps } from './types';
 
 function ApDexApplication({
-	handleGraphClick,
+	pointMenu,
 	onDragSelect,
 	topLevelOperationsRoute,
 	tagFilterItems,
@@ -44,7 +44,7 @@ function ApDexApplication({
 		<ChartPanel testId="apdex">
 			<GraphContainer>
 				<ApDexMetricsApplication
-					handleGraphClick={handleGraphClick}
+					pointMenu={pointMenu}
 					onDragSelect={onDragSelect}
 					topLevelOperationsRoute={topLevelOperationsRoute}
 					tagFilterItems={tagFilterItems}

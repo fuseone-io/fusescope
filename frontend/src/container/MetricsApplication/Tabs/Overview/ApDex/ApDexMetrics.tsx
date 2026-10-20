@@ -15,7 +15,6 @@ import DisplayThreshold from 'container/WidgetCard/Header/DisplayThreshold';
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,
-	SERVICE_DETAIL_DRILLDOWN_ENABLED,
 } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
@@ -32,7 +31,7 @@ function ApDexMetrics({
 	onDragSelect,
 	tagFilterItems,
 	topLevelOperationsRoute,
-	handleGraphClick,
+	pointMenu,
 }: ApDexMetricsProps): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -94,11 +93,10 @@ function ApDexMetrics({
 		<Graph
 			widget={apDexMetricsWidget}
 			onDragSelect={onDragSelect}
-			onClickHandler={handleGraphClick('ApDex')}
+			pointMenu={pointMenu}
 			threshold={threshold}
 			isQueryEnabled={isQueryEnabled}
 			version={ENTITY_VERSION_V4}
-			enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 		/>
 	);
 }

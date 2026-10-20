@@ -7,37 +7,26 @@ import Graph from 'container/WidgetCard/Card';
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,
-	SERVICE_DETAIL_DRILLDOWN_ENABLED,
 } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import ChartPanel from 'container/MetricsApplication/components/ChartPanel';
+import { PanelPointMenu } from 'container/WidgetCard/Panels/pointMenu.types';
 import { GraphContainer } from 'container/MetricsApplication/styles';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { useAppContext } from 'providers/App/App';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from '../types';
-import {
-	handleNonInQueryRange,
-	onViewTracePopupClick,
-	useGetAPMToLogsQueries,
-	useGetAPMToTracesQueries,
-} from '../util';
-import GraphControlsPanel from './GraphControlsPanel/GraphControlsPanel';
+import { handleNonInQueryRange } from '../util';
 
 function ServiceOverview({
 	onDragSelect,
-	handleGraphClick,
-	selectedTraceTags,
-	selectedTimeStamp,
+	pointMenu,
 	topLevelOperationsRoute,
 	topLevelOperationsIsLoading,
-	stepInterval,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -83,55 +72,23 @@ function ServiceOverview({
 	const isQueryEnabled =
 		!topLevelOperationsIsLoading && topLevelOperationsRoute.length > 0;
 
-	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
-
-	const apmToLogQuery = useGetAPMToLogsQueries({ servicename });
-
-	const { safeNavigate } = useSafeNavigate();
-
 	return (
-		<>
-			<GraphControlsPanel
-				id="Service_button"
-				onViewLogsClick={onViewTracePopupClick({
-					servicename,
-					selectedTraceTags,
-					timestamp: selectedTimeStamp,
-					apmToTraceQuery: apmToLogQuery,
-					isViewLogsClicked: true,
-					stepInterval,
-					safeNavigate,
-				})}
-				onViewTracesClick={onViewTracePopupClick({
-					servicename,
-					selectedTraceTags,
-					timestamp: selectedTimeStamp,
-					apmToTraceQuery,
-					stepInterval,
-					safeNavigate,
-				})}
-			/>
-			<ChartPanel testId="service_latency">
-				<GraphContainer>
-					<Graph
-						onDragSelect={onDragSelect}
-						widget={latencyWidget}
-						onClickHandler={handleGraphClick('Service')}
-						isQueryEnabled={isQueryEnabled}
-						version={ENTITY_VERSION_V4}
-						enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
-					/>
-				</GraphContainer>
-			</ChartPanel>
-		</>
+		<ChartPanel testId="service_latency">
+			<GraphContainer>
+				<Graph
+					onDragSelect={onDragSelect}
+					widget={latencyWidget}
+					pointMenu={pointMenu}
+					isQueryEnabled={isQueryEnabled}
+					version={ENTITY_VERSION_V4}
+				/>
+			</GraphContainer>
+		</ChartPanel>
 	);
 }
 interface ServiceOverviewProps {
-	stepInterval: number;
-	selectedTimeStamp: number;
-	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;
-	handleGraphClick: (type: string) => OnClickPluginOpts['onClick'];
+	pointMenu: PanelPointMenu;
 	topLevelOperationsRoute: string[];
 	topLevelOperationsIsLoading: boolean;
 }

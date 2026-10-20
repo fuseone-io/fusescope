@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
@@ -15,44 +15,31 @@ import {
 } from 'container/MetricsApplication/MetricsPageQueries/ExternalQueries';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
-	convertRawQueriesToTraceSelectedTags,
 	getResourceDeploymentKeys,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import getStep from 'lib/getStep';
 import history from 'lib/history';
-import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import {
-	GraphTitle,
-	legend,
-	MENU_ITEMS,
-	SERVICE_DETAIL_DRILLDOWN_ENABLED,
-} from '../constant';
+import { GraphTitle, legend, MENU_ITEMS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import ChartCell from '../components/ChartCell';
 import ChartGrid from '../components/ChartGrid';
 import ChartPanel from '../components/ChartPanel';
+import { useServiceChartMenu } from '../hooks/useServiceChartMenu';
 import { GraphContainer } from '../styles';
-import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel';
 import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
-	onViewAPIMonitoringPopupClick,
-	onViewTracePopupClick,
+	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
-	useGraphClickHandler,
 } from './util';
 
 function External(): JSX.Element {
-	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-	const [selectedData, setSelectedData] = useState<any>(undefined);
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -107,11 +94,6 @@ function External(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
-	const selectedTraceTags = useMemo(
-		() => JSON.stringify(convertRawQueriesToTraceSelectedTags(queries) || []),
-		[queries],
-	);
-
 	const externalCallDurationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -152,15 +134,6 @@ function External(): JSX.Element {
 		],
 	});
 
-	const stepInterval = useMemo(
-		() =>
-			getStep({
-				end: store.getState().globalTime.maxTime,
-				inputFormat: 'ns',
-				start: store.getState().globalTime.minTime,
-			}),
-		[],
-	);
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
@@ -229,184 +202,80 @@ function External(): JSX.Element {
 		isExternalCall: true,
 	});
 
-	const { safeNavigate } = useSafeNavigate();
-
-	const onGraphClickHandler = useGraphClickHandler(
-		setSelectedTimeStamp,
-		setSelectedData,
+	const apmToLogsQuery = useGetAPMToLogsQueries({ servicename });
+	const menuFor = useServiceChartMenu(servicename);
+	const errorMenu = useMemo(
+		() =>
+			menuFor({
+				tracesQuery: errorApmToTraceQuery,
+				logsQuery: apmToLogsQuery,
+				externalApis: { isError: true },
+			}),
+		[menuFor, errorApmToTraceQuery, apmToLogsQuery],
+	);
+	const callsMenu = useMemo(
+		() =>
+			menuFor({
+				tracesQuery: apmToTraceQuery,
+				logsQuery: apmToLogsQuery,
+				externalApis: { isError: false },
+			}),
+		[menuFor, apmToTraceQuery, apmToLogsQuery],
 	);
 
 	return (
 		<ChartGrid>
 			<ChartCell>
-				<GraphControlsPanel
-					id="external_call_error_percentage_button"
-					onViewTracesClick={onViewTracePopupClick({
-						servicename,
-						selectedTraceTags,
-						timestamp: selectedTimeStamp,
-						apmToTraceQuery: errorApmToTraceQuery,
-						stepInterval,
-						safeNavigate,
-					})}
-					onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
-						servicename,
-						timestamp: selectedTimeStamp,
-						domainName: selectedData?.address || '',
-						isError: true,
-						stepInterval: 300,
-						safeNavigate,
-					})}
-				/>
 				<ChartPanel testId="external_call_error_percentage">
 					<GraphContainer>
 						<Graph
 							headerMenuList={MENU_ITEMS}
 							widget={externalCallErrorWidget}
-							onClickHandler={(xValue, yValue, mouseX, mouseY, data): void => {
-								onGraphClickHandler(
-									xValue,
-									yValue,
-									mouseX,
-									mouseY,
-									'external_call_error_percentage',
-									data,
-								);
-							}}
+							pointMenu={errorMenu}
 							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
-							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
 				</ChartPanel>
 			</ChartCell>
 
 			<ChartCell>
-				<GraphControlsPanel
-					id="external_call_duration_button"
-					onViewTracesClick={onViewTracePopupClick({
-						servicename,
-						selectedTraceTags,
-						timestamp: selectedTimeStamp,
-						apmToTraceQuery,
-						stepInterval,
-						safeNavigate,
-					})}
-					onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
-						servicename,
-						timestamp: selectedTimeStamp,
-						domainName: selectedData?.address,
-						isError: false,
-						stepInterval: 300,
-						safeNavigate,
-					})}
-				/>
-
 				<ChartPanel testId="external_call_duration">
 					<GraphContainer>
 						<Graph
 							headerMenuList={MENU_ITEMS}
 							widget={externalCallDurationWidget}
-							onClickHandler={(xValue, yValue, mouseX, mouseY, data): void => {
-								onGraphClickHandler(
-									xValue,
-									yValue,
-									mouseX,
-									mouseY,
-									'external_call_duration',
-									data,
-								);
-							}}
+							pointMenu={callsMenu}
 							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
-							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
 				</ChartPanel>
 			</ChartCell>
 
 			<ChartCell>
-				<GraphControlsPanel
-					id="external_call_rps_by_address_button"
-					onViewTracesClick={onViewTracePopupClick({
-						servicename,
-						selectedTraceTags,
-						timestamp: selectedTimeStamp,
-						apmToTraceQuery,
-						stepInterval,
-						safeNavigate,
-					})}
-					onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
-						servicename,
-						timestamp: selectedTimeStamp,
-						domainName: selectedData?.address,
-						isError: false,
-						stepInterval: 300,
-						safeNavigate,
-					})}
-				/>
 				<ChartPanel testId="external_call_rps_by_address">
 					<GraphContainer>
 						<Graph
 							widget={externalCallRPSWidget}
 							headerMenuList={MENU_ITEMS}
-							onClickHandler={(xValue, yValue, mouseX, mouseY, data): Promise<void> =>
-								onGraphClickHandler(
-									xValue,
-									yValue,
-									mouseX,
-									mouseY,
-									'external_call_rps_by_address',
-									data,
-								)
-							}
+							pointMenu={callsMenu}
 							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
-							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
 				</ChartPanel>
 			</ChartCell>
 
 			<ChartCell>
-				<GraphControlsPanel
-					id="external_call_duration_by_address_button"
-					onViewTracesClick={onViewTracePopupClick({
-						servicename,
-						selectedTraceTags,
-						timestamp: selectedTimeStamp,
-						apmToTraceQuery,
-						stepInterval,
-						safeNavigate,
-					})}
-					onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
-						servicename,
-						timestamp: selectedTimeStamp,
-						domainName: selectedData?.address,
-						isError: false,
-						stepInterval: 300,
-						safeNavigate,
-					})}
-				/>
-
 				<ChartPanel testId="external_call_duration_by_address">
 					<GraphContainer>
 						<Graph
 							widget={externalCallDurationAddressWidget}
 							headerMenuList={MENU_ITEMS}
-							onClickHandler={(xValue, yValue, mouseX, mouseY, data): void => {
-								onGraphClickHandler(
-									xValue,
-									yValue,
-									mouseX,
-									mouseY,
-									'external_call_duration_by_address',
-									data,
-								);
-							}}
+							pointMenu={callsMenu}
 							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
-							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
 				</ChartPanel>

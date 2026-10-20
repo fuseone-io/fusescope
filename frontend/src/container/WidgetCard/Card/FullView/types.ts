@@ -7,6 +7,8 @@ import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Widgets } from 'types/api/widgets/widget';
 import uPlot from 'uplot';
 
+import { PanelPointMenu } from 'container/WidgetCard/Panels/pointMenu.types';
+
 export interface DataSetProps {
 	index: number;
 	data: number | null;
@@ -50,6 +52,7 @@ export interface FullViewProps {
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
 	setCurrentGraphRef: Dispatch<SetStateAction<RefObject<HTMLDivElement> | null>>;
 	enableDrillDown?: boolean;
+	pointMenu?: PanelPointMenu;
 }
 
 export interface GraphManagerProps extends UplotProps {
