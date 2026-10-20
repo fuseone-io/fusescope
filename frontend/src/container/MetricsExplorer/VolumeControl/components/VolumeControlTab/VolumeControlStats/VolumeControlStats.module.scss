@@ -17,14 +17,14 @@
 	gap: 6px;
 	min-width: 150px;
 	padding: 12px 16px;
-	border: 1px solid var(--l1-border);
-	border-radius: 6px;
-	background: var(--l2-background);
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
 }
 
 .statCardHighlighted {
-	border-color: var(--callout-success-border);
-	background: var(--callout-success-background);
+	border-color: color-mix(in srgb, var(--fs-success) 40%, transparent);
+	background: var(--fs-success-soft);
 }
 
 .statCardLabelRow {
@@ -40,7 +40,7 @@
 
 .statCardInfo {
 	flex-shrink: 0;
-	color: var(--l2-foreground);
+	color: var(--fs-subtle-foreground);
 	line-height: 1;
 	cursor: help;
 }
@@ -49,5 +49,6 @@
 	display: flex;
 	align-items: baseline;
 	gap: 6px;
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--tw-font-sans);
+	font-variant-numeric: tabular-nums;
 }

@@ -2,15 +2,15 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	padding: 16px 0;
+	padding: 0 0 16px;
 }
 
 .metricNameCell {
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--tw-font-mono);
 }
 
 .attributesCell {
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--tw-font-mono);
 }
 
 .volumeCell {
