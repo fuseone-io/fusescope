@@ -1,5 +1,4 @@
 import { BookOpenText, CircleX, TriangleAlert } from '@signozhq/icons';
-import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 
 import type { PanelStatusDetail, PanelStatusVariant } from './types';
@@ -11,8 +10,8 @@ interface PanelStatusContentProps {
 }
 
 const VARIANT_ICON = {
-	error: { Icon: CircleX, color: Color.BG_CHERRY_500 },
-	warning: { Icon: TriangleAlert, color: Color.BG_AMBER_500 },
+	error: { Icon: CircleX, color: 'var(--fs-error)' },
+	warning: { Icon: TriangleAlert, color: 'var(--fs-warning)' },
 };
 
 /** Popover card for a panel status (error or warning). Pure presentation. */

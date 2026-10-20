@@ -1,40 +1,61 @@
 .header {
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: 8px;
 	min-height: 36px;
-	padding: 4px;
-
-	&.headerOpen {
-		border-bottom: 1px solid var(--fs-border);
-	}
+	padding: 0 4px;
+	font-family:
+		Inter,
+		'Segoe UI',
+		-apple-system,
+		system-ui,
+		sans-serif;
 }
 
 .dragHandle {
-	--button-cursor: grab;
+	display: inline-flex;
+	cursor: grab;
 
 	&:active {
-		--button-cursor: grabbing;
+		cursor: grabbing;
 	}
 }
 
+.dragButton {
+	width: 24px;
+	height: 28px;
+	color: var(--fs-subtle-foreground);
+	cursor: inherit;
+}
+
 .toggle {
-	flex: 1;
+	flex: 0 1 auto;
 	min-width: 0;
-	--button-justify-content: flex-start;
+	padding: 0 6px;
+	color: var(--fs-foreground);
+	font-size: 13px;
+	font-weight: 600;
+
+	svg {
+		color: var(--fs-muted-foreground);
+	}
 }
 
 .title {
-	margin-left: 4px;
-	color: var(--fs-foreground);
-	font-size: 14px;
-	font-weight: 600;
-	white-space: nowrap;
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .repeatBadge {
-	margin-left: 8px;
-	opacity: 0.6;
+	color: var(--fs-subtle-foreground);
+	font-weight: 400;
+}
+
+.rule {
+	flex: 1;
+	min-width: 16px;
+	height: 1px;
+	background: var(--fs-border);
 }

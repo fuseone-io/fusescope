@@ -6,7 +6,7 @@
 	width: 100%;
 	background: var(--text-panel-surface, var(--fs-card));
 	border: 1px solid var(--text-panel-border, var(--fs-border));
-	border-radius: 8px;
+	border-radius: 12px;
 	// Inherits into the header and the body, so no descendant names a colour.
 	color: var(--text-panel-ink, inherit);
 	overflow: hidden;

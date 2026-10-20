@@ -1,5 +1,4 @@
-import { ChevronDown } from '@signozhq/icons';
-import { Typography } from '@signozhq/ui/typography';
+import { ChevronDown } from 'lucide-react';
 
 import { NEW_PANEL_SIZE } from '../../../patchOps';
 import { usePanelPickerTargetStore } from '../../../store/usePanelPickerTargetStore';
@@ -24,9 +23,9 @@ function DraftSection(): JSX.Element | null {
 		<div className={styles.draftSection} data-testid="draft-section">
 			<div className={styles.header}>
 				<ChevronDown size={14} />
-				<Typography.Text className={title ? styles.title : styles.placeholder}>
+				<span className={title ? styles.title : styles.placeholder}>
 					{title || 'New section'}
-				</Typography.Text>
+				</span>
 			</div>
 			<div style={{ padding: GRID_MARGIN }}>
 				<div

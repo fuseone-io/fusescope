@@ -3,7 +3,7 @@
 }
 
 .pickerTarget {
-	border-radius: 4px;
+	border-radius: 8px;
 	outline: 1px dashed var(--fs-primary);
 	outline-offset: 2px;
 }
@@ -12,13 +12,22 @@
 	opacity: 0.8;
 }
 
-.deleteModal :global(.ant-modal-confirm-body) {
-	align-items: center;
-}
-
 .emptySection {
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	margin: 8px 4px 0;
 	padding: 24px 12px;
+	border: 1px dashed var(--fs-border);
+	border-radius: 12px;
+	font-family:
+		Inter,
+		'Segoe UI',
+		-apple-system,
+		system-ui,
+		sans-serif;
+}
+
+.addPanel {
+	color: var(--fs-muted-foreground);
 }

@@ -1,6 +1,5 @@
 import type { ReactElement, ReactNode } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from 'components/ui/button';
 import cx from 'classnames';
 
 import styles from './PanelMessage.module.scss';
@@ -49,29 +48,26 @@ function PanelMessage({
 	}
 
 	return (
-		<div className={styles.message} data-testid={testId}>
+		<div className={cx('fs-ui', styles.message)} data-testid={testId}>
 			<div className={cx(styles.icon, { [styles.iconDanger]: tone === 'danger' })}>
 				{icon}
 			</div>
-			<Typography.Text className={styles.title}>{title}</Typography.Text>
-			{description && (
-				<Typography.Text className={styles.description}>
-					{description}
-				</Typography.Text>
-			)}
+			<span className={styles.title}>{title}</span>
+			{description && <span className={styles.description}>{description}</span>}
 			{actions.length > 0 && (
 				<div className={styles.actions}>
 					{actions.map(({ suffix, action: item }) => (
 						<Button
 							key={suffix}
-							variant="outlined"
-							color="secondary"
+							type="button"
+							variant="outline"
 							size="sm"
-							prefix={item.icon}
 							onClick={item.onClick}
-							testId={testId ? `${testId}-${suffix}` : undefined}
+							data-testid={testId ? `${testId}-${suffix}` : undefined}
+							className={styles.actionButton}
 						>
-							{item.label}
+							{item.icon}
+							<span>{item.label}</span>
 						</Button>
 					))}
 				</div>

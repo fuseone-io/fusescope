@@ -1,10 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import { Input } from '@signozhq/ui/input';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
+import { Input } from 'components/ui/input';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { LoaderCircle } from 'lucide-react';
 
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
-import styles from './SectionTitleModal.module.scss';
 
 interface SectionTitleModalProps {
 	open: boolean;
@@ -50,57 +58,71 @@ function SectionTitleModal({
 		onSubmit(value.trim());
 	};
 
+	const isEmpty = value.trim().length === 0;
+
 	return (
-		<DialogWrapper
-			title={heading}
+		<Dialog
 			open={open}
-			width="narrow"
 			onOpenChange={(next): void => {
 				if (!next) {
 					onClose();
 				}
 			}}
-			footer={
-				<div className={styles.footer}>
+		>
+			<DialogContent
+				showCloseButton={false}
+				aria-describedby={undefined}
+				className="tw:max-w-[440px]"
+			>
+				<DialogHeader>
+					<DialogTitle>{heading}</DialogTitle>
+				</DialogHeader>
+				<DialogBody>
+					<Input
+						data-testid="section-title-input"
+						aria-label={placeholder}
+						autoFocus
+						value={value}
+						maxLength={DASHBOARD_NAME_MAX_LENGTH}
+						placeholder={placeholder}
+						className="tw:h-8 tw:border-input tw:bg-surface-raised tw:text-[13px] tw:text-foreground tw:dark:bg-surface-raised"
+						onChange={(e): void => setValue(e.target.value)}
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter' && canSave) {
+								e.preventDefault();
+								submit();
+							}
+						}}
+					/>
+				</DialogBody>
+				<DialogFooter>
 					<Button
+						type="button"
 						variant="ghost"
-						color="secondary"
-						size="md"
+						size="sm"
 						onClick={onClose}
-						testId="section-title-cancel"
+						data-testid="section-title-cancel"
 					>
 						Cancel
 					</Button>
-					<Button
-						disabledTooltip="Enter a section name first"
-						variant="solid"
-						color="primary"
-						size="md"
-						disabled={value.trim().length === 0}
-						loading={isSaving}
-						onClick={submit}
-						testId="section-title-submit"
-					>
-						{okText}
-					</Button>
-				</div>
-			}
-		>
-			<Input
-				testId="section-title-input"
-				autoFocus
-				value={value}
-				maxLength={DASHBOARD_NAME_MAX_LENGTH}
-				placeholder={placeholder}
-				onChange={(e): void => setValue(e.target.value)}
-				onKeyDown={(e): void => {
-					if (e.key === 'Enter' && canSave) {
-						e.preventDefault();
-						submit();
-					}
-				}}
-			/>
-		</DialogWrapper>
+					<TitleTooltip title={isEmpty ? 'Enter a section name first' : undefined}>
+						<span className="tw:inline-flex">
+							<Button
+								type="button"
+								size="sm"
+								disabled={isEmpty || isSaving}
+								aria-busy={isSaving || undefined}
+								onClick={submit}
+								data-testid="section-title-submit"
+							>
+								{isSaving && <LoaderCircle className="tw:animate-spin" />}
+								<span>{okText}</span>
+							</Button>
+						</span>
+					</TitleTooltip>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

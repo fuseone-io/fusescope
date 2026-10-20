@@ -1,6 +1,6 @@
 import { Fragment, useMemo } from 'react';
-import { Info, Loader } from '@signozhq/icons';
-import { Typography } from '@signozhq/ui/typography';
+import { Info, LoaderCircle } from 'lucide-react';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
 import type {
 	DashboardtypesPanelDTO,
 	Querybuildertypesv5QueryWarnDataDTO as WarningDTO,
@@ -21,7 +21,6 @@ import {
 	panelStatusFromWarning,
 } from '../PanelStatus/utils';
 import styles from './PanelHeader.module.scss';
-import { Tooltip } from '@signozhq/ui/tooltip';
 
 interface PanelHeaderBaseProps {
 	panelId: string;
@@ -102,22 +101,26 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 	}
 
 	return (
-		<div className={cx(styles.header, 'panel-drag-handle')}>
+		<div className={cx('fs-ui', styles.header, 'panel-drag-handle')}>
 			<div className={styles.headerLeft}>
-				<Typography.Text className={styles.headerTitle}>{name}</Typography.Text>
+				<h2 className={styles.headerTitle} title={name}>
+					{name}
+				</h2>
 				{description && (
-					<Tooltip title={description}>
+					<TitleTooltip title={description}>
 						<Info
 							className={styles.headerInfoIcon}
 							size={14}
+							aria-label="Panel description"
 							data-testid="panel-header-info-icon"
 						/>
-					</Tooltip>
+					</TitleTooltip>
 				)}
 				{query?.isFetching && (
-					<Loader
+					<LoaderCircle
 						size={12}
-						className={cx('animate-spin', styles.refetchIndicator)}
+						aria-label="Refreshing"
+						className={cx('tw:animate-spin', styles.refetchIndicator)}
 						data-testid="panel-refetching"
 					/>
 				)}
@@ -132,11 +135,11 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 					/>
 				)}
 				{query?.timeLabel && (
-					<Tooltip title={query.timeLabel.full}>
+					<TitleTooltip title={query.timeLabel.full}>
 						<span className={styles.timePill} data-testid="panel-time-preference">
 							{query.timeLabel.short}
 						</span>
-					</Tooltip>
+					</TitleTooltip>
 				)}
 				{errorDetail && <PanelStatusPopover variant="error" detail={errorDetail} />}
 				{warningDetail && (

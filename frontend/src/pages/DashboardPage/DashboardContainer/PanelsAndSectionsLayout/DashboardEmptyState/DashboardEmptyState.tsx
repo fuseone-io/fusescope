@@ -1,9 +1,6 @@
-import { Configure, Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
-
-import dashboardEmojiUrl from '@/assets/Icons/dashboard_emoji.svg';
-import landscapeUrl from '@/assets/Icons/landscape.svg';
+import { ReactNode } from 'react';
+import { Button } from 'components/ui/button';
+import { LayoutGrid, Plus, Settings2 } from 'lucide-react';
 
 import { useCreatePanel } from '../../hooks/useCreatePanel';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -16,6 +13,30 @@ interface DashboardEmptyStateProps {
 	canAddPanel: boolean;
 }
 
+interface StepProps {
+	icon: ReactNode;
+	title: string;
+	info: string;
+	action: ReactNode;
+}
+
+function Step({ icon, title, info, action }: StepProps): JSX.Element {
+	return (
+		<div className={styles.step}>
+			<div className={styles.stepText}>
+				<span aria-hidden="true" className={styles.stepIcon}>
+					{icon}
+				</span>
+				<div className={styles.stepCopy}>
+					<span className={styles.stepTitle}>{title}</span>
+					<span className={styles.stepInfo}>{info}</span>
+				</div>
+			</div>
+			{action}
+		</div>
+	);
+}
+
 function DashboardEmptyState({
 	canAddPanel,
 }: DashboardEmptyStateProps): JSX.Element {
@@ -26,75 +47,59 @@ function DashboardEmptyState({
 	const requestSettings = useDashboardStore((s) => s.requestSettings);
 
 	return (
-		<section className={styles.emptyState}>
+		<section className={`fs-ui ${styles.emptyState}`}>
 			<div className={styles.content}>
 				<div className={styles.heading}>
-					<img src={dashboardEmojiUrl} alt="" className={styles.emoji} />
-					<Typography.Text className={styles.welcome}>
-						Welcome to your new dashboard
-					</Typography.Text>
-					<Typography.Text className={styles.welcomeInfo}>
+					<span aria-hidden="true" className={styles.headingIcon}>
+						<LayoutGrid size={20} />
+					</span>
+					<h2 className={styles.welcome}>Welcome to your new dashboard</h2>
+					<p className={styles.welcomeInfo}>
 						Follow the steps to populate it with data and share with your teammates
-					</Typography.Text>
+					</p>
 				</div>
 
 				<div className={styles.steps}>
-					<div className={styles.step}>
-						<div className={styles.stepText}>
-							<Configure size={14} className={styles.stepIcon} />
-							<div className={styles.stepCopy}>
-								<Typography.Text className={styles.stepTitle}>
-									Configure your new dashboard
-								</Typography.Text>
-								<Typography.Text className={styles.stepInfo}>
-									Give it a name, add description, tags and variables
-								</Typography.Text>
-							</div>
-						</div>
-						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
-							<Button
-								disabledTooltip={undefined}
-								size="md"
-								variant="solid"
-								color="secondary"
-								width="140px"
-								prefix={<Configure size="md" />}
-								disabled={!isEditable}
-								onClick={(): void => requestSettings({ tab: 'Overview' })}
-								testId="empty-configure"
-							>
-								Configure
-							</Button>
-						</AuthZTooltip>
-					</div>
-
-					<div className={styles.step}>
-						<div className={styles.stepText}>
-							<img src={landscapeUrl} alt="" className={styles.stepIcon} />
-							<div className={styles.stepCopy}>
-								<Typography.Text className={styles.stepTitle}>
-									Add panels
-								</Typography.Text>
-								<Typography.Text className={styles.stepInfo}>
-									Add panels to visualize your data
-								</Typography.Text>
-							</div>
-						</div>
-						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
-							<Button
-								disabledTooltip={undefined}
-								size="md"
-								variant="solid"
-								color="primary"
-								prefix={<Plus size="md" />}
-								disabled={!canAddPanel}
-								onClick={(): void => openPicker()}
-								testId="add-panel"
-							>
-								New Panel
-							</Button>
-						</AuthZTooltip>
-					</div>
+					<Step
+						icon={<Settings2 size={16} />}
+						title="Configure your new dashboard"
+						info="Give it a name, add description, tags and variables"
+						action={
+							<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									disabled={!isEditable}
+									onClick={(): void => requestSettings({ tab: 'Overview' })}
+									data-testid="empty-configure"
+									className={styles.secondaryAction}
+								>
+									<Settings2 />
+									Configure
+								</Button>
+							</AuthZTooltip>
+						}
+					/>
+					<Step
+						icon={<Plus size={16} />}
+						title="Add panels"
+						info="Add panels to visualize your data"
+						action={
+							<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
+								<Button
+									type="button"
+									size="sm"
+									disabled={!canAddPanel}
+									onClick={(): void => openPicker()}
+									data-testid="add-panel"
+								>
+									<Plus />
+									New Panel
+								</Button>
+							</AuthZTooltip>
+						}
+					/>
 				</div>
 			</div>
 			<PanelTypeSelectionModal

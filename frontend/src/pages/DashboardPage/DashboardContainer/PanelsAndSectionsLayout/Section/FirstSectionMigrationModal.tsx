@@ -1,5 +1,13 @@
-import { Modal } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
 
 interface FirstSectionMigrationModalProps {
 	open: boolean;
@@ -20,21 +28,41 @@ function FirstSectionMigrationModal({
 	onConfirm,
 }: FirstSectionMigrationModalProps): JSX.Element {
 	return (
-		<Modal
+		<Dialog
 			open={open}
-			title="Group panels into sections?"
-			onCancel={onClose}
-			onOk={onConfirm}
-			okText="Continue"
-			okButtonProps={{ disabled: isSaving, 'data-testid': 'confirm-migration' }}
-			destroyOnClose
+			onOpenChange={(next): void => {
+				if (!next) {
+					onClose();
+				}
+			}}
 		>
-			<Typography.Text>
-				This dashboard&apos;s panels are currently free-flowing. Adding a section
-				will move the existing panels into their own section, and a new empty
-				section will be added below. You can rename sections afterwards.
-			</Typography.Text>
-		</Modal>
+			<DialogContent className="tw:max-w-[480px]">
+				<DialogHeader>
+					<DialogTitle>Group panels into sections?</DialogTitle>
+				</DialogHeader>
+				<DialogBody>
+					<DialogDescription className="tw:text-[13px]">
+						This dashboard&apos;s panels are currently free-flowing. Adding a section
+						will move the existing panels into their own section, and a new empty
+						section will be added below. You can rename sections afterwards.
+					</DialogDescription>
+				</DialogBody>
+				<DialogFooter>
+					<Button type="button" variant="ghost" size="sm" onClick={onClose}>
+						Cancel
+					</Button>
+					<Button
+						type="button"
+						size="sm"
+						disabled={isSaving}
+						onClick={onConfirm}
+						data-testid="confirm-migration"
+					>
+						Continue
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

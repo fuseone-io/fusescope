@@ -1,5 +1,5 @@
 import { EllipsisVertical } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
+import { Button } from 'components/ui/button';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
@@ -52,12 +52,11 @@ function PanelActionsMenu({
 				<Button
 					type="button"
 					variant="ghost"
-					color="secondary"
-					size="sm"
-					icon
+					size="icon-sm"
 					aria-label="Panel actions"
+					className="tw:size-7 tw:text-muted-foreground"
 				>
-					<EllipsisVertical size={14} />
+					<EllipsisVertical />
 				</Button>
 			</AuthZDropdown>
 			<ConfirmDeleteDialog

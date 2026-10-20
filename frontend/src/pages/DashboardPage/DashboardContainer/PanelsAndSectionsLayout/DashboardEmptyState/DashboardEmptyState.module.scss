@@ -3,46 +3,63 @@
 	justify-content: center;
 	align-items: flex-start;
 	padding: 48px 16px;
+	font-family:
+		Inter,
+		'Segoe UI',
+		-apple-system,
+		system-ui,
+		sans-serif;
 }
 
 .content {
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
+	gap: 20px;
 	width: 100%;
-	max-width: 480px;
+	max-width: 520px;
+	padding: 32px;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
 }
 
 .heading {
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
+}
 
-	.emoji {
-		height: 32px;
-		width: 32px;
-	}
+.headingIcon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	margin-bottom: 4px;
+	border-radius: 10px;
+	background: var(--fs-primary-soft);
+	color: var(--fs-primary-ink);
+}
 
-	.welcome {
-		color: var(--fs-foreground);
-		font-size: 16px;
-		font-weight: 500;
-		line-height: 24px;
-		letter-spacing: -0.08px;
-	}
+.welcome {
+	margin: 0;
+	color: var(--fs-foreground);
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 24px;
+}
 
-	.welcomeInfo {
-		color: var(--fs-subtle-foreground);
-		font-size: 13px;
-		font-weight: 400;
-		line-height: 18px;
-	}
+.welcomeInfo {
+	margin: 0;
+	color: var(--fs-muted-foreground);
+	font-size: 13px;
+	line-height: 18px;
 }
 
 .steps {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 8px;
 }
 
 .step {
@@ -50,22 +67,29 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 16px;
-	padding: 16px;
-	border: 1px dashed var(--fs-border);
-	border-radius: 6px;
+	padding: 14px 16px;
+	border: 1px solid var(--fs-border);
+	border-radius: 8px;
+	background: var(--fs-background);
 }
 
 .stepText {
 	display: flex;
-	align-items: flex-start;
-	gap: 10px;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+}
 
-	.stepIcon {
-		height: 14px;
-		width: 14px;
-		margin-top: 2px;
-		flex: none;
-	}
+.stepIcon {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 8px;
+	background: var(--fs-muted);
+	color: var(--fs-muted-foreground);
 }
 
 .stepCopy {
@@ -76,14 +100,18 @@
 
 .stepTitle {
 	color: var(--fs-foreground);
-	font-size: 14px;
-	font-weight: 500;
+	font-size: 13px;
+	font-weight: 600;
 	line-height: 20px;
 }
 
 .stepInfo {
 	color: var(--fs-subtle-foreground);
-	font-size: 13px;
-	font-weight: 400;
+	font-size: 12px;
 	line-height: 18px;
+}
+
+.secondaryAction {
+	border-color: var(--fs-input);
+	background: var(--fs-card);
 }

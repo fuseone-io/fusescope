@@ -1,4 +1,3 @@
-import { Color } from '@signozhq/design-tokens';
 import { CircleX, TriangleAlert } from '@signozhq/icons';
 import { Tooltip } from '@signozhq/ui/tooltip';
 
@@ -10,8 +9,8 @@ const VARIANT_CONFIG: Record<
 	PanelStatusVariant,
 	{ color: string; ariaLabel: string }
 > = {
-	error: { color: Color.BG_CHERRY_500, ariaLabel: 'Panel error' },
-	warning: { color: Color.BG_AMBER_500, ariaLabel: 'Panel warning' },
+	error: { color: 'var(--fs-error)', ariaLabel: 'Panel error' },
+	warning: { color: 'var(--fs-warning)', ariaLabel: 'Panel warning' },
 };
 
 interface PanelStatusPopoverProps {
