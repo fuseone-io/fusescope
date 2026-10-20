@@ -6,8 +6,11 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
+	aggregationSummary,
 	cardSummary,
 	countLabel,
+	functionsSummary,
+	resultSummary,
 	summarizeFormula,
 	summarizeQuery,
 } from '../summary';
@@ -179,5 +182,57 @@ describe('cardSummary', () => {
 		).toBe(
 			"rate · 60s · sum by service.name · where status.code = 'STATUS_CODE_ERROR' · limit 10",
 		);
+	});
+});
+
+describe('section summaries', () => {
+	it('reads the aggregation with its breakdown, or says there is none', () => {
+		expect(aggregationSummary(query({ groupBy: groupBy('service.name') }))).toBe(
+			'rate · 60s · sum by service.name',
+		);
+		expect(aggregationSummary(query({ stepInterval: undefined }))).toBe(
+			'rate · auto · sum · no breakdown',
+		);
+	});
+
+	it('chains the functions in order with their arguments', () => {
+		expect(
+			functionsSummary(
+				query({
+					functions: [
+						{ name: 'ewma5', args: [] },
+						{ name: 'clampMax', args: [{ value: 100 }] },
+					],
+				} as unknown as Partial<IBuilderQuery>),
+			),
+		).toBe('EWMA 5 → Clamp Max 100');
+		expect(functionsSummary(query({ functions: [] }))).toBe('None');
+	});
+
+	it('lists only the result options that are set', () => {
+		expect(
+			resultSummary(
+				query({
+					limit: 10,
+					orderBy: [{ columnName: 'value', order: 'desc' }],
+					legend: '{{service.name}}',
+				}),
+			),
+		).toBe('limit 10 · order by value desc · legend');
+		expect(resultSummary(query({ having: { expression: 'value > 5' } }))).toBe(
+			'having value > 5',
+		);
+		expect(resultSummary(query({}))).toBe('Defaults');
+	});
+
+	it('summarizes a formula result the same way', () => {
+		const formula = {
+			queryName: 'F1',
+			expression: 'A / B',
+			disabled: false,
+			legend: '',
+			limit: 5,
+		} as IBuilderFormula;
+		expect(resultSummary(formula)).toBe('limit 5');
 	});
 });

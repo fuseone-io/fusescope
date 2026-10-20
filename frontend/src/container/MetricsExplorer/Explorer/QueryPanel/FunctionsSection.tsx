@@ -21,12 +21,9 @@ function FunctionsSection({
 
 	return (
 		<div
-			className="qsec qp-functions"
+			className="qp-functions"
 			data-testid={`query-functions-${query.queryName}`}
 		>
-			<span className="esec">
-				Functions <span className="fhint">applied in order, top to bottom</span>
-			</span>
 			<QueryFunctions
 				query={query}
 				queryFunctions={query.functions || []}

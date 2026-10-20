@@ -12,8 +12,15 @@ import AggregationFields from './AggregationFields';
 import CardHead from './CardHead';
 import EditorActions from './EditorActions';
 import FunctionsSection from './FunctionsSection';
+import QuerySection from './QuerySection';
 import ResultFields from './ResultFields';
-import { cardSummary, summarizeQuery } from './summary';
+import {
+	aggregationSummary,
+	cardSummary,
+	functionsSummary,
+	resultSummary,
+	summarizeQuery,
+} from './summary';
 
 interface QueryCardProps {
 	query: IBuilderQuery;
@@ -99,15 +106,34 @@ function QueryCard({
 							/>
 						</div>
 					</div>
-					<div className="qsec">
-						<span className="esec">Aggregation</span>
+					<QuerySection
+						name={query.queryName}
+						kind="aggregation"
+						title="Aggregation"
+						summary={aggregationSummary(query)}
+						isSet={Boolean(query.groupBy?.length)}
+					>
 						<AggregationFields query={query} index={index} />
-					</div>
-					<FunctionsSection query={query} index={index} />
-					<div className="qsec">
-						<span className="esec">Result</span>
+					</QuerySection>
+					<QuerySection
+						name={query.queryName}
+						kind="functions"
+						title="Functions"
+						hint="applied in order, top to bottom"
+						summary={functionsSummary(query)}
+						isSet={Boolean(query.functions?.length)}
+					>
+						<FunctionsSection query={query} index={index} />
+					</QuerySection>
+					<QuerySection
+						name={query.queryName}
+						kind="result"
+						title="Result"
+						summary={resultSummary(query)}
+						isSet={summary.options.length > 0}
+					>
 						<ResultFields query={query} index={index} />
-					</div>
+					</QuerySection>
 					<EditorActions
 						letter={query.queryName}
 						onReset={onReset}
