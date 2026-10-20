@@ -11,6 +11,7 @@ import {
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/WidgetCard/Card';
+import { useStepAlignedRange } from 'container/MetricsApplication/hooks/useStepAlignedRange';
 import DisplayThreshold from 'container/WidgetCard/Header/DisplayThreshold';
 import {
 	GraphTitle,
@@ -37,6 +38,7 @@ function ApDexMetrics({
 	pointMenu,
 	isSpanMetricEnable = true,
 }: ApDexMetricsProps): JSX.Element {
+	const { start, end } = useStepAlignedRange();
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
 	const apDexMetricsWidget = useMemo(
@@ -102,6 +104,9 @@ function ApDexMetrics({
 
 	return (
 		<Graph
+			start={start}
+			end={end}
+			trimToEnd
 			widget={apDexMetricsWidget}
 			onDragSelect={onDragSelect}
 			pointMenu={pointMenu}

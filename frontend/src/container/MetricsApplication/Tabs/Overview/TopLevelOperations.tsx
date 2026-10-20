@@ -3,6 +3,7 @@ import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import Graph from 'container/WidgetCard/Card';
+import { useStepAlignedRange } from 'container/MetricsApplication/hooks/useStepAlignedRange';
 import ChartPanel from 'container/MetricsApplication/components/ChartPanel';
 import { GraphContainer } from 'container/MetricsApplication/styles';
 import { PanelPointMenu } from 'container/WidgetCard/Panels/pointMenu.types';
@@ -17,6 +18,7 @@ function TopLevelOperation({
 	widget,
 	topLevelOperationsIsLoading,
 }: TopLevelOperationProps): JSX.Element {
+	const { start, end } = useStepAlignedRange();
 	return (
 		<ChartPanel testId={name}>
 			{topLevelOperationsIsError ? (
@@ -28,6 +30,9 @@ function TopLevelOperation({
 			) : (
 				<GraphContainer>
 					<Graph
+						start={start}
+						end={end}
+						trimToEnd
 						widget={widget}
 						pointMenu={pointMenu}
 						onDragSelect={onDragSelect}

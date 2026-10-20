@@ -1,5 +1,6 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import getStep from 'lib/getStep';
 import { withBasePath } from 'utils/basePath';
 
 import { TopOperationList } from './KeyOperations/types';
@@ -72,3 +73,16 @@ export const convertedTracesToDownloadData = (
 
 		return newObj;
 	});
+
+/**
+ * The global range in seconds, both ends floored to the charts' step, so the
+ * last bucket is complete instead of a partial one that reads as a drop.
+ */
+export function getStepAlignedRange(
+	minTimeNs: number,
+	maxTimeNs: number,
+): { start: number; end: number } {
+	const step = getStep({ start: minTimeNs, end: maxTimeNs, inputFormat: 'ns' });
+	const floorToStep = (ns: number): number => Math.floor(ns / 1e9 / step) * step;
+	return { start: floorToStep(minTimeNs), end: floorToStep(maxTimeNs) };
+}

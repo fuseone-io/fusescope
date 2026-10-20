@@ -261,3 +261,18 @@ export const errorDetails = (error: APIError | Error): string => {
 	const errorDetails = `${message ?? error.message} ${details}`;
 	return errorDetails.trim() || 'Unknown error occurred';
 };
+
+/**
+ * `series` without points at or after `end` (epoch seconds). Gap filling adds
+ * a zero bucket at the window end that holds no data.
+ */
+export function dropPointsFrom(series: QueryData[], end: number): QueryData[] {
+	return series.map((item) =>
+		item.values.some(([timestamp]) => timestamp >= end)
+			? {
+					...item,
+					values: item.values.filter(([timestamp]) => timestamp < end),
+				}
+			: item,
+	);
+}

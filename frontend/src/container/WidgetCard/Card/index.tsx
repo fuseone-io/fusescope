@@ -31,6 +31,7 @@ import EmptyWidget from 'container/WidgetCard/EmptyWidget';
 import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 import { GridCardGraphProps } from 'container/WidgetCard/Card/types';
 import {
+	dropPointsFrom,
 	errorDetails,
 	isDataAvailableByPanelType,
 } from 'container/WidgetCard/Card/utils';
@@ -61,6 +62,7 @@ function GridCardGraph({
 	customTimeRangeWindowForCoRelation,
 	enableDrillDown,
 	pointMenu,
+	trimToEnd,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -248,6 +250,13 @@ function GridCardGraph({
 			queryResponse.data?.payload.data.result,
 		);
 		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
+
+	if (queryResponse.data && trimToEnd && end) {
+		queryResponse.data.payload.data.result = dropPointsFrom(
+			queryResponse.data.payload.data.result,
+			end,
+		);
 	}
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.PIE) {
