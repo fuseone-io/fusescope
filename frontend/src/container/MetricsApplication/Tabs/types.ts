@@ -1,16 +1,9 @@
-import { ReactNode } from 'react';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 
 export interface IServiceName {
 	servicename: string;
-}
-
-export interface TopOperationQueryFactoryProps {
-	servicename: IServiceName['servicename'];
-	tagFilterItems: TagFilterItem[];
 }
 
 export interface ExternalCallDurationByAddressProps extends ExternalCallProps {
@@ -67,11 +60,6 @@ export interface ApDexProps {
 	tagFilterItems: TagFilterItem[];
 	topLevelOperationsRoute: string[];
 	threashold: number;
-}
-
-export interface TableRendererProps {
-	columnName: string;
-	renderFunction: (record: RowData) => ReactNode;
 }
 
 export interface ApDexMetricsQueryBuilderQueriesProps extends ApDexProps {

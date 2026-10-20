@@ -1,4 +1,3 @@
-import { DownloadOptions } from 'container/Download/Download.types';
 import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 import {
 	MetricAggregateOperator,
@@ -99,11 +98,6 @@ export enum WidgetKeys {
 	SignozLatencyBucket = 'signoz_latency.bucket',
 	DbSystem = 'db.system',
 }
-
-export const topOperationMetricsDownloadOptions: DownloadOptions = {
-	isDownloadEnabled: true,
-	fileName: 'top-operation',
-} as const;
 
 export const SERVICE_CHART_ID = {
 	latency: 'SERVICE_OVERVIEW_LATENCY',
