@@ -25,6 +25,9 @@ export interface MetricsTableProps {
 	) => void;
 	queryFilterExpression: Filter;
 	onFilterChange: (expression: string) => void;
+	onOpenInExplorer: (metricName: string) => void;
+	/** Defaults to samples, descending. */
+	orderBy?: Querybuildertypesv5OrderByDTO;
 }
 
 export interface MetricsSearchProps {
@@ -82,11 +85,4 @@ export interface MetricsListItemRowData {
 export enum TreemapViewType {
 	TIMESERIES = 'timeseries',
 	SAMPLES = 'samples',
-}
-
-export interface TreemapTile {
-	id: string;
-	size: number;
-	displayValue: number | string | null;
-	parent: string | null;
 }

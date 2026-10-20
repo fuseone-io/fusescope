@@ -97,12 +97,14 @@ describe('MetricsTable', () => {
 						openMetricDetails={jest.fn()}
 						queryFilterExpression={mockQueryFilterExpression}
 						onFilterChange={jest.fn()}
+						onOpenInExplorer={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
 		);
 
-		expect(screen.getByText('List View')).toBeInTheDocument();
+		expect(screen.getByText('List view')).toBeInTheDocument();
+		expect(screen.getByText('Test metric 1')).toBeInTheDocument();
 		expect(screen.getByText('Metric 1')).toBeInTheDocument();
 		expect(screen.getByText('Metric 2')).toBeInTheDocument();
 	});
@@ -123,6 +125,7 @@ describe('MetricsTable', () => {
 						queryFilterExpression={mockQueryFilterExpression}
 						isLoading
 						onFilterChange={jest.fn()}
+						onOpenInExplorer={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -158,6 +161,7 @@ describe('MetricsTable', () => {
 						openMetricDetails={jest.fn()}
 						queryFilterExpression={mockQueryFilterExpression}
 						onFilterChange={jest.fn()}
+						onOpenInExplorer={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -183,6 +187,7 @@ describe('MetricsTable', () => {
 						openMetricDetails={jest.fn()}
 						queryFilterExpression={mockQueryFilterExpression}
 						onFilterChange={jest.fn()}
+						onOpenInExplorer={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -213,6 +218,7 @@ describe('MetricsTable', () => {
 						openMetricDetails={mockOpenMetricDetails}
 						queryFilterExpression={mockQueryFilterExpression}
 						onFilterChange={jest.fn()}
+						onOpenInExplorer={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -243,12 +249,13 @@ describe('MetricsTable', () => {
 						openMetricDetails={jest.fn()}
 						queryFilterExpression={mockQueryFilterExpression}
 						onFilterChange={jest.fn()}
+						onOpenInExplorer={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
 		);
 
-		const samplesHeader = screen.getByText('SAMPLES');
+		const samplesHeader = screen.getByText('Samples');
 		fireEvent.click(samplesHeader);
 
 		expect(mockSetOrderBy).toHaveBeenCalledWith({
@@ -257,5 +264,78 @@ describe('MetricsTable', () => {
 			},
 			direction: 'asc',
 		});
+	});
+
+	it('sorts the active column the other way and a new one descending', () => {
+		const mockSetOrderBy = jest.fn();
+		render(
+			<MemoryRouter>
+				<Provider store={store}>
+					<MetricsTable
+						isLoading={false}
+						isError={false}
+						data={mockData}
+						pageSize={10}
+						currentPage={1}
+						onPaginationChange={jest.fn()}
+						setOrderBy={mockSetOrderBy}
+						orderBy={{ key: { name: 'samples' }, direction: 'asc' as any }}
+						totalCount={2}
+						openMetricDetails={jest.fn()}
+						queryFilterExpression={mockQueryFilterExpression}
+						onFilterChange={jest.fn()}
+						onOpenInExplorer={jest.fn()}
+					/>
+				</Provider>
+			</MemoryRouter>,
+		);
+
+		expect(screen.getByText('Samples').closest('[aria-sort]')).toHaveAttribute(
+			'aria-sort',
+			'ascending',
+		);
+		fireEvent.click(screen.getByText('Samples'));
+		expect(mockSetOrderBy).toHaveBeenLastCalledWith({
+			key: { name: 'samples' },
+			direction: 'desc',
+		});
+
+		fireEvent.click(screen.getByText('Time series'));
+		expect(mockSetOrderBy).toHaveBeenLastCalledWith({
+			key: { name: 'timeseries' },
+			direction: 'desc',
+		});
+	});
+
+	it('opens a row in the explorer from its hover action without opening details', () => {
+		const mockOpenInExplorer = jest.fn();
+		const mockOpenMetricDetails = jest.fn();
+		render(
+			<MemoryRouter>
+				<Provider store={store}>
+					<MetricsTable
+						isLoading={false}
+						isError={false}
+						data={mockData}
+						pageSize={10}
+						currentPage={1}
+						onPaginationChange={jest.fn()}
+						setOrderBy={jest.fn()}
+						totalCount={2}
+						openMetricDetails={mockOpenMetricDetails}
+						queryFilterExpression={mockQueryFilterExpression}
+						onFilterChange={jest.fn()}
+						onOpenInExplorer={mockOpenInExplorer}
+					/>
+				</Provider>
+			</MemoryRouter>,
+		);
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Open metric2 in Explorer' }),
+		);
+
+		expect(mockOpenInExplorer).toHaveBeenCalledWith('metric2');
+		expect(mockOpenMetricDetails).not.toHaveBeenCalled();
 	});
 });

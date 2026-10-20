@@ -1,70 +1,53 @@
-import { useMemo } from 'react';
-import { Color } from '@signozhq/design-tokens';
-import { Typography } from '@signozhq/ui/typography';
 import { MetrictypesTypeDTO } from 'api/generated/services/fuseScope.schemas';
 import { BarChart, ChartBar, Diff, Gauge } from '@signozhq/icons';
+import { cn } from 'lib/utils';
 
-import { METRIC_TYPE_VIEW_VALUES_MAP } from './constants';
+import { METRIC_TYPE_VIEW_LABEL_MAP } from './constants';
+
+const TYPE_STYLES: Record<
+	MetrictypesTypeDTO,
+	{ icon: typeof Gauge; className: string }
+> = {
+	[MetrictypesTypeDTO.sum]: {
+		icon: Diff,
+		className: 'tw:bg-primary-soft tw:text-primary-ink',
+	},
+	[MetrictypesTypeDTO.gauge]: {
+		icon: Gauge,
+		className: 'tw:bg-brand-secondary-soft tw:text-brand-secondary-ink',
+	},
+	[MetrictypesTypeDTO.histogram]: {
+		icon: BarChart,
+		className: 'tw:bg-warning-soft tw:text-warning-ink',
+	},
+	[MetrictypesTypeDTO.summary]: {
+		icon: ChartBar,
+		className: 'tw:bg-success-soft tw:text-success-ink',
+	},
+	[MetrictypesTypeDTO.exponentialhistogram]: {
+		icon: BarChart,
+		className: 'tw:bg-muted tw:text-muted-foreground',
+	},
+};
 
 export function MetricTypeViewRenderer({
 	type,
 }: {
 	type: MetrictypesTypeDTO;
 }): JSX.Element {
-	const [icon, color] = useMemo(() => {
-		switch (type) {
-			case MetrictypesTypeDTO.sum:
-				return [
-					<Diff key={type} size={12} color={Color.BG_ROBIN_500} />,
-					Color.BG_ROBIN_500,
-				];
-			case MetrictypesTypeDTO.gauge:
-				return [
-					<Gauge key={type} size={12} color={Color.BG_SAKURA_500} />,
-					Color.BG_SAKURA_500,
-				];
-			case MetrictypesTypeDTO.histogram:
-				return [
-					<BarChart key={type} size={12} color={Color.BG_SIENNA_500} />,
-					Color.BG_SIENNA_500,
-				];
-			case MetrictypesTypeDTO.summary:
-				return [
-					<ChartBar key={type} size={12} color={Color.BG_FOREST_500} />,
-					Color.BG_FOREST_500,
-				];
-			case MetrictypesTypeDTO.exponentialhistogram:
-				return [
-					<BarChart key={type} size={12} color={Color.BG_AQUA_500} />,
-					Color.BG_AQUA_500,
-				];
-			default:
-				return [null, ''];
-		}
-	}, [type]);
-
-	const { metricTypeViewRendererStyle, metricTypeViewRendererTextStyle } =
-		useMemo(() => {
-			return {
-				metricTypeViewRendererStyle: {
-					backgroundColor: `${color}33`,
-					border: `1px solid ${color}`,
-					color,
-				},
-				metricTypeViewRendererTextStyle: {
-					color,
-					fontSize: 12,
-				},
-			};
-		}, [color]);
+	const style = TYPE_STYLES[type];
+	const Icon = style?.icon;
 
 	return (
-		<div className="metric-type-renderer" style={metricTypeViewRendererStyle}>
-			{icon}
-			<Typography.Text style={metricTypeViewRendererTextStyle}>
-				{METRIC_TYPE_VIEW_VALUES_MAP[type]}
-			</Typography.Text>
-		</div>
+		<span
+			className={cn(
+				'metric-type-renderer fs-ui tw:inline-flex tw:h-5 tw:items-center tw:gap-1.5 tw:rounded-sm tw:px-2 tw:font-sans tw:text-xs tw:font-medium tw:whitespace-nowrap',
+				style?.className ?? 'tw:bg-muted tw:text-muted-foreground',
+			)}
+		>
+			{Icon && <Icon size={12} aria-hidden="true" />}
+			{METRIC_TYPE_VIEW_LABEL_MAP[type] ?? type}
+		</span>
 	);
 }
 
