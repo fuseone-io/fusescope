@@ -10,10 +10,18 @@ describe('ServicesList view', () => {
 		);
 
 		await waitFor(() => {
-			expect(screen.getByText(/application/i)).toBeInTheDocument();
-			expect(screen.getByText(/p99 latency \(in ms\)/i)).toBeInTheDocument();
-			expect(screen.getByText(/error rate \(% of total\)/i)).toBeInTheDocument();
-			expect(screen.getByText(/operations per second/i)).toBeInTheDocument();
+			expect(
+				screen.getAllByRole('columnheader').map((header) => header.textContent),
+			).toStrictEqual([
+				'Service',
+				'Rate',
+				'Error %',
+				'p50',
+				'p95',
+				'p99 latency',
+				'Requests',
+				'Actions',
+			]);
 		});
 	});
 
@@ -25,7 +33,7 @@ describe('ServicesList view', () => {
 		expect(screen.getByText('frontend')).toBeInTheDocument();
 	});
 
-	it('labels span-metrics p99 in ms, the unit signoz_latency reports', async () => {
+	it('reads span-metrics p99 as ms, the unit signoz_latency reports', async () => {
 		render(
 			<ServicesList
 				services={[{ ...services[0], p99: 612.5 }]}
@@ -34,14 +42,13 @@ describe('ServicesList view', () => {
 			/>,
 		);
 
-		expect(screen.getByText(/p99 latency \(in ms\)/i)).toBeInTheDocument();
-		expect(screen.getByText('612.50')).toBeInTheDocument();
+		expect(screen.getByTestId('service-p99')).toHaveTextContent('613 ms');
 	});
 
 	it('keeps the header and shows placeholder rows while loading', async () => {
 		render(<ServicesList services={[]} loading isMetricData={false} />);
 
-		expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+		expect(screen.getAllByRole('columnheader')).toHaveLength(8);
 		expect(screen.getAllByTestId('service-row-loading').length).toBeGreaterThan(
 			0,
 		);

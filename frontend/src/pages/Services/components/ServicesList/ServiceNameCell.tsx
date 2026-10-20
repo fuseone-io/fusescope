@@ -5,14 +5,21 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from 'components/ui/hover-card';
-import { TriangleAlert } from 'lucide-react';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import ServiceKindIcon from 'components/ServiceKindIcon/ServiceKindIcon';
+import { ServiceIdentity } from 'lib/apm/useServiceKinds';
+import { ServiceBadge } from 'lib/apm/types';
+import { TriangleAlert, Zap } from 'lucide-react';
 import { ServicesList } from 'types/api/metrics/getService';
 
 import { MAX_TOP_LEVEL_OPERATIONS } from './constants';
+import { BADGE_TONE } from './serviceCells';
 import { topLevelOperationsUrl } from './utils';
 
 interface ServiceNameCellProps {
 	service: ServicesList;
+	badges?: ServiceBadge[];
+	identity?: ServiceIdentity;
 	href: string;
 }
 
@@ -20,13 +27,18 @@ function stopRowClick(event: React.SyntheticEvent): void {
 	event.stopPropagation();
 }
 
-function ServiceNameCell({ service, href }: ServiceNameCellProps): JSX.Element {
+function ServiceNameCell({
+	service,
+	badges = [],
+	identity,
+	href,
+}: ServiceNameCellProps): JSX.Element {
 	const { serviceName } = service;
 	const hasTooManyOperations =
 		(service.dataWarning?.topLevelOps?.length ?? 0) > MAX_TOP_LEVEL_OPERATIONS;
 
 	return (
-		<span className="tw:flex tw:min-w-0 tw:items-center tw:gap-2">
+		<span className="tw:flex tw:min-w-0 tw:flex-wrap tw:items-center tw:gap-x-2 tw:gap-y-1.5">
 			{hasTooManyOperations && (
 				<HoverCard openDelay={100}>
 					<HoverCardTrigger asChild>
@@ -59,6 +71,7 @@ function ServiceNameCell({ service, href }: ServiceNameCellProps): JSX.Element {
 					</HoverCardContent>
 				</HoverCard>
 			)}
+			{identity && <ServiceKindIcon kind={identity.kind} />}
 			<Link
 				to={href}
 				data-testid="service-name"
@@ -67,6 +80,22 @@ function ServiceNameCell({ service, href }: ServiceNameCellProps): JSX.Element {
 			>
 				{serviceName}
 			</Link>
+			{identity?.language && (
+				<span
+					data-testid="service-language"
+					className="tw:text-xs tw:text-subtle-foreground"
+				>
+					{identity.language}
+				</span>
+			)}
+			{badges.map((badge) => (
+				<span key={badge.kind} title={badge.reason} className="tw:inline-flex">
+					<StatusBadge tone={BADGE_TONE[badge.tone]} testId="service-highlight">
+						<Zap aria-hidden="true" className="tw:size-3" />
+						{badge.text}
+					</StatusBadge>
+				</span>
+			))}
 		</span>
 	);
 }

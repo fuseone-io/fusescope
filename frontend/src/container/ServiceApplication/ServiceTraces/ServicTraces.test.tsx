@@ -7,12 +7,15 @@ describe('ServicesTraces', () => {
 		await act(() => {
 			render(<ServiceTraces />);
 		});
-		const applicationHeader = screen.getByText(/application/i);
-		expect(applicationHeader).toBeInTheDocument();
-		const p99LatencyHeader = screen.getByText(/p99 latency \(in ms\)/i);
-		expect(p99LatencyHeader).toBeInTheDocument();
-		const errorRateHeader = screen.getByText(/error rate \(% of total\)/i);
-		expect(errorRateHeader).toBeInTheDocument();
+		expect(screen.getByTestId('services-sort-serviceName')).toHaveTextContent(
+			'Service',
+		);
+		expect(screen.getByTestId('services-sort-p99')).toHaveTextContent(
+			'p99 latency',
+		);
+		expect(screen.getByTestId('services-sort-errorRate')).toHaveTextContent(
+			'Error %',
+		);
 	});
 
 	it('Should render the Services with Services', async () => {
@@ -23,7 +26,7 @@ describe('ServicesTraces', () => {
 			exact: true,
 		});
 		expect(servierName).toBeInTheDocument();
-		const p99Latency = await screen.findByText(/8\.11/i);
+		const p99Latency = await screen.findByText('8.1 ms');
 		expect(p99Latency).toBeInTheDocument();
 	});
 
@@ -31,28 +34,25 @@ describe('ServicesTraces', () => {
 		act(() => {
 			render(<ServiceTraces />);
 		});
-		const p99LatencyHeader = await screen.findByText(/p99 latency \(in ms\)/i);
-		expect(p99LatencyHeader).toBeInTheDocument();
 		await screen.findByText(/TestCustomerService/i);
 
-		// Sorted by p99, highest first.
+		// Highlighted first; neither is, so by error rate, then p99, highest first.
 		const allRow = screen.getAllByTestId('service-row');
 		expect(allRow).toHaveLength(2);
 		expect(allRow[0].innerHTML).toContain('TestCustomerService');
 		expect(allRow[1].innerHTML).toContain('TestService');
 
 		const tableHeader = await screen.findAllByRole('columnheader');
-		expect(tableHeader).toHaveLength(4);
-
-		fireEvent.click(screen.getByTestId('services-sort-p99'));
-
-		const allSortedRowAsc = screen.getAllByTestId('service-row');
-		expect(allSortedRowAsc).toHaveLength(2);
-		expect(allSortedRowAsc[0].innerHTML).toContain('TestService');
+		expect(tableHeader).toHaveLength(8);
 
 		fireEvent.click(screen.getByTestId('services-sort-p99'));
 		const allSortedRowDsc = screen.getAllByTestId('service-row');
 		expect(allSortedRowDsc).toHaveLength(2);
 		expect(allSortedRowDsc[0].innerHTML).toContain('TestCustomerService');
+
+		fireEvent.click(screen.getByTestId('services-sort-p99'));
+		const allSortedRowAsc = screen.getAllByTestId('service-row');
+		expect(allSortedRowAsc).toHaveLength(2);
+		expect(allSortedRowAsc[0].innerHTML).toContain('TestService');
 	});
 });

@@ -85,9 +85,13 @@ describe('ServicesUsingMetrics', () => {
 		});
 
 		// Wait for the component to load and render
-		await screen.findByText(/application/i);
-		expect(screen.getByText(/p99 latency \(in ms\)/i)).toBeInTheDocument();
-		expect(screen.getByText(/error rate \(% of total\)/i)).toBeInTheDocument();
+		await screen.findByTestId('services-sort-serviceName');
+		expect(screen.getByTestId('services-sort-p99')).toHaveTextContent(
+			'p99 latency',
+		);
+		expect(screen.getByTestId('services-sort-errorRate')).toHaveTextContent(
+			'Error %',
+		);
 	});
 
 	it('should render the ServicesUsingMetrics component with loading', async () => {

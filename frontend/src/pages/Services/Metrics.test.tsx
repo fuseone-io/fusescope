@@ -12,22 +12,22 @@ describe('Services', () => {
 		expect(screen.getByTestId('resource-environment-filter')).toBeInTheDocument();
 
 		const application = screen.getByRole('columnheader', {
-			name: /application/i,
+			name: /^service$/i,
 		});
 		expect(application).toBeInTheDocument();
 
 		const p99 = screen.getByRole('columnheader', {
-			name: /p99 latency \(in ms\)/i,
+			name: /p99 latency/i,
 		});
 		expect(p99).toBeInTheDocument();
 
 		const errorRate = screen.getByRole('columnheader', {
-			name: /error rate \(% of total\)/i,
+			name: /error %/i,
 		});
 		expect(errorRate).toBeInTheDocument();
 
 		const operationPerSecond = screen.getByRole('columnheader', {
-			name: /operations per second/i,
+			name: /^rate$/i,
 		});
 		expect(operationPerSecond).toBeInTheDocument();
 	});
