@@ -1,9 +1,9 @@
 .metrics-explorer-explore-container {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 0;
 	min-height: 100%;
-	padding: 16px 24px 0;
+	padding: 0 24px;
 
 	// Meant to fix the query builder colors
 	--input-background: var(--l2-background);
@@ -44,34 +44,6 @@
 
 		.selected-view {
 			background: var(--l1-background);
-		}
-	}
-
-	.metrics-explorer-query-panel {
-		border: 1px solid var(--fs-border);
-		border-radius: 12px;
-		background: var(--fs-card);
-
-		.query-builder-v2 {
-			padding: 14px 16px 10px;
-		}
-
-		// The details shortcut sits beside the metric selector.
-		.metrics-container:has(> .metric-details-entry) {
-			display: flex;
-			align-items: flex-start;
-			gap: 4px;
-
-			> :first-child {
-				flex: 1;
-				min-width: 0;
-			}
-		}
-
-		.metric-details-entry {
-			display: inline-flex;
-			flex: none;
-			padding-top: 2px;
 		}
 	}
 
