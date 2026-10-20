@@ -13,6 +13,7 @@ import { ChartColumn } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { Explorer, Summary, Views, VolumeControl } from './constants';
+import { contentPadding } from './contentPadding';
 import MetricsCountLine from './MetricsCountLine';
 
 function MetricsExplorerPage(): JSX.Element {
@@ -55,11 +56,7 @@ function MetricsExplorerPage(): JSX.Element {
 			routes={routes}
 			activeKey={pathname}
 			history={history}
-			contentClassName={
-				pathname === ROUTES.METRICS_EXPLORER_EXPLORER
-					? undefined
-					: 'tw:px-4 tw:py-4 tw:md:px-6'
-			}
+			contentClassName={contentPadding(pathname)}
 		/>
 	);
 }
