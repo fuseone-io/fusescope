@@ -2,21 +2,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Drawer, Empty, Skeleton } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Drawer } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { Button } from 'components/ui/button';
+import { Skeleton } from 'components/ui/skeleton';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Compass } from '@signozhq/icons';
+import { ArrowLeft } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
+import MetricTypeViewRenderer from '../Summary/MetricTypeViewRenderer';
 import ExpandedView from './ExpandedView';
 import GraphView from './GraphView';
 import QueryBuilder from './QueryBuilder';
@@ -191,9 +193,11 @@ function Inspect({
 
 	const chartArea = useMemo(() => {
 		const renderFallback = (testId: string, body: JSX.Element): JSX.Element => (
-			<div data-testid={testId} className="inspect-metrics-fallback">
-				<div className="inspect-metrics-fallback-header-placeholder" />
-				<div className="inspect-metrics-fallback-body">{body}</div>
+			<div
+				data-testid={testId}
+				className="inspect-metrics-fallback fs-ui tw:flex tw:min-h-[320px] tw:items-center tw:justify-center tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised tw:p-4 tw:font-sans tw:text-[13px] tw:text-muted-foreground"
+			>
+				{body}
 			</div>
 		);
 
@@ -208,20 +212,23 @@ function Inspect({
 		}
 
 		if (isInspectMetricsLoading && !isInspectMetricsRefetching) {
-			return renderFallback('inspect-metrics-loading', <Skeleton active />);
+			return renderFallback(
+				'inspect-metrics-loading',
+				<Skeleton className="tw:h-[280px] tw:w-full" />,
+			);
 		}
 
 		if (isInspectMetricsError) {
 			return renderFallback(
 				'inspect-metrics-error',
-				<Empty description="Error loading inspect metrics." />,
+				<span>Error loading inspect metrics.</span>,
 			);
 		}
 
 		if (inspectMetricsTimeSeries.length === 0) {
 			return renderFallback(
 				'inspect-metrics-empty',
-				<Empty description="No time series found for this metric to inspect." />,
+				<span>No time series found for this metric to inspect.</span>,
 			);
 		}
 
@@ -282,19 +289,8 @@ function Inspect({
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<Drawer
 				width="100%"
-				title={
-					<div className="inspect-metrics-title">
-						<Typography.Text>Metrics Explorer —</Typography.Text>
-						<Button
-							className="inspect-metrics-button"
-							size="small"
-							icon={<Compass size={14} />}
-							disabled
-						>
-							Inspect Metric
-						</Button>
-					</div>
-				}
+				title={null}
+				closable={false}
 				open={isOpen}
 				onClose={onClose}
 				style={{
@@ -304,6 +300,35 @@ function Inspect({
 				className="inspect-metrics-modal"
 				destroyOnClose
 			>
+				<div className="inspect-metrics-header fs-ui tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-4 tw:font-sans tw:text-foreground">
+					<div className="tw:flex tw:min-w-0 tw:items-start tw:gap-3">
+						<Button
+							variant="outline"
+							size="icon-sm"
+							aria-label="Back to metrics"
+							onClick={onClose}
+						>
+							<ArrowLeft />
+						</Button>
+						<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5">
+							<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2.5">
+								<span className="tw:text-xs tw:font-medium tw:tracking-[0.05em] tw:text-muted-foreground tw:uppercase">
+									Inspect metric
+								</span>
+								<h1 className="tw:font-mono tw:text-lg tw:leading-snug tw:font-medium tw:break-all">
+									{appliedMetricName}
+								</h1>
+								{selectedMetricType && (
+									<MetricTypeViewRenderer type={selectedMetricType} />
+								)}
+							</div>
+							<p className="tw:text-[13px] tw:text-muted-foreground">
+								See how a query turns raw series into a chart, one aggregation at a
+								time. Data from the last 30 minutes.
+							</p>
+						</div>
+					</div>
+				</div>
 				<div className="inspect-metrics-content">
 					<div className="inspect-metrics-content-first-col">
 						{chartArea}

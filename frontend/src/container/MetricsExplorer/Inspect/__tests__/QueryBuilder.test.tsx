@@ -119,12 +119,40 @@ describe('QueryBuilder', () => {
 				</Provider>
 			</QueryClientProvider>,
 		);
-		expect(screen.getByText('Query Builder')).toBeInTheDocument();
+		expect(screen.getByRole('heading', { name: 'Query' })).toBeInTheDocument();
 		expect(screen.getByTestId('metric-name-search')).toBeInTheDocument();
 		expect(screen.getByTestId('metric-filters')).toBeInTheDocument();
 		expect(screen.getByTestId('metric-time-aggregation')).toBeInTheDocument();
 		expect(screen.getByTestId('metric-space-aggregation')).toBeInTheDocument();
 	});
+
+	it.each([
+		[InspectionStep.TIME_AGGREGATION, ['done', 'done', 'current', 'pending']],
+		[InspectionStep.SPACE_AGGREGATION, ['done', 'done', 'done', 'current']],
+		[InspectionStep.COMPLETED, ['done', 'done', 'done', 'done']],
+	])(
+		'numbers the four steps and highlights the current one at step %s',
+		(inspectionStep, states) => {
+			render(
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<QueryBuilder {...defaultProps} inspectionStep={inspectionStep} />
+					</Provider>
+				</QueryClientProvider>,
+			);
+
+			const steps = screen.getAllByTestId('inspect-query-step');
+			expect(steps.map((step) => step.getAttribute('data-step'))).toStrictEqual([
+				'1',
+				'2',
+				'3',
+				'4',
+			]);
+			expect(steps.map((step) => step.getAttribute('data-state'))).toStrictEqual(
+				states,
+			);
+		},
+	);
 
 	it('should call setCurrentMetricName when metric name is selected', async () => {
 		const user = userEvent.setup();

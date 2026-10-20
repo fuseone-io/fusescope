@@ -126,8 +126,12 @@ describe('Inspect', () => {
 		);
 
 		expect(screen.getByText('test_metric')).toBeInTheDocument();
-		expect(screen.getByRole('switch')).toBeInTheDocument(); // Graph/Table view switch
-		expect(screen.getByText('Query Builder')).toBeInTheDocument();
+		expect(screen.getByRole('group', { name: 'View' })).toBeInTheDocument();
+		expect(screen.getByRole('heading', { name: 'Query' })).toBeInTheDocument();
+		expect(screen.getByText(/Data from the last 30 minutes/)).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: 'Back to metrics' }),
+		).toBeInTheDocument();
 	});
 
 	it('renders loading state', () => {
