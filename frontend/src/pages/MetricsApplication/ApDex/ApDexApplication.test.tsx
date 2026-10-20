@@ -34,13 +34,13 @@ describe('ApDexApplication', () => {
 	it('should render the component', () => {
 		render(<ApDexApplication />);
 
-		expect(screen.getByText('Settings')).toBeInTheDocument();
+		expect(screen.getByText('Apdex settings')).toBeInTheDocument();
 	});
 
 	it('should open the popover when the settings button is clicked', async () => {
 		render(<ApDexApplication />);
 
-		const button = screen.getByText('Settings');
+		const button = screen.getByText('Apdex settings');
 		fireEvent.click(button);
 		await waitFor(() => {
 			expect(screen.getByText(APPLICATION_SETTINGS)).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe('ApDexApplication', () => {
 	it('should close the popover when the close button is clicked', async () => {
 		render(<ApDexApplication />);
 
-		const button = screen.getByText('Settings');
+		const button = screen.getByText('Apdex settings');
 		fireEvent.click(button);
 		await waitFor(() => {
 			expect(screen.getByText(APPLICATION_SETTINGS)).toBeInTheDocument();

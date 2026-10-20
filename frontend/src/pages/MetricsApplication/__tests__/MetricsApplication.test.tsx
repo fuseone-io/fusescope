@@ -51,7 +51,7 @@ describe('Service detail page', () => {
 		const actions = within(screen.getByTestId('page-header-actions'));
 		expect(actions.getByTestId('service-view-traces')).toBeInTheDocument();
 		expect(actions.getByTestId('service-view-logs')).toBeInTheDocument();
-		expect(actions.getByText('Settings')).toBeInTheDocument();
+		expect(actions.getByText('Apdex settings')).toBeInTheDocument();
 	});
 
 	it('links to traces and logs of this service over the selected range', () => {
@@ -82,8 +82,12 @@ describe('Service detail page', () => {
 		);
 		expect(tabs.getAllByRole('tab').map((tab) => tab.textContent)).toStrictEqual([
 			'Overview',
-			'DB Call Metrics',
-			'External Metrics',
+			'Endpoints',
+			'Dependencies',
+			'Errors',
+			'Infrastructure',
+			'DB calls',
+			'External',
 		]);
 		expect(tabs.getByRole('tab', { name: 'Overview' })).toHaveAttribute(
 			'aria-selected',
@@ -95,7 +99,7 @@ describe('Service detail page', () => {
 	it('opens the tab named by ?tab=', () => {
 		renderAt('/services/checkout?tab=EXTERNAL_METRICS');
 
-		expect(screen.getByRole('tab', { name: 'External Metrics' })).toHaveAttribute(
+		expect(screen.getByRole('tab', { name: 'External' })).toHaveAttribute(
 			'aria-selected',
 			'true',
 		);
