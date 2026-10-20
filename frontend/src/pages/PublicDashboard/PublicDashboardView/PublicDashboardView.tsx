@@ -1,5 +1,4 @@
 import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/fuseScope.schemas';
-import { Typography } from '@signozhq/ui/typography';
 import { refreshIntervalOptions } from 'container/TopNav/AutoRefreshV2/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
@@ -104,11 +103,9 @@ function PublicDashboardView({
 							alt="FuseScope"
 							className={styles.brandLogo}
 						/>
-						<Typography className={styles.brandName}>FuseScope</Typography>
+						<span className={styles.brandName}>FuseScope</span>
 					</div>
-					<Typography.Text className={styles.title}>
-						{dashboard?.spec?.display?.name}
-					</Typography.Text>
+					<h1 className={styles.title}>{dashboard?.spec?.display?.name}</h1>
 				</div>
 
 				{isTimeRangeEnabled && (
@@ -143,9 +140,10 @@ function PublicDashboardView({
 				{sections.map((section) => (
 					<section key={section.id} className={styles.section}>
 						{section.title && (
-							<Typography.Text className={styles.sectionTitle}>
-								{section.title}
-							</Typography.Text>
+							<div className={styles.sectionHeader}>
+								<h2 className={styles.sectionTitle}>{section.title}</h2>
+								<span aria-hidden="true" className={styles.sectionRule} />
+							</div>
 						)}
 						<PublicSectionGrid
 							items={section.items}

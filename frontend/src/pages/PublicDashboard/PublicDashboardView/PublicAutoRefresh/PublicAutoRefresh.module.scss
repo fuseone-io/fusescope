@@ -3,8 +3,9 @@
 .refreshActions {
 	display: flex;
 	flex-direction: row;
-	border-radius: 2px;
-	border: 1px solid var(--fs-border);
+	overflow: hidden;
+	border-radius: 8px;
+	border: 1px solid var(--fs-input);
 	background: var(--fs-card);
 
 	.refreshButton {

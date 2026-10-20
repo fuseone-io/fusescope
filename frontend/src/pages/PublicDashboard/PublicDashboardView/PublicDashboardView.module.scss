@@ -1,5 +1,11 @@
 .container {
 	display: flex;
+	font-family:
+		Inter,
+		'Segoe UI',
+		-apple-system,
+		system-ui,
+		sans-serif;
 	flex-direction: column;
 	height: 100%;
 	width: 100%;
@@ -31,23 +37,27 @@
 }
 
 .brandLogo {
-	height: 24px;
-	width: 24px;
+	height: 22px;
+	width: 22px;
 }
 
 .brandName {
+	color: var(--fs-foreground);
+	font-size: 15px;
 	font-weight: 600;
 }
 
 .title {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	margin: 0;
 	padding-left: 16px;
+	overflow: hidden;
 	border-left: 1px solid var(--fs-border);
 	color: var(--fs-foreground);
-	font-size: 14px;
-	font-weight: 500;
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .headerRight {
@@ -69,10 +79,23 @@
 	margin-bottom: 8px;
 }
 
+.sectionHeader {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 36px;
+	padding: 0 4px;
+}
+
 .sectionTitle {
-	padding: 8px 4px 4px;
-	border-bottom: 1px solid var(--fs-border);
+	margin: 0;
 	color: var(--fs-foreground);
-	font-size: 14px;
+	font-size: 13px;
 	font-weight: 600;
+}
+
+.sectionRule {
+	flex: 1;
+	height: 1px;
+	background: var(--fs-border);
 }
