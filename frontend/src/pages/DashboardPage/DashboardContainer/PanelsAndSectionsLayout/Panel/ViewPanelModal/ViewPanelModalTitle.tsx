@@ -1,5 +1,4 @@
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 
 import { usePanelTitle } from '../hooks/usePanelTitle';
@@ -13,11 +12,11 @@ function ViewPanelModalTitle({ panel }: ViewPanelModalTitleProps): JSX.Element {
 	const name = usePanelTitle(panel);
 
 	return (
-		<Tooltip title={name}>
-			<Typography.Text className={styles.title}>
+		<TitleTooltip title={name}>
+			<span className={styles.title}>
 				{name ? `${name} - (View mode)` : 'View mode'}
-			</Typography.Text>
-		</Tooltip>
+			</span>
+		</TitleTooltip>
 	);
 }
 

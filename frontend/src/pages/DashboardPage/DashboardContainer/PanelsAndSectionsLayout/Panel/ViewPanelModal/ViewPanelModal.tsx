@@ -1,11 +1,9 @@
 import {
 	Dialog,
-	DialogCloseButton,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-} from '@signozhq/ui/dialog';
-import { Typography } from '@signozhq/ui/typography';
+} from 'components/ui/dialog';
 import { ConfigProvider } from 'antd';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 import { useRef } from 'react';
@@ -46,20 +44,19 @@ function ViewPanelModal({
 		>
 			<DialogContent
 				ref={contentRef}
-				position="center"
-				width="extra-wide"
+				aria-describedby={undefined}
 				className={styles.dialog}
+				data-testid="view-panel-modal"
 			>
-				<DialogHeader>
-					<DialogTitle>
+				<DialogHeader className={styles.header}>
+					<DialogTitle className={styles.titleRow}>
 						{panel ? (
 							<ViewPanelModalTitle panel={panel} />
 						) : (
-							<Typography.Text className={styles.title}>View mode</Typography.Text>
+							<span className={styles.title}>View mode</span>
 						)}
 					</DialogTitle>
 				</DialogHeader>
-				<DialogCloseButton />
 				{open && panel && panelId && (
 					<ConfigProvider
 						getPopupContainer={(): HTMLElement => contentRef.current ?? document.body}

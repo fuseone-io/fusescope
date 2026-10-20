@@ -1,5 +1,6 @@
-import { PenLine, RotateCw } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
+import { PenLine, RotateCw } from 'lucide-react';
+import { Button as LegacyButton } from '@signozhq/ui/button';
+import { Button } from 'components/ui/button';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/fuseScope.schemas';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import type {
@@ -89,25 +90,26 @@ function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
 			</div>
 			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 				<Button
-					disabledTooltip={undefined}
-					size="md"
-					variant="outlined"
-					color="secondary"
-					prefix={<PenLine />}
+					type="button"
+					variant="outline"
+					size="sm"
 					disabled={!canSwitchToEdit}
 					onClick={onSwitchToEdit}
-					testId="view-panel-switch-to-edit"
+					data-testid="view-panel-switch-to-edit"
+					className={styles.outlineButton}
 				>
+					<PenLine />
 					Switch to Edit Mode
 				</Button>
 			</AuthZTooltip>
 			{query && (
 				<Button
-					size="md"
-					variant="outlined"
-					color="secondary"
+					type="button"
+					variant="outline"
+					size="sm"
 					onClick={query.onResetQuery}
-					testId="view-panel-reset-query"
+					data-testid="view-panel-reset-query"
+					className={styles.outlineButton}
 				>
 					Reset Query
 				</Button>
@@ -125,7 +127,7 @@ function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
 						modalInitialStartTime={query.startMs}
 						modalInitialEndTime={query.endMs}
 					/>
-					<Button
+					<LegacyButton
 						size="md"
 						icon
 						variant="outlined"
@@ -135,8 +137,8 @@ function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
 						aria-label="Refresh"
 						testId="view-panel-refresh"
 					>
-						<RotateCw />
-					</Button>
+						<RotateCw size={14} />
+					</LegacyButton>
 				</div>
 			)}
 		</div>

@@ -206,7 +206,7 @@ describe('ViewPanelModal', () => {
 		// fireEvent: user-event's pointer walk races Radix's layer bookkeeping in
 		// jsdom, transiently dropping the dialog's pointer-events and failing the
 		// interaction check. The assertion is only that Close wires to onClose.
-		fireEvent.click(screen.getByLabelText('Close'));
+		fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 		expect(onClose).toHaveBeenCalled();
 	});
 
