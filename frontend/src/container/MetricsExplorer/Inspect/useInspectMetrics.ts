@@ -282,6 +282,7 @@ export function useInspectMetrics(
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
 		inspectionStep: currentInspectionStep,
+		appliedInspectionStep,
 		isInspectMetricsRefetching,
 		spaceAggregatedSeriesMap,
 		aggregatedTimeSeries,

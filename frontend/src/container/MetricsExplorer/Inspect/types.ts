@@ -29,6 +29,7 @@ export interface UseInspectMetricsReturnData {
 	metricInspectionOptions: MetricInspectionState;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
+	appliedInspectionStep: InspectionStep;
 	isInspectMetricsRefetching: boolean;
 	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
 	aggregatedTimeSeries: InspectMetricsSeries[];
