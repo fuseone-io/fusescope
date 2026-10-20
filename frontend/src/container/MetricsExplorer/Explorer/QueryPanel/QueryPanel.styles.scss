@@ -544,29 +544,27 @@
 		width: 96px;
 	}
 
+	// The shared tag styles, past the bare select's 30px items.
 	.qp-groupby {
 		height: auto;
 		min-height: 32px;
-		padding: 0 4px;
+		padding: 0;
 
 		.ant-select-selector {
 			height: auto !important;
 			min-height: 30px !important;
+			padding: 4px !important;
 		}
 
 		.ant-select-selection-placeholder {
-			inset-inline-start: 6px !important;
+			inset-inline-start: 10px !important;
 		}
 
-		.ant-select-selection-item {
-			height: 22px;
-			margin: 0 4px 0 0;
-			border: 1px solid var(--fs-border);
-			border-radius: 4px;
-			background: var(--fs-muted);
-			font-family: var(--tw-font-mono);
-			font-size: 12px;
-			line-height: 20px;
+		.ant-select-selection-item,
+		.ant-select-selection-search,
+		.ant-select-selection-search-input {
+			height: 22px !important;
+			line-height: 20px !important;
 		}
 	}
 

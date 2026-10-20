@@ -27,6 +27,8 @@ import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 import { selectStyle } from '../QueryBuilderSearchV2/config';
 import { getMetricNameForQuery } from '../utils';
 import OptionRenderer from '../OptionRenderer/OptionRenderer';
+
+import './GroupByFilter.styles.scss';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
 import { toAttributeKey } from './utils';
 
@@ -156,6 +158,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			labelInValue
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
+			className="group-by-select"
 			data-testid="group-by"
 			placeholder={localValues?.length === 0 ? placeholder : ''}
 		/>
