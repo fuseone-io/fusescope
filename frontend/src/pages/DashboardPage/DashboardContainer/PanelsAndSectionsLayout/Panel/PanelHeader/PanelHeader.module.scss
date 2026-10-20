@@ -2,45 +2,56 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 8px 8px 4px 14px;
+	gap: 8px;
+	min-height: 38px;
+	padding: 6px 8px 0 16px;
+	font-family:
+		Inter,
+		'Segoe UI',
+		-apple-system,
+		system-ui,
+		sans-serif;
 	cursor: grab;
-	min-height: 36px;
 }
 
 .headerLeft {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 6px;
 	min-width: 0;
 }
 
 .headerTitle {
 	margin: 0;
-	white-space: nowrap;
 	overflow: hidden;
-	text-overflow: ellipsis;
-	color: var(--text-panel-ink, inherit);
-	font-size: 14px;
+	color: var(--text-panel-ink, var(--fs-foreground));
+	font-size: 13px;
 	font-weight: 600;
+	line-height: 20px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
-.badge {
-	margin-inline-end: 0;
+.headerInfoIcon {
+	flex-shrink: 0;
+	color: var(--fs-subtle-foreground);
+	cursor: help;
 }
 
 // Actions sit inside the drag-handle row but opt out of dragging
 // (`panel-no-drag`); reset the grab cursor so the menu reads as clickable.
 .actions {
 	display: flex;
+	flex-shrink: 0;
 	align-items: center;
-	gap: 8px;
+	gap: 4px;
 	cursor: default;
 }
 
 // Subtle background-refetch spinner in the header (chart stays mounted).
 .refetchIndicator {
-	color: var(--fs-muted-foreground);
 	flex-shrink: 0;
+	color: var(--fs-muted-foreground);
 }
 
 // Per-panel time-preference pill (e.g. `6h`), shown when the panel overrides
@@ -48,11 +59,12 @@
 .timePill {
 	flex-shrink: 0;
 	padding: 1px 6px;
+	border: 1px solid var(--fs-border);
 	border-radius: 4px;
+	background: var(--fs-muted);
+	color: var(--fs-muted-foreground);
+	font-family: 'JetBrains Mono', 'Fira Code', Consolas, ui-monospace, monospace;
 	font-size: 11px;
 	line-height: 16px;
-	color: var(--fs-subtle-foreground);
-	background: var(--fs-muted);
-	border: 1px solid var(--fs-border);
 	cursor: default;
 }

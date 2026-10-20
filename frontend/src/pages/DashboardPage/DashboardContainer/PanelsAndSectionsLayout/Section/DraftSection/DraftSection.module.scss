@@ -1,7 +1,7 @@
 .draftSection {
 	margin-bottom: 12px;
 	border: 1px solid var(--fs-border);
-	border-radius: 4px;
+	border-radius: 8px;
 	outline: 1px dashed var(--fs-primary);
 	outline-offset: 2px;
 }
@@ -13,11 +13,12 @@
 	padding: 8px 12px;
 	border-bottom: 1px solid var(--fs-border);
 	color: var(--fs-muted-foreground);
+	font-size: 13px;
 }
 
 .title {
 	color: var(--fs-foreground);
-	font-weight: 500;
+	font-weight: 600;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;

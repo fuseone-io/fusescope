@@ -1,9 +1,15 @@
 import { ReactNode } from 'react';
-import { Trash2, X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-
-import styles from './ConfirmDeleteDialog.module.scss';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
+import { LoaderCircle, Trash2, X } from 'lucide-react';
 
 interface ConfirmDeleteDialogProps {
 	open: boolean;
@@ -15,11 +21,7 @@ interface ConfirmDeleteDialogProps {
 	onClose: () => void;
 }
 
-/**
- * Shared destructive-confirm dialog built on @signozhq/ui DialogWrapper (not
- * antd Modal), so it inherits the design-system styling/theme. Used by the
- * dashboard and section delete flows.
- */
+/** Shared destructive-confirm dialog for the dashboard, section and panel delete flows. */
 function ConfirmDeleteDialog({
 	open,
 	title,
@@ -29,46 +31,44 @@ function ConfirmDeleteDialog({
 	onConfirm,
 	onClose,
 }: ConfirmDeleteDialogProps): JSX.Element {
-	const footer = (
-		<div className={styles.footer}>
-			<Button
-				size="md"
-				variant="solid"
-				color="secondary"
-				onClick={onClose}
-				prefix={<X size={12} />}
-			>
-				Cancel
-			</Button>
-			<Button
-				size="md"
-				variant="solid"
-				color="danger"
-				loading={isLoading}
-				onClick={onConfirm}
-				testId="confirm-delete"
-				prefix={<Trash2 size={12} />}
-			>
-				{confirmLabel}
-			</Button>
-		</div>
-	);
-
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
 					onClose();
 				}
 			}}
-			title={title}
-			width="narrow"
-			showCloseButton={false}
-			footer={footer}
 		>
-			<div className={styles.body}>{description}</div>
-		</DialogWrapper>
+			<DialogContent showCloseButton={false} className="tw:max-w-[440px]">
+				<DialogHeader>
+					<DialogTitle>{title}</DialogTitle>
+				</DialogHeader>
+				<DialogBody>
+					<DialogDescription className="tw:text-[13px]">
+						{description}
+					</DialogDescription>
+				</DialogBody>
+				<DialogFooter>
+					<Button type="button" variant="ghost" size="sm" onClick={onClose}>
+						<X />
+						Cancel
+					</Button>
+					<Button
+						type="button"
+						variant="destructive"
+						size="sm"
+						disabled={isLoading}
+						aria-busy={isLoading || undefined}
+						onClick={onConfirm}
+						data-testid="confirm-delete"
+					>
+						{isLoading ? <LoaderCircle className="tw:animate-spin" /> : <Trash2 />}
+						<span>{confirmLabel}</span>
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

@@ -9,7 +9,7 @@
 	:global(.react-grid-item.react-grid-placeholder) {
 		background: var(--fs-primary);
 		opacity: 0.2;
-		border-radius: 4px;
+		border-radius: 12px;
 		transition-duration: 100ms;
 		z-index: 2;
 		user-select: none;
@@ -20,8 +20,11 @@
 	// Recolour it with the theme border token so the grip is visible in both.
 	:global(.react-resizable-handle) {
 		&::after {
-			border-right-color: var(--fs-border) !important;
-			border-bottom-color: var(--fs-border) !important;
+			right: 5px !important;
+			bottom: 5px !important;
+			border-right-color: var(--fs-subtle-foreground) !important;
+			border-bottom-color: var(--fs-subtle-foreground) !important;
+			opacity: 0.6;
 		}
 	}
 }

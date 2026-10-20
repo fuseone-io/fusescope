@@ -1,11 +1,18 @@
-import { RotateCcw } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
+import { RotateCcw } from 'lucide-react';
 import logEvent from 'api/common/logEvent';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import { useDashboardStore } from '../../store/useDashboardStore';
-import styles from './DashboardChangedDialog.module.scss';
 
 interface DashboardChangedDialogProps {
 	open: boolean;
@@ -36,48 +43,47 @@ function DashboardChangedDialog({
 		onDismiss();
 	};
 
-	const footer = (
-		<div className={styles.footer}>
-			<Button
-				size="md"
-				variant="solid"
-				color="secondary"
-				onClick={handleDismiss}
-				testId="dashboard-changed-dismiss"
-			>
-				Dismiss
-			</Button>
-			<Button
-				size="md"
-				variant="solid"
-				color="primary"
-				prefix={<RotateCcw size={12} />}
-				onClick={handleReload}
-				testId="dashboard-changed-reload"
-			>
-				Reload
-			</Button>
-		</div>
-	);
-
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
 					onDismiss();
 				}
 			}}
-			title="Dashboard updated elsewhere"
-			width="narrow"
-			showCloseButton={false}
-			footer={footer}
 		>
-			<div className={styles.body}>
-				This dashboard was changed in another tab or by another user. Reload to see
-				the latest version.
-			</div>
-		</DialogWrapper>
+			<DialogContent showCloseButton={false} className="tw:max-w-[440px]">
+				<DialogHeader>
+					<DialogTitle>Dashboard updated elsewhere</DialogTitle>
+				</DialogHeader>
+				<DialogBody>
+					<DialogDescription className="tw:text-[13px]">
+						This dashboard was changed in another tab or by another user. Reload to
+						see the latest version.
+					</DialogDescription>
+				</DialogBody>
+				<DialogFooter>
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						onClick={handleDismiss}
+						data-testid="dashboard-changed-dismiss"
+					>
+						Dismiss
+					</Button>
+					<Button
+						type="button"
+						size="sm"
+						onClick={handleReload}
+						data-testid="dashboard-changed-reload"
+					>
+						<RotateCcw />
+						Reload
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

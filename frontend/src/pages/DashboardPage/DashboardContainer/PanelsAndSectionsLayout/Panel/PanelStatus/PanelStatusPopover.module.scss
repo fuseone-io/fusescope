@@ -85,7 +85,7 @@
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	background: var(--bg-sakura-500);
+	background: var(--fs-error);
 }
 
 .badgeText {
@@ -129,7 +129,7 @@
 	position: relative;
 	padding-left: 14px;
 	color: var(--fs-muted-foreground);
-	font-family: 'Geist Mono', monospace;
+	font-family: 'JetBrains Mono', 'Fira Code', Consolas, ui-monospace, monospace;
 	font-size: 12px;
 	line-height: 18px;
 	word-break: break-word;

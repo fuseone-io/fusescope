@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Copy, EllipsisVertical, PenLine, Plus, Trash2 } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
+import { Button } from 'components/ui/button';
 import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 import { blockedBy } from 'lib/authz/components/AuthZDropdown/utils';
@@ -94,12 +94,11 @@ function SectionActionsMenu({
 			<Button
 				type="button"
 				variant="ghost"
-				color="secondary"
-				size="sm"
-				icon
+				size="icon-sm"
 				aria-label="Section actions"
+				className="tw:size-7 tw:text-muted-foreground"
 			>
-				<EllipsisVertical size={14} />
+				<EllipsisVertical />
 			</Button>
 		</AuthZDropdown>
 	);

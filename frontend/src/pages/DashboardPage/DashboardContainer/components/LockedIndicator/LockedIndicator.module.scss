@@ -15,22 +15,26 @@
 	align-self: flex-end;
 	display: inline-flex;
 	align-items: center;
-	gap: 4px;
-	padding: 4px 6px;
-	border-radius: 4px 0 0 0;
-	background: var(--bg-sakura-500);
-	color: var(--fs-foreground);
-	backdrop-filter: blur(6px);
-	font-family: 'Space Mono';
-	font-size: 12px;
+	gap: 6px;
+	padding: 3px 8px;
+	border-radius: 6px 0 0 0;
+	background: var(--fs-warning-soft);
+	color: var(--fs-warning-ink);
+	font-family:
+		Inter,
+		'Segoe UI',
+		-apple-system,
+		system-ui,
+		sans-serif;
+	font-size: 11px;
 	font-weight: 500;
 	line-height: 16px;
-	letter-spacing: 0.48px;
+	letter-spacing: 0.05em;
 	text-transform: uppercase;
 }
 
 .lockedBar {
 	width: 100%;
-	height: 6px;
-	background: var(--bg-sakura-500);
+	height: 3px;
+	background: var(--fs-warning);
 }

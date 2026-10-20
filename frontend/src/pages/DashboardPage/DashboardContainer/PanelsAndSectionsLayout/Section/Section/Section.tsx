@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import { Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
+import { Plus } from 'lucide-react';
+import { Button } from 'components/ui/button';
 import cx from 'classnames';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
@@ -127,19 +127,19 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				(section.items.length > 0 || pickerTarget ? (
 					grid
 				) : (
-					<div className={styles.emptySection}>
+					<div className={cx('fs-ui', styles.emptySection)}>
 						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 							<Button
-								size="md"
 								type="button"
-								variant="dashed"
-								color="secondary"
-								prefix={<Plus size="md" />}
+								variant="ghost"
+								size="sm"
 								onClick={
 									isEditable ? (): void => openPicker(section.layoutIndex) : undefined
 								}
-								testId={`section-add-panel-${section.id}`}
+								data-testid={`section-add-panel-${section.id}`}
+								className={styles.addPanel}
 							>
+								<Plus />
 								New Panel
 							</Button>
 						</AuthZTooltip>

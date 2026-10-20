@@ -1,9 +1,7 @@
 import type { DraggableAttributes } from '@dnd-kit/core';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
-import { ChevronDown, ChevronRight, GripVertical } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
-import cx from 'classnames';
+import { Button } from 'components/ui/button';
+import { ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
 
 import SectionActionsMenu from '../SectionActionsMenu/SectionActionsMenu';
 
@@ -56,14 +54,13 @@ function SectionDragHandleButton({
 			<Button
 				type="button"
 				variant="ghost"
-				color="secondary"
-				size="sm"
-				icon
+				size="icon-sm"
 				aria-label="Drag to reorder section"
-				testId={`dashboard-section-drag-${sectionId}`}
+				data-testid={`dashboard-section-drag-${sectionId}`}
+				className={styles.dragButton}
 				{...sortableAttributes}
 			>
-				<GripVertical size={14} />
+				<GripVertical />
 			</Button>
 		</span>
 	);
@@ -81,29 +78,26 @@ function SectionHeader({
 	disabledTooltip,
 }: SectionHeaderProps): JSX.Element {
 	return (
-		<div className={cx(styles.header, { [styles.headerOpen]: open })}>
+		<div className={`fs-ui ${styles.header}`}>
 			{dragHandle ? (
 				<SectionDragHandleButton dragHandle={dragHandle} sectionId={sectionId} />
 			) : null}
-			<div className={styles.toggle}>
-				<Button
-					size="md"
-					type="button"
-					variant="ghost"
-					color="secondary"
-					width="100%"
-					onClick={onToggle}
-					testId={`dashboard-section-toggle-${sectionId}`}
-					prefix={open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-				>
-					<Typography.Text className={styles.title}>{title}</Typography.Text>
-					{repeatVariable ? (
-						<Typography.Text className={styles.repeatBadge}>
-							(repeats per ${repeatVariable})
-						</Typography.Text>
-					) : null}
-				</Button>
-			</div>
+			<Button
+				type="button"
+				variant="ghost"
+				size="sm"
+				aria-expanded={open}
+				onClick={onToggle}
+				data-testid={`dashboard-section-toggle-${sectionId}`}
+				className={styles.toggle}
+			>
+				{open ? <ChevronDown /> : <ChevronRight />}
+				<span className={styles.title}>{title}</span>
+				{repeatVariable ? (
+					<span className={styles.repeatBadge}>(repeats per ${repeatVariable})</span>
+				) : null}
+			</Button>
+			<span aria-hidden="true" className={styles.rule} />
 			{actions ? (
 				<SectionActionsMenu
 					sectionId={sectionId}
