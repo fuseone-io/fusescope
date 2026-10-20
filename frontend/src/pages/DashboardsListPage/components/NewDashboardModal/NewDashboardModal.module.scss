@@ -3,8 +3,9 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	padding-top: 12px;
+	padding-top: 16px;
 	height: 460px;
+	font-size: 13px;
 }
 
 .footer {
@@ -27,8 +28,30 @@
 }
 
 .label {
+	color: var(--fs-foreground);
 	font-size: 13px;
-	color: var(--fs-muted-foreground);
+}
+
+.textarea {
+	width: 100%;
+	min-height: 76px;
+	padding: 6px 12px;
+	border-width: 1px;
+	border-style: solid;
+	border-radius: 6px;
+	color: var(--fs-foreground);
+	font: inherit;
+	resize: vertical;
+	outline: none;
+
+	&::placeholder {
+		color: var(--fs-subtle-foreground);
+	}
+
+	&:focus-visible {
+		border-color: var(--fs-ring);
+		box-shadow: 0 0 0 3px var(--fs-ring-soft);
+	}
 }
 
 .required {
@@ -49,12 +72,11 @@
 }
 
 .imageTrigger {
-	border-radius: 2px 0 0 2px;
+	border-radius: 6px;
 }
 
 .titleInput {
 	flex: 1;
-	border-radius: 0 2px 2px 0;
 }
 
 .hint {
@@ -89,17 +111,26 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 44px;
-	height: 44px;
+	width: 40px;
+	height: 40px;
 	margin-bottom: 4px;
 	border-radius: 10px;
-	color: var(--fs-primary);
-	background: var(--callout-primary-background);
-	border: 1px solid var(--callout-primary-border);
+	background: var(--fs-primary-soft);
+	color: var(--fs-primary-ink);
+}
+
+.templatesTitle {
+	margin: 0;
+	color: var(--fs-foreground);
+	font-size: 16px;
+	font-weight: 600;
 }
 
 .templatesDesc {
 	max-width: 360px;
+	margin: 0;
+	color: var(--fs-muted-foreground);
+	font-size: 13px;
 }
 
 .browseLink {
@@ -112,7 +143,8 @@
 	font-weight: 500;
 
 	&:hover {
-		color: var(--bg-robin-300);
+		color: var(--fs-primary-strong);
+		text-decoration: underline;
 	}
 }
 
@@ -129,15 +161,13 @@
 
 .requestHeader {
 	color: var(--fs-foreground);
+	font-size: 13px;
+	font-weight: 600;
 }
 
 .requestRow {
 	display: flex;
 	gap: 8px;
-}
-
-.requestInput {
-	flex: 1;
 }
 
 .importHeader {
@@ -158,18 +188,19 @@
 
 .editor {
 	border: 1px solid var(--fs-border);
-	border-radius: 6px;
+	border-radius: 8px;
 	overflow: hidden;
 }
 
 .editorExpanded {
-	margin-top: 8px;
+	margin: 12px 20px 20px;
 }
 
 .jsonError {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	color: var(--fs-error);
 }
 
 .errorText {

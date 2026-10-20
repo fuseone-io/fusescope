@@ -29,6 +29,9 @@ jest.mock('../../hooks/useRetryMigration', () => ({
 
 const DASHBOARD_ID = '0f9a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c';
 
+// The Radix dialog disables pointer events on <body> while it is open.
+const user = userEvent.setup({ pointerEventsCheck: 0 });
+
 describe('LegacyDashboardDialog', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -56,14 +59,14 @@ describe('LegacyDashboardDialog', () => {
 
 	it('copies the dashboard id and confirms with a toast', async () => {
 		setup();
-		await userEvent.click(screen.getByTestId('legacy-dashboard-copy-id'));
+		await user.click(screen.getByTestId('legacy-dashboard-copy-id'));
 		expect(mockCopy).toHaveBeenCalledWith(DASHBOARD_ID);
 		expect(mockToastSuccess).toHaveBeenCalledWith('Dashboard ID copied');
 	});
 
 	it('routes the user to support', async () => {
 		setup();
-		await userEvent.click(screen.getByTestId('legacy-dashboard-contact-support'));
+		await user.click(screen.getByTestId('legacy-dashboard-contact-support'));
 		expect(mockContactSupport).toHaveBeenCalledTimes(1);
 	});
 
@@ -76,7 +79,7 @@ describe('LegacyDashboardDialog', () => {
 				screen.getByTestId('legacy-dashboard-retry-migration'),
 			).not.toHaveAttribute('aria-disabled', 'true'),
 		);
-		await userEvent.click(screen.getByTestId('legacy-dashboard-retry-migration'));
+		await user.click(screen.getByTestId('legacy-dashboard-retry-migration'));
 		expect(mockRetryMigration).toHaveBeenCalledWith(DASHBOARD_ID);
 	});
 

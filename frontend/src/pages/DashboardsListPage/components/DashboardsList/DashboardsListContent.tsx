@@ -1,6 +1,6 @@
 import logEvent from 'api/common/logEvent';
 import Panel from 'components/PageTemplate/components/Panel';
-import TablePagination from 'components/PageTemplate/components/TablePagination';
+import NumberedTablePagination from 'components/PageTemplate/components/NumberedTablePagination';
 import { cn } from 'lib/utils';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 
@@ -47,13 +47,13 @@ function DashboardsListContent({
 					role="table"
 					aria-label="Dashboards"
 					aria-busy={loading}
-					className="tw:min-w-[880px]"
+					className="tw:min-w-[760px]"
 				>
 					<div
 						role="row"
 						className={cn(
 							grid,
-							'fs-ui tw:min-h-9 tw:border-b tw:border-border tw:bg-muted tw:font-sans',
+							'fs-ui tw:min-h-9 tw:border-b tw:border-border tw:bg-surface-sunken tw:font-sans',
 						)}
 					>
 						<span role="columnheader" className={HEADER_CELL}>
@@ -93,11 +93,13 @@ function DashboardsListContent({
 					</div>
 				</div>
 			</div>
-			<TablePagination
+			<NumberedTablePagination
 				page={page}
 				pageSize={pageSize}
 				total={total}
-				onPageChange={handlePageChange}
+				itemLabel="dashboards"
+				pageSizes={[pageSize]}
+				onChange={handlePageChange}
 			/>
 		</Panel>
 	);

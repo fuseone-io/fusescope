@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import { Input } from '@signozhq/ui/input';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
+import { Input } from 'components/ui/input';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { LoaderCircle } from 'lucide-react';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import {
@@ -16,7 +25,6 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../DashboardPage/DashboardContainer/constants';
-import styles from './ActionsPopover.module.scss';
 
 interface Props {
 	open: boolean;
@@ -71,60 +79,74 @@ function RenameDashboardModal({
 	const trimmed = name.trim();
 	const canSave = trimmed.length > 0 && trimmed !== currentName && !isLoading;
 
+	const blockedReason =
+		trimmed.length === 0
+			? 'Enter a dashboard name first'
+			: 'Change the name first';
+	const blocked = trimmed.length === 0 || trimmed === currentName;
+
 	return (
-		<DialogWrapper
-			title="Rename dashboard"
+		<Dialog
 			open={open}
-			width="narrow"
 			onOpenChange={(next): void => {
 				if (!next) {
 					onClose();
 				}
 			}}
-			footer={
-				<div className={styles.renameFooter}>
+		>
+			<DialogContent
+				showCloseButton={false}
+				aria-describedby={undefined}
+				className="tw:max-w-[440px]"
+			>
+				<DialogHeader>
+					<DialogTitle>Rename dashboard</DialogTitle>
+				</DialogHeader>
+				<DialogBody>
+					<Input
+						value={name}
+						autoFocus
+						maxLength={DASHBOARD_NAME_MAX_LENGTH}
+						placeholder="Dashboard name"
+						aria-label="Dashboard name"
+						data-testid="rename-dashboard-input"
+						className="tw:h-8 tw:border-input tw:bg-surface-raised tw:text-[13px] tw:text-foreground tw:dark:bg-surface-raised"
+						onChange={(e): void => setName(e.target.value)}
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter' && canSave) {
+								runRename();
+							}
+						}}
+					/>
+				</DialogBody>
+				<DialogFooter>
 					<Button
+						type="button"
 						variant="ghost"
-						color="secondary"
-						size="md"
+						size="sm"
 						onClick={onClose}
-						testId="rename-dashboard-cancel"
+						data-testid="rename-dashboard-cancel"
 					>
 						Cancel
 					</Button>
-					<Button
-						disabledTooltip={
-							trimmed.length === 0
-								? 'Enter a dashboard name first'
-								: 'Change the name first'
-						}
-						variant="solid"
-						color="primary"
-						size="md"
-						disabled={trimmed.length === 0 || trimmed === currentName}
-						loading={isLoading}
-						onClick={(): void => runRename()}
-						testId="rename-dashboard-submit"
-					>
-						Save
-					</Button>
-				</div>
-			}
-		>
-			<Input
-				value={name}
-				autoFocus
-				maxLength={DASHBOARD_NAME_MAX_LENGTH}
-				placeholder="Dashboard name"
-				testId="rename-dashboard-input"
-				onChange={(e): void => setName(e.target.value)}
-				onKeyDown={(e): void => {
-					if (e.key === 'Enter' && canSave) {
-						runRename();
-					}
-				}}
-			/>
-		</DialogWrapper>
+					<TitleTooltip title={blocked ? blockedReason : undefined}>
+						<span className="tw:inline-flex">
+							<Button
+								type="button"
+								size="sm"
+								disabled={blocked || isLoading}
+								aria-busy={isLoading || undefined}
+								onClick={(): void => runRename()}
+								data-testid="rename-dashboard-submit"
+							>
+								{isLoading && <LoaderCircle className="tw:animate-spin" />}
+								<span>Save</span>
+							</Button>
+						</span>
+					</TitleTooltip>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

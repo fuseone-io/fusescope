@@ -5,11 +5,11 @@ import {
 	useState,
 } from 'react';
 import logEvent from 'api/common/logEvent';
-import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { Input } from '@signozhq/ui/input';
-import { Typography } from '@signozhq/ui/typography';
-import { Bookmark, PenLine, Plus, Search, Trash2 } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { Bookmark } from '@signozhq/icons';
+import { PenLine, Plus, Search, Trash2 } from 'lucide-react';
 import cx from 'classnames';
 
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
@@ -87,11 +87,9 @@ function ViewsRail({
 		(id: string, label: string): void => {
 			confirmDelete({
 				title: (
-					<Typography.Title level={5}>
-						Delete the{' '}
-						<Typography.Text className={styles.deleteName}>{label}</Typography.Text>{' '}
-						view?
-					</Typography.Title>
+					<span className={styles.deleteTitle}>
+						Delete the <span className={styles.deleteName}>{label}</span> view?
+					</span>
 				),
 				content: 'This removes the saved view. Your dashboards are not affected.',
 				// Return the delete promise so the modal's Delete button stays loading
@@ -149,32 +147,32 @@ function ViewsRail({
 							tooltip="Rename view"
 							trigger={
 								<Button
+									type="button"
 									variant="ghost"
-									color="secondary"
-									size="sm"
-									icon
+									size="icon-xs"
 									aria-label="Rename view"
+									className={styles.itemAction}
 									onClick={(e): void => e.stopPropagation()}
 								>
-									<PenLine size={12} />
+									<PenLine />
 								</Button>
 							}
 						/>
-						<Tooltip title="Delete view">
+						<TitleTooltip title="Delete view">
 							<Button
+								type="button"
 								variant="ghost"
-								color="secondary"
-								size="sm"
-								icon
+								size="icon-xs"
 								aria-label="Delete view"
+								className={styles.itemAction}
 								onClick={(e): void => {
 									e.stopPropagation();
 									onConfirmDelete(row.id, row.label);
 								}}
 							>
-								<Trash2 size={12} />
+								<Trash2 />
 							</Button>
-						</Tooltip>
+						</TitleTooltip>
 					</div>
 				)}
 			</div>
@@ -205,25 +203,27 @@ function ViewsRail({
 							tooltip="Save current filters as a view"
 							trigger={
 								<Button
+									type="button"
 									aria-label="Save current filters as a view"
 									variant="ghost"
-									color="secondary"
-									size="sm"
-									icon
-									testId="dashboards-view-save-trigger"
+									size="icon-sm"
+									data-testid="dashboards-view-save-trigger"
+									className="tw:size-7 tw:text-muted-foreground"
 								>
-									<Plus size={14} />
+									<Plus />
 								</Button>
 							}
 						/>
 					</div>
 
-					<div className={styles.search}>
+					<div className={cx('fs-ui', styles.search)}>
+						<Search aria-hidden="true" className={styles.searchIcon} />
 						<Input
 							value={query}
 							placeholder="Filter views by name"
-							prefix={<Search size={12} />}
-							testId="dashboards-view-search"
+							aria-label="Filter views by name"
+							data-testid="dashboards-view-search"
+							className="tw:h-8 tw:rounded-lg tw:border-input tw:bg-surface-raised tw:pl-8 tw:font-sans tw:text-[13px] tw:dark:bg-surface-raised"
 							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
 								setQuery(e.target.value)
 							}
@@ -251,9 +251,7 @@ function ViewsRail({
 							<>
 								<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
 									My views
-									<Typography.Text className={styles.groupCount}>
-										{customViews.length}
-									</Typography.Text>
+									<span className={styles.groupCount}>{customViews.length}</span>
 								</div>
 								{customViewsLoading ? (
 									<div className={styles.empty}>Loading views…</div>
@@ -282,27 +280,27 @@ function ViewsRail({
 					</div>
 
 					{isCustomActive && isModified && (
-						<div className={styles.dirtyPanel}>
+						<div className={cx('fs-ui', styles.dirtyPanel)}>
 							<div className={styles.dirtyTitle}>Unsaved changes</div>
 							<div className={styles.dirtyActions}>
 								<Button
-									variant="solid"
-									color="primary"
+									type="button"
 									size="sm"
 									onClick={handleSaveViewChanges}
-									testId="dashboards-view-save-changes"
+									data-testid="dashboards-view-save-changes"
 								>
 									Save
 								</Button>
 								<Button
-									variant="outlined"
-									color="secondary"
+									type="button"
+									variant="outline"
 									size="sm"
+									className={styles.secondaryAction}
 									onClick={(): void => setSaveOpen(true)}
 								>
 									Save as…
 								</Button>
-								<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
+								<Button type="button" variant="ghost" size="sm" onClick={onReset}>
 									Reset
 								</Button>
 							</div>
@@ -310,20 +308,19 @@ function ViewsRail({
 					)}
 
 					{!isCustomActive && isModified && (
-						<div className={cx(styles.dirtyPanel, styles.dirtyPanelDefault)}>
+						<div className={cx('fs-ui', styles.dirtyPanel, styles.dirtyPanelDefault)}>
 							<div className={styles.dirtyTitle}>Filters active</div>
 							<div className={styles.dirtyActions}>
 								<Button
-									variant="solid"
-									color="primary"
+									type="button"
 									size="sm"
-									prefix={<Plus size={12} />}
 									onClick={(): void => setSaveOpen(true)}
-									testId="dashboards-view-save-as-new"
+									data-testid="dashboards-view-save-as-new"
 								>
+									<Plus />
 									Save as new view
 								</Button>
-								<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
+								<Button type="button" variant="ghost" size="sm" onClick={onReset}>
 									Reset
 								</Button>
 							</div>

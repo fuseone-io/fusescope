@@ -1,7 +1,13 @@
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import { Typography } from '@signozhq/ui/typography';
-import { ArrowUpRight, Copy, RotateCw } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
+import { ArrowUpRight, Copy, RotateCw } from 'lucide-react';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
@@ -65,50 +71,80 @@ function LegacyDashboardDialog({
 	};
 
 	return (
-		<DialogWrapper
-			title="This dashboard isn't available in the new experience"
+		<Dialog
 			open={open}
-			width="narrow"
 			onOpenChange={(next): void => {
 				if (!next) {
 					onClose();
 				}
 			}}
-			footer={
-				<div className={styles.footer}>
+		>
+			<DialogContent
+				showCloseButton={false}
+				aria-describedby={undefined}
+				className="tw:max-w-[480px]"
+			>
+				<DialogHeader>
+					<DialogTitle>
+						This dashboard isn&apos;t available in the new experience
+					</DialogTitle>
+				</DialogHeader>
+				<DialogBody className={styles.body}>
+					<p className={styles.description}>
+						<strong>{dashboardName || 'This dashboard'}</strong> hasn&apos;t been
+						migrated to the new dashboard experience yet, so it can&apos;t be opened
+						here.{' '}
+						{canEdit
+							? "Retrying the migration often works once we've handled the case that blocked it. If it still fails, share the dashboard ID below with support."
+							: "Share the dashboard ID below with support and we'll help you move it over."}
+					</p>
+
+					<div className={styles.idField}>
+						<span className={styles.idLabel}>Dashboard ID</span>
+						<div className={styles.idRow}>
+							<span className={styles.idValue} data-testid="legacy-dashboard-id">
+								{dashboardId}
+							</span>
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-sm"
+								aria-label="Copy dashboard ID"
+								onClick={onCopyId}
+								data-testid="legacy-dashboard-copy-id"
+							>
+								<Copy />
+							</Button>
+						</div>
+					</div>
+				</DialogBody>
+				<DialogFooter>
 					<Button
+						type="button"
 						variant="ghost"
-						color="secondary"
-						size="md"
-						loading={isMigrating}
+						size="sm"
+						disabled={isMigrating}
+						aria-disabled={isMigrating || undefined}
 						onClick={onClose}
-						testId="legacy-dashboard-close"
+						data-testid="legacy-dashboard-close"
 					>
 						Close
 					</Button>
-					{canEdit ? (
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="md"
-							suffix={<ArrowUpRight size={14} />}
-							onClick={onContactSupport}
-							testId="legacy-dashboard-contact-support"
-						>
-							Contact Support
-						</Button>
-					) : (
-						<Button
-							variant="solid"
-							color="primary"
-							size="md"
-							suffix={<ArrowUpRight size={14} />}
-							onClick={onContactSupport}
-							testId="legacy-dashboard-contact-support"
-						>
-							Contact Support
-						</Button>
-					)}
+					<Button
+						type="button"
+						variant={canEdit ? 'outline' : 'default'}
+						size="sm"
+						className={
+							canEdit
+								? 'tw:border-input tw:bg-surface-raised tw:dark:bg-surface-raised'
+								: undefined
+						}
+						onClick={onContactSupport}
+						data-testid="legacy-dashboard-contact-support"
+					>
+						Contact Support
+						<ArrowUpRight />
+					</Button>
 					<AuthZButton
 						checks={editChecks}
 						variant="solid"
@@ -122,43 +158,9 @@ function LegacyDashboardDialog({
 					>
 						Retry migration
 					</AuthZButton>
-				</div>
-			}
-		>
-			<div className={styles.body}>
-				<Typography.Text className={styles.description}>
-					<strong>{dashboardName || 'This dashboard'}</strong> hasn&apos;t been
-					migrated to the new dashboard experience yet, so it can&apos;t be opened
-					here.{' '}
-					{canEdit
-						? "Retrying the migration often works once we've handled the case that blocked it. If it still fails, share the dashboard ID below with support."
-						: "Share the dashboard ID below with support and we'll help you move it over."}
-				</Typography.Text>
-
-				<div className={styles.idField}>
-					<Typography.Text className={styles.idLabel}>Dashboard ID</Typography.Text>
-					<div className={styles.idRow}>
-						<Typography.Text
-							className={styles.idValue}
-							data-testid="legacy-dashboard-id"
-						>
-							{dashboardId}
-						</Typography.Text>
-						<Button
-							variant="ghost"
-							color="secondary"
-							size="sm"
-							icon
-							aria-label="Copy dashboard ID"
-							onClick={onCopyId}
-							testId="legacy-dashboard-copy-id"
-						>
-							<Copy size={14} />
-						</Button>
-					</div>
-				</div>
-			</div>
-		</DialogWrapper>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

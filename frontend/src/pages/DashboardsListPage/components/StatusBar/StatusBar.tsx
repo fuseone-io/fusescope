@@ -1,6 +1,5 @@
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
-import { PanelLeftClose, PanelLeftOpen } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 import styles from './StatusBar.module.scss';
 
@@ -20,20 +19,19 @@ function StatusBar({
 	return (
 		<div className={styles.statusBar}>
 			<Button
+				type="button"
 				variant="ghost"
-				color="secondary"
-				size="sm"
-				prefix={
-					collapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />
-				}
+				size="xs"
 				onClick={onToggleCollapse}
-				testId="dashboards-rail-toggle"
+				data-testid="dashboards-rail-toggle"
+				className="fs-ui tw:font-sans tw:text-muted-foreground"
 			>
+				{collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
 				{collapsed ? 'Expand' : 'Collapse'}
 			</Button>
-			<Typography.Text className={styles.count}>
+			<span className={styles.count}>
 				{count} of {total} dashboards
-			</Typography.Text>
+			</span>
 		</div>
 	);
 }

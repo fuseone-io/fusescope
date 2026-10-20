@@ -1,7 +1,7 @@
 .filterZone {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 8px;
 	width: 100%;
 }
 
@@ -19,58 +19,79 @@
 
 .filtersRow {
 	display: flex;
-	align-items: center;
-	gap: 8px;
 	flex-wrap: wrap;
-}
-
-.filtersLabel {
-	font-size: 12px;
-	font-weight: 500;
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
-	color: var(--fs-muted-foreground);
-	margin-right: 2px;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
 }
 
 .filterControls {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
-	flex-wrap: wrap;
 }
 
 .chips {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
-	// Keep the two dropdowns side by side; each is fixed-width so pills can't
-	// grow the trigger and wrap them onto separate lines.
-	flex-wrap: nowrap;
 }
 
-.select {
+// A secondary button look: the label prefix, then the borderless select.
+.filterField {
+	display: inline-flex;
 	flex: none;
+	align-items: center;
+	height: 32px;
+	padding-left: 10px;
+	border: 1px solid var(--fs-input);
+	border-radius: 8px;
+	background: var(--fs-card);
+	box-shadow: var(--fs-control-shadow);
+	font-size: 13px;
 
-	// Match the search bar: near-black background, --l2-border border.
-	:global(.ant-select-selector) {
-		background-color: var(--fs-background) !important;
-		border-color: var(--fs-border) !important;
+	&:hover {
+		background: var(--fs-muted);
+	}
+
+	&:focus-within {
+		border-color: var(--fs-ring);
+		box-shadow: 0 0 0 3px var(--fs-ring-soft);
 	}
 }
 
-// The single-select (Updated) is compact; the multi-select (Created-by) is wider
-// to fit a truncated pill + "+N" + clear.
-.selectNarrow {
-	width: 140px;
+.filterLabel {
+	flex: none;
+	color: var(--fs-foreground);
+	white-space: nowrap;
 }
 
-.selectWide {
-	width: 240px;
+.select {
+	flex: 1;
+	min-width: 0;
 
-	// Keep the pills on one line and let the first pill shrink + ellipsis to fill
-	// the available width (antd sets `flex: none` on tags, so allow the pill to
-	// shrink; keep the "+N" count and the search area intact).
+	:global(.ant-select-selector) {
+		background: transparent !important;
+		box-shadow: none !important;
+	}
+
+	:global(.ant-select-selection-placeholder),
+	:global(.ant-select-selection-item) {
+		color: var(--fs-subtle-foreground);
+	}
+}
+
+// Single-select (Updated) is compact; the multi-select (Created by) fits a
+// truncated pill, "+N" and clear on one line.
+.fieldNarrow {
+	width: 196px;
+}
+
+.fieldWide {
+	width: 300px;
+
 	:global(.ant-select-selection-overflow) {
 		flex-wrap: nowrap;
 	}

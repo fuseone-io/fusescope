@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import {
@@ -16,7 +23,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import { keyValueStringsToTags } from '../../utils/helpers';
-import styles from './ActionsPopover.module.scss';
+import { LoaderCircle } from 'lucide-react';
 
 interface Props {
 	open: boolean;
@@ -96,46 +103,54 @@ function EditTagsModal({
 	const title = currentTags.length > 0 ? 'Edit tags' : 'Add tags';
 
 	return (
-		<DialogWrapper
-			title={title}
+		<Dialog
 			open={open}
-			width="narrow"
 			onOpenChange={(next): void => {
 				if (!next) {
 					onClose();
 				}
 			}}
-			footer={
-				<div className={styles.renameFooter}>
+		>
+			<DialogContent
+				showCloseButton={false}
+				aria-describedby={undefined}
+				className="tw:max-w-[440px]"
+			>
+				<DialogHeader>
+					<DialogTitle>{title}</DialogTitle>
+				</DialogHeader>
+				<DialogBody>
+					<TagKeyValueInput
+						tags={tags}
+						onTagsChange={setTags}
+						placeholder="key:value (press Enter)"
+						testId="edit-dashboard-tags"
+					/>
+				</DialogBody>
+				<DialogFooter>
 					<Button
+						type="button"
 						variant="ghost"
-						color="secondary"
-						size="md"
+						size="sm"
 						onClick={onClose}
-						testId="edit-tags-cancel"
+						data-testid="edit-tags-cancel"
 					>
 						Cancel
 					</Button>
 					<Button
-						variant="solid"
-						color="primary"
-						size="md"
-						loading={isLoading}
+						type="button"
+						size="sm"
+						disabled={isLoading}
+						aria-busy={isLoading || undefined}
 						onClick={(): void => runSave()}
-						testId="edit-tags-submit"
+						data-testid="edit-tags-submit"
 					>
-						Save
+						{isLoading && <LoaderCircle className="tw:animate-spin" />}
+						<span>Save</span>
 					</Button>
-				</div>
-			}
-		>
-			<TagKeyValueInput
-				tags={tags}
-				onTagsChange={setTags}
-				placeholder="key:value (press Enter)"
-				testId="edit-dashboard-tags"
-			/>
-		</DialogWrapper>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

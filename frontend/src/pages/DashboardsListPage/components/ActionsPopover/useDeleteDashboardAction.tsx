@@ -2,7 +2,6 @@ import { ReactNode, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from '@signozhq/ui/sonner';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
 	deleteDashboardV2,
@@ -65,14 +64,10 @@ export function useDeleteDashboardAction({
 	const openConfirm = useCallback((): void => {
 		confirmDelete({
 			title: (
-				<Typography.Title level={5}>
-					Are you sure you want to delete the
-					<Typography.Text className={styles.deleteName}>
-						{' '}
-						{dashboardName}{' '}
-					</Typography.Text>
-					dashboard?
-				</Typography.Title>
+				<span className={styles.deleteTitle}>
+					Are you sure you want to delete the{' '}
+					<span className={styles.deleteName}>{dashboardName}</span> dashboard?
+				</span>
 			),
 			// Keeps the Delete button loading until the mutation settles, then closes.
 			onConfirm: () =>

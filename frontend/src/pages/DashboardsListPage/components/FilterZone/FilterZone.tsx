@@ -6,9 +6,8 @@ import {
 	useState,
 } from 'react';
 import logEvent from 'api/common/logEvent';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
-import { X } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import { X } from 'lucide-react';
 
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
@@ -36,6 +35,8 @@ interface Props {
 	onQueryChange: (value: string) => void;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
+	/** Right end of the filters row: the sort and column controls. */
+	resultControls?: ReactNode;
 	/** Filtering needs `list`: the box and chips edit a query that cannot be run. */
 	disabled?: boolean;
 }
@@ -51,6 +52,7 @@ function FilterZone({
 	source,
 	onQueryChange,
 	rightSlot,
+	resultControls,
 	disabled = false,
 }: Props): JSX.Element {
 	const [draft, setDraft] = useState(query);
@@ -135,7 +137,6 @@ function FilterZone({
 				{rightSlot}
 			</div>
 			<div className={styles.filtersRow}>
-				<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
 				<AuthZTooltip checks={LIST_CHECKS}>
 					<div
 						className={styles.filterControls}
@@ -153,20 +154,21 @@ function FilterZone({
 						/>
 						{!isEmpty && (
 							<Button
-								disabledTooltip={undefined}
-								variant="outlined"
-								color="secondary"
-								size="md"
-								prefix={<X size={12} />}
+								type="button"
+								variant="ghost"
+								size="sm"
 								disabled={disabled}
 								onClick={handleClear}
-								testId="dashboards-filter-clear"
+								data-testid="dashboards-filter-clear"
+								className="fs-ui tw:font-sans tw:text-muted-foreground"
 							>
+								<X />
 								Clear
 							</Button>
 						)}
 					</div>
 				</AuthZTooltip>
+				{resultControls}
 			</div>
 		</div>
 	);

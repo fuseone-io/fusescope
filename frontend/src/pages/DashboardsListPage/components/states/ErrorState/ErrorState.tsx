@@ -1,14 +1,11 @@
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
-import { ArrowUpRight, RotateCw } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import { ArrowUpRight, RotateCw, TriangleAlert } from 'lucide-react';
 import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 
-import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
-
 import { formatQueryErrorMessage } from '../../../utils/helpers';
-import styles from './ErrorState.module.scss';
+import StateCard from '../StateCard';
 
 interface Props {
 	isCloudUser: boolean;
@@ -49,49 +46,43 @@ function ErrorState({
 	};
 
 	return (
-		<div className={styles.wrapper}>
-			<img src={awwSnapUrl} alt="something went wrong" className={styles.img} />
-
-			{isClientError ? (
+		<StateCard
+			testId="dashboards-error-state"
+			tone="error"
+			icon={<TriangleAlert />}
+			title={isClientError ? 'Invalid query' : GENERIC_MESSAGE}
+			description={
+				isClientError ? cleanedDetail || INVALID_QUERY_FALLBACK : undefined
+			}
+			actions={
 				<>
-					<Typography.Text className={styles.errorText}>
-						Invalid query
-					</Typography.Text>
-					<Typography.Text className={styles.errorDetail}>
-						{cleanedDetail || INVALID_QUERY_FALLBACK}
-					</Typography.Text>
-				</>
-			) : (
-				<Typography.Text className={styles.errorText}>
-					{GENERIC_MESSAGE}
-				</Typography.Text>
-			)}
-
-			<section className={styles.actionButtons}>
-				{!isClientError && (
+					{!isClientError && (
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							data-testid="dashboards-list-retry"
+							className="tw:border-input tw:bg-surface-raised tw:dark:bg-surface-raised"
+							onClick={handleRetry}
+						>
+							<RotateCw />
+							Retry
+						</Button>
+					)}
 					<Button
-						size="md"
-						variant="outlined"
-						color="secondary"
-						prefix={<RotateCw size={16} />}
-						onClick={handleRetry}
-						testId="dashboards-list-retry"
+						type="button"
+						variant="link"
+						size="sm"
+						data-testid="dashboards-list-contact-support"
+						className="tw:px-1"
+						onClick={handleContactSupportClick}
 					>
-						Retry
+						Contact Support
+						<ArrowUpRight />
 					</Button>
-				)}
-				<Button
-					size="md"
-					variant="link"
-					color="primary"
-					onClick={handleContactSupportClick}
-					testId="dashboards-list-contact-support"
-				>
-					Contact Support
-				</Button>
-				<ArrowUpRight size={16} className={styles.learnMoreArrow} />
-			</section>
-		</div>
+				</>
+			}
+		/>
 	);
 }
 

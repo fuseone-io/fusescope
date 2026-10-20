@@ -1,10 +1,9 @@
 import { type ChangeEvent, useState } from 'react';
-// eslint-disable-next-line signoz/no-antd-components -- no @signozhq/ui multiline TextArea yet
-import { Input as AntInput } from 'antd';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
 import { toast } from '@signozhq/ui/sonner';
+import { LoaderCircle } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { generatePath } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
@@ -24,6 +23,9 @@ import { DASHBOARD_NAME_MAX_LENGTH } from '../../../DashboardPage/DashboardConta
 import styles from './NewDashboardModal.module.scss';
 
 const DEFAULT_NAME = 'Sample Dashboard';
+
+const FIELD =
+	'tw:border-input tw:bg-surface-raised tw:text-[13px] tw:dark:bg-surface-raised';
 
 interface Props {
 	onClose: () => void;
@@ -85,9 +87,9 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 		<div className={styles.panel}>
 			<div className={styles.form}>
 				<div className={styles.field}>
-					<Typography.Text className={styles.label}>
-						Title <Typography.Text className={styles.required}>*</Typography.Text>
-					</Typography.Text>
+					<label htmlFor="create-dashboard-name" className={styles.label}>
+						Title <span className={styles.required}>*</span>
+					</label>
 					<div className={styles.titleRow}>
 						<DashboardImagePicker
 							image={image}
@@ -95,12 +97,13 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 							triggerClassName={styles.imageTrigger}
 						/>
 						<Input
-							className={styles.titleInput}
+							id="create-dashboard-name"
+							className={`${FIELD} ${styles.titleInput}`}
 							value={name}
 							autoFocus
 							maxLength={DASHBOARD_NAME_MAX_LENGTH}
 							placeholder="e.g. Sample Dashboard"
-							testId="create-dashboard-name"
+							data-testid="create-dashboard-name"
 							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
 								setName(e.target.value)
 							}
@@ -114,55 +117,65 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 				</div>
 
 				<div className={styles.field}>
-					<Typography.Text className={styles.label}>Description</Typography.Text>
-					{/* eslint-disable-next-line signoz/no-antd-components -- no @signozhq TextArea yet */}
-					<AntInput.TextArea
+					<label htmlFor="create-dashboard-description" className={styles.label}>
+						Description
+					</label>
+					<textarea
+						id="create-dashboard-description"
 						value={description}
 						rows={3}
 						placeholder="What is this dashboard for?"
 						data-testid="create-dashboard-description"
+						className={`${FIELD} ${styles.textarea}`}
 						onChange={(e): void => setDescription(e.target.value)}
 					/>
 				</div>
 
 				<div className={styles.field}>
-					<Typography.Text className={styles.label}>Tags</Typography.Text>
+					<span className={styles.label}>Tags</span>
 					<TagKeyValueInput
 						tags={tags}
 						onTagsChange={setTags}
 						placeholder="team:jarvis (press Enter)"
 						testId="create-dashboard-tags"
 					/>
-					<Typography.Text className={styles.hint}>
+					<span className={styles.hint}>
 						Use key:value (e.g. team:jarvis) and press Enter to add.
-					</Typography.Text>
+					</span>
 				</div>
 			</div>
 
 			<div className={styles.footer}>
 				<Button
+					type="button"
 					variant="ghost"
-					color="secondary"
-					size="md"
+					size="sm"
 					onClick={onClose}
-					testId="create-dashboard-cancel"
+					data-testid="create-dashboard-cancel"
 				>
 					Cancel
 				</Button>
-				<Button
-					disabledTooltip="Enter a dashboard name first"
-					variant="solid"
-					color="primary"
-					size="md"
-					disabled={name.trim().length === 0}
-					loading={submitting}
-					testId="create-dashboard-submit"
-					onClick={(): void => {
-						void handleCreate();
-					}}
+				<TitleTooltip
+					title={
+						name.trim().length === 0 ? 'Enter a dashboard name first' : undefined
+					}
 				>
-					Create dashboard
-				</Button>
+					<span className="tw:inline-flex">
+						<Button
+							type="button"
+							size="sm"
+							disabled={name.trim().length === 0 || submitting}
+							aria-busy={submitting || undefined}
+							data-testid="create-dashboard-submit"
+							onClick={(): void => {
+								void handleCreate();
+							}}
+						>
+							{submitting && <LoaderCircle className="tw:animate-spin" />}
+							<span>Create dashboard</span>
+						</Button>
+					</span>
+				</TitleTooltip>
 			</div>
 		</div>
 	);

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { EllipsisVertical } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import { EllipsisVertical } from 'lucide-react';
 import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 
 import EditTagsModal from './EditTagsModal';
@@ -71,15 +71,15 @@ function ActionsPopover({
 				onOpenChange={handleOpenChange}
 			>
 				<Button
+					type="button"
 					aria-label="Action"
-					size="sm"
-					icon
+					size="icon-sm"
 					variant="ghost"
-					color="secondary"
+					className="fs-ui tw:size-7 tw:text-muted-foreground"
 					// The row navigates on click.
 					onClick={(e): void => e.stopPropagation()}
 				>
-					<EllipsisVertical size={14} />
+					<EllipsisVertical />
 				</Button>
 			</AuthZDropdown>
 			<RenameDashboardModal

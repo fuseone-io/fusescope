@@ -59,43 +59,53 @@ function FilterChips({
 
 	return (
 		<div className={styles.chips}>
-			<Select
-				mode="multiple"
-				showSearch
-				allowClear
-				className={cx(styles.select, styles.selectWide)}
-				placeholder="Created by"
-				value={createdBy}
-				options={creatorOptionsData}
-				optionFilterProp="label"
-				maxTagCount={1}
-				menuItemSelectedIcon={null}
-				data-testid="dashboards-filter-created-by"
-				disabled={disabled}
-				onClear={onClearCreatedBy}
-				optionRender={(option): JSX.Element => (
-					<div className={styles.creatorOption}>
-						<Checkbox
-							checked={createdBy.includes(option.value as string)}
-							className={styles.creatorCheck}
-						/>
-						<span className={styles.creatorLabel}>{option.label}</span>
-					</div>
-				)}
-				onChange={(value): void => onCreatedByChange(value as string[])}
-				onDropdownVisibleChange={runOnClose}
-			/>
-			<Select
-				showSearch
-				className={cx(styles.select, styles.selectNarrow)}
-				placeholder="Updated"
-				value={updated}
-				options={UPDATED_OPTIONS}
-				optionFilterProp="label"
-				data-testid="dashboards-filter-updated"
-				disabled={disabled}
-				onChange={(value): void => onUpdatedChange(value as UpdatedWindow)}
-			/>
+			<div className={cx(styles.filterField, styles.fieldWide)}>
+				<span className={styles.filterLabel}>Created by</span>
+				<Select
+					mode="multiple"
+					showSearch
+					allowClear
+					bordered={false}
+					className={styles.select}
+					placeholder="Anyone"
+					value={createdBy}
+					options={creatorOptionsData}
+					optionFilterProp="label"
+					maxTagCount={1}
+					menuItemSelectedIcon={null}
+					popupMatchSelectWidth={260}
+					data-testid="dashboards-filter-created-by"
+					disabled={disabled}
+					onClear={onClearCreatedBy}
+					optionRender={(option): JSX.Element => (
+						<div className={styles.creatorOption}>
+							<Checkbox
+								checked={createdBy.includes(option.value as string)}
+								className={styles.creatorCheck}
+							/>
+							<span className={styles.creatorLabel}>{option.label}</span>
+						</div>
+					)}
+					onChange={(value): void => onCreatedByChange(value as string[])}
+					onDropdownVisibleChange={runOnClose}
+				/>
+			</div>
+			<div className={cx(styles.filterField, styles.fieldNarrow)}>
+				<span className={styles.filterLabel}>Updated</span>
+				<Select
+					showSearch
+					bordered={false}
+					className={styles.select}
+					placeholder="Any time"
+					value={updated}
+					options={UPDATED_OPTIONS}
+					optionFilterProp="label"
+					popupMatchSelectWidth={160}
+					data-testid="dashboards-filter-updated"
+					disabled={disabled}
+					onChange={(value): void => onUpdatedChange(value as UpdatedWindow)}
+				/>
+			</div>
 		</div>
 	);
 }

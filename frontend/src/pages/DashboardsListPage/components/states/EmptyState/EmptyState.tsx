@@ -1,14 +1,11 @@
 import { ReactNode } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
-import { ArrowUpRight } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import { ArrowUpRight, LayoutGrid } from 'lucide-react';
 import logEvent from 'api/common/logEvent';
-
-import dashboardsUrl from '@/assets/Icons/dashboards.svg';
-
-import styles from './EmptyState.module.scss';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import { openInNewTab } from 'utils/navigation';
+
+import StateCard from '../StateCard';
 
 interface Props {
 	createDropdown?: ReactNode;
@@ -18,36 +15,33 @@ const LEARN_MORE_HREF = fuseScopeDocsUrl('/dashboards/dashboards/');
 
 function EmptyState({ createDropdown }: Props): JSX.Element {
 	return (
-		<div className={styles.wrapper}>
-			<img src={dashboardsUrl} alt="dashboards" className={styles.image} />
-			<section className={styles.copy}>
-				<Typography.Text className={styles.noDashboard}>
-					No dashboards yet.{' '}
-				</Typography.Text>
-				<Typography.Text className={styles.info}>
-					Create a dashboard to start visualizing your data
-				</Typography.Text>
-			</section>
-
-			{createDropdown ? (
-				<section className={styles.actions}>
-					{createDropdown}
-					<Button
-						size="md"
-						variant="link"
-						color="primary"
-						testId="learn-more"
-						onClick={(): void => {
-							logEvent('Dashboard List: Learn more clicked', {});
-							openInNewTab(LEARN_MORE_HREF);
-						}}
-					>
-						Learn more
-					</Button>
-					<ArrowUpRight size={16} className={styles.learnMoreArrow} />
-				</section>
-			) : null}
-		</div>
+		<StateCard
+			testId="dashboards-empty-state"
+			icon={<LayoutGrid />}
+			title="No dashboards yet."
+			description="Create a dashboard to start visualizing your data"
+			actions={
+				createDropdown ? (
+					<>
+						{createDropdown}
+						<Button
+							type="button"
+							variant="link"
+							size="sm"
+							data-testid="learn-more"
+							className="tw:px-1"
+							onClick={(): void => {
+								logEvent('Dashboard List: Learn more clicked', {});
+								openInNewTab(LEARN_MORE_HREF);
+							}}
+						>
+							Learn more
+							<ArrowUpRight />
+						</Button>
+					</>
+				) : null
+			}
+		/>
 	);
 }
 
