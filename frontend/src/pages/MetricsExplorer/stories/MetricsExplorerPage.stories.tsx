@@ -79,6 +79,20 @@ export const Explorer: Story = {
 /** The Views tab, where the saved views the explorer offers are managed. */
 export const SavedViews: Story = {
 	args: { tab: 'views' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const table = await within(canvasElement).findByTestId(
+			'saved-views-table',
+			{},
+			{ timeout: 10000 },
+		);
+		const [deleteView] = await within(table).findAllByTestId('delete-view');
+		await expect(deleteView).toBeVisible();
+		const scroller = table.querySelector('table')?.parentElement as HTMLElement;
+		// The row actions fit their column: no sideways scroll.
+		await waitFor(() =>
+			expect(scroller.scrollWidth).toBeLessThanOrEqual(scroller.clientWidth),
+		);
+	},
 };
 
 /**

@@ -57,7 +57,7 @@ function ViewsTable({
 						<TableHead className="tw:px-4">View</TableHead>
 						<TableHead className="tw:w-[220px] tw:px-4">Created by</TableHead>
 						<TableHead className="tw:w-[300px] tw:px-4">Created</TableHead>
-						<TableHead className="tw:w-[112px] tw:px-4 tw:text-right">
+						<TableHead className="tw:w-[136px] tw:px-4 tw:text-right">
 							Actions
 						</TableHead>
 					</TableRow>
