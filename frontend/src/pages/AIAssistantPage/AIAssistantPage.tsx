@@ -134,7 +134,7 @@ export default function AIAssistantPage(): JSX.Element {
 	return (
 		<VariantContext.Provider value="page">
 			<div className="tw:flex tw:h-full tw:flex-col tw:bg-background">
-				<div className="fs-ui tw:flex tw:flex-none tw:items-center tw:border-b tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3 tw:font-sans tw:md:px-8">
+				<div className="fs-ui tw:flex tw:flex-none tw:items-center tw:border-b tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3 tw:font-sans tw:md:px-6">
 					<div className="noz-wave tw:flex tw:items-center tw:gap-3">
 						<span
 							aria-hidden="true"
