@@ -145,4 +145,27 @@ describe('GroupByFilter', () => {
 			).toHaveLength(2),
 		);
 	});
+
+	it('opens a popup wider than the field, with key names', async () => {
+		useFieldKeys([
+			{
+				name: 'k8s.deployment.name',
+				fieldContext: 'resource',
+				fieldDataType: 'string',
+			},
+		]);
+		setup();
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		await user.click(groupByInput());
+
+		const option = await screen.findByText(
+			(content, el) =>
+				content === 'k8s.deployment.name' &&
+				!!el?.closest('.ant-select-item-option'),
+		);
+		expect(option.closest('.ant-select-dropdown')).toHaveClass(
+			'attribute-option-popup',
+		);
+	});
 });

@@ -1,7 +1,5 @@
 import { Tooltip } from 'antd';
 
-import { TagContainer, TagLabel, TagValue } from './style';
-
 import './OptionRenderer.styles.scss';
 
 function OptionRenderer({
@@ -19,17 +17,17 @@ function OptionRenderer({
 					rootClassName="option-renderer-tooltip"
 				>
 					<div className="selectOptionContainer">
-						<div className="option-value">{value}</div>
-						<div className="option-meta-data-container">
-							<TagContainer>
-								<TagLabel>Type: </TagLabel>
-								<TagValue>{type}</TagValue>
-							</TagContainer>
-							<TagContainer>
-								<TagLabel>Data type: </TagLabel>
-								<TagValue>{dataType}</TagValue>
-							</TagContainer>
-						</div>
+						<span className="option-value">{value}</span>
+						<span className="option-meta-data-container">
+							<span className="option-badge" title={`Type: ${type}`}>
+								{type}
+							</span>
+							{dataType ? (
+								<span className="option-badge" title={`Data type: ${dataType}`}>
+									{dataType}
+								</span>
+							) : null}
+						</span>
 					</div>
 				</Tooltip>
 			) : (

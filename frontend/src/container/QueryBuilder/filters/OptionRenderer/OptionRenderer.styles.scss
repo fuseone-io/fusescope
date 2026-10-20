@@ -3,27 +3,61 @@
 	gap: 8px;
 	justify-content: space-between;
 	align-items: center;
-	overflow-x: auto;
-
-	&::-webkit-scrollbar {
-		width: 0.2rem;
-		height: 0.2rem;
-	}
+	min-width: 0;
 
 	.option-value {
+		flex: 1;
 		overflow: hidden;
+		min-width: 0;
+		color: var(--fs-foreground);
+		font-family: var(--tw-font-mono);
+		font-size: 12px;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		min-width: 0;
 	}
 
 	.option-meta-data-container {
 		display: flex;
-		gap: 8px;
 		flex-shrink: 0;
+		gap: 4px;
+	}
+
+	.option-badge {
+		display: inline-flex;
+		align-items: center;
+		height: 18px;
+		padding: 0 6px;
+		border: 1px solid var(--fs-border);
+		border-radius: 4px;
+		background: var(--fs-muted);
+		color: var(--fs-muted-foreground);
+		font-family: var(--tw-font-sans);
+		font-size: 11px;
+		line-height: 1;
+		text-transform: lowercase;
 	}
 }
 
 .option-renderer-tooltip {
 	pointer-events: none;
+}
+
+// Attribute pickers: wider than their field so keys and badges fit.
+.attribute-option-popup.ant-select-dropdown {
+	min-width: min(320px, calc(100vw - 16px)) !important;
+	max-width: min(480px, calc(100vw - 16px));
+
+	.ant-select-item-option {
+		min-height: 32px;
+		align-items: center;
+		padding: 0 10px;
+	}
+
+	.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+		background: var(--fs-accent);
+	}
+
+	.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+		background: var(--fs-primary-soft);
+	}
 }
