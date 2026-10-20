@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -18,11 +17,9 @@ import {
 	Querybuildertypesv5OrderByDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/fuseScope.schemas';
-import eyesEmojiUrl from 'assets/Images/eyesEmoji.svg';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { usePageSize } from './usePageSize';
-import NoLogs from 'container/NoLogs/NoLogs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -42,6 +39,7 @@ import {
 	IS_METRIC_DETAILS_OPEN_KEY,
 	SELECTED_METRIC_NAME_KEY,
 } from './constants';
+import MetricsEmptyState from './MetricsEmptyState';
 import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
 import MetricsTreemap from './MetricsTreemap';
@@ -403,32 +401,33 @@ function Summary(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
-				<MetricsSearch
-					query={query}
-					onChange={handleFilterChange}
-					currentQueryFilterExpression={currentQueryFilterExpression}
-					setCurrentQueryFilterExpression={setCurrentQueryFilterExpression}
-					isLoading={isLoadingQueries}
-					handleCancelQuery={handleCancelQuery}
-					onRunQuery={handleRunQuery}
-				/>
+				{!showNoMetrics && (
+					<MetricsSearch
+						query={query}
+						onChange={handleFilterChange}
+						currentQueryFilterExpression={currentQueryFilterExpression}
+						setCurrentQueryFilterExpression={setCurrentQueryFilterExpression}
+						isLoading={isLoadingQueries}
+						handleCancelQuery={handleCancelQuery}
+						onRunQuery={handleRunQuery}
+					/>
+				)}
 				{showFullScreenLoading ? (
 					<MetricsLoading />
 				) : isCancelled ? (
-					<div className="no-logs-container">
-						<div className="no-logs-container-content">
-							<img className="eyes-emoji" src={eyesEmojiUrl} alt="eyes emoji" />
-							<Typography className="no-logs-text">
+					<div
+						className="fs-ui tw:flex tw:min-h-[240px] tw:items-center tw:justify-center tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised tw:font-sans tw:text-sm tw:text-muted-foreground"
+						data-testid="metrics-query-cancelled"
+					>
+						<p>
+							<span className="tw:font-medium tw:text-foreground">
 								Query cancelled.
-								<span className="sub-text">
-									{' '}
-									Click &quot;Run Query&quot; to load metrics.
-								</span>
-							</Typography>
-						</div>
+							</span>{' '}
+							Click &quot;Run Query&quot; to load metrics.
+						</p>
 					</div>
 				) : showNoMetrics ? (
-					<NoLogs dataSource={DataSource.METRICS} />
+					<MetricsEmptyState />
 				) : (
 					<>
 						<MetricsTreemap

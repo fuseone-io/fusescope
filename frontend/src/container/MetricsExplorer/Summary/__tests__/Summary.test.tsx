@@ -221,4 +221,39 @@ describe('Summary', () => {
 
 		expect(useMetricsCount.getState().count).toBeNull();
 	});
+
+	it('shows only the onboarding state when nothing was received', () => {
+		const empty = {
+			mutate: jest.fn(),
+			isLoading: false,
+			isError: false,
+			error: null,
+			reset: jest.fn(),
+		};
+		useGetMetricsStatsSpy.mockReturnValue({
+			...empty,
+			mutate: mockGetMetricsStats,
+			data: { status: 'success', data: { total: 0, metrics: [] } },
+		} as any);
+		useGetMetricsTreemapSpy.mockReturnValue({
+			...empty,
+			mutate: mockGetMetricsTreemap,
+			data: { status: 'success', data: { samples: [], timeseries: [] } },
+		} as any);
+
+		render(<Summary />);
+
+		expect(screen.getByText('No metrics yet')).toBeInTheDocument();
+		expect(
+			screen.getByRole('link', { name: /Sending metrics to FuseScope/ }),
+		).toHaveAttribute(
+			'href',
+			'https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/',
+		);
+		expect(
+			screen.queryByTestId('metrics-search-expression'),
+		).not.toBeInTheDocument();
+		expect(screen.queryByText('Proportion view')).not.toBeInTheDocument();
+		expect(screen.queryByAltText('eyes emoji')).not.toBeInTheDocument();
+	});
 });
