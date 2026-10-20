@@ -4,7 +4,7 @@ import {
 	openKeySuggestions,
 	typeFilter,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
-import { screen, userEvent } from 'storybook/test';
+import { screen, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -43,7 +43,7 @@ type Story = StoryObj<MetricsArgs>;
 export const Default: Story = {};
 
 /**
- * The metric details drawer, opened from a row: the metric's metadata, the
+ * The metric details panel, opened from a row: the metric's metadata, the
  * cardinality highlights, the dashboards and alerts it feeds, and its attribute
  * keys with the values seen in the window.
  */
@@ -94,29 +94,27 @@ export const Loading: Story = {
 };
 
 /**
- * The metric details drawer's highlights, all three held open: the exact sample
- * count behind the abbreviated one, what counts as an active time series, and
- * the timestamp the last data point arrived at.
+ * The metric details panel's highlights with their tooltips held open: the
+ * exact sample count behind the abbreviated one and the timestamp the last data
+ * point arrived at.
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true, drawer: 'details' },
 };
 
 /**
- * The dashboards pill in the metric details drawer, open: every dashboard that
- * charts this metric, each a link out to it.
+ * The metric details panel's "Used in" list: every dashboard and alert rule
+ * that charts this metric, each a link out to it.
  */
-export const MetricDetailsDashboardsMenu: Story = {
+export const MetricDetailsUsedIn: Story = {
 	args: { drawer: 'details' },
 	play: async (): Promise<void> => {
-		await userEvent.click(
-			await screen.findByTestId(
-				'metric-dashboards-popover',
-				{},
-				{ timeout: 10000 },
-			),
+		const usedIn = await screen.findByTestId(
+			'metric-used-in',
+			{},
+			{ timeout: 10000 },
 		);
-		await screen.findByRole('menu');
+		await within(usedIn).findAllByRole('link');
 	},
 };
 

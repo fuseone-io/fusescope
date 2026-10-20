@@ -357,5 +357,10 @@ describe('Metadata', () => {
 
 		const unitSelect = screen.queryByTestId('unit-select');
 		expect(unitSelect).not.toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'Set once; it cannot be changed after the metric has a unit.',
+			),
+		).toBeInTheDocument();
 	});
 });

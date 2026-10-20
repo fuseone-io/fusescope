@@ -24,7 +24,7 @@ export function AllAttributesEmptyText({
 			</div>
 		);
 	}
-	return <Typography.Text>No attributes found</Typography.Text>;
+	return <span>No attributes found</span>;
 }
 
 export function AllAttributesValue({
@@ -159,11 +159,14 @@ export function AllAttributesValue({
 	);
 
 	return (
-		<div className="all-attributes-value">
+		<div className="all-attributes-value fs-ui tw:flex tw:flex-wrap tw:items-center tw:gap-1.5">
 			{filterValue.slice(0, INITIAL_VISIBLE_COUNT).map((attribute) => {
 				const isCopied = copiedValue === attribute;
 				return (
-					<div key={attribute} className="all-attributes-value-item">
+					<div
+						key={attribute}
+						className="all-attributes-value-item tw:inline-flex tw:items-center tw:gap-1"
+					>
 						<Popover
 							content={attributePopoverContent(attribute)}
 							trigger="click"
@@ -177,12 +180,16 @@ export function AllAttributesValue({
 								}
 							}}
 						>
-							<Button type="text">
-								<Typography.Text>{attribute}</Typography.Text>
-							</Button>
+							<button
+								type="button"
+								title={attribute}
+								className="tw:inline-flex tw:h-6 tw:max-w-[220px] tw:cursor-pointer tw:items-center tw:overflow-hidden tw:rounded-md tw:border tw:border-border tw:bg-surface-sunken tw:px-2 tw:font-mono tw:text-[11px] tw:text-ellipsis tw:whitespace-nowrap tw:text-foreground tw:hover:border-input tw:focus-visible:outline-2 tw:focus-visible:outline-ring"
+							>
+								{attribute}
+							</button>
 						</Popover>
 						{isCopied && (
-							<span className="copy-feedback">
+							<span className="copy-feedback tw:text-success">
 								<Check size={12} />
 							</span>
 						)}
@@ -203,9 +210,12 @@ export function AllAttributesValue({
 					}}
 					overlayClassName="metric-details-popover all-values-popover-overlay"
 				>
-					<Button type="text" className="all-values-button">
+					<button
+						type="button"
+						className="all-values-button tw:inline-flex tw:h-6 tw:cursor-pointer tw:items-center tw:rounded-md tw:border-0 tw:bg-transparent tw:px-1.5 tw:text-xs tw:font-medium tw:text-primary tw:hover:bg-muted tw:focus-visible:outline-2 tw:focus-visible:outline-ring"
+					>
 						All values ({filterValue.length})
-					</Button>
+					</button>
 				</Popover>
 			)}
 		</div>

@@ -1,10 +1,9 @@
-import { Color } from '@signozhq/design-tokens';
-import { Button, Spin } from 'antd';
+import { ReactNode } from 'react';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
+import { Button } from 'components/ui/button';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { Info } from '@signozhq/icons';
+import { Info, Loader2 } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
@@ -13,6 +12,29 @@ import {
 	formatNumberToCompactFormat,
 	formatTimestampToReadableDate,
 } from './utils';
+
+const LABELS = ['Samples', 'Time series', 'Last received'];
+
+function StatCell({
+	label,
+	children,
+}: {
+	label: string;
+	children: ReactNode;
+}): JSX.Element {
+	return (
+		<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-1 tw:bg-surface-raised tw:px-3.5 tw:py-3">
+			<span className="tw:text-[11px] tw:font-medium tw:tracking-[0.05em] tw:text-muted-foreground tw:uppercase">
+				{label}
+			</span>
+			{children}
+		</div>
+	);
+}
+
+const STRIP_CLASS =
+	'fs-ui tw:grid tw:grid-cols-[repeat(auto-fit,minmax(150px,1fr))] tw:gap-px tw:overflow-hidden tw:rounded-xl tw:border tw:border-border tw:bg-border tw:font-sans tw:text-foreground';
+const VALUE_CLASS = 'tw:text-xl tw:font-semibold tw:tabular-nums';
 
 function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	const {
@@ -52,84 +74,78 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 
 	if (isErrorMetricHighlights) {
 		return (
-			<div className="metric-details-content-grid">
-				<div
-					className="metric-highlights-error-state"
-					data-testid="metric-highlights-error-state"
+			<div
+				className="fs-ui tw:flex tw:flex-wrap tw:items-center tw:gap-2 tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3 tw:font-sans tw:text-[13px] tw:text-foreground"
+				data-testid="metric-highlights-error-state"
+			>
+				<Info aria-hidden="true" className="tw:size-4 tw:text-error" />
+				Something went wrong while fetching metric highlights
+				<Button
+					variant="link"
+					size="sm"
+					className="tw:h-auto tw:px-1"
+					onClick={(): void => {
+						void refetchMetricHighlights();
+					}}
 				>
-					<Info size={16} color={Color.BG_CHERRY_500} />
-					<Typography.Text>
-						Something went wrong while fetching metric highlights
-					</Typography.Text>
-					<Button
-						type="link"
-						size="large"
-						onClick={(): void => {
-							refetchMetricHighlights();
-						}}
-					>
-						Retry ?
-					</Button>
-				</div>
+					Retry
+				</Button>
+			</div>
+		);
+	}
+
+	if (isLoadingMetricHighlights) {
+		return (
+			<div className={STRIP_CLASS}>
+				{LABELS.map((label, index) => (
+					<StatCell key={label} label={label}>
+						{index === 0 ? (
+							<span className="tw:inline-flex tw:items-center tw:gap-2 tw:text-[13px] tw:text-muted-foreground">
+								<Loader2 aria-hidden="true" className="tw:size-4 tw:animate-spin" />
+								Loading metric stats
+							</span>
+						) : (
+							<span className={`${VALUE_CLASS} tw:text-subtle-foreground`}>-</span>
+						)}
+					</StatCell>
+				))}
 			</div>
 		);
 	}
 
 	return (
-		<div className="metric-details-content-grid">
-			<div className="labels-row">
-				<Typography.Text color="muted" className="metric-details-grid-label">
-					SAMPLES
-				</Typography.Text>
-				<Typography.Text color="muted" className="metric-details-grid-label">
-					TIME SERIES
-				</Typography.Text>
-				<Typography.Text color="muted" className="metric-details-grid-label">
-					LAST RECEIVED
-				</Typography.Text>
-			</div>
-			<div className="values-row">
-				{isLoadingMetricHighlights ? (
-					<div className="metric-highlights-loading-inline">
-						<Spin size="small" />
-						<Typography.Text color="muted">Loading metric stats</Typography.Text>
-					</div>
-				) : (
-					<>
-						<Typography.Text
-							className="metric-details-grid-value"
-							data-testid="metric-highlights-data-points"
-						>
-							<Tooltip title={metricHighlights?.dataPoints?.toLocaleString()}>
-								<span>
-									{formatNumberIntoHumanReadableFormat(
-										metricHighlights?.dataPoints ?? 0,
-									)}
-								</span>
-							</Tooltip>
-						</Typography.Text>
-						<Typography.Text
-							className="metric-details-grid-value"
-							data-testid="metric-highlights-time-series-total"
-						>
-							<Tooltip
-								title="Active time series are those that have received data points in the last 1 hour."
-								side="top"
-							>
-								<span>{`${timeSeriesTotal} total — ${timeSeriesActive} active`}</span>
-							</Tooltip>
-						</Typography.Text>
-						<Typography.Text
-							className="metric-details-grid-value"
-							data-testid="metric-highlights-last-received"
-						>
-							<Tooltip title={lastReceivedTooltipText}>
-								<span>{lastReceivedText}</span>
-							</Tooltip>
-						</Typography.Text>
-					</>
-				)}
-			</div>
+		<div className={STRIP_CLASS}>
+			<StatCell label={LABELS[0]}>
+				<Tooltip title={metricHighlights?.dataPoints?.toLocaleString()}>
+					<span className={VALUE_CLASS} data-testid="metric-highlights-data-points">
+						{formatNumberIntoHumanReadableFormat(metricHighlights?.dataPoints ?? 0)}
+					</span>
+				</Tooltip>
+			</StatCell>
+			<StatCell label={LABELS[1]}>
+				<span
+					className={VALUE_CLASS}
+					data-testid="metric-highlights-time-series-total"
+				>
+					{timeSeriesTotal}
+					<span className="tw:text-[13px] tw:font-normal tw:text-muted-foreground">
+						{` total — ${timeSeriesActive} active`}
+					</span>
+				</span>
+				<span className="tw:text-[11px] tw:text-subtle-foreground">
+					Active: received data in the last hour
+				</span>
+			</StatCell>
+			<StatCell label={LABELS[2]}>
+				<Tooltip title={lastReceivedTooltipText}>
+					<span
+						className="tw:text-xl tw:font-semibold"
+						data-testid="metric-highlights-last-received"
+					>
+						{lastReceivedText}
+					</span>
+				</Tooltip>
+			</StatCell>
 		</div>
 	);
 }

@@ -11,6 +11,9 @@ const mockMetricName = 'test-metric';
 const mockOpenInspectModal = jest.fn();
 const mockOnClose = jest.fn();
 
+// Radix marks the body inert behind the modal panel; jsdom can't see the override.
+const user = userEvent.setup({ pointerEventsCheck: 0 });
+
 const mockHandleExplorerTabChange = jest.fn();
 jest
 	.spyOn(useHandleExplorerTabChange, 'useHandleExplorerTabChange')
@@ -129,10 +132,35 @@ describe('MetricDetails', () => {
 		expect(screen.getByTestId('open-in-explorer-button')).toBeInTheDocument();
 		expect(screen.getByTestId('inspect-metric-button')).toBeInTheDocument();
 
-		await userEvent.click(screen.getByTestId('open-in-explorer-button'));
+		await user.click(screen.getByTestId('open-in-explorer-button'));
 		expect(mockHandleExplorerTabChange).toHaveBeenCalled();
 
-		await userEvent.click(screen.getByTestId('inspect-metric-button'));
+		await user.click(screen.getByTestId('inspect-metric-button'));
 		expect(mockOpenInspectModal).toHaveBeenCalled();
+	});
+
+	it('opens as a right-side panel named after the metric, closing from its header', async () => {
+		const onClose = jest.fn();
+		render(
+			<MetricDetails
+				onClose={onClose}
+				isOpen
+				metricName={mockMetricName}
+				isModalTimeSelection
+				openInspectModal={mockOpenInspectModal}
+			/>,
+		);
+
+		expect(
+			screen.getByRole('dialog', { name: mockMetricName }),
+		).toBeInTheDocument();
+		expect(screen.getByTestId('inspect-metric-button')).toHaveTextContent(
+			'Inspect',
+		);
+
+		await user.click(
+			screen.getByRole('button', { name: 'Close metric details' }),
+		);
+		expect(onClose).toHaveBeenCalled();
 	});
 });

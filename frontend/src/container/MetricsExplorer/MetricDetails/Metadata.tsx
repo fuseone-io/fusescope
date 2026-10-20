@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import type { TableColumnsType as ColumnsType } from 'antd';
-import { Input } from '@signozhq/ui/input';
-import { Button, Collapse, Select, Spin } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateGetMetricMetadata,
@@ -16,14 +13,13 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
-import { ResizeTable } from 'components/ResizeTable';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
-import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
-import { DataType } from 'container/LogDetailedView/LogDetailedView.types';
 import { useNotifications } from 'hooks/useNotifications';
-import { PenLine, Save, X } from '@signozhq/icons';
+import { Loader2, PenLine } from 'lucide-react';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricTypeRendererV2 from '../Summary/MetricTypeViewRenderer';
@@ -34,6 +30,7 @@ import {
 	METRIC_METADATA_UPDATE_ERROR_MESSAGE,
 } from './constants';
 import MetricDetailsErrorState from './MetricDetailsErrorState';
+import MetadataRow from './MetadataRow';
 import { MetadataProps, MetricMetadataFormState, TableFields } from './types';
 import { transformUpdateMetricMetadataRequest } from './utils';
 
@@ -57,9 +54,6 @@ function Metadata({
 	const { notifications } = useNotifications();
 	const { mutate: updateMetricMetadata, isLoading: isUpdatingMetricsMetadata } =
 		useUpdateMetricMetadata();
-	const [activeKey, setActiveKey] = useState<string | string[]>(
-		'metric-metadata',
-	);
 	const queryClient = useQueryClient();
 
 	// Initialize state from metadata api data
@@ -75,16 +69,12 @@ function Metadata({
 		}
 	}, [metadata]);
 
-	const tableData = useMemo(
+	const rows = useMemo(
 		() =>
 			metadata
-				? Object.keys(metadata).map((key) => ({
-						key,
-						value: {
-							value: metadata[key as keyof typeof metadata],
-							key,
-						},
-					}))
+				? (Object.keys(METRIC_METADATA_KEYS) as (keyof MetricMetadataFormState)[])
+						.filter((key) => key in metadata)
+						.map((key) => ({ key, value: metadata[key] }))
 				: [],
 		[metadata],
 	);
@@ -93,25 +83,25 @@ function Metadata({
 	const renderUneditableField = useCallback(
 		(key: keyof MetricMetadataFormState, value: string) => {
 			if (isErrorMetricMetadata) {
-				return <FieldRenderer field="-" />;
+				return <span>-</span>;
 			}
 			if (key === TableFields.TYPE) {
 				return <MetricTypeRendererV2 type={value as MetrictypesTypeDTO} />;
 			}
 			if (key === TableFields.IS_MONOTONIC) {
-				return <FieldRenderer field={value ? 'Yes' : 'No'} />;
+				return <span>{value ? 'Yes' : 'No'}</span>;
 			}
 			if (key === TableFields.Temporality) {
 				const temporality = METRIC_METADATA_TEMPORALITY_OPTIONS.find(
 					(option) => option.value === value,
 				);
-				return <FieldRenderer field={temporality?.label || '-'} />;
+				return <span>{temporality?.label || '-'}</span>;
 			}
 			let fieldValue = value;
 			if (key === TableFields.UNIT) {
 				fieldValue = getUniversalNameFromMetricUnit(value);
 			}
-			return <FieldRenderer field={fieldValue || '-'} />;
+			return <span className="tw:break-words">{fieldValue || '-'}</span>;
 		},
 		[isErrorMetricMetadata],
 	);
@@ -129,7 +119,14 @@ function Metadata({
 			const metricUnitAlreadySet =
 				field.key === TableFields.UNIT && Boolean(metadata?.unit);
 			if (metricUnitAlreadySet) {
-				return renderUneditableField(field.key, field.value);
+				return (
+					<span className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+						{renderUneditableField(field.key, field.value)}
+						<span className="tw:text-xs tw:text-subtle-foreground">
+							Set once; it cannot be changed after the metric has a unit.
+						</span>
+					</span>
+				);
 			}
 
 			// Monotonic is not editable
@@ -187,6 +184,8 @@ function Metadata({
 				return (
 					<Input
 						data-testid="description-input"
+						aria-label="Description"
+						className="tw:h-8 tw:text-[13px]"
 						name={field.key}
 						defaultValue={metricMetadataState.description}
 						onChange={(e): void => {
@@ -198,40 +197,9 @@ function Metadata({
 					/>
 				);
 			}
-			return <FieldRenderer field="-" />;
+			return <span>-</span>;
 		},
 		[isEditing, metadata?.unit, metricMetadataState, renderUneditableField],
-	);
-
-	const columns: ColumnsType<DataType> = useMemo(
-		() => [
-			{
-				title: 'Key',
-				dataIndex: 'key',
-				key: 'key',
-				width: 50,
-				align: 'left',
-				className: 'metric-metadata-key',
-				render: (field: string): JSX.Element => (
-					<FieldRenderer
-						field={
-							METRIC_METADATA_KEYS[field as keyof typeof METRIC_METADATA_KEYS] || ''
-						}
-					/>
-				),
-			},
-			{
-				title: 'Value',
-				dataIndex: 'value',
-				key: 'value',
-				width: 50,
-				align: 'left',
-				ellipsis: true,
-				className: 'metric-metadata-value',
-				render: renderColumnValue,
-			},
-		],
-		[renderColumnValue],
 	);
 
 	const handleSave = useCallback(() => {
@@ -292,27 +260,24 @@ function Metadata({
 	const actionButton = useMemo(() => {
 		if (isEditing) {
 			return (
-				<div className="action-menu">
+				<div className="tw:flex tw:gap-1.5">
 					<Button
-						className="action-button"
-						type="text"
+						variant="ghost"
+						size="sm"
 						onClick={cancelEdit}
 						disabled={isUpdatingMetricsMetadata}
 					>
-						<X size={14} />
-						<Typography.Text>Cancel</Typography.Text>
+						Cancel
 					</Button>
 					<Button
-						className="action-button"
-						type="text"
+						size="sm"
 						onClick={(e): void => {
 							e.stopPropagation();
 							handleSave();
 						}}
 						disabled={isUpdatingMetricsMetadata}
 					>
-						<Save size={14} />
-						<Typography.Text>Save</Typography.Text>
+						Save
 					</Button>
 				</div>
 			);
@@ -321,20 +286,18 @@ function Metadata({
 			return null;
 		}
 		return (
-			<div className="action-menu">
-				<Button
-					className="action-button"
-					type="text"
-					onClick={(e): void => {
-						e.stopPropagation();
-						setIsEditing(true);
-					}}
-					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
-				>
-					<PenLine size={14} />
-					<Typography.Text>Edit</Typography.Text>
-				</Button>
-			</div>
+			<Button
+				variant="outline"
+				size="sm"
+				onClick={(e): void => {
+					e.stopPropagation();
+					setIsEditing(true);
+				}}
+				disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
+			>
+				<PenLine />
+				Edit
+			</Button>
 		);
 	}, [
 		isEditing,
@@ -345,57 +308,48 @@ function Metadata({
 		handleSave,
 	]);
 
-	const items = useMemo(
-		() => [
-			{
-				label: (
-					<div className="metrics-accordion-header metrics-metadata-header">
-						<Typography.Text>Metadata</Typography.Text>
-						{actionButton}
-					</div>
-				),
-				key: 'metric-metadata',
-				children: isLoadingMetricMetadata ? (
-					<div className="metrics-accordion-loading-state">
-						<Spin size="small" />
-					</div>
-				) : isErrorMetricMetadata ? (
-					<div className="metric-metadata-error-state">
-						<MetricDetailsErrorState
-							refetch={refetchMetricMetadata}
-							errorMessage="Something went wrong while fetching metric metadata"
-						/>
-					</div>
-				) : (
-					<ResizeTable
-						columns={columns}
-						tableLayout="fixed"
-						dataSource={tableData}
-						pagination={false}
-						showHeader={false}
-						className="metrics-accordion-content metrics-metadata-container"
-					/>
-				),
-			},
-		],
-		[
-			actionButton,
-			columns,
-			isLoadingMetricMetadata,
-			isErrorMetricMetadata,
-			refetchMetricMetadata,
-			tableData,
-		],
-	);
+	let body: JSX.Element;
+	if (isLoadingMetricMetadata) {
+		body = (
+			<div className="tw:flex tw:justify-center tw:py-6">
+				<Loader2
+					aria-label="Loading metadata"
+					className="tw:size-4 tw:animate-spin tw:text-muted-foreground"
+				/>
+			</div>
+		);
+	} else if (isErrorMetricMetadata) {
+		body = (
+			<MetricDetailsErrorState
+				refetch={refetchMetricMetadata}
+				errorMessage="Something went wrong while fetching metric metadata"
+			/>
+		);
+	} else {
+		body = (
+			<div>
+				{rows.map((row) => (
+					<MetadataRow key={row.key} label={METRIC_METADATA_KEYS[row.key]}>
+						{renderColumnValue({ key: row.key, value: row.value as string })}
+					</MetadataRow>
+				))}
+			</div>
+		);
+	}
 
 	return (
-		<Collapse
-			bordered
-			className="metrics-accordion metrics-metadata-accordion"
-			activeKey={activeKey}
-			onChange={(keys): void => setActiveKey(keys)}
-			items={items}
-		/>
+		<section
+			aria-labelledby="metric-metadata-title"
+			className="metrics-metadata-accordion fs-ui tw:flex tw:flex-col tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised tw:font-sans tw:text-foreground"
+		>
+			<div className="tw:flex tw:min-h-[52px] tw:items-center tw:justify-between tw:gap-3 tw:border-b tw:border-border tw:px-4 tw:py-2.5">
+				<h3 id="metric-metadata-title" className="tw:text-sm tw:font-semibold">
+					Metadata
+				</h3>
+				{actionButton}
+			</div>
+			{body}
+		</section>
 	);
 }
 

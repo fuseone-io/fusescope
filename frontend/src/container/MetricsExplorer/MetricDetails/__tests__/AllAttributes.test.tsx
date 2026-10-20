@@ -3,6 +3,8 @@ import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { MetrictypesTypeDTO } from 'api/generated/services/fuseScope.schemas';
 import { userEvent } from 'tests/test-utils';
 
+import * as useHandleExplorerTabChangeHooks from 'hooks/useHandleExplorerTabChange';
+
 import ROUTES from '../../../../constants/routes';
 import AllAttributes from '../AllAttributes';
 import { AllAttributesValue } from '../AllAttributesValue';
@@ -59,20 +61,67 @@ describe('AllAttributes', () => {
 			/>,
 		);
 
-		expect(screen.getByText('All Attributes')).toBeInTheDocument();
+		expect(screen.getByText('All attributes')).toBeInTheDocument();
 		expect(screen.getByText('No attributes found')).toBeInTheDocument();
 	});
 
-	it('clicking on an attribute key shows popover with Open in Metric Explorer option', async () => {
+	it('offers Open in Metric Explorer and Copy Key on every key without a menu', async () => {
+		const handleExplorerTabChange = jest.fn();
+		jest
+			.spyOn(useHandleExplorerTabChangeHooks, 'useHandleExplorerTabChange')
+			.mockReturnValue({ handleExplorerTabChange });
 		render(
 			<AllAttributes
 				metricName={MOCK_METRIC_NAME}
 				metricType={MetrictypesTypeDTO.gauge}
 			/>,
 		);
-		await userEvent.click(screen.getByText('attribute1'));
-		expect(screen.getByText('Open in Metric Explorer')).toBeInTheDocument();
-		expect(screen.getByText('Copy Key')).toBeInTheDocument();
+
+		expect(
+			screen.getByRole('button', { name: 'Copy key attribute1' }),
+		).toBeInTheDocument();
+		await userEvent.click(
+			screen.getByRole('button', {
+				name: 'Open in Metric Explorer grouped by attribute1',
+			}),
+		);
+
+		expect(handleExplorerTabChange).toHaveBeenCalledWith(
+			'graph',
+			expect.objectContaining({ query: expect.any(Object) }),
+			ROUTES.METRICS_EXPLORER_EXPLORER,
+			true,
+		);
+		const { query } = handleExplorerTabChange.mock.calls[0][1];
+		expect(query.builder.queryData[0].groupBy[0].key).toBe('attribute1');
+	});
+
+	it('lists the keys with the most values first', () => {
+		useGetMetricAttributesMock.mockReturnValue({
+			...getMockMetricAttributesData({
+				data: {
+					attributes: [
+						{ key: 'few', values: ['a'], valueCount: 1 },
+						{ key: 'many', values: ['a', 'b', 'c'], valueCount: 3 },
+						{ key: 'some', values: ['a', 'b'], valueCount: 2 },
+					],
+					totalKeys: 3,
+				},
+			}),
+		});
+		render(
+			<AllAttributes
+				metricName={MOCK_METRIC_NAME}
+				metricType={MetrictypesTypeDTO.gauge}
+			/>,
+		);
+
+		const keys = screen
+			.getAllByTestId('metric-attribute-key')
+			.map((node) => node.textContent);
+		expect(keys).toStrictEqual(['many', 'some', 'few']);
+		expect(screen.getByText('3 values')).toBeInTheDocument();
+		expect(screen.getByText('1 value')).toBeInTheDocument();
 	});
 
 	it('filters attributes based on search input', async () => {
