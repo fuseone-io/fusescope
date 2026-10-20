@@ -93,7 +93,9 @@ export const prepareUPlotConfig = ({
 			label: label,
 			colorMapping: widget.customLegendColors ?? {},
 			spanGaps: widget.spanGaps ?? true,
-			lineStyle: widget.lineStyle || LineStyle.Solid,
+			lineStyle: widget.dashedQueryNames?.includes(series.queryName ?? '')
+				? LineStyle.Dashed
+				: widget.lineStyle || LineStyle.Solid,
 			lineInterpolation: widget.lineInterpolation || LineInterpolation.Spline,
 			showPoints:
 				widget.showPoints || hasSingleValidPoint ? true : !!widget.showPoints,

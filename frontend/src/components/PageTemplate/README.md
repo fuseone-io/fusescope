@@ -16,6 +16,10 @@ The parts a new-UI page is built from. Built on `components/ui` and the
 | `RailToggleButton` | Collapses a filter rail, or reopens it from the toolbar. |
 | `UserAvatarCell` | A user in a table cell: their initial in a circle, then their email. |
 | `HttpStatusCodeBadge` | An HTTP status code as a `StatusBadge`; `httpStatusTone` maps a code to its tone. |
+| `HeaderBandTabsLayout` | `HeaderBandLayout` with `?tab=` tabs at the bottom of the band and a toolbar above every tab's content. |
+| `ContentPanel` | `Panel` as Metrics and Dashboards draw it: `rounded-xl`, a `px-5 py-3` header, an optional rule before the body and a footer line. |
+| `Sparkline`, `TrendCell`, `DeltaText` | A cell's trend line; a cell with sparkline, value and change; a change against the previous period, coloured when notable. |
+| `ShareBar`, `TabCountBadge` | A share bar with its number (`tone="error"` for error rates); a count beside a tab or panel title. |
 
 ## `fs-ui` scope
 
@@ -28,6 +32,7 @@ legacy chart or table in a panel body renders as before.
 
 - Services list (`pages/Services/components/ServicesList`)
 - Service detail (`pages/MetricsApplication`, `container/MetricsApplication`)
+- Service map and top-level operations (`modules/Servicemap`, `pages/ServiceTopLevelOperations`)
 - Traces funnels and funnel detail (`pages/TracesFunnels`, `pages/TracesFunnelDetails`)
 - Saved views of every explorer (`pages/SaveView`)
 - Trace details (`pages/TraceDetailsV3`)
