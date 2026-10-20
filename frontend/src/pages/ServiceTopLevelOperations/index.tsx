@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import PageHeader from 'components/PageTemplate/components/PageHeader';
-import Panel from 'components/PageTemplate/components/Panel';
-import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import CompactPageHeader from 'components/PageTemplate/components/CompactPageHeader';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import HeaderBandLayout from 'components/PageTemplate/components/HeaderBandLayout';
 import TablePagination from 'components/PageTemplate/components/TablePagination';
-import PageTemplate from 'components/PageTemplate/PageTemplate';
 import { pageOf } from 'components/PageTemplate/utils';
 import { Table, TableBody, TableCell, TableRow } from 'components/ui/table';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
@@ -59,21 +58,33 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 	const rows = pageOf(topLevelOperations, page, PAGE_SIZE);
 
 	return (
-		<PageTemplate testId="top-level-operations-page">
-			<PageHeader
-				icon={<HardDrive />}
-				titleMono
-				title={servicename}
-				badges={
-					!isLoading && (
-						<StatusBadge tone="neutral" testId="top-level-operations-count">
-							{topLevelOperations.length}
-						</StatusBadge>
-					)
-				}
-				description="Top level operations"
-			/>
-
+		<HeaderBandLayout
+			testId="top-level-operations-page"
+			header={
+				<CompactPageHeader
+					icon={<HardDrive />}
+					titleMono
+					title={servicename}
+					meta={
+						<>
+							Top level operations
+							{!isLoading && (
+								<>
+									{' · '}
+									<strong
+										data-testid="top-level-operations-count"
+										className="tw:font-medium tw:text-foreground"
+									>
+										{topLevelOperations.length}
+									</strong>
+								</>
+							)}
+						</>
+					}
+				/>
+			}
+			bodyClassName="tw:gap-4 tw:px-4 tw:pt-4 tw:pb-8 tw:md:px-6"
+		>
 			<TopLevelOperationsInfo />
 
 			{isLoading && (
@@ -83,11 +94,10 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 			)}
 
 			{!isLoading && (
-				<Panel
+				<ContentPanel
 					title="Top Level Operations"
 					testId="top-level-operations-list"
-					className="tw:overflow-hidden"
-					bodyClassName="tw:mt-3 tw:border-t tw:border-border"
+					divided
 				>
 					<Table>
 						<TableBody>
@@ -113,8 +123,8 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 						total={topLevelOperations.length}
 						onPageChange={setPage}
 					/>
-				</Panel>
+				</ContentPanel>
 			)}
-		</PageTemplate>
+		</HeaderBandLayout>
 	);
 }

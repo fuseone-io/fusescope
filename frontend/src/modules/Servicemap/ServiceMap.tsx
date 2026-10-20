@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import PageHeader from 'components/PageTemplate/components/PageHeader';
-import Panel from 'components/PageTemplate/components/Panel';
-import PageTemplate from 'components/PageTemplate/PageTemplate';
+import CompactPageHeader from 'components/PageTemplate/components/CompactPageHeader';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import HeaderBandLayout from 'components/PageTemplate/components/HeaderBandLayout';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
@@ -124,12 +124,17 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 	};
 
 	return (
-		<PageTemplate testId="service-map-page">
-			<PageHeader
-				icon={<Route />}
-				title="Service Map"
-				description="Calls between services in the selected time range"
-			/>
+		<HeaderBandLayout
+			testId="service-map-page"
+			header={
+				<CompactPageHeader
+					icon={<Route />}
+					title="Service Map"
+					meta="Calls between services in the selected time range"
+				/>
+			}
+			bodyClassName="tw:gap-4 tw:px-4 tw:pt-4 tw:pb-8 tw:md:px-6"
+		>
 			<div>
 				<ResourceAttributesFilter
 					suffixIcon={
@@ -144,12 +149,12 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 				/>
 			</div>
 
-			<Panel testId="service-map-graph" className="tw:overflow-hidden">
+			<ContentPanel testId="service-map-graph">
 				<Container ref={graphContainerRef} className="service-map-container">
 					{renderBody()}
 				</Container>
-			</Panel>
-		</PageTemplate>
+			</ContentPanel>
+		</HeaderBandLayout>
 	);
 }
 
