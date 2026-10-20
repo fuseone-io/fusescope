@@ -4,6 +4,7 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/WidgetCard/Card';
+import { useStepAlignedRange } from 'container/MetricsApplication/hooks/useStepAlignedRange';
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,
@@ -28,6 +29,7 @@ function ServiceOverview({
 	topLevelOperationsRoute,
 	topLevelOperationsIsLoading,
 }: ServiceOverviewProps): JSX.Element {
+	const { start, end } = useStepAlignedRange();
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
 
@@ -76,6 +78,9 @@ function ServiceOverview({
 		<ChartPanel testId="service_latency">
 			<GraphContainer>
 				<Graph
+					start={start}
+					end={end}
+					trimToEnd
 					onDragSelect={onDragSelect}
 					widget={latencyWidget}
 					pointMenu={pointMenu}

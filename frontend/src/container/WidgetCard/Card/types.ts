@@ -75,6 +75,8 @@ export interface GridCardGraphProps {
 	enableDrillDown?: boolean;
 	/** Replaces the generic drilldown on time-series points. */
 	pointMenu?: PanelPointMenu;
+	/** Drops points at or after `end`, which hold no data. */
+	trimToEnd?: boolean;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

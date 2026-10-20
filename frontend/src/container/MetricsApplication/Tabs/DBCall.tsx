@@ -29,6 +29,7 @@ import ChartCell from '../components/ChartCell';
 import ChartGrid from '../components/ChartGrid';
 import ChartPanel from '../components/ChartPanel';
 import { useServiceChartMenu } from '../hooks/useServiceChartMenu';
+import { useStepAlignedRange } from '../hooks/useStepAlignedRange';
 import { GraphContainer } from '../styles';
 import { IServiceName } from './types';
 import {
@@ -38,6 +39,7 @@ import {
 } from './util';
 
 function DBCall(): JSX.Element {
+	const { start, end } = useStepAlignedRange();
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -150,6 +152,9 @@ function DBCall(): JSX.Element {
 				<ChartPanel testId="database_call_rps">
 					<GraphContainer>
 						<Graph
+							start={start}
+							end={end}
+							trimToEnd
 							widget={databaseCallsRPSWidget}
 							pointMenu={pointMenu}
 							onDragSelect={onDragSelect}
@@ -163,6 +168,9 @@ function DBCall(): JSX.Element {
 				<ChartPanel testId="database_call_avg_duration">
 					<GraphContainer>
 						<Graph
+							start={start}
+							end={end}
+							trimToEnd
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}
 							pointMenu={pointMenu}

@@ -31,6 +31,7 @@ import ChartCell from '../components/ChartCell';
 import ChartGrid from '../components/ChartGrid';
 import ChartPanel from '../components/ChartPanel';
 import { useServiceChartMenu } from '../hooks/useServiceChartMenu';
+import { useStepAlignedRange } from '../hooks/useStepAlignedRange';
 import { GraphContainer } from '../styles';
 import { IServiceName } from './types';
 import {
@@ -40,6 +41,7 @@ import {
 } from './util';
 
 function External(): JSX.Element {
+	const { start, end } = useStepAlignedRange();
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -229,6 +231,9 @@ function External(): JSX.Element {
 				<ChartPanel testId="external_call_error_percentage">
 					<GraphContainer>
 						<Graph
+							start={start}
+							end={end}
+							trimToEnd
 							headerMenuList={MENU_ITEMS}
 							widget={externalCallErrorWidget}
 							pointMenu={errorMenu}
@@ -243,6 +248,9 @@ function External(): JSX.Element {
 				<ChartPanel testId="external_call_duration">
 					<GraphContainer>
 						<Graph
+							start={start}
+							end={end}
+							trimToEnd
 							headerMenuList={MENU_ITEMS}
 							widget={externalCallDurationWidget}
 							pointMenu={callsMenu}
@@ -257,6 +265,9 @@ function External(): JSX.Element {
 				<ChartPanel testId="external_call_rps_by_address">
 					<GraphContainer>
 						<Graph
+							start={start}
+							end={end}
+							trimToEnd
 							widget={externalCallRPSWidget}
 							headerMenuList={MENU_ITEMS}
 							pointMenu={callsMenu}
@@ -271,6 +282,9 @@ function External(): JSX.Element {
 				<ChartPanel testId="external_call_duration_by_address">
 					<GraphContainer>
 						<Graph
+							start={start}
+							end={end}
+							trimToEnd
 							widget={externalCallDurationAddressWidget}
 							headerMenuList={MENU_ITEMS}
 							pointMenu={callsMenu}

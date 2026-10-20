@@ -4,6 +4,7 @@ import {
 	convertedTracesToDownloadData,
 	getErrorRate,
 	getNearestHighestBucketValue,
+	getStepAlignedRange,
 } from './utils';
 
 describe('Error Rate', () => {
@@ -66,5 +67,30 @@ describe('convertedTracesToDownloadData', () => {
 				'Error Rate (%)': '10.00',
 			},
 		]);
+	});
+});
+
+describe('getStepAlignedRange', () => {
+	const NS_PER_S = 1e9;
+
+	it('ends on the last complete step, so no partial bucket is drawn', () => {
+		const minTime = 1_700_000_047 * NS_PER_S;
+		const maxTime = (1_700_000_047 + 30 * 60) * NS_PER_S;
+
+		expect(getStepAlignedRange(minTime, maxTime)).toStrictEqual({
+			start: 1_700_000_040,
+			end: 1_700_001_840,
+		});
+	});
+
+	it('aligns to the step the charts query with on longer ranges', () => {
+		const minTime = 1_700_000_047 * NS_PER_S;
+		const maxTime = (1_700_000_047 + 24 * 3600) * NS_PER_S;
+
+		const { start, end } = getStepAlignedRange(minTime, maxTime);
+
+		expect(start % 240).toBe(0);
+		expect(end % 240).toBe(0);
+		expect(end).toBeLessThanOrEqual(1_700_000_047 + 24 * 3600);
 	});
 });
