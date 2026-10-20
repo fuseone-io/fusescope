@@ -68,4 +68,19 @@ describe('NumberedTablePagination', () => {
 
 		expect(screen.getByTestId('pagination-next')).toBeDisabled();
 	});
+
+	it('hides the page-size menu when there is one size', () => {
+		render(
+			<NumberedTablePagination
+				page={1}
+				pageSize={20}
+				total={45}
+				onChange={jest.fn()}
+				pageSizes={[20]}
+			/>,
+		);
+
+		expect(screen.queryByTestId('pagination-page-size')).not.toBeInTheDocument();
+		expect(screen.getByTestId('pagination-page-3')).toBeVisible();
+	});
 });
