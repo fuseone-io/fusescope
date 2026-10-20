@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/fuseScope.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
@@ -18,6 +18,7 @@ import {
 	resolveQueryBuilderField,
 } from './queryBuilderFields.utils';
 import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
+import { useQueryPresenter } from './QueryPresenterContext';
 import { clearPreviousQuery } from './QueryV2/previousQuery.utils';
 import QueryFooter from './QueryV2/QueryFooter/QueryFooter';
 import { QueryV2 } from './QueryV2/QueryV2';
@@ -57,6 +58,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	} = useQueryBuilder();
 
 	const containerRef = useRef(null);
+	const presenter = useQueryPresenter();
 
 	const currentDataSource = useMemo(
 		() =>
@@ -288,10 +290,17 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 										currentQuery.builder.queryData[index] ||
 										currentQuery.builder.queryData[0];
 
-									return (
+									const editor = (
 										<div key={formula.queryName} className="qb-formula">
 											<Formula query={query} formula={formula} index={index} isQBV2 />
 										</div>
+									);
+									return presenter ? (
+										<Fragment key={formula.queryName}>
+											{presenter.renderFormula({ formula, index, editor })}
+										</Fragment>
+									) : (
+										editor
 									);
 								})}
 							</div>
