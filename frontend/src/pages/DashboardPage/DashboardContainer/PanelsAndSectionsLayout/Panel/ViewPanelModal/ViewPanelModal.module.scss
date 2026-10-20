@@ -1,8 +1,19 @@
 @use '../../../../../../styles/scrollbar' as *;
 
-.dialog[data-width] {
-	max-width: 85%;
+.dialog {
 	width: 85%;
+	max-width: 85%;
+	overflow: hidden;
+}
+
+.header {
+	padding: 14px 48px 12px 20px;
+	border-bottom: 1px solid var(--fs-border);
+}
+
+.titleRow {
+	min-width: 0;
+	font-size: 14px;
 }
 
 // Truncate a long panel name so the header stays on one line; the wrapping tooltip
@@ -24,7 +35,7 @@
 	gap: 8px;
 	height: 78vh;
 	overflow: auto;
-	padding: 12px;
+	padding: 12px 20px 20px;
 
 	@include custom-scrollbar;
 }
@@ -38,10 +49,16 @@
 
 .toolbar {
 	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: flex-end;
 	gap: 8px;
-	flex: 0 0 auto;
+}
+
+.outlineButton {
+	border-color: var(--fs-input);
+	background: var(--fs-card);
 }
 
 .toolbarTime {
