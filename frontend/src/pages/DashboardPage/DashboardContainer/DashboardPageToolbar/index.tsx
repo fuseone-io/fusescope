@@ -7,8 +7,6 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 } from 'api/generated/services/fuseScope.schemas';
 import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useToggleDashboardLock } from 'hooks/dashboards/useToggleDashboardLock';
@@ -23,6 +21,7 @@ import { usePublicDashboardMeta } from '../DashboardSettings/PublicDashboard/use
 import PanelTypeSelectionModal from '../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardInfo from './DashboardInfo/DashboardInfo';
+import DashboardTimeControls from './DashboardTimeControls';
 import { useEditableTitle } from './DashboardInfo/useEditableTitle';
 import VariablesBar from '../VariablesBar/VariablesBar';
 
@@ -157,7 +156,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	}, [id, openPicker]);
 
 	return (
-		<section className={styles.dashboardPageToolbarContainer}>
+		<section className={`fs-ui ${styles.dashboardPageToolbarContainer}`}>
 			<div className={styles.dashboardInfoWithActions}>
 				<DashboardInfo
 					title={title}
@@ -182,12 +181,6 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					onCancel={cancel}
 				/>
 				<div className={styles.headerActions}>
-					<HeaderRightSection
-						enableAnnouncements={false}
-						enableShare
-						enableFeedback
-						shareModalExtraOption={shareVariablesOption}
-					/>
 					<DashboardActions
 						title={title}
 						dashboard={dashboard}
@@ -200,15 +193,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 				</div>
 			</div>
 
-			{/* Row 2: the time selector floats top-right (declared first so the
-			    variables bar's content wraps around it); the variables bar
-			    collapses to one line and, when expanded, wraps full-width under it. */}
-			<div className={styles.toolbarRow}>
-				<div className={styles.timeCluster}>
-					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
-				</div>
-				<VariablesBar dashboard={dashboard} />
-			</div>
+			<DashboardTimeControls shareModalExtraOption={shareVariablesOption} />
+			<VariablesBar dashboard={dashboard} />
 			<PanelTypeSelectionModal
 				open={isPickerOpen}
 				onClose={closePicker}

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { Typography } from '@signozhq/ui/typography';
+import { TriangleAlert } from 'lucide-react';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
@@ -45,9 +45,12 @@ function DashboardPage(): JSX.Element {
 
 	if (isError || !dashboard) {
 		return (
-			<div className={styles.errorState}>
-				<Typography.Title>Failed to load dashboard</Typography.Title>
-				<Typography.Text>{(error as Error)?.message}</Typography.Text>
+			<div className={`fs-ui ${styles.errorState}`} role="alert">
+				<span aria-hidden="true" className={styles.errorIcon}>
+					<TriangleAlert size={20} />
+				</span>
+				<h1 className={styles.errorTitle}>Failed to load dashboard</h1>
+				<p className={styles.errorMessage}>{(error as Error)?.message}</p>
 			</div>
 		);
 	}

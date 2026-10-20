@@ -1,0 +1,35 @@
+// Matches the header's global picker (AppHeader `.timeControls`).
+.timeControls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+
+	:global(.date-time-selector),
+	:global(.date-time-selector) :global(.ant-form) > div {
+		flex-wrap: wrap;
+		row-gap: 8px;
+	}
+
+	:global(.date-time-selector) :global(.date-time-input-element) {
+		height: 32px;
+		margin-right: 0;
+		border-radius: 8px;
+		border-color: var(--l1-border);
+		background: var(--l2-background);
+	}
+
+	:global(.date-time-selector) :global(.refresh-actions) {
+		border-radius: 8px;
+		border-color: var(--l1-border);
+		background: var(--l2-background);
+	}
+
+	:global(.timeSelection-input) input {
+		width: 200px;
+
+		@media (max-width: 480px) {
+			width: 112px;
+		}
+	}
+}

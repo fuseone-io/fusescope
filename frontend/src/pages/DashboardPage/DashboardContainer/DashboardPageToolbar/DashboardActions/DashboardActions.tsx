@@ -3,10 +3,10 @@ import { FullScreenHandle } from 'react-full-screen';
 import { generatePath } from 'react-router-dom';
 import {
 	Braces,
+	ChevronDown,
 	Configure,
 	Copy,
 	Fullscreen,
-	Grid3X3,
 	LockKeyhole,
 	PenLine,
 	Plus,
@@ -267,7 +267,7 @@ function DashboardActions({
 					variant="ghost"
 					color="secondary"
 					size="md"
-					prefix={<Grid3X3 size="md" />}
+					suffix={<ChevronDown size={14} />}
 					testId="options"
 				>
 					Actions

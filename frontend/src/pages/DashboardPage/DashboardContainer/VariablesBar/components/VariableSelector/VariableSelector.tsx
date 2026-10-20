@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Info } from '@signozhq/icons';
-import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line signoz/no-antd-components -- lightweight description tooltip, matches V1
 import { Tooltip } from 'antd';
 
@@ -86,7 +85,7 @@ function VariableSelector({
 			className={styles.variableItem}
 			data-testid={`variable-${variable.name}`}
 		>
-			<Typography.Text className={styles.variableName}>
+			<span className={styles.variableName}>
 				<span className={styles.name} title={`$${variable.name}`}>
 					${variable.name}
 				</span>
@@ -103,7 +102,7 @@ function VariableSelector({
 						<Info className={styles.infoIcon} size={12} />
 					</Tooltip>
 				) : null}
-			</Typography.Text>
+			</span>
 
 			<div className={styles.variableValue}>{renderControl()}</div>
 

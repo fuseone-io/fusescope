@@ -1,6 +1,5 @@
 import { Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { Button } from 'components/ui/button';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
@@ -16,9 +15,8 @@ interface AddVariableIconProps {
 }
 
 /**
- * Compact "+" trigger (label on hover) shown after the variable pills once at
- * least one variable exists. Opens the Variables settings tab with the add form
- * primed.
+ * "Add variable" trigger shown after the variable pills once at least one
+ * variable exists. Opens the Variables settings tab with the add form primed.
  */
 function AddVariableIcon({
 	checks,
@@ -34,19 +32,17 @@ function AddVariableIcon({
 	// explained by the authz button itself.
 	if (isEditable) {
 		return (
-			<Tooltip side="top" title="Add variable">
-				<Button
-					variant="outlined"
-					color="secondary"
-					size="md"
-					icon
-					aria-label="Add variable"
-					testId="dashboard-variables-add"
-					onClick={onClick}
-				>
-					<Plus size={14} />
-				</Button>
-			</Tooltip>
+			<Button
+				type="button"
+				variant="ghost"
+				size="sm"
+				data-testid="dashboard-variables-add"
+				className="fs-ui tw:font-sans tw:text-muted-foreground"
+				onClick={onClick}
+			>
+				<Plus size={16} />
+				Add variable
+			</Button>
 		);
 	}
 

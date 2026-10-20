@@ -1,4 +1,3 @@
-import TagBadge from 'components/TagBadge/TagBadge';
 import TooltipScrollArea from 'components/TooltipScrollArea/TooltipScrollArea';
 
 import styles from './DashboardInfo.module.scss';
@@ -13,7 +12,9 @@ function TagsOverflowTooltip({ tags }: TagsOverflowTooltipProps): JSX.Element {
 		<TooltipScrollArea>
 			<div className={styles.overflowTags} data-testid="dashboard-tags-tooltip">
 				{tags.map((tag) => (
-					<TagBadge key={tag}>{tag}</TagBadge>
+					<span key={tag} data-slot="tag">
+						{tag}
+					</span>
 				))}
 			</div>
 		</TooltipScrollArea>
