@@ -8,11 +8,15 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	color: var(--bg-robin-400, #7190f9);
+	color: var(--fs-primary-ink);
 }
 
 .title {
 	margin: 0 !important;
+	color: var(--fs-foreground) !important;
+	font-family: var(--tw-font-sans);
+	font-size: 16px !important;
+	font-weight: 600 !important;
 }
 
 .subtitle {
