@@ -10,6 +10,8 @@ import { Widgets } from 'types/api/widgets/widget';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
+import { PanelPointMenu } from './pointMenu.types';
+
 export type PanelWrapperProps = {
 	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 	widget: Widgets;
@@ -29,6 +31,7 @@ export type PanelWrapperProps = {
 	customOnRowClick?: (record: RowData) => void;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
 	enableDrillDown?: boolean;
+	pointMenu?: PanelPointMenu;
 	panelMode: PanelMode;
 	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import {
 	getTimeRangeFromStepInterval,
@@ -10,6 +10,10 @@ import {
 	PopoverPosition,
 	useCoordinates,
 } from 'periscope/components/ContextMenu';
+import {
+	PanelPoint,
+	PanelPointMenu,
+} from 'container/WidgetCard/Panels/pointMenu.types';
 import { Widgets } from 'types/api/widgets/widget';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
@@ -18,12 +22,36 @@ interface UseTimeSeriesContextMenuParams {
 	widget: Widgets;
 	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 	enableDrillDown?: boolean;
+	pointMenu?: PanelPointMenu;
+}
+
+const DEFAULT_STEP_INTERVAL = 60;
+
+function getPanelPoint(
+	widget: Widgets,
+	timestamp: number,
+	metric: Record<string, string> | undefined,
+): PanelPoint {
+	const queryData = widget.query?.builder?.queryData?.[0];
+	const step = queryData?.stepInterval || DEFAULT_STEP_INTERVAL;
+	const { clickedTimestamp: _, ...labels } = metric ?? {};
+	return {
+		timestamp,
+		timeRange: getTimeRangeFromStepInterval(
+			step,
+			timestamp,
+			queryData?.dataSource === DataSource.METRICS &&
+				isApmMetric(queryData?.aggregateAttribute?.key),
+		),
+		labels,
+	};
 }
 
 export const usePanelContextMenu = ({
 	widget,
 	queryResponse,
 	enableDrillDown = false,
+	pointMenu,
 }: UseTimeSeriesContextMenuParams): {
 	coordinates: { x: number; y: number } | null;
 	popoverPosition: PopoverPosition | null;
@@ -47,7 +75,7 @@ export const usePanelContextMenu = ({
 	const { menuItemsConfig } = useGraphContextMenu({
 		widgetId: widget.id || '',
 		query: widget.query,
-		graphData: clickedData,
+		graphData: pointMenu ? null : clickedData,
 		onClose,
 		coordinates,
 		subMenu,
@@ -59,6 +87,17 @@ export const usePanelContextMenu = ({
 
 	const clickHandlerWithContextMenu = useCallback(
 		(...args: any[]) => {
+			if (pointMenu) {
+				const [xValue, , , , metric, queryData, absoluteMouseX, absoluteMouseY] =
+					args;
+				if (queryData?.queryName) {
+					onClick(
+						{ x: absoluteMouseX, y: absoluteMouseY },
+						getPanelPoint(widget, metric?.clickedTimestamp ?? xValue, metric),
+					);
+				}
+				return;
+			}
 			if (!enableDrillDown) {
 				return;
 			}
@@ -113,14 +152,29 @@ export const usePanelContextMenu = ({
 				});
 			}
 		},
-		[enableDrillDown, onClick, queryResponse],
+		[enableDrillDown, onClick, queryResponse, pointMenu, widget],
 	);
+
+	const pointMenuItemsConfig = useMemo(
+		() =>
+			pointMenu && clickedData
+				? { items: pointMenu(clickedData as PanelPoint, onClose) }
+				: {},
+		[pointMenu, clickedData, onClose],
+	);
+
+	let activeMenuItemsConfig = {};
+	if (pointMenu) {
+		activeMenuItemsConfig = pointMenuItemsConfig;
+	} else if (enableDrillDown) {
+		activeMenuItemsConfig = menuItemsConfig;
+	}
 
 	return {
 		coordinates,
 		popoverPosition,
 		onClose,
-		menuItemsConfig: enableDrillDown ? menuItemsConfig : {},
+		menuItemsConfig: activeMenuItemsConfig,
 		clickHandlerWithContextMenu,
 	};
 };

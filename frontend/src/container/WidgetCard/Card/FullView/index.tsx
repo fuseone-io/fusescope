@@ -64,6 +64,7 @@ function FullView({
 	customOnDragSelect,
 	setCurrentGraphRef,
 	enableDrillDown = false,
+	pointMenu,
 }: FullViewProps): JSX.Element {
 	const {
 		selectedTime: globalSelectedTime,
@@ -375,6 +376,7 @@ function FullView({
 									searchTerm={searchTerm}
 									onClickHandler={onClickHandler}
 									enableDrillDown={enableDrillDown}
+									pointMenu={pointMenu}
 									selectedGraph={selectedPanelType}
 								/>
 							)}

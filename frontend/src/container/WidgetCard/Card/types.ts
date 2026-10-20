@@ -14,6 +14,7 @@ import uPlot from 'uplot';
 
 import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 import { LegendEntryProps } from 'container/WidgetCard/Card/FullView/types';
+import { PanelPointMenu } from 'container/WidgetCard/Panels/pointMenu.types';
 
 export interface GraphVisibilityLegendEntryProps {
 	graphVisibilityStates: boolean[];
@@ -41,6 +42,7 @@ export interface WidgetGraphComponentProps {
 	customOnRowClick?: (record: RowData) => void;
 	customTimeRangeWindowForCoRelation?: string | undefined;
 	enableDrillDown?: boolean;
+	pointMenu?: PanelPointMenu;
 	/** Hide list-panel pagination controls (e.g. public dashboards, where paging isn't supported). */
 	hidePagination?: boolean;
 }
@@ -71,6 +73,8 @@ export interface GridCardGraphProps {
 	customOnRowClick?: (record: RowData) => void;
 	customTimeRangeWindowForCoRelation?: string | undefined;
 	enableDrillDown?: boolean;
+	/** Replaces the generic drilldown on time-series points. */
+	pointMenu?: PanelPointMenu;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

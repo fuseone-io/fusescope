@@ -55,6 +55,7 @@ function WidgetGraphComponent({
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
 	enableDrillDown,
+	pointMenu,
 	hidePagination,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
@@ -221,6 +222,7 @@ function WidgetGraphComponent({
 					enableDrillDown={
 						enableDrillDown && widget?.query?.queryType === EQueryType.QUERY_BUILDER
 					}
+					pointMenu={pointMenu}
 				/>
 			</Modal>
 
@@ -273,6 +275,7 @@ function WidgetGraphComponent({
 						customSeries={customSeries}
 						customOnRowClick={customOnRowClick}
 						enableDrillDown={enableDrillDown}
+						pointMenu={pointMenu}
 						hidePagination={hidePagination}
 					/>
 				</div>

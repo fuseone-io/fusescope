@@ -1,8 +1,8 @@
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import { PanelPointMenu } from 'container/WidgetCard/Panels/pointMenu.types';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface ApDexApplicationProps {
-	handleGraphClick: (type: string) => OnClickPluginOpts['onClick'];
+	pointMenu: PanelPointMenu;
 	onDragSelect: (start: number, end: number) => void;
 	topLevelOperationsRoute: string[];
 	tagFilterItems: TagFilterItem[];

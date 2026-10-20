@@ -9,7 +9,7 @@ import ApDexMetrics from './ApDexMetrics';
 import { ApDexDataSwitcherProps } from './types';
 
 function ApDexMetricsApplication({
-	handleGraphClick,
+	pointMenu,
 	onDragSelect,
 	tagFilterItems,
 	thresholdValue,
@@ -31,7 +31,7 @@ function ApDexMetricsApplication({
 	return (
 		<ApDexMetrics
 			topLevelOperationsRoute={topLevelOperationsRoute}
-			handleGraphClick={handleGraphClick}
+			pointMenu={pointMenu}
 			delta={data?.data.delta}
 			metricsBuckets={data?.data.le || []}
 			onDragSelect={onDragSelect}
