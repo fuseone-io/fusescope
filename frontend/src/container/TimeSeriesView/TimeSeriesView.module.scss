@@ -14,8 +14,16 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	gap: 12px;
 	padding: 12px 0;
 	flex-shrink: 0;
+}
+
+.headerTitle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
 }
 
 .headerActions {

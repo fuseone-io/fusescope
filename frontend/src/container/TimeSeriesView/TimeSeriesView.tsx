@@ -51,8 +51,11 @@ import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import ExportMenu from 'components/ExportMenu/ExportMenu';
+import { saveLegendEntriesToLocalStorage } from 'container/WidgetCard/Card/FullView/utils';
 
+import HeaderLegend from './HeaderLegend';
 import styles from './TimeSeriesView.module.scss';
+import { isolateSeries } from './utils';
 
 function TimeSeriesView({
 	data,
@@ -69,6 +72,10 @@ function TimeSeriesView({
 	exportFileName,
 	onYAxisUnitChange,
 	headerActions,
+	title,
+	legendInHeader = false,
+	prefixLegendWithQuery = false,
+	className,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -235,7 +242,7 @@ function TimeSeriesView({
 		query: currentQuery,
 		graphsVisibilityStates: graphVisibility,
 		setGraphsVisibilityStates: setGraphVisibility,
-		enhancedLegend: true,
+		enhancedLegend: !legendInHeader,
 		legendPosition: LegendPosition.BOTTOM,
 		legendScrollPosition: legendScrollPositionRef.current,
 		setLegendScrollPosition: (position: {
@@ -246,28 +253,71 @@ function TimeSeriesView({
 		},
 	});
 
-	const chartOptions = useMemo(
-		() =>
-			stackedBands
-				? { ...baseChartOptions, bands: stackedBands }
-				: baseChartOptions,
-		[baseChartOptions, stackedBands],
+	const chartOptions = useMemo(() => {
+		const options = stackedBands
+			? { ...baseChartOptions, bands: stackedBands }
+			: baseChartOptions;
+		if (!legendInHeader) {
+			return options;
+		}
+		return {
+			...options,
+			height: containerDimensions.height,
+			legend: { ...options.legend, show: false },
+		};
+	}, [
+		baseChartOptions,
+		stackedBands,
+		legendInHeader,
+		containerDimensions.height,
+	]);
+
+	const legendSeries = chartOptions.series ?? [];
+	const handleLegendSelect = useCallback(
+		(seriesIndex: number): void => {
+			setGraphVisibility((prev) => {
+				const next = isolateSeries(prev, seriesIndex, legendSeries.length);
+				saveLegendEntriesToLocalStorage({
+					options: chartOptions,
+					graphVisibilityState: next,
+					name: 'time-series-explorer',
+				});
+				return next;
+			});
+		},
+		[chartOptions, legendSeries.length],
 	);
 
 	const showExport = allowExport && !!data?.rawV5Response;
-	const showHeader = showExport || !!onYAxisUnitChange || !!headerActions;
+	const showHeader =
+		showExport || !!onYAxisUnitChange || !!headerActions || !!title;
+	const showHeaderLegend =
+		legendInHeader && legendSeries.length > 1 && !isLoading && !isError;
 
 	return (
-		<div className={cx('time-series-view', styles.timeSeriesView)}>
+		<div className={cx('time-series-view', styles.timeSeriesView, className)}>
 			{isError && error && <ErrorInPlace error={error as APIError} />}
 
 			{showHeader && (
 				<div className={styles.header} data-testid="time-series-view-header">
-					<div>
+					<div className={styles.headerTitle}>
+						{title}
 						{onYAxisUnitChange && (
 							<BuilderUnitsFilter onChange={onYAxisUnitChange} yAxisUnit={yAxisUnit} />
 						)}
 					</div>
+					{showHeaderLegend && (
+						<HeaderLegend
+							series={legendSeries}
+							queryNames={
+								prefixLegendWithQuery
+									? (data?.payload?.data?.result ?? []).map((item) => item.queryName)
+									: undefined
+							}
+							visibility={graphVisibility}
+							onSelect={handleLegendSelect}
+						/>
+					)}
 					<div className={styles.headerActions}>
 						{headerActions}
 						{showExport && data?.rawV5Response && (
@@ -352,6 +402,13 @@ interface TimeSeriesViewProps {
 	onYAxisUnitChange?: (value: string) => void;
 	// Rendered in the header ahead of the export menu.
 	headerActions?: ReactNode;
+	// Opt-in: a title at the start of the header.
+	title?: ReactNode;
+	// Opt-in: the series legend in the header instead of under the chart.
+	legendInHeader?: boolean;
+	// With legendInHeader: prefix each legend label with its query name.
+	prefixLegendWithQuery?: boolean;
+	className?: string;
 }
 
 TimeSeriesView.defaultProps = {

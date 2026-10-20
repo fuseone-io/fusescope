@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom-v5-compat';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
@@ -23,6 +23,18 @@ import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 import Explorer from '../Explorer';
 import * as useGetMetricsHooks from '../utils';
 import { MOCK_METRIC_METADATA } from './testUtils';
+
+jest.mock(
+	'container/MetricsExplorer/MetricDetails/MetricDetails',
+	() =>
+		function MockMetricDetails({
+			metricName,
+		}: {
+			metricName: string;
+		}): JSX.Element {
+			return <div data-testid="metric-details-mock">{metricName}</div>;
+		},
+);
 
 const mockSetSearchParams = jest.fn();
 const queryClient = new QueryClient();
@@ -489,5 +501,49 @@ describe('Explorer', () => {
 
 			expect(screen.queryByText(EMPTY_STATE_TEXT)).not.toBeInTheDocument();
 		});
+	});
+
+	it('opens the metric details panel from the icon beside the metric selector', () => {
+		(useSearchParams as jest.Mock).mockReturnValue([
+			new URLSearchParams({}),
+			mockSetSearchParams,
+		]);
+		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+			isLoading: false,
+			isError: false,
+			metrics: [MOCK_METRIC_METADATA],
+		});
+		const query = {
+			...initialQueriesMap[DataSource.METRICS],
+			builder: {
+				...initialQueriesMap[DataSource.METRICS].builder,
+				queryData: [
+					{
+						...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+						aggregateAttribute: {
+							...(initialQueriesMap[DataSource.METRICS].builder.queryData[0]
+								.aggregateAttribute as BaseAutocompleteData),
+							key: 'system_cpu_usage',
+						},
+					},
+				],
+			},
+		};
+		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+			...mockUseQueryBuilderData,
+			currentQuery: query,
+			stagedQuery: query,
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
+
+		renderExplorer();
+
+		expect(screen.queryByTestId('metric-details-mock')).not.toBeInTheDocument();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Metric details for system_cpu_usage' }),
+		);
+
+		expect(screen.getByTestId('metric-details-mock')).toHaveTextContent(
+			'system_cpu_usage',
+		);
 	});
 });

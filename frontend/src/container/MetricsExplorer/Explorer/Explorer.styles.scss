@@ -1,5 +1,9 @@
 .metrics-explorer-explore-container {
-	padding-bottom: 80px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-height: 100%;
+	padding: 16px 24px 0;
 
 	// Meant to fix the query builder colors
 	--input-background: var(--l2-background);
@@ -8,26 +12,6 @@
 	--input-border-color: var(--l2-border);
 	--input-hover-border-color: var(--internal-ant-border-color-hover);
 	--input-focus-border-color: var(--internal-ant-border-color-hover);
-
-	.explore-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin: 4px 0;
-		padding: 0 1rem;
-
-		.explore-header-left-actions {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-		}
-
-		.explore-header-right-actions {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-		}
-	}
 
 	.query-section {
 		max-height: 450px;
@@ -63,27 +47,82 @@
 		}
 	}
 
-	.explore-content {
-		padding: 0 8px;
+	.metrics-explorer-query-panel {
+		border: 1px solid var(--fs-border);
+		border-radius: 12px;
+		background: var(--fs-card);
 
-		.y-axis-unit-selector-container {
+		.query-builder-v2 {
+			padding: 14px 16px 10px;
+		}
+
+		// The details shortcut sits beside the metric selector.
+		.metrics-container:has(> .metric-details-entry) {
 			display: flex;
-			align-items: center;
-			gap: 10px;
-			padding-top: 10px;
-			margin-bottom: 10px;
+			align-items: flex-start;
+			gap: 4px;
 
-			.save-unit-container {
-				display: flex;
-				align-items: center;
-				gap: 10px;
+			> :first-child {
+				flex: 1;
+				min-width: 0;
+			}
+		}
 
-				.ant-btn {
-					border-radius: 2px;
-					.ant-typography {
-						font-size: 12px;
-					}
+		.metric-details-entry {
+			display: inline-flex;
+			flex: none;
+			padding-top: 2px;
+		}
+	}
+
+	.explore-content {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 12px;
+		padding-bottom: 16px;
+
+		.metrics-chart-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr));
+			gap: 12px;
+
+			> :last-child:nth-child(odd) {
+				grid-column: 1 / -1;
+			}
+		}
+
+		.metrics-chart-panel {
+			height: auto;
+			min-height: 0;
+			padding: 0 20px 14px;
+			border: 1px solid var(--fs-border);
+			border-radius: 12px;
+			background: var(--fs-card);
+
+			> [data-testid='time-series-view-header'] {
+				flex-wrap: wrap;
+				align-items: flex-start;
+				gap: 8px 12px;
+				padding: 16px 0 10px;
+
+				> :first-child {
+					flex: 1 1 280px;
+					min-width: 0;
 				}
+
+				> [data-testid='time-series-header-legend'] {
+					flex: 1 1 220px;
+					order: 3;
+				}
+
+				> :last-child {
+					flex: none;
+				}
+			}
+
+			> .graph-container {
+				height: 260px !important;
 			}
 		}
 
@@ -105,24 +144,6 @@
 			min-width: 100%;
 			width: 100%;
 			position: relative;
-
-			.no-unit-warning {
-				position: absolute;
-				top: 30px;
-				right: 40px;
-				z-index: 1000;
-			}
-		}
-
-		.time-series-container {
-			display: grid;
-			grid-template-columns: repeat(
-				auto-fit,
-				minmax(min(100%, calc(50% - 8px)), 1fr)
-			);
-			gap: 16px;
-			width: 100%;
-			height: fit-content;
 		}
 
 		.related-metrics-container {
@@ -187,35 +208,66 @@
 	}
 }
 
-.dashboards-and-alerts-popover-container {
-	display: flex;
-	gap: 16px;
-
-	.dashboards-and-alerts-popover {
-		border-radius: 20px;
-		padding: 4px 8px;
-		cursor: pointer;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		gap: 4px;
-
-		&:hover {
-			opacity: 0.8;
-		}
+// The saved-views toolbar is the page's sticky full-width footer, as on Traces.
+.metrics-explorer-explore-container {
+	.explorer-options-container {
+		position: sticky;
+		bottom: var(--bottom-strip-height, 0px);
+		left: auto;
+		z-index: 3;
+		margin: auto -24px 0;
+		transform: none;
+		border-top: 1px solid var(--fs-border);
+		background: var(--fs-card);
 	}
 
-	.dashboards-popover {
-		border: 1px solid var(--bg-sienna-500);
-		.ant-typography {
-			color: var(--bg-sienna-500);
-		}
+	.explorer-update {
+		align-self: center;
+		margin-left: 18px;
+		padding: 0;
+		border: 0;
+		background: transparent;
 	}
 
-	.alerts-popover {
-		border: 1px solid var(--bg-sakura-500);
-		.ant-typography {
-			color: var(--bg-sakura-500);
+	.explorer-options {
+		flex: 1;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 8px;
+		padding: 10px 24px;
+		border: 0;
+		border-radius: 0;
+		box-shadow: none;
+		backdrop-filter: none;
+		background-image: none !important;
+
+		.view-options {
+			flex: 1;
+			justify-content: space-between;
 		}
+	}
+}
+
+// The unit row sits outside the builder; it reads like the Logs unit picker.
+.metrics-explorer-explore-container
+	.y-axis-unit-selector-container
+	.ant-select {
+	min-width: 200px;
+
+	.ant-select-selector {
+		height: 32px !important;
+		padding: 0 10px !important;
+		border: 1px solid var(--fs-input) !important;
+		border-radius: 8px !important;
+		background: var(--fs-card) !important;
+		box-shadow: none !important;
+		font-size: 13px;
+	}
+
+	.ant-select-selection-item,
+	.ant-select-selection-placeholder,
+	.ant-select-selection-search-input {
+		height: 30px !important;
+		line-height: 30px !important;
 	}
 }

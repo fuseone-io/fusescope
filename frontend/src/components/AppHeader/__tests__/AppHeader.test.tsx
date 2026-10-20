@@ -205,6 +205,7 @@ describe('AppHeader', () => {
 			ROUTES.METER,
 			ROUTES.METER_EXPLORER,
 			ROUTES.TRACES_EXPLORER,
+			ROUTES.METRICS_EXPLORER_EXPLORER,
 		])('moves the global picker of %s into the header', (route) => {
 			renderHeader(route);
 
@@ -232,7 +233,6 @@ describe('AppHeader', () => {
 		it.each([
 			ROUTES.HOME,
 			ROUTES.LOGS_INDEX_FIELDS,
-			ROUTES.METRICS_EXPLORER_EXPLORER,
 			'/traces/funnels/abc',
 			'/dashboard/abc',
 			ROUTES.SETTINGS,
