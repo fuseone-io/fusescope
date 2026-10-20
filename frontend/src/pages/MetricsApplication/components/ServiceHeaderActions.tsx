@@ -17,23 +17,15 @@ function ServiceHeaderActions({
 	return (
 		<>
 			<Button asChild variant="outline">
-				<Link
-					to={logsUrl}
-					data-testid="service-view-logs"
-					className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
-				>
-					<ScrollText aria-hidden="true" />
-					View logs
+				<Link to={tracesUrl} data-testid="service-view-traces">
+					<DraftingCompass aria-hidden="true" />
+					View traces
 				</Link>
 			</Button>
 			<Button asChild variant="outline">
-				<Link
-					to={tracesUrl}
-					data-testid="service-view-traces"
-					className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
-				>
-					<DraftingCompass aria-hidden="true" />
-					View traces
+				<Link to={logsUrl} data-testid="service-view-logs">
+					<ScrollText aria-hidden="true" />
+					View logs
 				</Link>
 			</Button>
 			<ApDexApplication />

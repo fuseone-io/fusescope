@@ -1,8 +1,5 @@
 import { memo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import Spinner from 'components/Spinner';
-import ChartPanel from 'container/MetricsApplication/components/ChartPanel';
-import { GraphContainer } from 'container/MetricsApplication/styles';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
@@ -18,6 +15,7 @@ function ApDexApplication({
 	onDragSelect,
 	topLevelOperationsRoute,
 	tagFilterItems,
+	compare = false,
 }: ApDexApplicationProps): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -39,37 +37,20 @@ function ApDexApplication({
 		}
 	}, [error, notifications]);
 
-	if (isLoading || isRefetching) {
-		return (
-			<ChartPanel>
-				<Spinner height="40vh" tip="Loading..." />
-			</ChartPanel>
-		);
-	}
+	const loading = isLoading || isRefetching;
+	const props = {
+		pointMenu,
+		onDragSelect,
+		topLevelOperationsRoute,
+		tagFilterItems,
+		compare,
+		thresholdValue: data?.data[0].threshold,
+	};
 
-	return (
-		<ChartPanel testId="apdex">
-			<GraphContainer>
-				{isSpanMetricEnable ? (
-					<ApDexMetricsApplication
-						pointMenu={pointMenu}
-						onDragSelect={onDragSelect}
-						topLevelOperationsRoute={topLevelOperationsRoute}
-						tagFilterItems={tagFilterItems}
-						thresholdValue={data?.data[0].threshold}
-					/>
-				) : (
-					<ApDexMetrics
-						pointMenu={pointMenu}
-						onDragSelect={onDragSelect}
-						topLevelOperationsRoute={topLevelOperationsRoute}
-						tagFilterItems={tagFilterItems}
-						thresholdValue={data?.data[0].threshold}
-						isSpanMetricEnable={false}
-					/>
-				)}
-			</GraphContainer>
-		</ChartPanel>
+	return isSpanMetricEnable && !loading ? (
+		<ApDexMetricsApplication {...props} />
+	) : (
+		<ApDexMetrics {...props} loading={loading} isSpanMetricEnable={false} />
 	);
 }
 

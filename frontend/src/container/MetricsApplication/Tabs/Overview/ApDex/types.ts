@@ -6,10 +6,14 @@ export interface ApDexApplicationProps {
 	onDragSelect: (start: number, end: number) => void;
 	topLevelOperationsRoute: string[];
 	tagFilterItems: TagFilterItem[];
+	/** Draws the previous period dashed. */
+	compare?: boolean;
 }
 
 export interface ApDexDataSwitcherProps extends ApDexApplicationProps {
 	thresholdValue?: number;
+	/** The settings or the bucket metadata are still loading. */
+	loading?: boolean;
 }
 
 export interface ApDexMetricsProps extends ApDexDataSwitcherProps {

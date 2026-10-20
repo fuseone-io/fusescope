@@ -58,13 +58,9 @@ function ApDexApplication(): JSX.Element {
 				/>
 			}
 		>
-			<Button
-				variant="outline"
-				data-testid="service-settings"
-				className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
-			>
+			<Button variant="outline" data-testid="service-settings">
 				<Settings aria-hidden="true" />
-				Settings
+				Apdex settings
 			</Button>
 		</Popover>
 	);

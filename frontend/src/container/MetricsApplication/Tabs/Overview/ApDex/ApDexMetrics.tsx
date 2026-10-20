@@ -1,18 +1,14 @@
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Space } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import TextToolTip from 'components/TextToolTip';
 import {
 	apDexToolTipText,
 	apDexToolTipUrl,
 	apDexToolTipUrlText,
 } from 'constants/apDex';
-import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/WidgetCard/Card';
-import { useStepAlignedRange } from 'container/MetricsApplication/hooks/useStepAlignedRange';
-import DisplayThreshold from 'container/WidgetCard/Header/DisplayThreshold';
+import ServiceChart from 'container/MetricsApplication/components/ServiceChart';
+import { APDEX_SERIES } from 'container/MetricsApplication/components/serviceChartSeries';
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,
@@ -37,8 +33,9 @@ function ApDexMetrics({
 	topLevelOperationsRoute,
 	pointMenu,
 	isSpanMetricEnable = true,
+	compare = false,
+	loading = false,
 }: ApDexMetricsProps): JSX.Element {
-	const { start, end } = useStepAlignedRange();
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
 	const apDexMetricsWidget = useMemo(
@@ -65,17 +62,7 @@ function ApDexMetrics({
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				title: (
-					<Space>
-						<Typography>{GraphTitle.APDEX}</Typography>
-						<TextToolTip
-							text={apDexToolTipText}
-							url={apDexToolTipUrl}
-							useFilledIcon={false}
-							urlText={apDexToolTipUrlText}
-						/>
-					</Space>
-				),
+				title: GraphTitle.APDEX,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				id: SERVICE_CHART_ID.apdex,
 			}),
@@ -90,29 +77,31 @@ function ApDexMetrics({
 		],
 	);
 
-	const threshold: ReactNode = useMemo(() => {
-		if (thresholdValue) {
-			return <DisplayThreshold threshold={thresholdValue} />;
-		}
-		return null;
-	}, [thresholdValue]);
-
 	const isQueryEnabled =
 		topLevelOperationsRoute.length > 0 &&
 		(!isSpanMetricEnable ||
 			(!!metricsBuckets && metricsBuckets?.length > 0 && delta !== undefined));
 
 	return (
-		<Graph
-			start={start}
-			end={end}
-			trimToEnd
+		<ServiceChart
+			title={GraphTitle.APDEX}
+			unit={thresholdValue ? `T = ${thresholdValue * 1000} ms` : undefined}
+			titleAddon={
+				<TextToolTip
+					text={apDexToolTipText}
+					url={apDexToolTipUrl}
+					useFilledIcon={false}
+					urlText={apDexToolTipUrlText}
+				/>
+			}
+			testId="apdex"
 			widget={apDexMetricsWidget}
-			onDragSelect={onDragSelect}
+			series={APDEX_SERIES}
+			compare={compare}
 			pointMenu={pointMenu}
-			threshold={threshold}
+			onDragSelect={onDragSelect}
 			isQueryEnabled={isQueryEnabled}
-			version={ENTITY_VERSION_V4}
+			loading={loading}
 		/>
 	);
 }
@@ -121,6 +110,8 @@ ApDexMetrics.defaultProps = {
 	delta: undefined,
 	le: undefined,
 	isSpanMetricEnable: true,
+	compare: false,
+	loading: false,
 };
 
 export default ApDexMetrics;

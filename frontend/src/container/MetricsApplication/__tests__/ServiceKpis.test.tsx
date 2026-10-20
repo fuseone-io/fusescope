@@ -1,64 +1,145 @@
+import { ReactNode } from 'react';
+import { Route } from 'react-router-dom';
+import { renderHook } from '@testing-library/react';
+import ROUTES from 'constants/routes';
+import { FeatureKeys } from 'constants/features';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import {
+	AllTheProviders,
+	defaultFeatureFlags,
 	render,
 	screen,
-	waitForElementToBeRemoved,
+	waitFor,
 	within,
 } from 'tests/test-utils';
-import { ServicesList } from 'types/api/metrics/getService';
 
+import { useServiceKpis } from '../hooks/useServiceKpis';
 import ServiceKpis from '../Tabs/Overview/ServiceKpis';
 
-const CHECKOUT: ServicesList = {
-	serviceName: 'checkout',
-	p99: 612_000_000,
-	avgDuration: 48_000_000,
-	numCalls: 14_460,
-	callRate: 2.41,
-	numErrors: 275,
-	errorRate: 1.9,
+const CURRENT = {
+	requests: 6120,
+	rate: 1.7,
+	errors: 428,
+	errorRate: 7,
+	p99: 1120,
+	avg: 402,
+	apdex: 0.81,
+};
+const PREVIOUS = {
+	requests: 4680,
+	rate: 1.31,
+	errors: 318,
+	errorRate: 6.8,
+	p99: 540,
+	avg: 291,
+	apdex: 0.9,
 };
 
-function respondWith(services: ServicesList[]): void {
-	server.use(
-		rest.post('http://localhost/api/v2/services', (req, res, ctx) =>
-			res(ctx.status(200), ctx.json({ status: 'success', data: services })),
-		),
-	);
-}
-
 describe('ServiceKpis', () => {
-	it('shows the service RED metrics from the services endpoint', async () => {
-		respondWith([{ ...CHECKOUT, serviceName: 'cart', callRate: 9 }, CHECKOUT]);
-		render(<ServiceKpis servicename="checkout" />);
+	it('shows each total with its change against the previous period', () => {
+		render(
+			<ServiceKpis
+				current={CURRENT}
+				previous={PREVIOUS}
+				isLoading={false}
+				compare
+			/>,
+		);
 
-		const strip = await screen.findByRole('region', { name: 'Service metrics' });
-		await expect(within(strip).findByText('2.41')).resolves.toBeInTheDocument();
-		expect(
-			within(screen.getByTestId('kpi-error-rate')).getByText('1.90'),
-		).toBeInTheDocument();
-		expect(
-			within(screen.getByTestId('kpi-p99')).getByText('612.00'),
-		).toBeInTheDocument();
-		expect(
-			within(screen.getByTestId('kpi-avg')).getByText('48.00'),
-		).toBeInTheDocument();
-		expect(
-			within(screen.getByTestId('kpi-calls')).getByText('14,460'),
-		).toBeInTheDocument();
-		expect(
-			within(screen.getByTestId('kpi-errors')).getByText('275'),
-		).toBeInTheDocument();
+		const strip = within(screen.getByRole('region', { name: 'Service metrics' }));
+		expect(strip.getByTestId('kpi-requests')).toHaveTextContent(
+			'6,120+31% vs 4,680',
+		);
+		expect(strip.getByTestId('kpi-error-rate')).toHaveTextContent(
+			'7.0%+0.2 pp vs 6.8%',
+		);
+		const p99 = strip.getByTestId('kpi-p99');
+		expect(p99).toHaveTextContent('1.12s↑2.1× vs 540 ms');
+		expect(within(p99).getByText('↑2.1×', { exact: false })).toHaveAttribute(
+			'data-tone',
+			'bad',
+		);
+		expect(strip.getByTestId('kpi-apdex')).toHaveTextContent('0.81−0.09 vs 0.90');
 	});
 
-	it('drops the strip when the service has no data in the range', async () => {
-		respondWith([{ ...CHECKOUT, serviceName: 'cart' }]);
-		render(<ServiceKpis servicename="checkout" />);
-
-		await waitForElementToBeRemoved(() =>
-			screen.queryByRole('region', { name: 'Service metrics' }),
+	it('leaves the deltas out when not comparing', () => {
+		render(
+			<ServiceKpis
+				current={CURRENT}
+				previous={PREVIOUS}
+				isLoading={false}
+				compare={false}
+			/>,
 		);
-		expect(screen.queryByTestId('service-kpis')).not.toBeInTheDocument();
+		expect(screen.getByTestId('kpi-p99')).toHaveTextContent(
+			/^p99 latency1\.12s$/,
+		);
+	});
+
+	it('drops the strip when the service has no data in the range', () => {
+		render(<ServiceKpis isLoading={false} compare />);
+		expect(screen.queryByRole('region', { name: 'Service metrics' })).toBeNull();
+	});
+});
+
+describe('useServiceKpis', () => {
+	function captureQueryRange(): jest.Mock {
+		const onRequest = jest.fn();
+		server.use(
+			rest.post('http://localhost/api/v5/query_range', async (req, res, ctx) => {
+				onRequest(await req.json());
+				return res(
+					ctx.json({ status: 'success', data: { data: { results: [] } } }),
+				);
+			}),
+			rest.post(
+				'http://localhost/api/v1/service/top_level_operations',
+				(_, res, ctx) => res(ctx.json({ checkout: ['GET /cart'] })),
+			),
+		);
+		return onRequest;
+	}
+
+	function wrapperWith(spanMetrics: boolean) {
+		const featureFlags = defaultFeatureFlags.map((flag) =>
+			flag.name === FeatureKeys.USE_SPAN_METRICS
+				? { ...flag, active: spanMetrics }
+				: flag,
+		);
+		return function Wrapper({ children }: { children: ReactNode }): JSX.Element {
+			return (
+				<AllTheProviders
+					appContextOverrides={{ featureFlags }}
+					initialRoute="/services/checkout"
+				>
+					<Route path={ROUTES.SERVICE_METRICS}>{children}</Route>
+				</AllTheProviders>
+			);
+		};
+	}
+
+	const signals = (body: {
+		compositeQuery: { queries: { spec: { signal: string } }[] };
+	}): string[] => body.compositeQuery.queries.map((query) => query.spec.signal);
+
+	it('reads span metrics when use_span_metrics is on, like the charts', async () => {
+		const onRequest = captureQueryRange();
+		renderHook(() => useServiceKpis('checkout'), { wrapper: wrapperWith(true) });
+
+		await waitFor(() => expect(onRequest).toHaveBeenCalled());
+		expect(new Set(signals(onRequest.mock.calls[0][0]))).toStrictEqual(
+			new Set(['metrics']),
+		);
+	});
+
+	it('reads the entry spans from traces when it is off', async () => {
+		const onRequest = captureQueryRange();
+		renderHook(() => useServiceKpis('checkout'), { wrapper: wrapperWith(false) });
+
+		await waitFor(() => expect(onRequest).toHaveBeenCalled());
+		expect(new Set(signals(onRequest.mock.calls[0][0]))).toStrictEqual(
+			new Set(['traces']),
+		);
 	});
 });

@@ -5,16 +5,25 @@ import {
 	SetApDexPayloadProps,
 } from 'types/api/metrics/getApDex';
 
+/** The `tab` param of the service page, in tab order. */
 export enum MetricsApplicationTab {
 	OVER_METRICS = 'OVER_METRICS',
+	ENDPOINTS = 'ENDPOINTS',
+	DEPENDENCIES = 'DEPENDENCIES',
+	ERRORS = 'ERRORS',
+	INFRASTRUCTURE = 'INFRASTRUCTURE',
 	DB_CALL_METRICS = 'DB_CALL_METRICS',
 	EXTERNAL_METRICS = 'EXTERNAL_METRICS',
 }
 
-export const TAB_KEY_VS_LABEL = {
+export const TAB_KEY_VS_LABEL: Record<MetricsApplicationTab, string> = {
 	[MetricsApplicationTab.OVER_METRICS]: 'Overview',
-	[MetricsApplicationTab.DB_CALL_METRICS]: 'DB Call Metrics',
-	[MetricsApplicationTab.EXTERNAL_METRICS]: 'External Metrics',
+	[MetricsApplicationTab.ENDPOINTS]: 'Endpoints',
+	[MetricsApplicationTab.DEPENDENCIES]: 'Dependencies',
+	[MetricsApplicationTab.ERRORS]: 'Errors',
+	[MetricsApplicationTab.INFRASTRUCTURE]: 'Infrastructure',
+	[MetricsApplicationTab.DB_CALL_METRICS]: 'DB calls',
+	[MetricsApplicationTab.EXTERNAL_METRICS]: 'External',
 };
 
 export interface OnSaveApDexSettingsProps {
