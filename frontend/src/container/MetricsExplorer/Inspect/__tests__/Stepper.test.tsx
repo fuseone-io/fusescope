@@ -11,7 +11,7 @@ describe('Stepper', () => {
 		jest.clearAllMocks();
 	});
 
-	it('renders welcome message', () => {
+	it('names the checklist without an emoji and shows progress', () => {
 		render(
 			<Stepper
 				inspectionStep={InspectionStep.TIME_AGGREGATION}
@@ -19,9 +19,11 @@ describe('Stepper', () => {
 			/>,
 		);
 
-		expect(
-			screen.getByText('👋 Hello, welcome to the Metrics Inspector'),
-		).toBeInTheDocument();
+		expect(screen.getByText('Metrics Inspector')).toBeInTheDocument();
+		expect(screen.getByTestId('inspect-checklist-progress')).toHaveTextContent(
+			'0 of 2',
+		);
+		expect(document.body.textContent).not.toMatch(/\p{Extended_Pictographic}/u);
 	});
 
 	it('shows temporal aggregation step as active when on first step', () => {
@@ -32,8 +34,10 @@ describe('Stepper', () => {
 			/>,
 		);
 
-		const temporalStep = screen.getByText(/First, align the data by selecting a/);
-		expect(temporalStep.parentElement).toHaveClass('whats-next-checklist-item');
+		const temporalStep = screen
+			.getByText(/First, align the data by selecting a/)
+			.closest('li');
+		expect(temporalStep).toHaveAttribute('data-state', 'current');
 	});
 
 	it('shows temporal aggregation step as completed when on later steps', () => {
@@ -44,8 +48,28 @@ describe('Stepper', () => {
 			/>,
 		);
 
-		const temporalStep = screen.getByText(/First, align the data by selecting a/);
-		expect(temporalStep.parentElement).toHaveClass('completed-checklist-item');
+		const temporalStep = screen
+			.getByText(/First, align the data by selecting a/)
+			.closest('li');
+		expect(temporalStep).toHaveAttribute('data-state', 'done');
+		expect(screen.getByTestId('inspect-checklist-progress')).toHaveTextContent(
+			'1 of 2',
+		);
+	});
+
+	it('links the aggregations to the FuseScope docs', () => {
+		render(
+			<Stepper
+				inspectionStep={InspectionStep.TIME_AGGREGATION}
+				resetInspection={mockResetInspection}
+			/>,
+		);
+
+		screen.getAllByRole('link').forEach((link) => {
+			expect(link.getAttribute('href')).toMatch(
+				/^https:\/\/fuseone-io\.github\.io\/fusescope-docs\//,
+			);
+		});
 	});
 
 	it('calls resetInspection when reset button is clicked', async () => {
@@ -56,8 +80,10 @@ describe('Stepper', () => {
 			/>,
 		);
 
-		const resetButton = screen.getByRole('button');
-		await userEvent.click(resetButton);
+		expect(screen.getByTestId('inspect-checklist-progress')).toHaveTextContent(
+			'2 of 2',
+		);
+		await userEvent.click(screen.getByRole('button', { name: /Reset query/ }));
 
 		expect(mockResetInspection).toHaveBeenCalledTimes(1);
 	});

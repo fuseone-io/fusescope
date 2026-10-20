@@ -3,10 +3,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import { FsChartColor } from 'constants/fuseScopeColors';
-import { Button, Skeleton } from 'antd';
-import { Switch } from '@signozhq/ui/switch';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
+import { Skeleton } from 'components/ui/skeleton';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -15,19 +14,16 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
-import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
 import GraphPopover from './GraphPopover';
 import HoverPopover from './HoverPopover';
 import TableView from './TableView';
-import { GraphPopoverOptions, GraphViewProps } from './types';
+import { GraphPopoverOptions, GraphViewProps, InspectionStep } from './types';
 import { onGraphClick, onGraphHover } from './utils';
 
 function GraphView({
 	inspectMetricsTimeSeries,
 	formattedInspectMetricsTimeSeries,
 	metricUnit,
-	metricName,
-	metricType,
 	spaceAggregationSeriesMap,
 	inspectionStep,
 	setPopoverOptions,
@@ -83,7 +79,7 @@ function GraphView({
 			},
 			axes: [
 				{
-					stroke: isDarkMode ? Color.TEXT_VANILLA_400 : FsChartColor.BG_SLATE_400,
+					stroke: isDarkMode ? Color.TEXT_VANILLA_400 : FsChartColor.BG_SLATE_50,
 					grid: {
 						show: false,
 					},
@@ -101,12 +97,12 @@ function GraphView({
 				},
 				{
 					label: metricUnit || '',
-					stroke: isDarkMode ? Color.TEXT_VANILLA_400 : FsChartColor.BG_SLATE_400,
+					stroke: isDarkMode ? Color.TEXT_VANILLA_400 : FsChartColor.BG_SLATE_50,
 					grid: {
 						show: true,
 						stroke: isDarkMode
-							? FsChartColor.BG_SLATE_500
-							: FsChartColor.BG_SLATE_200,
+							? FsChartColor.BG_INK_200
+							: FsChartColor.BG_VANILLA_300,
 					},
 					values: (_, vals): string[] =>
 						vals.map((v) => formatNumberIntoHumanReadableFormat(v, false)),
@@ -182,55 +178,48 @@ function GraphView({
 		],
 	);
 
-	const MetricTypeIcon = metricType ? METRIC_TYPE_TO_ICON_MAP[metricType] : null;
+	const seriesNote =
+		inspectionStep === InspectionStep.COMPLETED
+			? 'Aggregated by the labels chosen in step 4'
+			: 'Raw series, one line each';
 
 	return (
-		<div className="inspect-metrics-graph-view" ref={graphRef}>
-			<div className="inspect-metrics-graph-view-header">
-				<Button.Group>
-					<Button
-						className="metric-name-button-label"
-						size="middle"
-						icon={
-							MetricTypeIcon && metricType ? (
-								<MetricTypeIcon
-									size={14}
-									color={METRIC_TYPE_TO_COLOR_MAP[metricType]}
-								/>
-							) : null
-						}
-						disabled
-					>
-						{metricName}
-					</Button>
-					<Button className="time-series-button-label" size="middle" disabled>
+		<section
+			aria-label="Inspected series"
+			className="inspect-metrics-graph-view tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised"
+			ref={graphRef}
+		>
+			<div className="inspect-metrics-graph-view-header fs-ui tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-b tw:border-border tw:px-4 tw:py-2.5 tw:font-sans">
+				<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+					<h2 className="tw:text-sm tw:font-semibold tw:text-foreground tw:tabular-nums">
 						{/* First time series in that of timestamps. Hence -1 */}
 						{`${formattedInspectMetricsTimeSeries.length - 1} time series`}
-					</Button>
-				</Button.Group>
-				<div className="view-toggle-button">
-					<Switch
-						color="primary"
-						textPlacement="right"
-						value={viewType === 'graph'}
-						onChange={(checked): void => {
-							const newViewType = checked ? 'graph' : 'table';
-							setViewType(newViewType);
-							logEvent(MetricsExplorerEvents.InspectViewChanged, {
-								[MetricsExplorerEventKeys.Tab]: 'inspect',
-								[MetricsExplorerEventKeys.InspectView]: newViewType,
-							});
-						}}
-					/>
-					<Typography.Text>
-						{viewType === 'graph' ? 'Graph View' : 'Table View'}
-					</Typography.Text>
+					</h2>
+					<span className="tw:text-xs tw:text-subtle-foreground">{seriesNote}</span>
 				</div>
+				<SegmentedControl
+					label="View"
+					size="sm"
+					value={viewType}
+					onChange={(newViewType): void => {
+						setViewType(newViewType);
+						void logEvent(MetricsExplorerEvents.InspectViewChanged, {
+							[MetricsExplorerEventKeys.Tab]: 'inspect',
+							[MetricsExplorerEventKeys.InspectView]: newViewType,
+						});
+					}}
+					options={[
+						{ value: 'graph', label: 'Graph' },
+						{ value: 'table', label: 'Table' },
+					]}
+				/>
 			</div>
 			<div className="graph-view-container">
 				{viewType === 'graph' &&
 					(isInspectMetricsRefetching ? (
-						<Skeleton active />
+						<div className="fs-ui tw:p-4">
+							<Skeleton className="tw:h-[480px] tw:w-full" />
+						</div>
 					) : (
 						<Uplot data={formattedInspectMetricsTimeSeries} options={options} />
 					))}
@@ -266,7 +255,7 @@ function GraphView({
 					metricInspectionAppliedOptions={metricInspectionAppliedOptions}
 				/>
 			)}
-		</div>
+		</section>
 	);
 }
 

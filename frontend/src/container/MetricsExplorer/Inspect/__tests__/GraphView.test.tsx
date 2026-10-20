@@ -72,8 +72,14 @@ describe('GraphView', () => {
 				<GraphView {...defaultProps} />
 			</Provider>,
 		);
-		expect(screen.getByRole('switch')).toBeInTheDocument();
-		expect(screen.getByText('Graph View')).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Graph' })).toHaveAttribute(
+			'aria-pressed',
+			'true',
+		);
+		expect(screen.getByRole('button', { name: 'Table' })).toHaveAttribute(
+			'aria-pressed',
+			'false',
+		);
 	});
 
 	it('switches between graph and table view', async () => {
@@ -83,20 +89,20 @@ describe('GraphView', () => {
 			</Provider>,
 		);
 
-		const switchButton = screen.getByRole('switch');
-		expect(screen.getByText('Graph View')).toBeInTheDocument();
+		await userEvent.click(screen.getByRole('button', { name: 'Table' }));
 
-		await userEvent.click(switchButton);
-		expect(screen.getByText('Table View')).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Table' })).toHaveAttribute(
+			'aria-pressed',
+			'true',
+		);
 	});
 
-	it('renders metric name and number of series', () => {
+	it('renders the number of series', () => {
 		render(
 			<Provider store={store}>
 				<GraphView {...defaultProps} />
 			</Provider>,
 		);
-		expect(screen.getByText('test_metric')).toBeInTheDocument();
 		expect(screen.getByText('1 time series')).toBeInTheDocument();
 	});
 });
