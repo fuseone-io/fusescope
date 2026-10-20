@@ -139,6 +139,9 @@ export const GroupByFilter = memo(function GroupByFilter({
 	return (
 		<Select
 			getPopupContainer={getPopupContainer}
+			popupMatchSelectWidth={false}
+			popupClassName="attribute-option-popup"
+			placement="bottomLeft"
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}
