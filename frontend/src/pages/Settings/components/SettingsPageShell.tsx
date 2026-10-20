@@ -28,7 +28,7 @@ function SettingsPageShell({
 		<PageTemplate
 			testId={testId}
 			className={cn(
-				'tw:mx-0 tw:gap-4 tw:md:px-8 tw:md:pt-6 tw:md:pb-10',
+				'tw:mx-0 tw:gap-4 tw:md:px-6 tw:md:pt-6 tw:md:pb-10',
 				narrow ? 'tw:max-w-[960px]' : 'tw:max-w-[1280px]',
 			)}
 		>

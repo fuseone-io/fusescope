@@ -17,7 +17,7 @@ function AppHeader(): JSX.Element {
 	return (
 		<header
 			data-testid="app-header"
-			className="tw:flex tw:min-h-14 tw:shrink-0 tw:flex-wrap tw:items-center tw:lg:flex-nowrap tw:gap-x-3 tw:gap-y-2 tw:border-b tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3 tw:text-foreground tw:md:px-8"
+			className="tw:flex tw:min-h-14 tw:shrink-0 tw:flex-wrap tw:items-center tw:lg:flex-nowrap tw:gap-x-3 tw:gap-y-2 tw:border-b tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3 tw:text-foreground tw:md:px-6"
 		>
 			<div className="fs-ui tw:flex tw:min-w-0 tw:flex-[1_0.1_auto] tw:items-center tw:gap-2 tw:font-sans">
 				<SidebarToggle />

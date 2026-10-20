@@ -37,7 +37,7 @@ function AlertsPageShell({
 			data-testid={testId}
 			className="tw:flex tw:w-full tw:flex-1 tw:flex-col tw:bg-background tw:text-foreground"
 		>
-			<div className="tw:mx-auto tw:box-border tw:flex tw:w-full tw:max-w-[1600px] tw:flex-1 tw:flex-col tw:gap-6 tw:p-4 tw:md:p-8">
+			<div className="tw:mx-auto tw:box-border tw:flex tw:w-full tw:max-w-[1600px] tw:flex-1 tw:flex-col tw:gap-6 tw:p-4 tw:md:p-6">
 				<PageHeader
 					icon={<Bell />}
 					title="Alerts"
