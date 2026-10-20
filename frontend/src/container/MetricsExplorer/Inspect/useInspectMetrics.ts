@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useMemo, useReducer } from 'react';
 import { useQuery } from 'react-query';
 import { inspectMetrics } from 'api/generated/services/metrics';
 import { isAxiosError } from 'axios';
@@ -203,22 +203,14 @@ export function useInspectMetrics(
 		return InspectionStep.TIME_AGGREGATION;
 	}, [metricInspectionOptions]);
 
-	const [spaceAggregatedSeriesMap, setSpaceAggregatedSeriesMap] = useState<
-		Map<string, InspectMetricsSeries[]>
-	>(new Map());
-	const [timeAggregatedSeriesMap, setTimeAggregatedSeriesMap] = useState<
-		Map<number, GraphPopoverData[]>
-	>(new Map());
-	const [aggregatedTimeSeries, setAggregatedTimeSeries] = useState<
-		InspectMetricsSeries[]
-	>(inspectMetricsTimeSeries);
-
-	useEffect(() => {
-		setAggregatedTimeSeries(inspectMetricsTimeSeries);
-	}, [inspectMetricsTimeSeries]);
-
-	const formattedInspectMetricsTimeSeries = useMemo(() => {
-		let timeSeries: InspectMetricsSeries[] = [...inspectMetricsTimeSeries];
+	const {
+		aggregatedTimeSeries,
+		spaceAggregatedSeriesMap,
+		timeAggregatedSeriesMap,
+	} = useMemo(() => {
+		let timeSeries: InspectMetricsSeries[] = inspectMetricsTimeSeries;
+		let timeAggregatedMap = new Map<number, GraphPopoverData[]>();
+		let spaceAggregatedMap = new Map<string, InspectMetricsSeries[]>();
 
 		// Apply time aggregation once required options are set
 		if (
@@ -227,13 +219,9 @@ export function useInspectMetrics(
 			metricInspectionOptions.appliedOptions.timeAggregationInterval
 		) {
 			const { timeAggregatedSeries, timeAggregatedSeriesMap } =
-				applyTimeAggregation(
-					inspectMetricsTimeSeries,
-					metricInspectionOptions.appliedOptions,
-				);
+				applyTimeAggregation(timeSeries, metricInspectionOptions.appliedOptions);
 			timeSeries = timeAggregatedSeries;
-			setTimeAggregatedSeriesMap(timeAggregatedSeriesMap);
-			setAggregatedTimeSeries(timeSeries);
+			timeAggregatedMap = timeAggregatedSeriesMap;
 		}
 		// Apply space aggregation
 		if (appliedInspectionStep === InspectionStep.COMPLETED) {
@@ -242,13 +230,20 @@ export function useInspectMetrics(
 				metricInspectionOptions.appliedOptions,
 			);
 			timeSeries = aggregatedSeries;
-			setSpaceAggregatedSeriesMap(spaceAggregatedSeriesMap);
-			setAggregatedTimeSeries(aggregatedSeries);
+			spaceAggregatedMap = spaceAggregatedSeriesMap;
 		}
 
-		const timestamps = getAllTimestampsOfMetrics(timeSeries);
+		return {
+			aggregatedTimeSeries: timeSeries,
+			spaceAggregatedSeriesMap: spaceAggregatedMap,
+			timeAggregatedSeriesMap: timeAggregatedMap,
+		};
+	}, [inspectMetricsTimeSeries, appliedInspectionStep, metricInspectionOptions]);
 
-		const timeseriesArray = timeSeries.map((series) => {
+	const formattedInspectMetricsTimeSeries = useMemo(() => {
+		const timestamps = getAllTimestampsOfMetrics(aggregatedTimeSeries);
+
+		const timeseriesArray = aggregatedTimeSeries.map((series) => {
 			const valuesMap = new Map<number, number>();
 
 			series.values.forEach(({ timestamp, value }) => {
@@ -260,7 +255,7 @@ export function useInspectMetrics(
 
 		const rawData = [timestamps, ...timeseriesArray];
 		return rawData.map((series) => new Float64Array(series));
-	}, [inspectMetricsTimeSeries, appliedInspectionStep, metricInspectionOptions]);
+	}, [aggregatedTimeSeries]);
 
 	const spaceAggregationLabels = useMemo(() => {
 		const labels = new Set<string>();
@@ -276,10 +271,7 @@ export function useInspectMetrics(
 		dispatchMetricInspectionOptions({
 			type: 'RESET_INSPECTION',
 		});
-		setSpaceAggregatedSeriesMap(new Map());
-		setTimeAggregatedSeriesMap(new Map());
-		setAggregatedTimeSeries(inspectMetricsTimeSeries);
-	}, [dispatchMetricInspectionOptions, inspectMetricsTimeSeries]);
+	}, [dispatchMetricInspectionOptions]);
 
 	return {
 		inspectMetricsTimeSeries,
