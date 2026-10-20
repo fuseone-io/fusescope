@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
@@ -19,6 +19,7 @@ import {
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { UpdateTimeInterval } from 'store/actions';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
@@ -28,6 +29,7 @@ import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import ChartCell from '../components/ChartCell';
 import ChartGrid from '../components/ChartGrid';
 import ChartPanel from '../components/ChartPanel';
+import DbCallsEmptyState from '../components/DbCallsEmptyState';
 import { useServiceChartMenu } from '../hooks/useServiceChartMenu';
 import { useStepAlignedRange } from '../hooks/useStepAlignedRange';
 import { GraphContainer } from '../styles';
@@ -139,6 +141,17 @@ function DBCall(): JSX.Element {
 		servicename,
 		isDBCall: true,
 	});
+	// Unknown until the RPS chart answers; failed queries keep the charts' error.
+	const [hasDbCalls, setHasDbCalls] = useState<boolean>();
+	const onDbCallsData = useCallback(
+		(data?: MetricRangePayloadProps['data']): void => {
+			if (data) {
+				setHasDbCalls(data.result.some((series) => series.values?.length > 0));
+			}
+		},
+		[],
+	);
+
 	const apmToLogsQuery = useGetAPMToLogsQueries({ servicename });
 	const menuFor = useServiceChartMenu(servicename);
 	const pointMenu = useMemo(
@@ -147,40 +160,46 @@ function DBCall(): JSX.Element {
 	);
 
 	return (
-		<ChartGrid>
-			<ChartCell>
-				<ChartPanel testId="database_call_rps">
-					<GraphContainer>
-						<Graph
-							start={start}
-							end={end}
-							trimToEnd
-							widget={databaseCallsRPSWidget}
-							pointMenu={pointMenu}
-							onDragSelect={onDragSelect}
-							version={ENTITY_VERSION_V4}
-						/>
-					</GraphContainer>
-				</ChartPanel>
-			</ChartCell>
+		<>
+			{hasDbCalls === false && <DbCallsEmptyState />}
+			<div hidden={hasDbCalls === false}>
+				<ChartGrid>
+					<ChartCell>
+						<ChartPanel testId="database_call_rps">
+							<GraphContainer>
+								<Graph
+									start={start}
+									end={end}
+									trimToEnd
+									widget={databaseCallsRPSWidget}
+									getGraphData={onDbCallsData}
+									pointMenu={pointMenu}
+									onDragSelect={onDragSelect}
+									version={ENTITY_VERSION_V4}
+								/>
+							</GraphContainer>
+						</ChartPanel>
+					</ChartCell>
 
-			<ChartCell>
-				<ChartPanel testId="database_call_avg_duration">
-					<GraphContainer>
-						<Graph
-							start={start}
-							end={end}
-							trimToEnd
-							widget={databaseCallsAverageDurationWidget}
-							headerMenuList={MENU_ITEMS}
-							pointMenu={pointMenu}
-							onDragSelect={onDragSelect}
-							version={ENTITY_VERSION_V4}
-						/>
-					</GraphContainer>
-				</ChartPanel>
-			</ChartCell>
-		</ChartGrid>
+					<ChartCell>
+						<ChartPanel testId="database_call_avg_duration">
+							<GraphContainer>
+								<Graph
+									start={start}
+									end={end}
+									trimToEnd
+									widget={databaseCallsAverageDurationWidget}
+									headerMenuList={MENU_ITEMS}
+									pointMenu={pointMenu}
+									onDragSelect={onDragSelect}
+									version={ENTITY_VERSION_V4}
+								/>
+							</GraphContainer>
+						</ChartPanel>
+					</ChartCell>
+				</ChartGrid>
+			</div>
+		</>
 	);
 }
 
