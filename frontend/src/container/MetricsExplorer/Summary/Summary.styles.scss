@@ -2,234 +2,100 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	padding: 16px 0;
+	padding: 0 0 16px;
 
-	.metrics-table-title,
-	.metrics-treemap-title {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin-bottom: 16px;
-
-		.ant-typography {
-			margin-top: 0;
-			margin-bottom: 0;
-		}
-
-		.lucide-info {
-			cursor: pointer;
-		}
-	}
-
-	.metrics-treemap-title {
-		justify-content: space-between;
-
-		.metrics-treemap-title-left {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-		}
-
-		.ant-select {
-			width: 140px;
-		}
-	}
-
+	// The search bar: one sunken box with a strong border around the bare editor.
 	.metrics-search-container {
 		display: flex;
+		flex-wrap: wrap;
+		align-items: stretch;
 		gap: 8px;
-		align-items: center;
 
 		.qb-search-container {
+			position: relative;
 			display: flex;
-			align-items: center;
-			gap: 8px;
-			flex: 1;
+			align-items: flex-start;
+			flex: 1 1 420px;
+			min-width: 0;
+			min-height: 40px;
+			border: 1px solid var(--fs-input);
+			border-radius: 8px;
+			background: var(--fs-muted);
 
-			.query-builder-search-container {
-				width: 100%;
+			&:has(.cm-focused) {
+				border-color: var(--fs-ring);
 			}
-		}
-	}
 
-	.metrics-table-container {
-		padding-bottom: 48px;
-		.ant-table {
-			.ant-table-thead > tr > th {
-				padding: 12px;
-				font-weight: 500;
+			&:has(.hasErrors) {
+				border-color: var(--fs-error);
+			}
+
+			.metrics-search-icon {
+				flex: none;
+				margin: 12px 0 0 12px;
+				color: var(--fs-subtle-foreground);
+			}
+
+			.code-mirror-where-clause,
+			.query-where-clause-editor-container {
+				flex: 1;
+				min-width: 0;
+			}
+
+			.cm-editor,
+			.cm-editor .cm-scroller,
+			.cm-editor .cm-content,
+			.cm-editor .cm-line {
+				border: 0 !important;
+				background: transparent !important;
+			}
+
+			.cm-editor.cm-focused {
+				outline: 0;
+			}
+
+			.cm-editor .cm-content {
+				min-height: 38px;
+				padding: 9px 28px 9px 0 !important;
 				font-size: 12px;
-				line-height: 18px;
-
-				background: var(--l1-background);
-				border-bottom: none;
-
-				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 11px;
-				font-style: normal;
-				font-weight: 600;
-				line-height: 18px; /* 163.636% */
-				letter-spacing: 0.44px;
-				text-transform: uppercase;
-
-				&::before {
-					background-color: transparent;
-				}
 			}
 
-			.ant-table-thead > tr > th:has(.metric-name-column-header) {
-				background: var(--l2-background);
+			.cm-editor .cm-line {
+				padding-left: 10px;
+				line-height: 20px !important;
 			}
 
-			.metric-name-column-header,
-			.metric-type-column-header {
-				display: flex;
-				justify-content: space-between;
-
-				.metric-name-column-header-text,
-				.metric-type-column-header-text {
-					line-height: 32px;
-				}
-
-				.ant-btn {
-					margin-left: 4px;
-					padding: 0;
-				}
+			.query-status-container {
+				border: 0 !important;
+				background: transparent !important;
 			}
 
-			.ant-table-cell {
-				padding: 12px;
-				font-size: 13px;
-				line-height: 20px;
-				color: var(--l1-foreground);
-				background: var(--l1-background);
-			}
-
-			.ant-table-cell:has(.metric-name-column-value) {
-				background: var(--l2-background);
-			}
-
-			.metric-description-column-value {
-				white-space: nowrap;
-				overflow: hidden;
-				text-overflow: ellipsis;
-			}
-
-			.metric-name-column-value {
-				color: var(--l1-foreground);
-				font-family: 'Geist Mono';
-				font-style: normal;
-				font-weight: 600;
-				line-height: 20px; /* 142.857% */
-				letter-spacing: -0.07px;
-			}
-
-			.status-cell {
-				.active-tag {
-					color: var(--bg-forest-500);
-					padding: 4px 8px;
-					border-radius: 4px;
-					font-size: 12px;
-					font-weight: 500;
-				}
-			}
-
-			.ant-table-tbody > tr:hover > td {
-				background: color-mix(in srgb, var(--l1-foreground) 4%, transparent);
-			}
-
-			.ant-table-cell:first-child {
-				text-align: justify;
-			}
-
-			.ant-table-cell:nth-child(2) {
-				padding-left: 16px;
-				padding-right: 16px;
-			}
-
-			.ant-table-cell:nth-child(n + 3) {
-				padding-right: 24px;
-			}
-			.column-header-right {
-				text-align: right;
-			}
-			.column-header-left {
-				text-align: left;
-			}
-			.ant-table-tbody > tr > td {
-				border-bottom: none;
-			}
-
-			.ant-table-thead
-				> tr
-				> th:not(:last-child):not(.ant-table-selection-column):not(
-					.ant-table-row-expand-icon-cell
-				):not([colspan])::before {
-				background-color: transparent;
-			}
-
-			.ant-empty-normal {
-				visibility: hidden;
+			.query-where-clause-editor-container > a {
+				top: 12px !important;
 			}
 		}
 
-		.ant-pagination {
-			position: fixed;
-			// Lifted above the bottom strip. Don't extend this pattern — new
-			// fixed-bottom UI belongs in the bounded layout, not in another offset here.
-			bottom: var(--bottom-strip-height, 0px);
-			width: calc(100% - 54px);
-			background: var(--l1-background);
-			padding: 16px;
-			margin: 0;
-
-			// this is to offset chat support icon till we improve the design
-			right: 20px;
-
-			.ant-pagination-item {
-				border-radius: 4px;
-
-				&-active {
-					background: var(--primary-background);
-					border-color: var(--bg-robin-500);
-
-					a {
-						color: var(--l1-foreground) !important;
-					}
-				}
-			}
+		[data-run-query-btn] {
+			height: 40px;
 		}
 	}
 
-	.metrics-treemap {
-		margin-left: -12px;
-		margin-right: -12px;
-	}
+	.metrics-table-container th .ant-btn {
+		width: 24px;
+		min-width: 24px;
+		height: 24px;
+		padding: 0;
+		border: 0;
+		border-radius: 6px;
+		background: transparent;
+		color: var(--fs-muted-foreground);
+		box-shadow: none;
 
-	.no-metrics-message-container {
-		display: flex;
-		flex-direction: column;
-		justify-content: flex-start;
-		align-items: center;
-		min-height: 400px;
-		gap: 16px;
-		padding-top: 32px;
+		&:hover {
+			background: var(--fs-muted) !important;
+			color: var(--fs-foreground) !important;
+		}
 	}
-}
-
-.metric-type-renderer {
-	border-radius: 50px;
-	max-height: 24px;
-	width: fit-content;
-	display: flex;
-	align-items: center;
-	justify-content: flex-start;
-	gap: 4px;
-	text-transform: uppercase;
-	font-size: 12px;
-	padding: 5px 10px;
-	align-self: flex-end;
 }
 
 .ant-popover-inner {

@@ -7,25 +7,8 @@ import { render, screen, waitFor } from 'tests/test-utils';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import Summary from '../Summary';
+import { useMetricsCount } from '../useMetricsCount';
 
-jest.mock('d3-hierarchy', () => ({
-	stratify: jest.fn().mockReturnValue({
-		id: jest.fn().mockReturnValue({
-			parentId: jest.fn().mockReturnValue(
-				jest.fn().mockReturnValue({
-					sum: jest.fn().mockReturnValue({
-						descendants: jest.fn().mockReturnValue([]),
-						eachBefore: jest.fn().mockReturnValue([]),
-					}),
-				}),
-			),
-		}),
-	}),
-	treemapBinary: jest.fn(),
-}));
-jest.mock('react-use', () => ({
-	useWindowSize: jest.fn().mockReturnValue({ width: 1000, height: 1000 }),
-}));
 jest.mock('react-router-dom-v5-compat', () => {
 	const actual = jest.requireActual('react-router-dom-v5-compat');
 	return {
@@ -180,7 +163,7 @@ describe('Summary', () => {
 
 		render(<Summary />);
 
-		expect(screen.queryByText('Proportion View')).not.toBeInTheDocument();
+		expect(screen.queryByText('Proportion view')).not.toBeInTheDocument();
 	});
 
 	it('persists metric details modal state across page refresh', () => {
@@ -194,6 +177,48 @@ describe('Summary', () => {
 
 		render(<Summary />);
 
-		expect(screen.queryByText('Proportion View')).not.toBeInTheDocument();
+		expect(screen.queryByText('Proportion view')).not.toBeInTheDocument();
+	});
+
+	it('hands the list total to the page header once loaded', () => {
+		useMetricsCount.setState({ count: null });
+		useGetMetricsStatsSpy.mockReturnValue({
+			data: {
+				status: 'success',
+				data: {
+					total: 186,
+					metrics: [
+						{
+							metricName: 'signoz_calls_total',
+							description: '',
+							type: 'sum',
+							unit: '',
+							samples: 10,
+							timeseries: 2,
+						},
+					],
+				},
+			},
+			mutate: mockGetMetricsStats,
+			isLoading: false,
+			isError: false,
+			error: null,
+			reset: jest.fn(),
+		} as any);
+
+		const { unmount } = render(<Summary />);
+
+		expect(useMetricsCount.getState().count).toBe(186);
+
+		unmount();
+		expect(useMetricsCount.getState().count).toBeNull();
+	});
+
+	it('clears the header count while the list loads', () => {
+		useMetricsCount.setState({ count: 12 });
+
+		render(<Summary />);
+
+		expect(useMetricsCount.getState().count).toBeNull();
 	});
 });

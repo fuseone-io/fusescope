@@ -45,6 +45,8 @@ import {
 import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
 import MetricsTreemap from './MetricsTreemap';
+import { useMetricsCount } from './useMetricsCount';
+import { useOpenMetricInExplorer } from './useOpenMetricInExplorer';
 import { convertNanoToMilliseconds, formatDataForMetricsTable } from './utils';
 
 import './Summary.styles.scss';
@@ -272,6 +274,29 @@ function Summary(): JSX.Element {
 		});
 	};
 
+	const setMetricsCount = useMetricsCount((state) => state.setCount);
+	const metricsTotal =
+		isGetMetricsStatsLoading || isGetMetricsStatsError || isCancelled
+			? null
+			: (metricsData?.data.total ?? null);
+
+	useEffect(() => {
+		setMetricsCount(metricsTotal);
+	}, [metricsTotal, setMetricsCount]);
+
+	useEffect(() => (): void => setMetricsCount(null), [setMetricsCount]);
+
+	const openMetricInExplorer = useOpenMetricInExplorer();
+	const handleOpenInExplorer = useCallback(
+		(metricName: string): void => {
+			const metric = metricsData?.data.metrics?.find(
+				(item) => item.metricName === metricName,
+			);
+			void openMetricInExplorer(metricName, metric?.type);
+		},
+		[metricsData, openMetricInExplorer],
+	);
+
 	const formattedMetricsData = useMemo(
 		() => formatDataForMetricsTable(metricsData?.data.metrics || []),
 		[metricsData],
@@ -424,6 +449,8 @@ function Summary(): JSX.Element {
 							currentPage={currentPage}
 							onPaginationChange={onPaginationChange}
 							setOrderBy={handleSetOrderBy}
+							orderBy={orderBy}
+							onOpenInExplorer={handleOpenInExplorer}
 							totalCount={metricsData?.data.total || 0}
 							openMetricDetails={openMetricDetails}
 							queryFilterExpression={queryFilterExpression}

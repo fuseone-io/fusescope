@@ -1,30 +1,11 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/fuseScope.schemas';
 import store from 'store';
 
 import MetricsTreemap from '../MetricsTreemap';
-
-jest.mock('d3-hierarchy', () => ({
-	stratify: jest.fn().mockReturnValue({
-		id: jest.fn().mockReturnValue({
-			parentId: jest.fn().mockReturnValue(
-				jest.fn().mockReturnValue({
-					sum: jest.fn().mockReturnValue({
-						descendants: jest.fn().mockReturnValue([]),
-						eachBefore: jest.fn().mockReturnValue([]),
-					}),
-				}),
-			),
-		}),
-	}),
-	treemapBinary: jest.fn(),
-}));
-jest.mock('react-use', () => ({
-	useWindowSize: jest.fn().mockReturnValue({ width: 1000, height: 1000 }),
-}));
 
 const mockData = [
 	{
@@ -59,7 +40,10 @@ describe('MetricsTreemap', () => {
 			</MemoryRouter>,
 		);
 
-		expect(screen.getByText('Proportion View')).toBeInTheDocument();
+		expect(screen.getByText('Proportion view')).toBeInTheDocument();
+		const tile = screen.getByTestId('metrics-treemap-tile-Metric 2');
+		expect(tile).toHaveTextContent('Metric 2');
+		expect(tile).toHaveTextContent('0.60%');
 	});
 
 	it('shows loading state', () => {
@@ -131,5 +115,80 @@ describe('MetricsTreemap', () => {
 
 		expect(screen.getByTestId('metrics-treemap-empty-state')).toBeInTheDocument();
 		expect(screen.getByText('No metrics found')).toBeInTheDocument();
+	});
+
+	it('opens the metric details from a tile', () => {
+		const openMetricDetails = jest.fn();
+		render(
+			<MetricsTreemap
+				isLoading={false}
+				isError={false}
+				data={{ timeseries: [], samples: mockData }}
+				openMetricDetails={openMetricDetails}
+				viewType={MetricsexplorertypesTreemapModeDTO.samples}
+				setHeatmapView={jest.fn()}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId('metrics-treemap-tile-Metric 1'));
+
+		expect(openMetricDetails).toHaveBeenCalledWith(
+			'Metric 1',
+			'treemap',
+			expect.any(Object),
+		);
+	});
+
+	it('sizes tiles by samples or time series from the segmented toggle', () => {
+		const setHeatmapView = jest.fn();
+		render(
+			<MetricsTreemap
+				isLoading={false}
+				isError={false}
+				data={{ timeseries: [], samples: mockData }}
+				openMetricDetails={jest.fn()}
+				viewType={MetricsexplorertypesTreemapModeDTO.samples}
+				setHeatmapView={setHeatmapView}
+			/>,
+		);
+
+		expect(screen.getByRole('button', { name: 'Samples' })).toHaveAttribute(
+			'aria-pressed',
+			'true',
+		);
+		fireEvent.click(screen.getByRole('button', { name: 'Time series' }));
+
+		expect(setHeatmapView).toHaveBeenCalledWith(
+			MetricsexplorertypesTreemapModeDTO.timeseries,
+		);
+	});
+
+	it('collapses and reopens the proportion view', () => {
+		render(
+			<MetricsTreemap
+				isLoading={false}
+				isError={false}
+				data={{ timeseries: [], samples: mockData }}
+				openMetricDetails={jest.fn()}
+				viewType={MetricsexplorertypesTreemapModeDTO.samples}
+				setHeatmapView={jest.fn()}
+			/>,
+		);
+
+		const toggle = screen.getByRole('button', { name: 'Toggle proportion view' });
+		expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+		fireEvent.click(toggle);
+
+		expect(toggle).toHaveAttribute('aria-expanded', 'false');
+		expect(
+			screen.queryByTestId('metrics-treemap-tile-Metric 1'),
+		).not.toBeInTheDocument();
+
+		fireEvent.click(toggle);
+
+		expect(
+			screen.getByTestId('metrics-treemap-tile-Metric 1'),
+		).toBeInTheDocument();
 	});
 });

@@ -3,6 +3,7 @@ import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySear
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { DataSource } from 'types/common/queryBuilder';
+import { Search } from 'lucide-react';
 
 import { MetricsSearchProps } from './types';
 
@@ -40,6 +41,7 @@ function MetricsSearch({
 	return (
 		<div className="metrics-search-container">
 			<div data-testid="qb-search-container" className="qb-search-container">
+				<Search size={16} aria-hidden="true" className="metrics-search-icon" />
 				<QuerySearch
 					onChange={handleOnChange}
 					dataSource={DataSource.METRICS}

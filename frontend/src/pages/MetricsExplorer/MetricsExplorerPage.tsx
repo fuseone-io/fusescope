@@ -13,6 +13,7 @@ import { ChartColumn } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { Explorer, Summary, Views, VolumeControl } from './constants';
+import MetricsCountLine from './MetricsCountLine';
 
 function MetricsExplorerPage(): JSX.Element {
 	const { pathname = '' } = useLocation();
@@ -47,6 +48,9 @@ function MetricsExplorerPage(): JSX.Element {
 		<ModuleTabsLayout
 			title="Metrics"
 			icon={<ChartColumn />}
+			description={
+				pathname === ROUTES.METRICS_EXPLORER ? <MetricsCountLine /> : undefined
+			}
 			testId="metrics-explorer-page"
 			routes={routes}
 			activeKey={pathname}
