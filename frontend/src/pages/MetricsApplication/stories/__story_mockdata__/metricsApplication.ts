@@ -21,6 +21,10 @@ export const SERVICE_NAME = 'checkout';
  */
 export const METRICS_APPLICATION_TABS = [
 	'OVER_METRICS',
+	'ENDPOINTS',
+	'DEPENDENCIES',
+	'ERRORS',
+	'INFRASTRUCTURE',
 	'DB_CALL_METRICS',
 	'EXTERNAL_METRICS',
 ] as const;
@@ -54,6 +58,14 @@ export const METRICS_LABEL_VALUES: Record<string, readonly string[]> = {
 	],
 	'db.system': ['postgresql', 'redis', 'mysql'],
 	'status.code': ['200', '400', '500'],
+	name: OPERATION_NAMES,
+	'http.route': ['/api/checkout', '/api/cart', ''],
+	'rpc.method': ['PlaceOrder', ''],
+	'host.name': ['checkout-7d9f8-a', 'checkout-7d9f8-b'],
+	'deployment.environment': ['production'],
+	'telemetry.sdk.language': ['go'],
+	'peer.service': ['postgresql'],
+	status_message: ['payment declined: card expired', ''],
 };
 
 /** The service the page is on, with the entry points its overview graphs cover. */

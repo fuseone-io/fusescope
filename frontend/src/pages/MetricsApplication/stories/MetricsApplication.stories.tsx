@@ -14,8 +14,8 @@ type MetricsApplicationArgs = PageStoryArgs<typeof metricsApplicationMocks>;
 const pageStory = storyMocks(metricsApplicationMocks, { layout: 'app' });
 
 /**
- * One service: its latency, rate and error panels, its top and entry point
- * operations, and the apdex setting the panels read.
+ * One service as an APM overview: KPIs and charts against the previous period,
+ * endpoints, dependencies, errors, hosts, DB and external calls.
  *
  * Route: `/services/:servicename`.
  */
@@ -37,14 +37,35 @@ export default meta;
 type Story = StoryObj<MetricsApplicationArgs>;
 
 /**
- * A service's overview: latency, rate, apdex and error percentage over the
- * selected range, with the key operations behind them.
+ * A service's overview: KPIs against the previous period, highlights, latency,
+ * rate, error % and Apdex with the previous period dashed, the latency
+ * distribution, monitors and the top endpoints.
  */
 export const Default: Story = {};
 
 /** The overview in the dark theme. */
 export const Dark: Story = {
 	parameters: { signoz: { theme: 'dark' } },
+};
+
+/** Every operation with rate, latency, error rate and its share of the service's time. */
+export const Endpoints: Story = {
+	args: { tab: 'ENDPOINTS' },
+};
+
+/** Callers and callees of the service, on a map and in two tables. */
+export const Dependencies: Story = {
+	args: { tab: 'DEPENDENCIES' },
+};
+
+/** Error summary, top exceptions and error status messages. */
+export const Errors: Story = {
+	args: { tab: 'ERRORS' },
+};
+
+/** The hosts behind the service's requests. */
+export const Infrastructure: Story = {
+	args: { tab: 'INFRASTRUCTURE' },
 };
 
 /** The database calls the service makes, by system and by upstream. */
@@ -62,9 +83,9 @@ export const DenseOperations: Story = {
 	args: { operations: 10, series: 6 },
 };
 
-/** The real empty table branch when this service has no top or entry-point operations. */
+/** The endpoints table when this service has no top or entry-point operations. */
 export const NoOperations: Story = {
-	args: { operations: 0 },
+	args: { operations: 0, tab: 'ENDPOINTS' },
 };
 
 /**
@@ -72,6 +93,7 @@ export const NoOperations: Story = {
  * be taken away in.
  */
 export const DownloadMenu: Story = {
+	args: { tab: 'ENDPOINTS' },
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(
 			await within(canvasElement).findByTestId(

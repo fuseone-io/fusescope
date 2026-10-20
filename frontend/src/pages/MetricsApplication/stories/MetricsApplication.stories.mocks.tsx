@@ -14,6 +14,12 @@ import {
 } from '@/storybook/msw/__story_mockdata__/attributes';
 import { queryRangeV3ForRequest } from '@/storybook/msw/__story_mockdata__/queryRange';
 
+import { apmQueryRangeResponse } from './__story_mockdata__/apmQueryRange';
+import {
+	dependencyGraphResponse,
+	exceptionsResponse,
+	rulesResponse,
+} from './__story_mockdata__/serviceData';
 import {
 	apDexSettingsResponse,
 	METRICS_APPLICATION_TABS,
@@ -55,6 +61,12 @@ export const metricsApplicationMocks = defineStoryMocks({
 			value: 8,
 			max: TOP_OPERATION_MAX,
 		}),
+		exceptions: countControl('Exception groups', {
+			group: DATA,
+			description: 'Exception groups the Errors tab lists for the service.',
+			value: 2,
+			max: 3,
+		}),
 		series: countControl('Graph series', {
 			group: DATA,
 			description:
@@ -74,6 +86,28 @@ export const metricsApplicationMocks = defineStoryMocks({
 		return [
 			rest.post('http://localhost/api/v3/query_range', queryRange),
 			rest.post('http://localhost/api/v4/query_range', queryRange),
+			rest.post(
+				'http://localhost/api/v5/query_range',
+				response.json(async (req) =>
+					apmQueryRangeResponse(await req.json(), METRICS_LABEL_VALUES),
+				),
+			),
+			rest.post(
+				'http://localhost/api/v1/dependency_graph',
+				response.json(() => dependencyGraphResponse()),
+			),
+			rest.post(
+				'http://localhost/api/v1/listErrors',
+				response.json(() => exceptionsResponse(values.exceptions)),
+			),
+			rest.post(
+				'http://localhost/api/v1/countErrors',
+				response.json(() => values.exceptions),
+			),
+			rest.get(
+				'http://localhost/api/v2/rules',
+				response.json(() => rulesResponse()),
+			),
 			rest.post(
 				'http://localhost/api/v1/service/top_level_operations',
 				response.json(() => topLevelOperationsResponse(SERVICE_NAME)),
