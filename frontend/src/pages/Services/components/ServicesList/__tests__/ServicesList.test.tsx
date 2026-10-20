@@ -78,21 +78,24 @@ describe('Services list', () => {
 		expect(screen.getByTestId('services-count')).toHaveTextContent('3');
 
 		const checkout = screen.getAllByTestId('service-row')[0];
-		expect(within(checkout).getByText('612.00')).toBeInTheDocument();
-		expect(within(checkout).getByText('8.70')).toHaveAttribute(
-			'data-tone',
-			'error',
+		expect(within(checkout).getByTestId('service-p99')).toHaveTextContent(
+			'612 ms',
+		);
+		expect(within(checkout).getByTestId('service-error-rate')).toHaveTextContent(
+			'8.7%',
 		);
 	});
 
-	it('sorts by p99 descending by default and flips on header click', async () => {
+	it('puts the most failing services first by default and sorts on header click', async () => {
 		respondWith(SERVICES);
 		render(<ServiceTraces />);
 
 		await waitFor(() =>
-			expect(serviceNames()).toStrictEqual(['checkout', 'auth', 'cart']),
+			expect(serviceNames()).toStrictEqual(['checkout', 'cart', 'auth']),
 		);
 
+		fireEvent.click(screen.getByTestId('services-sort-p99'));
+		expect(serviceNames()).toStrictEqual(['checkout', 'auth', 'cart']);
 		fireEvent.click(screen.getByTestId('services-sort-p99'));
 		expect(serviceNames()).toStrictEqual(['cart', 'auth', 'checkout']);
 
@@ -189,6 +192,43 @@ describe('Services list', () => {
 		expect(
 			screen.getByRole('link', { name: 'Show Top Level Operations' }),
 		).toHaveAttribute('href', '/services/noisy/top-level-operations');
+	});
+
+	it('flags services against the previous period and lists them first', async () => {
+		respondWith(SERVICES);
+		const column = (index: number): Record<string, unknown> => ({
+			name: `__result_${index}`,
+			aggregationIndex: index,
+			columnType: 'aggregation',
+		});
+		const totals = (queryName: string, rows: unknown[][]): unknown => ({
+			queryName,
+			columns: [
+				{ name: 'service.name', columnType: 'group' },
+				...[0, 1, 2, 3, 4].map(column),
+			].map((item) => ({ ...item, queryName })),
+			data: rows,
+		});
+		server.use(
+			rest.post('http://localhost/api/v5/query_range', async (req, res, ctx) => {
+				const body = await req.json();
+				const results =
+					body.requestType === 'scalar'
+						? [
+								totals('A', [['auth', 100, 0, 1e7, 2e7, 9e7]]),
+								totals('B', [['auth', 100, 0, 1e7, 2e7, 3e7]]),
+							]
+						: [];
+				return res(ctx.json({ status: 'success', data: { data: { results } } }));
+			}),
+		);
+		render(<ServiceTraces />);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('service-highlight')).toHaveTextContent('p99 ↑3×'),
+		);
+		expect(serviceNames()[0]).toBe('auth');
+		expect(screen.getByTestId('services-flagged-count')).toHaveTextContent('1');
 	});
 
 	it('shows the empty state when no service reports', async () => {

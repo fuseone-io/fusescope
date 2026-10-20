@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
 import { SortState } from 'components/PageTemplate/types';
 import { compareRows, nextSort, pageOf } from 'components/PageTemplate/utils';
-import { ServicesList } from 'types/api/metrics/getService';
 
-import { ColumnKey, PAGE_SIZE } from './constants';
+import { ColumnKey, PAGE_SIZE, ServiceSortKey } from './constants';
+import { compareFlagged, ServiceRow } from './serviceRows';
 
 interface ServicesTableState {
-	rows: ServicesList[];
+	rows: ServiceRow[];
 	total: number;
-	sort: SortState<ColumnKey>;
+	sort: SortState<ServiceSortKey>;
 	onSort: (key: ColumnKey) => void;
 	search: string;
 	onSearch: (term: string) => void;
@@ -16,9 +16,10 @@ interface ServicesTableState {
 	setPage: (page: number) => void;
 }
 
-export function useServicesTable(services: ServicesList[]): ServicesTableState {
-	const [sort, setSort] = useState<SortState<ColumnKey>>({
-		key: ColumnKey.P99,
+/** Highlighted services come first until a column is sorted. */
+export function useServicesTable(services: ServiceRow[]): ServicesTableState {
+	const [sort, setSort] = useState<SortState<ServiceSortKey>>({
+		key: 'flag',
 		direction: 'desc',
 	});
 	const [search, setSearch] = useState('');
@@ -31,7 +32,11 @@ export function useServicesTable(services: ServicesList[]): ServicesTableState {
 					service.serviceName.toLowerCase().includes(term),
 				)
 			: services;
-		return [...filtered].sort(compareRows(sort.key, sort.direction));
+		const compare =
+			sort.key === 'flag'
+				? compareFlagged
+				: compareRows<ServiceRow, ColumnKey>(sort.key, sort.direction);
+		return [...filtered].sort(compare);
 	}, [search, services, sort]);
 
 	return {
@@ -40,7 +45,11 @@ export function useServicesTable(services: ServicesList[]): ServicesTableState {
 		sort,
 		onSort: (key): void => {
 			setSort((current) =>
-				nextSort(current, key, key === ColumnKey.Application ? 'asc' : 'desc'),
+				nextSort<ServiceSortKey>(
+					current,
+					key,
+					key === ColumnKey.Application ? 'asc' : 'desc',
+				),
 			);
 			setPage(1);
 		},

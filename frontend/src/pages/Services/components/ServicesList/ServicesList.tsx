@@ -1,17 +1,21 @@
-import PageHeader from 'components/PageTemplate/components/PageHeader';
-import Panel from 'components/PageTemplate/components/Panel';
-import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import CompactPageHeader from 'components/PageTemplate/components/CompactPageHeader';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import HeaderBandLayout from 'components/PageTemplate/components/HeaderBandLayout';
 import TablePagination from 'components/PageTemplate/components/TablePagination';
-import PageTemplate from 'components/PageTemplate/PageTemplate';
-import { Input } from 'components/ui/input';
-import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
-import { Search, Server } from 'lucide-react';
+import { Button } from 'components/ui/button';
+import ROUTES from 'constants/routes';
+import { Info, Network, Server } from 'lucide-react';
 import { ServicesList as ServicesListType } from 'types/api/metrics/getService';
 
-import { PAGE_SIZE, SEARCH_PLACEHOLDER } from './constants';
+import { PAGE_SIZE } from './constants';
+import { buildServiceRows } from './serviceRows';
 import ServicesEmptyState from './ServicesEmptyState';
+import ServicesFilterRow from './ServicesFilterRow';
 import ServicesTable from './ServicesTable';
 import TrialRpsWarning from './TrialRpsWarning';
+import { useServicesApm } from './useServicesApm';
 import { useServicesTable } from './useServicesTable';
 
 interface ServicesListProps {
@@ -19,24 +23,37 @@ interface ServicesListProps {
 	loading: boolean;
 	/** Span metrics report p99 in ms; traces in ns. */
 	isMetricData: boolean;
+	/** Span metrics only: scopes the period comparison to top-level operations. */
+	topLevelOperations?: [string, string[]][];
 }
 
 function ServicesList({
 	services,
 	loading,
 	isMetricData,
+	topLevelOperations,
 }: ServicesListProps): JSX.Element {
-	const table = useServicesTable(services);
+	const { stats } = useServicesApm(
+		isMetricData ? 'span-metrics' : 'traces',
+		topLevelOperations,
+	);
+	const rows = useMemo(
+		() => buildServiceRows(services, stats, isMetricData),
+		[services, stats, isMetricData],
+	);
+	const flagged = rows.filter((row) => row.badges.length > 0).length;
+	const table = useServicesTable(rows);
 
 	let body = (
 		<>
-			<ServicesTable
-				loading={loading}
-				rows={table.rows}
-				sort={table.sort}
-				onSort={table.onSort}
-				isMetricData={isMetricData}
-			/>
+			<div className="tw:overflow-x-auto">
+				<ServicesTable
+					loading={loading}
+					rows={table.rows}
+					sort={table.sort}
+					onSort={table.onSort}
+				/>
+			</div>
 			<TablePagination
 				page={table.page}
 				pageSize={PAGE_SIZE}
@@ -50,44 +67,61 @@ function ServicesList({
 	}
 
 	return (
-		<PageTemplate testId="services-page">
-			<PageHeader
-				icon={<Server />}
-				title="Services"
-				badges={
-					!loading && (
-						<StatusBadge tone="neutral" testId="services-count">
-							{services.length}
-						</StatusBadge>
-					)
-				}
-				description="RED metrics of every instrumented service in the selected time range"
-			/>
+		<HeaderBandLayout
+			testId="services-page"
+			header={
+				<CompactPageHeader
+					icon={<Server />}
+					title="Services"
+					meta={
+						!loading && (
+							<>
+								<strong
+									data-testid="services-count"
+									className="tw:font-medium tw:text-foreground"
+								>
+									{services.length}
+								</strong>{' '}
+								services in the selected range ·{' '}
+								<strong
+									data-testid="services-flagged-count"
+									className="tw:font-medium tw:text-foreground"
+								>
+									{flagged}
+								</strong>{' '}
+								with highlights
+							</>
+						)
+					}
+					actions={
+						<Button asChild variant="outline">
+							<Link to={ROUTES.SERVICE_MAP} data-testid="services-open-map">
+								<Network aria-hidden="true" />
+								Service map
+							</Link>
+						</Button>
+					}
+				/>
+			}
+			bodyClassName="tw:gap-4 tw:px-4 tw:pt-4 tw:pb-8 tw:md:px-6"
+		>
 			<TrialRpsWarning services={services} />
-			<div className="tw:flex tw:flex-wrap tw:items-start tw:gap-2">
-				<div className="fs-ui tw:relative tw:w-full tw:font-sans tw:sm:w-64">
-					<Search
-						aria-hidden="true"
-						className="tw:pointer-events-none tw:absolute tw:top-1/2 tw:left-3 tw:size-4 tw:-translate-y-1/2 tw:text-subtle-foreground"
-					/>
-					<Input
-						type="search"
-						data-testid="services-search"
-						aria-label={SEARCH_PLACEHOLDER}
-						placeholder={SEARCH_PLACEHOLDER}
-						value={table.search}
-						onChange={(event): void => table.onSearch(event.target.value)}
-						className="tw:bg-surface-raised tw:pl-9 tw:dark:bg-surface-raised"
-					/>
-				</div>
-				<div className="tw:min-w-0 tw:flex-1">
-					<ResourceAttributesFilter />
-				</div>
-			</div>
-			<Panel testId="services-table" className="tw:overflow-hidden">
+			<ServicesFilterRow search={table.search} onSearch={table.onSearch} />
+			<ContentPanel
+				testId="services-table"
+				title="Services"
+				subtitle="Entry-point spans per service. Deltas compare with the previous period of the same length."
+				actions={
+					<span className="tw:flex tw:items-center tw:gap-1.5 tw:text-xs tw:text-muted-foreground">
+						<Info aria-hidden="true" className="tw:size-3.5" />
+						Highlights flag a 2× change or an error rate of 50% or more
+					</span>
+				}
+				divided
+			>
 				{body}
-			</Panel>
-		</PageTemplate>
+			</ContentPanel>
+		</HeaderBandLayout>
 	);
 }
 

@@ -16,12 +16,15 @@ import {
 	attributeValuesResponse,
 } from '@/storybook/msw/__story_mockdata__/attributes';
 
+import { apmQueryRangeResponse } from 'pages/MetricsApplication/stories/__story_mockdata__/apmQueryRange';
+
 import {
 	DEPLOYMENT_ENVIRONMENTS,
 	RESOURCE_ATTRIBUTE_KEYS,
 	SERVICE_HEALTH_STATES,
 	SERVICE_MAX,
 	SERVICE_MODES,
+	SERVICE_NAMES,
 	SERVICE_TRAFFIC_LEVELS,
 	serviceMetricsResponse,
 	servicesResponse,
@@ -104,6 +107,14 @@ export const servicesMocks = defineStoryMocks({
 					values.traffic,
 					POINT_AT,
 				),
+			),
+		),
+		rest.post(
+			'http://localhost/api/v5/query_range',
+			response.json(async (req) =>
+				apmQueryRangeResponse(await req.json(), {
+					'service.name': SERVICE_NAMES.slice(0, values.services),
+				}),
 			),
 		),
 		rest.get(

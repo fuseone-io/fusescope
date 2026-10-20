@@ -55,8 +55,22 @@ function ServiceMetricTable({
 
 	useServicesStripInfo(services.length);
 
+	const operationsByService = useMemo(
+		() =>
+			topLevelOperations.map(([name, operations]): [string, string[]] => [
+				String(name),
+				operations,
+			]),
+		[topLevelOperations],
+	);
+
 	return (
-		<ServicesListView services={services} loading={isLoading} isMetricData />
+		<ServicesListView
+			services={services}
+			loading={isLoading}
+			isMetricData
+			topLevelOperations={operationsByService}
+		/>
 	);
 }
 

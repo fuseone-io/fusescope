@@ -25,7 +25,7 @@ export const SERVICE_TRAFFIC_LEVELS = ['steady', 'over-trial-limit'] as const;
 
 export type ServiceTraffic = (typeof SERVICE_TRAFFIC_LEVELS)[number];
 
-const SERVICE_NAMES = [
+export const SERVICE_NAMES = [
 	'frontend',
 	'checkout',
 	'cart',

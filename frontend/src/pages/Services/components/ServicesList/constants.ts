@@ -3,13 +3,17 @@ export enum ColumnKey {
 	P99 = 'p99',
 	ErrorRate = 'errorRate',
 	Operations = 'callRate',
+	Requests = 'numCalls',
 }
 
+export type ServiceSortKey = ColumnKey | 'flag';
+
 export const ColumnTitle: Record<ColumnKey, string> = {
-	[ColumnKey.Application]: 'Application',
-	[ColumnKey.P99]: 'P99 latency',
-	[ColumnKey.ErrorRate]: 'Error Rate (% of total)',
-	[ColumnKey.Operations]: 'Operations Per Second',
+	[ColumnKey.Application]: 'Service',
+	[ColumnKey.P99]: 'p99 latency',
+	[ColumnKey.ErrorRate]: 'Error %',
+	[ColumnKey.Operations]: 'Rate',
+	[ColumnKey.Requests]: 'Requests',
 };
 
 export const SEARCH_PLACEHOLDER = 'Search by service';
