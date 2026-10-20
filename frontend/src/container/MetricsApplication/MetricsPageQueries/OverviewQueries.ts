@@ -8,6 +8,7 @@ import {
 	DataSource,
 	MetricAggregateOperator,
 	QueryBuilderData,
+	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
 
 import {
@@ -195,6 +196,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			op: OPERATORS.IN,
 			value: [...topLevelOperationsRoute],
 		},
+		...tagFilterItems,
 	];
 
 	const filterItemC: TagFilterItem[] = [
@@ -238,6 +240,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			op: OPERATORS.IN,
 			value: [...topLevelOperationsRoute],
 		},
+		...tagFilterItems,
 	];
 
 	const autocompleteData = [
@@ -452,11 +455,94 @@ export const apDexMetricsQueryBuilderQueries = ({
 	});
 };
 
-export const operationPerSec = ({
+/** The service's top-level spans, as trace filters. */
+const topLevelSpanFilters = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
-}: OperationPerSecProps): QueryBuilderData => {
+}: OperationPerSecProps): TagFilterItem[] => [
+	{
+		id: '',
+		key: {
+			key: WidgetKeys.ServiceName,
+			dataType: DataTypes.String,
+			type: MetricsType.Tag,
+		},
+		op: OPERATORS['='],
+		value: servicename,
+	},
+	{
+		id: '',
+		key: {
+			key: WidgetKeys.Name,
+			dataType: DataTypes.String,
+			type: MetricsType.Tag,
+		},
+		op: OPERATORS.IN,
+		value: topLevelOperations,
+	},
+	...tagFilterItems,
+];
+
+const hasErrorFilter: TagFilterItem = {
+	id: '',
+	key: {
+		key: WidgetKeys.HasError,
+		dataType: DataTypes.bool,
+		type: MetricsType.Tag,
+	},
+	op: OPERATORS['='],
+	value: true,
+};
+
+const operationPerSecTraces = (props: OperationPerSecProps): QueryBuilderData =>
+	getQueryBuilderQueries({
+		autocompleteData: [{ key: '', dataType: DataTypes.EMPTY, type: '' }],
+		legends: OPERATION_LEGENDS,
+		filterItems: [topLevelSpanFilters(props)],
+		aggregateOperator: [TracesAggregatorOperator.RATE],
+		dataSource: DataSource.TRACES,
+		timeAggregateOperators: [MetricAggregateOperator.RATE],
+		spaceAggregateOperators: [MetricAggregateOperator.EMPTY],
+	});
+
+const errorPercentageTraces = (
+	props: OperationPerSecProps,
+): QueryBuilderData => {
+	const spans = topLevelSpanFilters(props);
+	const [service, operations, ...resourceFilters] = spans;
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData: [
+			{ key: '', dataType: DataTypes.EMPTY, type: '' },
+			{ key: '', dataType: DataTypes.EMPTY, type: '' },
+		],
+		additionalItems: [
+			[service, operations, hasErrorFilter, ...resourceFilters],
+			spans,
+		],
+		legends: [GraphTitle.ERROR_PERCENTAGE],
+		disabled: [true, true],
+		expressions: [FORMULA.ERROR_PERCENTAGE],
+		legendFormulas: [GraphTitle.ERROR_PERCENTAGE],
+		timeAggregateOperators: [
+			MetricAggregateOperator.COUNT,
+			MetricAggregateOperator.COUNT,
+		],
+		spaceAggregateOperators: [
+			MetricAggregateOperator.EMPTY,
+			MetricAggregateOperator.EMPTY,
+		],
+		dataSource: DataSource.TRACES,
+	});
+};
+
+export const operationPerSec = (
+	props: OperationPerSecProps,
+): QueryBuilderData => {
+	if (!props.isSpanMetricEnable) {
+		return operationPerSecTraces(props);
+	}
+	const { servicename, tagFilterItems, topLevelOperations } = props;
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
 			key: WidgetKeys.SignozLatencyCount,
@@ -507,11 +593,13 @@ export const operationPerSec = ({
 	});
 };
 
-export const errorPercentage = ({
-	servicename,
-	tagFilterItems,
-	topLevelOperations,
-}: OperationPerSecProps): QueryBuilderData => {
+export const errorPercentage = (
+	props: OperationPerSecProps,
+): QueryBuilderData => {
+	if (!props.isSpanMetricEnable) {
+		return errorPercentageTraces(props);
+	}
+	const { servicename, tagFilterItems, topLevelOperations } = props;
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
 		dataType: DataTypes.Float64,

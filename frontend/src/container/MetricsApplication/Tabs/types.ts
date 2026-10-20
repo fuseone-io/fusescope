@@ -50,6 +50,8 @@ export interface OperationPerSecProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 	topLevelOperations: string[];
+	/** Off, the query reads the service's top-level spans instead. */
+	isSpanMetricEnable: boolean;
 }
 
 export interface LatencyProps {
