@@ -4,6 +4,8 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
+import { buildSeverityClause } from 'components/QuickFilters/FilterRenderers/Severity/severityFilterQuery';
+import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useClickOutside from 'hooks/useClickOutside';
 import useResourceAttribute from 'hooks/useResourceAttribute';
@@ -276,6 +278,32 @@ export function useGetAPMToLogsQueries({
 		// Callers pass fixed filters with fresh ids every render.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [servicename, queries, updateAllQueriesOperators]);
+}
+
+/**
+ * `query` narrowed to error and fatal logs, by the same severity clause the
+ * logs explorer's severity filter writes, so every spelling matches.
+ */
+export function withErrorSeverity(query: Query): Query {
+	return {
+		...query,
+		builder: {
+			...query.builder,
+			queryData: query.builder.queryData.map((queryData) => {
+				const { expression } = convertFiltersToExpression(
+					queryData.filters ?? { items: [], op: 'AND' },
+				);
+				return {
+					...queryData,
+					filter: {
+						expression: [expression, buildSeverityClause(['ERROR', 'FATAL'])]
+							.filter(Boolean)
+							.join(' AND '),
+					},
+				};
+			}),
+		},
+	};
 }
 
 export function useGetAPMToTracesQueries({
