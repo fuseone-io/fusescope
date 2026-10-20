@@ -1,0 +1,54 @@
+// Selected keys as small inset tags, 4px clear of the field's edges.
+.group-by-select.ant-select-multiple {
+	.ant-select-selector {
+		min-height: 32px;
+		padding: 4px !important;
+
+		&::after {
+			margin: 0;
+			line-height: 22px;
+		}
+	}
+
+	.ant-select-selection-overflow {
+		gap: 4px;
+	}
+
+	.ant-select-selection-overflow-item {
+		align-self: center;
+	}
+
+	.ant-select-selection-item {
+		align-items: center;
+		height: 22px !important;
+		margin: 0 !important;
+		padding: 0 2px 0 6px;
+		border: 1px solid var(--fs-border);
+		border-radius: 4px;
+		background: var(--fs-muted);
+		color: var(--fs-foreground);
+		font-family: var(--tw-font-mono);
+		font-size: 12px;
+		line-height: 20px !important;
+	}
+
+	.ant-select-selection-item-remove {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 16px;
+		height: 16px;
+		color: var(--fs-subtle-foreground);
+	}
+
+	.ant-select-selection-search,
+	.ant-select-selection-search-input {
+		height: 22px !important;
+		margin: 0;
+		line-height: 22px !important;
+	}
+
+	.ant-select-selection-placeholder {
+		inset-inline-start: 10px;
+	}
+}
