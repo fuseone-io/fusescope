@@ -1,21 +1,46 @@
-import { useMemo } from 'react';
+import { MouseEvent, ReactNode, useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
-import { Color } from '@signozhq/design-tokens';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
-import { Skeleton } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import {
 	useGetMetricAlerts,
 	useGetMetricDashboardsV2,
 } from 'api/generated/services/metrics';
+import { Skeleton } from 'components/ui/skeleton';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { Bell, Grid2X2 } from '@signozhq/icons';
+import { Bell, LayoutDashboard } from 'lucide-react';
 import { openInNewTab } from 'utils/navigation';
 import { pluralize } from 'utils/pluralize';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
 
+interface UsedInItem {
+	id: string;
+	name: string;
+	href: string;
+	kind: string;
+	icon: ReactNode;
+}
+
+function UsedInLink({ item }: { item: UsedInItem }): JSX.Element {
+	return (
+		<a
+			href={item.href}
+			onClick={(event: MouseEvent<HTMLAnchorElement>): void => {
+				event.preventDefault();
+				openInNewTab(item.href);
+			}}
+			className="tw:flex tw:min-h-9 tw:items-center tw:gap-2.5 tw:rounded-lg tw:px-3 tw:text-[13px] tw:text-foreground! tw:no-underline! tw:transition-colors tw:hover:bg-muted!"
+		>
+			<span aria-hidden="true" className="tw:text-subtle-foreground">
+				{item.icon}
+			</span>
+			<span className="tw:min-w-0 tw:flex-1 tw:truncate">{item.name}</span>
+			<span className="tw:text-xs tw:text-subtle-foreground">{item.kind}</span>
+		</a>
+	);
+}
+
+/** "Used in": the dashboards and alert rules that query the metric. */
 function DashboardsAndAlertsPopover({
 	metricName,
 }: DashboardsAndAlertsPopoverProps): JSX.Element | null {
@@ -49,9 +74,7 @@ function DashboardsAndAlertsPopover({
 		},
 	);
 
-	const alerts = useMemo(() => {
-		return alertsData?.data.alerts ?? [];
-	}, [alertsData]);
+	const alerts = useMemo(() => alertsData?.data.alerts ?? [], [alertsData]);
 
 	const dashboards = useMemo(() => {
 		const currentDashboards = dashboardsData?.data.dashboards ?? [];
@@ -63,111 +86,65 @@ function DashboardsAndAlertsPopover({
 		);
 	}, [dashboardsData]);
 
-	const alertsPopoverContent = useMemo((): DropdownItemType[] | null => {
-		if (alerts && alerts.length > 0) {
-			return alerts.map((alert) => ({
-				type: 'item',
-				value: alert.alertId,
-				label: (
-					<Typography.Link
-						key={alert.alertId}
-						onClick={(): void => {
-							openInNewTab(
-								`${ROUTES.ALERT_OVERVIEW}?${QueryParams.ruleId}=${alert.alertId}`,
-							);
-						}}
-						className="dashboards-popover-content-item"
-					>
-						{alert.alertName || alert.alertId}
-					</Typography.Link>
-				),
-			}));
-		}
-		return null;
-	}, [alerts]);
-
-	const dashboardsPopoverContent = useMemo((): DropdownItemType[] | null => {
-		if (dashboards && dashboards.length > 0) {
-			return dashboards.map((dashboard) => ({
-				type: 'item',
-				value: dashboard.dashboardId,
-				label: (
-					<Typography.Link
-						key={dashboard.dashboardId}
-						onClick={(): void => {
-							openInNewTab(
-								generatePath(ROUTES.DASHBOARD, {
-									dashboardId: dashboard.dashboardId,
-								}),
-							);
-						}}
-						className="dashboards-popover-content-item"
-					>
-						{dashboard.dashboardName || dashboard.dashboardId}
-					</Typography.Link>
-				),
-			}));
-		}
-		return null;
-	}, [dashboards]);
+	const items = useMemo(
+		(): UsedInItem[] => [
+			...dashboards.map((dashboard) => ({
+				id: `dashboard-${dashboard.dashboardId}`,
+				name: dashboard.dashboardName || dashboard.dashboardId,
+				href: generatePath(ROUTES.DASHBOARD, {
+					dashboardId: dashboard.dashboardId,
+				}),
+				kind: 'Dashboard',
+				icon: <LayoutDashboard size={16} />,
+			})),
+			...alerts.map((alert) => ({
+				id: `alert-${alert.alertId}`,
+				name: alert.alertName || alert.alertId,
+				href: `${ROUTES.ALERT_OVERVIEW}?${QueryParams.ruleId}=${alert.alertId}`,
+				kind: 'Alert rule',
+				icon: <Bell size={16} />,
+			})),
+		],
+		[alerts, dashboards],
+	);
 
 	if (isLoadingAlerts || isLoadingDashboards) {
 		return (
-			<div className="dashboards-and-alerts-popover-container">
-				<Skeleton title={false} paragraph={{ rows: 1 }} active />
+			<div className="fs-ui" data-testid="metric-used-in-loading">
+				<Skeleton className="tw:h-[52px] tw:w-full tw:rounded-xl" />
 			</div>
 		);
 	}
 
-	// If there are no dashboards or alerts or both have errors, don't show the popover
-	const hidePopover =
-		(!dashboardsPopoverContent && !alertsPopoverContent) ||
-		(isErrorAlerts && isErrorDashboards);
-	if (hidePopover) {
-		return <div className="dashboards-and-alerts-popover-container" />;
+	if (!items.length || (isErrorAlerts && isErrorDashboards)) {
+		return null;
 	}
 
+	const summary = [
+		dashboards.length ? pluralize(dashboards.length, 'dashboard') : null,
+		alerts.length ? pluralize(alerts.length, 'alert rule') : null,
+	]
+		.filter(Boolean)
+		.join(' — ');
+
 	return (
-		<div className="dashboards-and-alerts-popover-container">
-			{dashboardsPopoverContent && (
-				<Dropdown
-					items={dashboardsPopoverContent}
-					nativeButton={false}
-					align="start"
-					side="bottom"
-				>
-					<div
-						className="dashboards-and-alerts-popover dashboards-popover"
-						data-testid="metric-dashboards-popover"
-						style={{ backgroundColor: `${Color.BG_SIENNA_500}33` }}
-					>
-						<Grid2X2 size={12} color={Color.BG_SIENNA_500} />
-						<Typography.Text>
-							{pluralize(dashboards.length, 'dashboard')}
-						</Typography.Text>
-					</div>
-				</Dropdown>
-			)}
-			{alertsPopoverContent && (
-				<Dropdown
-					items={alertsPopoverContent}
-					nativeButton={false}
-					align="start"
-					side="bottom"
-				>
-					<div
-						className="dashboards-and-alerts-popover alerts-popover"
-						data-testid="metric-alerts-popover"
-						style={{ backgroundColor: `${Color.BG_SAKURA_500}33` }}
-					>
-						<Bell size={12} color={Color.BG_SAKURA_500} />
-						<Typography.Text>
-							{pluralize(alerts.length, 'alert rule')}
-						</Typography.Text>
-					</div>
-				</Dropdown>
-			)}
-		</div>
+		<section
+			aria-labelledby="metric-used-in-title"
+			data-testid="metric-used-in"
+			className="fs-ui tw:flex tw:flex-col tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised tw:font-sans tw:text-foreground"
+		>
+			<div className="tw:flex tw:items-center tw:justify-between tw:gap-3 tw:border-b tw:border-border tw:px-4 tw:py-3">
+				<h3 id="metric-used-in-title" className="tw:text-sm tw:font-semibold">
+					Used in
+				</h3>
+				<span className="tw:text-xs tw:text-subtle-foreground">{summary}</span>
+			</div>
+			<div className="tw:flex tw:flex-col tw:px-1 tw:py-1.5">
+				{items.map((item) => (
+					<UsedInLink key={item.id} item={item} />
+				))}
+			</div>
+		</section>
 	);
 }
 

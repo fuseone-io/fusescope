@@ -1,19 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import type { TableColumnsType as ColumnsType } from 'antd';
-import { Button, Collapse, Input, Menu, Popover, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricAttributes } from 'api/generated/services/metrics';
-import { ResizeTable } from 'components/ResizeTable';
-import { DataType } from 'container/LogDetailedView/LogDetailedView.types';
-import {
-	Check,
-	Copy,
-	Info,
-	Search,
-	SquareArrowOutUpRight,
-} from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import { Check, Compass, Copy, Loader2, Search } from 'lucide-react';
 
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
@@ -26,7 +16,6 @@ import {
 import { AllAttributesProps } from './types';
 import { getMetricDetailsQuery } from './utils';
 
-const ALL_ATTRIBUTES_KEY = 'all-attributes';
 const COPY_FEEDBACK_DURATION_MS = 1500;
 
 function AllAttributes({
@@ -38,8 +27,6 @@ function AllAttributes({
 	maxTime,
 }: AllAttributesProps): JSX.Element {
 	const [searchString, setSearchString] = useState('');
-	const [activeKey, setActiveKey] = useState<string[]>([ALL_ATTRIBUTES_KEY]);
-	const [keyPopoverOpen, setKeyPopoverOpen] = useState<string | null>(null);
 	const [copiedKey, setCopiedKey] = useState<string | null>(null);
 	const [, copyToClipboard] = useCopyToClipboard();
 	const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -56,7 +43,10 @@ function AllAttributes({
 	});
 
 	const attributes = useMemo(
-		() => attributesData?.data.attributes ?? [],
+		() =>
+			[...(attributesData?.data.attributes ?? [])].sort(
+				(a, b) => (b.valueCount ?? 0) - (a.valueCount ?? 0),
+			),
 		[attributesData],
 	);
 
@@ -82,7 +72,7 @@ function AllAttributes({
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 				true,
 			);
-			logEvent(MetricsExplorerEvents.OpenInExplorerClicked, {
+			void logEvent(MetricsExplorerEvents.OpenInExplorerClicked, {
 				[MetricsExplorerEventKeys.MetricName]: metricName,
 				[MetricsExplorerEventKeys.Tab]: 'summary',
 				[MetricsExplorerEventKeys.Modal]: 'metric-details',
@@ -111,7 +101,7 @@ function AllAttributes({
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 				true,
 			);
-			logEvent(MetricsExplorerEvents.OpenInExplorerClicked, {
+			void logEvent(MetricsExplorerEvents.OpenInExplorerClicked, {
 				[MetricsExplorerEventKeys.MetricName]: metricName,
 				[MetricsExplorerEventKeys.Tab]: 'summary',
 				[MetricsExplorerEventKeys.Modal]: 'metric-details',
@@ -139,7 +129,6 @@ function AllAttributes({
 				default:
 					break;
 			}
-			setKeyPopoverOpen(null);
 		},
 		[goToMetricsExplorerwithAppliedSpaceAggregation, copyToClipboard],
 	);
@@ -156,181 +145,129 @@ function AllAttributes({
 		[attributes, searchString],
 	);
 
-	const tableData = useMemo(
-		() =>
-			filteredAttributes
-				? filteredAttributes.map((attribute) => ({
-						key: {
-							label: attribute.key,
-							contribution: attribute.valueCount,
-						},
-						value: {
-							key: attribute.key,
-							value: attribute.values,
-						},
-					}))
-				: [],
-		[filteredAttributes],
-	);
-
-	const columns: ColumnsType<DataType> = useMemo(
-		() => [
-			{
-				title: 'Key',
-				dataIndex: 'key',
-				key: 'key',
-				width: 50,
-				align: 'left',
-				className: 'metric-metadata-key',
-				render: (field: { label: string; contribution: number }): JSX.Element => {
-					const isCopied = copiedKey === field.label;
-					return (
-						<div className="all-attributes-key">
-							<Popover
-								content={
-									<Menu
-										items={[
-											{
-												icon: <SquareArrowOutUpRight size={14} />,
-												label: 'Open in Metric Explorer',
-												key: 'open-in-explorer',
-											},
-											{
-												icon: <Copy size={14} />,
-												label: 'Copy Key',
-												key: 'copy-key',
-											},
-										]}
-										onClick={(info): void => {
-											handleKeyMenuItemClick(info.key, field.label, field.contribution);
-										}}
-									/>
-								}
-								trigger="click"
-								placement="right"
-								overlayClassName="metric-details-popover attribute-key-popover-overlay"
-								open={keyPopoverOpen === field.label}
-								onOpenChange={(open): void => {
-									if (!open) {
-										setKeyPopoverOpen(null);
-									} else {
-										setKeyPopoverOpen(field.label);
-									}
-								}}
+	let content: JSX.Element;
+	if (isLoadingAttributes) {
+		content = (
+			<div className="tw:flex tw:justify-center tw:py-6">
+				<Loader2
+					aria-label="Loading attributes"
+					className="tw:size-4 tw:animate-spin tw:text-muted-foreground"
+				/>
+			</div>
+		);
+	} else if (!filteredAttributes.length) {
+		content = (
+			<div className="tw:px-4 tw:py-6 tw:text-center tw:text-[13px] tw:text-muted-foreground">
+				<AllAttributesEmptyText
+					isErrorAttributes={isErrorAttributes}
+					refetchAttributes={refetchAttributes}
+				/>
+			</div>
+		);
+	} else {
+		content = (
+			<div className="all-attributes-content">
+				{filteredAttributes.map((attribute) => (
+					<div
+						key={attribute.key}
+						className="tw:flex tw:flex-col tw:gap-2 tw:border-b tw:border-border tw:px-4 tw:py-3 tw:last:border-b-0"
+					>
+						<div className="tw:flex tw:items-center tw:gap-2">
+							<span
+								className="tw:min-w-0 tw:flex-1 tw:truncate tw:font-mono tw:text-xs tw:font-medium"
+								data-testid="metric-attribute-key"
 							>
-								<Button type="text">
-									<Typography.Text>{field.label}</Typography.Text>
-								</Button>
-							</Popover>
-							{isCopied && (
-								<span className="copy-feedback">
-									<Check size={12} />
-								</span>
-							)}
-							<Typography.Text className="all-attributes-contribution">
-								{field.contribution}
-							</Typography.Text>
+								{attribute.key}
+							</span>
+							<span className="tw:text-xs tw:whitespace-nowrap tw:text-subtle-foreground tw:tabular-nums">
+								{`${attribute.valueCount} ${attribute.valueCount === 1 ? 'value' : 'values'}`}
+							</span>
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								className="tw:size-7 tw:text-muted-foreground"
+								aria-label={`Open in Metric Explorer grouped by ${attribute.key}`}
+								title="Open in Metric Explorer"
+								onClick={(): void =>
+									handleKeyMenuItemClick(
+										'open-in-explorer',
+										attribute.key,
+										attribute.valueCount,
+									)
+								}
+							>
+								<Compass />
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								className="tw:size-7 tw:text-muted-foreground"
+								aria-label={
+									copiedKey === attribute.key
+										? `Copied key ${attribute.key}`
+										: `Copy key ${attribute.key}`
+								}
+								title="Copy Key"
+								onClick={(): void => handleKeyMenuItemClick('copy-key', attribute.key)}
+							>
+								{copiedKey === attribute.key ? <Check /> : <Copy />}
+							</Button>
 						</div>
-					);
-				},
-			},
-			{
-				title: 'Value',
-				dataIndex: 'value',
-				key: 'value',
-				width: 50,
-				align: 'left',
-				ellipsis: true,
-				className: 'metric-metadata-value',
-				render: (field: { key: string; value: string[] }): JSX.Element => (
-					<AllAttributesValue
-						filterKey={field.key}
-						filterValue={field.value}
-						goToMetricsExploreWithAppliedAttribute={
-							goToMetricsExploreWithAppliedAttribute
-						}
-					/>
-				),
-			},
-		],
-		[
-			goToMetricsExploreWithAppliedAttribute,
-			handleKeyMenuItemClick,
-			keyPopoverOpen,
-			copiedKey,
-		],
-	);
-
-	const items = useMemo(
-		() => [
-			{
-				label: (
-					<div className="metrics-accordion-header">
-						<div className="all-attributes-header-title">
-							<Typography.Text>All Attributes</Typography.Text>
-							<Tooltip title="Showing attributes for the selected time range">
-								<Info size={14} />
-							</Tooltip>
-						</div>
-						<Input
-							className="all-attributes-search-input"
-							placeholder="Search"
-							value={searchString}
-							size="small"
-							suffix={<Search size={12} />}
-							onChange={(e): void => {
-								setSearchString(e.target.value);
-							}}
-							onClick={(e): void => {
-								e.stopPropagation();
-							}}
-							disabled={isLoadingAttributes || isErrorAttributes}
+						<AllAttributesValue
+							filterKey={attribute.key}
+							filterValue={attribute.values ?? []}
+							goToMetricsExploreWithAppliedAttribute={
+								goToMetricsExploreWithAppliedAttribute
+							}
 						/>
 					</div>
-				),
-				key: 'all-attributes',
-				children: (
-					<ResizeTable
-						columns={columns}
-						loading={isLoadingAttributes}
-						tableLayout="fixed"
-						dataSource={tableData}
-						pagination={false}
-						showHeader={false}
-						className="metrics-accordion-content all-attributes-content"
-						scroll={{ y: 600 }}
-						locale={{
-							emptyText: isLoadingAttributes ? (
-								' '
-							) : (
-								<AllAttributesEmptyText
-									isErrorAttributes={isErrorAttributes}
-									refetchAttributes={refetchAttributes}
-								/>
-							),
-						}}
-					/>
-				),
-			},
-		],
-		[
-			searchString,
-			isLoadingAttributes,
-			isErrorAttributes,
-			columns,
-			tableData,
-			refetchAttributes,
-		],
-	);
+				))}
+			</div>
+		);
+	}
 
 	return (
-		<Collapse
-			bordered
-			className="metrics-accordion"
-			activeKey={activeKey}
-			onChange={(keys): void => setActiveKey(keys as string[])}
-			items={items}
-		/>
+		<section
+			aria-labelledby="metric-attributes-title"
+			data-testid="all-attributes"
+			className="metrics-accordion fs-ui tw:flex tw:flex-col tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised tw:font-sans tw:text-foreground"
+		>
+			<div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-b tw:border-border tw:px-4 tw:py-3">
+				<div className="tw:min-w-0">
+					<h3
+						id="metric-attributes-title"
+						className="tw:flex tw:items-center tw:gap-1.5 tw:text-sm tw:font-semibold"
+					>
+						All attributes
+						{!isLoadingAttributes && !isErrorAttributes && (
+							<span className="tw:inline-flex tw:h-[18px] tw:items-center tw:rounded-sm tw:bg-muted tw:px-1.5 tw:text-xs tw:font-medium tw:text-muted-foreground tw:tabular-nums">
+								{attributes.length}
+							</span>
+						)}
+					</h3>
+					<p className="tw:mt-0.5 tw:text-xs tw:text-muted-foreground">
+						Keys and values seen in the selected time range, most values first
+					</p>
+				</div>
+				<label className="tw:flex tw:h-8 tw:flex-[0_1_200px] tw:items-center tw:gap-2 tw:rounded-lg tw:border tw:border-input tw:bg-surface-raised tw:px-2.5 tw:text-[13px] tw:has-[input:focus-visible]:border-ring">
+					<Search
+						aria-hidden="true"
+						className="tw:size-3.5 tw:flex-none tw:text-subtle-foreground"
+					/>
+					<input
+						className="tw:min-w-0 tw:flex-1 tw:border-0 tw:bg-transparent tw:text-foreground tw:outline-none tw:placeholder:text-subtle-foreground"
+						placeholder="Search"
+						aria-label="Search attributes"
+						value={searchString}
+						onChange={(e): void => {
+							setSearchString(e.target.value);
+						}}
+						disabled={isLoadingAttributes || isErrorAttributes}
+					/>
+				</label>
+			</div>
+			{content}
+		</section>
 	);
 }
 

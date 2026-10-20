@@ -38,6 +38,9 @@ describe('Highlights', () => {
 		expect(lastReceived.textContent).toBe(
 			formatTimestampToReadableDate('2026-01-24T00:00:00Z'),
 		);
+		expect(
+			screen.getByText('Active: received data in the last hour'),
+		).toBeInTheDocument();
 	});
 
 	it('should render error state correctly', () => {
@@ -69,9 +72,9 @@ describe('Highlights', () => {
 
 		renderHighlights(MOCK_METRIC_NAME);
 
-		expect(screen.getByText('SAMPLES')).toBeInTheDocument();
-		expect(screen.getByText('TIME SERIES')).toBeInTheDocument();
-		expect(screen.getByText('LAST RECEIVED')).toBeInTheDocument();
+		expect(screen.getByText('Samples')).toBeInTheDocument();
+		expect(screen.getByText('Time series')).toBeInTheDocument();
+		expect(screen.getByText('Last received')).toBeInTheDocument();
 		expect(screen.getByText('Loading metric stats')).toBeInTheDocument();
 
 		expect(
