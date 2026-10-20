@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
@@ -18,11 +19,14 @@ type UseUpdateMetricMetadataReturnType = ReturnType<
 
 jest.mock('container/TimeSeriesView/TimeSeriesView', () => ({
 	__esModule: true,
-	default: jest.fn().mockReturnValue(
-		<div role="img" aria-label="warning">
-			TimeSeriesView
-		</div>,
-	),
+	default: jest.fn().mockImplementation(({ title }: { title?: ReactNode }) => (
+		<div>
+			{title}
+			<div role="img" aria-label="warning">
+				TimeSeriesView
+			</div>
+		</div>
+	)),
 }));
 
 jest.mock('react-query', () => ({

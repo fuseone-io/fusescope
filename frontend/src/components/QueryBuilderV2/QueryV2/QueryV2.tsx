@@ -26,6 +26,7 @@ import {
 } from '../queryBuilderFields.utils';
 
 import MetricsAggregateSection from './MerticsAggregateSection/MetricsAggregateSection';
+import { useMetricSelectAddon } from './MetricsSelect/MetricSelectAddonContext';
 import { MetricsSelect } from './MetricsSelect/MetricsSelect';
 import QueryActionsMenu from './QueryActionsMenu';
 import QueryAddOns from './QueryAddOns/QueryAddOns';
@@ -59,6 +60,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 	ref: ForwardedRef<HTMLDivElement>,
 ): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
+	const metricSelectAddon = useMetricSelectAddon();
 
 	const hasQueryFunctions = query?.functions?.length > 0;
 	const { dataSource, builderQueryType } = query;
@@ -249,6 +251,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 										signalSourceChangeEnabled={signalSourceChangeEnabled}
 										savePreviousQuery={savePreviousQuery}
 									/>
+									{metricSelectAddon?.(query)}
 								</div>
 							)}
 

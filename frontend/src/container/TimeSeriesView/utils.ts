@@ -61,3 +61,23 @@ export const convertDataValueToMs = (
 
 	return convertedData;
 };
+
+/**
+ * A legend click: show only `index`, or every series again when it already
+ * was the only one shown. Visibility is indexed like uPlot series (0 is x).
+ */
+export function isolateSeries(
+	visibility: boolean[],
+	index: number,
+	seriesCount: number,
+): boolean[] {
+	const next = visibility.length
+		? [...visibility]
+		: new Array<boolean>(seriesCount).fill(true);
+	if (next[index] && next.every((shown, i) => (i === index ? shown : !shown))) {
+		return next.fill(true);
+	}
+	next.fill(false);
+	next[index] = true;
+	return next;
+}

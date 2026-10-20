@@ -4,11 +4,11 @@ import usePersistedFiltersVisibility from 'components/QuickFilters/hooks/usePers
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { Filter } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Switch } from '@signozhq/ui/switch';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { Filter, Info } from 'lucide-react';
+import { Button } from 'components/ui/button';
+import { Switch } from 'components/ui/switch';
 import logEvent from 'api/common/logEvent';
+import { MetricSelectAddonProvider } from 'components/QueryBuilderV2/QueryV2/MetricsSelect/MetricSelectAddonContext';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -19,7 +19,6 @@ import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/Quick
 import explorerChrome from 'components/ExplorerChrome/ExplorerChrome.module.scss';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -40,7 +39,7 @@ import {
 } from 'pages/MetricsExplorer/aiActions';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Warning } from 'types/api';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { explorerViewToPanelType } from 'utils/explorerUtils';
@@ -323,6 +322,36 @@ function Explorer(): JSX.Element {
 		setSelectedMetricName(metricName);
 	};
 
+	const metricSelectAddon = useCallback(
+		(query: IBuilderQuery): JSX.Element | null => {
+			const metricName =
+				query.aggregateAttribute?.key ||
+				(query.aggregations?.[0] as MetricAggregation | undefined)?.metricName;
+			if (!metricName) {
+				return null;
+			}
+			return (
+				<span className="fs-ui metric-details-entry">
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						aria-label={`Metric details for ${metricName}`}
+						title="Metric details"
+						data-testid="metric-details-entry"
+						className="tw:text-muted-foreground"
+						onClick={(): void => {
+							setSelectedMetricName(metricName);
+							setIsMetricDetailsOpen(true);
+						}}
+					>
+						<Info />
+					</Button>
+				</span>
+			);
+		},
+		[],
+	);
+
 	const handleCloseMetricDetails = (): void => {
 		setIsMetricDetailsOpen(false);
 		setSelectedMetricName(null);
@@ -366,49 +395,63 @@ function Explorer(): JSX.Element {
 				savedViewProps={{ source: SavedviewtypesSourceDTO.metrics }}
 			>
 				<div className="metrics-explorer-explore-container">
-					<div className="explore-header">
-						<div className="explore-header-left-actions">
-							{!showSidebar && (
-								<Tooltip title="Show Views">
+					<section
+						aria-label="Query builder"
+						className="metrics-explorer-query-panel"
+					>
+						<div className="fs-ui metrics-explorer-query-panel__header tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-x-3 tw:gap-y-2 tw:border-b tw:border-border tw:py-2.5 tw:pr-3 tw:pl-4 tw:font-sans">
+							<div className="tw:flex tw:items-center tw:gap-2">
+								{!showSidebar && (
 									<Button
-										variant="outlined"
-										color="secondary"
-										size="sm"
-										icon
+										variant="outline"
+										size="icon-sm"
 										aria-label="Show Views"
+										title="Show Views"
 										onClick={toggleSidebar}
-										testId="metrics-explorer-show-sidebar"
+										data-testid="metrics-explorer-show-sidebar"
 									>
-										<Filter size={16} />
+										<Filter />
 									</Button>
-								</Tooltip>
-							)}
-							<span>1 chart/query</span>
-							<Switch
-								color="primary"
-								textPlacement="right"
-								value={showOneChartPerQuery}
-								onChange={handleToggleShowOneChartPerQuery}
-								disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
-								disabledTooltip={oneChartPerQueryDisabledTooltip}
-							/>
+								)}
+								<h2 className="tw:text-sm tw:font-semibold tw:text-foreground">
+									Query
+								</h2>
+							</div>
+							<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-3">
+								{!isEmpty(warning) && <WarningPopover warningData={warning} />}
+								<span
+									className="tw:inline-flex tw:items-center tw:gap-2 tw:text-[13px] tw:text-muted-foreground"
+									title={oneChartPerQueryDisabledTooltip}
+								>
+									<Switch
+										id="metrics-one-chart-per-query"
+										checked={showOneChartPerQuery}
+										onCheckedChange={handleToggleShowOneChartPerQuery}
+										disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+										aria-disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+										aria-label="One chart per query"
+									/>
+									<label htmlFor="metrics-one-chart-per-query">1 chart/query</label>
+								</span>
+								<RightToolbarActions
+									onStageRunQuery={(): void => handleRunQuery()}
+									isLoadingQueries={isLoadingQueries}
+									handleCancelQuery={handleCancelQuery}
+								/>
+							</div>
 						</div>
-						<div className="explore-header-right-actions">
-							{!isEmpty(warning) && <WarningPopover warningData={warning} />}
-							<DateTimeSelector showAutoRefresh />
-							<RightToolbarActions
-								onStageRunQuery={(): void => handleRunQuery()}
-								isLoadingQueries={isLoadingQueries}
-								handleCancelQuery={handleCancelQuery}
+						<MetricSelectAddonProvider value={metricSelectAddon}>
+							<QueryBuilderV2
+								config={{
+									initialDataSource: DataSource.METRICS,
+									queryVariant: 'static',
+								}}
+								panelType={PANEL_TYPES.TIME_SERIES}
+								showFunctions={false}
+								version="v3"
 							/>
-						</div>
-					</div>
-					<QueryBuilderV2
-						config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
-						panelType={PANEL_TYPES.TIME_SERIES}
-						showFunctions={false}
-						version="v3"
-					/>
+						</MetricSelectAddonProvider>
+					</section>
 					<div className="explore-content">
 						<TimeSeries
 							onFetchingStateChange={setIsLoadingQueries}
@@ -428,19 +471,19 @@ function Explorer(): JSX.Element {
 							exportDefaultQuery={exportDefaultQuery}
 						/>
 					</div>
+					{!isSavedViewEnabled && (
+						<ExplorerOptionWrapper
+							disabled={!stagedQuery}
+							query={exportDefaultQuery}
+							sourcepage={DataSource.METRICS}
+							onExport={handleExport}
+							isOneChartPerQuery={showOneChartPerQuery}
+							splitedQueries={splitedQueries}
+							handleChangeSelectedView={handleChangeSelectedView}
+						/>
+					)}
 				</div>
 			</QuickFiltersLayout>
-			{!isSavedViewEnabled && (
-				<ExplorerOptionWrapper
-					disabled={!stagedQuery}
-					query={exportDefaultQuery}
-					sourcepage={DataSource.METRICS}
-					onExport={handleExport}
-					isOneChartPerQuery={showOneChartPerQuery}
-					splitedQueries={splitedQueries}
-					handleChangeSelectedView={handleChangeSelectedView}
-				/>
-			)}
 			{isMetricDetailsOpen && selectedMetricName && (
 				<MetricDetails
 					metricName={selectedMetricName}

@@ -2,16 +2,15 @@ import { useEffect, useMemo } from 'react';
 import { useQueries, useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Color } from '@signozhq/design-tokens';
 import { toast } from '@signozhq/ui/sonner';
-import { Button, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Tooltip } from 'antd';
 import {
 	invalidateGetMetricMetadata,
 	useUpdateMetricMetadata,
 } from 'api/generated/services/metrics';
 import { isAxiosError } from 'axios';
 import classNames from 'classnames';
+import { Button } from 'components/ui/button';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
@@ -32,6 +31,8 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import ChartPanelTitle from './ChartPanelTitle';
+import { getChartHeading } from './chartHeading';
 import EmptyMetricsSearch from './EmptyMetricsSearch';
 import { TimeSeriesProps } from './types';
 import {
@@ -216,35 +217,35 @@ function TimeSeries({
 
 	return (
 		<>
-			<div className="y-axis-unit-selector-container">
-				{showYAxisUnitSelector && (
-					<>
-						<YAxisUnitSelector
-							onChange={onUnitChangeHandler}
-							value={yAxisUnit}
-							source={YAxisSource.EXPLORER}
-							data-testid="y-axis-unit-selector"
-						/>
-						{showSaveUnitButton && (
-							<div className="save-unit-container">
-								<Typography.Text>
-									Set the selected unit as the metric unit?
-								</Typography.Text>
-								<Button
-									type="primary"
-									size="small"
-									disabled={isUpdatingMetricMetadata}
-									onClick={handleSaveUnit}
-								>
-									<Typography.Text>Yes</Typography.Text>
-								</Button>
-							</div>
-						)}
-					</>
-				)}
-			</div>
+			{showYAxisUnitSelector && (
+				<div className="y-axis-unit-selector-container fs-ui tw:flex tw:flex-wrap tw:items-center tw:gap-x-3 tw:gap-y-2 tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised tw:px-3.5 tw:py-2.5 tw:font-sans tw:text-[13px]">
+					<span className="tw:text-muted-foreground">Y-axis unit</span>
+					<YAxisUnitSelector
+						onChange={onUnitChangeHandler}
+						value={yAxisUnit}
+						source={YAxisSource.EXPLORER}
+						data-testid="y-axis-unit-selector"
+					/>
+					{showSaveUnitButton && (
+						<div className="save-unit-container tw:flex tw:flex-wrap tw:items-center tw:gap-3">
+							<span aria-hidden="true" className="tw:h-5 tw:w-px tw:bg-border" />
+							<span className="tw:text-foreground">
+								<span className="tw:font-mono tw:text-xs">{metricNames[0]}</span> has no
+								unit. <span>Set the selected unit as the metric unit?</span>
+							</span>
+							<Button
+								size="sm"
+								disabled={isUpdatingMetricMetadata}
+								onClick={handleSaveUnit}
+							>
+								Yes
+							</Button>
+						</div>
+					)}
+				</div>
+			)}
 			<div
-				className={classNames({
+				className={classNames('metrics-chart-grid', {
 					'time-series-container': changeLayoutForOneChartPerQuery,
 				})}
 			>
@@ -274,6 +275,11 @@ function TimeSeries({
 							metricName;
 
 						const currentYAxisUnit = yAxisUnit || metricUnit;
+						const heading = getChartHeading(
+							changeLayoutForOneChartPerQuery
+								? queryPayloads[index]
+								: stagedQuery || queryPayloads[index],
+						);
 						const exportQuery = changeLayoutForOneChartPerQuery
 							? queryPayloads[index]
 							: exportDefaultQuery;
@@ -284,30 +290,42 @@ function TimeSeries({
 								// eslint-disable-next-line react/no-array-index-key
 								key={index}
 							>
-								{isMetricUnitEmpty && metricName && (
-									<Tooltip
-										className="no-unit-warning"
-										title={
-											<Typography.Text>
-												No unit is set for this metric. You can assign one from the{' '}
-												<Typography.Link
-													onClick={(): void => handleOpenMetricDetails(metricName)}
-												>
-													metric details
-												</Typography.Link>{' '}
-												page.
-											</Typography.Text>
-										}
-									>
-										<TriangleAlert
-											size={16}
-											color={Color.BG_AMBER_400}
-											role="img"
-											aria-label="no unit warning"
-										/>
-									</Tooltip>
-								)}
 								<TimeSeriesView
+									className="metrics-chart-panel"
+									legendInHeader
+									prefixLegendWithQuery={heading.letters.length > 1}
+									title={
+										<ChartPanelTitle
+											heading={heading}
+											adornment={
+												isMetricUnitEmpty && metricName ? (
+													<Tooltip
+														className="no-unit-warning"
+														title={
+															<span>
+																No unit is set for this metric. You can assign one from the{' '}
+																<button
+																	type="button"
+																	className="tw:cursor-pointer tw:border-0 tw:bg-transparent tw:p-0 tw:text-primary tw:underline"
+																	onClick={(): void => handleOpenMetricDetails(metricName)}
+																>
+																	metric details
+																</button>{' '}
+																page.
+															</span>
+														}
+													>
+														<TriangleAlert
+															size={16}
+															className="tw:flex-none tw:text-warning"
+															role="img"
+															aria-label="no unit warning"
+														/>
+													</Tooltip>
+												) : null
+											}
+										/>
+									}
 									isFilterApplied={false}
 									isError={queries[index].isError}
 									isLoading={queries[index].isLoading || isMetricUnitsLoading}
