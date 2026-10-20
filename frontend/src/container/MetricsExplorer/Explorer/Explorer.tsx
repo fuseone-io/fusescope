@@ -8,8 +8,6 @@ import { Filter, Info } from 'lucide-react';
 import { Button } from 'components/ui/button';
 import { Switch } from 'components/ui/switch';
 import logEvent from 'api/common/logEvent';
-import { MetricSelectAddonProvider } from 'components/QueryBuilderV2/QueryV2/MetricsSelect/MetricSelectAddonContext';
-import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -18,7 +16,6 @@ import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schema
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import explorerChrome from 'components/ExplorerChrome/ExplorerChrome.module.scss';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
-import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -47,6 +44,8 @@ import { v4 as uuid } from 'uuid';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricDetails from '../MetricDetails/MetricDetails';
+import QuerySplit from './QueryPanel/QuerySplit';
+import { useLastRun } from './QueryPanel/useLastRun';
 import TimeSeries from './TimeSeries';
 import {
 	getMetricUnits,
@@ -81,6 +80,7 @@ function Explorer(): JSX.Element {
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
 	const [isCancelled, setIsCancelled] = useState(false);
+	const lastRun = useLastRun(isLoadingQueries);
 
 	useEffect(() => {
 		if (isLoadingQueries) {
@@ -395,11 +395,17 @@ function Explorer(): JSX.Element {
 				savedViewProps={{ source: SavedviewtypesSourceDTO.metrics }}
 			>
 				<div className="metrics-explorer-explore-container">
-					<section
-						aria-label="Query builder"
-						className="metrics-explorer-query-panel"
+					<QuerySplit
+						metricSelectAddon={metricSelectAddon}
+						isLoadingQueries={isLoadingQueries}
+						lastRun={lastRun}
+						onRun={(): void => handleRunQuery()}
+						onCancel={handleCancelQuery}
+						runAdornment={
+							!isEmpty(warning) ? <WarningPopover warningData={warning} /> : null
+						}
 					>
-						<div className="fs-ui metrics-explorer-query-panel__header tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-x-3 tw:gap-y-2 tw:border-b tw:border-border tw:py-2.5 tw:pr-3 tw:pl-4 tw:font-sans">
+						<div className="fs-ui results-h">
 							<div className="tw:flex tw:items-center tw:gap-2">
 								{!showSidebar && (
 									<Button
@@ -414,63 +420,44 @@ function Explorer(): JSX.Element {
 									</Button>
 								)}
 								<h2 className="tw:text-sm tw:font-semibold tw:text-foreground">
-									Query
+									Results
 								</h2>
 							</div>
-							<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-3">
-								{!isEmpty(warning) && <WarningPopover warningData={warning} />}
-								<span
-									className="tw:inline-flex tw:items-center tw:gap-2 tw:text-[13px] tw:text-muted-foreground"
-									title={oneChartPerQueryDisabledTooltip}
-								>
-									<Switch
-										id="metrics-one-chart-per-query"
-										checked={showOneChartPerQuery}
-										onCheckedChange={handleToggleShowOneChartPerQuery}
-										disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
-										aria-disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
-										aria-label="One chart per query"
-									/>
-									<label htmlFor="metrics-one-chart-per-query">1 chart/query</label>
-								</span>
-								<RightToolbarActions
-									onStageRunQuery={(): void => handleRunQuery()}
-									isLoadingQueries={isLoadingQueries}
-									handleCancelQuery={handleCancelQuery}
+							<span
+								className="tw:inline-flex tw:items-center tw:gap-2 tw:text-[13px] tw:text-muted-foreground"
+								title={oneChartPerQueryDisabledTooltip}
+							>
+								<Switch
+									id="metrics-one-chart-per-query"
+									checked={showOneChartPerQuery}
+									onCheckedChange={handleToggleShowOneChartPerQuery}
+									disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+									aria-disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+									aria-label="One chart per query"
 								/>
-							</div>
+								<label htmlFor="metrics-one-chart-per-query">1 chart/query</label>
+							</span>
 						</div>
-						<MetricSelectAddonProvider value={metricSelectAddon}>
-							<QueryBuilderV2
-								config={{
-									initialDataSource: DataSource.METRICS,
-									queryVariant: 'static',
-								}}
-								panelType={PANEL_TYPES.TIME_SERIES}
-								showFunctions={false}
-								version="v3"
+						<div className="explore-content">
+							<TimeSeries
+								onFetchingStateChange={setIsLoadingQueries}
+								showOneChartPerQuery={showOneChartPerQuery}
+								setWarning={setWarning}
+								areAllMetricUnitsSame={areAllMetricUnitsSame}
+								isMetricUnitsLoading={isMetricUnitsLoading}
+								isMetricUnitsError={isMetricUnitsError}
+								metricUnits={units}
+								metricNames={metricNames}
+								metrics={metrics}
+								handleOpenMetricDetails={handleOpenMetricDetails}
+								yAxisUnit={yAxisUnit}
+								setYAxisUnit={setYAxisUnit}
+								showYAxisUnitSelector={showYAxisUnitSelector}
+								isCancelled={isCancelled}
+								exportDefaultQuery={exportDefaultQuery}
 							/>
-						</MetricSelectAddonProvider>
-					</section>
-					<div className="explore-content">
-						<TimeSeries
-							onFetchingStateChange={setIsLoadingQueries}
-							showOneChartPerQuery={showOneChartPerQuery}
-							setWarning={setWarning}
-							areAllMetricUnitsSame={areAllMetricUnitsSame}
-							isMetricUnitsLoading={isMetricUnitsLoading}
-							isMetricUnitsError={isMetricUnitsError}
-							metricUnits={units}
-							metricNames={metricNames}
-							metrics={metrics}
-							handleOpenMetricDetails={handleOpenMetricDetails}
-							yAxisUnit={yAxisUnit}
-							setYAxisUnit={setYAxisUnit}
-							showYAxisUnitSelector={showYAxisUnitSelector}
-							isCancelled={isCancelled}
-							exportDefaultQuery={exportDefaultQuery}
-						/>
-					</div>
+						</div>
+					</QuerySplit>
 					{!isSavedViewEnabled && (
 						<ExplorerOptionWrapper
 							disabled={!stagedQuery}
