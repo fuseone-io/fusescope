@@ -1,21 +1,21 @@
 import { ReactNode } from 'react';
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 
 interface ChartPanelProps {
 	children: ReactNode;
 	testId?: string;
 }
 
-/** A fixed-height panel for one service chart; the chart draws its own header. */
+/** A fixed-height `rounded-xl` panel for one service chart; the chart draws its own header. */
 function ChartPanel({ children, testId }: ChartPanelProps): JSX.Element {
 	return (
-		<Panel
+		<ContentPanel
 			testId={testId}
-			className="tw:h-[40vh] tw:overflow-hidden"
-			bodyClassName="tw:h-full tw:p-2.5"
+			className="tw:h-[340px]"
+			bodyClassName="tw:min-h-0 tw:px-3 tw:pt-2 tw:pb-3"
 		>
 			{children}
-		</Panel>
+		</ContentPanel>
 	);
 }
 

@@ -40,7 +40,11 @@ import {
 	useGetAPMToTracesQueries,
 } from './util';
 
-function DBCall(): JSX.Element {
+interface DBCallProps {
+	onOpenDependencies?: () => void;
+}
+
+function DBCall({ onOpenDependencies }: DBCallProps = {}): JSX.Element {
 	const { start, end } = useStepAlignedRange();
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 
@@ -161,7 +165,9 @@ function DBCall(): JSX.Element {
 
 	return (
 		<>
-			{hasDbCalls === false && <DbCallsEmptyState />}
+			{hasDbCalls === false && (
+				<DbCallsEmptyState onOpenDependencies={onOpenDependencies} />
+			)}
 			<div hidden={hasDbCalls === false}>
 				<ChartGrid>
 					<ChartCell>
