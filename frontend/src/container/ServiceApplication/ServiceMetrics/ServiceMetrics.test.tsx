@@ -86,7 +86,7 @@ describe('ServicesUsingMetrics', () => {
 
 		// Wait for the component to load and render
 		await screen.findByText(/application/i);
-		expect(screen.getByText(/p99 latency \(in ns\)/i)).toBeInTheDocument();
+		expect(screen.getByText(/p99 latency \(in ms\)/i)).toBeInTheDocument();
 		expect(screen.getByText(/error rate \(% of total\)/i)).toBeInTheDocument();
 	});
 

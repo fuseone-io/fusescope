@@ -15,7 +15,7 @@ export function errorRateTone(percent: number): StatusTone {
 	return 'success';
 }
 
-/** Trace data reports p99 in ns and shows ms; span metrics show the raw value. */
+/** p99 in ms: trace data reports ns, span metrics (`signoz_latency`) already ms. */
 export function formatP99(value: number, isMetricData: boolean): string {
 	if (Number.isNaN(value)) {
 		return '0.00';

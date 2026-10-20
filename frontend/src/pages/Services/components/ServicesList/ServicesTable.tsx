@@ -52,7 +52,7 @@ function ServicesTable({
 		},
 		{
 			key: ColumnKey.P99,
-			label: `${ColumnTitle[ColumnKey.P99]} ${isMetricData ? '(in ns)' : '(in ms)'}`,
+			label: `${ColumnTitle[ColumnKey.P99]} (in ms)`,
 			align: 'right',
 		},
 		{

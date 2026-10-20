@@ -42,7 +42,7 @@ export const Dark: Story = {
 	parameters: { signoz: { theme: 'dark' } },
 };
 
-/** The same list read from span metrics instead of traces, so p99 is in ns. */
+/** The same list read from span metrics instead of traces. */
 export const SpanMetrics: Story = {
 	args: { mode: 'span-metrics' },
 };
