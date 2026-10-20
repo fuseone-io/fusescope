@@ -102,6 +102,7 @@ function Inspect({
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
 		inspectionStep,
+		appliedInspectionStep,
 		isInspectMetricsRefetching,
 		spaceAggregatedSeriesMap: spaceAggregationSeriesMap,
 		aggregatedTimeSeries,
@@ -189,7 +190,7 @@ function Inspect({
 	useEffect(() => {
 		setShowExpandedView(false);
 		setExpandedViewOptions(null);
-	}, [inspectionStep]);
+	}, [appliedInspectionStep]);
 
 	const chartArea = useMemo(() => {
 		const renderFallback = (testId: string, body: JSX.Element): JSX.Element => (
@@ -241,7 +242,7 @@ function Inspect({
 				metricUnit={selectedMetricUnit}
 				metricType={selectedMetricType}
 				spaceAggregationSeriesMap={spaceAggregationSeriesMap}
-				inspectionStep={inspectionStep}
+				inspectionStep={appliedInspectionStep}
 				setPopoverOptions={setPopoverOptions}
 				setShowExpandedView={setShowExpandedView}
 				showExpandedView={showExpandedView}
@@ -264,7 +265,7 @@ function Inspect({
 		selectedMetricUnit,
 		selectedMetricType,
 		spaceAggregationSeriesMap,
-		inspectionStep,
+		appliedInspectionStep,
 		showExpandedView,
 		popoverOptions,
 		metricInspectionOptions.appliedOptions,
@@ -355,14 +356,14 @@ function Inspect({
 					</div>
 					<div className="inspect-metrics-content-second-col">
 						<Stepper
-							inspectionStep={inspectionStep}
+							inspectionStep={appliedInspectionStep}
 							resetInspection={resetInspection}
 						/>
 						{showExpandedView && (
 							<ExpandedView
 								options={expandedViewOptions}
 								spaceAggregationSeriesMap={spaceAggregationSeriesMap}
-								step={inspectionStep}
+								step={appliedInspectionStep}
 								metricInspectionAppliedOptions={metricInspectionOptions.appliedOptions}
 								timeAggregatedSeriesMap={timeAggregatedSeriesMap}
 							/>

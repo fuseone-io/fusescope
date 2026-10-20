@@ -92,6 +92,7 @@ const baseHookReturn: UseInspectMetricsReturnData = {
 	metricInspectionOptions: INITIAL_INSPECT_METRICS_OPTIONS,
 	dispatchMetricInspectionOptions: jest.fn(),
 	inspectionStep: InspectionStep.COMPLETED,
+	appliedInspectionStep: InspectionStep.COMPLETED,
 	isInspectMetricsRefetching: false,
 	spaceAggregatedSeriesMap: new Map(),
 	aggregatedTimeSeries: [],
@@ -183,5 +184,28 @@ describe('Inspect', () => {
 		);
 
 		expect(screen.getByTestId('inspect-metrics-error')).toBeInTheDocument();
+	});
+
+	it('follows the applied step until the query runs', () => {
+		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
+			...baseHookReturn,
+			inspectMetricsTimeSeries: mockTimeSeries,
+			aggregatedTimeSeries: mockTimeSeries,
+			inspectionStep: InspectionStep.COMPLETED,
+			appliedInspectionStep: InspectionStep.TIME_AGGREGATION,
+		});
+
+		render(
+			<QueryClientProvider client={queryClient}>
+				<Provider store={store}>
+					<Inspect {...defaultProps} />
+				</Provider>
+			</QueryClientProvider>,
+		);
+
+		expect(screen.getByTestId('inspect-checklist-progress')).toHaveTextContent(
+			'0 of 2',
+		);
+		expect(screen.getByText('Raw series, one line each')).toBeInTheDocument();
 	});
 });
