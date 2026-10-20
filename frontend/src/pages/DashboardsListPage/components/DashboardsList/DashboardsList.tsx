@@ -301,6 +301,7 @@ function DashboardsList({ headerActions }: Props): JSX.Element {
 			<DashboardsListHeader
 				showCreate={!isWorkspaceEmpty}
 				onCreate={openCreate}
+				count={canList && !isLoading && response ? total : undefined}
 				actions={headerActions}
 			/>
 			<div className={styles.layout}>
