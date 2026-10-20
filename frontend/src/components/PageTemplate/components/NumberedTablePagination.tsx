@@ -21,6 +21,7 @@ interface NumberedTablePaginationProps {
 	onChange: (page: number, pageSize: number) => void;
 	/** Plural noun after the total, e.g. "exceptions". */
 	itemLabel?: string;
+	/** One size hides the page-size menu. */
 	pageSizes?: number[];
 	className?: string;
 }
@@ -97,35 +98,37 @@ function NumberedTablePagination({
 				>
 					<ChevronRight />
 				</Button>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button
-							variant="outline"
-							size="sm"
-							data-testid="pagination-page-size"
-							className="tw:ml-2 tw:font-normal tw:tabular-nums"
-						>
-							{`${pageSize} / page`}
-							<ChevronDown />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuRadioGroup
-							value={String(pageSize)}
-							onValueChange={(value): void => onChange(1, Number(value))}
-						>
-							{pageSizes.map((size) => (
-								<DropdownMenuRadioItem
-									key={size}
-									value={String(size)}
-									data-testid={`pagination-page-size-${size}`}
-								>
-									{`${size} / page`}
-								</DropdownMenuRadioItem>
-							))}
-						</DropdownMenuRadioGroup>
-					</DropdownMenuContent>
-				</DropdownMenu>
+				{pageSizes.length > 1 && (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button
+								variant="outline"
+								size="sm"
+								data-testid="pagination-page-size"
+								className="tw:ml-2 tw:font-normal tw:tabular-nums"
+							>
+								{`${pageSize} / page`}
+								<ChevronDown />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuRadioGroup
+								value={String(pageSize)}
+								onValueChange={(value): void => onChange(1, Number(value))}
+							>
+								{pageSizes.map((size) => (
+									<DropdownMenuRadioItem
+										key={size}
+										value={String(size)}
+										data-testid={`pagination-page-size-${size}`}
+									>
+										{`${size} / page`}
+									</DropdownMenuRadioItem>
+								))}
+							</DropdownMenuRadioGroup>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				)}
 			</div>
 		</nav>
 	);
