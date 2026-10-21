@@ -13,6 +13,7 @@ import { useStepAlignedRange } from '../hooks/useStepAlignedRange';
 import { withPreviousPeriod } from '../MetricsPageQueries/previousPeriod';
 import ChartLegend from './ChartLegend';
 import CreateAlertButton from './CreateAlertButton';
+import styles from './ServiceChart.module.scss';
 import { chartColors, ChartSeriesSpec } from './serviceChartSeries';
 
 const MENU = [MenuItemKeys.View, MenuItemKeys.CreateAlerts];
@@ -96,7 +97,7 @@ function ServiceChart({
 					<CreateAlertButton widget={widget} testId={`${testId}-create-alert`} />
 				</>
 			}
-			bodyClassName="tw:h-[280px] tw:flex-none tw:px-3 tw:pb-3"
+			bodyClassName={`tw:h-[280px] tw:flex-none tw:px-3 tw:pb-3 ${styles.body}`}
 		>
 			{loading ? (
 				<Skeleton className="tw:h-full tw:w-full tw:bg-muted" />

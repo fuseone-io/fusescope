@@ -1,0 +1,31 @@
+// The panel header carries the title and legend, so the widget's own header
+// row floats over the plot's top-right corner instead of taking a row.
+.body {
+	// uPlot pads 16px above the plot; 12px under the header is the design.
+	margin-top: -4px;
+
+	:global {
+		.widget-graph-component-container {
+			position: relative;
+		}
+
+		.drag-handle {
+			position: absolute;
+			top: 0;
+			right: 0;
+			z-index: 1;
+		}
+
+		.widget-header-container {
+			padding: 0;
+		}
+
+		.widget-header-title-container {
+			display: none;
+		}
+
+		.widget-graph-container.graph-panel-container {
+			height: 100%;
+		}
+	}
+}
