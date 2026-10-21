@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { Color } from '@signozhq/design-tokens';
-import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
-import { Delete } from '@signozhq/icons';
+import { Switch } from 'components/ui/switch';
+import { cn } from 'lib/utils';
+import { X } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 
-import './TimezoneAdaptation.styles.scss';
+import PreferenceRow from '../PreferenceRow';
 
 function TimezoneAdaptation(): JSX.Element {
 	const {
@@ -40,54 +40,52 @@ function TimezoneAdaptation(): JSX.Element {
 	};
 
 	return (
-		<div className="timezone-adaption">
-			<div className="timezone-adaption__header">
-				<h2 className="timezone-adaption__title">Adapt to my timezone</h2>
+		<PreferenceRow
+			className="timezone-adaption"
+			title="Adapt to my timezone"
+			description="Adapt the timestamps shown in the FuseScope console to my active timezone."
+			control={
 				<Switch
-					color={isAdaptationEnabled && isTimezoneOverridden ? 'warning' : 'primary'}
-					textPlacement="right"
-					value={isAdaptationEnabled}
-					onChange={handleSwitchChange}
-					testId="timezone-adaptation-switch"
+					aria-label="Adapt to my timezone"
+					checked={isAdaptationEnabled}
+					onCheckedChange={handleSwitchChange}
+					data-testid="timezone-adaptation-switch"
+					className={cn(
+						isAdaptationEnabled &&
+							isTimezoneOverridden &&
+							'tw:data-[state=checked]:bg-warning',
+					)}
 				/>
-			</div>
-
-			<p className="timezone-adaption__description">
-				Adapt the timestamps shown in the FuseScope console to my active timezone.
-			</p>
-
-			<div className="timezone-adaption__note">
-				<div className="timezone-adaption__note-text-container">
-					<span className="timezone-adaption__bullet">•</span>
-					<span className="timezone-adaption__note-text">
-						{isTimezoneOverridden ? (
-							<>
-								Your current timezone is overridden to
-								<span className="timezone-adaption__note-text-overridden">
-									{timezone.offset}
-								</span>
-							</>
-						) : (
-							<>
-								You can override the timezone adaption for any view with the time
-								picker.
-							</>
-						)}
-					</span>
-				</div>
+			}
+		>
+			<div className="timezone-adaption__note tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2 tw:rounded-md tw:bg-primary-soft tw:px-3 tw:py-2 tw:text-xs tw:text-primary-ink">
+				<span className="timezone-adaption__note-text tw:flex tw:items-center tw:gap-1">
+					{isTimezoneOverridden ? (
+						<>
+							Your current timezone is overridden to
+							<span className="timezone-adaption__note-text-overridden tw:font-mono tw:font-medium tw:text-foreground">
+								{timezone.offset}
+							</span>
+						</>
+					) : (
+						<>
+							You can override the timezone adaption for any view with the time picker.
+						</>
+					)}
+				</span>
 
 				{!!isTimezoneOverridden && (
 					<button
 						type="button"
-						className="timezone-adaption__clear-override"
+						className="timezone-adaption__clear-override tw:inline-flex tw:cursor-pointer tw:items-center tw:gap-1 tw:border-0 tw:bg-transparent tw:p-0 tw:text-xs tw:font-medium tw:text-primary-ink tw:hover:underline"
 						onClick={handleOverrideClear}
 					>
-						<Delete height={12} width={12} color={Color.BG_ROBIN_300} />
+						<X className="tw:size-3" aria-hidden="true" />
 						Clear override
 					</button>
 				)}
 			</div>
-		</div>
+		</PreferenceRow>
 	);
 }
 

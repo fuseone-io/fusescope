@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { Button, Input, Modal } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
@@ -8,15 +6,16 @@ import {
 	useUpdateMyUserV2,
 } from 'api/generated/services/users';
 import { toast } from '@signozhq/ui/sonner';
-import { Check, FileTerminal, Mail, User } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import { KeyRound, Mail, PencilLine, User } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { ErrorV2Resp } from 'types/api';
 import { AxiosError } from 'axios';
 
-import '../MySettings.styles.scss';
-import './UserInfo.styles.scss';
+import ResetPasswordDialog from './ResetPasswordDialog';
+import UpdateNameDialog from './UpdateNameDialog';
 
 function UserInfo(): JSX.Element {
 	const { user, org, updateUser } = useAppContext();
@@ -36,8 +35,6 @@ function UserInfo(): JSX.Element {
 		useState<boolean>(false);
 	const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
 		useState<boolean>(false);
-
-	const defaultPlaceHolder = '*************';
 
 	if (!user) {
 		return <div />;
@@ -122,148 +119,74 @@ function UserInfo(): JSX.Element {
 	}
 
 	return (
-		<div className="user-info-card">
-			<div className="user-info">
-				<div className="user-name">{user.displayName}</div>
+		<div className="user-info-card fs-ui tw:flex tw:flex-wrap tw:items-center tw:gap-4 tw:px-5 tw:py-4 tw:font-sans">
+			<span
+				aria-hidden="true"
+				className="tw:flex tw:size-10 tw:flex-none tw:items-center tw:justify-center tw:rounded-full tw:bg-primary-soft tw:text-sm tw:font-semibold tw:text-primary-ink"
+			>
+				{(user.displayName || user.email).charAt(0).toUpperCase()}
+			</span>
+			<div className="user-info tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-1">
+				<div className="user-name tw:truncate tw:text-sm tw:font-semibold tw:text-foreground">
+					{user.displayName}
+				</div>
 
-				<div className="user-info-subsection">
-					<div className="user-email">
-						<Mail size={16} /> {user.email}
-					</div>
+				<div className="user-info-subsection tw:flex tw:flex-wrap tw:gap-x-5 tw:gap-y-1 tw:text-[13px] tw:text-muted-foreground tw:[&_svg]:size-3.5">
+					<span className="user-email tw:inline-flex tw:items-center tw:gap-1.5">
+						<Mail aria-hidden="true" /> {user.email}
+					</span>
 
-					<div className="user-role">
-						<User size={16} /> {user.role.toLowerCase()}
-					</div>
+					<span className="user-role tw:inline-flex tw:items-center tw:gap-1.5 tw:capitalize">
+						<User aria-hidden="true" /> {user.role.toLowerCase()}
+					</span>
 				</div>
 			</div>
 
-			<div className="user-info-update-section">
+			<div className="user-info-update-section tw:flex tw:flex-wrap tw:gap-2">
 				<Button
-					type="default"
-					className="periscope-btn secondary"
-					icon={<FileTerminal size={16} />}
+					type="button"
+					variant="outline"
 					onClick={(): void => setIsUpdateNameModalOpen(true)}
 				>
+					<PencilLine aria-hidden="true" />
 					Update name
 				</Button>
 
 				<Button
-					type="default"
-					className="periscope-btn secondary"
-					icon={<FileTerminal size={16} />}
+					type="button"
+					variant="outline"
 					onClick={(): void => setIsResetPasswordModalOpen(true)}
 				>
+					<KeyRound aria-hidden="true" />
 					Reset password
 				</Button>
 			</div>
 
-			<Modal
-				className="update-name-modal"
-				title={<span className="title">Update name</span>}
+			<UpdateNameDialog
 				open={isUpdateNameModalOpen}
-				closable
-				onCancel={hideUpdateNameModal}
-				footer={[
-					<Button
-						key="submit"
-						type="primary"
-						icon={<Check size={16} />}
-						onClick={onSaveHandler}
-						loading={isLoading}
-						data-testid="update-name-btn"
-					>
-						Update name
-					</Button>,
-				]}
-			>
-				<Typography.Text>Name</Typography.Text>
-				<div className="update-name-input">
-					<Input
-						placeholder="e.g. John Doe"
-						value={changedName}
-						disabled={isLoading}
-						onChange={(e): void => setChangedName(e.target.value)}
-						onPressEnter={(): void => {
-							void onSaveHandler();
-						}}
-					/>
-				</div>
-			</Modal>
+				name={changedName}
+				isLoading={isLoading}
+				onNameChange={setChangedName}
+				onClose={hideUpdateNameModal}
+				onSave={(): void => {
+					void onSaveHandler();
+				}}
+			/>
 
-			<Modal
-				className="reset-password-modal"
-				title={<span className="title">Reset password</span>}
+			<ResetPasswordDialog
 				open={isResetPasswordModalOpen}
-				closable
-				destroyOnClose
-				onCancel={hideResetPasswordModal}
-				footer={[
-					<Button
-						key="submit"
-						className={`periscope-btn ${
-							isResetPasswordDisabled ? 'secondary' : 'primary'
-						}`}
-						icon={<Check size={16} />}
-						onClick={onChangePasswordClickHandler}
-						loading={isLoading}
-						disabled={isResetPasswordDisabled}
-						data-testid="reset-password-btn"
-					>
-						Reset password
-					</Button>,
-				]}
-			>
-				<div className="reset-password-container">
-					<div className="current-password-input">
-						<Typography.Text>Current password</Typography.Text>
-						<Input.Password
-							data-testid="current-password-textbox"
-							disabled={isLoading}
-							placeholder={defaultPlaceHolder}
-							onChange={(event): void => {
-								setCurrentPassword(event.target.value);
-							}}
-							value={currentPassword}
-							type="password"
-							autoComplete="off"
-							visibilityToggle
-							onPressEnter={(): void => {
-								if (!isResetPasswordDisabled) {
-									void onChangePasswordClickHandler();
-								}
-							}}
-						/>
-					</div>
-
-					<div className="new-password-input">
-						<Typography.Text>New password</Typography.Text>
-						<Input.Password
-							data-testid="new-password-textbox"
-							disabled={isLoading}
-							placeholder={defaultPlaceHolder}
-							onChange={(event): void => {
-								const updatedValue = event.target.value;
-								setUpdatePassword(updatedValue);
-							}}
-							value={updatePassword}
-							type="password"
-							autoComplete="off"
-							visibilityToggle={false}
-							status={passwordsMatch ? 'error' : ''}
-							onPressEnter={(): void => {
-								if (!isResetPasswordDisabled) {
-									void onChangePasswordClickHandler();
-								}
-							}}
-						/>
-						{passwordsMatch && (
-							<span className="password-error-text">
-								New password must be different from current password
-							</span>
-						)}
-					</div>
-				</div>
-			</Modal>
+				currentPassword={currentPassword}
+				newPassword={updatePassword}
+				isLoading={isLoading}
+				isDisabled={isResetPasswordDisabled}
+				passwordsMatch={passwordsMatch}
+				onCurrentPasswordChange={setCurrentPassword}
+				onNewPasswordChange={setUpdatePassword}
+				onClose={hideResetPasswordModal}
+				onSubmit={(): void => {
+					void onChangePasswordClickHandler();
+				}}
+			/>
 		</div>
 	);
 }

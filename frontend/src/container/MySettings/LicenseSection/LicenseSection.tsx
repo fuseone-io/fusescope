@@ -3,7 +3,7 @@ import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useNotifications } from 'hooks/useNotifications';
 import { Copy } from '@signozhq/icons';
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import { buildLicenseReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
@@ -65,15 +65,11 @@ function LicenseSection(): JSX.Element | null {
 	}
 
 	return (
-		<Panel
-			title="License"
-			className="license-section"
-			bodyClassName="tw:mt-3 tw:border-t tw:border-border"
-		>
+		<ContentPanel title="License" className="license-section" divided>
 			<AuthZGuardContent checks={[buildLicenseReadPermission(activeLicense.id)]}>
 				<LicenseSectionContent />
 			</AuthZGuardContent>
-		</Panel>
+		</ContentPanel>
 	);
 }
 
