@@ -1,24 +1,21 @@
 import { Copy } from '@signozhq/icons';
-import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
+import { type BadgeColorType } from '@signozhq/ui/badge';
 import { toast } from '@signozhq/ui/sonner';
 import { Tooltip } from '@signozhq/ui/tooltip';
+import TagChip from 'components/PageTemplate/components/TagChip';
 import { useCopyToClipboard } from 'react-use';
 
 import styles from './LabelTag.module.scss';
 
 export interface LabelTagProps {
 	label: string;
+	/** Kept for callers; tags are drawn neutral like the page template's. */
 	color?: BadgeColorType;
 	value?: string;
 	className?: string;
 }
 
-function LabelTag({
-	label,
-	value,
-	color,
-	className,
-}: LabelTagProps): JSX.Element {
+function LabelTag({ label, value, className }: LabelTagProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 	const displayText = value ? `${label}: ${value}` : label;
 	const searchFormat = value ? `${label} ${value}` : label;
@@ -46,14 +43,12 @@ function LabelTag({
 			}
 		>
 			<span className={className}>
-				<Badge
-					textTransform="none"
-					color={color ?? 'secondary'}
-					variant="outlined"
+				<TagChip
 					testId={`label-tag-${label}`}
+					className="tw:max-w-full tw:min-w-0 tw:flex-initial"
 				>
-					<span className={styles.labelValue}>{displayText}</span>
-				</Badge>
+					{displayText}
+				</TagChip>
 			</span>
 		</Tooltip>
 	);

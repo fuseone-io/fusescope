@@ -1,8 +1,9 @@
 import { Copy } from '@signozhq/icons';
-import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
+import { type BadgeColorType } from '@signozhq/ui/badge';
 import { toast } from '@signozhq/ui/sonner';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
+import TagChip from 'components/PageTemplate/components/TagChip';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
@@ -103,9 +104,7 @@ function LabelColumn({
 					}
 				>
 					<span>
-						<Badge color={color} variant="outlined" testId="label-overflow-badge">
-							+{remainingLabels.length}
-						</Badge>
+						<TagChip testId="label-overflow-badge">+{remainingLabels.length}</TagChip>
 					</span>
 				</Tooltip>
 			)}

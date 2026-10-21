@@ -10,12 +10,14 @@ import {
 	TableHeader,
 	TableRow,
 } from 'components/ui/table';
+import TagChip from 'components/PageTemplate/components/TagChip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { Channels } from 'types/api/channels/getAll';
+import { Pencil } from 'lucide-react';
 
 import Delete from './Delete';
 
@@ -35,7 +37,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 
 	return (
 		<Table data-testid="alert-channels-table">
-			<TableHeader>
+			<TableHeader className="tw:bg-surface-sunken">
 				<TableRow>
 					<TableHead>{t('column_channel_name')}</TableHead>
 					<TableHead>{t('column_channel_type')}</TableHead>
@@ -50,8 +52,8 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 				{allChannels.map((channel) => (
 					<TableRow key={channel.id}>
 						<TableCell className="tw:font-medium">{channel.name}</TableCell>
-						<TableCell className="tw:font-mono tw:text-xs tw:text-muted-foreground">
-							{channel.type}
+						<TableCell>
+							<TagChip>{channel.type}</TagChip>
 						</TableCell>
 						{action && (
 							<TableCell className="tw:text-right">
@@ -60,6 +62,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 									size="sm"
 									onClick={(): void => onClickEditHandler(channel.id)}
 								>
+									<Pencil aria-hidden="true" />
 									{t('column_channel_edit')}
 								</Button>
 								<Delete id={channel.id} notifications={notifications} />
@@ -73,7 +76,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 							colSpan={action ? 3 : 2}
 							className="tw:h-24 tw:text-center tw:text-muted-foreground"
 						>
-							No data
+							No notification channels yet
 						</TableCell>
 					</TableRow>
 				)}

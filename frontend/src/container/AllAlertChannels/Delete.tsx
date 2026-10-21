@@ -5,6 +5,7 @@ import type { NotificationInstance } from 'antd/es/notification/interface';
 import deleteChannel from 'api/channels/delete';
 import { Button } from 'components/ui/button';
 import APIError from 'types/api/error';
+import { Trash2 } from 'lucide-react';
 
 function Delete({ notifications, id }: DeleteProps): JSX.Element {
 	const { t } = useTranslation(['channels']);
@@ -43,6 +44,7 @@ function Delete({ notifications, id }: DeleteProps): JSX.Element {
 			onClick={onClickHandler}
 			className="tw:text-error-ink tw:hover:text-error-ink"
 		>
+			<Trash2 aria-hidden="true" />
 			Delete
 		</Button>
 	);

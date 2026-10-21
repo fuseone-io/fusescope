@@ -6,7 +6,9 @@ export const SEVERITY_ORDER = ['critical', 'error', 'warning', 'info'];
 export const STATE_LABELS: Record<string, string> = {
 	firing: 'Firing',
 	pending: 'Pending',
+	recovering: 'Recovering',
 	inactive: 'OK',
+	nodata: 'No data',
 	disabled: 'Disabled',
 };
 

@@ -41,7 +41,7 @@ describe('TriggeredAlerts — list rendering', () => {
 		);
 		expect(
 			screen.getByTestId('alert-row-fp-noseverity-severity'),
-		).toHaveTextContent('-');
+		).toHaveTextContent('—');
 	});
 
 	it('renders status tags reflecting the alert state', async () => {
