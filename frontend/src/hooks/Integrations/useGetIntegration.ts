@@ -6,6 +6,11 @@ import {
 	GetIntegrationProps,
 } from 'types/api/integrations/types';
 
+export const getIntegrationQueryKey = (integrationId: string): string[] => [
+	'Integration',
+	integrationId,
+];
+
 export const useGetIntegration = ({
 	integrationId,
 }: GetIntegrationPayloadProps): UseQueryResult<
@@ -13,6 +18,6 @@ export const useGetIntegration = ({
 	AxiosError
 > =>
 	useQuery<AxiosResponse<GetIntegrationProps>, AxiosError>({
-		queryKey: ['Integration', integrationId],
+		queryKey: getIntegrationQueryKey(integrationId),
 		queryFn: () => getIntegration({ integrationId }),
 	});

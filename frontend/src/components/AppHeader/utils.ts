@@ -13,7 +13,7 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/constants';
 
 import { CRUMB_ROUTES } from './constants';
-import { Crumb, CrumbContext } from './types';
+import { Crumb, CrumbContext, CrumbNames } from './types';
 
 const NAV_LABELS = new Map(
 	[
@@ -98,7 +98,7 @@ function crumbFor(path: string, context: CrumbContext): Crumb | null {
 /** Breadcrumb for `pathname`, root first; the sidebar item's label otherwise. */
 export function resolveCrumbs(
 	pathname: string,
-	dashboardName?: string,
+	names: CrumbNames = {},
 ): Crumb[] {
 	const match = matchCrumbRoute(pathname);
 	if (!match) {
@@ -106,7 +106,7 @@ export function resolveCrumbs(
 		return fallback ? [fallback] : [];
 	}
 
-	const context: CrumbContext = { params: match.params, dashboardName };
+	const context: CrumbContext = { params: match.params, ...names };
 	const crumbs: Crumb[] = [];
 	let path: string | undefined = match.path;
 	while (path) {
