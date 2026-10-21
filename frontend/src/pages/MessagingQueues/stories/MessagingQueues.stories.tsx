@@ -30,49 +30,84 @@ export default meta;
 
 type Story = StoryObj<KafkaOverviewArgs>;
 
-/** The button waits on all three onboarding calls, and swallows clicks until. */
+/** The onboarding checks land after the first render. */
 const untilLoaded = { timeout: 15_000 };
 
 /**
- * The kafka landing tab: how to instrument producers, consumers and the broker,
- * then the five views the detail page offers, with the instrumentation health
- * check in the header.
+ * The kafka landing tab: the setup steps with their progress, then the five
+ * views the detail page offers, each saying what it still needs.
  */
-export const Default: Story = {};
+export const Default: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
 
-/**
- * The header button when the instrumentation is incomplete, counting the
- * attributes the onboarding checks did not find.
- */
-export const MissingConfiguration: Story = {
-	args: { configuration: 'partial' },
+		await expect(
+			await canvas.findByText('3 of 3 done', undefined, untilLoaded),
+		).toBeInTheDocument();
+		await expect(
+			canvas.getByTestId('kafka-view-readiness-consumerLag'),
+		).toHaveTextContent('Ready');
+		await expect(
+			screen.queryByTestId('kafka-health-check-sheet'),
+		).not.toBeInTheDocument();
+	},
 };
 
-/** The checklist behind the header button: every attribute, per service. */
-export const ConfigurationChecklist: Story = {
+/**
+ * Incomplete instrumentation: the header button counts what is missing, the
+ * checklist opens on its own and each view names what it needs.
+ */
+export const MissingConfiguration: Story = {
 	args: { configuration: 'partial' },
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 
-		// The button reads plain "Configuration" while the checks are in flight and
-		// ignores clicks until they land, so the count is what to wait on.
-		const button = await canvas.findByRole(
-			'button',
-			{ name: /missing configuration/i },
-			untilLoaded,
-		);
-		// The count shows once any one check lands; the button stays loading, and
-		// ignores clicks, until all three have.
-		await waitFor(
-			() => expect(button).not.toHaveClass('ant-btn-loading'),
-			untilLoaded,
-		);
-		await userEvent.click(button);
-		// The modal header and its title both carry the text.
-		await screen.findAllByText(
-			'Kafka Service Attributes',
+		await expect(
+			await canvas.findByTestId(
+				'kafka-health-check-missing',
+				undefined,
+				untilLoaded,
+			),
+		).toHaveTextContent(/\d+ missing/);
+		await screen.findByTestId('kafka-health-check-sheet', undefined, untilLoaded);
+		await expect(
+			canvas.getByTestId('kafka-view-readiness-consumerLag'),
+		).toHaveTextContent('Needs Kafka receiver metrics');
+	},
+};
+
+/** The checklist behind the header button, narrowed to what is missing. */
+export const ConfigurationChecklist: Story = {
+	args: { configuration: 'partial' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		const sheet = await screen.findByTestId(
+			'kafka-health-check-sheet',
 			undefined,
 			untilLoaded,
 		);
+
+		await userEvent.click(within(sheet).getByRole('button', { name: 'Close' }));
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('kafka-health-check-sheet'),
+			).not.toBeInTheDocument(),
+		);
+
+		await userEvent.click(canvas.getByTestId('kafka-health-check-button'));
+		const reopened = await screen.findByTestId('kafka-health-check-sheet');
+		await userEvent.click(
+			within(reopened).getByRole('button', { name: /^Missing/ }),
+		);
+
+		await waitFor(() =>
+			expect(within(reopened).queryAllByTestId('attribute-found')).toHaveLength(0),
+		);
+		await expect(
+			within(reopened).getAllByTestId('attribute-missing').length,
+		).toBeGreaterThan(0);
+		await expect(
+			within(reopened).getAllByRole('button', { name: /^Fix / }).length,
+		).toBeGreaterThan(0);
 	},
 };

@@ -1,54 +1,46 @@
 {
-	"breadcrumb": "Messaging Queues",
-	"header": "Kafka / Overview",
-	"overview": {
-		"title": "Start sending data in as little as 20 minutes",
-		"subtitle": "Connect and Monitor Your Data Streams"
-	},
-	"configureConsumer": {
-		"title": "Configure Consumer",
-		"description": "Add consumer data sources to gain insights and enhance monitoring.",
-		"button": "Get Started"
-	},
-	"configureProducer": {
-		"title": "Configure Producer",
-		"description": "Add producer data sources to gain insights and enhance monitoring.",
-		"button": "Get Started"
-	},
-	"monitorKafka": {
-		"title": "Monitor kafka",
-		"description": "Add your Kafka source to gain insights and enhance activity tracking.",
-		"button": "Get Started"
-	},
-	"summarySection": {
-		"viewDetailsButton": "View Details",
-		"consumer": {
-			"title": "Consumer lag view",
-			"description": "Connect and Monitor Your Data Streams"
+	"setup": {
+		"title": "Set up Kafka monitoring",
+		"subtitle": "The Kafka views need spans from both sides of a topic plus the Kafka receiver metrics.",
+		"progress": "{{done}} of {{total}} done",
+		"getStarted": "Get started",
+		"receiving": "Receiving data",
+		"checking": "Checking…",
+		"producers": {
+			"title": "Instrument producers",
+			"description": "Send producer spans with messaging.system = kafka and the destination and partition attributes."
 		},
-		"producer": {
-			"title": "Producer latency view",
-			"description": "Connect and Monitor Your Data Streams"
+		"consumers": {
+			"title": "Instrument consumers",
+			"description": "Send consumer spans with the consumer group, partition, client ID and message size of each message."
 		},
-		"partition": {
-			"title": "Partition Latency view",
-			"description": "Connect and Monitor Your Data Streams"
-		},
-		"dropRate": {
-			"title": "Drop Rate view",
-			"description": "Connect and Monitor Your Data Streams"
-		},
-		"metricPage": {
-			"title": "Metric View",
-			"description": "Connect and Monitor Your Data Streams"
+		"kafka": {
+			"title": "Collect Kafka metrics",
+			"description": "Enable the Kafka metrics receiver in your collector for consumer lag and fetch latency."
 		}
 	},
-	"confirmModal": {
-		"content": "Before navigating to the details page, please make sure you have configured all the required setup to ensure correct data monitoring.",
-		"okText": "Proceed"
-	},
-	"overviewSummarySection": {
-		"title": "Monitor Your Data Streams",
-		"subtitle": "Monitor key Kafka metrics like consumer lag and latency to ensure efficient data flow and troubleshoot in real time."
+	"views": {
+		"title": "Kafka views",
+		"subtitle": "Each view opens the Kafka detail with its own filters.",
+		"consumerLag": {
+			"title": "Consumer lag",
+			"description": "How far each consumer group is behind the latest offset, per topic and partition."
+		},
+		"partitionLatency": {
+			"title": "Partition latency",
+			"description": "p99, error rate and throughput per topic partition, for producers and consumer groups."
+		},
+		"producerLatency": {
+			"title": "Producer latency",
+			"description": "Latency, error rate and throughput per producer or consumer service and topic."
+		},
+		"dropRate": {
+			"title": "Drop rate",
+			"description": "Share of messages whose producer-to-consumer time breaches an evaluation interval."
+		},
+		"metricPage": {
+			"title": "Metrics",
+			"description": "Broker, producer, consumer, JVM and partition metrics from the Kafka receivers."
+		}
 	}
 }
