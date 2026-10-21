@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { green, orange, volcano } from '@ant-design/colors';
-import { SolidInfoCircle } from '@signozhq/icons';
-import { Card, Col } from 'antd';
+import { cn } from 'lib/utils';
+import { Info } from 'lucide-react';
 import { TStatus } from 'types/api/settings/getRetention';
 
 import { convertHoursValueToRelevantUnitString } from './utils';
@@ -14,17 +13,17 @@ function StatusMessage({
 }: StatusMessageProps): JSX.Element | null {
 	const { t } = useTranslation(['generalSettings']);
 
-	const messageColor = useMemo((): string => {
+	const toneClassName = useMemo((): string => {
 		if (status === 'success') {
-			return green[6];
+			return 'tw:bg-success-soft tw:text-success-ink';
 		}
 		if (status === 'pending') {
-			return orange[6];
+			return 'tw:bg-warning-soft tw:text-warning-ink';
 		}
 		if (status === 'failed') {
-			return volcano[6];
+			return 'tw:bg-error-soft tw:text-error-ink';
 		}
-		return 'inherit';
+		return 'tw:bg-surface-sunken tw:text-muted-foreground';
 	}, [status]);
 	if (!status) {
 		return null;
@@ -44,33 +43,18 @@ function StatusMessage({
 			: null;
 
 	return statusMessage ? (
-		<Card
-			style={{
-				width: '100%',
-			}}
-		>
+		<div className="fs-ui tw:px-5 tw:pb-3 tw:font-sans">
 			<div
-				style={{
-					display: 'flex',
-					gap: '1rem',
-					alignItems: 'center',
-					justifyContent: 'center',
-				}}
+				data-testid="retention-status-message"
+				className={cn(
+					'tw:flex tw:items-center tw:gap-2 tw:rounded-md tw:px-3 tw:py-2 tw:text-[13px]',
+					toneClassName,
+				)}
 			>
-				<Col xs={1}>
-					<SolidInfoCircle size="md" />
-				</Col>
-
-				<Col
-					xs={22}
-					style={{
-						color: messageColor,
-					}}
-				>
-					{statusMessage}
-				</Col>
+				<Info className="tw:size-4 tw:flex-none" aria-hidden="true" />
+				{statusMessage}
 			</div>
-		</Card>
+		</div>
 	) : null;
 }
 
