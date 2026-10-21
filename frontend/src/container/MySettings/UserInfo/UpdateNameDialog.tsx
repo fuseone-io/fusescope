@@ -1,14 +1,7 @@
 import { Button } from 'components/ui/button';
-import {
-	Dialog,
-	DialogBody,
-	DialogContent,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from 'components/ui/dialog';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
+import SettingsDialog from 'pages/Settings/components/SettingsDialog';
 import { Check, Loader2 } from 'lucide-react';
 
 interface UpdateNameDialogProps {
@@ -29,39 +22,19 @@ function UpdateNameDialog({
 	onSave,
 }: UpdateNameDialogProps): JSX.Element {
 	return (
-		<Dialog
+		<SettingsDialog
 			open={open}
 			onOpenChange={(next): void => {
 				if (!next) {
 					onClose();
 				}
 			}}
-		>
-			<DialogContent
-				aria-describedby={undefined}
-				className="update-name-modal tw:max-w-md"
-			>
-				<DialogHeader className="tw:border-b tw:border-border tw:pb-3">
-					<DialogTitle>Update name</DialogTitle>
-				</DialogHeader>
-				<DialogBody className="tw:gap-2 tw:pt-4">
-					<Label htmlFor="update-name-input" className="tw:text-foreground">
-						Name
-					</Label>
-					<Input
-						id="update-name-input"
-						placeholder="e.g. John Doe"
-						value={name}
-						disabled={isLoading}
-						onChange={(e): void => onNameChange(e.target.value)}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter') {
-								onSave();
-							}
-						}}
-					/>
-				</DialogBody>
-				<DialogFooter>
+			title="Update name"
+			width="narrow"
+			className="update-name-modal"
+			bodyClassName="tw:flex tw:flex-col tw:gap-2"
+			footer={
+				<>
 					<Button type="button" variant="outline" onClick={onClose}>
 						Cancel
 					</Button>
@@ -78,9 +51,25 @@ function UpdateNameDialog({
 						)}
 						<span className="translate-safe">Update name</span>
 					</Button>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+				</>
+			}
+		>
+			<Label htmlFor="update-name-input" className="tw:text-foreground">
+				Name
+			</Label>
+			<Input
+				id="update-name-input"
+				placeholder="e.g. John Doe"
+				value={name}
+				disabled={isLoading}
+				onChange={(e): void => onNameChange(e.target.value)}
+				onKeyDown={(e): void => {
+					if (e.key === 'Enter') {
+						onSave();
+					}
+				}}
+			/>
+		</SettingsDialog>
 	);
 }
 
