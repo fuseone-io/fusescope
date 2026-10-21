@@ -1,3 +1,4 @@
+import { cn } from 'lib/utils';
 import { CircleCheck, TriangleAlert } from 'lucide-react';
 
 interface CheckEntryRowProps {
@@ -18,22 +19,29 @@ export function CheckEntryRow({
 	const Icon = passed ? CircleCheck : TriangleAlert;
 
 	return (
-		<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-2 tw:gap-y-1.5 tw:border-t tw:border-dotted tw:border-current tw:py-2 tw:text-[13px]">
+		<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-2 tw:gap-y-1.5 tw:border-t tw:border-border tw:py-2 tw:text-[13px]">
 			<Icon
 				size={16}
 				role="img"
 				aria-label={passed ? 'Passed' : 'Needs attention'}
-				className="tw:flex-none"
+				className={cn(
+					'tw:flex-none',
+					passed ? 'tw:text-success' : 'tw:text-warning',
+				)}
 			/>
 			<strong className="tw:font-semibold">{typeLabel}</strong>
-			<span className="tw:font-mono tw:text-xs">{items?.join(', ')}</span>
-			<span className="tw:text-xs tw:italic">{componentName}</span>
+			<span className="tw:font-mono tw:text-xs tw:text-foreground">
+				{items?.join(', ')}
+			</span>
+			<span className="tw:text-xs tw:text-muted-foreground tw:italic">
+				{componentName}
+			</span>
 			{documentationLink && (
 				<a
 					href={documentationLink}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="tw:text-xs tw:text-inherit! tw:underline"
+					className="tw:text-xs tw:text-primary-ink! tw:underline tw:underline-offset-2 tw:hover:no-underline"
 				>
 					Learn how to fix
 				</a>
