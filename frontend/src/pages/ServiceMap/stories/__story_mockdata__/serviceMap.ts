@@ -8,7 +8,7 @@ import type {
 	Tags,
 } from 'hooks/useResourceAttribute/types';
 import { getResourceDeploymentKeys } from 'hooks/useResourceAttribute/utils';
-import type { ServicesMapItem } from 'store/actions/serviceMap';
+import type { DependencyGraphItem } from 'pages/ServiceMap/types';
 import type {
 	TagKeysPayloadProps,
 	TagValuesPayloadProps,
@@ -234,7 +234,7 @@ export const dependencyGraphResponse = ({
 	count,
 	health,
 	tags = [],
-}: DependencyGraphOptions): ServicesMapItem[] =>
+}: DependencyGraphOptions): DependencyGraphItem[] =>
 	DEPENDENCIES.slice(0, count)
 		.filter((dependency) => tags.every((tag) => matchesTag(dependency, tag)))
 		.map(({ parent, child, callCount, callRate, p99 }, index) => ({
@@ -352,3 +352,28 @@ const FILTER_QUERIES: Record<ResourceFilter, IResourceAttribute> = {
 export const resourceFilterQueries = (
 	filters: readonly ResourceFilter[],
 ): IResourceAttribute[] => filters.map((filter) => FILTER_QUERIES[filter]);
+
+const OPERATIONS = [
+	'GET /api/items',
+	'POST /api/orders',
+	'HTTP GET',
+	'SELECT items',
+];
+
+/** The selected service's busiest operations; p99 in ns. */
+export const topOperationsResponse = (): {
+	name: string;
+	numCalls: number;
+	errorCount: number;
+	p50: number;
+	p95: number;
+	p99: number;
+}[] =>
+	OPERATIONS.map((name, index) => ({
+		name,
+		numCalls: 36000 / (index + 1),
+		errorCount: index === 1 ? 900 : 0,
+		p50: 20e6 * (index + 1),
+		p95: 60e6 * (index + 1),
+		p99: 90e6 * (index + 1),
+	}));

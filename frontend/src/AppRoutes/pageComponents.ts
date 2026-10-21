@@ -23,7 +23,7 @@ export const ServiceTopLevelOperationsPage = Loadable(
 );
 
 export const ServiceMapPage = Loadable(
-	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
+	() => import(/* webpackChunkName: "ServiceMapPage" */ 'pages/ServiceMap'),
 );
 
 export const LogsSaveViews = Loadable(
