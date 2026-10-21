@@ -19,6 +19,19 @@ export interface AllIntegrationsProps {
 	};
 }
 
+export interface CollectedLogAttribute {
+	name: string;
+	path: string;
+	type: string;
+}
+
+export interface CollectedMetric {
+	name: string;
+	type: string;
+	unit: string;
+	description?: string;
+}
+
 export interface IntegrationDetailedProps {
 	description: string;
 	id: string;
@@ -58,8 +71,8 @@ export interface IntegrationDetailedProps {
 		},
 	];
 	data_collected: {
-		logs: string[];
-		metrics: string[];
+		logs: CollectedLogAttribute[];
+		metrics: CollectedMetric[];
 	};
 }
 export interface GetIntegrationProps {

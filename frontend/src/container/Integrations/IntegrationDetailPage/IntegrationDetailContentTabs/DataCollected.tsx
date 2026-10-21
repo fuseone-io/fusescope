@@ -1,86 +1,53 @@
-import { Table } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import { BarChart, ScrollText } from '@signozhq/icons';
+import { ChartColumn, ScrollText } from 'lucide-react';
+import {
+	CollectedLogAttribute,
+	CollectedMetric,
+} from 'types/api/integrations/types';
 
-import './IntegrationDetailContentTabs.styles.scss';
+import DataCollectedTable, { DataCollectedColumn } from './DataCollectedTable';
 
 interface DataCollectedProps {
-	logsData: Array<any>;
-	metricsData: Array<any>;
+	logsData: CollectedLogAttribute[];
+	metricsData: CollectedMetric[];
 }
 
-function DataCollected(props: DataCollectedProps): JSX.Element {
-	const { logsData, metricsData } = props;
-	const logsColumns = [
-		{
-			title: 'Name',
-			dataIndex: 'name',
-			key: 'name',
-		},
-		{
-			title: 'Path',
-			dataIndex: 'path',
-			key: 'path',
-		},
-		{
-			title: 'Type',
-			dataIndex: 'type',
-			key: 'type',
-		},
-	];
+const LOGS_COLUMNS: DataCollectedColumn<CollectedLogAttribute>[] = [
+	{ key: 'name', label: 'Name' },
+	{ key: 'path', label: 'Path', mono: true },
+	{ key: 'type', label: 'Type' },
+];
 
-	const metricsColumns = [
-		{
-			title: 'Name',
-			dataIndex: 'name',
-			key: 'name',
-		},
-		{
-			title: 'Type',
-			dataIndex: 'type',
-			key: 'type',
-		},
-		{
-			title: 'Unit',
-			dataIndex: 'unit',
-			key: 'unit',
-		},
-	];
+const METRICS_COLUMNS: DataCollectedColumn<CollectedMetric>[] = [
+	{ key: 'name', label: 'Name', mono: true },
+	{ key: 'type', label: 'Type' },
+	{ key: 'unit', label: 'Unit' },
+];
 
-	const paginationConfig = { pageSize: 20, hideOnSinglePage: true };
+const ICON_CLASS = 'tw:size-4 tw:text-muted-foreground';
 
+function DataCollected({
+	logsData,
+	metricsData,
+}: DataCollectedProps): JSX.Element {
 	return (
-		<div className="integration-data-collected">
-			<div className="logs-section">
-				<div className="logs-heading">
-					<ScrollText size={14} />
-					<Typography.Text>Logs</Typography.Text>
-				</div>
-				<Table
-					columns={logsColumns}
-					rowClassName={(_, index): string =>
-						index % 2 === 0 ? 'table-row-dark' : ''
-					}
-					dataSource={logsData}
-					pagination={paginationConfig}
-					className="logs-section-table"
-				/>
-			</div>
-			<div className="metrics-section">
-				<div className="metrics-heading">
-					<BarChart size={14} />
-					<Typography.Text>Metrics</Typography.Text>
-				</div>
-				<Table
-					columns={metricsColumns}
-					rowClassName={(_, index): string =>
-						index % 2 === 0 ? 'table-row-dark' : ''
-					}
-					dataSource={metricsData}
-					pagination={paginationConfig}
-					className="metrics-section-table"
-				/>
-			</div>
+		<div
+			data-testid="integration-data-collected"
+			className="tw:flex tw:flex-col tw:gap-4"
+		>
+			<DataCollectedTable
+				testId="integration-data-collected-logs"
+				title="Logs"
+				icon={<ScrollText aria-hidden="true" className={ICON_CLASS} />}
+				columns={LOGS_COLUMNS}
+				rows={logsData ?? []}
+			/>
+			<DataCollectedTable
+				testId="integration-data-collected-metrics"
+				title="Metrics"
+				icon={<ChartColumn aria-hidden="true" className={ICON_CLASS} />}
+				columns={METRICS_COLUMNS}
+				rows={metricsData ?? []}
+			/>
 		</div>
 	);
 }
