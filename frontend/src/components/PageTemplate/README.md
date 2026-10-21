@@ -20,6 +20,7 @@ The parts a new-UI page is built from. Built on `components/ui` and the
 | `ContentPanel` | `Panel` as Metrics and Dashboards draw it: `rounded-xl`, a `px-5 py-3` header, an optional rule before the body and a footer line. |
 | `Sparkline`, `TrendCell`, `DeltaText` | A cell's trend line; a cell with sparkline, value and change; a change against the previous period, coloured when notable. |
 | `ShareBar`, `TabCountBadge` | A share bar with its number (`tone="error"` for error rates); a count beside a tab or panel title. |
+| `ChartHeaderLegend` + `useSeriesVisibility` | A chart's series as colour squares in its panel header, with optional figures (totals); the hook wires each item to show or hide its uPlot series. |
 
 ## `fs-ui` scope
 
