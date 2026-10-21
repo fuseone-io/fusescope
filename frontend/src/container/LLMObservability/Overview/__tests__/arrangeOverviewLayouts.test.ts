@@ -7,6 +7,7 @@ import {
 import {
 	arrangeOverviewLayouts,
 	KPI_ROW_HEIGHT,
+	kpiPanelIds,
 	TOOLS_AND_TRACE_TITLE,
 } from '../arrangeOverviewLayouts';
 
@@ -125,5 +126,14 @@ describe('arrangeOverviewLayouts', () => {
 			undefined,
 			'Tool calls',
 		]);
+	});
+});
+
+describe('kpiPanelIds', () => {
+	it.each([
+		['the untitled KPI row', [COST, KPIS, LATENCY], ['cost', 'tokens']],
+		['no KPI row', [COST, LATENCY], []],
+	])('returns the panels of %s', (_name, layouts, expected) => {
+		expect(kpiPanelIds(layouts)).toStrictEqual(expected);
 	});
 });

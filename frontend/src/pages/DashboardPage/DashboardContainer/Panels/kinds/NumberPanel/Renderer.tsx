@@ -18,10 +18,13 @@ import { getBuilderQueries } from '../../utils/getBuilderQueries';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 
 import { prepareNumberData } from './prepareData';
+import { useCompactEmptyValueStore } from './compactEmptyValueStore';
+import CompactNoData from './components/CompactNoData/CompactNoData';
 import { mapNumberThresholds } from './utils';
 import ValueDisplay from './components/ValueDisplay/ValueDisplay';
 
 function NumberPanelRenderer({
+	panelId,
 	panel,
 	data,
 	isFetching,
@@ -50,6 +53,9 @@ function NumberPanelRenderer({
 	);
 
 	const value = useMemo(() => prepareNumberData(tables), [tables]);
+	const isCompactEmpty = useCompactEmptyValueStore((state) =>
+		state.compactPanelIds.has(panelId),
+	);
 
 	const thresholds = useMemo(
 		() => mapNumberThresholds(spec.thresholds),
@@ -125,7 +131,9 @@ function NumberPanelRenderer({
 					}
 				: {})}
 		>
-			{value === null ? (
+			{value === null && isCompactEmpty && !isFetching ? (
+				<CompactNoData />
+			) : value === null ? (
 				<NoData
 					data-testid="number-panel-no-data"
 					isFetching={isFetching}

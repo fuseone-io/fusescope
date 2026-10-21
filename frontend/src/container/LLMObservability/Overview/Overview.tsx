@@ -3,12 +3,23 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
+import { useCompactEmptyValueStore } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/NumberPanel/compactEmptyValueStore';
+
+import { kpiPanelIds } from './arrangeOverviewLayouts';
 
 import { useSystemDashboard } from './hooks/useSystemDashboard';
 import styles from './Overview.module.scss';
 
 function Overview(): JSX.Element {
 	const { dashboard, isLoading, isError, error, refetch } = useSystemDashboard();
+	const setCompactPanelIds = useCompactEmptyValueStore(
+		(state) => state.setCompactPanelIds,
+	);
+
+	useEffect(() => {
+		setCompactPanelIds(kpiPanelIds(dashboard?.spec.layouts ?? []));
+		return (): void => setCompactPanelIds([]);
+	}, [dashboard, setCompactPanelIds]);
 
 	useEffect(() => {
 		void logEvent('AI Observability Overview: Page visited', {});
