@@ -289,8 +289,9 @@ function DashboardActions({
 			</AuthZTooltip>
 			<SettingsDrawer
 				drawerTitle="Dashboard Configuration"
+				subtitle={title}
+				testId="dashboard-settings-sheet"
 				isOpen={isSettingsDrawerOpen}
-				destroyOnClose
 				onClose={(): void => {
 					setIsSettingsDrawerOpen(false);
 					clearSettingsRequest();

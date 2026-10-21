@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { DragEndEvent } from '@dnd-kit/core';
 import {
 	DndContext,
@@ -11,9 +12,11 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
+import { computeVariableDependencies } from '../../../../VariablesBar/utils/variableDependencies';
+import { useCachedVariableOptions } from '../../hooks/useCachedVariableOptions';
+import { summarizeVariable } from '../../utils/variableRowSummary';
 import VariableRow from '../VariableRow/VariableRow';
 import type { VariableFormModel } from '../../variableFormModel';
-import styles from './VariablesList.module.scss';
 
 interface VariablesListProps {
 	variables: VariableFormModel[];
@@ -45,6 +48,11 @@ function VariablesList({
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 1 } }),
 	);
+	const cachedOptions = useCachedVariableOptions(variables);
+	const parentGraph = useMemo(
+		() => computeVariableDependencies(variables).parentGraph,
+		[variables],
+	);
 
 	const handleDragEnd = ({ active, over }: DragEndEvent): void => {
 		if (!over || active.id === over.id) {
@@ -58,11 +66,10 @@ function VariablesList({
 	};
 
 	return (
-		<div className={styles.table} data-testid="variables-list">
-			<div className={styles.headerRow}>
-				<span className={styles.headerCell}>Variable</span>
-				<span className={styles.headerCell}>Description</span>
-			</div>
+		<div
+			className="tw:rounded-[10px] tw:border tw:border-border tw:bg-surface-raised"
+			data-testid="variables-list"
+		>
 			<DndContext
 				sensors={sensors}
 				modifiers={[restrictToVerticalAxis]}
@@ -72,23 +79,23 @@ function VariablesList({
 					items={variables.map((v) => v.name)}
 					strategy={verticalListSortingStrategy}
 				>
-					<div className={styles.list}>
-						{variables.map((variable, index) => (
-							<VariableRow
-								key={variable.name || `variable-${index}`}
-								variable={variable}
-								index={index}
-								canEdit={canEdit}
-								isConfirmingDelete={confirmingIndex === index}
-								onEdit={onEdit}
-								onRequestDelete={onRequestDelete}
-								onConfirmDelete={onConfirmDelete}
-								onCancelDelete={onCancelDelete}
-								onApplyToAll={onApplyToAll}
-								isAppliedToAll={appliedToAllNames.has(variable.name)}
-							/>
-						))}
-					</div>
+					{variables.map((variable, index) => (
+						<VariableRow
+							key={variable.name || `variable-${index}`}
+							variable={variable}
+							index={index}
+							canEdit={canEdit}
+							summary={summarizeVariable(variable, cachedOptions[variable.name])}
+							dependsOn={parentGraph[variable.name] ?? []}
+							isConfirmingDelete={confirmingIndex === index}
+							onEdit={onEdit}
+							onRequestDelete={onRequestDelete}
+							onConfirmDelete={onConfirmDelete}
+							onCancelDelete={onCancelDelete}
+							onApplyToAll={onApplyToAll}
+							isAppliedToAll={appliedToAllNames.has(variable.name)}
+						/>
+					))}
 				</SortableContext>
 			</DndContext>
 		</div>

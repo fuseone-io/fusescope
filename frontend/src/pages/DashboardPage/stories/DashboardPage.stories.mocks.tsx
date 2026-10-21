@@ -543,7 +543,7 @@ export type VariableType = 'dynamic' | 'textbox' | 'custom' | 'query';
 
 type RowAction = 'edit' | 'delete' | 'apply-all';
 
-/** Opens the settings drawer from the toolbar and returns the tab's panel. */
+/** Opens the settings sheet from the toolbar and returns the tab's panel. */
 export const openSettings = async (
 	canvasElement: HTMLElement,
 	tab: SettingsTab = 'Overview',

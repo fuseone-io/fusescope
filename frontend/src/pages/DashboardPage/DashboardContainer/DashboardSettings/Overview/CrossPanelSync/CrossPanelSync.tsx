@@ -1,7 +1,5 @@
-import { ExternalLink, SolidInfoCircle } from '@signozhq/icons';
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import { Events } from 'constants/events';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
@@ -12,11 +10,8 @@ import {
 	SyncTooltipFilterMode,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { getAbsoluteUrl } from 'utils/basePath';
-import cx from 'classnames';
 
-import SegmentedControl from '../SegmentedControl/SegmentedControl';
-import settingsStyles from '../../DashboardSettings.module.scss';
-import styles from './CrossPanelSync.module.scss';
+import SettingsField from '../../components/SettingsField';
 
 interface CrossPanelSyncProps {
 	dashboardId: string;
@@ -45,83 +40,84 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 	};
 
 	return (
-		<div className={cx(settingsStyles.settingsCard, styles.crossPanelSyncGroup)}>
-			<div className={styles.crossPanelSyncSectionHeader}>
-				<Typography.Text className={styles.crossPanelsSyncSectionTitle}>
-					Cross-Panel Sync
-				</Typography.Text>
-
-				<Tooltip
-					side="top"
-					title={
-						<div className={styles.crossPanelSyncTooltipContent}>
-							<strong className={styles.crossPanelSyncTooltipTitle}>
-								Cross-Panel Sync
-							</strong>
-							<span className={styles.crossPanelSyncTooltipDescription}>
-								Sync crosshair and tooltip across all the dashboard panels
-							</span>
-							<Typography.Link
-								href={fuseScopeDocsUrl('/dashboards/dashboards/#dashboard-settings')}
-								target="_blank"
-								rel="noopener noreferrer"
-								className={styles.crossPanelSyncTooltipDocLink}
-							>
-								Learn more
-								<ExternalLink size={12} />
-							</Typography.Link>
-						</div>
-					}
+		<section
+			aria-labelledby="dashboard-settings-cross-panel-sync"
+			className="tw:flex tw:flex-col tw:gap-3.5 tw:border-t tw:border-border tw:pt-5"
+		>
+			<div>
+				<h3
+					id="dashboard-settings-cross-panel-sync"
+					className="tw:m-0 tw:text-sm tw:font-semibold tw:text-foreground"
 				>
-					<SolidInfoCircle size="md" className={styles.crossPanelSyncInfoIcon} />
-				</Tooltip>
+					Cross-Panel Sync
+				</h3>
+				<p className="tw:m-0 tw:mt-0.5 tw:text-xs tw:text-muted-foreground">
+					Sync crosshair and tooltip across all the dashboard panels.{' '}
+					<a
+						href={fuseScopeDocsUrl('/dashboards/dashboards/#dashboard-settings')}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="tw:text-primary tw:hover:underline"
+					>
+						Learn more
+					</a>
+				</p>
 			</div>
 
-			<div className={styles.crossPanelSyncRow}>
-				<div className={styles.crossPanelSyncInfo}>
-					<Typography.Text className={styles.crossPanelSyncTitle}>
-						Sync Mode
-					</Typography.Text>
-					<Typography.Text className={styles.crossPanelSyncDescription}>
-						Sync crosshair and tooltip across all the dashboard panels
-					</Typography.Text>
-				</div>
-				<SegmentedControl
-					testId="cursor-sync-mode"
-					value={cursorSyncMode}
-					onChange={handleCursorSyncChange}
-					options={[
-						{ label: 'No Sync', value: DashboardCursorSync.None },
-						{ label: 'Crosshair', value: DashboardCursorSync.Crosshair },
-						{ label: 'Tooltip', value: DashboardCursorSync.Tooltip },
-					]}
-				/>
-			</div>
-
-			{cursorSyncMode === DashboardCursorSync.Tooltip && (
-				<div className={styles.crossPanelSyncRow}>
-					<div className={styles.crossPanelSyncInfo}>
-						<Typography.Text className={styles.crossPanelSyncTitle}>
-							Synced Tooltip Series
-						</Typography.Text>
-						<Typography.Text className={styles.crossPanelSyncDescription}>
-							Show only series that intersect on group-by, or every series with the
-							matching ones highlighted
-						</Typography.Text>
-					</div>
-
+			<div className="tw:grid tw:grid-cols-[repeat(auto-fit,minmax(min(240px,100%),1fr))] tw:gap-4">
+				<SettingsField label="Sync Mode">
 					<SegmentedControl
-						testId="sync-tooltip-filter-mode"
-						value={syncTooltipFilterMode}
-						onChange={handleTooltipFilterModeChange}
+						label="Sync Mode"
+						className="tw:self-start"
+						value={cursorSyncMode}
+						onChange={handleCursorSyncChange}
 						options={[
-							{ label: 'All', value: SyncTooltipFilterMode.All },
-							{ label: 'Filtered', value: SyncTooltipFilterMode.Filtered },
+							{
+								label: 'No Sync',
+								value: DashboardCursorSync.None,
+								testId: `cursor-sync-mode-${DashboardCursorSync.None}`,
+							},
+							{
+								label: 'Crosshair',
+								value: DashboardCursorSync.Crosshair,
+								testId: `cursor-sync-mode-${DashboardCursorSync.Crosshair}`,
+							},
+							{
+								label: 'Tooltip',
+								value: DashboardCursorSync.Tooltip,
+								testId: `cursor-sync-mode-${DashboardCursorSync.Tooltip}`,
+							},
 						]}
 					/>
-				</div>
-			)}
-		</div>
+				</SettingsField>
+
+				{cursorSyncMode === DashboardCursorSync.Tooltip && (
+					<SettingsField
+						label="Synced Tooltip Series"
+						description="Only the series that intersect on group-by, or every series with the matching ones highlighted."
+					>
+						<SegmentedControl
+							label="Synced Tooltip Series"
+							className="tw:self-start"
+							value={syncTooltipFilterMode}
+							onChange={handleTooltipFilterModeChange}
+							options={[
+								{
+									label: 'All',
+									value: SyncTooltipFilterMode.All,
+									testId: `sync-tooltip-filter-mode-${SyncTooltipFilterMode.All}`,
+								},
+								{
+									label: 'Filtered',
+									value: SyncTooltipFilterMode.Filtered,
+									testId: `sync-tooltip-filter-mode-${SyncTooltipFilterMode.Filtered}`,
+								},
+							]}
+						/>
+					</SettingsField>
+				)}
+			</div>
+		</section>
 	);
 }
 

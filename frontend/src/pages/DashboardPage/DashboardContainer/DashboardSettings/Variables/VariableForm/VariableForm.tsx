@@ -1,12 +1,9 @@
 import { useRef, useState } from 'react';
-import { Check, X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
-import { Typography } from '@signozhq/ui/typography';
-import cx from 'classnames';
-// eslint-disable-next-line signoz/no-antd-components -- TextArea/Collapse: no @signozhq/ui equivalent
-import { Collapse, Input as AntdInput } from 'antd';
+import { ConfigProvider } from 'antd';
 import { CustomMultiSelect } from 'components/NewSelect';
+import { Button } from 'components/ui/button';
+import { cn } from 'lib/utils';
+import { Check, Loader2, X } from 'lucide-react';
 
 import DynamicVariableFields from './DynamicVariableFields';
 import ListVariableFields from './ListVariableFields';
@@ -17,13 +14,26 @@ import styles from './VariableForm.module.scss';
 import BackToAllVariables from '../components/BackToAllVariables/BackToAllVariables';
 import { VariableFormProps } from '../types';
 import VariableInfoForm from '../components/VariableInfoForm/VariableInfoForm';
+import {
+	BUTTON_GHOST,
+	BUTTON_SM,
+	FIELD_INPUT,
+	FIELD_TEXTAREA,
+} from '../../components/settingsClassNames';
+import DisabledReason from '../../components/DisabledReason';
+import SettingsField from '../../components/SettingsField';
+import SettingsSheetBody from '../../components/SettingsSheetBody';
+import SettingsSheetFooter from '../../components/SettingsSheetFooter';
+
+// The legacy selects inside match the 36px, 8px-radius fields around them.
+const LEGACY_FIELD_THEME = {
+	token: { controlHeight: 36, borderRadius: 8, borderRadiusLG: 12 },
+};
 
 /**
- * In-drawer variable editor reproducing the V1 VariableItem layout, built on
- * @signozhq components (antd kept only for the monaco editor, TextArea, Collapse
- * and searchable selects). Master→detail: renders in place of the list. Form
- * state/handlers live in {@link useVariableForm}; the shared list-type rows in
- * {@link ListVariableFields}.
+ * In-sheet variable editor (antd kept only for the searchable selects).
+ * Master→detail: renders in place of the list. Form state/handlers live in
+ * {@link useVariableForm}; the shared list-type rows in {@link ListVariableFields}.
  */
 function VariableForm({
 	initial,
@@ -73,7 +83,7 @@ function VariableForm({
 
 	// Shared list rows (preview/sort/multi/default) for the list-type variables;
 	// rendered as a sibling inside each list-type panel. Only the active panel
-	// mounts (Tabs unmounts the rest), so reusing one element is safe.
+	// mounts, so reusing one element is safe.
 	const listFields = isListType ? (
 		<ListVariableFields
 			model={model}
@@ -86,11 +96,13 @@ function VariableForm({
 		/>
 	) : null;
 
-	return (
-		<div className={styles.container}>
-			<BackToAllVariables onClose={onClose} />
+	const saveDisabledReason = nameError || attributeError || undefined;
 
-			<div className={styles.content}>
+	return (
+		<ConfigProvider theme={LEGACY_FIELD_THEME}>
+			<SettingsSheetBody className="tw:gap-[18px] tw:pt-4">
+				<BackToAllVariables onClose={onClose} />
+
 				<VariableInfoForm
 					title={model.name}
 					description={model.description}
@@ -104,7 +116,7 @@ function VariableForm({
 					onChange={selectType}
 					panels={{
 						DYNAMIC: (
-							<div className={styles.typeContent}>
+							<>
 								<DynamicVariableFields
 									attribute={model.dynamicAttribute}
 									signal={model.dynamicSignal}
@@ -112,14 +124,9 @@ function VariableForm({
 									onPreview={setRawPreview}
 									attributeError={attributeError}
 								/>
-								{listFields}
-								<div className={styles.row}>
-									<div className={styles.labelContainer}>
-										<Typography.Text className={styles.label}>
-											Apply to panels
-										</Typography.Text>
-									</div>
+								<SettingsField label="Apply to panels">
 									<CustomMultiSelect
+										className={styles.select}
 										placeholder="Select panels"
 										options={panelOptions}
 										value={selectedPanelIds}
@@ -129,11 +136,12 @@ function VariableForm({
 										showLabels
 										placement="topRight"
 									/>
-								</div>
-							</div>
+								</SettingsField>
+								{listFields}
+							</>
 						),
 						QUERY: (
-							<div className={styles.typeContent}>
+							<>
 								<QueryVariableFields
 									queryValue={model.queryValue}
 									variables={payloadVariables}
@@ -142,88 +150,83 @@ function VariableForm({
 									onError={setPreviewError}
 								/>
 								{listFields}
-							</div>
+							</>
 						),
 						CUSTOM: (
-							<div className={styles.typeContent}>
-								<div className={cx(styles.row, styles.customSection)}>
-									<Collapse
-										collapsible="header"
-										rootClassName="custom-collapse"
-										defaultActiveKey={['1']}
-										items={[
-											{
-												key: '1',
-												label: 'Options',
-												children: (
-													<AntdInput.TextArea
-														value={model.customValue}
-														placeholder="Enter options separated by commas."
-														rootClassName="comma-input"
-														onChange={(e): void => onCustomChange(e.target.value)}
-														data-testid="variable-custom-input"
-													/>
-												),
-											},
-										]}
+							<>
+								<SettingsField
+									label="Options"
+									htmlFor="variable-form-custom-options"
+									hint="comma-separated"
+								>
+									<textarea
+										id="variable-form-custom-options"
+										className={cn(FIELD_TEXTAREA, 'tw:font-mono tw:text-xs')}
+										rows={4}
+										value={model.customValue}
+										placeholder="Enter options separated by commas."
+										onChange={(e): void => onCustomChange(e.target.value)}
+										data-testid="variable-custom-input"
 									/>
-								</div>
+								</SettingsField>
 								{listFields}
-							</div>
+							</>
 						),
 						TEXT: (
-							<div className={styles.typeContent}>
-								<div className={cx(styles.row, styles.textboxSection)}>
-									<div className={styles.labelContainer}>
-										<Typography.Text className={styles.label}>
-											Default Value
-										</Typography.Text>
-									</div>
-									<Input
-										className={styles.defaultInput}
-										value={model.textValue}
-										placeholder="Enter a default value (if any)..."
-										onChange={(e): void => set({ textValue: e.target.value })}
-										testId="variable-text-input"
-									/>
-								</div>
-							</div>
+							<SettingsField
+								label="Default Value"
+								htmlFor="variable-form-text-default"
+							>
+								<input
+									id="variable-form-text-default"
+									className={cn(FIELD_INPUT, 'tw:font-mono tw:text-xs')}
+									value={model.textValue}
+									placeholder="Enter a default value (if any)..."
+									onChange={(e): void => set({ textValue: e.target.value })}
+									data-testid="variable-text-input"
+								/>
+							</SettingsField>
 						),
 					}}
 				/>
 
 				{cycleError ? (
-					<Typography.Text className={styles.errorText}>
+					<span role="alert" className="tw:text-xs tw:text-warning-ink">
 						{cycleError}
-					</Typography.Text>
+					</span>
 				) : null}
+			</SettingsSheetBody>
 
-				<div className={styles.actionButtons}>
+			<SettingsSheetFooter>
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					className={BUTTON_GHOST}
+					onClick={onClose}
+				>
+					<X aria-hidden="true" />
+					Discard
+				</Button>
+				<DisabledReason reason={saveDisabledReason}>
 					<Button
-						size="md"
-						variant="outlined"
-						color="secondary"
-						prefix={<X size={14} />}
-						onClick={onClose}
-					>
-						Discard
-					</Button>
-					<Button
-						disabledTooltip={nameError || attributeError}
-						size="md"
-						variant="solid"
-						color="primary"
-						prefix={<Check size={14} />}
-						disabled={!!nameError || !!attributeError}
-						loading={isSaving}
+						type="button"
+						size="sm"
+						className={cn(BUTTON_SM, 'tw:hover:bg-primary-strong')}
+						disabled={!!saveDisabledReason || isSaving}
 						onClick={handleSave}
-						testId="variable-save"
+						data-testid="variable-save"
 					>
-						Save Variable
+						{isSaving ? (
+							<Loader2 className="tw:animate-spin" aria-hidden="true" />
+						) : (
+							<Check aria-hidden="true" />
+						)}
+						<span>Save Variable</span>
 					</Button>
-				</div>
-			</div>
-		</div>
+				</DisabledReason>
+			</SettingsSheetFooter>
+		</ConfigProvider>
 	);
 }
 

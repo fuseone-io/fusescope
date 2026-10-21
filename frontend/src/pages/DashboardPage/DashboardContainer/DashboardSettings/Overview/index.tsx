@@ -17,7 +17,7 @@ import DashboardInfoForm from './DashboardInfoForm/DashboardInfoForm';
 import UnsavedChangesFooter from './UnsavedChangesFooter/UnsavedChangesFooter';
 import { stringsToTags, tagsToStrings } from './utils';
 import { DEFAULT_DASHBOARD_ICON_PATH } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
-import styles from './Overview.module.scss';
+import SettingsSheetBody from '../components/SettingsSheetBody';
 
 interface OverviewProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -168,18 +168,20 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 	}, [title, image, tagsAsStrings, description, id]);
 
 	return (
-		<div className={styles.overviewContent}>
-			<DashboardInfoForm
-				title={updatedTitle}
-				description={updatedDescription}
-				image={updatedImage}
-				tags={updatedTags}
-				onTitleChange={setUpdatedTitle}
-				onDescriptionChange={setUpdatedDescription}
-				onImageChange={setUpdatedImage}
-				onTagsChange={setUpdatedTags}
-			/>
-			<CrossPanelSync dashboardId={id} />
+		<>
+			<SettingsSheetBody>
+				<DashboardInfoForm
+					title={updatedTitle}
+					description={updatedDescription}
+					image={updatedImage}
+					tags={updatedTags}
+					onTitleChange={setUpdatedTitle}
+					onDescriptionChange={setUpdatedDescription}
+					onImageChange={setUpdatedImage}
+					onTagsChange={setUpdatedTags}
+				/>
+				<CrossPanelSync dashboardId={id} />
+			</SettingsSheetBody>
 			{numberOfUnsavedChanges > 0 && (
 				<UnsavedChangesFooter
 					count={numberOfUnsavedChanges}
@@ -188,7 +190,7 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 					onSave={onSaveHandler}
 				/>
 			)}
-		</div>
+		</>
 	);
 }
 

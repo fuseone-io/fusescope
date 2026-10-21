@@ -1,10 +1,7 @@
-import { Badge } from '@signozhq/ui/badge';
-import { Switch } from '@signozhq/ui/switch';
-import { Typography } from '@signozhq/ui/typography';
-import cx from 'classnames';
 // eslint-disable-next-line signoz/no-antd-components -- fixed-option sort picker
 import { Select } from 'antd';
 import { CustomSelect } from 'components/NewSelect';
+import { Switch } from 'components/ui/switch';
 
 import {
 	VARIABLE_SORT_LABEL,
@@ -12,7 +9,11 @@ import {
 	type VariableFormModel,
 	type VariableSort,
 } from '../variableFormModel';
+import { VALUE_CHIP } from '../../components/settingsClassNames';
+import SettingsField from '../../components/SettingsField';
 import styles from './VariableForm.module.scss';
+
+const SWITCH_LABEL = 'tw:cursor-pointer tw:text-[13px] tw:text-foreground';
 
 interface ListVariableFieldsProps {
 	model: VariableFormModel;
@@ -27,7 +28,7 @@ interface ListVariableFieldsProps {
 
 /**
  * Rows shared by the list-style variables (Query / Custom / Dynamic): the value
- * preview, sort, multi-select / ALL toggles and the default-value picker.
+ * preview, sort, default-value picker and the multi-select / ALL toggles.
  */
 function ListVariableFields({
 	model,
@@ -40,103 +41,97 @@ function ListVariableFields({
 }: ListVariableFieldsProps): JSX.Element {
 	return (
 		<>
-			<div className={cx(styles.row, styles.previewSection)}>
-				<Typography.Text className={styles.previewLabel}>
-					Preview of Values
-				</Typography.Text>
-				<div className={styles.previewValues}>
+			<SettingsField label="Preview of Values">
+				<div className="tw:flex tw:max-h-28 tw:flex-wrap tw:gap-1 tw:overflow-y-auto">
 					{previewError ? (
-						<Typography.Text className={styles.previewError}>
-							{previewError}
-						</Typography.Text>
+						<span className="tw:text-xs tw:text-warning-ink">{previewError}</span>
 					) : (
 						previewValues.map((value, idx) => (
-							<Badge
-								textTransform="none"
-								variant="solid"
+							<span
 								// eslint-disable-next-line react/no-array-index-key -- preview values are display-only and may contain duplicates
 								key={`${value}-${idx}`}
-								color="secondary"
+								className={VALUE_CHIP}
 							>
-								{value.toString()}
-							</Badge>
+								<span className="tw:truncate">{value.toString()}</span>
+							</span>
 						))
 					)}
+					{!previewError && previewValues.length === 0 && (
+						<span className="tw:text-xs tw:text-subtle-foreground">No values</span>
+					)}
 				</div>
-			</div>
+			</SettingsField>
 
-			<div className={cx(styles.row, styles.sortSection)}>
-				<div className={styles.labelContainer}>
-					<Typography.Text className={styles.label}>Sort Values</Typography.Text>
-				</div>
-				<Select
-					className={styles.sortSelect}
-					popupMatchSelectWidth={false}
-					value={model.sort}
-					options={VARIABLE_SORTS.map((sort) => ({
-						label: VARIABLE_SORT_LABEL[sort],
-						value: sort,
-					}))}
-					onChange={(value): void => onChange({ sort: value as VariableSort })}
-					data-testid="variable-sort-select"
-				/>
-			</div>
-
-			<div className={cx(styles.row, styles.multiSection)}>
-				<Typography.Text className={styles.rowLabel}>
-					Enable multiple values to be checked
-				</Typography.Text>
-				<Switch
-					color="primary"
-					textPlacement="right"
-					value={model.multiSelect}
-					onChange={(checked): void =>
-						onChange({
-							multiSelect: checked,
-							showAllOption: checked ? model.showAllOption : false,
-						})
-					}
-					testId="variable-multi-switch"
-				/>
-			</div>
-
-			{model.multiSelect && showAllOptionField ? (
-				<div className={cx(styles.row, styles.allOptionSection)}>
-					<Typography.Text className={styles.rowLabel}>
-						Include an option for ALL values
-					</Typography.Text>
-					<Switch
-						color="primary"
-						textPlacement="right"
-						value={model.showAllOption}
-						onChange={(checked): void => onChange({ showAllOption: checked })}
-						testId="variable-all-switch"
+			<div className="tw:grid tw:grid-cols-[repeat(auto-fit,minmax(min(240px,100%),1fr))] tw:items-start tw:gap-4 tw:border-t tw:border-border tw:pt-4">
+				<SettingsField label="Sort Values">
+					<Select
+						className={styles.select}
+						popupMatchSelectWidth={false}
+						value={model.sort}
+						options={VARIABLE_SORTS.map((sort) => ({
+							label: VARIABLE_SORT_LABEL[sort],
+							value: sort,
+						}))}
+						onChange={(value): void => onChange({ sort: value as VariableSort })}
+						data-testid="variable-sort-select"
 					/>
-				</div>
-			) : null}
+				</SettingsField>
 
-			<div className={cx(styles.row, styles.defaultValueSection)}>
-				<div className={styles.labelContainer}>
-					<Typography.Text className={styles.label}>Default Value</Typography.Text>
-					<Typography.Text className={styles.defaultValueDesc}>
-						{model.type === 'QUERY'
+				<SettingsField
+					label="Default Value"
+					description={
+						model.type === 'QUERY'
 							? 'Click Test Run Query to see the values or add custom value'
-							: 'Select a value from the preview values or add custom value'}
-					</Typography.Text>
+							: 'Select a value from the preview values or add custom value'
+					}
+				>
+					<CustomSelect
+						className={styles.select}
+						showSearch
+						allowClear
+						placeholder="Select a default value"
+						value={defaultValue || undefined}
+						onChange={(value): void => onDefaultValueChange((value as string) ?? '')}
+						options={previewValues.map((value) => ({
+							label: value.toString(),
+							value: value.toString(),
+						}))}
+						data-testid="variable-default-select"
+					/>
+				</SettingsField>
+			</div>
+
+			<div className="tw:flex tw:flex-col tw:gap-3">
+				<div className="tw:flex tw:items-center tw:gap-2.5">
+					<Switch
+						id="variable-form-multi"
+						checked={model.multiSelect}
+						onCheckedChange={(checked): void =>
+							onChange({
+								multiSelect: checked,
+								showAllOption: checked ? model.showAllOption : false,
+							})
+						}
+						data-testid="variable-multi-switch"
+					/>
+					<label htmlFor="variable-form-multi" className={SWITCH_LABEL}>
+						Enable multiple values to be checked
+					</label>
 				</div>
-				<CustomSelect
-					className={styles.searchSelect}
-					showSearch
-					allowClear
-					placeholder="Select a default value"
-					value={defaultValue || undefined}
-					onChange={(value): void => onDefaultValueChange((value as string) ?? '')}
-					options={previewValues.map((value) => ({
-						label: value.toString(),
-						value: value.toString(),
-					}))}
-					data-testid="variable-default-select"
-				/>
+
+				{model.multiSelect && showAllOptionField ? (
+					<div className="tw:flex tw:items-center tw:gap-2.5 tw:pl-5">
+						<Switch
+							id="variable-form-all"
+							checked={model.showAllOption}
+							onCheckedChange={(checked): void => onChange({ showAllOption: checked })}
+							data-testid="variable-all-switch"
+						/>
+						<label htmlFor="variable-form-all" className={SWITCH_LABEL}>
+							Include an option for ALL values
+						</label>
+					</div>
+				) : null}
 			</div>
 		</>
 	);

@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from 'components/ui/button';
+import { cn } from 'lib/utils';
+import { Loader2, Play } from 'lucide-react';
 import logEvent from 'api/common/logEvent';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import Editor from 'components/Editor';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import type { PayloadVariables } from 'types/api/dashboard/variables/query';
 
-import styles from './VariableForm.module.scss';
+import { BUTTON_SM } from '../../components/settingsClassNames';
+import DisabledReason from '../../components/DisabledReason';
+import SettingsField from '../../components/SettingsField';
 
 interface QueryVariableFieldsProps {
 	queryValue: string;
@@ -71,11 +74,8 @@ function QueryVariableFields({
 	}, [queryValue]);
 
 	return (
-		<div className={styles.queryContainer}>
-			<div className={styles.labelContainer}>
-				<Typography.Text className={styles.label}>Query</Typography.Text>
-			</div>
-			<div className={styles.editorWrap}>
+		<SettingsField label="Query">
+			<div className="tw:h-60 tw:overflow-hidden tw:rounded-lg tw:border tw:border-input">
 				<Editor
 					language="sql"
 					value={queryValue}
@@ -93,21 +93,24 @@ function QueryVariableFields({
 					}}
 				/>
 			</div>
-			<div className={styles.testRow}>
+			<DisabledReason reason={queryValue ? undefined : 'Enter a query first'}>
 				<Button
-					disabledTooltip="Enter a query first"
-					variant="solid"
-					color="primary"
+					type="button"
 					size="sm"
-					loading={isRunning}
-					disabled={!queryValue}
+					className={cn(BUTTON_SM, 'tw:hover:bg-primary-strong')}
+					disabled={!queryValue || isRunning}
 					onClick={runTest}
-					testId="variable-test-run"
+					data-testid="variable-test-run"
 				>
-					Test Run Query
+					{isRunning ? (
+						<Loader2 className="tw:animate-spin" aria-hidden="true" />
+					) : (
+						<Play aria-hidden="true" />
+					)}
+					<span>Test Run Query</span>
 				</Button>
-			</div>
-		</div>
+			</DisabledReason>
+		</SettingsField>
 	);
 }
 

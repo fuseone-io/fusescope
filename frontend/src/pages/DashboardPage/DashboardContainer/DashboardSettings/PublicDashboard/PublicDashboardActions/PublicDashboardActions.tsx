@@ -2,7 +2,6 @@ import { Globe, RefreshCw, Trash } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
-import styles from './PublicDashboardActions.module.scss';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 interface PublicDashboardActionsProps {
@@ -34,7 +33,7 @@ function PublicDashboardActions({
 	onUnpublish,
 }: PublicDashboardActionsProps): JSX.Element {
 	return (
-		<div className={styles.footer}>
+		<>
 			{isPublic ? (
 				<>
 					<AuthZTooltip checks={checks}>
@@ -79,7 +78,7 @@ function PublicDashboardActions({
 					</Button>
 				</AuthZTooltip>
 			)}
-		</div>
+		</>
 	);
 }
 

@@ -1,7 +1,7 @@
-import { Typography } from '@signozhq/ui/typography';
+import { Braces } from 'lucide-react';
+
 import AddVariableButton from '../AddVariableButton';
 import { EditingState } from '../../types';
-import styles from './NoVariables.module.scss';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 const NoVariablesCard = ({
@@ -14,14 +14,17 @@ const NoVariablesCard = ({
 	setIsEditing: React.Dispatch<React.SetStateAction<EditingState | null>>;
 }): JSX.Element => {
 	return (
-		<div className={styles.noVariablesCard}>
-			<div className={styles.noVariablesCopy}>
-				<Typography.Text className={styles.noVariablesTitle}>
+		<div className="tw:flex tw:flex-col tw:items-center tw:gap-3 tw:rounded-[10px] tw:border tw:border-dashed tw:border-border tw:px-6 tw:py-10 tw:text-center">
+			<span className="tw:flex tw:size-9 tw:items-center tw:justify-center tw:rounded-lg tw:bg-primary-soft tw:text-primary-ink">
+				<Braces className="tw:size-4" aria-hidden="true" />
+			</span>
+			<div className="tw:flex tw:flex-col tw:gap-0.5">
+				<span className="tw:text-sm tw:font-medium tw:text-foreground">
 					No variables yet
-				</Typography.Text>
-				<Typography.Text className={styles.noVariablesInfo}>
+				</span>
+				<span className="tw:text-[13px] tw:text-subtle-foreground">
 					Create a variable to parameterize your panel queries.
-				</Typography.Text>
+				</span>
 			</div>
 			<AddVariableButton
 				checks={checks}

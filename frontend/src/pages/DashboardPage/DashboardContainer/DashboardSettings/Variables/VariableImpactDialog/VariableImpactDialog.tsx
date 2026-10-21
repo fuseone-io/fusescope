@@ -1,18 +1,28 @@
-import { Check, X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import { Typography } from '@signozhq/ui/typography';
-// eslint-disable-next-line signoz/no-antd-components -- multiline TextArea + Checkbox have no @signozhq/ui equivalent yet
-import { Checkbox, Input as AntdInput } from 'antd';
-import cx from 'classnames';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
+import { cn } from 'lib/utils';
 import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
+import { Check, Loader2, X } from 'lucide-react';
 
 import type {
 	VariableImpactMode,
 	VariableUsage,
 } from '../utils/variableUsages';
+import {
+	BADGE_NEUTRAL,
+	BUTTON_OUTLINE,
+	BUTTON_SM,
+	FIELD_TEXTAREA,
+} from '../../components/settingsClassNames';
 import { useVariableImpactState } from './useVariableImpactState';
-import styles from './VariableImpactDialog.module.scss';
 
 const KIND_LABEL: Record<VariableUsage['kind'], string> = {
 	builder: 'Query builder',
@@ -21,6 +31,11 @@ const KIND_LABEL: Record<VariableUsage['kind'], string> = {
 	variable: 'Variable',
 	text: 'Markdown body',
 };
+
+const CODE_FIELD = cn(
+	FIELD_TEXTAREA,
+	'tw:field-sizing-content tw:max-h-28 tw:font-mono tw:text-xs',
+);
 
 interface VariableImpactDialogProps {
 	open: boolean;
@@ -59,123 +74,131 @@ function VariableImpactDialog({
 	const count = usages.length;
 	const plural = count === 1 ? '' : 's';
 	let intro: string;
+	let title: string;
 	if (isRename) {
 		intro = `$${variableName} is used in ${count} place${plural}. Review the updated queries before renaming to $${newName}.`;
+		title = `Rename $${variableName}`;
 	} else if (isDelete) {
 		intro = `$${variableName} is used in ${count} place${plural}. Edit or remove each usage before deleting.`;
+		title = `Delete $${variableName}`;
 	} else {
 		intro = `Applying $${variableName} can update upto ${count} panel quer${count === 1 ? 'y' : 'ies'}. Review the changes before applying.`;
+		title = `Apply $${variableName} to panels`;
 	}
 	const confirmLabel = isRename ? 'Rename' : isDelete ? 'Delete' : 'Apply';
 
-	const footer = (
-		<div className={styles.footer}>
-			<Button
-				size="md"
-				variant="solid"
-				color="secondary"
-				onClick={onClose}
-				testId="variable-impact-cancel"
-				prefix={<X size={12} />}
-			>
-				Cancel
-			</Button>
-			<Button
-				size="md"
-				variant="solid"
-				color={isDelete ? 'danger' : 'primary'}
-				loading={isLoading}
-				onClick={(): void => onConfirm(resolvedUsages)}
-				testId="variable-impact-confirm"
-				prefix={<Check size={12} />}
-			>
-				{confirmLabel}
-			</Button>
-		</div>
-	);
-
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
 					onClose();
 				}
 			}}
-			title={
-				// eslint-disable-next-line no-nested-ternary
-				isRename
-					? `Rename $${variableName}`
-					: isDelete
-						? `Delete $${variableName}`
-						: `Apply $${variableName} to panels`
-			}
-			width="wide"
-			showCloseButton={false}
-			// Lift above the settings drawer (z ~1000); overlay off (it would only half-dim).
-			style={{ zIndex: 1100 }}
-			showOverlay={false}
-			footer={footer}
 		>
-			<div className={styles.body}>
-				<Typography.Text className={styles.intro}>{intro}</Typography.Text>
-				<div className={styles.rows}>
+			<DialogContent showCloseButton={false} className="tw:max-w-2xl">
+				<DialogHeader>
+					<DialogTitle className="tw:text-base">{title}</DialogTitle>
+					<DialogDescription>{intro}</DialogDescription>
+				</DialogHeader>
+				<DialogBody className="tw:max-h-[60vh] tw:gap-3 tw:overflow-y-auto">
 					{rows.map((row) => {
 						// Only warn on delete: an apply result is meant to reference the variable.
 						const stillReferences =
 							isDelete &&
 							row.included &&
 							textContainsVariableReference(row.resultingText, variableName);
+						const checkboxId = `variable-impact-include-${row.id}`;
 						return (
 							<div
 								key={row.id}
-								className={styles.row}
+								className="tw:flex tw:flex-col tw:gap-2 tw:rounded-[10px] tw:border tw:border-border tw:p-3"
 								data-testid={`variable-impact-row-${row.id}`}
 							>
-								<div className={styles.rowHeader}>
-									<Checkbox
-										checked={row.included}
-										onChange={(): void => toggleIncluded(row.id)}
-										data-testid={`variable-impact-include-${row.id}`}
+								<div className="tw:flex tw:items-center tw:justify-between tw:gap-2">
+									<label
+										htmlFor={checkboxId}
+										className="tw:flex tw:min-w-0 tw:cursor-pointer tw:items-center tw:gap-2 tw:text-[13px] tw:font-medium tw:text-foreground"
 									>
-										<span className={styles.sourceLabel}>{row.sourceLabel}</span>
-									</Checkbox>
-									<span className={styles.kindTag}>{KIND_LABEL[row.kind]}</span>
+										<input
+											id={checkboxId}
+											type="checkbox"
+											checked={row.included}
+											onChange={(): void => toggleIncluded(row.id)}
+											data-testid={checkboxId}
+											className="tw:size-4 tw:flex-none tw:cursor-pointer tw:accent-primary"
+										/>
+										<span className="tw:truncate">{row.sourceLabel}</span>
+									</label>
+									<span className={BADGE_NEUTRAL}>{KIND_LABEL[row.kind]}</span>
 								</div>
-								<div className={styles.field}>
-									<Typography.Text className={styles.fieldLabel}>
+								<div className="tw:flex tw:flex-col tw:gap-1">
+									<span className="tw:text-[11px] tw:font-medium tw:tracking-wide tw:text-subtle-foreground tw:uppercase">
 										Current
-									</Typography.Text>
-									<AntdInput.TextArea
-										className={styles.textArea}
+									</span>
+									<textarea
+										className={cn(CODE_FIELD, 'tw:bg-surface-sunken')}
 										value={row.currentText}
+										aria-label={`Current ${row.sourceLabel}`}
 										disabled
 										readOnly
-										autoSize={{ minRows: 1, maxRows: 4 }}
+										rows={1}
 									/>
 								</div>
-								<div className={styles.field}>
-									<Typography.Text className={styles.fieldLabel}>Result</Typography.Text>
-									<AntdInput.TextArea
-										className={cx(styles.textArea, !row.included && styles.disabled)}
+								<div className="tw:flex tw:flex-col tw:gap-1">
+									<span className="tw:text-[11px] tw:font-medium tw:tracking-wide tw:text-subtle-foreground tw:uppercase">
+										Result
+									</span>
+									<textarea
+										className={CODE_FIELD}
 										value={row.resultingText}
+										aria-label={`Result ${row.sourceLabel}`}
 										disabled={!row.included}
-										autoSize={{ minRows: 1, maxRows: 4 }}
+										rows={1}
 										onChange={(e): void => setResultingText(row.id, e.target.value)}
 										data-testid={`variable-impact-result-${row.id}`}
 									/>
 									{stillReferences ? (
-										<Typography.Text size={'small'} color="warning">
+										<span className="tw:text-xs tw:text-warning-ink">
 											Still references ${variableName}
-										</Typography.Text>
+										</span>
 									) : null}
 								</div>
 							</div>
 						);
 					})}
-				</div>
-			</div>
-		</DialogWrapper>
+				</DialogBody>
+				<DialogFooter>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						className={BUTTON_OUTLINE}
+						onClick={onClose}
+						data-testid="variable-impact-cancel"
+					>
+						<X aria-hidden="true" />
+						Cancel
+					</Button>
+					<Button
+						type="button"
+						variant={isDelete ? 'destructive' : 'default'}
+						size="sm"
+						className={cn(BUTTON_SM, !isDelete && 'tw:hover:bg-primary-strong')}
+						disabled={isLoading}
+						onClick={(): void => onConfirm(resolvedUsages)}
+						data-testid="variable-impact-confirm"
+					>
+						{isLoading ? (
+							<Loader2 className="tw:animate-spin" aria-hidden="true" />
+						) : (
+							<Check aria-hidden="true" />
+						)}
+						{confirmLabel}
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Info } from '@signozhq/icons';
-import { Typography } from '@signozhq/ui/typography';
 import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/fuseScope.schemas';
-import cx from 'classnames';
 // eslint-disable-next-line signoz/no-antd-components -- fixed-option signal picker
 import { Select } from 'antd';
 import { CustomSelect } from 'components/NewSelect';
@@ -17,6 +15,7 @@ import {
 	DYNAMIC_SIGNALS,
 	signalForApi,
 } from '../variableFormModel';
+import SettingsField from '../../components/SettingsField';
 import styles from './VariableForm.module.scss';
 
 interface DynamicVariableFieldsProps {
@@ -81,55 +80,56 @@ function DynamicVariableFields({
 	const errorMessage = error ? (error as Error).message || null : null;
 
 	return (
-		<>
-			{/* Combined row retained from V1: the field on the left, `from` + the
-			    telemetry source on the right. */}
-			<div className={cx(styles.row, styles.dynamicCombinedRow)}>
-				<CustomSelect
-					className={styles.dynamicFieldSelect}
-					showSearch
-					value={attribute || undefined}
-					placeholder="Select a field"
-					loading={isLoading}
-					options={options}
-					onSearch={setSearch}
-					onChange={(value): void => onChange({ dynamicAttribute: value as string })}
-					noDataMessage="No fields found"
-					errorMessage={errorMessage}
-					onRetry={(): void => {
-						void refetch();
-					}}
-					showRetryButton={error ? isRetryableError(error) : true}
-					data-testid="variable-field-select"
-				/>
-				<Typography.Text className={styles.fromText}>from</Typography.Text>
-				<TextToolTip
-					text="By default, this searches across logs, traces, and metrics, which can be slow. Selecting a single source improves performance. Many fields share the same values across different signals (for example, `k8s.pod.name` is identical in logs, traces and metrics) making one source enough. Only use `All telemetry` when you need fields that have different values in different signal types."
-					useFilledIcon={false}
-					outlinedIcon={<Info size={14} />}
-				/>
-				<Select
-					className={styles.dynamicSourceSelect}
-					popupMatchSelectWidth={false}
-					value={signal}
-					options={DYNAMIC_SIGNALS.map((s) => ({
-						label: DYNAMIC_SIGNAL_LABEL[s],
-						value: s,
-					}))}
-					onChange={(value): void =>
-						onChange({
-							dynamicSignal: value as DashboardtypesDynamicVariableSignalDTO,
-						})
-					}
-					data-testid="variable-signal-select"
-				/>
+		<SettingsField label="Values from" error={attributeError}>
+			<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+				<div className="tw:min-w-0 tw:flex-[1_1_220px]">
+					<CustomSelect
+						className={styles.select}
+						showSearch
+						value={attribute || undefined}
+						placeholder="Select a field"
+						loading={isLoading}
+						options={options}
+						onSearch={setSearch}
+						onChange={(value): void =>
+							onChange({ dynamicAttribute: value as string })
+						}
+						noDataMessage="No fields found"
+						errorMessage={errorMessage}
+						onRetry={(): void => {
+							void refetch();
+						}}
+						showRetryButton={error ? isRetryableError(error) : true}
+						data-testid="variable-field-select"
+					/>
+				</div>
+				<span className="tw:flex tw:items-center tw:gap-1 tw:text-[13px] tw:text-subtle-foreground">
+					from
+					<TextToolTip
+						text="By default, this searches across logs, traces, and metrics, which can be slow. Selecting a single source improves performance. Many fields share the same values across different signals (for example, `k8s.pod.name` is identical in logs, traces and metrics) making one source enough. Only use `All telemetry` when you need fields that have different values in different signal types."
+						useFilledIcon={false}
+						outlinedIcon={<Info size={14} />}
+					/>
+				</span>
+				<div className="tw:min-w-0 tw:flex-[0_1_180px]">
+					<Select
+						className={styles.select}
+						popupMatchSelectWidth={false}
+						value={signal}
+						options={DYNAMIC_SIGNALS.map((s) => ({
+							label: DYNAMIC_SIGNAL_LABEL[s],
+							value: s,
+						}))}
+						onChange={(value): void =>
+							onChange({
+								dynamicSignal: value as DashboardtypesDynamicVariableSignalDTO,
+							})
+						}
+						data-testid="variable-signal-select"
+					/>
+				</div>
 			</div>
-			{attributeError ? (
-				<Typography.Text className={styles.errorText}>
-					{attributeError}
-				</Typography.Text>
-			) : null}
-		</>
+		</SettingsField>
 	);
 }
 

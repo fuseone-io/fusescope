@@ -1,11 +1,9 @@
-import { Input } from '@signozhq/ui/input';
-import { Typography } from '@signozhq/ui/typography';
-// eslint-disable-next-line signoz/no-antd-components -- multiline TextArea has no @signozhq/ui equivalent yet
-import { Input as AntdInput } from 'antd';
-
-import styles from './VariableInfoForm.module.scss';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../../constants';
-import variableFormStyles from '../../VariableForm/VariableForm.module.scss';
+import {
+	FIELD_INPUT,
+	FIELD_TEXTAREA,
+} from '../../../components/settingsClassNames';
+import SettingsField from '../../../components/SettingsField';
 
 interface VariableInfoFormProps {
 	title: string;
@@ -23,39 +21,36 @@ function VariableInfoForm({
 	visibleNameError,
 }: VariableInfoFormProps): JSX.Element {
 	return (
-		<>
-			<div className={styles.infoItemContainer}>
-				<Typography className={styles.infoTitle}>Name</Typography>
-
-				<Input
-					testId="variable-name"
-					className={styles.variableNameInput}
+		<div className="tw:grid tw:grid-cols-[repeat(auto-fit,minmax(min(240px,100%),1fr))] tw:items-start tw:gap-4">
+			<SettingsField
+				label="Name"
+				htmlFor="variable-form-name"
+				error={visibleNameError}
+			>
+				<input
+					id="variable-form-name"
+					data-testid="variable-name"
+					className={`${FIELD_INPUT} tw:font-mono tw:text-xs`}
 					value={title}
 					maxLength={DASHBOARD_NAME_MAX_LENGTH}
+					aria-invalid={visibleNameError ? true : undefined}
 					onChange={(e): void => onTitleChange(e.target.value)}
 					placeholder="Unique name of the variable"
 				/>
+			</SettingsField>
 
-				{visibleNameError ? (
-					<Typography.Text className={variableFormStyles.errorText}>
-						<sup>*</sup>&nbsp;
-						{visibleNameError}
-					</Typography.Text>
-				) : null}
-			</div>
-
-			<div className={styles.infoItemContainer}>
-				<Typography className={styles.infoTitle}>Description</Typography>
-				<AntdInput.TextArea
-					className={styles.descriptionTextArea}
+			<SettingsField label="Description" htmlFor="variable-form-description">
+				<textarea
+					id="variable-form-description"
+					className={FIELD_TEXTAREA}
 					value={description}
 					placeholder="Enter a description for the variable"
 					data-testid="dashboard-desc"
-					rows={3}
+					rows={1}
 					onChange={(e): void => onDescriptionChange(e.target.value)}
 				/>
-			</div>
-		</>
+			</SettingsField>
+		</div>
 	);
 }
 
