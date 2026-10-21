@@ -5,7 +5,7 @@ import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import {
 	apDexToolTipText,
-	apDexToolTipUrl,
+	apDexThresholdUrl,
 	apDexToolTipUrlText,
 } from 'constants/apDex';
 import { themeColors } from 'constants/theme';
@@ -87,7 +87,7 @@ function ApDexSettings({
 					Apdex threshold (in seconds){' '}
 					<TextToolTip
 						text={apDexToolTipText}
-						url={apDexToolTipUrl}
+						url={apDexThresholdUrl}
 						useFilledIcon={false}
 						urlText={apDexToolTipUrlText}
 					/>
