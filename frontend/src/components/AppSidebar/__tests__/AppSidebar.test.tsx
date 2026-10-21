@@ -43,6 +43,11 @@ const COMMUNITY = {
 };
 
 const CLOUD = { ...COMMUNITY, isCommunityUser: false, isCloudUser: true };
+const ENTERPRISE = {
+	...COMMUNITY,
+	isCommunityUser: false,
+	isEnterpriseSelfHostedUser: true,
+};
 
 interface PreferenceWrite {
 	name: string;
@@ -259,32 +264,23 @@ describe('AppSidebar', () => {
 			expect(navLink('AI Observability Beta')).toBeInTheDocument();
 		});
 
-		it('hides Integrations from community users and viewers', () => {
-			renderAppSidebar({ pinned: true });
+		it.each([
+			['community', 'ADMIN', true, COMMUNITY],
+			['community', 'EDITOR', true, COMMUNITY],
+			['community', 'VIEWER', false, COMMUNITY],
+			['cloud', 'ADMIN', true, CLOUD],
+			['cloud', 'EDITOR', true, CLOUD],
+			['cloud', 'VIEWER', false, CLOUD],
+			['enterprise', 'ADMIN', true, ENTERPRISE],
+			['enterprise', 'VIEWER', false, ENTERPRISE],
+		])('shows Integrations to a %s %s: %s', (_build, role, visible, license) => {
+			mockLicense.mockReturnValue(license);
+			renderAppSidebar({ pinned: true, role });
 
-			expect(
-				within(screen.getByTestId('app-sidebar')).queryByRole('link', {
-					name: 'Integrations',
-				}),
-			).not.toBeInTheDocument();
-		});
-
-		it('shows Integrations to cloud admins', () => {
-			mockLicense.mockReturnValue(CLOUD);
-			renderAppSidebar({ pinned: true });
-
-			expect(navLink('Integrations')).toBeInTheDocument();
-		});
-
-		it('hides Integrations from cloud viewers', () => {
-			mockLicense.mockReturnValue(CLOUD);
-			renderAppSidebar({ pinned: true, role: 'VIEWER' });
-
-			expect(
-				within(screen.getByTestId('app-sidebar')).queryByRole('link', {
-					name: 'Integrations',
-				}),
-			).not.toBeInTheDocument();
+			const link = within(screen.getByTestId('app-sidebar')).queryByRole('link', {
+				name: 'Integrations',
+			});
+			expect(link !== null).toBe(visible);
 		});
 
 		it('shows the new source button to cloud users who are not viewers', () => {

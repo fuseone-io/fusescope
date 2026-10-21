@@ -31,6 +31,7 @@ import { IUser } from 'providers/App/types';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
 
+import { filterRoutesForLicense } from './licenseRoutes';
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
 import defaultRoutes, {
@@ -189,29 +190,21 @@ function App(): JSX.Element {
 				setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
 			}
 
-			let updatedRoutes = defaultRoutes;
+			let updatedRoutes = filterRoutesForLicense(defaultRoutes, {
+				isCloudUser,
+				isEnterpriseSelfHostedUser,
+				isOnBasicPlan: Boolean(isOnBasicPlan),
+			});
 			// if the user is a cloud user
 			if (isCloudUser || isEnterpriseSelfHostedUser) {
-				// if the user is on basic plan then remove billing
-				if (isOnBasicPlan) {
-					updatedRoutes = updatedRoutes.filter(
-						(route) =>
-							route?.path !== ROUTES.BILLING && route?.path !== ROUTES.INTEGRATIONS,
-					);
-				}
-
 				if (isEnterpriseSelfHostedUser) {
-					updatedRoutes.push(LIST_LICENSES);
+					updatedRoutes = [...updatedRoutes, LIST_LICENSES];
 				}
 
 				// always add support route for cloud users
 				updatedRoutes = [...updatedRoutes, SUPPORT_ROUTE];
 			} else {
-				// if not a cloud user then remove billing and add list licenses route
-				updatedRoutes = updatedRoutes.filter(
-					(route) =>
-						route?.path !== ROUTES.BILLING && route?.path !== ROUTES.INTEGRATIONS,
-				);
+				// if not a cloud user then add list licenses route
 				updatedRoutes = [...updatedRoutes, LIST_LICENSES];
 			}
 			setRoutes(updatedRoutes);

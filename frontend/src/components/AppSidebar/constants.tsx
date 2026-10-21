@@ -131,13 +131,8 @@ export const INTEGRATIONS_NAV_ITEM: NavItem = {
 	itemKey: 'integrations',
 	label: 'Integrations',
 	icon: <Unplug />,
-	isVisible: ({
-		isCloudUser,
-		isEnterpriseSelfHostedUser,
-		isAdmin,
-		isEditor,
-	}: NavVisibility): boolean =>
-		(isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor),
+	isVisible: ({ isAdmin, isEditor }: NavVisibility): boolean =>
+		isAdmin || isEditor,
 };
 
 export const AI_ASSISTANT_NAV_ITEM: NavItem = {
