@@ -1,15 +1,18 @@
 import React from 'react';
-import { Badge } from '@signozhq/ui/badge';
-import { Progress } from '@signozhq/ui/progress';
+import TagChip from 'components/PageTemplate/components/TagChip';
 import {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
 } from 'api/generated/services/fuseScope.schemas';
-import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/types';
+import {
+	EntityStatus,
+	K8sDetailsMetadataConfig,
+} from 'container/InfraMonitoringK8sV2/Base/types';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { TextNoData } from 'container/InfraMonitoringK8sV2/components';
 import { getStrokeColorForPercent } from 'container/InfraMonitoringK8sV2/components/EntityProgressBar.utils';
+import UsageBar from 'container/InfraMonitoringK8sV2/components/UsageBar';
 import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
 import {
 	getHostQueryPayload,
@@ -18,30 +21,20 @@ import {
 
 export type HostDetailMetadataConfigType =
 	K8sDetailsMetadataConfig<InframonitoringtypesHostRecordDTO>;
+export const hostGetStatus = (
+	h: InframonitoringtypesHostRecordDTO,
+): EntityStatus =>
+	h.status === InframonitoringtypesHostStatusDTO.active
+		? { label: 'Active', tone: 'success' }
+		: { label: 'Inactive', tone: 'warning' };
+
 export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
-	{
-		label: 'STATUS',
-		getValue: (h): string =>
-			h.status === InframonitoringtypesHostStatusDTO.active
-				? 'ACTIVE'
-				: 'INACTIVE',
-		render: (value, h): React.ReactNode => {
-			const isActive = h.status === InframonitoringtypesHostStatusDTO.active;
-			return (
-				<Badge color={isActive ? 'success' : 'secondary'} variant="outlined">
-					{value}
-				</Badge>
-			);
-		},
-	},
 	{
 		label: 'OPERATING SYSTEM',
 		getValue: (h): string => h.meta?.[INFRA_MONITORING_ATTR_KEYS.OS_TYPE] || '-',
 		render: (value): React.ReactNode =>
 			value !== '-' ? (
-				<Badge textTransform="none" color="primary" variant="outlined">
-					{value}
-				</Badge>
+				<TagChip className="tw:self-start">{value}</TagChip>
 			) : (
 				<TextNoData type="typography" />
 			),
@@ -50,10 +43,9 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		label: 'CPU USAGE',
 		getValue: (h): number => h.cpu * 100,
 		render: (value): React.ReactNode => (
-			<Progress
+			<UsageBar
 				percent={Number(Number(value).toFixed(1))}
-				strokeColor={getStrokeColorForPercent('cpu', Number(value))}
-				showInfo
+				color={getStrokeColorForPercent('cpu', Number(value))}
 			/>
 		),
 	},
@@ -61,10 +53,9 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		label: 'MEMORY USAGE',
 		getValue: (h): number => h.memory * 100,
 		render: (value): React.ReactNode => (
-			<Progress
+			<UsageBar
 				percent={Number(Number(value).toFixed(1))}
-				strokeColor={getStrokeColorForPercent('memory', Number(value))}
-				showInfo
+				color={getStrokeColorForPercent('memory', Number(value))}
 			/>
 		),
 	},

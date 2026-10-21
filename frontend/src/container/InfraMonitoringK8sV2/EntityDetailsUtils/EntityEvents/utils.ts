@@ -1,3 +1,4 @@
+import type { StatusTone } from 'components/PageTemplate/types';
 import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
@@ -132,4 +133,16 @@ export function getEntityEventsQueryPayload({
 		},
 		queryData,
 	};
+}
+
+/** Kubernetes events are Normal or Warning; collectors map them to log severities. */
+export function severityTone(severity: string): StatusTone {
+	const value = severity.toUpperCase();
+	if (value.startsWith('WARN')) {
+		return 'warning';
+	}
+	if (value.startsWith('ERR') || value.startsWith('FATAL')) {
+		return 'error';
+	}
+	return 'neutral';
 }

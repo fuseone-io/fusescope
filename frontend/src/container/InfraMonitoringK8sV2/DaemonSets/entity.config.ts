@@ -150,7 +150,6 @@ export const daemonSetEntityConfig: K8sEntityConfig<
 				getQueryPayload: getDaemonSetPodMetricsQueryPayload,
 				category: InfraMonitoringEntity.DAEMONSETS,
 				queryKey: 'daemonSetPodMetrics',
-				docBasePath: '/infrastructure-monitoring/kubernetes/daemonsets/',
 			}),
 		],
 	},

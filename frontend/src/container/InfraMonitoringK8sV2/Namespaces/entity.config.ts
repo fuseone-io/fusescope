@@ -126,7 +126,6 @@ const namespaceCustomTabs = [
 		getQueryPayload: getNamespacePodMetricsQueryPayload,
 		category: InfraMonitoringEntity.NAMESPACES,
 		queryKey: 'namespacePodMetrics',
-		docBasePath: '/infrastructure-monitoring/kubernetes/namespaces/',
 	}),
 ];
 

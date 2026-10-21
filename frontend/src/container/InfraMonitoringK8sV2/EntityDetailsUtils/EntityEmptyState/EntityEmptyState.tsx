@@ -1,8 +1,6 @@
-import { Typography } from '@signozhq/ui/typography';
+import { Inbox, SearchX } from 'lucide-react';
 
-import emptyStateUrl from '@/assets/Icons/emptyState.svg';
-
-import styles from './EntityEmptyState.module.scss';
+import InfraEmptyState from '../../components/InfraEmptyState';
 
 interface EntityEmptyStateProps {
 	hasFilters: boolean;
@@ -11,22 +9,17 @@ interface EntityEmptyStateProps {
 export default function EntityEmptyState({
 	hasFilters,
 }: EntityEmptyStateProps): JSX.Element {
-	return (
-		<div className={styles.container}>
-			<div className={styles.content}>
-				<img src={emptyStateUrl} alt="empty-state" className={styles.icon} />
-				{hasFilters ? (
-					<Typography.Text>
-						<span className={styles.title}>This query had no results. </span>
-						Edit your query and try again!
-					</Typography.Text>
-				) : (
-					<Typography.Text>
-						<span className={styles.title}>No data yet. </span>
-						When we receive data, it will show up here.
-					</Typography.Text>
-				)}
-			</div>
-		</div>
+	return hasFilters ? (
+		<InfraEmptyState
+			icon={<SearchX />}
+			title="This query had no results."
+			description="Edit your query and try again!"
+		/>
+	) : (
+		<InfraEmptyState
+			icon={<Inbox />}
+			title="No data yet."
+			description="When we receive data, it will show up here."
+		/>
 	);
 }

@@ -38,6 +38,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import {
 	getHostMetricsQueryPayload,
 	hostDetailsMetadataConfig,
+	hostGetStatus,
 	hostGetEntityName,
 	hostGetSelectedItemExpression,
 	hostInitialEventsExpression,
@@ -269,6 +270,7 @@ function Hosts(): JSX.Element {
 				getInitialLogTracesExpression={getInitialLogTracesExpression}
 				getInitialEventsExpression={hostInitialEventsExpression}
 				metadataConfig={hostDetailsMetadataConfig}
+				getStatus={hostGetStatus}
 				entityWidgetInfo={hostWidgetInfo}
 				getEntityQueryPayload={getHostMetricsQueryPayload}
 				queryKeyPrefix="hosts"

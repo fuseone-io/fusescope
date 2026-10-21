@@ -102,7 +102,7 @@ describe('K8sBaseDetails - back navigation', () => {
 	});
 
 	it('returns to the resource this one was opened from', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onUrlUpdate = jest.fn();
 
 		useDrawerHistoryStore.getState().push(NODE_ENTRY);
@@ -133,7 +133,7 @@ describe('K8sBaseDetails - back navigation', () => {
 	});
 
 	it('drops the trail when the drawer is dismissed', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		useDrawerHistoryStore.getState().push(NODE_ENTRY);
 

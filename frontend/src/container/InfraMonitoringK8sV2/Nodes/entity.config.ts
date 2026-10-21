@@ -15,6 +15,7 @@ import { InfraMonitoringEntity } from '../constants';
 import {
 	getNodeMetricsQueryPayload,
 	k8sNodeDetailsMetadataConfig,
+	k8sNodeGetStatus,
 	k8sNodeGetEntityName,
 	k8sNodeGetSelectedItemExpression,
 	k8sNodeInitialEventsExpression,
@@ -141,6 +142,7 @@ export const nodeEntityConfig: K8sEntityConfig<
 		getInitialLogTracesExpression: k8sNodeInitialLogTracesExpression,
 		getInitialEventsExpression: k8sNodeInitialEventsExpression,
 		metadataConfig: k8sNodeDetailsMetadataConfig,
+		getStatus: k8sNodeGetStatus,
 		entityWidgetInfo: nodeWidgetInfo,
 		getEntityQueryPayload: getNodeMetricsQueryPayload,
 	},

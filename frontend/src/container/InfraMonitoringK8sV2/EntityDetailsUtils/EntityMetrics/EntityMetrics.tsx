@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Skeleton } from 'antd';
 import cx from 'classnames';
 import { InfraMonitoringEvents } from 'constants/events';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -28,7 +27,10 @@ import { K8sDetailsWidgetInfo } from 'container/InfraMonitoringK8sV2/Base/types'
 
 import { buildEntityMetricsChartConfig } from './configBuilder';
 import ChartHeader from './ChartHeader';
+import EntityChartLegend from './EntityChartLegend';
 
+import { Skeleton } from 'components/ui/skeleton';
+import EntityTabToolbar from '../EntityTabToolbar';
 import EntityDateTimeSelector from '../EntityDateTimeSelector/EntityDateTimeSelector';
 import { useEntityDetailsTime } from '../EntityDateTimeSelector/useEntityDetailsTime';
 import { useEntityMetrics } from './hooks';
@@ -81,6 +83,16 @@ function EntityMetrics<T>({
 
 	const [tooltipPortalEl, setTooltipPortalEl] = useState<HTMLDivElement | null>(
 		null,
+	);
+	const [legendEls, setLegendEls] = useState<Record<number, HTMLDivElement>>({});
+	const legendRef = useCallback(
+		(idx: number) =>
+			(el: HTMLDivElement | null): void => {
+				if (el) {
+					setLegendEls((prev) => (prev[idx] === el ? prev : { ...prev, [idx]: el }));
+				}
+			},
+		[],
 	);
 
 	const isDarkMode = useIsDarkMode();
@@ -142,7 +154,12 @@ function EntityMetrics<T>({
 			query.isFetching ||
 			!visibilities[idx]
 		) {
-			return <Skeleton />;
+			return (
+				<div className="tw:flex tw:h-full tw:flex-col tw:gap-2 tw:pt-2">
+					<Skeleton className="tw:h-4 tw:w-1/3 tw:bg-muted" />
+					<Skeleton className="tw:w-full tw:flex-1 tw:bg-muted" />
+				</div>
+			);
 		}
 
 		if (query.error && !isKeyNotFoundError(query.error)) {
@@ -172,6 +189,13 @@ function EntityMetrics<T>({
 							config={configs[idx]}
 							data={chartData[idx]}
 							legendConfig={{ position: LegendPosition.BOTTOM }}
+							showLegend={false}
+							layoutChildren={
+								<EntityChartLegend
+									config={configs[idx]}
+									container={legendEls[idx] ?? null}
+								/>
+							}
 							width={dimensions.width}
 							height={dimensions.height}
 							timezone={timezone}
@@ -199,13 +223,15 @@ function EntityMetrics<T>({
 		<>
 			<div ref={setTooltipPortalEl} style={{ display: 'contents' }} />
 
-			<div className={styles.metricsHeader}>
-				<EntityDateTimeSelector
-					eventEntity={eventEntity}
-					category={category}
-					view={InfraMonitoringEvents.MetricsView}
-				/>
-			</div>
+			<EntityTabToolbar
+				time={
+					<EntityDateTimeSelector
+						eventEntity={eventEntity}
+						category={category}
+						view={InfraMonitoringEvents.MetricsView}
+					/>
+				}
+			/>
 			<div className={styles.entityMetricsContainer}>
 				{queries.map((query, idx) => (
 					<div
@@ -215,7 +241,6 @@ function EntityMetrics<T>({
 					>
 						<ChartHeader
 							title={entityWidgetInfo[idx].title}
-							docPath={entityWidgetInfo[idx].docPath}
 							tooltip={entityWidgetInfo[idx].description}
 							metricsExplorerUrl={
 								queryPayloads[idx] && queryPayloads[idx].graphType !== PANEL_TYPES.TABLE
@@ -231,6 +256,7 @@ function EntityMetrics<T>({
 									: undefined
 							}
 							metricsExplorerTestId={`open-metrics-explorer-${idx}`}
+							legendRef={legendRef(idx)}
 							onExploreClick={(): void =>
 								logInfraExplorerNavigatedEvent({
 									entityType: category,

@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { ArrowLeft, X } from '@signozhq/icons';
-import { Divider } from '@signozhq/ui/divider';
-import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper, DrawerWrapperProps } from '@signozhq/ui/drawer';
 import { toast } from '@signozhq/ui/sonner';
-import { Typography } from '@signozhq/ui/typography';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import { Button } from 'components/ui/button';
+import { ArrowLeft, X } from 'lucide-react';
+import { Dialog as DialogPrimitive } from 'radix-ui';
 import logEvent from 'api/common/logEvent';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import APIError from 'types/api/error';
@@ -24,6 +23,7 @@ import { useInfraMonitoringSelectedItemParams } from '../hooks';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import LoadingContainer from '../LoadingContainer';
 
+import EntityDetailSheet from './components/EntityDetailSheet';
 import K8sBaseDetailsContent from './K8sBaseDetailsContent';
 import { CategoryIcon } from './categoryIcons';
 import { getEntityNameAttributeKey } from './relations';
@@ -32,7 +32,6 @@ import { usePrimeEntityDetails } from './usePrimeEntityDetails';
 import { K8sBaseDetailsProps } from './types';
 import { useDrawerLifecycleStore } from './useDrawerLifecycleStore';
 
-import styles from '../EntityDetailsUtils/entityDetails.module.scss';
 import { INFRA_MONITORING_DETAILS_CACHE_TIME } from 'constants/queryCacheTime';
 
 export type {
@@ -43,27 +42,6 @@ export type {
 	K8sDetailsFilters,
 	K8sDetailsMetadataConfig,
 } from './types';
-
-// TODO(H4ad): Improve this on component level
-const DRAWER_TRANSITION = { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] };
-// Be careful when changing these props, this must be animated with transform but later
-// replaced with none, otherwise, the tooltip of the chart will be not positioned correctly
-// due to how the tooltip positioning calculation works
-const DRAWER_MOTION_PROPS = {
-	onOpenAutoFocus: (e: Event): void => e.preventDefault(),
-	initial: { opacity: 0, transform: 'translateX(100%)' },
-	animate: {
-		opacity: 1,
-		transform: 'translateX(0%)',
-		transition: DRAWER_TRANSITION,
-		transitionEnd: { transform: 'none' },
-	},
-	exit: {
-		opacity: 0,
-		transform: 'translateX(100%)',
-		transition: DRAWER_TRANSITION,
-	},
-} as unknown as DrawerWrapperProps['drawerContentProps'];
 
 export default function K8sBaseDetails<T>({
 	category,
@@ -82,6 +60,7 @@ export default function K8sBaseDetails<T>({
 	hideDetailViewTabs = false,
 	tabsConfig,
 	customTabs,
+	getStatus,
 }: K8sBaseDetailsProps<T>): JSX.Element {
 	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
@@ -240,10 +219,10 @@ export default function K8sBaseDetails<T>({
 		: '';
 	const backLabel = previousEntry ? `${backTarget}: ${previousEntry.label}` : '';
 
-	// TODO(H4ad): Improve this on component level
-	// DrawerWrapper types `title` as string but renders any ReactNode.
-	const drawerTitle = (
-		<>
+	const status = entity && getStatus ? getStatus(entity) : null;
+
+	const header = (
+		<div className="fs-ui tw:flex tw:flex-none tw:items-center tw:gap-3 tw:border-b tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3 tw:font-sans">
 			{/* One control: step back where there is a trail, close otherwise.
 			    Clicking outside the drawer closes it either way. The label is text
 			    rather than a tooltip, which a click on the control would dismiss. */}
@@ -251,61 +230,64 @@ export default function K8sBaseDetails<T>({
 				<Button
 					variant="ghost"
 					size="sm"
-					color="secondary"
 					onClick={handleBack}
-					testId="drawer-back-button"
+					data-testid="drawer-back-button"
 					aria-label={backLabel}
-					prefix={<ArrowLeft size={14} />}
+					className="tw:text-muted-foreground"
 				>
+					<ArrowLeft />
 					{backTarget}
 				</Button>
 			) : (
 				<Button
 					variant="ghost"
-					size="sm"
-					color="secondary"
-					icon
+					size="icon-sm"
 					aria-label="Close"
 					onClick={handleClose}
-					testId="close-drawer-button"
+					data-testid="close-drawer-button"
+					className="tw:text-muted-foreground"
 				>
 					<X />
 				</Button>
 			)}
-			<Divider type="vertical" />
-			<span className={styles.entityKind} data-testid="drawer-entity-kind">
+			<span aria-hidden="true" className="tw:h-5 tw:w-px tw:bg-border" />
+			<span
+				className="tw:inline-flex tw:h-6 tw:flex-none tw:items-center tw:gap-1.5 tw:rounded-md tw:bg-primary-soft tw:px-2 tw:text-[11px] tw:font-medium tw:tracking-[0.06em] tw:text-primary-ink tw:uppercase"
+				data-testid="drawer-entity-kind"
+			>
 				<CategoryIcon category={category} />
 				{K8S_CATEGORY_SINGULAR_LABELS[category]}
 			</span>
-			<Typography.Text className={styles.title}>
+			<DialogPrimitive.Title className="tw:min-w-0 tw:truncate tw:font-mono tw:text-base tw:font-medium tw:text-foreground">
 				{entityName ||
 					((isEntityError || hasResponseError) && 'Failed to load entity details') ||
 					(isEntityLoading && 'Loading...') ||
 					'-'}
-			</Typography.Text>
+			</DialogPrimitive.Title>
 			<CopyButton
 				value={entityName || selectedItem || ''}
 				ariaLabel={`Copy ${K8S_CATEGORY_SINGULAR_LABELS[category]} name`}
 				testId="copy-id-button"
 				onCopy={handleCopyId}
 			/>
-		</>
-	) as unknown as string;
+			{status && (
+				<StatusBadge tone={status.tone} dot testId="drawer-entity-status">
+					{status.label}
+				</StatusBadge>
+			)}
+		</div>
+	);
 
 	return (
-		<DrawerWrapper
+		<EntityDetailSheet
 			open={!!selectedItem}
 			onOpenChange={handleOpenChange}
-			direction="right"
-			title={drawerTitle}
-			showCloseButton={false}
-			drawerContentProps={DRAWER_MOTION_PROPS}
-			className={styles.entityDetailDrawer}
+			header={header}
 		>
 			{(isEntityLoading || !selectedItem) && <LoadingContainer />}
 
 			{selectedItem && (isEntityError || hasResponseError) && (
-				<div className="entity-error-container">
+				<div className="tw:max-w-3xl">
 					<ErrorContent
 						error={
 							entityResponse?.error ??
@@ -351,6 +333,6 @@ export default function K8sBaseDetails<T>({
 					/>
 				</GlobalTimeProvider>
 			)}
-		</DrawerWrapper>
+		</EntityDetailSheet>
 	);
 }

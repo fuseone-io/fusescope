@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import type { StatusTone } from 'components/PageTemplate/types';
 import {
 	InframonitoringtypesContainerStatusDTO,
 	InframonitoringtypesNodeConditionDTO,
@@ -57,6 +58,11 @@ export type K8sTableRowData<T> = T & {
 	groupedByMeta?: Record<string, string>;
 };
 
+export interface EntityStatus {
+	label: string;
+	tone: StatusTone;
+}
+
 export interface K8sDetailsMetadataConfig<T> {
 	label: string;
 	getValue: (entity: T) => string | number;
@@ -72,7 +78,6 @@ export interface K8sDetailsFilters {
 export interface K8sDetailsWidgetInfo {
 	title: string;
 	yAxisUnit: string;
-	docPath?: string;
 	description?: string;
 }
 
@@ -132,6 +137,8 @@ export interface K8sBaseDetailsProps<T> {
 	hideDetailViewTabs?: boolean;
 	tabsConfig?: K8sDetailsTabsConfig;
 	customTabs?: K8sDetailsCustomTab<T>[];
+	/** Shown beside the name in the header; omitted for kinds without one. */
+	getStatus?: (entity: T) => EntityStatus | null;
 }
 
 export interface K8sBaseDetailsContentProps<T> {

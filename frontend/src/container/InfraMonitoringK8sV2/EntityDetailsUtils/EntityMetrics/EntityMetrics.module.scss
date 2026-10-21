@@ -1,37 +1,23 @@
 .entityMetricsContainer {
-	display: flex;
-	flex-wrap: wrap;
-	margin-top: 1rem;
-	margin-left: -12px;
-	margin-right: -12px;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr));
+	gap: 16px;
 }
 
 .entityMetricsCol {
-	flex: 0 0 50%;
-	max-width: 50%;
-	padding-left: 12px;
-	padding-right: 12px;
-	box-sizing: border-box;
-}
-
-.metricsHeader {
 	display: flex;
-	justify-content: flex-end;
-	margin-top: 1rem;
-
-	gap: 8px;
-	padding: 12px;
-	border-radius: 3px;
-	border: 1px solid var(--l1-border);
+	flex-direction: column;
+	min-width: 0;
+	overflow: hidden;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
 }
 
 .entityMetricsCard {
 	position: relative;
-	margin: 8px 0 1rem 0;
-	height: 300px;
-	padding: 10px;
-	border: 1px solid var(--l1-border);
-	border-radius: 3px;
+	height: 280px;
+	padding: 8px 12px 12px;
 
 	.chartContainer {
 		width: 100%;

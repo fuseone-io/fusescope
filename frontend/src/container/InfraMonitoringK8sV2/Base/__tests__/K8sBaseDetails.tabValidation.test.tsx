@@ -102,7 +102,9 @@ function renderK8sBaseDetails({
 }
 
 function getSelectedTabText(): string | null {
-	const selectedTab = document.querySelector('[aria-pressed="true"]');
+	const selectedTab = document.querySelector(
+		'[role="tab"][aria-selected="true"]',
+	);
 	return selectedTab?.textContent ?? null;
 }
 
@@ -230,7 +232,7 @@ describe('K8sBaseDetails - Tab Validation', () => {
 	});
 
 	it('should keep the selected tab when the active tab is clicked again (untoggle guard)', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		act(() => {
 			renderK8sBaseDetails({ view: VIEW_TYPES.LOGS });
@@ -244,7 +246,9 @@ describe('K8sBaseDetails - Tab Validation', () => {
 			expect(getSelectedTabText()).toContain('Logs');
 		});
 
-		const selectedTab = document.querySelector('[aria-pressed="true"]');
+		const selectedTab = document.querySelector(
+			'[role="tab"][aria-selected="true"]',
+		);
 		expect(selectedTab).not.toBeNull();
 
 		await user.click(selectedTab as Element);

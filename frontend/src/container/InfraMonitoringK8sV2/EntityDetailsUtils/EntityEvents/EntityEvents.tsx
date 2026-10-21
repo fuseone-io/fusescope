@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Table, TableColumnsType } from 'antd';
+import { severityTone } from './utils';
 import logEvent from 'api/common/logEvent';
 import {
 	QuerySearchV2Provider,
@@ -21,13 +22,15 @@ import Controls from 'container/Controls';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import LoadingContainer from 'container/InfraMonitoringK8sV2/LoadingContainer';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { useQueryState } from 'nuqs';
 import { DataSource } from 'types/common/queryBuilder';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 import { validateQuery } from 'utils/queryValidationUtils';
 
+import EntityTabToolbar from '../EntityTabToolbar';
 import EntityDateTimeSelector from '../EntityDateTimeSelector/EntityDateTimeSelector';
 import { useEntityDetailsTime } from '../EntityDateTimeSelector/useEntityDetailsTime';
 import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
@@ -174,7 +177,15 @@ function EntityEventsContent({
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const columns: TableColumnsType<EventDataType> = useMemo(
 		() => [
-			{ title: 'Severity', dataIndex: 'severity', key: 'severity', width: 100 },
+			{
+				title: 'Severity',
+				dataIndex: 'severity',
+				key: 'severity',
+				width: 110,
+				render: (value: string): JSX.Element => (
+					<StatusBadge tone={severityTone(value)}>{value}</StatusBadge>
+				),
+			},
 			{
 				title: 'Timestamp',
 				dataIndex: 'timestamp',
@@ -230,22 +241,22 @@ function EntityEventsContent({
 
 	return (
 		<div className={styles.container}>
-			<div className={styles.filterContainer}>
-				<div className={styles.filterContainerTime}>
+			<EntityTabToolbar
+				time={
 					<EntityDateTimeSelector
 						eventEntity={eventEntity}
 						category={category}
 						view={InfraMonitoringEvents.EventsView}
 					/>
-
+				}
+				run={
 					<RunQueryBtn
 						isLoadingQueries={isFetching}
 						onStageRunQuery={(): void => handleRunQuery()}
 						handleCancelQuery={cancel}
 					/>
-				</div>
-
-				<div className={styles.filterQuerySearch}>
+				}
+				search={
 					<QuerySearch
 						onChange={querySearchOnChange}
 						queryData={queryData}
@@ -253,8 +264,8 @@ function EntityEventsContent({
 						onRun={handleRunQuery}
 						initialExpression={querySearchInitialExpressionProp}
 					/>
-				</div>
-			</div>
+				}
+			/>
 
 			{isLoading && formattedEvents.length === 0 && <LoadingContainer />}
 

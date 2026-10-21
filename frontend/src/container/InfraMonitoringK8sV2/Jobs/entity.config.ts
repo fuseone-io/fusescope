@@ -150,7 +150,6 @@ export const jobEntityConfig: K8sEntityConfig<
 				getQueryPayload: getJobPodMetricsQueryPayload,
 				category: InfraMonitoringEntity.JOBS,
 				queryKey: 'jobPodMetrics',
-				docBasePath: '/infrastructure-monitoring/kubernetes/jobs/',
 			}),
 		],
 	},

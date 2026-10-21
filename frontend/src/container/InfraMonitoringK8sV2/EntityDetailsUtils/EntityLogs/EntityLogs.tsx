@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import LogDetail from 'components/LogDetail';
 import RawLogView from 'components/Logs/RawLogView';
@@ -32,6 +31,7 @@ import { ILog } from 'types/api/logs/log';
 import { DataSource } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/queryValidationUtils';
 
+import EntityTabToolbar from '../EntityTabToolbar';
 import EntityDateTimeSelector from '../EntityDateTimeSelector/EntityDateTimeSelector';
 import { useEntityDetailsTime } from '../EntityDateTimeSelector/useEntityDetailsTime';
 import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
@@ -246,7 +246,7 @@ function EntityLogsContent({
 
 	const renderContent = useMemo(
 		() => (
-			<Card bordered={false} className={styles.listCard}>
+			<div className={styles.listCard}>
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
 						key="entity-logs-virtuoso"
@@ -261,7 +261,7 @@ function EntityLogsContent({
 						}}
 					/>
 				</OverlayScrollbar>
-			</Card>
+			</div>
 		),
 		[logs, loadMoreLogs, getItemContent, renderFooter],
 	);
@@ -275,22 +275,22 @@ function EntityLogsContent({
 
 	return (
 		<div className={styles.container}>
-			<div className={styles.filterContainer}>
-				<div className={styles.filterContainerTime}>
+			<EntityTabToolbar
+				time={
 					<EntityDateTimeSelector
 						eventEntity={eventEntity}
 						category={category}
 						view={InfraMonitoringEvents.LogsView}
 					/>
-
+				}
+				run={
 					<RunQueryBtn
 						isLoadingQueries={isFetching}
 						onStageRunQuery={(): void => handleRunQuery()}
 						handleCancelQuery={cancel}
 					/>
-				</div>
-
-				<div className={styles.filterQuerySearch}>
+				}
+				search={
 					<QuerySearch
 						onChange={querySearchOnChange}
 						queryData={queryData}
@@ -298,8 +298,8 @@ function EntityLogsContent({
 						onRun={handleRunQuery}
 						initialExpression={querySearchInitialExpressionProp}
 					/>
-				</div>
-			</div>
+				}
+			/>
 			<div className={styles.logs}>
 				{showInitialLoading && <LogsLoading />}
 				{isDataEmpty && <EntityEmptyState hasFilters={hasAdditionalFilters} />}

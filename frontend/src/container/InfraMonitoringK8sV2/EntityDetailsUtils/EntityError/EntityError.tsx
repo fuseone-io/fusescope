@@ -1,12 +1,11 @@
-import { Typography } from '@signozhq/ui/typography';
+import { FUSESCOPE_NEW_ISSUE_URL } from 'components/AppSidebar/constants';
+import { Button } from 'components/ui/button';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { ArrowRight } from '@signozhq/icons';
+import { ArrowRight, TriangleAlert } from 'lucide-react';
 import { openInNewTab } from 'utils/navigation';
 
-import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
-
-import styles from './EntityError.module.scss';
+import InfraEmptyState from '../../components/InfraEmptyState';
 
 export default function EntityError(): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
@@ -15,36 +14,21 @@ export default function EntityError(): JSX.Element {
 		if (isCloudUserVal) {
 			history.push('/support');
 		} else {
-			openInNewTab('https://signoz.io/slack');
+			openInNewTab(FUSESCOPE_NEW_ISSUE_URL);
 		}
 	};
 
 	return (
-		<div className={styles.container}>
-			<div className={styles.content}>
-				<img src={awwSnapUrl} alt="error" className={styles.icon} />
-				<Typography.Text>
-					<span className={styles.title}>Aw snap :/ </span>
-					Something went wrong. Please try again or contact support.
-				</Typography.Text>
-
-				<div
-					className={styles.contactSupport}
-					onClick={handleContactSupport}
-					role="button"
-					tabIndex={0}
-					onKeyDown={(e): void => {
-						if (e.key === 'Enter') {
-							handleContactSupport();
-						}
-					}}
-				>
-					<Typography.Link className={styles.contactSupportText}>
-						Contact Support
-					</Typography.Link>
-					<ArrowRight size={14} />
-				</div>
-			</div>
-		</div>
+		<InfraEmptyState
+			icon={<TriangleAlert />}
+			title="Aw snap :/"
+			description="Something went wrong. Please try again or contact support."
+			actions={
+				<Button variant="outline" size="sm" onClick={handleContactSupport}>
+					Contact Support
+					<ArrowRight />
+				</Button>
+			}
+		/>
 	);
 }

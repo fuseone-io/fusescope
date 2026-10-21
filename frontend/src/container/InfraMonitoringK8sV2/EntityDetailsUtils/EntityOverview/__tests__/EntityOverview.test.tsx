@@ -162,7 +162,7 @@ describe('EntityOverview', () => {
 	});
 
 	it('opens the clicked resource in its own drawer', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onUrlUpdate = jest.fn();
 
 		renderOverview({ onUrlUpdate });
@@ -183,7 +183,7 @@ describe('EntityOverview', () => {
 	});
 
 	it("forgets the previous drawer's resource when another one opens", async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		const { openAnotherResource } = renderOverview();
 
@@ -213,7 +213,7 @@ describe('EntityOverview', () => {
 	});
 
 	it('switches the listed resource from the dropdown', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		renderOverview();
 

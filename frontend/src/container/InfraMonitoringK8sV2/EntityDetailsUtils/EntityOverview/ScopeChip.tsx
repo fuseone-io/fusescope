@@ -1,5 +1,5 @@
-import { Lock } from '@signozhq/icons';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { Lock } from 'lucide-react';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 
 import { RelatedFilterClause } from '../../Base/relations';
@@ -23,7 +23,7 @@ export function ScopeChip({
 	const relation = clauses[clauses.length - 1];
 
 	return (
-		<Tooltip title={expression} side="top">
+		<TitleTooltip title={expression} side="top">
 			<span className={styles.scopeChip} data-testid="overview-locked-scope">
 				<Lock size={12} />
 				<span className={styles.scopeExpression}>
@@ -37,6 +37,6 @@ export function ScopeChip({
 					<span className={styles.scopeMore}>{`+${clauses.length - 1}`}</span>
 				)}
 			</span>
-		</Tooltip>
+		</TitleTooltip>
 	);
 }
