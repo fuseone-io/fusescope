@@ -6,22 +6,16 @@ import {
 	apDexToolTipUrl,
 	apDexToolTipUrlText,
 } from 'constants/apDex';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import ServiceChart from 'container/MetricsApplication/components/ServiceChart';
 import { APDEX_SERIES } from 'container/MetricsApplication/components/serviceChartSeries';
-import {
-	GraphTitle,
-	SERVICE_CHART_ID,
-} from 'container/MetricsApplication/constant';
-import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
+import { GraphTitle } from 'container/MetricsApplication/constant';
 import {
 	apDexMetricsQueryBuilderQueries,
 	apDexTracesQueryBuilderQueries,
 } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
-import { EQueryType } from 'types/common/dashboard';
-import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from '../../types';
+import { apdexWidget } from './apdexWidget';
 import { ApDexMetricsProps } from './types';
 
 function ApDexMetrics({
@@ -40,32 +34,23 @@ function ApDexMetrics({
 	const servicename = decodeURIComponent(encodedServiceName);
 	const apDexMetricsWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				query: {
-					queryType: EQueryType.QUERY_BUILDER,
-					promql: [],
-					builder: isSpanMetricEnable
-						? apDexMetricsQueryBuilderQueries({
-								servicename,
-								tagFilterItems,
-								topLevelOperationsRoute,
-								threashold: thresholdValue || 0,
-								delta: delta || false,
-								metricsBuckets: metricsBuckets || [],
-							})
-						: apDexTracesQueryBuilderQueries({
-								servicename,
-								tagFilterItems,
-								topLevelOperationsRoute,
-								threashold: thresholdValue || 0,
-							}),
-					clickhouse_sql: [],
-					id: uuid(),
-				},
-				title: GraphTitle.APDEX,
-				panelTypes: PANEL_TYPES.TIME_SERIES,
-				id: SERVICE_CHART_ID.apdex,
-			}),
+			apdexWidget(
+				isSpanMetricEnable
+					? apDexMetricsQueryBuilderQueries({
+							servicename,
+							tagFilterItems,
+							topLevelOperationsRoute,
+							threashold: thresholdValue || 0,
+							delta: delta || false,
+							metricsBuckets: metricsBuckets || [],
+						})
+					: apDexTracesQueryBuilderQueries({
+							servicename,
+							tagFilterItems,
+							topLevelOperationsRoute,
+							threashold: thresholdValue || 0,
+						}),
+			),
 		[
 			delta,
 			isSpanMetricEnable,

@@ -67,23 +67,43 @@ export function percentileBucket(
 	);
 }
 
-/** Requests up to the largest bound at or below `ms`. */
-function countUpTo(buckets: LatencyBucket[], ms: number): number {
-	return buckets
-		.filter((bucket) => bucket.le <= ms)
-		.reduce((highest, bucket) => Math.max(highest, bucket.cumulative), 0);
+export interface ApdexCounts {
+	/** Every request, failed ones included. */
+	total: number;
+	/** OK requests within T. */
+	satisfied: number;
+	/** OK requests within 4T but over T. */
+	tolerating: number;
 }
 
-/** Apdex at threshold T (ms), read off bucket bounds: satisfied ≤ T, tolerating ≤ 4T. */
+/** Failed requests count as frustrated: they are in the total only. */
+export function apdexScore({
+	total,
+	satisfied,
+	tolerating,
+}: ApdexCounts): number | undefined {
+	return total > 0 ? (satisfied + tolerating / 2) / total : undefined;
+}
+
+/** Requests up to the smallest bound at or above `ms`, as the Apdex chart reads `le`. */
+function countAtOrAbove(buckets: LatencyBucket[], ms: number): number {
+	const bucket = buckets.find((item) => item.le >= ms);
+	return bucket?.cumulative ?? buckets[buckets.length - 1]?.cumulative ?? 0;
+}
+
+/**
+ * Apdex at threshold T (ms) from the buckets of OK requests over all `total`
+ * requests; T and 4T round up to the next bucket bound, as the chart does.
+ */
 export function apdexFromBuckets(
-	buckets: LatencyBucket[],
+	okBuckets: LatencyBucket[],
 	thresholdMs: number,
+	total: number,
 ): number | undefined {
-	const total = buckets[buckets.length - 1]?.cumulative ?? 0;
-	if (total <= 0) {
-		return undefined;
-	}
-	const satisfied = countUpTo(buckets, thresholdMs);
-	const tolerating = countUpTo(buckets, thresholdMs * 4) - satisfied;
-	return (satisfied + tolerating / 2) / total;
+	const satisfied = countAtOrAbove(okBuckets, thresholdMs);
+	return apdexScore({
+		total,
+		satisfied,
+		tolerating: countAtOrAbove(okBuckets, thresholdMs * 4) - satisfied,
+	});
 }

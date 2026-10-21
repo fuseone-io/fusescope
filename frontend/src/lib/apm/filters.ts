@@ -7,8 +7,12 @@ export const entrySpansFilter = 'isRoot = true OR isEntryPoint = true';
 
 export const errorSpansFilter = 'has_error = true';
 
+export const okSpansFilter = 'has_error = false';
+
 /** Span metrics mark failed calls with this `status.code`. */
 export const metricErrorFilter = "status.code = 'STATUS_CODE_ERROR'";
+
+export const metricOkFilter = "status.code != 'STATUS_CODE_ERROR'";
 
 export function quote(value: string): string {
 	return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
