@@ -1,5 +1,4 @@
-import { Color } from '@signozhq/design-tokens';
-import type { BadgeColorType } from '@signozhq/ui/badge';
+import type { StatusTone } from 'components/PageTemplate/types';
 import {
 	InframonitoringtypesContainerCountsByReadyDTO,
 	InframonitoringtypesContainerCountsByStatusDTO,
@@ -10,9 +9,6 @@ import {
 
 import { StatusCountItem } from '../components/GroupedStatusCounts';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
-
-export const CONTAINERS_DOC_PATH =
-	'/infrastructure-monitoring/kubernetes/containers';
 
 /** Renders as `name:tag`; the tag is dropped when the image is not pinned. */
 export function getContainerImageWithTag(
@@ -50,22 +46,22 @@ export function getContainerPodUID(
 
 export const CONTAINER_STATUS_COLORS: Record<
 	InframonitoringtypesContainerStatusDTO,
-	BadgeColorType
+	StatusTone
 > = {
 	[InframonitoringtypesContainerStatusDTO.running]: 'success',
-	[InframonitoringtypesContainerStatusDTO.completed]: 'primary',
+	[InframonitoringtypesContainerStatusDTO.completed]: 'info',
 	[InframonitoringtypesContainerStatusDTO.waiting]: 'warning',
 	[InframonitoringtypesContainerStatusDTO.containercreating]: 'warning',
-	[InframonitoringtypesContainerStatusDTO.terminated]: 'archive',
-	[InframonitoringtypesContainerStatusDTO.unknown]: 'secondary',
-	[InframonitoringtypesContainerStatusDTO.no_data]: 'secondary',
-	[InframonitoringtypesContainerStatusDTO.crashloopbackoff]: 'danger',
-	[InframonitoringtypesContainerStatusDTO.imagepullbackoff]: 'danger',
-	[InframonitoringtypesContainerStatusDTO.errimagepull]: 'danger',
-	[InframonitoringtypesContainerStatusDTO.createcontainerconfigerror]: 'danger',
-	[InframonitoringtypesContainerStatusDTO.oomkilled]: 'danger',
-	[InframonitoringtypesContainerStatusDTO.error]: 'danger',
-	[InframonitoringtypesContainerStatusDTO.containercannotrun]: 'danger',
+	[InframonitoringtypesContainerStatusDTO.terminated]: 'neutral',
+	[InframonitoringtypesContainerStatusDTO.unknown]: 'neutral',
+	[InframonitoringtypesContainerStatusDTO.no_data]: 'neutral',
+	[InframonitoringtypesContainerStatusDTO.crashloopbackoff]: 'error',
+	[InframonitoringtypesContainerStatusDTO.imagepullbackoff]: 'error',
+	[InframonitoringtypesContainerStatusDTO.errimagepull]: 'error',
+	[InframonitoringtypesContainerStatusDTO.createcontainerconfigerror]: 'error',
+	[InframonitoringtypesContainerStatusDTO.oomkilled]: 'error',
+	[InframonitoringtypesContainerStatusDTO.error]: 'error',
+	[InframonitoringtypesContainerStatusDTO.containercannotrun]: 'error',
 };
 
 /** kubectl prints these as single CamelCase words, so the enum value alone is not a usable label. */
@@ -138,19 +134,19 @@ export function getContainerStatusItems(
 		{
 			value: counts.running,
 			label: 'Running',
-			color: Color.BG_FOREST_500,
+			color: 'var(--fs-success)',
 			statuses: [InframonitoringtypesContainerStatusDTO.running],
 		},
 		{
 			value: counts.completed,
 			label: 'Completed',
-			color: Color.BG_ROBIN_500,
+			color: 'var(--fs-primary)',
 			statuses: [InframonitoringtypesContainerStatusDTO.completed],
 		},
 		{
 			value: counts.waiting + counts.containerCreating,
 			label: 'Waiting',
-			color: Color.BG_AMBER_500,
+			color: 'var(--fs-warning)',
 			breakdown: [
 				{
 					label: 'Waiting',
@@ -171,19 +167,19 @@ export function getContainerStatusItems(
 		{
 			value: counts.terminated,
 			label: 'Terminated',
-			color: Color.BG_SIENNA_500,
+			color: 'var(--fs-warning)',
 			statuses: [InframonitoringtypesContainerStatusDTO.terminated],
 		},
 		{
 			value: counts.unknown,
 			label: 'Unknown',
-			color: Color.BG_SLATE_400,
+			color: 'var(--fs-subtle-foreground)',
 			statuses: [InframonitoringtypesContainerStatusDTO.unknown],
 		},
 		{
 			value: errorKeys.reduce((sum, key) => sum + counts[key], 0),
 			label: 'Error Status',
-			color: Color.BG_CHERRY_500,
+			color: 'var(--fs-error)',
 			breakdown: errorBreakdown,
 			statuses: errorBreakdown.flatMap((item) => item.statuses),
 		},
@@ -192,11 +188,11 @@ export function getContainerStatusItems(
 
 export const CONTAINER_READY_COLORS: Record<
 	InframonitoringtypesContainerReadyDTO,
-	BadgeColorType
+	StatusTone
 > = {
 	[InframonitoringtypesContainerReadyDTO.ready]: 'success',
-	[InframonitoringtypesContainerReadyDTO.not_ready]: 'danger',
-	[InframonitoringtypesContainerReadyDTO.no_data]: 'secondary',
+	[InframonitoringtypesContainerReadyDTO.not_ready]: 'error',
+	[InframonitoringtypesContainerReadyDTO.no_data]: 'neutral',
 };
 
 export const CONTAINER_READY_LABELS: Record<
@@ -212,7 +208,7 @@ export function getContainerReadyItems(
 	counts: InframonitoringtypesContainerCountsByReadyDTO,
 ): StatusCountItem[] {
 	return [
-		{ value: counts.ready, label: 'Ready', color: Color.BG_FOREST_500 },
-		{ value: counts.notReady, label: 'Not Ready', color: Color.BG_CHERRY_500 },
+		{ value: counts.ready, label: 'Ready', color: 'var(--fs-success)' },
+		{ value: counts.notReady, label: 'Not Ready', color: 'var(--fs-error)' },
 	];
 }

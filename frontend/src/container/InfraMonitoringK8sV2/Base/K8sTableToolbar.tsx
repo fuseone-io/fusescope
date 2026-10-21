@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
-import { Button } from '@signozhq/ui/button';
 import { Select } from 'antd';
-import { Download, SlidersVertical } from '@signozhq/icons';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { Button } from 'components/ui/button';
+import { Columns3, Download } from 'lucide-react';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
 
@@ -78,8 +78,8 @@ function K8sTableToolbar({
 
 	return (
 		<div className={styles.toolbar}>
-			<div className={styles.groupByContainer} data-testid="k8s-table-group-by">
-				<div className={styles.groupByLabel}>Group by</div>
+			<div className={styles.groupBy} data-testid="k8s-table-group-by">
+				<span className={styles.label}>Group by</span>
 				<Select
 					className={styles.groupBySelect}
 					data-testid="k8s-table-group-by-select"
@@ -94,41 +94,37 @@ function K8sTableToolbar({
 				/>
 			</div>
 
-			<div className={styles.spacer} />
+			<div className={styles.actions}>
+				{leftFilters}
 
-			{leftFilters}
+				{onDownload && (
+					<TitleTooltip title="Download">
+						<Button
+							aria-label="Download"
+							type="button"
+							variant="outline"
+							size="icon-sm"
+							data-testid="k8s-table-download-button"
+							onClick={onDownload}
+						>
+							<Download />
+						</Button>
+					</TitleTooltip>
+				)}
 
-			{onDownload && (
-				<Tooltip title="Download">
+				<TitleTooltip title="Columns and display options">
 					<Button
-						aria-label="Action"
+						aria-label="Columns and display options"
 						type="button"
-						variant="ghost"
-						size="sm"
-						icon
-						color="secondary"
-						testId="k8s-table-download-button"
-						onClick={onDownload}
+						variant="outline"
+						size="icon-sm"
+						data-testid="k8s-table-options-button"
+						onClick={onOpenOptionsDrawer}
 					>
-						<Download size={14} />
+						<Columns3 />
 					</Button>
-				</Tooltip>
-			)}
-
-			<Tooltip title="Options">
-				<Button
-					aria-label="Action"
-					type="button"
-					variant="ghost"
-					size="sm"
-					icon
-					color="secondary"
-					testId="k8s-table-options-button"
-					onClick={onOpenOptionsDrawer}
-				>
-					<SlidersVertical size={14} />
-				</Button>
-			</Tooltip>
+				</TitleTooltip>
+			</div>
 		</div>
 	);
 }

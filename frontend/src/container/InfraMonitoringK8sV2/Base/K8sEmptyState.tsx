@@ -1,18 +1,24 @@
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import { Button } from 'components/ui/button';
+import { fuseScopeDocsUrl } from 'constants/docs';
+import { CalendarClock, ExternalLink, SearchX, ShipWheel } from 'lucide-react';
 
-import emptyStateUrl from '@/assets/Icons/emptyState.svg';
-import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
-
+import InfraEmptyState from '../components/InfraEmptyState';
+import { InfraMonitoringEntity, K8S_CATEGORY_LABELS } from '../constants';
 import type { K8sBaseListEmptyStateContext } from './K8sBaseList';
 
-import styles from './K8sEmptyState.module.scss';
+type K8sEmptyStateProps = Partial<K8sBaseListEmptyStateContext> & {
+	entity: InfraMonitoringEntity;
+};
 
-type K8sEmptyStateProps = Partial<K8sBaseListEmptyStateContext>;
+const KUBERNETES_DOCS_URL = fuseScopeDocsUrl('/sending-data/kubernetes/');
 
 export function K8sEmptyState({
+	entity,
 	isError,
 	error,
 	isLoading,
+	hasFilters,
 	endTimeBeforeRetention,
 }: K8sEmptyStateProps): JSX.Element | null {
 	if (isLoading) {
@@ -21,52 +27,61 @@ export function K8sEmptyState({
 
 	if (isError || error) {
 		return (
-			<div className={styles.container}>
-				<div className={styles.errorContent}>
-					<ErrorContent
-						error={
-							error ?? {
-								code: 500,
-								message: 'An error occurred while fetching data.',
-							}
+			<div className="tw:w-full tw:max-w-3xl">
+				<ErrorContent
+					error={
+						error ?? {
+							code: 500,
+							message: 'An error occurred while fetching data.',
 						}
-					/>
-				</div>
+					}
+				/>
 			</div>
 		);
 	}
 
 	if (endTimeBeforeRetention) {
 		return (
-			<div className={styles.container}>
-				<div className={styles.content}>
-					<img className={styles.eyesEmoji} src={eyesEmojiUrl} alt="eyes emoji" />
-					<div className={styles.noDataMessage}>
-						<h5 className={styles.title}>
-							Queried time range is before earliest K8s metrics
-						</h5>
-						<span className={styles.message}>
-							Your requested end time is earlier than the earliest detected time of K8s
-							metrics data, please adjust your end time.
-						</span>
-					</div>
-				</div>
-			</div>
+			<InfraEmptyState
+				icon={<CalendarClock />}
+				title="Queried time range is before earliest K8s metrics"
+				description="Your requested end time is earlier than the earliest detected time of K8s metrics data, please adjust your end time."
+			/>
 		);
 	}
 
+	if (hasFilters) {
+		return (
+			<InfraEmptyState
+				icon={<SearchX />}
+				title={`No ${K8S_CATEGORY_LABELS[entity].toLowerCase()} match this filter`}
+				description="Edit the filter or widen the time range."
+			/>
+		);
+	}
+
+	const isHosts = entity === InfraMonitoringEntity.HOSTS;
+
 	return (
-		<div className={styles.container}>
-			<div className={styles.content}>
-				<img
-					src={emptyStateUrl}
-					alt="empty-state"
-					className={styles.emptyStateSvg}
-				/>
-				<span className={styles.message}>
-					This query had no results. Edit your query and try again!
-				</span>
-			</div>
-		</div>
+		<InfraEmptyState
+			testId="infra-onboarding"
+			icon={<ShipWheel />}
+			title={isHosts ? 'No host metrics yet' : 'No Kubernetes metrics yet'}
+			description={
+				isHosts
+					? 'Host metrics come from the collector’s hostmetrics receiver, which the k8s-infra chart runs on every node. None arrived in the selected range.'
+					: 'Install the k8s-infra chart to send node, pod and cluster metrics to FuseScope. None arrived in the selected range.'
+			}
+			actions={
+				<Button asChild variant="outline" size="sm">
+					<a href={KUBERNETES_DOCS_URL} target="_blank" rel="noopener noreferrer">
+						<span className="translate-safe">
+							{isHosts ? 'Set up host metrics' : 'Set up Kubernetes monitoring'}
+						</span>
+						<ExternalLink />
+					</a>
+				</Button>
+			}
+		/>
 	);
 }

@@ -617,9 +617,9 @@ describe('K8sBaseList', () => {
 			});
 		});
 
-		it('should display empty state when no data is returned', async () => {
+		it('should display the onboarding state when no data is returned', async () => {
 			await waitFor(() => {
-				expect(screen.getByText(/This query had no results/i)).toBeInTheDocument();
+				expect(screen.getByText('No Kubernetes metrics yet')).toBeInTheDocument();
 			});
 		});
 
@@ -1422,7 +1422,10 @@ describe('K8sBaseList', () => {
 			await expect(
 				screen.findByText('k8s.pod.cpu.limit'),
 			).resolves.toBeInTheDocument();
-			await expect(screen.findByText('Learn here')).resolves.toBeInTheDocument();
+			const fixLink = await screen.findByRole('link', {
+				name: /Learn how to fix/,
+			});
+			expect(fixLink).toHaveAttribute('href', 'https://example.com/docs');
 		});
 
 		it('should trigger recheck on button click', async () => {
@@ -1542,6 +1545,8 @@ describe('K8sBaseList', () => {
 			await expect(
 				screen.findByText('k8s.pod.memory.limit'),
 			).resolves.toBeInTheDocument();
+
+			expect(screen.getByText('1 of 3 need attention')).toBeInTheDocument();
 		});
 	});
 

@@ -1,10 +1,7 @@
-import { Typography } from '@signozhq/ui/typography';
-
 import {
 	EntityProgressBarType,
 	THRESHOLDS_BY_TYPE,
 } from './EntityProgressBar.utils';
-import styles from './EntityProgressThresholds.module.scss';
 
 interface EntityProgressThresholdsProps {
 	type: EntityProgressBarType;
@@ -17,37 +14,24 @@ export function EntityProgressThresholds({
 }: EntityProgressThresholdsProps): JSX.Element {
 	return (
 		<div
-			className={styles.container}
+			className="tw:flex tw:max-w-80 tw:flex-col tw:gap-2 tw:py-1 tw:text-left tw:text-wrap tw:normal-case tw:tracking-normal"
 			data-testid={`entity-progress-thresholds-${type}`}
 		>
-			{note && (
-				<Typography.Text as="p" size="small">
-					{note}
-				</Typography.Text>
-			)}
+			{note && <p>{note}</p>}
 			{THRESHOLDS_BY_TYPE[type].map((threshold) => (
-				<div key={threshold.range} className={styles.threshold}>
+				<div key={threshold.range} className="tw:flex tw:items-stretch tw:gap-2">
 					<span
-						className={styles.swatch}
-						style={{ '--ept-color': threshold.color } as React.CSSProperties}
+						className="tw:w-[3px] tw:flex-none tw:rounded-[1px]"
+						style={{ background: threshold.color }}
 					/>
-					<div className={styles.thresholdBody}>
-						<div className={styles.thresholdHeading}>
-							<Typography.Text as="span" size="small" weight="medium">
-								{threshold.label}
-							</Typography.Text>
-							<Typography.Text
-								as="span"
-								size="small"
-								color="muted"
-								className={styles.range}
-							>
+					<div className="tw:flex tw:flex-col tw:gap-0.5">
+						<div className="tw:flex tw:items-baseline tw:gap-1.5">
+							<span className="tw:font-medium">{threshold.label}</span>
+							<span className="tw:whitespace-nowrap tw:tabular-nums tw:opacity-70">
 								{threshold.range}
-							</Typography.Text>
+							</span>
 						</div>
-						<Typography.Text as="p" size="small" color="muted">
-							{threshold.description}
-						</Typography.Text>
+						<p className="tw:opacity-70">{threshold.description}</p>
 					</div>
 				</div>
 			))}

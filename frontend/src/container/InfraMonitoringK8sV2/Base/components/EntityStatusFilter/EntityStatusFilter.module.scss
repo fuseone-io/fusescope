@@ -1,7 +1,8 @@
 .statusFilterGroup {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: 12px;
+	gap: 8px 12px;
 }
 
 .statusFilter {
@@ -11,11 +12,11 @@
 }
 
 .statusFilterLabel {
-	color: var(--muted-foreground);
-	font-size: var(--periscope-font-size-base);
+	color: var(--fs-muted-foreground);
+	font-size: 13px;
 	white-space: nowrap;
 }
 
 .statusFilterControl {
-	min-width: 180px;
+	min-width: 160px;
 }

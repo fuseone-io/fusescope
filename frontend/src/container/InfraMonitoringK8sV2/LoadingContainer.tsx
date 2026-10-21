@@ -1,28 +1,14 @@
-import { Skeleton } from 'antd';
-
-import styles from './LoadingContainer.module.scss';
+import { Skeleton } from 'components/ui/skeleton';
 
 function LoadingContainer(): JSX.Element {
 	return (
-		<div className={styles.loadingState} data-testid="loader">
-			<Skeleton.Input
-				className={styles.loadingStateItem}
-				size="large"
-				block
-				active
-			/>
-			<Skeleton.Input
-				className={styles.loadingStateItem}
-				size="large"
-				block
-				active
-			/>
-			<Skeleton.Input
-				className={styles.loadingStateItem}
-				size="large"
-				block
-				active
-			/>
+		<div
+			className="fs-ui tw:flex tw:flex-col tw:gap-2 tw:py-2"
+			data-testid="loader"
+		>
+			<Skeleton className="tw:h-12 tw:w-full tw:bg-muted" />
+			<Skeleton className="tw:h-12 tw:w-full tw:bg-muted" />
+			<Skeleton className="tw:h-12 tw:w-full tw:bg-muted" />
 		</div>
 	);
 }

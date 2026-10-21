@@ -82,12 +82,11 @@ export const Loading: Story = {
 };
 
 /**
- * Every tooltip the host list carries, held open: the Options button above the
- * table, the Hostname, IOWait and load average headers sharing the generic note
- * and its docs link, the Status header's own sentence about the ten minute
- * window, and the CPU, memory and disk headers, whose tooltip is the whole
- * threshold legend rather than a sentence. The Collapse Filters control beside
- * the quick filters is an antd tooltip and stays closed.
+ * The host list with the Tooltips control on. The header hints (the Status
+ * sentence about the ten minute window, the CPU, memory and disk threshold
+ * legends) and the Options button are new-UI tooltips that open on hover or
+ * focus, so the control holds only the row tooltips that still use the legacy
+ * one.
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },

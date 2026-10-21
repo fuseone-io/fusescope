@@ -1,13 +1,13 @@
-import type { BadgeColorType } from '@signozhq/ui/badge';
+import type { StatusTone } from 'components/PageTemplate/types';
 import { InframonitoringtypesNodeConditionDTO } from 'api/generated/services/fuseScope.schemas';
 
 export const NODE_CONDITION_COLORS: Record<
 	InframonitoringtypesNodeConditionDTO,
-	BadgeColorType
+	StatusTone
 > = {
 	[InframonitoringtypesNodeConditionDTO.ready]: 'success',
 	[InframonitoringtypesNodeConditionDTO.not_ready]: 'warning',
-	[InframonitoringtypesNodeConditionDTO.no_data]: 'secondary',
+	[InframonitoringtypesNodeConditionDTO.no_data]: 'neutral',
 };
 
 export const NODE_CONDITION_LABELS: Record<

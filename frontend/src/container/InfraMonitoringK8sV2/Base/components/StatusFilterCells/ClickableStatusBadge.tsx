@@ -1,12 +1,11 @@
-import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import type { StatusTone } from 'components/PageTemplate/types';
 import TanStackTable from 'components/TanStackTableView';
 
 import { StatusFilterKind, useStatusFilter } from './useStatusFilter';
 
-import styles from './ClickableStatusBadge.module.scss';
-
 interface ClickableStatusBadgeProps {
-	color: BadgeColorType;
+	tone: StatusTone;
 	label: string;
 	/** The status this badge stands for, applied as the filter when clicked. */
 	status: string;
@@ -15,7 +14,7 @@ interface ClickableStatusBadgeProps {
 }
 
 function ClickableStatusBadge({
-	color,
+	tone,
 	label,
 	status,
 	kind,
@@ -36,7 +35,7 @@ function ClickableStatusBadge({
 		>
 			<button
 				type="button"
-				className={styles.statusBadgeButton}
+				className="fs-ui tw:inline-flex tw:cursor-pointer tw:rounded-sm tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:outline-none"
 				data-testid={`status-badge-${status}`}
 				onClick={(e): void => {
 					e.preventDefault();
@@ -44,9 +43,9 @@ function ClickableStatusBadge({
 					setStatusFilter(isWholeFilter ? [] : [status]);
 				}}
 			>
-				<Badge color={color} variant="outlined" textTransform="none">
+				<StatusBadge tone={tone} dot>
 					{label}
-				</Badge>
+				</StatusBadge>
 			</button>
 		</TanStackTable.HoverTooltip>
 	);

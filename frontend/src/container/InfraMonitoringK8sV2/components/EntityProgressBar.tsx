@@ -1,11 +1,10 @@
-import { Progress } from '@signozhq/ui/progress';
 import TanStackTable from 'components/TanStackTableView';
 
-import styles from './EntityProgressBar.module.scss';
 import {
 	EntityProgressBarType,
 	getStrokeColor,
 } from './EntityProgressBar.utils';
+import UsageBar from './UsageBar';
 
 export function EntityProgressBar({
 	value,
@@ -18,24 +17,8 @@ export function EntityProgressBar({
 	const percentage = isNoData ? null : Number((value * 100).toFixed(1));
 
 	if (percentage === null) {
-		return (
-			<div className={styles.entityProgressBar}>
-				<TanStackTable.Text>-</TanStackTable.Text>
-			</div>
-		);
+		return <TanStackTable.Text>-</TanStackTable.Text>;
 	}
 
-	return (
-		<div className={styles.entityProgressBar}>
-			<Progress
-				percent={percentage}
-				strokeLinecap="butt"
-				status="normal"
-				strokeColor={getStrokeColor(type, value)}
-				className={styles.progressBar}
-				showInfo={false}
-			/>
-			<TanStackTable.Text>{percentage}%</TanStackTable.Text>
-		</div>
-	);
+	return <UsageBar percent={percentage} color={getStrokeColor(type, value)} />;
 }

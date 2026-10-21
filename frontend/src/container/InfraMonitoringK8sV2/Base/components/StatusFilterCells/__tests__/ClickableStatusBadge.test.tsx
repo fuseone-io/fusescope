@@ -11,7 +11,7 @@ function renderBadge(
 	render(
 		<NuqsTestingAdapter searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
 			<ClickableStatusBadge
-				color="danger"
+				tone="error"
 				label="CrashLoopBackOff"
 				status="crashloopbackoff"
 				kind="pod"

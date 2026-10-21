@@ -3,9 +3,8 @@
 	align-items: flex-start;
 	gap: 8px;
 	width: 100%;
-}
 
-.k8SQbSearchContainer {
-	flex: 1;
-	min-width: 0;
+	:global([data-run-query-btn]) {
+		height: 40px;
+	}
 }

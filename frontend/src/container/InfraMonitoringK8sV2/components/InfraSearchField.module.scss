@@ -1,0 +1,73 @@
+.field {
+	position: relative;
+	display: flex;
+	align-items: flex-start;
+	flex: 1 1 360px;
+	min-width: 0;
+	min-height: 40px;
+	border: 1px solid var(--fs-input);
+	border-radius: 8px;
+	background: var(--fs-muted);
+
+	&:has(:global(.cm-focused)) {
+		border-color: var(--fs-ring);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--fs-ring) 25%, transparent);
+	}
+
+	&:has(:global(.hasErrors)) {
+		border-color: var(--fs-error);
+	}
+
+	// A scoped editor leads with its own filter mark
+	&:has(:global(.query-search-initial-scope-label)) .icon {
+		display: none;
+	}
+
+	:global(.code-mirror-where-clause),
+	:global(.query-where-clause-editor-container) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	:global(.cm-editor),
+	:global(.cm-editor .cm-scroller),
+	:global(.cm-editor .cm-content),
+	:global(.cm-editor .cm-line) {
+		border: 0 !important;
+		background: transparent !important;
+	}
+
+	:global(.cm-editor.cm-focused) {
+		outline: 0;
+	}
+
+	:global(.cm-editor .cm-content) {
+		min-height: 38px;
+		padding: 9px 28px 9px 0 !important;
+		font-size: 12px;
+	}
+
+	:global(.cm-editor .cm-line) {
+		padding-left: 10px;
+		line-height: 20px !important;
+	}
+
+	:global(.query-status-container) {
+		border: 0 !important;
+		background: transparent !important;
+	}
+
+	:global(.query-where-clause-editor-container > a) {
+		top: 12px !important;
+	}
+
+	:global(.query-where-clause-editor-container > a svg) {
+		color: var(--fs-subtle-foreground) !important;
+	}
+}
+
+.icon {
+	flex: none;
+	margin: 12px 0 0 12px;
+	color: var(--fs-subtle-foreground);
+}

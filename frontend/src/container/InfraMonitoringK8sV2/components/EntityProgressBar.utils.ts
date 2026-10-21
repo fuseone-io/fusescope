@@ -1,5 +1,3 @@
-import { Color } from '@signozhq/design-tokens';
-
 export type EntityProgressBarType =
 	| 'cpu-request'
 	| 'cpu-limit'
@@ -20,7 +18,7 @@ export interface EntityProgressThreshold {
 const CPU_REQUEST_THRESHOLDS: EntityProgressThreshold[] = [
 	{
 		matches: (percent): boolean => percent <= 50,
-		color: Color.BG_AMBER_500,
+		color: 'var(--fs-series-5)',
 		range: '≤ 50%',
 		label: 'Over-requested',
 		description:
@@ -28,14 +26,14 @@ const CPU_REQUEST_THRESHOLDS: EntityProgressThreshold[] = [
 	},
 	{
 		matches: (percent): boolean => percent <= 100,
-		color: Color.BG_FOREST_500,
+		color: 'var(--fs-primary)',
 		range: '> 50% - 100%',
 		label: 'Right-sized',
 		description: 'CPU usage is close to the request and stays within it.',
 	},
 	{
 		matches: (percent): boolean => percent <= 150,
-		color: Color.BG_SAKURA_500,
+		color: 'var(--fs-warning)',
 		range: '> 100% - 150%',
 		label: 'Over request',
 		description:
@@ -43,7 +41,7 @@ const CPU_REQUEST_THRESHOLDS: EntityProgressThreshold[] = [
 	},
 	{
 		matches: (): boolean => true,
-		color: Color.BG_CHERRY_600,
+		color: 'var(--fs-error)',
 		range: '> 150%',
 		label: 'Request badly undersized',
 		description:
@@ -54,21 +52,21 @@ const CPU_REQUEST_THRESHOLDS: EntityProgressThreshold[] = [
 const CPU_LIMIT_THRESHOLDS: EntityProgressThreshold[] = [
 	{
 		matches: (percent): boolean => percent <= 60,
-		color: Color.BG_FOREST_500,
+		color: 'var(--fs-primary)',
 		range: '≤ 60%',
 		label: 'Healthy',
 		description: 'CPU usage is well below the limit.',
 	},
 	{
 		matches: (percent): boolean => percent <= 80,
-		color: Color.BG_AMBER_200,
+		color: 'var(--fs-series-5)',
 		range: '> 60% - 80%',
 		label: 'Watch',
 		description: 'CPU usage is approaching the limit.',
 	},
 	{
 		matches: (percent): boolean => percent <= 95,
-		color: Color.BG_AMBER_500,
+		color: 'var(--fs-warning)',
 		range: '> 80% - 95%',
 		label: 'Near limit',
 		description:
@@ -76,7 +74,7 @@ const CPU_LIMIT_THRESHOLDS: EntityProgressThreshold[] = [
 	},
 	{
 		matches: (): boolean => true,
-		color: Color.BG_SAKURA_500,
+		color: 'var(--fs-error)',
 		range: '> 95%',
 		label: 'At limit',
 		description:
@@ -87,7 +85,7 @@ const CPU_LIMIT_THRESHOLDS: EntityProgressThreshold[] = [
 const MEMORY_REQUEST_THRESHOLDS: EntityProgressThreshold[] = [
 	{
 		matches: (percent): boolean => percent <= 50,
-		color: Color.BG_AMBER_500,
+		color: 'var(--fs-series-5)',
 		range: '≤ 50%',
 		label: 'Over-requested',
 		description:
@@ -95,14 +93,14 @@ const MEMORY_REQUEST_THRESHOLDS: EntityProgressThreshold[] = [
 	},
 	{
 		matches: (percent): boolean => percent <= 100,
-		color: Color.BG_FOREST_500,
+		color: 'var(--fs-primary)',
 		range: '> 50% - 100%',
 		label: 'Right-sized',
 		description: 'Memory usage is close to the request and stays within it.',
 	},
 	{
 		matches: (percent): boolean => percent <= 150,
-		color: Color.BG_SAKURA_500,
+		color: 'var(--fs-warning)',
 		range: '> 100% - 150%',
 		label: 'Over request',
 		description:
@@ -110,7 +108,7 @@ const MEMORY_REQUEST_THRESHOLDS: EntityProgressThreshold[] = [
 	},
 	{
 		matches: (): boolean => true,
-		color: Color.BG_CHERRY_600,
+		color: 'var(--fs-error)',
 		range: '> 150%',
 		label: 'Request badly undersized',
 		description:
@@ -121,21 +119,21 @@ const MEMORY_REQUEST_THRESHOLDS: EntityProgressThreshold[] = [
 const MEMORY_LIMIT_THRESHOLDS: EntityProgressThreshold[] = [
 	{
 		matches: (percent): boolean => percent <= 60,
-		color: Color.BG_FOREST_500,
+		color: 'var(--fs-primary)',
 		range: '≤ 60%',
 		label: 'Healthy',
 		description: 'Memory usage is well below the limit.',
 	},
 	{
 		matches: (percent): boolean => percent <= 80,
-		color: Color.BG_AMBER_200,
+		color: 'var(--fs-series-5)',
 		range: '> 60% - 80%',
 		label: 'Watch',
 		description: 'Memory usage is approaching the limit.',
 	},
 	{
 		matches: (percent): boolean => percent <= 95,
-		color: Color.BG_AMBER_500,
+		color: 'var(--fs-warning)',
 		range: '> 80% - 95%',
 		label: 'Near limit',
 		description:
@@ -143,7 +141,7 @@ const MEMORY_LIMIT_THRESHOLDS: EntityProgressThreshold[] = [
 	},
 	{
 		matches: (): boolean => true,
-		color: Color.BG_SAKURA_500,
+		color: 'var(--fs-error)',
 		range: '> 95%',
 		label: 'At limit',
 		description:
@@ -154,21 +152,21 @@ const MEMORY_LIMIT_THRESHOLDS: EntityProgressThreshold[] = [
 const CPU_THRESHOLDS: EntityProgressThreshold[] = [
 	{
 		matches: (percent): boolean => percent < 60,
-		color: Color.BG_FOREST_500,
+		color: 'var(--fs-primary)',
 		range: '< 60%',
 		label: 'Healthy',
 		description: 'CPU usage is well below the available capacity.',
 	},
 	{
 		matches: (percent): boolean => percent < 90,
-		color: Color.BG_AMBER_500,
+		color: 'var(--fs-warning)',
 		range: '60% - 89.9%',
 		label: 'Elevated',
 		description: 'CPU usage is high relative to the available capacity.',
 	},
 	{
 		matches: (): boolean => true,
-		color: Color.BG_SAKURA_500,
+		color: 'var(--fs-error)',
 		range: '≥ 90%',
 		label: 'Critical',
 		description: 'CPU usage is close to the available capacity.',
@@ -178,21 +176,21 @@ const CPU_THRESHOLDS: EntityProgressThreshold[] = [
 const MEMORY_THRESHOLDS: EntityProgressThreshold[] = [
 	{
 		matches: (percent): boolean => percent < 60,
-		color: Color.BG_FOREST_500,
+		color: 'var(--fs-primary)',
 		range: '< 60%',
 		label: 'Healthy',
 		description: 'Memory usage is well below the available capacity.',
 	},
 	{
 		matches: (percent): boolean => percent < 90,
-		color: Color.BG_AMBER_500,
+		color: 'var(--fs-warning)',
 		range: '60% - 89.9%',
 		label: 'Elevated',
 		description: 'Memory usage is high relative to the available capacity.',
 	},
 	{
 		matches: (): boolean => true,
-		color: Color.BG_CHERRY_500,
+		color: 'var(--fs-error)',
 		range: '≥ 90%',
 		label: 'Critical',
 		description:
@@ -203,21 +201,21 @@ const MEMORY_THRESHOLDS: EntityProgressThreshold[] = [
 const DISK_THRESHOLDS: EntityProgressThreshold[] = [
 	{
 		matches: (percent): boolean => percent < 60,
-		color: Color.BG_FOREST_500,
+		color: 'var(--fs-primary)',
 		range: '< 60%',
 		label: 'Healthy',
 		description: 'Most of the volume is still free.',
 	},
 	{
 		matches: (percent): boolean => percent < 90,
-		color: Color.BG_AMBER_500,
+		color: 'var(--fs-warning)',
 		range: '60% - 89.9%',
 		label: 'Elevated',
 		description: 'Used space is high relative to the volume capacity.',
 	},
 	{
 		matches: (): boolean => true,
-		color: Color.BG_SAKURA_500,
+		color: 'var(--fs-error)',
 		range: '≥ 90%',
 		label: 'Critical',
 		description: 'The volume is nearly full. Writes fail once no space is left.',

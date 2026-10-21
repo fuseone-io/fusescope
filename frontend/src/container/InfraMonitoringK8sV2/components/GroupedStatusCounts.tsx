@@ -1,7 +1,6 @@
 // oxlint-disable jsx-a11y/click-events-have-key-events
 import styles from './GroupedStatusCounts.module.scss';
 import TanStackTable from 'components/TanStackTableView';
-import { Typography } from '@signozhq/ui/typography';
 import { TextNoData } from './TextNoData';
 import { MouseEventHandler } from 'react';
 
@@ -41,9 +40,9 @@ function buildTooltipContent(
 	if (!item.breakdown || item.breakdown.length === 0) {
 		return (
 			<div onClick={onClickHandle}>
-				<Typography.Text>
+				<span>
 					{item.label}: {item.value}
-				</Typography.Text>
+				</span>
 			</div>
 		);
 	}
@@ -52,20 +51,16 @@ function buildTooltipContent(
 	if (nonZeroBreakdown.length === 0) {
 		return (
 			<div className={styles.tooltipContent} onClick={onClickHandle}>
-				<Typography.Text className={styles.tooltipHeader}>
-					{item.label}
-				</Typography.Text>
+				<span className={styles.tooltipHeader}>{item.label}</span>
 
-				<Typography.Text>No errors</Typography.Text>
+				<span>No errors</span>
 			</div>
 		);
 	}
 
 	return (
 		<div className={styles.tooltipContent} onClick={onClickHandle}>
-			<Typography.Text className={styles.tooltipHeader}>
-				{item.label}
-			</Typography.Text>
+			<span className={styles.tooltipHeader}>{item.label}</span>
 			{nonZeroBreakdown.map((b) =>
 				onSelectStatuses && b.statuses?.length ? (
 					<button
@@ -79,17 +74,13 @@ function buildTooltipContent(
 							onSelectStatuses(b.statuses as string[]);
 						}}
 					>
-						<Typography.Text>{b.label}</Typography.Text>
-						<Typography.Text className={styles.tooltipValue}>
-							{b.value}
-						</Typography.Text>
+						<span>{b.label}</span>
+						<span className={styles.tooltipValue}>{b.value}</span>
 					</button>
 				) : (
 					<div key={b.label} className={styles.tooltipRow}>
-						<Typography.Text>{b.label}</Typography.Text>
-						<Typography.Text className={styles.tooltipValue}>
-							{b.value}
-						</Typography.Text>
+						<span>{b.label}</span>
+						<span className={styles.tooltipValue}>{b.value}</span>
 					</div>
 				),
 			)}

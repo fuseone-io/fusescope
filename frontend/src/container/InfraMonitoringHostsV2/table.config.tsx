@@ -1,6 +1,5 @@
 import React from 'react';
-import { Color } from '@signozhq/design-tokens';
-import { Container } from '@signozhq/icons';
+import { Server } from 'lucide-react';
 import {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
@@ -25,26 +24,27 @@ import EntityGroupHeader from 'container/InfraMonitoringK8sV2/Base/EntityGroupHe
 import { HostnameCell } from './utils';
 
 import styles from './table.module.scss';
-import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import type { StatusTone } from 'components/PageTemplate/types';
 
 const statusMap: Record<
 	InframonitoringtypesHostStatusDTO,
 	{
 		label: string;
-		color: BadgeColorType;
+		tone: StatusTone;
 	}
 > = {
 	[InframonitoringtypesHostStatusDTO.active]: {
-		label: 'ACTIVE',
-		color: 'success',
+		label: 'Active',
+		tone: 'success',
 	},
 	[InframonitoringtypesHostStatusDTO.inactive]: {
-		label: 'INACTIVE',
-		color: 'warning',
+		label: 'Inactive',
+		tone: 'warning',
 	},
 	['']: {
-		label: 'UNKNOWN',
-		color: 'secondary',
+		label: 'Unknown',
+		tone: 'neutral',
 	},
 };
 
@@ -101,11 +101,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: INFRA_MONITORING_ATTR_KEYS.HOST_NAME,
 		header: (): React.ReactNode => (
-			<EntityGroupHeader
-				title="Hostname"
-				icon={<Container size={14} />}
-				docPath="/infrastructure-monitoring/host-monitoring#hostname"
-			/>
+			<EntityGroupHeader title="Hostname" icon={<Server size={14} />} />
 		),
 		accessorFn: (row): string => row.hostName ?? '',
 		width: { min: 290 },
@@ -121,10 +117,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'status',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				tooltip="Sent system metrics in last 10 mins."
-				docPath="/infrastructure-monitoring/host-monitoring#status"
-			>
+			<ColumnHeader tooltip="Sent system metrics in last 10 mins.">
 				Status
 			</ColumnHeader>
 		),
@@ -142,12 +135,12 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 							{
 								value: row.activeHostCount,
 								label: 'Active',
-								color: Color.BG_FOREST_500,
+								color: 'var(--fs-success)',
 							},
 							{
 								value: row.inactiveHostCount,
 								label: 'Inactive',
-								color: Color.BG_AMBER_500,
+								color: 'var(--fs-warning)',
 							},
 						]}
 					/>
@@ -156,19 +149,16 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 
 			const statusDetails = statusMap[status] || statusMap[''];
 			return (
-				<Badge variant="outlined" color={statusDetails.color}>
+				<StatusBadge tone={statusDetails.tone} dot>
 					{statusDetails.label}
-				</Badge>
+				</StatusBadge>
 			);
 		},
 	},
 	{
 		id: 'cpu',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				docPath="/infrastructure-monitoring/host-monitoring#cpu-usage"
-				tooltip={<EntityProgressThresholds type="cpu" />}
-			>
+			<ColumnHeader tooltip={<EntityProgressThresholds type="cpu" />}>
 				CPU Usage
 			</ColumnHeader>
 		),
@@ -198,7 +188,6 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 				tooltip={
 					<EntityProgressThresholds type="memory" note="Excluding cache memory." />
 				}
-				docPath="/infrastructure-monitoring/host-monitoring#memory-usage"
 			>
 				Memory Usage (WSS)
 			</ColumnHeader>
@@ -225,10 +214,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'disk_usage',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				docPath="/infrastructure-monitoring/host-monitoring#disk-usage"
-				tooltip={<EntityProgressThresholds type="disk" />}
-			>
+			<ColumnHeader tooltip={<EntityProgressThresholds type="disk" />}>
 				Disk Usage
 			</ColumnHeader>
 		),
@@ -254,11 +240,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	},
 	{
 		id: 'wait',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#iowait">
-				IOWait
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>IOWait</ColumnHeader>,
 		accessorFn: (row): number => row.wait,
 		width: { min: 120 },
 		enableSort: true,
@@ -281,11 +263,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	},
 	{
 		id: 'load15',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#load-avg">
-				Load Avg (15min)
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Load Avg (15min)</ColumnHeader>,
 		accessorFn: (row): number => row.load15,
 		width: { min: 160 },
 		enableSort: true,

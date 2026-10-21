@@ -1,5 +1,4 @@
 import { CSSProperties, forwardRef } from 'react';
-import { Typography } from '@signozhq/ui/typography';
 import TanStackTable from 'components/TanStackTableView';
 
 export interface TextNoDataProps {
@@ -26,14 +25,9 @@ export const TextNoData = forwardRef<HTMLSpanElement, TextNoDataProps>(
 		}
 
 		return (
-			<Typography.Text
-				ref={ref}
-				className={className}
-				style={combinedStyle}
-				{...props}
-			>
+			<span ref={ref} className={className} style={combinedStyle} {...props}>
 				-
-			</Typography.Text>
+			</span>
 		);
 	},
 );

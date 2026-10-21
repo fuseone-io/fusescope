@@ -1,6 +1,4 @@
-import { Badge } from '@signozhq/ui/badge';
-
-import styles from './utils.module.scss';
+import TagChip from 'components/PageTemplate/components/TagChip';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	convertFiltersToExpression,
@@ -60,18 +58,16 @@ export function getGroupByEl<
 	});
 
 	return (
-		<div className={styles.itemDataGroup}>
+		<div className="fs-ui tw:flex tw:min-w-0 tw:flex-wrap tw:items-center tw:gap-1 tw:overflow-hidden">
 			{groupByValues.map((value, index) => (
-				<Badge
-					textTransform="none"
-					variant="solid"
+				<TagChip
 					// oxlint-disable-next-line react/no-array-index-key
 					key={`${index}-${value}`}
-					color="secondary"
-					maxWidth="100%"
+					className="tw:max-w-full"
+					title={value}
 				>
 					{value === '' ? '<no-value>' : value}
-				</Badge>
+				</TagChip>
 			))}
 		</div>
 	);

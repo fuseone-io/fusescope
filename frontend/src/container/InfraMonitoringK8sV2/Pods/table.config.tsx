@@ -1,9 +1,10 @@
-import { Container } from '@signozhq/icons';
+import { Container } from 'lucide-react';
 import {
 	InframonitoringtypesPodRecordDTO,
 	InframonitoringtypesPodStatusDTO,
 } from 'api/generated/services/fuseScope.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
+import EntityNameCell from 'container/InfraMonitoringK8sV2/components/EntityNameCell';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
@@ -75,7 +76,6 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 			<EntityGroupHeader
 				title="Pod Name"
 				icon={<Container data-hide-expanded="true" size={14} />}
-				docPath="/infrastructure-monitoring/kubernetes/pods#pod-name"
 			/>
 		),
 		accessorFn: (row): string =>
@@ -86,19 +86,18 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => (
-			<TanStackTable.Text>{value}</TanStackTable.Text>
+		cell: ({ value, row }): React.ReactNode => (
+			<EntityNameCell
+				name={String(value)}
+				subtitle={row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME]}
+			/>
 		),
 	},
 	{
 		id: 'podStatus',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-status">
-				Status
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Status</ColumnHeader>,
 		accessorFn: (row): string => row.podStatus,
-		width: { min: 250 },
+		width: { min: 170 },
 		enableSort: false,
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ row, rowId }): React.ReactNode => {
@@ -113,7 +112,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 			const color = POD_STATUS_COLORS[row.podStatus] || POD_STATUS_COLORS.unknown;
 			return (
 				<ClickableStatusBadge
-					color={color}
+					tone={color}
 					label={POD_STATUS_LABELS[row.podStatus]}
 					status={row.podStatus}
 					kind="pod"
@@ -124,11 +123,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'podCountsByStatus',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-status">
-				Status
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Status</ColumnHeader>,
 		accessorFn: (row): InframonitoringtypesPodRecordDTO['podCountsByStatus'] =>
 			row.podCountsByStatus,
 		width: { min: 250 },
@@ -150,13 +145,9 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'podAge',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-age">
-				Age
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Age</ColumnHeader>,
 		accessorFn: (row): number => row.podAge,
-		width: { min: 100 },
+		width: { min: 90 },
 		enableSort: false,
 		cell: ({ value, rowId }): React.ReactNode => {
 			const age = value as number;
@@ -174,13 +165,9 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'podRestarts',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#restarts">
-				Restarts
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Restarts</ColumnHeader>,
 		accessorFn: (row): number => row.podRestarts,
-		width: { min: 140 },
+		width: { min: 110 },
 		enableSort: false,
 		cell: ({ value, rowId }): React.ReactNode => {
 			const restarts = value as number;
@@ -199,10 +186,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	{
 		id: 'cpu_request',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				docPath="/infrastructure-monitoring/kubernetes/pods#cpu-req-usage-"
-				tooltip={<EntityProgressThresholds type="cpu-request" />}
-			>
+			<ColumnHeader tooltip={<EntityProgressThresholds type="cpu-request" />}>
 				CPU Request Usage (%)
 			</ColumnHeader>
 		),
@@ -227,10 +211,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	{
 		id: 'cpu_limit',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				docPath="/infrastructure-monitoring/kubernetes/pods#cpu-limit-usage-"
-				tooltip={<EntityProgressThresholds type="cpu-limit" />}
-			>
+			<ColumnHeader tooltip={<EntityProgressThresholds type="cpu-limit" />}>
 				CPU Limit Usage (%)
 			</ColumnHeader>
 		),
@@ -253,11 +234,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'cpu',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#cpu-usage-cores">
-				CPU Usage (cores)
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>CPU Usage (cores)</ColumnHeader>,
 		accessorFn: (row): number => row.podCPU,
 		width: { min: 160 },
 		enableSort: true,
@@ -278,10 +255,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	{
 		id: 'memory_request',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				docPath="/infrastructure-monitoring/kubernetes/pods#mem-req-usage-"
-				tooltip={<EntityProgressThresholds type="memory-request" />}
-			>
+			<ColumnHeader tooltip={<EntityProgressThresholds type="memory-request" />}>
 				Memory Request Usage (%)
 			</ColumnHeader>
 		),
@@ -306,10 +280,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	{
 		id: 'memory_limit',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				docPath="/infrastructure-monitoring/kubernetes/pods#mem-limit-usage-"
-				tooltip={<EntityProgressThresholds type="memory-limit" />}
-			>
+			<ColumnHeader tooltip={<EntityProgressThresholds type="memory-limit" />}>
 				Memory Limit Usage (%)
 			</ColumnHeader>
 		),
@@ -333,9 +304,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	{
 		id: 'memory',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#mem-usage-wss">
-				Memory Usage (WSS)
-			</ColumnHeader>
+			<ColumnHeader>Memory Usage (WSS)</ColumnHeader>
 		),
 		accessorFn: (row): number => row.podMemory,
 		width: { min: 210, default: '100%' },
@@ -356,11 +325,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'namespace',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#additional-columns">
-				Namespace
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Namespace</ColumnHeader>,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { default: 100 },
@@ -372,11 +337,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'node',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#additional-columns">
-				Node
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Node</ColumnHeader>,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME] || '',
 		width: { default: 100 },
@@ -388,11 +349,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'cluster',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#additional-columns">
-				Cluster
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Cluster</ColumnHeader>,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		width: { default: 100 },

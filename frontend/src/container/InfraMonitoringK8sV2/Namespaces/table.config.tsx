@@ -1,6 +1,7 @@
-import { FilePenLine } from '@signozhq/icons';
+import { FilePenLine } from 'lucide-react';
 import { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/fuseScope.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
+import EntityNameCell from 'container/InfraMonitoringK8sV2/components/EntityNameCell';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
@@ -68,7 +69,6 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 			<EntityGroupHeader
 				title="Namespace Name"
 				icon={<FilePenLine data-hide-expanded="true" size={14} />}
-				docPath="/infrastructure-monitoring/kubernetes/namespaces#namespace-name"
 			/>
 		),
 		accessorFn: (row): string => row.namespaceName || '',
@@ -78,17 +78,16 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => (
-			<TanStackTable.Text>{value}</TanStackTable.Text>
+		cell: ({ value, row }): React.ReactNode => (
+			<EntityNameCell
+				name={String(value)}
+				subtitle={row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME]}
+			/>
 		),
 	},
 	{
 		id: 'clusterName',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#cluster-name">
-				Cluster Name
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Cluster Name</ColumnHeader>,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		width: { default: 150 },
@@ -99,11 +98,7 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 	},
 	{
 		id: 'podCountsByStatus',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#pod-counts-by-status">
-				Pod Status
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Pod Status</ColumnHeader>,
 		accessorFn: (
 			row,
 		): InframonitoringtypesNamespaceRecordDTO['podCountsByStatus'] =>
@@ -126,11 +121,7 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 	},
 	{
 		id: 'cpu',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#cpu-usage-cores">
-				CPU Usage (cores)
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>CPU Usage (cores)</ColumnHeader>,
 		accessorFn: (row): number => row.namespaceCPU,
 		width: { min: 190 },
 		enableSort: true,
@@ -151,9 +142,7 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 	{
 		id: 'memory',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#mem-usage-wss">
-				Memory Usage (WSS)
-			</ColumnHeader>
+			<ColumnHeader>Memory Usage (WSS)</ColumnHeader>
 		),
 		accessorFn: (row): number => row.namespaceMemory,
 		width: { min: 220 },
