@@ -116,8 +116,7 @@ export const CRUMB_ROUTES: Record<string, CrumbRoute> = {
 	},
 	[ROUTES.INTEGRATIONS_DETAIL]: {
 		parent: ROUTES.INTEGRATIONS,
-		label: param('integrationId'),
-		mono: true,
+		label: ({ integrationTitle }): string => integrationTitle || 'Integration',
 	},
 	[ROUTES.MY_SETTINGS]: { parent: ROUTES.SETTINGS, label: 'Account' },
 	[ROUTES.ORG_SETTINGS]: { parent: ROUTES.SETTINGS, label: 'Single Sign-on' },

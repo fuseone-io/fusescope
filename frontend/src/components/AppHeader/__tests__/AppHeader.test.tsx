@@ -6,6 +6,7 @@ import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import ROUTES from 'constants/routes';
 import { rest, server } from 'mocks-server/server';
 import { useGetDashboardV2 } from 'api/generated/services/dashboard';
+import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import {
 	fireEvent,
 	RenderResult,
@@ -79,6 +80,12 @@ function currentCrumb(): HTMLElement {
 /** Loads the dashboard the way the dashboard page does. */
 function DashboardPageProbe({ id }: { id: string }): null {
 	useGetDashboardV2({ id });
+	return null;
+}
+
+/** Loads the integration the way the integration detail page does. */
+function IntegrationPageProbe({ id }: { id: string }): null {
+	useGetIntegration({ integrationId: id });
 	return null;
 }
 
@@ -157,6 +164,34 @@ describe('AppHeader', () => {
 				screen.findByText('Checkout overview'),
 			).resolves.toBeInTheDocument();
 			expect(crumbs()).toStrictEqual(['Dashboards', 'Checkout overview']);
+		});
+
+		it('shows the integration title once the page has loaded it', async () => {
+			server.use(
+				rest.get('*/api/v1/integrations/:id', (req, res, ctx) =>
+					res(
+						ctx.json({
+							status: 'success',
+							data: { id: req.params.id, title: 'Redis' },
+						}),
+					),
+				),
+			);
+			renderHeader(
+				'/integrations/builtin-redis',
+				<IntegrationPageProbe id="builtin-redis" />,
+			);
+
+			expect(crumbs()).toStrictEqual(['Integrations', 'Integration']);
+			await expect(screen.findByText('Redis')).resolves.toBeInTheDocument();
+			expect(crumbs()).toStrictEqual(['Integrations', 'Redis']);
+			expect(currentCrumb()).not.toHaveClass('tw:font-mono');
+		});
+
+		it('names a cloud integration after its provider', () => {
+			renderHeader('/integrations/aws');
+
+			expect(crumbs()).toStrictEqual(['Integrations', 'Amazon Web Services']);
 		});
 	});
 
