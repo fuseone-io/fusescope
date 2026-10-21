@@ -845,7 +845,6 @@ function EditAlertChannels({
 				onSaveHandler,
 				testingState,
 				savingState,
-				title: t('page_title_edit'),
 				initialValue,
 				editing: true,
 			}}

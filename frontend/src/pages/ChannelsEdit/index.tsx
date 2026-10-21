@@ -5,7 +5,7 @@ import { useQuery } from 'react-query';
 import { matchPath, useLocation } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
 import get from 'api/channels/get';
-import AlertBreadcrumb from 'components/AlertBreadcrumb';
+import TagChip from 'components/PageTemplate/components/TagChip';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import {
@@ -20,14 +20,15 @@ import {
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
 import EditAlertChannels from 'container/EditAlertChannels';
+import ChannelFormPage from 'container/FormAlertChannels/components/ChannelFormPage';
+import { channelTypeLabel } from 'container/FormAlertChannels/channelTypeOptions';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 
-import './ChannelsEdit.styles.scss';
-
 function ChannelsEdit(): JSX.Element {
 	const { t } = useTranslation();
+	const { t: tChannels } = useTranslation('channels');
 
 	const { pathname } = useLocation();
 	const channelId = matchPath<{ channelId: string }>(pathname, {
@@ -47,14 +48,20 @@ function ChannelsEdit(): JSX.Element {
 
 	if (isError) {
 		return (
-			<Typography>
-				{error?.getErrorMessage() || t('something_went_wrong')}
-			</Typography>
+			<ChannelFormPage title={tChannels('page_title_edit')}>
+				<Typography>
+					{error?.getErrorMessage() || t('something_went_wrong')}
+				</Typography>
+			</ChannelFormPage>
 		);
 	}
 
 	if (isFetching || !data?.data) {
-		return <Spinner tip="Loading Channels..." />;
+		return (
+			<ChannelFormPage title={tChannels('page_title_edit')}>
+				<Spinner tip="Loading Channels..." />
+			</ChannelFormPage>
+		);
 	}
 
 	const { data: ChannelData } = data.data;
@@ -209,26 +216,25 @@ function ChannelsEdit(): JSX.Element {
 	const target = prepChannelConfig();
 
 	return (
-		<>
-			<AlertBreadcrumb
-				items={[
-					{ title: 'Channels', route: ROUTES.ALL_CHANNELS },
-					{ title: value.name || 'Edit Channel', isLast: true },
-				]}
+		<ChannelFormPage
+			title={value.name || tChannels('page_title_edit')}
+			badges={
+				<TagChip testId="channel-type-badge">
+					{channelTypeLabel(target.type)}
+				</TagChip>
+			}
+		>
+			<EditAlertChannels
+				{...{
+					channelId: channelId || '',
+					initialValue: {
+						...target.channel,
+						type: target.type,
+						name: value.name,
+					},
+				}}
 			/>
-			<div className="edit-alert-channels-container">
-				<EditAlertChannels
-					{...{
-						channelId: channelId || '',
-						initialValue: {
-							...target.channel,
-							type: target.type,
-							name: value.name,
-						},
-					}}
-				/>
-			</div>
-		</>
+		</ChannelFormPage>
 	);
 }
 

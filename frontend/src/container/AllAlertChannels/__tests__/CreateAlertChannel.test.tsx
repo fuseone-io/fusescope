@@ -66,8 +66,8 @@ describe('Create Alert Channel', () => {
 		afterEach(() => {
 			jest.clearAllMocks();
 		});
-		it('Should check if the title is "New Notification Channels"', () => {
-			expect(screen.getByText('page_title_create')).toBeInTheDocument();
+		it('Should group the channel fields under a "Channel" panel', () => {
+			expect(screen.getByRole('heading', { name: 'Channel' })).toBeInTheDocument();
 		});
 		it('Should check if the name label and textbox are displayed properly', () => {
 			testLabelInputAndHelpValue({
