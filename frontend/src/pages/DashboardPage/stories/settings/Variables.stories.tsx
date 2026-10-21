@@ -46,7 +46,7 @@ export default meta;
 
 type Story = StoryObj<DashboardArgs>;
 
-/** One variable of each type, listed by name and description. */
+/** One variable of each type: its type, source, first values and dependencies. */
 export const Default: Story = {
 	play: async ({ canvasElement }) => {
 		await openSettings(canvasElement, 'Variables');
@@ -65,15 +65,13 @@ export const Empty: Story = {
 
 /**
  * A dynamic variable's Apply to all says whether it is already a filter on
- * every panel. The row keeps its actions invisible until it is hovered, which
- * the story does first.
+ * every panel.
  */
 export const TooltipsInVariables: Story = {
 	args: { tooltipsOpen: true },
 	play: async ({ canvasElement }) => {
 		await openSettings(canvasElement, 'Variables');
 
-		// The tooltip trigger's Slot merge drops the button's own test id.
 		await userEvent.hover(
 			await screen.findByRole(
 				'button',

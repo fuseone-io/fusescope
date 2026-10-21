@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/fuseScope.schemas';
-import cx from 'classnames';
 
-import settingsStyles from '../DashboardSettings.module.scss';
+import SettingsSheetBody from '../components/SettingsSheetBody';
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { getPanelIdsReferencingVariable } from './utils/applyVariableToPanelsPatch';
@@ -16,7 +15,6 @@ import {
 import VariableForm from './VariableForm/VariableForm';
 import VariableImpactDialog from './VariableImpactDialog/VariableImpactDialog';
 import VariablesList from './components/VariablesList/VariablesList';
-import styles from './Variables.module.scss';
 import AddVariableButton from './components/AddVariableButton';
 import NoVariablesCard from './components/NoVariablesCard/NoVariablesCard';
 import { EditingState } from './types';
@@ -127,7 +125,7 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	}
 
 	return (
-		<div className={cx(styles.container, settingsStyles.settingsCard)}>
+		<SettingsSheetBody className="tw:gap-3 tw:pt-4">
 			{variables.length === 0 ? (
 				<NoVariablesCard
 					checks={editChecks}
@@ -136,6 +134,10 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 				/>
 			) : (
 				<>
+					<p className="tw:m-0 tw:text-[13px] tw:text-muted-foreground">
+						Variables appear in the dashboard bar in this order. Reference them in
+						queries as <span className="tw:font-mono tw:text-foreground">$name</span>.
+					</p>
 					<VariablesList
 						variables={variables}
 						canEdit={isEditable}
@@ -148,7 +150,7 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 						onApplyToAll={requestApplyToAll}
 						appliedToAllNames={appliedToAllNames}
 					/>
-					<div className={styles.footer}>
+					<div>
 						<AddVariableButton
 							checks={editChecks}
 							disabledTooltip={editDisabledTooltip}
@@ -167,7 +169,7 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 				onConfirm={(resolved): void => void handleImpactConfirm(resolved)}
 				onClose={(): void => setImpact(null)}
 			/>
-		</div>
+		</SettingsSheetBody>
 	);
 }
 

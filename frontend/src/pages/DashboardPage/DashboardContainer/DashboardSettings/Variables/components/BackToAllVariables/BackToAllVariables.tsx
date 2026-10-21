@@ -1,7 +1,9 @@
-import { ArrowLeft } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import styles from './BackToAllVariables.module.scss';
+import { Button } from 'components/ui/button';
+import { cn } from 'lib/utils';
+import { ArrowLeft } from 'lucide-react';
+
 import { VariableFormProps } from '../../types';
+import { BUTTON_GHOST } from '../../../components/settingsClassNames';
 
 const BackToAllVariables = ({
 	onClose,
@@ -9,18 +11,17 @@ const BackToAllVariables = ({
 	onClose: VariableFormProps['onClose'];
 }): JSX.Element => {
 	return (
-		<div className={styles.backToAllVariables}>
-			<Button
-				variant="ghost"
-				color="secondary"
-				prefix={<ArrowLeft size={14} />}
-				onClick={onClose}
-				testId="variable-form-back"
-				size="md"
-			>
-				All variables
-			</Button>
-		</div>
+		<Button
+			type="button"
+			variant="ghost"
+			size="sm"
+			className={cn(BUTTON_GHOST, 'tw:self-start tw:px-1.5')}
+			onClick={onClose}
+			data-testid="variable-form-back"
+		>
+			<ArrowLeft aria-hidden="true" />
+			All variables
+		</Button>
 	);
 };
 

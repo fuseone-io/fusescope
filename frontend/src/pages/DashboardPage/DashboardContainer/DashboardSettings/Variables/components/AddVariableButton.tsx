@@ -11,18 +11,21 @@ const AddVariableButton = ({
 	disabledTooltip?: string;
 	setIsEditing: (state: { type: 'new' }) => void;
 }): JSX.Element => (
-	<AuthZButton
-		checks={checks}
-		disabledTooltip={disabledTooltip}
-		variant="solid"
-		color="primary"
-		prefix={<Plus size={14} />}
-		size="md"
-		onClick={(): void => setIsEditing({ type: 'new' })}
-		testId="add-variable"
-	>
-		Add variable
-	</AuthZButton>
+	// The shared button takes no class, so the dashed outline comes from here.
+	<span className="tw:inline-flex tw:[&_button]:rounded-lg! tw:[&_button]:border-dashed! tw:[&_button]:border-input!">
+		<AuthZButton
+			checks={checks}
+			disabledTooltip={disabledTooltip}
+			variant="outlined"
+			color="secondary"
+			prefix={<Plus size={14} />}
+			size="sm"
+			onClick={(): void => setIsEditing({ type: 'new' })}
+			testId="add-variable"
+		>
+			Add variable
+		</AuthZButton>
+	</span>
 );
 
 export default AddVariableButton;

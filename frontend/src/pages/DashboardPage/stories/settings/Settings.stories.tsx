@@ -16,7 +16,7 @@ type DashboardArgs = PageStoryArgs<typeof dashboardMocks>;
 const pageStory = storyMocks(dashboardMocks, { layout: 'app' });
 
 /**
- * The dashboard's settings drawer on its Overview and Publish tabs: the name,
+ * The dashboard's settings sheet on its Overview and Publish tabs: the name,
  * icon, description and tags, the cross-panel sync mode, and the public link.
  * The Publish tab only exists on cloud and enterprise licenses.
  *
@@ -37,7 +37,7 @@ export default meta;
 
 type Story = StoryObj<DashboardArgs>;
 
-/** The drawer as Configure opens it, on the Overview tab. */
+/** The sheet as Configure opens it, on the Overview tab. */
 export const Overview: Story = {
 	play: async ({ canvasElement }) => {
 		await openSettings(canvasElement);
@@ -75,18 +75,9 @@ export const OverviewIconPicker: Story = {
 export const OverviewTooltipSync: Story = {
 	play: async ({ canvasElement }) => {
 		await openSettings(canvasElement);
-		await userEvent.click(await screen.findByRole('radio', { name: 'Tooltip' }));
+		await userEvent.click(await screen.findByRole('button', { name: 'Tooltip' }));
 		await screen.findByText('Synced Tooltip Series');
 	},
-};
-
-/**
- * The Overview tab's own tooltip: Cross-Panel Sync explains what syncing does
- * and links out to the docs.
- */
-export const TooltipsInOverview: Story = {
-	args: { tooltipsOpen: true },
-	play: Overview.play,
 };
 
 /** The Publish tab of a dashboard with a public link. */

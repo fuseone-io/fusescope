@@ -7,7 +7,8 @@ import PublicDashboardStatus from './PublicDashboardStatus/PublicDashboardStatus
 import PublicDashboardUrl from './PublicDashboardUrl/PublicDashboardUrl';
 
 import { usePublicDashboard } from './usePublicDashboard';
-import styles from './PublicDashboard.module.scss';
+import SettingsSheetBody from '../components/SettingsSheetBody';
+import SettingsSheetFooter from '../components/SettingsSheetFooter';
 
 interface PublicDashboardSettingsProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -45,8 +46,8 @@ function PublicDashboardSettings({
 	}
 
 	return (
-		<div className={styles.publishTab}>
-			<div className={styles.content}>
+		<>
+			<SettingsSheetBody className="tw:gap-5">
 				<PublicDashboardStatus isPublic={isPublic} />
 
 				<PublicDashboardUrl
@@ -64,22 +65,24 @@ function PublicDashboardSettings({
 					onTimeRangeEnabledChange={setTimeRangeEnabled}
 					onDefaultTimeRangeChange={setDefaultTimeRange}
 				/>
-			</div>
 
-			<PublicDashboardHint />
+				<PublicDashboardHint />
+			</SettingsSheetBody>
 
-			<PublicDashboardActions
-				isPublic={isPublic}
-				checks={publishChecks}
-				isLoading={isLoading}
-				isPublishing={isPublishing}
-				isUpdating={isUpdating}
-				isUnpublishing={isUnpublishing}
-				onPublish={onPublish}
-				onUpdate={onUpdate}
-				onUnpublish={onUnpublish}
-			/>
-		</div>
+			<SettingsSheetFooter>
+				<PublicDashboardActions
+					isPublic={isPublic}
+					checks={publishChecks}
+					isLoading={isLoading}
+					isPublishing={isPublishing}
+					isUpdating={isUpdating}
+					isUnpublishing={isUnpublishing}
+					onPublish={onPublish}
+					onUpdate={onUpdate}
+					onUnpublish={onUnpublish}
+				/>
+			</SettingsSheetFooter>
+		</>
 	);
 }
 
