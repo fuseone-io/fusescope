@@ -64,7 +64,7 @@ function PanelTypeBrowser({
 					testId="panel-type-search"
 					containerClassName={styles.search}
 				/>
-				<div className={styles.categories}>
+				<div className={styles.categories} role="group" aria-label="Categories">
 					{categories.map(({ id, label, count }) => (
 						<button
 							key={id}
@@ -84,8 +84,8 @@ function PanelTypeBrowser({
 
 			<div className={styles.groups}>
 				{visibleGroups.map((group) => (
-					<section key={group.id} className={styles.group}>
-						<span className={styles.groupLabel}>{group.label}</span>
+					<section key={group.id} className={styles.group} aria-label={group.label}>
+						<h3 className={styles.groupLabel}>{group.label}</h3>
 						<div className={styles.grid}>
 							{group.items.map((item) => (
 								<PanelTypeTile

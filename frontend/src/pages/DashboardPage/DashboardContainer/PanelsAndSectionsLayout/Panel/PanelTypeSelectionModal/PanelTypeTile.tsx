@@ -1,8 +1,8 @@
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 
+import { acceptedData } from './acceptedData';
 import type { PanelTypeItem } from './panelTypeCatalog';
-import PanelTypePreview from './PanelTypePreview';
 
 import styles from './PanelTypeBrowser.module.scss';
 
@@ -20,6 +20,7 @@ function PanelTypeTile({
 	disabledReason,
 	onSelect,
 }: PanelTypeTileProps): JSX.Element {
+	const { icon: Icon } = item;
 	const tile = (
 		<button
 			type="button"
@@ -33,13 +34,26 @@ function PanelTypeTile({
 			aria-disabled={!!disabledReason}
 			onClick={disabledReason ? undefined : onSelect}
 		>
-			<PanelTypePreview kind={item.kind} />
+			<span className={styles.tileIcon} aria-hidden="true">
+				<Icon size={20} />
+			</span>
 			<span className={styles.tileText}>
 				<span className={styles.tileTitle}>
 					<span className={styles.tileName}>{item.displayName}</span>
 					{item.isNew && <span className={styles.newBadge}>New</span>}
 				</span>
 				<span className={styles.tileDescription}>{item.description}</span>
+				<span
+					className={styles.tileData}
+					aria-label={`Accepts: ${acceptedData(item.kind).join(', ')}`}
+					data-testid={`panel-type-data-${item.kind}`}
+				>
+					{acceptedData(item.kind).map((chip) => (
+						<span key={chip} className={styles.dataChip}>
+							{chip}
+						</span>
+					))}
+				</span>
 			</span>
 		</button>
 	);
