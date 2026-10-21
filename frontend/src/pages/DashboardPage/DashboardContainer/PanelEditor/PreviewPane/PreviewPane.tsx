@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/fuseScope.schemas';
 import cx from 'classnames';
 import { PanelMode } from 'lib/visualization/panels/types';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import PanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
 import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
 import StaticPanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/StaticPanelBody/StaticPanelBody';
@@ -46,7 +45,7 @@ interface QueryPreviewPaneProps extends PreviewPaneBaseProps {
 	onDragSelect: (start: number, end: number) => void;
 	/** Server-side pager for raw/list panels; absent for non-paginated panels. */
 	pagination?: PanelPagination;
-	/** Hide the preview's top row entirely (query-type badge + time picker) — the View modal has its own header. */
+	/** Hide the preview's top row (heading + query-type badge) — the View modal has its own header. */
 	hideHeader?: boolean;
 	/** Dashboard-wide preferences (cursor sync, …) forwarded to the body; the modal isolates cursor-sync. */
 	dashboardPreference?: DashboardPreference;
@@ -89,15 +88,15 @@ function PreviewPane(props: PreviewPaneProps): JSX.Element {
 		<div
 			className={cx(styles.preview, { [styles.previewStatic]: !!staticDraft })}
 		>
-			{query && !query.hideHeader && (
-				<div className={styles.header}>
-					<PlotTag
-						queryType={getPanelQueryType(panel)}
-						className={styles.queryType}
-					/>
-					<div className={styles.dateTimeSelector}>
-						<DateTimeSelectionV2 showAutoRefresh hideShareModal />
-					</div>
+			{panelMode === PanelMode.DASHBOARD_EDIT && !query?.hideHeader && (
+				<div className={cx('fs-ui', styles.header)}>
+					<h2 className={styles.heading}>Preview</h2>
+					{query && (
+						<PlotTag
+							queryType={getPanelQueryType(panel)}
+							className={styles.queryType}
+						/>
+					)}
 				</div>
 			)}
 			<div className={styles.container}>

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { type ReactNode, useCallback } from 'react';
 import { SolidAlertTriangle, X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
@@ -15,6 +15,8 @@ import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useUnloadPrompt } from '../hooks/useUnloadPrompt';
 import styles from './Header.module.scss';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import type { PanelEditorCrumbs } from './breadcrumb';
+import EditorBreadcrumb from './EditorBreadcrumb';
 
 interface HeaderProps {
 	/** Unsaved edits exist — shows the "Unsaved Changes" badge and gates the discard confirmation on close (not the Save button). */
@@ -29,6 +31,10 @@ interface HeaderProps {
 	onSave: () => void;
 	onSwitchToView?: () => void;
 	onClose: () => void;
+	/** Where the panel lives: dashboard › section › panel. */
+	crumbs?: PanelEditorCrumbs;
+	/** The preview's time range and refresh, for kinds that query. */
+	timePicker?: ReactNode;
 }
 
 function Header({
@@ -41,6 +47,8 @@ function Header({
 	onSave,
 	onSwitchToView,
 	onClose,
+	crumbs,
+	timePicker,
 }: HeaderProps): JSX.Element {
 	useUnloadPrompt(isDirty);
 
@@ -78,26 +86,48 @@ function Header({
 					<X size={14} />
 				</Button>
 				<Divider type="vertical" />
-				<h1 className={styles.titleText}>Configure panel</h1>
-				{isDirty && (
-					<Badge
-						variant="solid"
-						color="warning"
-						testId="panel-editor-v2-unsaved-badge"
-					>
-						Unsaved Changes
-					</Badge>
-				)}
+				<div className={styles.titleStack}>
+					{crumbs && <EditorBreadcrumb crumbs={crumbs} />}
+					<div className={styles.titleRow}>
+						<h1 className={styles.titleText}>Configure panel</h1>
+						{isDirty && (
+							<Badge
+								variant="solid"
+								color="warning"
+								testId="panel-editor-v2-unsaved-badge"
+							>
+								Unsaved Changes
+							</Badge>
+						)}
+					</div>
+				</div>
 			</div>
 			<div className={styles.actions}>
+				{timePicker && (
+					<div className={styles.timePicker} data-testid="panel-editor-time-picker">
+						{timePicker}
+					</div>
+				)}
 				<HeaderRightSection
 					enableAnnouncements={false}
 					enableShare={false}
 					enableFeedback={false}
 				/>
+				<Divider type="vertical" />
+				<Button
+					size="sm"
+					variant="ghost"
+					color="secondary"
+					testId="panel-editor-v2-discard"
+					disabled={!isDirty}
+					disabledTooltip="No unsaved changes"
+					onClick={discard.request}
+				>
+					Discard
+				</Button>
 				{showSwitchToView && (
 					<Button
-						size="md"
+						size="sm"
 						variant="outlined"
 						color="secondary"
 						testId="panel-editor-v2-switch-to-view"
@@ -112,7 +142,7 @@ function Header({
 				>
 					<Button
 						disabledTooltip={undefined}
-						size="md"
+						size="sm"
 						variant="solid"
 						color="primary"
 						testId="panel-editor-v2-save"

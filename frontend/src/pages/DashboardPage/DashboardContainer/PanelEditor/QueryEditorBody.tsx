@@ -15,6 +15,7 @@ import {
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { getBuilderQueries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 
 import { useDashboardEditContext } from '../hooks/useDashboardEditContext';
@@ -23,9 +24,8 @@ import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/use
 import { useScrollIntoViewStore } from '../store/useScrollIntoViewStore';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
-import PanelEditorLayout, {
-	PANE_SPLIT,
-} from './PanelEditorLayout/PanelEditorLayout';
+import { usePanelEditorCrumbs } from './Header/usePanelEditorCrumbs';
+import PanelEditorLayout from './PanelEditorLayout/PanelEditorLayout';
 import PreviewPane from './PreviewPane/PreviewPane';
 import { useLegendSeries } from './hooks/useLegendSeries';
 import type { PanelEditorDraftApi } from './types';
@@ -41,7 +41,7 @@ import logEvent from '@/api/common/logEvent';
 import { DashboardEvents } from '../../constants/events';
 import type { NewPanelTarget } from '../patchOps';
 
-// The query builder sits in an `overflow:hidden` resizable pane, so its Select
+// The query builder sits in an `overflow:hidden` scrolling pane, so its Select
 // popups (group-by, order-by, having, …) clip when they open into the short pane.
 // Portal them to the document body; the query-builder filters honor this via
 // `useSelectPopupContainer`. Scoped to the full-page editor — the View modal keeps
@@ -229,6 +229,12 @@ function QueryEditorBody({
 
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
 	const { showErrorModal } = useErrorModal();
+	const crumbs = usePanelEditorCrumbs({
+		panelId,
+		panelTitle: draft.spec.display.name,
+		isNew,
+		target,
+	});
 
 	const onSave = useCallback(async (): Promise<void> => {
 		if (!isEditable) {
@@ -275,9 +281,11 @@ function QueryEditorBody({
 
 	return (
 		<PanelEditorLayout
-			split={PANE_SPLIT.query}
+			mode={{ type: 'query', onRun: runQuery }}
 			header={
 				<Header
+					crumbs={crumbs}
+					timePicker={<DateTimeSelectionV2 showAutoRefresh hideShareModal />}
 					isDirty={isDirty}
 					isSaving={isSaving}
 					showSwitchToView={!isNew}

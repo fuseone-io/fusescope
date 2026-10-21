@@ -104,22 +104,6 @@ jest.mock(
 	}),
 );
 
-jest.mock('@signozhq/ui/resizable', () => ({
-	__esModule: true,
-	ResizablePanelGroup: ({
-		children,
-	}: {
-		children: React.ReactNode;
-	}): JSX.Element => <div>{children}</div>,
-	ResizablePanel: ({ children }: { children: React.ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-	ResizableHandle: (): null => null,
-	useDefaultLayout: (): unknown => ({
-		defaultLayout: undefined,
-		onLayoutChanged: jest.fn(),
-	}),
-}));
 jest.mock('@signozhq/ui/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
@@ -132,6 +116,13 @@ jest.mock('providers/ErrorModalProvider', () => ({
 
 // Children mocked to capture props (and expose a Save trigger / footer slot).
 const mockHeaderProps = jest.fn();
+// The breadcrumb reads the loaded dashboard, which these cases don't stand up.
+jest.mock('../Header/usePanelEditorCrumbs', () => ({
+	usePanelEditorCrumbs: (): unknown => ({
+		dashboard: 'Dashboard',
+		panel: 'Panel',
+	}),
+}));
 jest.mock('../Header/Header', () => ({
 	__esModule: true,
 	default: (props: { onSave: () => void; onClose: () => void }): JSX.Element => {

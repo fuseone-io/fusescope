@@ -31,6 +31,8 @@ import { toPanelType } from '../../Panels/types/panelKind';
 import { getQueryMode, isBuilderMode } from 'lib/query/queryMode';
 import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
+import { usePanelEditorChrome } from '../PanelEditorLayout/PanelEditorChromeContext';
+import PanelQueryPanel from './PanelQueryPanel';
 import styles from './PanelEditorQueryBuilder.module.scss';
 
 interface PanelEditorQueryBuilderProps {
@@ -55,6 +57,8 @@ interface PanelEditorQueryBuilderProps {
  * Builder UI for the V2 panel editor's left pane: queryType tabs (Query Builder /
  * ClickHouse / PromQL) plus the Stage & Run button, all reading/writing the global
  * `QueryBuilderProvider`. `usePanelEditorQuerySync` owns the panel↔provider sync.
+ * Inside the full-page editor's frame it renders as the side query panel; the View
+ * modal keeps the tabs.
  */
 function PanelEditorQueryBuilder({
 	panelDefinition,
@@ -73,6 +77,7 @@ function PanelEditorQueryBuilder({
 	const isRawQuery = isRawRequest(panelDefinition.queryCapabilities);
 	const { currentQuery } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
+	const chrome = usePanelEditorChrome();
 	useSyncQueryBuilderFields(panelDefinition.syncedQueryBuilderFields);
 
 	// Cleared here, not in QueryBuilderV2: builder panes unmount on every tab switch.
@@ -176,6 +181,28 @@ function PanelEditorQueryBuilder({
 			destroyInactiveTabPane: isBuilderMode(queryType),
 		}));
 	}, [panelDefinition, panelType, isDarkMode, isRawQuery]);
+
+	if (chrome) {
+		return (
+			<div
+				className={styles.sidePanelHost}
+				data-testid="panel-editor-v2-query-builder"
+				onKeyDownCapture={handleKeyDownCapture}
+				role="presentation"
+			>
+				<PanelQueryPanel
+					chrome={chrome}
+					panelDefinition={panelDefinition}
+					isRawQuery={isRawQuery}
+					onChangeQueryMode={onChangeQueryMode}
+					isLoadingQueries={isLoadingQueries}
+					onStageRunQuery={onStageRunQuery}
+					onCancelQuery={onCancelQuery}
+					footer={footer}
+				/>
+			</div>
+		);
+	}
 
 	return (
 		<div

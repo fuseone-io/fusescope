@@ -1,5 +1,5 @@
-// Full-page editor: fills the route's content area as a header-over-split
-// column (the editor is its own page now, not a modal overlay).
+// Full-page editor: the header band over three columns (queries, preview,
+// settings), each scrolling on its own.
 .page {
 	display: flex;
 	flex-direction: column;
@@ -9,20 +9,55 @@
 	background: var(--fs-background);
 }
 
-.left {
+.body {
 	display: flex;
+	flex: 1;
+	align-items: stretch;
+	min-width: 0;
+	min-height: 0;
+}
+
+.left {
+	position: relative;
+	display: flex;
+	flex: none;
 	flex-direction: column;
-	height: 100%;
+	max-width: 50%;
+	min-height: 0;
+	border-right: 1px solid var(--fs-border);
+	background: var(--fs-background);
+}
+
+.leftContent {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.center {
+	display: flex;
+	flex: 1 1 0;
+	flex-direction: column;
+	min-width: 360px;
 	min-height: 0;
 }
 
 .right {
 	display: flex;
+	flex: none;
+	width: 344px;
+	min-height: 0;
+	border-left: 1px solid var(--fs-border);
+	background: var(--fs-card);
 }
 
-.handle {
-	background: var(--fs-border);
-	&:hover {
-		background: var(--fs-primary);
-	}
+.rightRail {
+	display: flex;
+	flex: none;
+	width: 56px;
+	min-height: 0;
+	border-left: 1px solid var(--fs-border);
+	background: var(--fs-card);
 }
