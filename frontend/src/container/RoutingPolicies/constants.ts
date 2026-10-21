@@ -7,3 +7,6 @@ export const INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE: RoutingPolicyDetailsForm
 		channels: [],
 		description: '',
 	};
+
+/** Name, expression, channels, updated and the row actions. */
+export const ROUTING_POLICY_COLUMN_COUNT = 5;

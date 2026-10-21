@@ -1,9 +1,15 @@
 import { SetStateAction } from 'react';
-import { Button, Modal } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import { Trash2, X } from '@signozhq/icons';
-
-import './PlannedDowntime.styles.scss';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
+import { Trash2, X } from 'lucide-react';
 
 interface PlannedDowntimeDeleteModalProps {
 	isDeleteModalOpen: boolean;
@@ -27,35 +33,38 @@ export function PlannedDowntimeDeleteModal(
 		setIsDeleteModalOpen(false);
 	};
 	return (
-		<Modal
-			className="delete-schedule-modal"
-			title={<span className="title">Delete Schedule</span>}
+		<Dialog
 			open={isDeleteModalOpen}
-			closable={false}
-			onCancel={hideDeleteScheduleModal}
-			footer={[
-				<Button
-					key="cancel"
-					onClick={hideDeleteScheduleModal}
-					className="cancel-btn"
-					icon={<X size={16} />}
-				>
-					Cancel
-				</Button>,
-				<Button
-					key="submit"
-					icon={<Trash2 size={16} />}
-					onClick={onDeleteHandler}
-					className="delete-btn"
-					disabled={isDeleteLoading}
-				>
-					Delete Schedule
-				</Button>,
-			]}
+			onOpenChange={(open): void => {
+				if (!open) {
+					hideDeleteScheduleModal();
+				}
+			}}
 		>
-			<Typography.Text className="delete-text">
-				{`Are you sure you want to delete - ${downtimeSchedule} schedule? Deleting a schedule is irreversible and cannot be undone.`}
-			</Typography.Text>
-		</Modal>
+			<DialogContent showCloseButton={false}>
+				<DialogHeader>
+					<DialogTitle>Delete Schedule</DialogTitle>
+				</DialogHeader>
+				<DialogBody>
+					<DialogDescription>
+						{`Are you sure you want to delete - ${downtimeSchedule} schedule? Deleting a schedule is irreversible and cannot be undone.`}
+					</DialogDescription>
+				</DialogBody>
+				<DialogFooter>
+					<Button variant="outline" onClick={hideDeleteScheduleModal}>
+						<X aria-hidden="true" />
+						Cancel
+					</Button>
+					<Button
+						variant="destructive"
+						onClick={onDeleteHandler}
+						disabled={isDeleteLoading}
+					>
+						<Trash2 aria-hidden="true" />
+						Delete Schedule
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }

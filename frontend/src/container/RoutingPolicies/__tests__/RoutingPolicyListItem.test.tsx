@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as appHooks from 'providers/App/App';
 import { ROLES, USER_ROLES } from 'types/roles';
@@ -18,6 +19,14 @@ const mockRoutingPolicy = MOCK_ROUTING_POLICY_1;
 const mockHandlePolicyDetailsModalOpen = jest.fn();
 const mockHandleDeleteModalOpen = jest.fn();
 
+function TableWrapper({ children }: { children: ReactNode }): JSX.Element {
+	return (
+		<table>
+			<tbody>{children}</tbody>
+		</table>
+	);
+}
+
 const EDIT_ROUTING_POLICY_TEST_ID = 'edit-routing-policy';
 const DELETE_ROUTING_POLICY_TEST_ID = 'delete-routing-policy';
 
@@ -29,6 +38,7 @@ describe('RoutingPolicyListItem', () => {
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 			/>,
+			{ wrapper: TableWrapper },
 		);
 		expect(screen.getByText(mockRoutingPolicy.name)).toBeInTheDocument();
 		expect(screen.getByTestId(EDIT_ROUTING_POLICY_TEST_ID)).toBeInTheDocument();
@@ -42,6 +52,7 @@ describe('RoutingPolicyListItem', () => {
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 			/>,
+			{ wrapper: TableWrapper },
 		);
 		expect(screen.getByText(mockRoutingPolicy.name)).toBeInTheDocument();
 
@@ -64,6 +75,7 @@ describe('RoutingPolicyListItem', () => {
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 			/>,
+			{ wrapper: TableWrapper },
 		);
 		fireEvent.click(screen.getByTestId(EDIT_ROUTING_POLICY_TEST_ID));
 		expect(mockHandlePolicyDetailsModalOpen).toHaveBeenCalledWith(
@@ -79,6 +91,7 @@ describe('RoutingPolicyListItem', () => {
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 			/>,
+			{ wrapper: TableWrapper },
 		);
 		fireEvent.click(screen.getByTestId(DELETE_ROUTING_POLICY_TEST_ID));
 		expect(mockHandleDeleteModalOpen).toHaveBeenCalledWith(mockRoutingPolicy);
@@ -96,6 +109,7 @@ describe('RoutingPolicyListItem', () => {
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 			/>,
+			{ wrapper: TableWrapper },
 		);
 		expect(
 			screen.queryByTestId(EDIT_ROUTING_POLICY_TEST_ID),
@@ -112,6 +126,7 @@ describe('RoutingPolicyListItem', () => {
 				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
 				handleDeleteModalOpen={mockHandleDeleteModalOpen}
 			/>,
+			{ wrapper: TableWrapper },
 		);
 
 		// Expand the details panel

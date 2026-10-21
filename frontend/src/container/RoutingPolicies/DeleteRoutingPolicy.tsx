@@ -1,6 +1,14 @@
-import { Button, Modal } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import { Loader, Trash2, X } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
+import {
+	Dialog,
+	DialogBody,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from 'components/ui/dialog';
+import { Loader2, Trash2, X } from 'lucide-react';
 
 import { DeleteRoutingPolicyProps } from './types';
 
@@ -10,47 +18,51 @@ function DeleteRoutingPolicy({
 	routingPolicy,
 	isDeletingRoutingPolicy,
 }: DeleteRoutingPolicyProps): JSX.Element {
-	const deleteButtonIcon = isDeletingRoutingPolicy ? (
-		<Loader size={16} />
-	) : (
-		<Trash2 size={16} />
-	);
-
 	return (
-		<Modal
-			className="delete-policy-modal"
-			title={<span className="title">Delete Routing Policy</span>}
+		<Dialog
 			open
-			closable={false}
-			onCancel={handleClose}
-			footer={[
-				<Button
-					key="cancel"
-					onClick={handleClose}
-					className="cancel-btn"
-					icon={<X size={16} />}
-					disabled={isDeletingRoutingPolicy}
-				>
-					Cancel
-				</Button>,
-				<Button
-					key="submit"
-					type="primary"
-					icon={deleteButtonIcon}
-					onClick={handleDelete}
-					className="delete-btn"
-					disabled={isDeletingRoutingPolicy}
-				>
-					Delete Routing Policy
-				</Button>,
-			]}
+			onOpenChange={(open): void => {
+				if (!open) {
+					handleClose();
+				}
+			}}
 		>
-			<Typography.Text className="delete-text">
-				Are you sure you want to delete <strong>{routingPolicy?.name}</strong>{' '}
-				routing policy? Deleting a routing policy is irreversible and cannot be
-				undone.
-			</Typography.Text>
-		</Modal>
+			<DialogContent showCloseButton={false}>
+				<DialogHeader>
+					<DialogTitle>Delete Routing Policy</DialogTitle>
+				</DialogHeader>
+				<DialogBody>
+					<DialogDescription>
+						Are you sure you want to delete <strong>{routingPolicy?.name}</strong>{' '}
+						routing policy? Deleting a routing policy is irreversible and cannot be
+						undone.
+					</DialogDescription>
+				</DialogBody>
+				<DialogFooter>
+					<Button
+						variant="outline"
+						onClick={handleClose}
+						disabled={isDeletingRoutingPolicy}
+					>
+						<X aria-hidden="true" />
+						Cancel
+					</Button>
+					<Button
+						variant="destructive"
+						onClick={handleDelete}
+						disabled={isDeletingRoutingPolicy}
+						aria-busy={isDeletingRoutingPolicy}
+					>
+						{isDeletingRoutingPolicy ? (
+							<Loader2 aria-hidden="true" className="tw:animate-spin" />
+						) : (
+							<Trash2 aria-hidden="true" />
+						)}
+						<span className="translate-safe">Delete Routing Policy</span>
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

@@ -1,15 +1,27 @@
-import { useMemo } from 'react';
-import { Button, Table, TableProps } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import { RotateCw } from '@signozhq/icons';
-
-import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
-import emptyStateUrl from '@/assets/Icons/emptyState.svg';
-
+import { useState } from 'react';
+import ConfigListSkeleton from 'components/Alerts/ConfigSectionHeader/ConfigListSkeleton';
+import ConfigListState from 'components/Alerts/ConfigSectionHeader/ConfigListState';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import TablePagination from 'components/PageTemplate/components/TablePagination';
+import { Button } from 'components/ui/button';
+import {
+	Table,
+	TableBody,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from 'components/ui/table';
 import { fuseScopeDocsUrl } from 'constants/docs';
+import { Plus, RotateCw, Route, Search, TriangleAlert } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
+import { USER_ROLES } from 'types/roles';
 
+import { ROUTING_POLICY_COLUMN_COUNT } from './constants';
 import RoutingPolicyListItem from './RoutingPolicyListItem';
-import { RoutingPolicy, RoutingPolicyListProps } from './types';
+import { RoutingPolicyListProps } from './types';
+
+const PAGE_SIZE = 5;
+const COLUMNS = ['Routing policy', 'Expression', 'Channels', 'Updated'];
 
 function RoutingPolicyList({
 	routingPolicies,
@@ -21,81 +33,126 @@ function RoutingPolicyList({
 	handleDeleteModalOpen,
 	hasSearchTerm,
 }: RoutingPolicyListProps): JSX.Element {
-	const columns: TableProps<RoutingPolicy>['columns'] = [
-		{
-			title: 'Routing Policy',
-			key: 'routingPolicy',
-			render: (data: RoutingPolicy): JSX.Element => (
-				<RoutingPolicyListItem
-					routingPolicy={data}
-					handlePolicyDetailsModalOpen={handlePolicyDetailsModalOpen}
-					handleDeleteModalOpen={handleDeleteModalOpen}
-				/>
-			),
-		},
-	];
+	const { user } = useAppContext();
+	const [page, setPage] = useState(1);
 
 	const showLoading = isRoutingPoliciesLoading || isRoutingPoliciesFetching;
 	const showError = !showLoading && isRoutingPoliciesError;
+	const pageCount = Math.max(1, Math.ceil(routingPolicies.length / PAGE_SIZE));
+	const currentPage = Math.min(page, pageCount);
+	const pageRows = routingPolicies.slice(
+		(currentPage - 1) * PAGE_SIZE,
+		currentPage * PAGE_SIZE,
+	);
 
-	const localeEmptyState = useMemo(
-		() => (
-			<div className="no-routing-policies-message-container">
-				{showError ? (
-					<img src={awwSnapUrl} alt="aww-snap" className="error-state-svg" />
-				) : (
-					<img
-						src={emptyStateUrl}
-						alt="thinking-emoji"
-						className="empty-state-svg"
-					/>
-				)}
-				{showError ? (
-					<div className="error-state">
-						<Typography.Text>
-							Something went wrong while fetching routing policies.
-						</Typography.Text>
-						<Button icon={<RotateCw size={14} />} onClick={refetchRoutingPolicies}>
+	const renderEmpty = (): JSX.Element => {
+		if (showError) {
+			return (
+				<ConfigListState
+					colSpan={ROUTING_POLICY_COLUMN_COUNT}
+					icon={<TriangleAlert />}
+					title="Something went wrong while fetching routing policies."
+					action={
+						<Button variant="outline" size="sm" onClick={refetchRoutingPolicies}>
+							<RotateCw aria-hidden="true" />
 							Retry
 						</Button>
-					</div>
-				) : hasSearchTerm ? (
-					<Typography.Text>No matching routing policies found.</Typography.Text>
-				) : (
-					<Typography.Text>
-						No routing policies yet,{' '}
+					}
+				/>
+			);
+		}
+		if (hasSearchTerm) {
+			return (
+				<ConfigListState
+					colSpan={ROUTING_POLICY_COLUMN_COUNT}
+					icon={<Search />}
+					title="No matching routing policies found."
+				/>
+			);
+		}
+		return (
+			<ConfigListState
+				colSpan={ROUTING_POLICY_COLUMN_COUNT}
+				icon={<Route />}
+				title="No routing policies yet"
+				description={
+					<>
+						Route firing alerts to channels by matching their labels.{' '}
 						<a
 							href={fuseScopeDocsUrl('/alerts/routing-and-downtime/#routing-policies')}
 							target="_blank"
 							rel="noopener noreferrer"
+							className="tw:text-primary-ink tw:underline-offset-4 tw:hover:underline"
 						>
-							Learn more here
+							Learn more
 						</a>
-					</Typography.Text>
-				)}
-			</div>
-		),
-		[showError, hasSearchTerm, refetchRoutingPolicies],
-	);
+					</>
+				}
+				action={
+					user?.role === USER_ROLES.VIEWER ? undefined : (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={(): void => handlePolicyDetailsModalOpen('create', null)}
+						>
+							<Plus aria-hidden="true" />
+							New routing policy
+						</Button>
+					)
+				}
+			/>
+		);
+	};
 
 	return (
-		<Table<RoutingPolicy>
-			columns={columns}
-			className="routing-policies-table"
-			bordered={false}
-			dataSource={routingPolicies}
-			loading={showLoading}
-			showHeader={false}
-			rowKey="id"
-			pagination={{
-				pageSize: 5,
-				showSizeChanger: false,
-				hideOnSinglePage: true,
-			}}
-			locale={{
-				emptyText: showLoading ? null : localeEmptyState,
-			}}
-		/>
+		<ContentPanel
+			testId="routing-policies-panel"
+			footer={
+				routingPolicies.length > PAGE_SIZE ||
+				!routingPolicies.length ? undefined : (
+					<span className="tw:tabular-nums">
+						{`${routingPolicies.length} ${routingPolicies.length === 1 ? 'policy' : 'policies'}`}
+					</span>
+				)
+			}
+		>
+			<Table aria-busy={showLoading}>
+				<TableHeader className="tw:bg-surface-sunken">
+					<TableRow>
+						{COLUMNS.map((column) => (
+							<TableHead key={column}>{column}</TableHead>
+						))}
+						<TableHead>
+							<span className="tw:sr-only">Actions</span>
+						</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody
+					className={
+						showLoading && routingPolicies.length ? 'tw:opacity-60' : undefined
+					}
+				>
+					{showLoading && !routingPolicies.length && (
+						<ConfigListSkeleton colSpan={ROUTING_POLICY_COLUMN_COUNT} />
+					)}
+					{!showLoading && !routingPolicies.length && renderEmpty()}
+					{pageRows.map((routingPolicy) => (
+						<RoutingPolicyListItem
+							key={routingPolicy.id}
+							routingPolicy={routingPolicy}
+							handlePolicyDetailsModalOpen={handlePolicyDetailsModalOpen}
+							handleDeleteModalOpen={handleDeleteModalOpen}
+						/>
+					))}
+				</TableBody>
+			</Table>
+			<TablePagination
+				page={currentPage}
+				pageSize={PAGE_SIZE}
+				total={routingPolicies.length}
+				onPageChange={setPage}
+			/>
+		</ContentPanel>
 	);
 }
 

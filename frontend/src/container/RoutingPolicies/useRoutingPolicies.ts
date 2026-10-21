@@ -27,8 +27,6 @@ import {
 	mapRoutingPolicyToUpdateApiPayload,
 } from './utils';
 
-import './styles.scss';
-
 function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	const queryClient = useQueryClient();
 	const urlQuery = useUrlQuery();

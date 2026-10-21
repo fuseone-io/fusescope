@@ -1,5 +1,6 @@
 import { ChangeEvent, useMemo } from 'react';
 import ConfigSectionHeader from 'components/Alerts/ConfigSectionHeader/ConfigSectionHeader';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -7,8 +8,6 @@ import DeleteRoutingPolicy from './DeleteRoutingPolicy';
 import RoutingPolicyDetails from './RoutingPolicyDetails';
 import RoutingPolicyList from './RoutingPolicyList';
 import useRoutingPolicies from './useRoutingPolicies';
-
-import './styles.scss';
 
 function RoutingPolicies(): JSX.Element {
 	const { user } = useAppContext();
@@ -56,51 +55,50 @@ function RoutingPolicies(): JSX.Element {
 	};
 
 	return (
-		<div className="routing-policies-container">
-			<div className="routing-policies-content">
-				<ConfigSectionHeader
-					title="Routing Policies"
-					subtitle="Create and manage routing policies."
-					searchPlaceholder="Search for a routing policy..."
-					searchValue={searchTerm}
-					onSearch={handleSearch}
-					actionLabel="New routing policy"
-					onAction={(): void => handlePolicyDetailsModalOpen('create', null)}
-					actionDisabled={disableCreateButton}
-					actionTooltip={tooltipTitle}
+		<div className="tw:flex tw:w-full tw:flex-col tw:gap-4">
+			<ConfigSectionHeader
+				title="Routing Policies"
+				subtitle="Create and manage routing policies."
+				searchPlaceholder="Search for a routing policy..."
+				searchValue={searchTerm}
+				onSearch={handleSearch}
+				actionLabel="New routing policy"
+				onAction={(): void => handlePolicyDetailsModalOpen('create', null)}
+				actionDisabled={disableCreateButton}
+				actionTooltip={tooltipTitle}
+				docsUrl={fuseScopeDocsUrl('/alerts/routing-and-downtime/#routing-policies')}
+			/>
+			<RoutingPolicyList
+				routingPolicies={routingPoliciesData}
+				refetchRoutingPolicies={refetchRoutingPolicies}
+				isRoutingPoliciesFetching={isFetchingRoutingPolicies}
+				isRoutingPoliciesLoading={isLoadingRoutingPolicies}
+				isRoutingPoliciesError={isErrorRoutingPolicies}
+				handlePolicyDetailsModalOpen={handlePolicyDetailsModalOpen}
+				handleDeleteModalOpen={handleDeleteModalOpen}
+				hasSearchTerm={(searchTerm?.length ?? 0) > 0}
+			/>
+			{policyDetailsModalState.isOpen && (
+				<RoutingPolicyDetails
+					routingPolicy={selectedRoutingPolicy}
+					closeModal={handlePolicyDetailsModalClose}
+					mode={policyDetailsModalState.mode}
+					channels={channels}
+					isErrorChannels={isErrorChannels}
+					isLoadingChannels={isLoadingChannels}
+					handlePolicyDetailsModalAction={handlePolicyDetailsModalAction}
+					isPolicyDetailsModalActionLoading={isPolicyDetailsModalActionLoading}
+					refreshChannels={refreshChannels}
 				/>
-				<RoutingPolicyList
-					routingPolicies={routingPoliciesData}
-					refetchRoutingPolicies={refetchRoutingPolicies}
-					isRoutingPoliciesFetching={isFetchingRoutingPolicies}
-					isRoutingPoliciesLoading={isLoadingRoutingPolicies}
-					isRoutingPoliciesError={isErrorRoutingPolicies}
-					handlePolicyDetailsModalOpen={handlePolicyDetailsModalOpen}
-					handleDeleteModalOpen={handleDeleteModalOpen}
-					hasSearchTerm={(searchTerm?.length ?? 0) > 0}
+			)}
+			{isDeleteModalOpen && (
+				<DeleteRoutingPolicy
+					isDeletingRoutingPolicy={isDeletingRoutingPolicy}
+					handleDelete={handleDeleteRoutingPolicy}
+					handleClose={handleDeleteModalClose}
+					routingPolicy={selectedRoutingPolicy}
 				/>
-				{policyDetailsModalState.isOpen && (
-					<RoutingPolicyDetails
-						routingPolicy={selectedRoutingPolicy}
-						closeModal={handlePolicyDetailsModalClose}
-						mode={policyDetailsModalState.mode}
-						channels={channels}
-						isErrorChannels={isErrorChannels}
-						isLoadingChannels={isLoadingChannels}
-						handlePolicyDetailsModalAction={handlePolicyDetailsModalAction}
-						isPolicyDetailsModalActionLoading={isPolicyDetailsModalActionLoading}
-						refreshChannels={refreshChannels}
-					/>
-				)}
-				{isDeleteModalOpen && (
-					<DeleteRoutingPolicy
-						isDeletingRoutingPolicy={isDeletingRoutingPolicy}
-						handleDelete={handleDeleteRoutingPolicy}
-						handleClose={handleDeleteModalClose}
-						routingPolicy={selectedRoutingPolicy}
-					/>
-				)}
-			</div>
+			)}
 		</div>
 	);
 }
