@@ -1,4 +1,4 @@
-### Monitor Redis with SigNoz
+### Monitor Redis with FuseScope
 
 Collect key Redis metrics and view them with an out of the box dashboard.
 

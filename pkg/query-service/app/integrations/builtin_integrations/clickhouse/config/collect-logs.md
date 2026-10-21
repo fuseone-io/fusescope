@@ -67,7 +67,7 @@ processors:
     timeout: 10s
 
 exporters:
-  # export to SigNoz cloud
+  # export to FuseScope
   otlp/clickhouse-logs:
     endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
     tls:
@@ -107,11 +107,11 @@ export CLICKHOUSE_LOG_FILE="/var/log/clickhouse-server/server.log"
 # Must be a IANA timezone name like Asia/Kolkata. For examples, see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 export CLICKHOUSE_TIMEZONE="Etc/UTC"
 
-# region specific SigNoz cloud ingestion endpoint
-export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"
+# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/
+export OTLP_DESTINATION_ENDPOINT="<fusescope-otel-collector-host>:4317"
 
-# your SigNoz ingestion key
-export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
+# your FuseScope ingestion key
+export SIGNOZ_INGESTION_KEY="<ingestion-key>"
 
 ```
 

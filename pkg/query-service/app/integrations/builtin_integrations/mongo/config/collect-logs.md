@@ -67,7 +67,7 @@ processors:
     timeout: 10s
 
 exporters:
-  # export to SigNoz cloud
+  # export to FuseScope
   otlp/mongodb-logs:
     endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
     tls:
@@ -101,11 +101,11 @@ Set the following environment variables in your otel-collector environment:
 # mongod.conf file can also be checked for finding log file location
 export MONGODB_LOG_FILE=/var/log/mongodb/mongodb.log
 
-# region specific SigNoz cloud ingestion endpoint
-export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"
+# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/
+export OTLP_DESTINATION_ENDPOINT="<fusescope-otel-collector-host>:4317"
 
-# your SigNoz ingestion key
-export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
+# your FuseScope ingestion key
+export SIGNOZ_INGESTION_KEY="<ingestion-key>"
 
 ```
 
