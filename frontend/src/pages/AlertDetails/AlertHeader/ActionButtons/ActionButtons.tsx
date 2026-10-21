@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Color } from '@signozhq/design-tokens';
-import { Button, Tooltip } from 'antd';
-import { Divider } from '@signozhq/ui/divider';
+import { Tooltip } from 'antd';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Switch } from '@signozhq/ui/switch';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import { Button } from 'components/ui/button';
 import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';
 import {
 	useAlertRuleDelete,
@@ -35,7 +33,6 @@ function AlertActionButtons({
 		alertDetails.alert,
 	);
 	const [isRenameAlertOpen, setIsRenameAlertOpen] = useState<boolean>(false);
-	const isDarkMode = useIsDarkMode();
 
 	const { handleAlertStateToggle } = useAlertRuleStatusToggle({ ruleId });
 	const { handleAlertDuplicate } = useAlertRuleDuplicate({
@@ -65,7 +62,7 @@ function AlertActionButtons({
 			type: 'item',
 			value: 'rename-rule',
 			label: 'Rename',
-			prefix: <PenLine size={16} color={Color.BG_VANILLA_400} />,
+			prefix: <PenLine size={16} />,
 			onClick: handleRename,
 		});
 	}
@@ -74,14 +71,14 @@ function AlertActionButtons({
 			type: 'item',
 			value: 'duplicate-rule',
 			label: 'Duplicate',
-			prefix: <Copy size={16} color={Color.BG_VANILLA_400} />,
+			prefix: <Copy size={16} />,
 			onClick: handleAlertDuplicate,
 		},
 		{
 			type: 'item',
 			value: 'delete-rule',
 			label: 'Delete',
-			prefix: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
+			prefix: <Trash2 size={16} />,
 			onClick: handleAlertDelete,
 			danger: true,
 		},
@@ -130,21 +127,19 @@ function AlertActionButtons({
 				</Tooltip>
 				<CopyToClipboard textToCopy={window.location.href} />
 
-				<Divider type="vertical" className="alert-action-buttons__divider" />
+				<span aria-hidden="true" className="tw:h-5 tw:w-px tw:bg-border" />
 
 				<Tooltip title="More options">
 					<span className="dropdown-trigger-wrapper">
 						<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 							<Button
-								type="text"
+								variant="ghost"
+								size="icon-sm"
+								aria-label="More options"
 								data-testid="alert-actions-menu"
-								icon={
-									<Ellipsis
-										size={16}
-										color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
-									/>
-								}
-							/>
+							>
+								<Ellipsis size={16} />
+							</Button>
 						</Dropdown>
 					</span>
 				</Tooltip>

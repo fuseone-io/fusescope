@@ -1,6 +1,10 @@
-import { Color } from '@signozhq/design-tokens';
-import { Drawer } from 'antd';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+} from 'components/ui/sheet';
 import { AlertRuleStats, AlertRuleTopContributors } from 'types/api/alerts/def';
 
 import TopContributorsRows from './TopContributorsRows';
@@ -16,33 +20,36 @@ function ViewAllDrawer({
 	topContributorsData: AlertRuleTopContributors[];
 	totalCurrentTriggers: AlertRuleStats['totalCurrentTriggers'];
 }): JSX.Element {
-	const isDarkMode = useIsDarkMode();
 	return (
-		<Drawer
+		<Sheet
 			open={isViewAllVisible}
-			destroyOnClose
-			onClose={toggleViewAllDrawer}
-			placement="right"
-			width="50%"
-			className="view-all-drawer"
-			style={{
-				overscrollBehavior: 'contain',
-				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
+			onOpenChange={(open): void => {
+				if (!open) {
+					toggleViewAllDrawer();
+				}
 			}}
-			title="Viewing All Contributors"
 		>
-			<div
-				className="top-contributors-card--view-all"
-				data-testid="top-contributors-drawer"
+			<SheetContent
+				side="right"
+				className="tw:w-full tw:gap-0 tw:overscroll-contain tw:bg-surface-raised tw:font-sans tw:sm:max-w-2xl"
 			>
-				<div className="top-contributors-card__content">
+				<SheetHeader className="tw:border-b tw:border-border tw:px-5 tw:py-4">
+					<SheetTitle className="tw:text-base">Viewing All Contributors</SheetTitle>
+					<SheetDescription className="tw:text-[13px]">
+						Series that triggered this alert most often in the selected period.
+					</SheetDescription>
+				</SheetHeader>
+				<div
+					className="tw:min-h-0 tw:flex-1 tw:overflow-y-auto"
+					data-testid="top-contributors-drawer"
+				>
 					<TopContributorsRows
 						topContributors={topContributorsData}
 						totalCurrentTriggers={totalCurrentTriggers}
 					/>
 				</div>
-			</div>
-		</Drawer>
+			</SheetContent>
+		</Sheet>
 	);
 }
 

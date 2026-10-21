@@ -1,16 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import { Button } from 'components/ui/button';
 import history from 'lib/history';
-import { ArrowRight } from '@signozhq/icons';
+import { ArrowRight } from 'lucide-react';
 
 import TopContributorsContent from './TopContributorsContent';
 import { TopContributorsCardProps } from './types';
 import ViewAllDrawer from './ViewAllDrawer';
-
-import './TopContributorsCard.styles.scss';
 
 function TopContributorsCard({
 	topContributorsData,
@@ -24,8 +21,6 @@ function TopContributorsCard({
 	const [isViewAllVisible, setIsViewAllVisible] = useState(
 		!!viewAllTopContributorsParam,
 	);
-
-	const isDarkMode = useIsDarkMode();
 
 	const toggleViewAllParam = (isOpen: boolean): void => {
 		if (isOpen) {
@@ -48,32 +43,29 @@ function TopContributorsCard({
 
 	return (
 		<>
-			<div className="top-contributors-card" data-testid="top-contributors-card">
-				<div className="top-contributors-card__header">
-					<div className="title">top contributors</div>
-					{topContributorsData.length > 3 && (
+			<ContentPanel
+				testId="top-contributors-card"
+				title="Top contributors"
+				divided
+				actions={
+					topContributorsData.length > 3 && (
 						<Button
-							type="text"
-							className="view-all"
+							variant="ghost"
+							size="sm"
 							onClick={toggleViewAllDrawer}
 							data-testid="top-contributors-view-all"
 						>
-							<div className="label">View all</div>
-							<div className="icon">
-								<ArrowRight
-									size={14}
-									color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
-								/>
-							</div>
+							View all
+							<ArrowRight aria-hidden="true" />
 						</Button>
-					)}
-				</div>
-
+					)
+				}
+			>
 				<TopContributorsContent
 					topContributorsData={topContributorsData}
 					totalCurrentTriggers={totalCurrentTriggers}
 				/>
-			</div>
+			</ContentPanel>
 			{isViewAllVisible && (
 				<ViewAllDrawer
 					isViewAllVisible={isViewAllVisible}

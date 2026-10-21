@@ -90,8 +90,9 @@ test.describe('Alert history — state filter', () => {
 			timelineFilter: 'FIRED',
 		});
 
-		await expect(page.getByTestId('timeline-filter-fired')).toHaveClass(
-			/selected/,
+		await expect(page.getByTestId('timeline-filter-fired')).toHaveAttribute(
+			'aria-pressed',
+			'true',
 		);
 		await expect(timelineRows(page).first()).toBeVisible();
 	});

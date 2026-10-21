@@ -2,9 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
-import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
-import PageTabs from 'components/PageTemplate/components/PageTabs';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -16,6 +14,7 @@ import { useAlertRule } from 'providers/Alert';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
+import { Tabs as TabsPrimitive } from 'radix-ui';
 
 import AlertHeader from './AlertHeader/AlertHeader';
 import AlertNotFound from './AlertNotFound';
@@ -91,6 +90,32 @@ function AlertDetails(): JSX.Element {
 		return <Spinner />;
 	}
 
+	const tabTriggerClass =
+		'tw:-mb-px tw:inline-flex tw:cursor-pointer tw:items-center tw:gap-1.5 tw:border-b-2 tw:border-transparent tw:py-2.5 tw:text-sm tw:font-medium tw:whitespace-nowrap tw:text-muted-foreground! tw:transition-colors tw:outline-none tw:hover:text-foreground! tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:ring-inset tw:data-[state=active]:border-primary tw:data-[state=active]:text-primary!';
+
+	const tabs = (
+		<div className="tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-x-4 tw:gap-y-2">
+			<TabsPrimitive.List
+				aria-label="Alert rule sections"
+				className="fs-ui tw:flex tw:gap-6 tw:overflow-x-auto tw:overflow-y-hidden tw:font-sans"
+			>
+				{routes.map(({ name, key }) => (
+					<TabsPrimitive.Trigger
+						key={key}
+						value={key}
+						data-testid={`page-tab-${key}`}
+						className={tabTriggerClass}
+					>
+						{name}
+					</TabsPrimitive.Trigger>
+				))}
+			</TabsPrimitive.List>
+			<div className="alert-details__filters tw:pb-2">
+				<Filters />
+			</div>
+		</div>
+	);
+
 	return (
 		<CreateAlertProvider
 			ruleId={ruleId || ''}
@@ -98,36 +123,31 @@ function AlertDetails(): JSX.Element {
 			initialAlertType={alertRuleDetails?.alertType as AlertTypes}
 			initialAlertState={initialAlertState}
 		>
-			<div
-				className={classNames('alert-details', { 'alert-details-v2': isV2Alert })}
+			<TabsPrimitive.Root
+				value={activeTab}
+				onValueChange={handleTabChange}
+				className={classNames(
+					'alert-details tw:flex tw:min-h-full tw:w-full tw:flex-col tw:self-start tw:bg-background tw:text-foreground',
+					{ 'alert-details-v2': isV2Alert },
+				)}
 				data-testid="alert-details-root"
 				data-schema-version={isV2Alert ? NEW_ALERT_SCHEMA_VERSION : 'v1'}
 			>
-				<AlertBreadcrumb
-					className="alert-details__breadcrumb"
-					items={[
-						{ title: 'Alert Rules', route: ROUTES.LIST_ALL_ALERT },
-						{ title: ruleId, isLast: true },
-					]}
-				/>
-
-				{alertRuleDetails && <AlertHeader alertDetails={alertRuleDetails} />}
-				<div className="alert-details__tabs tw:relative">
-					<div className="alert-details__filters">
-						<Filters />
-					</div>
-					<PageTabs
-						label="Alert rule sections"
-						value={activeTab}
-						onValueChange={handleTabChange}
-						tabs={routes.map(({ Component, name, key }) => ({
-							value: key,
-							label: name,
-							content: <Component />,
-						}))}
-					/>
+				{alertRuleDetails && (
+					<AlertHeader alertDetails={alertRuleDetails} tabs={tabs} />
+				)}
+				<div className="tw:mx-auto tw:box-border tw:flex tw:w-full tw:max-w-[1600px] tw:flex-1 tw:flex-col tw:px-4 tw:pt-5 tw:md:px-6">
+					{routes.map(({ Component, key }) => (
+						<TabsPrimitive.Content
+							key={key}
+							value={key}
+							className="tw:min-w-0 tw:outline-none tw:data-[state=active]:flex tw:data-[state=active]:flex-1 tw:data-[state=active]:flex-col"
+						>
+							<Component />
+						</TabsPrimitive.Content>
+					))}
 				</div>
-			</div>
+			</TabsPrimitive.Root>
 		</CreateAlertProvider>
 	);
 }

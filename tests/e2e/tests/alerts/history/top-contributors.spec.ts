@@ -10,7 +10,7 @@ test.describe('Alert history — top contributors', () => {
 
 		const card = page.getByTestId('top-contributors-card');
 		await expect(card).toBeVisible();
-		await expect(card).toContainText('top contributors');
+		await expect(card).toContainText(/top contributors/i);
 
 		const rows = card.getByTestId('top-contributors-row');
 		await expect(rows).toHaveCount(3);
@@ -72,9 +72,9 @@ test.describe('Alert history — top contributors', () => {
 		await expect(drawer).toBeVisible();
 		await expect(page.getByText('Viewing All Contributors')).toBeVisible();
 		await expect(drawer.getByTestId('top-contributors-row')).toHaveCount(10);
-		await expect(drawer.locator('.total')).toHaveText(
-			` of ${alertHistory.total}`,
-		);
+		await expect(
+			drawer.getByRole('navigation', { name: 'Pagination' }),
+		).toContainText(`of ${alertHistory.total} items`);
 	});
 
 	test('TC-05 drawer opens from deep link with ?viewAllTopContributors=true', async ({

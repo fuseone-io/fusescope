@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
+import { Skeleton } from 'components/ui/skeleton';
+import HistoryDataState from 'container/AlertHistory/HistoryDataState/HistoryDataState';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useGetAlertRuleDetailsTimelineGraphData } from 'pages/AlertDetails/hooks';
-import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
 import { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
 
 import Graph from '../Graph/Graph';
-
-import '../Graph/Graph.styles.scss';
 
 function GraphWrapper({
 	totalCurrentTriggers,
@@ -32,19 +31,31 @@ function GraphWrapper({
 	}, [data?.data]);
 
 	return (
-		<div className="timeline-graph" data-testid="timeline-graph">
-			<div className="timeline-graph__title" data-testid="timeline-graph-title">
+		<div
+			className="tw:flex tw:flex-col tw:gap-3 tw:border-b tw:border-border tw:px-5 tw:pt-4 tw:pb-2"
+			data-testid="timeline-graph"
+		>
+			<span
+				className="fs-ui tw:inline-flex tw:h-6 tw:w-max tw:items-center tw:rounded-md tw:border tw:border-border tw:bg-surface-sunken tw:px-2 tw:font-sans tw:text-xs tw:text-muted-foreground tw:tabular-nums"
+				data-testid="timeline-graph-title"
+			>
 				{totalCurrentTriggers} triggers in {relativeTime}
-			</div>
-			<div className="timeline-graph__chart">
-				<DataStateRenderer
+			</span>
+			<div className="tw:min-h-[85px]">
+				<HistoryDataState
 					isLoading={isLoading}
 					isError={isError || !isValidRuleId || !ruleId}
 					isRefetching={isRefetching}
 					data={adaptedData}
+					loading={
+						<Skeleton
+							data-testid="timeline-graph-loading"
+							className="tw:h-[85px] tw:w-full tw:bg-muted"
+						/>
+					}
 				>
 					{(data): JSX.Element => <Graph type="horizontal" data={data} />}
-				</DataStateRenderer>
+				</HistoryDataState>
 			</div>
 		</div>
 	);

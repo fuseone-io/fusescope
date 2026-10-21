@@ -36,8 +36,9 @@ test.describe('Alert history — cross-cutting', () => {
 
 		await expect(page.getByTestId('timeline-table')).toBeVisible();
 		await expect(page.getByTestId('top-contributors-drawer')).toBeVisible();
-		await expect(page.getByTestId('timeline-filter-fired')).toHaveClass(
-			/selected/,
+		await expect(page.getByTestId('timeline-filter-fired')).toHaveAttribute(
+			'aria-pressed',
+			'true',
 		);
 		await expect(timelineRows(page)).toHaveCount(1);
 	});

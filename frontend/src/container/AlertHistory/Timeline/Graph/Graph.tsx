@@ -69,7 +69,7 @@ function HorizontalTimelineGraph({
 			legend: {
 				show: false,
 			},
-			padding: [null, 0, null, 0],
+			padding: [null, 20, null, 20],
 			series: [
 				{
 					label: 'Time',

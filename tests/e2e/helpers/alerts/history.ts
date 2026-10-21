@@ -216,10 +216,11 @@ export async function gotoAlertHistory(
 	// timeline request settles — antd only overlays a spinner on it. Returning
 	// here would leave that request in flight, and the next
 	// `waitForHistoryResponse` in the spec would resolve with the page's own
-	// load instead of the response its interaction produced. Wait the spinner
+	// load instead of the response its interaction produced. Wait the busy
 	// out so every caller starts from a quiet page.
-	await expect(page.locator('.timeline-table .ant-spin-spinning')).toHaveCount(
-		0,
+	await expect(page.getByTestId('timeline-table')).not.toHaveAttribute(
+		'aria-busy',
+		'true',
 	);
 }
 
