@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Redirect, useParams } from 'react-router-dom';
-import PageTemplate from 'components/PageTemplate/PageTemplate';
-import ROUTES from 'constants/routes';
+import HeaderBandLayout from 'components/PageTemplate/components/HeaderBandLayout';
+import HeaderBandTabsLayout from 'components/PageTemplate/components/HeaderBandTabsLayout';
 import { Skeleton } from 'components/ui/skeleton';
+import ROUTES from 'constants/routes';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -10,14 +11,13 @@ import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 
 import CloudIntegration from '../CloudIntegration/CloudIntegration';
-import BackToIntegrations from '../components/BackToIntegrations';
 import IntegrationsError from '../components/IntegrationsError';
-import { IntegrationType } from '../types';
 import { INTEGRATION_TYPES } from '../constants';
+import { IntegrationType } from '../types';
 import { handleContactSupport } from '../utils';
-import IntegrationDetailContent from './IntegrationDetailContent';
 import IntegrationDetailHeader from './IntegrationDetailHeader';
 import IntergrationsUninstallBar from './IntegrationsUninstallBar';
+import { integrationDetailTabs } from './integrationDetailTabs';
 import { ConnectionStates } from './TestConnection';
 import { getConnectionStatesFromConnectionStatus } from './utils';
 
@@ -27,38 +27,35 @@ const cloudIntegrationTypeById: Record<string, IntegrationType> = {
 	[INTEGRATION_TYPES.GCP]: IntegrationType.GCP_SERVICES,
 };
 
+const NO_CONNECTION_DATA = { logs: null, metrics: null };
+
 function IntegrationDetailPage(): JSX.Element {
-	const { integrationId } = useParams<{ integrationId?: string }>();
-	const [activeDetailTab, setActiveDetailTab] = useState<string | null>(
-		'overview',
-	);
+	const { integrationId = '' } = useParams<{ integrationId?: string }>();
+	const [activeDetailTab, setActiveDetailTab] = useState<string>('overview');
 
 	const { data, isLoading, isFetching, refetch, isRefetching, isError } =
-		useGetIntegration({
-			integrationId: integrationId || '',
-		});
+		useGetIntegration({ integrationId });
 
 	const { isCloudUser: isCloudUserVal, isEnterpriseSelfHostedUser } =
 		useGetTenantLicense();
 	const { isFetchingActiveLicense } = useAppContext();
 
 	const { data: integrationStatus, isLoading: isStatusLoading } =
-		useGetIntegrationStatus({
-			integrationId: integrationId || '',
-		});
+		useGetIntegrationStatus({ integrationId });
 
 	const loading = isLoading || isFetching || isRefetching || isStatusLoading;
 	const integrationData = data?.data.data;
+	const title = defaultTo(integrationData?.title, '');
 
 	const connectionStatus = getConnectionStatesFromConnectionStatus(
 		integrationData?.installation,
 		defaultTo(
 			integrationStatus?.data.data,
-			defaultTo(integrationData?.connection_status, { logs: null, metrics: null }),
+			defaultTo(integrationData?.connection_status, NO_CONNECTION_DATA),
 		),
 	);
 
-	if (integrationId && cloudIntegrationTypeById[integrationId]) {
+	if (cloudIntegrationTypeById[integrationId]) {
 		if (
 			!isFetchingActiveLicense &&
 			!isCloudUserVal &&
@@ -69,11 +66,27 @@ function IntegrationDetailPage(): JSX.Element {
 		return <CloudIntegration type={cloudIntegrationTypeById[integrationId]} />;
 	}
 
-	return (
-		<PageTemplate testId="integration-details-page">
-			<BackToIntegrations />
+	const header = (
+		<IntegrationDetailHeader
+			id={integrationId}
+			title={title}
+			description={defaultTo(integrationData?.description, '')}
+			icon={defaultTo(integrationData?.icon, '')}
+			connectionState={connectionStatus}
+			connectionData={defaultTo(integrationStatus?.data.data, NO_CONNECTION_DATA)}
+			onUnInstallSuccess={refetch}
+			onShowConfiguration={(): void => setActiveDetailTab('configuration')}
+			isLoading={loading}
+		/>
+	);
 
-			{isError && (
+	if (isError) {
+		return (
+			<HeaderBandLayout
+				testId="integration-details-page"
+				header={header}
+				bodyClassName="tw:px-4 tw:pt-4 tw:pb-8 tw:md:px-6"
+			>
 				<IntegrationsError
 					testId="integration-details-error"
 					onRetry={(): void => {
@@ -81,52 +94,38 @@ function IntegrationDetailPage(): JSX.Element {
 					}}
 					onContactSupport={(): void => handleContactSupport(isCloudUserVal)}
 				/>
-			)}
+			</HeaderBandLayout>
+		);
+	}
 
-			{!isError && (
-				<>
-					<IntegrationDetailHeader
-						id={integrationId || ''}
-						title={defaultTo(integrationData?.title, '')}
-						description={defaultTo(integrationData?.description, '')}
-						icon={defaultTo(integrationData?.icon, '')}
-						connectionState={connectionStatus}
-						connectionData={defaultTo(integrationStatus?.data.data, {
-							logs: null,
-							metrics: null,
-						})}
-						onUnInstallSuccess={refetch}
-						setActiveDetailTab={setActiveDetailTab}
-						isLoading={loading}
-					/>
+	const tabs = integrationDetailTabs({
+		integrationData,
+		integrationId,
+		placeholder: loading && (
+			<Skeleton
+				data-testid="integration-details-loading"
+				className="tw:h-80 tw:w-full tw:rounded-xl tw:bg-muted"
+			/>
+		),
+		footer: connectionStatus !== ConnectionStates.NotInstalled && (
+			<IntergrationsUninstallBar
+				integrationTitle={title}
+				integrationId={integrationId}
+				onUnInstallSuccess={refetch}
+				connectionStatus={connectionStatus}
+			/>
+		),
+	});
 
-					{loading && (
-						<Skeleton
-							data-testid="integration-details-loading"
-							className="tw:h-80 tw:w-full tw:rounded-lg tw:bg-muted"
-						/>
-					)}
-
-					{!loading && integrationData && (
-						<IntegrationDetailContent
-							activeDetailTab={activeDetailTab || 'overview'}
-							integrationData={integrationData}
-							integrationId={integrationId || ''}
-							setActiveDetailTab={setActiveDetailTab}
-						/>
-					)}
-
-					{!loading && connectionStatus !== ConnectionStates.NotInstalled && (
-						<IntergrationsUninstallBar
-							integrationTitle={defaultTo(integrationData?.title, '')}
-							integrationId={integrationId || ''}
-							onUnInstallSuccess={refetch}
-							connectionStatus={connectionStatus}
-						/>
-					)}
-				</>
-			)}
-		</PageTemplate>
+	return (
+		<HeaderBandTabsLayout
+			testId="integration-details-page"
+			header={header}
+			label="Integration details"
+			tabs={tabs}
+			value={activeDetailTab}
+			onValueChange={setActiveDetailTab}
+		/>
 	);
 }
 

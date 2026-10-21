@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useMutation } from 'react-query';
 import logEvent from 'api/common/logEvent';
 import installIntegration from 'api/Integrations/installIntegration';
-import PageHeader from 'components/PageTemplate/components/PageHeader';
+import CompactPageHeader from 'components/PageTemplate/components/CompactPageHeader';
 import { Button } from 'components/ui/button';
 import { Skeleton } from 'components/ui/skeleton';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowLeftRight, Cable } from 'lucide-react';
+import { ArrowLeftRight, Plug } from 'lucide-react';
 import { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from '../constants';
@@ -23,7 +23,7 @@ interface IntegrationDetailHeaderProps {
 	onUnInstallSuccess: () => void;
 	connectionState: ConnectionStates;
 	connectionData: IntegrationConnectionStatus;
-	setActiveDetailTab: React.Dispatch<React.SetStateAction<string | null>>;
+	onShowConfiguration: () => void;
 	isLoading: boolean;
 }
 
@@ -39,7 +39,7 @@ function IntegrationDetailHeader(
 		connectionData,
 		isLoading,
 		onUnInstallSuccess,
-		setActiveDetailTab,
+		onShowConfiguration,
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -78,34 +78,33 @@ function IntegrationDetailHeader(
 
 	return (
 		<>
-			<PageHeader
+			<CompactPageHeader
 				key={id}
 				testId="integration-detail-header"
 				icon={
 					icon ? (
-						<img src={icon} alt={title} className="tw:size-7 tw:object-contain" />
+						<img src={icon} alt="" className="tw:size-5 tw:object-contain" />
 					) : (
-						<Cable />
+						<Plug />
 					)
 				}
 				title={
-					isLoading ? <Skeleton className="tw:h-7 tw:w-48 tw:bg-muted" /> : title
+					isLoading ? <Skeleton className="tw:h-6 tw:w-40 tw:bg-muted" /> : title
 				}
-				badges={
-					!isLoading &&
-					!isConnectionStateNotInstalled && (
-						<ConnectionStatusBadge connectionState={connectionState} />
+				meta={
+					!isLoading && (
+						<span className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-3 tw:gap-y-1">
+							{!isConnectionStateNotInstalled && (
+								<ConnectionStatusBadge connectionState={connectionState} />
+							)}
+							<span>{description}</span>
+						</span>
 					)
 				}
-				description={isLoading ? undefined : description}
 				actions={
 					<Button
 						variant={isConnectionStateNotInstalled ? 'default' : 'outline'}
-						className={
-							isConnectionStateNotInstalled
-								? undefined
-								: 'tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!'
-						}
+						data-testid="integration-connect-button"
 						disabled={isInstallLoading || isLoading}
 						onClick={handleConnectClick}
 					>
@@ -124,7 +123,7 @@ function IntegrationDetailHeader(
 				connectionData={connectionData}
 				onClose={(): void => setIsModalOpen(false)}
 				onInstall={(): void => mutate({ integration_id: id, config: {} })}
-				onShowConfiguration={(): void => setActiveDetailTab('configuration')}
+				onShowConfiguration={onShowConfiguration}
 			/>
 		</>
 	);

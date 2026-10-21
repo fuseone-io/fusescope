@@ -81,9 +81,9 @@ export const NoDataSinceLong: Story = {
 export const Configure: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await clickTab(canvasElement, /^configure$/i);
-		await within(canvasElement).findByText(
-			/prerequisites/i,
-			undefined,
+		await within(canvasElement).findByRole(
+			'button',
+			{ name: /prerequisites/i, current: 'step' },
 			untilLoaded,
 		);
 	},

@@ -70,7 +70,7 @@ function IntergrationsUninstallBar(
 	return (
 		<div
 			data-testid="uninstall-integration-bar"
-			className="uninstall-integration-bar fs-ui tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-4 tw:rounded-lg tw:border tw:border-error-soft tw:bg-surface-raised tw:px-5 tw:py-4 tw:font-sans tw:text-foreground"
+			className="uninstall-integration-bar fs-ui tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-4 tw:rounded-xl tw:border tw:border-error-soft tw:bg-surface-raised tw:px-5 tw:py-4 tw:font-sans tw:text-foreground"
 		>
 			<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-1">
 				<h2 className="tw:text-sm tw:font-semibold">Remove Integration</h2>
