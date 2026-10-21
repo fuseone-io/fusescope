@@ -1,6 +1,14 @@
 import { STATE_LABELS } from 'components/Alerts/constants';
 import LabelColumn from 'components/Alerts/LabelColumn';
-import { SEVERITY_TONES, STATE_TONES } from 'components/Alerts/tones';
+import {
+	alertTypeLabel,
+	describeRuleCondition,
+} from 'components/Alerts/ruleSummary';
+import {
+	SEVERITY_TONES,
+	STATE_BADGE_CLASSES,
+	STATE_TONES,
+} from 'components/Alerts/tones';
 import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
@@ -26,6 +34,7 @@ export function getAlertRuleColumns(
 					<StatusBadge
 						dot
 						tone={STATE_TONES[state] ?? 'neutral'}
+						className={STATE_BADGE_CLASSES[state]}
 						testId={`alert-row-${row.id ?? ''}-state`}
 					>
 						{STATE_LABELS[state] ?? 'Unknown'}
@@ -41,14 +50,30 @@ export function getAlertRuleColumns(
 			enableSort: true,
 			enableRemove: false,
 			enableMove: false,
-			cell: ({ row, value }): JSX.Element => (
-				<TanStackTable.Text
-					title={value}
-					data-testid={`alert-row-${row.id ?? ''}-name`}
-				>
-					{String(value ?? '-')}
-				</TanStackTable.Text>
-			),
+			cell: ({ row, value }): JSX.Element => {
+				const summary = [alertTypeLabel(row), describeRuleCondition(row)]
+					.filter(Boolean)
+					.join(' · ');
+				return (
+					<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-0.5 tw:font-sans">
+						<TanStackTable.Text
+							title={value}
+							data-testid={`alert-row-${row.id ?? ''}-name`}
+							className="tw:font-medium"
+						>
+							{String(value ?? '—')}
+						</TanStackTable.Text>
+						{summary && (
+							<span
+								data-testid={`alert-row-${row.id ?? ''}-summary`}
+								className="tw:truncate tw:text-xs tw:text-subtle-foreground"
+							>
+								{summary}
+							</span>
+						)}
+					</div>
+				);
+			},
 		},
 		{
 			id: 'severity',
@@ -62,7 +87,7 @@ export function getAlertRuleColumns(
 				if (!severity) {
 					return (
 						<TanStackTable.Text data-testid={`alert-row-${row.id ?? ''}-severity`}>
-							-
+							—
 						</TanStackTable.Text>
 					);
 				}
@@ -86,12 +111,12 @@ export function getAlertRuleColumns(
 			cell: ({ value }): JSX.Element => {
 				const labels = value as Record<string, string> | undefined;
 				if (!labels) {
-					return <TanStackTable.Text>-</TanStackTable.Text>;
+					return <TanStackTable.Text>—</TanStackTable.Text>;
 				}
 
 				const tagKeys = Object.keys(labels).filter((k) => k !== 'severity');
 				if (!tagKeys.length) {
-					return <TanStackTable.Text>-</TanStackTable.Text>;
+					return <TanStackTable.Text>—</TanStackTable.Text>;
 				}
 
 				return <LabelColumn labels={tagKeys} value={labels} color="secondary" />;
@@ -109,7 +134,7 @@ export function getAlertRuleColumns(
 				<TanStackTable.Text>
 					{value
 						? formatTimezoneAdjustedTimestamp(String(value), DATE_TIME_FORMATS.UTC_US)
-						: '-'}
+						: '—'}
 				</TanStackTable.Text>
 			),
 		},
@@ -122,7 +147,7 @@ export function getAlertRuleColumns(
 			enableMove: false,
 			defaultVisibility: false,
 			cell: ({ value }): JSX.Element => (
-				<TanStackTable.Text>{String(value ?? '-')}</TanStackTable.Text>
+				<TanStackTable.Text>{String(value ?? '—')}</TanStackTable.Text>
 			),
 		},
 		{
@@ -137,7 +162,7 @@ export function getAlertRuleColumns(
 				<TanStackTable.Text>
 					{value
 						? formatTimezoneAdjustedTimestamp(String(value), DATE_TIME_FORMATS.UTC_US)
-						: '-'}
+						: '—'}
 				</TanStackTable.Text>
 			),
 		},
@@ -150,7 +175,7 @@ export function getAlertRuleColumns(
 			enableMove: false,
 			defaultVisibility: false,
 			cell: ({ value }): JSX.Element => (
-				<TanStackTable.Text>{String(value ?? '-')}</TanStackTable.Text>
+				<TanStackTable.Text>{String(value ?? '—')}</TanStackTable.Text>
 			),
 		},
 	];

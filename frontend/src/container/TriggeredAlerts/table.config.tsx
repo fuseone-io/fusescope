@@ -40,7 +40,7 @@ export function getAlertColumns(
 					title={value}
 					data-testid={`alert-row-${row.fingerprint ?? ''}-name`}
 				>
-					{String(value ?? '-')}
+					{String(value ?? '—')}
 				</TanStackTable.Text>
 			),
 		},
@@ -55,7 +55,7 @@ export function getAlertColumns(
 				const severity = String(value ?? '').toLowerCase();
 				const testId = `alert-row-${row.fingerprint ?? ''}-severity`;
 				if (!severity) {
-					return <TanStackTable.Text data-testid={testId}>-</TanStackTable.Text>;
+					return <TanStackTable.Text data-testid={testId}>—</TanStackTable.Text>;
 				}
 				return (
 					<StatusBadge tone={SEVERITY_TONES[severity] ?? 'neutral'} testId={testId}>
@@ -75,7 +75,7 @@ export function getAlertColumns(
 				<TanStackTable.Text>
 					{value
 						? formatTimezoneAdjustedTimestamp(String(value), DATE_TIME_FORMATS.UTC_US)
-						: '-'}
+						: '—'}
 				</TanStackTable.Text>
 			),
 		},
@@ -88,12 +88,12 @@ export function getAlertColumns(
 			cell: ({ value }): JSX.Element => {
 				const labels = value as Record<string, string> | undefined;
 				if (!labels) {
-					return <TanStackTable.Text>-</TanStackTable.Text>;
+					return <TanStackTable.Text>—</TanStackTable.Text>;
 				}
 
 				const tagKeys = Object.keys(labels).filter((k) => k !== 'severity');
 				if (!tagKeys.length) {
-					return <TanStackTable.Text>-</TanStackTable.Text>;
+					return <TanStackTable.Text>—</TanStackTable.Text>;
 				}
 
 				return <LabelColumn labels={tagKeys} value={labels} color="secondary" />;

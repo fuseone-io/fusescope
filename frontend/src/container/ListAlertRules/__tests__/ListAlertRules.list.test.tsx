@@ -89,7 +89,7 @@ describe('ListAlertRules — list rendering', () => {
 			'critical',
 		);
 		expect(screen.getByTestId('alert-row-rule-5-severity')).toHaveTextContent(
-			'-',
+			'—',
 		);
 		expect(screen.getByTestId('alert-row-rule-1-severity')).toHaveAttribute(
 			'data-tone',

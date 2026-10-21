@@ -9,7 +9,7 @@ interface AlertStatusTagProps {
 const STATUS: Record<string, { tone: StatusTone; label: string }> = {
 	unprocessed: { tone: 'success', label: 'Unprocessed' },
 	active: { tone: 'error', label: 'Firing' },
-	suppressed: { tone: 'error', label: 'Suppressed' },
+	suppressed: { tone: 'neutral', label: 'Suppressed' },
 };
 
 function AlertStatusTag({ state, testId }: AlertStatusTagProps): JSX.Element {

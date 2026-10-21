@@ -162,7 +162,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 			<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 				<Button
 					aria-label="Action"
-					variant="outlined"
+					variant="ghost"
 					color="secondary"
 					size="sm"
 					icon
