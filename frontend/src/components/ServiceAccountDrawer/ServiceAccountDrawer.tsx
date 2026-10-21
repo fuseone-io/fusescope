@@ -6,12 +6,7 @@ import React, {
 	useState,
 } from 'react';
 import { useQueryClient } from 'react-query';
-import { Key, LayoutGrid, Plus, Trash2, X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { toast } from '@signozhq/ui/sonner';
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
-import { Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getListServiceAccountsQueryKey,
@@ -22,6 +17,10 @@ import {
 import type { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
+import SideSheet from 'components/PageTemplate/components/SideSheet';
+import { Button } from 'components/ui/button';
+import { Skeleton } from 'components/ui/skeleton';
 import { useRoles } from 'components/RolesSelect';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import {
@@ -33,7 +32,7 @@ import {
 	RoleUpdateFailure,
 	useServiceAccountRoleManager,
 } from 'hooks/serviceAccount/useServiceAccountRoleManager';
-import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
 	APIKeyCreatePermission,
 	buildSAAttachPermission,
@@ -50,6 +49,8 @@ import {
 } from 'nuqs';
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
+import { Plus, Trash2 } from 'lucide-react';
+import ActionButton from 'pages/Settings/components/ActionButton';
 
 import AddKeyModal from './AddKeyModal';
 import DeleteAccountModal from './DeleteAccountModal';
@@ -57,8 +58,6 @@ import KeysTab from './KeysTab';
 import OverviewTab from './OverviewTab';
 import type { SaveError } from './utils';
 import { ServiceAccountDrawerTab } from './utils';
-
-import './ServiceAccountDrawer.styles.scss';
 
 export interface ServiceAccountDrawerProps {
 	onSuccess: (options?: { closeDrawer?: boolean }) => void;
@@ -373,45 +372,41 @@ function ServiceAccountDrawer({
 	const footer = useMemo(
 		() =>
 			activeTab === ServiceAccountDrawerTab.Overview && !isDeleted && open ? (
-				<div className="sa-drawer__footer">
-					<AuthZButton
-						size="md"
+				<div className="sa-drawer__footer tw:flex tw:w-full tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
+					<AuthZTooltip
 						checks={[buildSADeletePermission(selectedAccountId ?? '')]}
-						authZEnabled={!!selectedAccountId}
-						variant="link"
-						color="danger"
-						onClick={(): void => {
-							void setIsDeleteOpen(true);
-						}}
-						prefix={<Trash2 size={12} />}
+						enabled={!!selectedAccountId}
 					>
-						Delete Service Account
-					</AuthZButton>
-					<div className="sa-drawer__footer-right">
-						<Button
-							size="md"
-							variant="outlined"
-							color="secondary"
-							onClick={handleClose}
-							prefix={<X size={14} />}
+						<ActionButton
+							variant="ghost"
+							className="tw:text-error-ink tw:hover:bg-error-soft tw:hover:text-error-ink tw:dark:text-error"
+							onClick={(): void => {
+								void setIsDeleteOpen(true);
+							}}
+							icon={<Trash2 aria-hidden="true" />}
 						>
+							Delete Service Account
+						</ActionButton>
+					</AuthZTooltip>
+					<div className="sa-drawer__footer-right tw:ml-auto tw:flex tw:items-center tw:gap-2">
+						<Button type="button" variant="outline" onClick={handleClose}>
 							Cancel
 						</Button>
-						<AuthZButton
-							size="md"
+						<AuthZTooltip
 							checks={[
 								buildSAReadPermission(selectedAccountId ?? ''),
 								buildSAUpdatePermission(selectedAccountId ?? ''),
 							]}
-							authZEnabled={!!selectedAccountId}
-							variant="solid"
-							color="primary"
-							loading={isSaving}
-							disabled={!isDirty}
-							onClick={handleSave}
+							enabled={!!selectedAccountId}
 						>
-							Save Changes
-						</AuthZButton>
+							<ActionButton
+								loading={isSaving}
+								disabled={!isDirty}
+								onClick={handleSave}
+							>
+								Save Changes
+							</ActionButton>
+						</AuthZTooltip>
 					</div>
 				</div>
 			) : null,
@@ -428,133 +423,126 @@ function ServiceAccountDrawer({
 		],
 	);
 
-	const body = (
-		<div className="sa-drawer__layout">
-			<div className="sa-drawer__tabs">
-				<ToggleGroup
-					variant="outlined"
-					color="secondary"
-					type="single"
-					value={activeTab}
-					size="sm"
-					onChange={(val: string): void => {
-						if (val) {
-							void setActiveTab(val as ServiceAccountDrawerTab);
-							if (val !== ServiceAccountDrawerTab.Keys) {
-								void setKeysPage(null);
-								void setEditKeyId(null);
-							}
-						}
-					}}
-					items={[
-						{
-							value: ServiceAccountDrawerTab.Overview,
-							label: 'Overview',
-							prefix: <LayoutGrid size={14} />,
-						},
-						{
-							value: ServiceAccountDrawerTab.Keys,
-							label: 'Keys',
-							prefix: <Key size={14} />,
-							suffix:
-								keys.length > 0 ? (
-									<span className="sa-drawer__tab-count">{keys.length}</span>
-								) : undefined,
-						},
+	const toolbar = (
+		<div className="sa-drawer__tabs tw:flex tw:items-center tw:justify-between tw:gap-2 tw:py-2">
+			<SegmentedControl
+				label="Service account sections"
+				value={activeTab}
+				onChange={(val): void => {
+					void setActiveTab(val);
+					if (val !== ServiceAccountDrawerTab.Keys) {
+						void setKeysPage(null);
+						void setEditKeyId(null);
+					}
+				}}
+				options={[
+					{ value: ServiceAccountDrawerTab.Overview, label: 'Overview' },
+					{
+						value: ServiceAccountDrawerTab.Keys,
+						label: 'Keys',
+						count: keys.length > 0 ? keys.length : undefined,
+					},
+				]}
+			/>
+			{activeTab === ServiceAccountDrawerTab.Keys && (
+				<AuthZTooltip
+					checks={[
+						APIKeyCreatePermission,
+						buildSAAttachPermission(selectedAccountId ?? ''),
 					]}
-				/>
-				{activeTab === ServiceAccountDrawerTab.Keys && (
-					<AuthZButton
-						checks={[
-							APIKeyCreatePermission,
-							buildSAAttachPermission(selectedAccountId ?? ''),
-						]}
-						authZEnabled={!isDeleted && !!selectedAccountId}
-						variant="outlined"
+					enabled={!isDeleted && !!selectedAccountId}
+				>
+					<ActionButton
+						variant="outline"
 						size="sm"
-						color="secondary"
 						disabled={isDeleted}
 						onClick={(): void => {
 							void setIsAddKeyOpen(true);
 						}}
-						prefix={<Plus size={12} />}
+						icon={<Plus aria-hidden="true" />}
 					>
 						Add Key
-					</AuthZButton>
-				)}
-			</div>
+					</ActionButton>
+				</AuthZTooltip>
+			)}
+		</div>
+	);
 
-			<div
-				className={`sa-drawer__body${
-					activeTab === ServiceAccountDrawerTab.Keys ? ' sa-drawer__body--keys' : ''
-				}`}
-			>
-				{isAccountLoading && <Skeleton active paragraph={{ rows: 6 }} />}
-				{isAccountError && (
-					<ErrorInPlace
-						error={toAPIError(
-							accountError,
-							'An unexpected error occurred while fetching service account details.',
-						)}
-					/>
-				)}
-				{!isAccountLoading && !isAccountError && (
-					<>
-						{activeTab === ServiceAccountDrawerTab.Overview &&
-							(account ? (
-								<OverviewTab
-									account={account}
-									localName={localName}
-									onNameChange={handleNameChange}
-									localRoles={localRoles}
-									onRolesChange={(roles): void => {
-										setLocalRoles(roles);
-										clearRoleErrors();
-									}}
-									isDisabled={isDeleted}
-									availableRoles={availableRoles}
-									rolesLoading={rolesLoading}
-									rolesError={rolesError}
-									rolesErrorObj={rolesErrorObj}
-									onRefetchRoles={refetchRoles}
-									saveErrors={saveErrors}
-								/>
-							) : (
-								<Skeleton active />
-							))}
-						{activeTab === ServiceAccountDrawerTab.Keys && (
-							<KeysTab
-								keys={keys}
-								isLoading={keysLoading}
-								isDisabled={isDeleted}
-								accountId={selectedAccountId ?? ''}
-								currentPage={keysPage}
-								pageSize={PAGE_SIZE}
-								onPageChange={(page): void => {
-									void setKeysPage(page);
+	const loadingRows = (
+		<div className="tw:flex tw:flex-col tw:gap-3">
+			{[0, 1, 2, 3, 4, 5].map((row) => (
+				<Skeleton key={row} className="tw:h-5 tw:bg-muted" />
+			))}
+		</div>
+	);
+
+	const body = (
+		<div
+			className={`sa-drawer__body${
+				activeTab === ServiceAccountDrawerTab.Keys ? ' sa-drawer__body--keys' : ''
+			}`}
+		>
+			{isAccountLoading && loadingRows}
+			{isAccountError && (
+				<ErrorInPlace
+					error={toAPIError(
+						accountError,
+						'An unexpected error occurred while fetching service account details.',
+					)}
+				/>
+			)}
+			{!isAccountLoading && !isAccountError && (
+				<>
+					{activeTab === ServiceAccountDrawerTab.Overview &&
+						(account ? (
+							<OverviewTab
+								account={account}
+								localName={localName}
+								onNameChange={handleNameChange}
+								localRoles={localRoles}
+								onRolesChange={(roles): void => {
+									setLocalRoles(roles);
+									clearRoleErrors();
 								}}
+								isDisabled={isDeleted}
+								availableRoles={availableRoles}
+								rolesLoading={rolesLoading}
+								rolesError={rolesError}
+								rolesErrorObj={rolesErrorObj}
+								onRefetchRoles={refetchRoles}
+								saveErrors={saveErrors}
 							/>
-						)}
-					</>
-				)}
-			</div>
+						) : (
+							loadingRows
+						))}
+					{activeTab === ServiceAccountDrawerTab.Keys && (
+						<KeysTab
+							keys={keys}
+							isLoading={keysLoading}
+							isDisabled={isDeleted}
+							accountId={selectedAccountId ?? ''}
+							currentPage={keysPage}
+							pageSize={PAGE_SIZE}
+							onPageChange={(page): void => {
+								void setKeysPage(page);
+							}}
+						/>
+					)}
+				</>
+			)}
 		</div>
 	);
 
 	return (
-		<DrawerWrapper
+		<SideSheet
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					handleClose();
-				}
-			}}
-			direction="right"
-			showCloseButton
-			showOverlay={false}
+			onClose={handleClose}
+			modal={false}
 			title="Service Account Details"
 			className="sa-drawer"
-			width="wide"
+			testId="service-account-drawer"
+			width={640}
+			toolbar={open ? toolbar : undefined}
 			footer={footer}
 		>
 			{open && (
@@ -564,7 +552,7 @@ function ServiceAccountDrawer({
 					<AddKeyModal />
 				</>
 			)}
-		</DrawerWrapper>
+		</SideSheet>
 	);
 }
 

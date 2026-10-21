@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -19,13 +18,12 @@ import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import SettingsDialog from 'pages/Settings/components/SettingsDialog';
 
 import KeyCreatedPhase from './KeyCreatedPhase';
 import KeyFormPhase from './KeyFormPhase';
 import type { FormValues } from './types';
 import { DEFAULT_FORM_VALUES, ExpiryMode, Phase, PHASE_TITLES } from './types';
-
-import './AddKeyModal.styles.scss';
 
 function AddKeyModal(): JSX.Element {
 	const queryClient = useQueryClient();
@@ -139,7 +137,7 @@ function AddKeyModal(): JSX.Element {
 	}
 
 	return (
-		<DialogWrapper
+		<SettingsDialog
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
@@ -147,9 +145,7 @@ function AddKeyModal(): JSX.Element {
 				}
 			}}
 			title={PHASE_TITLES[phase]}
-			width="base"
 			className="add-key-modal"
-			showCloseButton
 			disableOutsideClick={isErrorModalVisible}
 			testId="add-key-modal"
 		>
@@ -174,7 +170,7 @@ function AddKeyModal(): JSX.Element {
 					onCopy={handleCopy}
 				/>
 			)}
-		</DialogWrapper>
+		</SettingsDialog>
 	);
 }
 

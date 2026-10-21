@@ -1,12 +1,12 @@
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import { Label } from 'components/ui/label';
+import { Skeleton } from 'components/ui/skeleton';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import { SACreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
-import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
-import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -19,9 +19,8 @@ import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
-
-import './CreateServiceAccountModal.styles.scss';
-import { Skeleton } from 'antd';
+import ActionButton from 'pages/Settings/components/ActionButton';
+import SettingsDialog from 'pages/Settings/components/SettingsDialog';
 
 interface FormValues {
 	name: string;
@@ -82,7 +81,7 @@ function CreateServiceAccountModal(): JSX.Element {
 	}
 
 	return (
-		<DialogWrapper
+		<SettingsDialog
 			title="New Service Account"
 			open={isOpen}
 			onOpenChange={(open): void => {
@@ -90,76 +89,72 @@ function CreateServiceAccountModal(): JSX.Element {
 					handleClose();
 				}
 			}}
-			showCloseButton
 			width="narrow"
 			className="create-sa-modal"
 			disableOutsideClick={isErrorModalVisible}
 			testId="create-service-account-modal"
-		>
-			<div className="create-sa-modal__content">
-				<AuthZGuardContent
-					checks={[SACreatePermission]}
-					fallbackOnLoading={<Skeleton active paragraph={{ rows: 1 }} />}
-				>
-					<form
-						id="create-sa-form"
-						className="create-sa-form"
-						onSubmit={handleSubmit(handleCreate)}
+			footer={
+				<>
+					<Button
+						type="button"
+						variant="outline"
+						onClick={handleClose}
+						data-testid="create-sa-cancel-btn"
 					>
-						<div className="create-sa-form__item">
-							<label htmlFor="sa-name">Name</label>
-							<Controller
-								name="name"
-								control={control}
-								rules={{ required: 'Name is required' }}
-								render={({ field }): JSX.Element => (
-									<Input
-										id="sa-name"
-										placeholder="Enter a name"
-										className="create-sa-form__input"
-										value={field.value}
-										onChange={field.onChange}
-										onBlur={field.onBlur}
-										data-testid="create-sa-name-input"
-									/>
-								)}
+						Cancel
+					</Button>
+
+					<AuthZTooltip checks={[SACreatePermission]}>
+						<ActionButton
+							type="submit"
+							form="create-sa-form"
+							loading={isSubmitting}
+							disabled={!isValid}
+							testId="create-sa-submit-btn"
+						>
+							Create Service Account
+						</ActionButton>
+					</AuthZTooltip>
+				</>
+			}
+		>
+			<AuthZGuardContent
+				checks={[SACreatePermission]}
+				fallbackOnLoading={<Skeleton className="tw:h-9 tw:bg-muted" />}
+			>
+				<form
+					id="create-sa-form"
+					className="create-sa-form tw:flex tw:flex-col tw:gap-2"
+					onSubmit={handleSubmit(handleCreate)}
+				>
+					<Label htmlFor="sa-name" className="tw:text-foreground">
+						Name
+					</Label>
+					<Controller
+						name="name"
+						control={control}
+						rules={{ required: 'Name is required' }}
+						render={({ field }): JSX.Element => (
+							<Input
+								id="sa-name"
+								placeholder="Enter a name"
+								className="create-sa-form__input"
+								value={field.value}
+								onChange={field.onChange}
+								onBlur={field.onBlur}
+								aria-invalid={errors.name ? true : undefined}
+								data-testid="create-sa-name-input"
 							/>
-							{errors.name && (
-								<p className="create-sa-form__error">{errors.name.message}</p>
-							)}
-						</div>
-					</form>
-				</AuthZGuardContent>
-			</div>
-
-			<DialogFooter className="create-sa-modal__footer">
-				<Button
-					size="md"
-					type="button"
-					variant="solid"
-					color="secondary"
-					onClick={handleClose}
-					testId="create-sa-cancel-btn"
-					prefix={<X size={12} />}
-				>
-					Cancel
-				</Button>
-
-				<AuthZButton
-					size="md"
-					checks={[SACreatePermission]}
-					type="submit"
-					form="create-sa-form"
-					variant="solid"
-					color="primary"
-					loading={isSubmitting}
-					disabled={!isValid}
-					testId="create-sa-submit-btn"
-				>
-					Create Service Account
-				</AuthZButton>
-			</DialogFooter>
-		</DialogWrapper>
+						)}
+					/>
+					{errors.name && (
+						<p className="create-sa-form__error tw:text-xs tw:text-error-ink tw:dark:text-error">
+							{errors.name.message}
+						</p>
+					)}
+				</form>
+			</AuthZGuardContent>
+		</SettingsDialog>
 	);
 }
 

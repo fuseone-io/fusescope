@@ -5,6 +5,8 @@ import { Button } from '@signozhq/ui/button';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import APIError from 'types/api/error';
 
+import './SaveErrorItem.styles.scss';
+
 interface SaveErrorItemProps {
 	context: string;
 	apiError: APIError;

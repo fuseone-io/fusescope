@@ -1,19 +1,20 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
-import { LockKeyhole, Trash2, X } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/fuseScope.schemas';
-import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
 	buildAPIKeyDeletePermission,
 	buildAPIKeyUpdatePermission,
 	buildSADetachPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
+import { Trash2 } from 'lucide-react';
+import ActionButton from 'pages/Settings/components/ActionButton';
+import DrawerField from 'pages/Settings/components/DrawerField';
+import LockedValue from 'pages/Settings/components/LockedValue';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate, formatLastObservedAt } from '../utils';
@@ -53,21 +54,23 @@ function EditKeyForm({
 }: EditKeyFormProps): JSX.Element {
 	return (
 		<>
-			<form id={FORM_ID} className="edit-key-modal__form" onSubmit={onSubmit}>
-				<div className="edit-key-modal__field">
-					<label className="edit-key-modal__label" htmlFor="edit-key-name">
-						Name
-					</label>
+			<form
+				id={FORM_ID}
+				className="edit-key-modal__form tw:flex tw:flex-col tw:gap-4"
+				onSubmit={onSubmit}
+			>
+				<DrawerField label="Name" htmlFor="edit-key-name">
 					{!canUpdate ? (
 						<AuthZTooltip
 							checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
 							enabled={!!keyItem?.id}
 							withPortal={false}
 						>
-							<div className="edit-key-modal__key-display">
-								<span className="edit-key-modal__id-text">{keyItem?.name || '—'}</span>
-								<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
-							</div>
+							<LockedValue>
+								<span className="edit-key-modal__id-text tw:truncate">
+									{keyItem?.name || '—'}
+								</span>
+							</LockedValue>
 						</AuthZTooltip>
 					) : (
 						<Input
@@ -77,53 +80,56 @@ function EditKeyForm({
 							{...register('name')}
 						/>
 					)}
-				</div>
+				</DrawerField>
 
-				<div className="edit-key-modal__field">
-					<label className="edit-key-modal__label" htmlFor="edit-key-id">
-						ID
-					</label>
-					<div id="edit-key-id" className="edit-key-modal__key-display">
-						<span className="edit-key-modal__id-text">{keyItem?.id || '—'}</span>
-						<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
-					</div>
-				</div>
+				<DrawerField label="ID" htmlFor="edit-key-id">
+					<LockedValue>
+						<span
+							id="edit-key-id"
+							className="edit-key-modal__id-text tw:truncate tw:font-mono tw:text-xs"
+						>
+							{keyItem?.id || '—'}
+						</span>
+					</LockedValue>
+				</DrawerField>
 
-				<div className="edit-key-modal__field">
-					<label className="edit-key-modal__label" htmlFor="edit-key-display">
-						Key
-					</label>
-					<div id="edit-key-display" className="edit-key-modal__key-display">
-						<span className="edit-key-modal__key-text">********************</span>
-						<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
-					</div>
-				</div>
+				<DrawerField label="Key" htmlFor="edit-key-display">
+					<LockedValue>
+						<span
+							id="edit-key-display"
+							className="edit-key-modal__key-text tw:font-mono tw:text-xs"
+						>
+							********************
+						</span>
+					</LockedValue>
+				</DrawerField>
 
-				<div className="edit-key-modal__field">
-					<span className="edit-key-modal__label">Expiration</span>
+				<div
+					className="tw:flex tw:flex-col tw:gap-2"
+					title={
+						isUpdateDenied
+							? 'You do not have permission to update this key'
+							: undefined
+					}
+				>
+					<span className="tw:text-[13px] tw:font-medium tw:text-foreground">
+						Expiration
+					</span>
 					<Controller
 						name="expiryMode"
 						control={control}
 						render={({ field }): JSX.Element => (
-							<ToggleGroup
-								variant="outlined"
-								color="secondary"
-								type="single"
+							<SegmentedControl
+								label="Expiration"
 								value={field.value}
-								onChange={(val: string): void => {
-									if (val && canUpdate) {
+								onChange={(val): void => {
+									if (canUpdate) {
 										field.onChange(val);
 									}
 								}}
-								size="sm"
 								disabled={!canUpdate}
-								disabledTooltip={
-									isUpdateDenied
-										? 'You do not have permission to update this key'
-										: undefined
-								}
-								width="60%"
-								items={[
+								className="tw:self-start"
+								options={[
 									{ value: ExpiryMode.NONE, label: 'No Expiration' },
 									{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
 								]}
@@ -133,10 +139,7 @@ function EditKeyForm({
 				</div>
 
 				{expiryMode === ExpiryMode.DATE && (
-					<div className="edit-key-modal__field">
-						<label className="edit-key-modal__label" htmlFor="edit-key-datepicker">
-							Expiration Date
-						</label>
+					<DrawerField label="Expiration Date" htmlFor="edit-key-datepicker">
 						<div className="edit-key-modal__datepicker">
 							<Controller
 								name="expiresAt"
@@ -150,62 +153,59 @@ function EditKeyForm({
 										getPopupContainer={popupContainer}
 										disabledDate={disabledDate}
 										disabled={!canUpdate}
+										style={{ width: '100%' }}
 									/>
 								)}
 							/>
 						</div>
-					</div>
+					</DrawerField>
 				)}
 
-				<div className="edit-key-modal__meta">
-					<span className="edit-key-modal__meta-label">Last Observed At</span>
-					<Badge textTransform="none" variant="solid" color="secondary">
+				<div className="edit-key-modal__meta tw:flex tw:items-center tw:gap-2 tw:text-[13px]">
+					<span className="tw:text-muted-foreground">Last Observed At</span>
+					<span className="tw:font-medium tw:text-foreground tw:tabular-nums">
 						{formatLastObservedAt(
 							keyItem?.lastObservedAt ?? null,
 							formatTimezoneAdjustedTimestamp,
 						)}
-					</Badge>
+					</span>
 				</div>
 			</form>
 
-			<div className="edit-key-modal__footer">
-				<AuthZButton
-					size="md"
+			<div className="edit-key-modal__footer tw:-mx-5 tw:mt-5 tw:-mb-4 tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2 tw:border-t tw:border-border tw:px-5 tw:py-3">
+				<AuthZTooltip
 					checks={[
 						buildAPIKeyDeletePermission(keyItem?.id ?? ''),
 						buildSADetachPermission(accountId ?? ''),
 					]}
-					authZEnabled={!!accountId && !!keyItem?.id}
-					variant="link"
-					color="danger"
-					onClick={onRevokeClick}
-					prefix={<Trash2 size={12} />}
+					enabled={!!accountId && !!keyItem?.id}
 				>
-					Revoke Key
-				</AuthZButton>
-				<div className="edit-key-modal__footer-right">
-					<Button
-						size="md"
-						variant="solid"
-						color="secondary"
-						onClick={onClose}
-						prefix={<X size={12} />}
+					<ActionButton
+						variant="ghost"
+						className="tw:text-error-ink tw:hover:bg-error-soft tw:hover:text-error-ink tw:dark:text-error"
+						onClick={onRevokeClick}
+						icon={<Trash2 aria-hidden="true" />}
 					>
+						Revoke Key
+					</ActionButton>
+				</AuthZTooltip>
+				<div className="edit-key-modal__footer-right tw:flex tw:items-center tw:gap-2">
+					<Button type="button" variant="outline" onClick={onClose}>
 						Cancel
 					</Button>
-					<AuthZButton
-						size="md"
+					<AuthZTooltip
 						checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
-						authZEnabled={!!accountId && !!keyItem?.id}
-						type="submit"
-						form={FORM_ID}
-						variant="solid"
-						color="primary"
-						loading={isSaving}
-						disabled={!isDirty}
+						enabled={!!accountId && !!keyItem?.id}
 					>
-						Save Changes
-					</AuthZButton>
+						<ActionButton
+							type="submit"
+							form={FORM_ID}
+							loading={isSaving}
+							disabled={!isDirty}
+						>
+							Save Changes
+						</ActionButton>
+					</AuthZTooltip>
 				</div>
 			</div>
 		</>

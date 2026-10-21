@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import { Plus } from '@signozhq/icons';
+import { Plus } from 'lucide-react';
 import {
 	invalidateListServiceAccounts,
 	useListServiceAccounts,
 } from 'api/generated/services/serviceaccount';
 import { fuseScopeDocsUrl } from 'constants/docs';
-import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import ActionButton from 'pages/Settings/components/ActionButton';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
 import ServiceAccountsTable, {
 	PAGE_SIZE,
@@ -185,18 +185,16 @@ function ServiceAccountsSettings(): JSX.Element {
 				</>
 			}
 			actions={
-				<AuthZButton
-					size="md"
-					checks={[SACreatePermission]}
-					variant="solid"
-					color="primary"
-					onClick={async (): Promise<void> => {
-						await setIsCreateModalOpen(true);
-					}}
-					prefix={<Plus size={12} />}
-				>
-					New Service Account
-				</AuthZButton>
+				<AuthZTooltip checks={[SACreatePermission]}>
+					<ActionButton
+						onClick={async (): Promise<void> => {
+							await setIsCreateModalOpen(true);
+						}}
+						icon={<Plus aria-hidden="true" />}
+					>
+						New Service Account
+					</ActionButton>
+				</AuthZTooltip>
 			}
 		>
 			<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
@@ -237,13 +235,13 @@ function ServiceAccountsSettings(): JSX.Element {
 						)}
 					/>
 				) : (
-					<Panel className="tw:overflow-hidden">
+					<ContentPanel>
 						<ServiceAccountsTable
 							data={filteredAccounts}
 							loading={isLoading}
 							onRowClick={handleRowClick}
 						/>
-					</Panel>
+					</ContentPanel>
 				)}
 			</AuthZGuardContent>
 
