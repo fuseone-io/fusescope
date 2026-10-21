@@ -26,6 +26,12 @@
 				}
 			}
 
+			// The resize handle straddles the column edge; on the last column
+			// that pushes the table 1px wide.
+			.ant-table-thead > tr > th:last-child .resize-handle {
+				right: 0;
+			}
+
 			.ant-table-tbody > tr > td {
 				height: 48px;
 				padding: 8px 12px;
@@ -63,6 +69,32 @@
 			.ant-table-placeholder > td {
 				border-bottom: 0;
 				color: var(--fs-muted-foreground);
+			}
+
+			// antd offsets the scroll-pinned empty state by its own cell padding;
+			// match the padding above so it does not overflow the table.
+			.ant-table-placeholder .ant-table-expanded-row-fixed {
+				margin: -8px -20px;
+			}
+		}
+
+		.ant-table-content,
+		.ant-table-body {
+			scrollbar-width: thin;
+			scrollbar-color: var(--fs-border) transparent;
+
+			&::-webkit-scrollbar {
+				width: 6px;
+				height: 6px;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				border-radius: 999px;
+				background: var(--fs-border);
 			}
 		}
 

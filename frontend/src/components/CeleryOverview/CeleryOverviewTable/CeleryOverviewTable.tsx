@@ -38,6 +38,9 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { formatNumericValue } from 'utils/numericUtils';
 
 const INITIAL_PAGE_SIZE = 20;
+// The fixed columns plus a readable share for Span name and Destination, which
+// have no width and split what is left.
+const MIN_TABLE_WIDTH = 1000;
 
 const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 	<>
@@ -171,7 +174,7 @@ function getColumns(): TableColumnsType<RowData> {
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 170,
+			width: 160,
 			sorter: (a: RowData, b: RowData): number =>
 				String(a.service_name).localeCompare(String(b.service_name)),
 			render: monoRender('tw:font-mono tw:font-medium'),
@@ -184,7 +187,6 @@ function getColumns(): TableColumnsType<RowData> {
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 210,
 			sorter: (a: RowData, b: RowData): number =>
 				String(a.span_name).localeCompare(String(b.span_name)),
 			render: monoRender('tw:font-mono tw:text-xs tw:text-muted-foreground'),
@@ -196,7 +198,7 @@ function getColumns(): TableColumnsType<RowData> {
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 100,
+			width: 116,
 			sorter: (a: RowData, b: RowData): number =>
 				String(a.messaging_system).localeCompare(String(b.messaging_system)),
 			render: systemRender,
@@ -209,7 +211,6 @@ function getColumns(): TableColumnsType<RowData> {
 				showTitle: false,
 			},
 			render: monoRender('tw:font-mono tw:text-xs'),
-			width: 150,
 			sorter: (a: RowData, b: RowData): number =>
 				String(a.destination).localeCompare(String(b.destination)),
 		},
@@ -227,12 +228,13 @@ function getColumns(): TableColumnsType<RowData> {
 		},
 		{
 			title: 'Error %',
+			align: 'right',
 			dataIndex: 'error_percentage',
 			key: 'error_percentage',
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 170,
+			width: 132,
 			sorter: (a: RowData, b: RowData): number => {
 				const aValue = Number(a.error_percentage);
 				const bValue = Number(b.error_percentage);
@@ -241,14 +243,14 @@ function getColumns(): TableColumnsType<RowData> {
 			render: ErrorRateRender,
 		},
 		{
-			title: 'p95 latency',
+			title: 'P95',
 			align: 'right',
 			dataIndex: 'p95_latency',
 			key: 'p95_latency',
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 120,
+			width: 96,
 			sorter: (a: RowData, b: RowData): number => {
 				const aValue = Number(a.p95_latency);
 				const bValue = Number(b.p95_latency);
@@ -264,7 +266,7 @@ function getColumns(): TableColumnsType<RowData> {
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 130,
+			width: 172,
 			sorter: (a: RowData, b: RowData): number => {
 				const aValue = Number(a.throughput);
 				const bValue = Number(b.throughput);
@@ -546,7 +548,7 @@ export default function CeleryOverviewTable({
 						</Typography.Text>
 					),
 				}}
-				scroll={{ x: 'max-content' }}
+				scroll={{ x: MIN_TABLE_WIDTH }}
 				showSorterTooltip
 				onDragColumn={handleDragColumn}
 				onRow={(record): { onClick: () => void; className: string } => ({
