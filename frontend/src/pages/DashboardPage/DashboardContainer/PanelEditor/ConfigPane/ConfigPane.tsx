@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Input } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from 'components/ui/button';
+import { PanelRightClose } from 'lucide-react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
@@ -14,9 +15,13 @@ import type { EQueryType } from 'types/common/dashboard';
 
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
+import { usePanelEditorChrome } from '../PanelEditorLayout/PanelEditorChromeContext';
 import ConfigActions from './ConfigActions/ConfigActions';
 import PanelTitleInput from './PanelTitleInput/PanelTitleInput';
+import { resolveSectionEditor } from './sectionRegistry';
 import SectionSlot from './SectionSlot/SectionSlot';
+import SettingsRail from './SettingsRail/SettingsRail';
+import { useSectionOpenState } from './useSectionOpenState';
 
 import styles from './ConfigPane.module.scss';
 import { PanelKind } from '../../Panels/types/panelKind';
@@ -82,6 +87,42 @@ function ConfigPane({
 	const sections = definition.sections.filter(
 		(config) => config.kind !== SectionKind.PanelHeader,
 	);
+	const shownKinds = useMemo(
+		() =>
+			sections
+				.filter(
+					(config) =>
+						!!resolveSectionEditor(config.kind) && !config.isHidden?.(spec),
+				)
+				.map((config) => config.kind),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[definition, spec],
+	);
+	const sectionState = useSectionOpenState(shownKinds, spec);
+
+	const chrome = usePanelEditorChrome();
+	const isCollapsed = chrome?.settingsCollapsed ?? false;
+	const paneRef = useRef<HTMLDivElement>(null);
+	const [scrollTarget, setScrollTarget] = useState<SectionKind | null>(null);
+
+	useEffect(() => {
+		if (!scrollTarget || isCollapsed) {
+			return;
+		}
+		paneRef.current
+			?.querySelector(`[data-section="${scrollTarget}"]`)
+			?.scrollIntoView?.({ block: 'start' });
+		setScrollTarget(null);
+	}, [scrollTarget, isCollapsed]);
+
+	const openFromRail = useCallback(
+		(kind: SectionKind): void => {
+			sectionState.openOnly(kind);
+			chrome?.setSettingsCollapsed(false);
+			setScrollTarget(kind);
+		},
+		[sectionState, chrome],
+	);
 
 	const defaults = useMemo(
 		() => buildPluginSpec(definition.sections),
@@ -95,17 +136,53 @@ function ConfigPane({
 	const setDisplayField = (field: 'name' | 'description', value: string): void =>
 		onChangeSpec({ ...spec, display: { ...spec.display, [field]: value } });
 
+	if (chrome && isCollapsed) {
+		return (
+			<SettingsRail
+				sections={shownKinds}
+				onExpand={(): void => chrome.setSettingsCollapsed(false)}
+				onOpenSection={openFromRail}
+			/>
+		);
+	}
+
 	return (
-		<div className={styles.config}>
-			<header className={styles.heading}>
-				<span className={styles.marker} />
-				<Typography.Text>Panel Details</Typography.Text>
+		<div
+			className={styles.config}
+			ref={paneRef}
+			data-testid="panel-editor-settings"
+		>
+			<header className={`fs-ui ${styles.heading}`}>
+				<h2 className={styles.headingTitle}>Panel Details</h2>
+				<div className={styles.headingActions}>
+					{sectionState.isAnyOpen && (
+						<Button
+							variant="ghost"
+							size="sm"
+							data-testid="panel-editor-collapse-sections"
+							onClick={sectionState.collapseAll}
+						>
+							Collapse all
+						</Button>
+					)}
+					{chrome && (
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							className="tw:text-muted-foreground"
+							aria-label="Collapse panel settings"
+							data-testid="panel-editor-collapse-settings"
+							onClick={(): void => chrome.setSettingsCollapsed(true)}
+						>
+							<PanelRightClose />
+						</Button>
+					)}
+				</div>
 			</header>
-			<div className={styles.divider} />
 
 			<div className={styles.group}>
 				<div className={styles.field}>
-					<Typography.Text>Title</Typography.Text>
+					<span className={styles.label}>Title</span>
 					<PanelTitleInput
 						value={spec.display.name}
 						onChange={(value): void => setDisplayField('name', value)}
@@ -113,12 +190,12 @@ function ConfigPane({
 				</div>
 
 				<div className={styles.field}>
-					<Typography.Text>Description</Typography.Text>
+					<span className={styles.label}>Description</span>
 					<Input.TextArea
 						data-testid="panel-editor-v2-description"
 						value={spec.display.description ?? ''}
 						placeholder="Add a description"
-						rows={3}
+						rows={2}
 						onChange={(e): void => setDisplayField('description', e.target.value)}
 					/>
 				</div>
@@ -148,12 +225,14 @@ function ConfigPane({
 				<>
 					<div className={styles.divider} />
 					<div className={styles.sectionsContainer}>
-						<span className={styles.eyebrow}>DISPLAY OPTIONS</span>
+						<span className={styles.eyebrow}>Display options</span>
 						<div className={styles.sections}>
 							{sections.map((config) => (
 								<SectionSlot
 									key={config.kind}
 									config={config}
+									open={sectionState.isOpen(config.kind)}
+									onOpenChange={(open): void => sectionState.setOpen(config.kind, open)}
 									spec={spec}
 									savedSpec={savedSpec}
 									onChangeSpec={onChangeSpec}

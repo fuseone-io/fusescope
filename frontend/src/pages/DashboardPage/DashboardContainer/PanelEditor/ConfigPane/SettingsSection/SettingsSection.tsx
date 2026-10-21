@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from 'react';
-import { ChevronDown } from '@signozhq/icons';
+import { ChevronRight } from '@signozhq/icons';
 import cx from 'classnames';
 
 import ChangedDot from '../controls/ChangedDot/ChangedDot';
@@ -13,8 +13,12 @@ interface SettingsSectionProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	changed?: boolean;
-	/** Rendered between the title and the chevron. */
+	/** One line describing the section's settings, shown while it is collapsed. */
+	summary?: string;
+	/** Rendered after the toggle, at the end of the header row. */
 	headerSlot?: ReactNode;
+	/** Identifies the section for scrolling it into view. */
+	sectionId?: string;
 	children: ReactNode;
 }
 
@@ -27,7 +31,9 @@ function SettingsSection({
 	open,
 	onOpenChange,
 	changed,
+	summary,
 	headerSlot,
+	sectionId,
 	children,
 }: SettingsSectionProps): JSX.Element {
 	const [internalOpen, setInternalOpen] = useState(defaultOpen);
@@ -45,7 +51,7 @@ function SettingsSection({
 	const serializedTitle = title.toLowerCase().replace(/\s+/g, '-');
 
 	return (
-		<section className={styles.section}>
+		<section className={styles.section} data-section={sectionId}>
 			<div className={styles.header}>
 				<button
 					type="button"
@@ -55,15 +61,23 @@ function SettingsSection({
 					data-testid={`config-section-${serializedTitle}`}
 					onClick={toggle}
 				>
+					<ChevronRight
+						size={14}
+						className={cx(styles.chevron, { [styles.open]: isOpen })}
+					/>
 					<span className={styles.title}>{title}</span>
 					{changed && <ChangedDot title="Unsaved changes" />}
+					{!isOpen && summary && (
+						<span
+							className={styles.summary}
+							title={summary}
+							data-testid={`config-section-summary-${serializedTitle}`}
+						>
+							{summary}
+						</span>
+					)}
 				</button>
 				{headerSlot}
-				<ChevronDown
-					size={14}
-					className={cx(styles.chevron, { [styles.open]: isOpen })}
-					onClick={toggle}
-				/>
 			</div>
 			{isOpen && <div className={styles.body}>{children}</div>}
 		</section>

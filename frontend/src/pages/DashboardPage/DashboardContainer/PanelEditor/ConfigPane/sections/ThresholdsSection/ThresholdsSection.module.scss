@@ -5,20 +5,21 @@
 }
 
 .help {
-	font-size: 13px;
-	line-height: 19px;
-	color: var(--fs-muted-foreground);
+	font-size: 12px;
+	line-height: 17px;
+	color: var(--fs-subtle-foreground);
 }
 
 // ── View mode: compact summary row ──────────────────────────────────────────
 .viewRow {
 	display: flex;
 	align-items: center;
-	gap: 14px;
-	padding: 8px 10px 8px 16px;
+	gap: 8px;
+	min-height: 40px;
+	padding: 4px 4px 4px 10px;
 	border: 1px solid var(--fs-border);
-	border-radius: 4px;
-	background-color: var(--fs-card);
+	border-radius: 8px;
+	background-color: var(--fs-background);
 
 	&:hover {
 		border-color: var(--fs-border);
@@ -35,8 +36,9 @@
 
 .viewValue {
 	overflow: hidden;
-	font-family: 'Geist Mono', monospace;
-	font-size: 13px;
+	font-family: var(--tw-font-mono);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
 	color: var(--fs-foreground);
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -44,8 +46,8 @@
 
 .viewLabel {
 	overflow: hidden;
-	font-size: 12px;
-	color: var(--fs-muted-foreground);
+	font-size: 11px;
+	color: var(--fs-subtle-foreground);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
@@ -66,15 +68,15 @@
 .editRow {
 	display: flex;
 	flex-direction: column;
-	gap: 14px;
-	padding: 16px;
+	gap: 12px;
+	padding: 12px;
 	border: 1px solid var(--fs-primary);
-	border-radius: 4px;
+	border-radius: 8px;
 	background-color: var(--fs-card);
 }
 
 .editTitle {
-	font-size: 14px;
+	font-size: 13px;
 	font-weight: 500;
 	color: var(--fs-foreground);
 }
@@ -82,12 +84,13 @@
 .field {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 4px;
 }
 
 .fieldLabel {
-	font-size: 13px;
-	color: var(--fs-muted-foreground);
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--fs-foreground);
 }
 
 .emphasis {
@@ -107,8 +110,8 @@
 
 .formatPreview {
 	padding: 2px 8px;
-	border-radius: 3px;
-	font-family: 'Geist Mono', monospace;
+	border-radius: 4px;
+	font-family: var(--tw-font-mono);
 	font-size: 13px;
 	font-weight: 600;
 	color: var(--bg-vanilla-100);

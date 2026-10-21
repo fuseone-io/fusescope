@@ -5,9 +5,9 @@
 }
 
 .help {
-	font-size: 13px;
-	line-height: 19px;
-	color: var(--fs-muted-foreground);
+	font-size: 12px;
+	line-height: 17px;
+	color: var(--fs-subtle-foreground);
 }
 
 /* --- Saved-link list item --- */
@@ -15,11 +15,12 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 14px;
-	padding: 8px 10px 8px 16px;
+	gap: 8px;
+	min-height: 40px;
+	padding: 4px 4px 4px 10px;
 	border: 1px solid var(--fs-border);
-	border-radius: 4px;
-	background: var(--fs-card);
+	border-radius: 8px;
+	background: var(--fs-background);
 
 	&:hover {
 		border-color: var(--fs-border);

@@ -7,18 +7,16 @@
 
 // Matches ConfigField's heading.
 .label {
-	font-family: 'Geist Mono', monospace;
 	font-size: 12px;
-	letter-spacing: 0.1em;
-	text-transform: uppercase;
+	font-weight: 500;
 	white-space: nowrap;
-	color: var(--fs-muted-foreground);
+	color: var(--fs-foreground);
 }
 
 .help {
 	grid-column: 2;
 	margin-top: -4px;
-	font-size: 12px;
-	line-height: 17px;
-	color: var(--fs-muted-foreground);
+	font-size: 11px;
+	line-height: 16px;
+	color: var(--fs-subtle-foreground);
 }

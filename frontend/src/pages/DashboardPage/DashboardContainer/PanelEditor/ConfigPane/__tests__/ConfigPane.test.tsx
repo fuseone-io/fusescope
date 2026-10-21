@@ -6,6 +6,10 @@ import type {
 import { render, screen, userEvent } from 'tests/test-utils';
 import { EQueryType } from 'types/common/dashboard';
 
+import {
+	type PanelEditorChrome,
+	PanelEditorChromeProvider,
+} from '../../PanelEditorLayout/PanelEditorChromeContext';
 import ConfigPane from '../ConfigPane';
 
 // ConfigActions seeds alerts from the panel, which reads the loaded dashboard for
@@ -49,6 +53,7 @@ function spec(unit?: string): DashboardtypesPanelSpecDTO {
 
 function renderConfigPane(
 	overrides: Partial<React.ComponentProps<typeof ConfigPane>> = {},
+	chrome?: PanelEditorChrome,
 ): React.ComponentProps<typeof ConfigPane> {
 	const props: React.ComponentProps<typeof ConfigPane> = {
 		spec: spec(),
@@ -78,8 +83,29 @@ function renderConfigPane(
 		);
 	}
 
-	render(<Harness />);
+	render(
+		chrome ? (
+			<PanelEditorChromeProvider value={chrome}>
+				<Harness />
+			</PanelEditorChromeProvider>
+		) : (
+			<Harness />
+		),
+	);
 	return props;
+}
+
+function chromeWith(
+	overrides: Partial<PanelEditorChrome> = {},
+): PanelEditorChrome {
+	return {
+		collapseQueryPanel: jest.fn(),
+		settingsCollapsed: false,
+		setSettingsCollapsed: jest.fn(),
+		openQuery: undefined,
+		setOpenQuery: jest.fn(),
+		...overrides,
+	};
 }
 
 describe('ConfigPane', () => {
@@ -155,5 +181,57 @@ describe('ConfigPane', () => {
 		expect(
 			screen.queryByTestId('panel-editor-v2-create-alert'),
 		).not.toBeInTheDocument();
+	});
+
+	it('summarizes a collapsed section on one line', () => {
+		renderConfigPane({ spec: spec('ms') });
+
+		expect(
+			screen.getByTestId('config-section-summary-formatting-&-units'),
+		).toHaveTextContent('Milliseconds (ms) · 2 decimals');
+		expect(
+			screen.getByTestId('config-section-summary-thresholds'),
+		).toHaveTextContent('None');
+	});
+
+	it('collapses every open section with Collapse all', async () => {
+		const user = userEvent.setup();
+		renderConfigPane();
+
+		await user.click(screen.getByTestId('config-section-axes'));
+		expect(screen.getByTestId('config-section-axes')).toHaveAttribute(
+			'aria-expanded',
+			'true',
+		);
+
+		await user.click(screen.getByTestId('panel-editor-collapse-sections'));
+
+		expect(screen.queryAllByRole('button', { expanded: true })).toHaveLength(0);
+		expect(
+			screen.queryByTestId('panel-editor-collapse-sections'),
+		).not.toBeInTheDocument();
+	});
+
+	it('collapses the pane through the editor frame', async () => {
+		const user = userEvent.setup();
+		const chrome = chromeWith();
+		renderConfigPane({}, chrome);
+
+		await user.click(screen.getByTestId('panel-editor-collapse-settings'));
+
+		expect(chrome.setSettingsCollapsed).toHaveBeenCalledWith(true);
+	});
+
+	it('shows a rail of sections when collapsed, opening the pane on one', async () => {
+		const user = userEvent.setup();
+		const chrome = chromeWith({ settingsCollapsed: true });
+		renderConfigPane({}, chrome);
+
+		expect(screen.queryByTestId('panel-editor-v2-title')).not.toBeInTheDocument();
+		expect(screen.getByTestId('panel-editor-settings-rail')).toBeInTheDocument();
+
+		await user.click(screen.getByRole('button', { name: 'Legend' }));
+
+		expect(chrome.setSettingsCollapsed).toHaveBeenCalledWith(false);
 	});
 });

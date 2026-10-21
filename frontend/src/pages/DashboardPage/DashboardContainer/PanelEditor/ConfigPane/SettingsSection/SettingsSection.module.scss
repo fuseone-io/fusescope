@@ -1,15 +1,16 @@
 .section {
-	border-top: 1px solid var(--fs-border);
+	border-bottom: 1px solid var(--fs-border);
+	font-family: var(--tw-font-sans);
 }
 
 .header {
 	display: flex;
 	align-items: center;
-	gap: 6px;
-	padding: 0 20px 0 0;
+	gap: 4px;
+	padding-right: 8px;
 
 	&:hover {
-		background: var(--fs-card);
+		background: var(--fs-background);
 	}
 }
 
@@ -17,36 +18,54 @@
 	display: flex;
 	flex: 1;
 	align-items: center;
-	gap: 10px;
+	gap: 8px;
 	min-width: 0;
-	padding: 18px 0 18px 20px;
+	min-height: 44px;
+	padding: 0 4px 0 12px;
 	border: none;
 	background: transparent;
+	color: var(--fs-foreground);
 	font: inherit;
+	text-align: left;
 	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--fs-ring);
+		outline-offset: -2px;
+	}
 }
 
 .title {
+	flex: none;
 	font-size: 13px;
-	font-weight: 400;
+	font-weight: 600;
 	white-space: nowrap;
-	color: var(--fs-foreground);
+}
+
+.summary {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	color: var(--fs-subtle-foreground);
+	font-size: 12px;
+	text-align: right;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .chevron {
 	flex: none;
 	color: var(--fs-subtle-foreground);
-	cursor: pointer;
 	transition: transform 0.15s ease;
 
 	&.open {
-		transform: rotate(180deg);
+		transform: rotate(90deg);
 	}
 }
 
 .body {
 	display: flex;
 	flex-direction: column;
-	gap: 26px;
-	padding: 4px 20px 26px;
+	gap: 16px;
+	padding: 2px 16px 16px;
 }
