@@ -115,6 +115,16 @@ describe('AppHeader', () => {
 			).toHaveAttribute('href', expect.stringContaining(ROUTES.APPLICATION));
 		});
 
+		it('puts an External APIs domain under its list, decoded and in mono', () => {
+			renderHeader('/api-monitoring/domains/route%3A8083');
+
+			expect(crumbs()).toStrictEqual(['External APIs', 'route:8083']);
+			expect(currentCrumb()).toHaveClass('tw:font-mono');
+			expect(
+				within(header()).getByRole('link', { name: 'External APIs' }),
+			).toHaveAttribute('href', expect.stringContaining(ROUTES.API_MONITORING));
+		});
+
 		it('nests a page under a dynamic parent', () => {
 			renderHeader('/services/checkout-api/top-level-operations');
 

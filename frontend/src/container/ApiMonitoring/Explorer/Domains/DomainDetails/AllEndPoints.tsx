@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Select } from 'antd';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import {
 	getAllEndpointsWidgetData,
 	getGroupByFiltersFromGroupByValues,
 } from 'container/ApiMonitoring/utils';
-import GridCard from 'container/WidgetCard/Card';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { isEqual } from 'lodash-es';
@@ -14,6 +12,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { useApiMonitoringParams } from '../../../queryParams';
+import EndpointsTable from './components/EndpointsTable';
 import { SPAN_ATTRIBUTES, VIEWS } from './constants';
 
 function AllEndPoints({
@@ -230,42 +229,39 @@ function AllEndPoints({
 	);
 
 	return (
-		<div className="all-endpoints-container">
-			<div className="all-endpoints-header">
-				<div className="filter-container">
+		<div className="all-endpoints-container tw:flex tw:flex-col tw:gap-4">
+			<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-3 tw:gap-y-2">
+				<div className="filter-container tw:min-w-0 tw:flex-[1_1_360px]">
 					<QueryBuilderSearchV2
 						query={query}
 						onChange={handleFilterChange}
-						placeholder="Search for filters..."
+						placeholder="Filter, e.g. http.request.method = 'POST'"
+					/>
+				</div>
+				<div className="group-by-container fs-ui tw:flex tw:h-9 tw:min-w-0 tw:flex-[0_1_340px] tw:items-center tw:gap-2 tw:rounded-lg tw:border tw:border-input tw:bg-surface-raised tw:pl-3 tw:font-sans">
+					<span className="group-by-label tw:text-xs tw:whitespace-nowrap tw:text-subtle-foreground">
+						Group by
+					</span>
+					<Select
+						className="group-by-select tw:min-w-0 tw:flex-1"
+						bordered={false}
+						loading={isLoadingGroupByFilters}
+						mode="multiple"
+						value={groupBy}
+						allowClear
+						maxTagCount="responsive"
+						placeholder="Search for attribute"
+						options={groupByOptions}
+						onChange={handleGroupByChange}
+						onSearch={(value: string): void => setGroupBySearchValue(value)}
 					/>
 				</div>
 			</div>
-			<div className="group-by-container">
-				<div className="group-by-label"> Group by </div>
-				<Select
-					className="group-by-select"
-					loading={isLoadingGroupByFilters}
-					mode="multiple"
-					value={groupBy}
-					allowClear
-					maxTagCount="responsive"
-					placeholder="Search for attribute"
-					options={groupByOptions}
-					onChange={handleGroupByChange}
-					onSearch={(value: string): void => setGroupBySearchValue(value)}
-				/>{' '}
-			</div>
-			<div className="endpoints-table-container">
-				<GridCard
-					widget={allEndpointsWidgetData}
-					isQueryEnabled
-					onDragSelect={(): void => {}}
-					customOnDragSelect={(): void => {}}
-					customTimeRange={timeRange}
-					customOnRowClick={onRowClick}
-					version={ENTITY_VERSION_V5}
-				/>
-			</div>
+			<EndpointsTable
+				widget={allEndpointsWidgetData}
+				timeRange={timeRange}
+				onRowClick={onRowClick}
+			/>
 		</div>
 	);
 }

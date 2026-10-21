@@ -1,122 +1,112 @@
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Color } from '@signozhq/design-tokens';
-import { Skeleton, Tooltip } from 'antd';
-import { Progress } from '@signozhq/ui/progress';
-import { Typography } from '@signozhq/ui/typography';
-import {
-	getDisplayValue,
-	getFormattedEndPointMetricsData,
-} from 'container/ApiMonitoring/utils';
+import KpiStrip from 'components/PageTemplate/components/KpiStrip';
+import { Skeleton } from 'components/ui/skeleton';
+import { errorRateTone, formatMs } from 'container/ApiMonitoring/domainList';
+import { getFormattedEndPointMetricsData } from 'container/ApiMonitoring/utils';
+import { formatPercent } from 'lib/apm/format';
+import { cn } from 'lib/utils';
 import { SuccessResponse } from 'types/api';
 
 import ErrorState from './ErrorState';
+import KpiCell from './KpiCell';
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
+interface EndPointMetricsProps {
+	endPointMetricsDataQuery: UseQueryResult<SuccessResponse<any>, unknown>;
+	/** The selected endpoint; the KPIs then cover only it. */
+	endpointName?: string;
+	/** Endpoints of the domain, shown while none is selected. */
+	endpointCount?: number;
+}
+
+const toNumber = (value: number | string | undefined): number | undefined => {
+	if (value === undefined || value === '-' || value === '') {
+		return undefined;
+	}
+	const number = Number(value);
+	return Number.isFinite(number) ? number : undefined;
+};
+
+/** Rate, p99, error rate and last use of the domain, or of the selected endpoint. */
 function EndPointMetrics({
 	endPointMetricsDataQuery,
-}: {
-	endPointMetricsDataQuery: UseQueryResult<SuccessResponse<any>, unknown>;
-}): JSX.Element {
+	endpointName,
+	endpointCount,
+}: EndPointMetricsProps): JSX.Element {
 	const { isLoading, isRefetching, isError, data, refetch } =
 		endPointMetricsDataQuery;
+	const loading = isLoading || isRefetching;
 
-	const metricsData = useMemo(() => {
-		if (isLoading || isRefetching || isError) {
+	const metrics = useMemo(() => {
+		if (loading || isError) {
 			return null;
 		}
-
 		return getFormattedEndPointMetricsData(
-			data?.payload?.data?.result[0].table.rows,
+			data?.payload?.data?.result[0]?.table?.rows,
 		);
-	}, [data?.payload?.data?.result, isLoading, isRefetching, isError]);
+	}, [data?.payload?.data?.result, loading, isError]);
 
 	if (isError) {
 		return <ErrorState refetch={refetch} />;
 	}
 
-	return (
-		<div className="domain-detail-drawer__endpoint">
-			<div className="domain-details-grid">
-				<div className="labels-row">
-					<Typography.Text color="muted" className="domain-details-metadata-label">
-						Rate
-					</Typography.Text>
-					<Typography.Text color="muted" className="domain-details-metadata-label">
-						AVERAGE LATENCY
-					</Typography.Text>
-					<Typography.Text color="muted" className="domain-details-metadata-label">
-						ERROR %
-					</Typography.Text>
-					<Typography.Text color="muted" className="domain-details-metadata-label">
-						LAST USED
-					</Typography.Text>
-				</div>
+	const value = (content: string, unit?: string): JSX.Element =>
+		loading ? (
+			<Skeleton className="tw:mt-1 tw:h-6 tw:w-20 tw:bg-muted" />
+		) : (
+			<>
+				{content}
+				{unit && content !== '—' && (
+					<span className="tw:ml-1 tw:text-[13px] tw:font-normal tw:tracking-normal tw:text-muted-foreground">
+						{unit}
+					</span>
+				)}
+			</>
+		);
 
-				<div className="values-row">
-					<Typography.Text className="domain-details-metadata-value">
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={metricsData?.rate}>
-								<span className="round-metric-tag">
-									{metricsData?.rate !== '-' ? `${metricsData?.rate} ops/sec` : '-'}
-								</span>
-							</Tooltip>
-						)}
-					</Typography.Text>
-					<Typography.Text className="domain-details-metadata-value">
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={metricsData?.latency}>
-								{metricsData?.latency !== '-' ? `${metricsData?.latency}ms` : '-'}
-							</Tooltip>
-						)}
-					</Typography.Text>
-					<Typography.Text className="domain-details-metadata-value error-rate">
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={metricsData?.errorRate}>
-								{metricsData?.errorRate !== '-' ? (
-									<Progress
-										percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
-										strokeLinecap="butt"
-										showInfo
-										strokeColor={((): string => {
-											const errorRatePercent = Number(
-												Number(metricsData?.errorRate ?? 0).toFixed(2),
-											);
-											if (errorRatePercent >= 90) {
-												return Color.BG_SAKURA_500;
-											}
-											if (errorRatePercent >= 60) {
-												return Color.BG_AMBER_500;
-											}
-											return Color.BG_FOREST_500;
-										})()}
-										className="progress-bar"
-									/>
-								) : (
-									'-'
-								)}
-							</Tooltip>
-						)}
-					</Typography.Text>
-					<Typography.Text className="domain-details-metadata-value">
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={metricsData?.lastUsed}>
-								{getDisplayValue(metricsData?.lastUsed)}
-							</Tooltip>
-						)}
-					</Typography.Text>
-				</div>
-			</div>
-		</div>
+	const rate = toNumber(metrics?.rate);
+	const errorRate = toNumber(metrics?.errorRate);
+	const lastUsed = metrics?.lastUsed;
+	const lastUsedText =
+		lastUsed && lastUsed !== '-' ? lastUsed.replace(/\s*ago$/, '') : '—';
+
+	return (
+		<KpiStrip label="Endpoint metrics" testId="endpoint-metrics">
+			<KpiCell
+				label={endpointName ? 'Endpoint' : 'Endpoints'}
+				testId="endpoint-kpi-scope"
+				mono={Boolean(endpointName)}
+			>
+				{endpointName ??
+					(endpointCount === undefined ? '—' : String(endpointCount))}
+			</KpiCell>
+			<KpiCell label="Rate" testId="endpoint-kpi-rate">
+				{value(rate === undefined ? '—' : rate.toFixed(rate < 10 ? 2 : 1), 'ops/s')}
+			</KpiCell>
+			<KpiCell label="p99 latency" testId="endpoint-kpi-p99">
+				{value(formatMs(toNumber(metrics?.latency)))}
+			</KpiCell>
+			<KpiCell
+				label="Error rate"
+				testId="endpoint-kpi-error-rate"
+				className={cn(
+					errorRate !== undefined &&
+						errorRateTone(errorRate) === 'error' &&
+						'tw:text-error-ink',
+				)}
+			>
+				{value(formatPercent(errorRate))}
+			</KpiCell>
+			<KpiCell label="Last used" testId="endpoint-kpi-last-used">
+				{value(lastUsedText, 'ago')}
+			</KpiCell>
+		</KpiStrip>
 	);
 }
+
+EndPointMetrics.defaultProps = {
+	endpointName: undefined,
+	endpointCount: undefined,
+};
 
 export default EndPointMetrics;

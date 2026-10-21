@@ -258,7 +258,7 @@ describe('StatusCodeBarCharts', () => {
 		);
 
 		// Assert
-		expect(screen.getByTestId('skeleton-mock')).toBeInTheDocument();
+		expect(screen.getByTestId('status-code-chart-loading')).toBeInTheDocument();
 	});
 
 	it('renders error state correctly', () => {
@@ -340,7 +340,7 @@ describe('StatusCodeBarCharts', () => {
 			'sum',
 		);
 		expect(screen.getByTestId('bar-chart-mock')).toBeInTheDocument();
-		expect(screen.getByText('Number of calls')).toBeInTheDocument();
+		expect(screen.getByText('Calls')).toBeInTheDocument();
 		expect(screen.getByText('Latency')).toBeInTheDocument();
 	});
 

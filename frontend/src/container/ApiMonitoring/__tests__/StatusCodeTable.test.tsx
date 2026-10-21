@@ -23,39 +23,6 @@ jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () =>
 	)),
 );
 
-// Mock antd components
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
-	return {
-		...originalModule,
-		Table: jest
-			.fn()
-			.mockImplementation(({ loading, dataSource, columns, locale }) => (
-				<div data-testid="table-mock">
-					{loading && <div data-testid="loading-indicator">Loading...</div>}
-					{dataSource &&
-						dataSource.length === 0 &&
-						!loading &&
-						locale?.emptyText && (
-							<div data-testid="empty-table">{locale.emptyText}</div>
-						)}
-					{dataSource && dataSource.length > 0 && (
-						<div data-testid="table-data">
-							Data loaded with {dataSource.length} rows and {columns.length} columns
-						</div>
-					)}
-				</div>
-			)),
-		Typography: {
-			Text: jest.fn().mockImplementation(({ children, className }) => (
-				<div data-testid="typography-text" className={className}>
-					{children}
-				</div>
-			)),
-		},
-	};
-});
-
 // Create a mock query result type
 interface MockQueryResult {
 	isLoading: boolean;
@@ -83,7 +50,9 @@ describe('StatusCodeTable', () => {
 		render(<StatusCodeTable endPointStatusCodeDataQuery={mockQuery as any} />);
 
 		// Assert
-		expect(screen.getByTestId('loading-indicator')).toBeInTheDocument();
+		expect(
+			screen.getAllByTestId('status-code-row-loading').length,
+		).toBeGreaterThan(0);
 	});
 
 	it('renders error state correctly', () => {
@@ -130,7 +99,7 @@ describe('StatusCodeTable', () => {
 		render(<StatusCodeTable endPointStatusCodeDataQuery={mockQuery as any} />);
 
 		// Assert
-		expect(screen.getByTestId('empty-table')).toBeInTheDocument();
+		expect(screen.getByTestId('status-code-table-empty')).toBeInTheDocument();
 	});
 
 	it('renders table data correctly when data is available', () => {
@@ -170,6 +139,10 @@ describe('StatusCodeTable', () => {
 		render(<StatusCodeTable endPointStatusCodeDataQuery={mockQuery as any} />);
 
 		// Assert
-		expect(screen.getByTestId('table-data')).toBeInTheDocument();
+		const [row] = screen.getAllByTestId('status-code-row');
+		expect(row).toHaveTextContent('200');
+		expect(row).toHaveTextContent('150');
+		expect(row).toHaveTextContent(/5\.00\s*ops\/s/);
+		expect(row).toHaveTextContent('10 ms');
 	});
 });

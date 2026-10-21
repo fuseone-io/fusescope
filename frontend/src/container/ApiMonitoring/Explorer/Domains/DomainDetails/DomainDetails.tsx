@@ -1,54 +1,53 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-// eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
-import { Spacing } from '@signozhq/design-tokens';
-import { Button, Drawer } from 'antd';
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
-import { Divider } from '@signozhq/ui/divider';
-import { Typography } from '@signozhq/ui/typography';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import {
-	CustomTimeType,
-	Time,
-} from 'container/TopNav/DateTimeSelectionV2/types';
-import GetMinMax from 'lib/getMinMax';
-import { ArrowDown, ArrowUp, X } from '@signozhq/icons';
-import { AppState } from 'store/reducers';
+import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import CompactPageHeader from 'components/PageTemplate/components/CompactPageHeader';
+import HeaderBandTabsLayout from 'components/PageTemplate/components/HeaderBandTabsLayout';
+import TabCountBadge from 'components/PageTemplate/components/TabCountBadge';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { AlertTriangle, Globe, LayoutDashboard, ListTree } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { DomainTab, domainTabOfSearch, viewOfTab } from '../../../domainRoute';
 import { useApiMonitoringParams } from '../../../queryParams';
+import { useDomainCallers } from '../List/useDomainCallers';
+import { useDomainList } from '../List/useDomainList';
 import AllEndPoints from './AllEndPoints';
 import DomainMetrics from './components/DomainMetrics';
-import { VIEW_TYPES, VIEWS } from './constants';
+import DomainNavigation from './DomainNavigation';
 import EndPointDetails from './EndPointDetails';
 import TopErrors from './TopErrors';
+import { useDomainTimeRange } from './useDomainTimeRange';
+import { VIEWS } from './constants';
 
-import './DomainDetails.styles.scss';
+const EMPTY_FILTERS: IBuilderQuery['filters'] = { items: [], op: 'AND' };
 
-const TimeRangeOffset = 1000000000;
-
-function DomainDetails({
-	domainData,
-	handleClose,
-	selectedDomainIndex,
-	setSelectedDomainIndex,
-	domainListLength,
-	domainListFilters,
+const TabLabel = ({
+	icon,
+	children,
 }: {
-	domainData: any;
-	handleClose: () => void;
-	selectedDomainIndex: number;
-	setSelectedDomainIndex: (index: number) => void;
-	domainListLength: number;
-	domainListFilters: IBuilderQuery['filters'];
-}): JSX.Element {
+	icon: JSX.Element;
+	children: string;
+}): JSX.Element => (
+	<>
+		<span aria-hidden="true" className="tw:inline-flex tw:[&_svg]:size-4">
+			{icon}
+		</span>
+		{children}
+	</>
+);
+
+/** A domain's page, remounted per domain: header with its numbers, then Overview, Endpoints and Top errors. */
+function DomainDetails({ domain }: { domain: string }): JSX.Element {
+	const { search } = useLocation();
 	const [params, setParams] = useApiMonitoringParams();
-	const [selectedView, setSelectedView] = useState<VIEWS>(
-		(params.selectedView as VIEWS) || VIEWS.ALL_ENDPOINTS,
-	);
-	const [selectedEndPointName, setSelectedEndPointName] = useState<string>(
-		params.selectedEndPointName || '',
+	const tab = domainTabOfSearch(search);
+	const selectedEndPointName = params.selectedEndPointName || '';
+	const { timeRange, handleTimeChange } = useDomainTimeRange();
+
+	const compositeData = useGetCompositeQueryParam();
+	const domainListFilters = useMemo(
+		() => compositeData?.builder?.queryData[0]?.filters ?? EMPTY_FILTERS,
+		[compositeData],
 	);
 	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
 		IBuilderQuery['groupBy']
@@ -56,223 +55,85 @@ function DomainDetails({
 	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] =
 		useState<IBuilderQuery['filters']>(domainListFilters);
 
-	const handleTabChange = (value: string): void => {
-		setSelectedView(value as VIEWS);
-		setParams({ selectedView: value });
-	};
+	const { rows, filterExpression } = useDomainList();
+	const callers = useDomainCallers(filterExpression).get(domain);
+	const endpointCount = rows.find((row) => row.domain === domain)?.endpoints;
 
-	const handleEndPointChange = (name: string): void => {
-		setSelectedEndPointName(name);
+	const setTab = (value: string): void =>
+		setParams({ selectedView: viewOfTab(value as DomainTab) });
+	const setSelectedView = (view: VIEWS): void =>
+		setParams({ selectedView: view });
+	const handleEndPointChange = (name: string): void =>
 		setParams({ selectedEndPointName: name });
-	};
-
-	useEffect(() => {
-		if (params.selectedView && params.selectedView !== selectedView) {
-			setSelectedView(params.selectedView as VIEWS);
-		}
-		if (
-			params.selectedEndPointName !== undefined &&
-			params.selectedEndPointName !== selectedEndPointName
-		) {
-			setSelectedEndPointName(params.selectedEndPointName);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [params.selectedView, params.selectedEndPointName]);
-
-	const { maxTime, minTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
-	const startMs = useMemo(
-		() => Math.floor(Number(minTime) / TimeRangeOffset),
-		[minTime],
-	);
-	const endMs = useMemo(
-		() => Math.floor(Number(maxTime) / TimeRangeOffset),
-		[maxTime],
-	);
-
-	const [selectedInterval, setSelectedInterval] = useState<Time>(
-		(params.selectedInterval as Time) || (selectedTime as Time),
-	);
-
-	// Sync params to local selectedInterval state on param change
-	useEffect(() => {
-		if (params.selectedInterval && params.selectedInterval !== selectedInterval) {
-			setSelectedInterval(params.selectedInterval as Time);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [params.selectedInterval]);
-
-	const [modalTimeRange, setModalTimeRange] = useState(() => {
-		if (params.modalTimeRange) {
-			return params.modalTimeRange;
-		}
-		return {
-			startTime: startMs,
-			endTime: endMs,
-		};
-	});
-
-	// Sync params to local modalTimeRange state on param change
-	useEffect(() => {
-		if (
-			params.modalTimeRange &&
-			JSON.stringify(params.modalTimeRange) !== JSON.stringify(modalTimeRange)
-		) {
-			setModalTimeRange(params.modalTimeRange);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [params.modalTimeRange]);
-
-	const handleTimeChange = useCallback(
-		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
-			setSelectedInterval(interval as Time);
-			setParams({ selectedInterval: interval as string });
-
-			if (interval === 'custom' && dateTimeRange) {
-				const newRange = {
-					startTime: Math.floor(dateTimeRange[0] / 1000),
-					endTime: Math.floor(dateTimeRange[1] / 1000),
-				};
-				setModalTimeRange(newRange);
-				setParams({ modalTimeRange: newRange });
-			} else {
-				const { maxTime, minTime } = GetMinMax(interval);
-
-				const newRange = {
-					startTime: Math.floor(minTime / TimeRangeOffset),
-					endTime: Math.floor(maxTime / TimeRangeOffset),
-				};
-				setModalTimeRange(newRange);
-				setParams({ modalTimeRange: newRange });
-			}
-		},
-		[setParams],
-	);
 
 	return (
-		<Drawer
-			width="60%"
-			title={
-				<div className="domain-details-drawer-header">
-					<div className="domain-details-drawer-header-title">
-						<Divider type="vertical" />
-
-						{domainData?.domainName && (
-							<Typography.Text className="title">
-								{domainData.domainName}
-							</Typography.Text>
-						)}
-					</div>
-					<div className="domain-details-drawer-header-right-container">
-						<DateTimeSelectionV2
-							showAutoRefresh={false}
-							showRefreshText={false}
-							onTimeChange={handleTimeChange}
-							defaultRelativeTime="5m"
-							isModalTimeSelection
-							modalSelectedInterval={selectedInterval}
-							modalInitialStartTime={modalTimeRange.startTime * 1000}
-							modalInitialEndTime={modalTimeRange.endTime * 1000}
+		<HeaderBandTabsLayout
+			testId="api-monitoring-domain-page"
+			label="Domain sections"
+			value={tab}
+			onValueChange={setTab}
+			header={
+				<CompactPageHeader
+					icon={<Globe />}
+					title={domain}
+					titleMono
+					meta={
+						<DomainMetrics
+							domainName={domain}
+							domainListFilters={domainListFilters}
+							timeRange={timeRange}
+							callers={callers}
 						/>
-						<Button.Group className="domain-details-drawer-header-ctas">
-							<Button
-								className="domain-navigate-cta"
-								onClick={(): void => {
-									setSelectedDomainIndex(selectedDomainIndex - 1);
-									setSelectedEndPointName('');
-									setEndPointsGroupBy([]);
-									setSelectedView(VIEW_TYPES.ALL_ENDPOINTS);
-								}}
-								icon={<ArrowUp size={16} />}
-								disabled={selectedDomainIndex === 0}
-								title="Previous domain"
-							/>
-							<Button
-								className="domain-navigate-cta"
-								onClick={(): void => {
-									setSelectedDomainIndex(selectedDomainIndex + 1);
-									setSelectedEndPointName('');
-									setEndPointsGroupBy([]);
-									setSelectedView(VIEW_TYPES.ALL_ENDPOINTS);
-								}}
-								icon={<ArrowDown size={16} />}
-								disabled={selectedDomainIndex === domainListLength - 1}
-								title="Next domain"
-							/>
-						</Button.Group>
-					</div>
-				</div>
+					}
+					actions={<DomainNavigation domain={domain} rows={rows} />}
+				/>
 			}
-			placement="right"
-			onClose={handleClose}
-			open={!!domainData}
-			style={{
-				overscrollBehavior: 'contain',
-				background: 'var(--l1-background)',
-			}}
-			className="domain-detail-drawer"
-			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
-		>
-			{domainData && (
-				<>
-					<DomainMetrics
-						domainName={domainData.domainName}
-						domainListFilters={domainListFilters}
-						timeRange={modalTimeRange}
-					/>
-					<div className="views-tabs-container">
-						<ToggleGroup
-							variant="outlined"
-							color="secondary"
-							type="single"
-							onChange={handleTabChange}
-							value={selectedView}
-							size="md"
-							items={[
-								{ value: VIEW_TYPES.ALL_ENDPOINTS, label: 'All Endpoints' },
-								{ value: VIEW_TYPES.ENDPOINT_STATS, label: 'Endpoint(s) Stats' },
-								{ value: VIEW_TYPES.TOP_ERRORS, label: 'Top 10 Errors' },
-							]}
+			tabs={[
+				{
+					value: DomainTab.Overview,
+					label: <TabLabel icon={<LayoutDashboard />}>Overview</TabLabel>,
+					content: (
+						<EndPointDetails
+							domainName={domain}
+							endPointName={selectedEndPointName}
+							setSelectedEndPointName={handleEndPointChange}
+							initialFilters={initialFiltersEndPointStats}
+							timeRange={timeRange}
+							handleTimeChange={handleTimeChange}
+							endpointCount={endpointCount}
 						/>
-					</div>
-					{selectedView === VIEW_TYPES.ALL_ENDPOINTS && (
+					),
+				},
+				{
+					value: DomainTab.Endpoints,
+					label: <TabLabel icon={<ListTree />}>Endpoints</TabLabel>,
+					badge: <TabCountBadge count={endpointCount} />,
+					content: (
 						<AllEndPoints
-							domainName={domainData.domainName}
+							domainName={domain}
 							setSelectedEndPointName={handleEndPointChange}
 							setSelectedView={setSelectedView}
 							groupBy={endPointsGroupBy}
 							setGroupBy={setEndPointsGroupBy}
-							timeRange={modalTimeRange}
+							timeRange={timeRange}
 							initialFilters={domainListFilters}
 							setInitialFiltersEndPointStats={setInitialFiltersEndPointStats}
 						/>
-					)}
-
-					{selectedView === VIEW_TYPES.ENDPOINT_STATS && (
-						<EndPointDetails
-							domainName={domainData.domainName}
-							endPointName={selectedEndPointName}
-							setSelectedEndPointName={handleEndPointChange}
-							initialFilters={initialFiltersEndPointStats}
-							timeRange={modalTimeRange}
-							handleTimeChange={handleTimeChange}
-						/>
-					)}
-
-					{selectedView === VIEW_TYPES.TOP_ERRORS && (
+					),
+				},
+				{
+					value: DomainTab.Errors,
+					label: <TabLabel icon={<AlertTriangle />}>Top errors</TabLabel>,
+					content: (
 						<TopErrors
-							domainName={domainData.domainName}
-							timeRange={modalTimeRange}
+							domainName={domain}
+							timeRange={timeRange}
 							initialFilters={domainListFilters}
 						/>
-					)}
-				</>
-			)}
-		</Drawer>
+					),
+				},
+			]}
+		/>
 	);
 }
 

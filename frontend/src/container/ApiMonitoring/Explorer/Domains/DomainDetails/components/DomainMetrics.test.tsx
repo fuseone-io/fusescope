@@ -230,21 +230,18 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 
 			renderComponent();
 
-			// Wait for skeletons to disappear
-			await waitFor(() => {
-				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons).toHaveLength(0);
-			});
-
-			// Verify all metric labels are displayed
-			expect(screen.getByText('EXTERNAL API')).toBeInTheDocument();
-			expect(screen.getByText('AVERAGE LATENCY')).toBeInTheDocument();
-			expect(screen.getByText('ERROR %')).toBeInTheDocument();
-			expect(screen.getByText('LAST USED')).toBeInTheDocument();
-
-			// Verify metric values are displayed
-			expect(screen.getByText('150')).toBeInTheDocument();
-			expect(screen.getByText('0.125s')).toBeInTheDocument();
+			// Calls is a count of the domain's client spans and the latency is p99.
+			await expect(
+				screen.findByTestId('domain-summary-calls'),
+			).resolves.toHaveTextContent('150 calls');
+			expect(screen.getByTestId('domain-summary-p99')).toHaveTextContent(
+				'p99 125 ms',
+			);
+			expect(screen.getByTestId('domain-summary-errors')).toHaveTextContent(
+				'5.5% errors',
+			);
+			expect(screen.queryByText(/EXTERNAL API/i)).not.toBeInTheDocument();
+			expect(screen.queryByText(/AVERAGE LATENCY/i)).not.toBeInTheDocument();
 		});
 	});
 
@@ -270,14 +267,10 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 
 			renderComponent();
 
-			await waitFor(() => {
-				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons).toHaveLength(0);
-			});
-
-			// When no data, all values should show "-"
-			const dashValues = screen.getAllByText('-');
-			expect(dashValues.length).toBeGreaterThan(0);
+			await expect(
+				screen.findByTestId('domain-summary-calls'),
+			).resolves.toHaveTextContent('— calls');
+			expect(screen.getByTestId('domain-summary-p99')).toHaveTextContent('p99 —');
 		});
 	});
 

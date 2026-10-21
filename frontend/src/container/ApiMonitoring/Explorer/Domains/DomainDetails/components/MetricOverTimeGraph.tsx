@@ -1,4 +1,3 @@
-import { Card } from 'antd';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Widgets } from 'types/api/widgets/widget';
@@ -13,21 +12,17 @@ function MetricOverTimeGraph({
 	onDragSelect: (start: number, end: number) => void;
 }): JSX.Element {
 	return (
-		<div>
-			<Card bordered className="endpoint-details-card">
-				<div className="graph-container">
-					<GridCard
-						widget={widget}
-						isQueryEnabled
-						onDragSelect={onDragSelect}
-						customOnDragSelect={(): void => {}}
-						customTimeRange={timeRange}
-						customTimeRangeWindowForCoRelation="5m"
-						version={ENTITY_VERSION_V5}
-					/>
-				</div>
-			</Card>
-		</div>
+		<section className="endpoint-details-card tw:h-[300px] tw:min-w-0 tw:overflow-hidden tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised">
+			<GridCard
+				widget={widget}
+				isQueryEnabled
+				onDragSelect={onDragSelect}
+				customOnDragSelect={(): void => {}}
+				customTimeRange={timeRange}
+				customTimeRangeWindowForCoRelation="5m"
+				version={ENTITY_VERSION_V5}
+			/>
+		</section>
 	);
 }
 

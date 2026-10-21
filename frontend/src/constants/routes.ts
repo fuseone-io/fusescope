@@ -73,6 +73,7 @@ const ROUTES = {
 	METRICS_EXPLORER_VOLUME_CONTROL: '/metrics-explorer/volume-control',
 	API_MONITORING_BASE: '/api-monitoring',
 	API_MONITORING: '/api-monitoring/explorer',
+	API_MONITORING_DOMAIN: '/api-monitoring/domains/:domain',
 	METRICS_EXPLORER_BASE: '/metrics-explorer',
 	WORKSPACE_ACCESS_RESTRICTED: '/workspace-access-restricted',
 	METER: '/meter',

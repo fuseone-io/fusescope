@@ -44,7 +44,9 @@ function EndPointDetails({
 	initialFilters,
 	timeRange,
 	handleTimeChange,
+	endpointCount,
 }: {
+	endpointCount?: number;
 	domainName: string;
 	endPointName: string;
 	setSelectedEndPointName: (value: string) => void;
@@ -255,67 +257,81 @@ function EndPointDetails({
 	);
 
 	return (
-		<div className="endpoint-details-container">
-			<div className="endpoint-details-filters-container">
-				<div className="endpoint-details-filters-container-dropdown">
-					<EndPointsDropDown
-						selectedEndPointName={endPointName}
-						setSelectedEndPointName={setSelectedEndPointName}
-						endPointDropDownDataQuery={endPointDropDownDataQuery}
-						parentContainerDiv=".endpoint-details-filters-container"
-						dropdownStyle={{ width: 'calc(100% - 36px)' }}
-					/>
+		<div className="endpoint-details-container tw:flex tw:flex-col tw:gap-4">
+			<div className="endpoint-details-filters-container tw:flex tw:flex-wrap tw:items-center tw:gap-x-3 tw:gap-y-2">
+				<div className="endpoint-details-filters-container-dropdown fs-ui tw:flex tw:h-9 tw:w-[340px] tw:max-w-full tw:items-center tw:gap-2 tw:rounded-lg tw:border tw:border-input tw:bg-surface-raised tw:pl-3 tw:font-sans">
+					<span className="tw:text-xs tw:text-subtle-foreground">Endpoint</span>
+					<div className="tw:min-w-0 tw:flex-1">
+						<EndPointsDropDown
+							selectedEndPointName={endPointName}
+							setSelectedEndPointName={setSelectedEndPointName}
+							endPointDropDownDataQuery={endPointDropDownDataQuery}
+							parentContainerDiv=".endpoint-details-filters-container"
+							dropdownStyle={{ width: 'min(480px, 90vw)' }}
+						/>
+					</div>
 				</div>
-				<div className="endpoint-details-filters-container-search">
+				<div className="endpoint-details-filters-container-search tw:min-w-0 tw:flex-[1_1_360px]">
 					<QueryBuilderSearchV2
 						query={query}
 						onChange={handleFilterChange}
-						placeholder="Search for filters..."
+						placeholder="Filter, e.g. service.name = 'payment'"
 					/>
 				</div>
+				{endPointName && (
+					<span
+						data-testid="endpoint-port"
+						className="fs-ui tw:font-sans tw:text-xs tw:text-muted-foreground"
+					>
+						Port{' '}
+						<span className="tw:font-mono tw:text-foreground">{port || '—'}</span>
+					</span>
+				)}
 			</div>
-			<div className="endpoint-meta-data">
-				<div className="endpoint-meta-data-pill">
-					<div className="endpoint-meta-data-label">Endpoint</div>
-					<div className="endpoint-meta-data-value">
-						{endpoint || 'All Endpoints'}
-					</div>
-				</div>
-				<div className="endpoint-meta-data-pill">
-					<div className="endpoint-meta-data-label">Port</div>
-					<div className="endpoint-meta-data-value">{port || '-'}</div>
-				</div>
+			<EndPointMetrics
+				endPointMetricsDataQuery={endPointMetricsDataQuery}
+				endpointName={endPointName ? endpoint : undefined}
+				endpointCount={endpointCount}
+			/>
+			<div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:xl:grid-cols-2">
+				<StatusCodeBarCharts
+					endPointStatusCodeBarChartsDataQuery={endPointStatusCodeBarChartsDataQuery}
+					endPointStatusCodeLatencyBarChartsDataQuery={
+						endPointStatusCodeLatencyBarChartsDataQuery
+					}
+					domainName={domainName}
+					filters={filters}
+					timeRange={timeRange}
+					onDragSelect={onDragSelect}
+				/>
+				<StatusCodeTable
+					endPointStatusCodeDataQuery={endPointStatusCodeDataQuery}
+				/>
 			</div>
-			<EndPointMetrics endPointMetricsDataQuery={endPointMetricsDataQuery} />
+			<div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:xl:grid-cols-2">
+				<MetricOverTimeGraph
+					widget={rateOverTimeWidget}
+					timeRange={timeRange}
+					onDragSelect={onDragSelect}
+				/>
+				<MetricOverTimeGraph
+					widget={latencyOverTimeWidget}
+					timeRange={timeRange}
+					onDragSelect={onDragSelect}
+				/>
+			</div>
 			{!isServicesFilterApplied && (
 				<DependentServices
 					dependentServicesQuery={endPointDependentServicesDataQuery}
 					timeRange={timeRange}
 				/>
 			)}
-			<StatusCodeBarCharts
-				endPointStatusCodeBarChartsDataQuery={endPointStatusCodeBarChartsDataQuery}
-				endPointStatusCodeLatencyBarChartsDataQuery={
-					endPointStatusCodeLatencyBarChartsDataQuery
-				}
-				domainName={domainName}
-				filters={filters}
-				timeRange={timeRange}
-				onDragSelect={onDragSelect}
-			/>
-			<StatusCodeTable endPointStatusCodeDataQuery={endPointStatusCodeDataQuery} />
-			<MetricOverTimeGraph
-				widget={rateOverTimeWidget}
-				timeRange={timeRange}
-				onDragSelect={onDragSelect}
-			/>
-			<MetricOverTimeGraph
-				widget={latencyOverTimeWidget}
-				timeRange={timeRange}
-				onDragSelect={onDragSelect}
-			/>
 		</div>
 	);
 }
+
+EndPointDetails.defaultProps = {
+	endpointCount: undefined,
+};
 
 export default EndPointDetails;

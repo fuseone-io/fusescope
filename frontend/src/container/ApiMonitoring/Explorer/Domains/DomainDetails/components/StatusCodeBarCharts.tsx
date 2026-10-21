@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Color } from '@signozhq/design-tokens';
-import { FsChartColor } from 'constants/fuseScopeColors';
-import { Button, Card, Skeleton } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import cx from 'classnames';
+import ChartHeaderLegend from 'components/PageTemplate/components/ChartHeaderLegend';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
+import { useSeriesVisibility } from 'components/PageTemplate/hooks/useSeriesVisibility';
+import { Skeleton } from 'components/ui/skeleton';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import {
 	getCustomFiltersForBarChart,
@@ -27,6 +27,7 @@ import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/widgets/widget';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { STATUS_RANGES, statusRangeColors } from '../../../../statusRanges';
 import ErrorState from './ErrorState';
 import {
 	getStepIntervalForQuery,
@@ -120,15 +121,10 @@ function StatusCodeBarCharts({
 	const { notifications } = useNotifications();
 
 	const colorMapping = useMemo(
-		() => ({
-			'200-299': Color.BG_FOREST_500,
-			'300-399': Color.BG_AMBER_400,
-			'400-499': Color.BG_CHERRY_500,
-			'500-599': FsChartColor.BG_ROBIN_500,
-			Other: Color.BG_SIENNA_500,
-		}),
-		[],
+		() => statusRangeColors(isDarkMode),
+		[isDarkMode],
 	);
+	const { plotRef, hidden, toggle } = useSeriesVisibility();
 
 	const widget = useMemo<Widgets>(
 		() =>
@@ -230,28 +226,40 @@ function StatusCodeBarCharts({
 		colorMapping,
 	]);
 
+	const presentRanges = useMemo(
+		() =>
+			new Set(
+				(activeApiResponse?.data?.result ?? []).map((series) =>
+					String(series.metric?.response_status_code ?? ''),
+				),
+			),
+		[activeApiResponse],
+	);
+
 	const renderCardContent = useCallback(
 		(query: UseQueryResult<SuccessResponse<any>, unknown>): JSX.Element => {
 			if (query.isLoading) {
-				return <Skeleton />;
+				return (
+					<Skeleton
+						data-testid="status-code-chart-loading"
+						className="tw:h-full tw:w-full tw:bg-muted"
+					/>
+				);
 			}
 
 			if (query.error) {
 				return <ErrorState refetch={query.refetch} />;
 			}
 			return (
-				<div
-					className={cx('chart-container', {
-						'no-data-container':
-							!query.isLoading && !query?.data?.payload?.data?.result?.length,
-					})}
-				>
+				<div className="chart-container tw:h-full">
 					<BarChart
 						config={config}
 						data={chartData}
 						width={dimensions.width}
 						height={dimensions.height}
 						timezone={timezone}
+						showLegend={false}
+						plotRef={plotRef}
 						legendConfig={{
 							position: LegendPosition.BOTTOM,
 						}}
@@ -259,37 +267,53 @@ function StatusCodeBarCharts({
 				</div>
 			);
 		},
-		[config, chartData, dimensions, timezone],
+		[config, chartData, dimensions, timezone, plotRef],
 	);
 
 	return (
-		<div>
-			<Card bordered className="endpoint-details-card">
-				<div className="header">
-					<Typography.Text>Call response status</Typography.Text>
-					<Button.Group className="views-tabs">
-						<Button
-							value={0}
-							className={currentWidgetInfoIndex === 0 ? 'selected_view tab' : 'tab'}
-							disabled={false}
-							onClick={(): void => setCurrentWidgetInfoIndex(0)}
-						>
-							Number of calls
-						</Button>
-						<Button
-							value={1}
-							className={currentWidgetInfoIndex === 1 ? 'selected_view tab' : 'tab'}
-							onClick={(): void => setCurrentWidgetInfoIndex(1)}
-						>
-							Latency
-						</Button>
-					</Button.Group>
-				</div>
-				<div className="graph-container" ref={graphRef}>
-					{renderCardContent(endPointStatusCodeBarChartsDataQuery)}
-				</div>
-			</Card>
-		</div>
+		<ContentPanel
+			testId="status-code-bar-charts"
+			className="tw:min-h-[300px]"
+			title={
+				<>
+					Call response status
+					<span className="tw:font-normal tw:text-subtle-foreground">
+						{currentWidgetInfoIndex === 0 ? '· calls' : '· p99 latency'}
+					</span>
+				</>
+			}
+			subtitle={
+				<ChartHeaderLegend
+					items={STATUS_RANGES.map((range) => ({
+						key: range.key,
+						label: range.label,
+						color: colorMapping[range.key],
+						muted: !presentRanges.has(range.key),
+					}))}
+					hidden={hidden}
+					onToggle={toggle}
+					className="tw:mt-1"
+				/>
+			}
+			actions={
+				<SegmentedControl
+					label="Measure"
+					size="sm"
+					value={currentWidgetInfoIndex === 0 ? 'calls' : 'latency'}
+					onChange={(value): void =>
+						setCurrentWidgetInfoIndex(value === 'calls' ? 0 : 1)
+					}
+					options={[
+						{ value: 'calls', label: 'Calls', testId: 'status-chart-calls' },
+						{ value: 'latency', label: 'Latency', testId: 'status-chart-latency' },
+					]}
+				/>
+			}
+		>
+			<div className="graph-container tw:h-[200px] tw:px-3 tw:pb-3" ref={graphRef}>
+				{renderCardContent(endPointStatusCodeBarChartsDataQuery)}
+			</div>
+		</ContentPanel>
 	);
 }
 export default StatusCodeBarCharts;

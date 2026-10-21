@@ -380,6 +380,25 @@ export const dependentServicesResponse = (
 	});
 };
 
+/** The services calling each listed domain, for the list's "from" hint and the domain header. */
+export const domainCallersResponse = (count: number): MetricRangePayloadV5 =>
+	queryRangeV5ScalarTableResponse({
+		groupBy: [SPAN_ATTRIBUTES.SERVER_NAME, 'service.name'],
+		aggregations: ['A'],
+		rows: domainNames(count).flatMap((domain, index) => [
+			[domain, DEPENDENT_SERVICES[index % DEPENDENT_SERVICES.length], 900 - index],
+			...(index % 3 === 0
+				? [
+						[
+							domain,
+							DEPENDENT_SERVICES[(index + 1) % DEPENDENT_SERVICES.length],
+							120,
+						],
+					]
+				: []),
+		]),
+	});
+
 interface TopError {
 	statusCode: string;
 	message: string;
