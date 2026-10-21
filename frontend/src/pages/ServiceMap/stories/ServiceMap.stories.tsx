@@ -13,23 +13,24 @@ import {
 	stageClusterIn,
 } from './ServiceMap.stories.mocks';
 
-import ServiceMapContainer from '../index';
+import ServiceMap from '../index';
 
 type ServiceMapArgs = PageStoryArgs<typeof serviceMapMocks>;
 
 const pageStory = storyMocks(serviceMapMocks, { layout: 'app' });
 
 /**
- * Service to service calls as a force graph over `/api/v1/dependency_graph`,
- * nodes sized by request rate and coloured by error rate, with link details on
- * hover.
+ * Calls between services as a layered graph over `/api/v1/dependency_graph`,
+ * with inferred dependencies (db.system, peer.service, external addresses),
+ * the map's KPIs, a rule-based root cause, the selected node's details and
+ * every caller → callee pair.
  *
  * Route: `/service-map`.
  */
 const meta = {
 	title: 'Pages/Services/Service Map',
 	tags: ['beta', 'play'],
-	component: ServiceMapContainer,
+	component: ServiceMap,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<ServiceMapArgs>;
@@ -41,16 +42,114 @@ type Story = StoryObj<ServiceMapArgs>;
 /** The keys are only fetched once the select opens, past the 1s default. */
 const untilLoaded = { timeout: 15_000 };
 
-/**
- * The whole topology: one node per service, sized by how many calls it takes,
- * red where those calls are failing, and a link per dependency carrying the
- * latency and error rate its tooltip reports.
- */
-export const Default: Story = {};
+const nodeButton = async (
+	canvasElement: HTMLElement,
+	id: string,
+): Promise<HTMLElement> =>
+	waitFor(() => {
+		const node = canvasElement.querySelector<HTMLElement>(
+			`[data-node-id="${id}"]`,
+		);
+		if (!node) {
+			throw new Error(`node ${id} not drawn`);
+		}
+		return node;
+	}, untilLoaded);
 
-/** A topology without service errors, preserving the healthy node treatment. */
+/**
+ * The whole topology: entry points left, dependencies right, each node ringed
+ * by its health, and the failing `payments` named as the root cause.
+ */
+export const Default: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		await canvas.findByTestId('service-map-root-cause', undefined, untilLoaded);
+		await waitFor(
+			() =>
+				expect(canvas.getAllByTestId('service-map-node').length).toBeGreaterThan(5),
+			untilLoaded,
+		);
+	},
+};
+
+/** A service selected: its KPIs, latency, callers, calls and operations. */
+export const SelectedService: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		await userEvent.click(await nodeButton(canvasElement, 'checkout'));
+		await waitFor(
+			() =>
+				expect(canvas.getByTestId('service-map-node-name')).toHaveTextContent(
+					'checkout',
+				),
+			untilLoaded,
+		);
+		await canvas.findByTestId('service-map-node-calls');
+	},
+};
+
+/** A database without an SDK, inferred from its callers' spans. */
+export const SelectedDependency: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		await userEvent.click(await nodeButton(canvasElement, 'mysql'));
+		await canvas.findByTestId(
+			'service-map-inferred-note',
+			undefined,
+			untilLoaded,
+		);
+	},
+};
+
+/** Nodes coloured by p99 instead of health. */
+export const ColorByLatency: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByTestId(
+				'service-map-color-latency',
+				undefined,
+				untilLoaded,
+			),
+		);
+		await canvas.findByText('p99 ≥ 2 s');
+	},
+};
+
+/** Databases, caches, queues and externals hidden. */
+export const DependenciesHidden: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		await nodeButton(canvasElement, 'mysql');
+		await userEvent.click(canvas.getByTestId('service-map-dependencies-toggle'));
+		await waitFor(() =>
+			expect(canvasElement.querySelector('[data-node-id="mysql"]')).toBeNull(),
+		);
+	},
+};
+
+/** The dependency graph request failing. */
+export const LoadError: Story = {
+	args: { graphFails: true },
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await within(canvasElement).findByTestId(
+			'service-map-error',
+			undefined,
+			untilLoaded,
+		);
+	},
+};
+
+/** A topology without errors: no root-cause banner. */
 export const HealthyTopology: Story = {
 	args: { health: 'healthy' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await nodeButton(canvasElement, 'frontend');
+		await expect(
+			within(canvasElement).queryByTestId('service-map-root-cause'),
+		).toBeNull();
+	},
 };
 
 /**
@@ -64,6 +163,13 @@ export const Filtered: Story = {
 /** A workspace with no dependencies recorded in the selected time range. */
 export const NoServices: Story = {
 	args: { services: 0 },
+	play: async ({ canvasElement }): Promise<void> => {
+		await within(canvasElement).findByTestId(
+			'service-map-empty',
+			undefined,
+			untilLoaded,
+		);
+	},
 };
 
 /** The filter's real empty branch when no resource attributes have been ingested. */

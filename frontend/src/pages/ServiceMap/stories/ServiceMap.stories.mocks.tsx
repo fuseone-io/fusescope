@@ -18,6 +18,10 @@ import {
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
+import { apDexSettingsResponse } from 'pages/MetricsApplication/stories/__story_mockdata__/metricsApplication';
+import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+
+import { mapQueryRangeResponse } from './__story_mockdata__/mapQueryRange';
 import {
 	attributeKeysFor,
 	attributeKeysResponse,
@@ -30,6 +34,7 @@ import {
 	resourceFilterQueries,
 	SERVICE_HEALTH,
 	type ServiceHealth,
+	topOperationsResponse,
 } from './__story_mockdata__/serviceMap';
 
 /** The keys are only fetched once the select opens, past the 1s default. */
@@ -61,14 +66,14 @@ export const serviceMapMocks = defineStoryMocks({
 		services: countControl('Dependencies', {
 			group: GRAPH,
 			description:
-				'Call edges the endpoint answers with. Every one of them is a link and its two nodes; 0 is the "No Service Found" card.',
+				'Call edges the endpoint answers with. Every one of them is a link and its two nodes; 0 is the empty state.',
 			value: MAX_DEPENDENCIES,
 			max: MAX_DEPENDENCIES,
 		}),
 		health: choiceControl<ServiceHealth>('Service health', {
 			group: GRAPH,
 			description:
-				'Error rate on the calls into a service, which is what turns its node red.',
+				'Error rate on the calls into a service: it colours nodes and edges and drives the root-cause banner.',
 			options: SERVICE_HEALTH,
 			value: 'degraded',
 		}),
@@ -85,6 +90,11 @@ export const serviceMapMocks = defineStoryMocks({
 			value: 3,
 			max: 5,
 		}),
+		graphFails: toggleControl('Dependency graph fails', {
+			group: GRAPH,
+			description: 'Answers `/dependency_graph` with a 500, the error state.',
+			value: false,
+		}),
 		resourceAttributes: toggleControl('Resource attributes ingested', {
 			group: FILTERS,
 			description:
@@ -92,45 +102,82 @@ export const serviceMapMocks = defineStoryMocks({
 			value: true,
 		}),
 	},
-	handlers: (values, response) => [
-		rest.post(
-			'http://localhost/api/v1/dependency_graph',
-			response.json(async (req) => {
-				const body = (await req.json()) as DependencyGraphBody;
-
-				return dependencyGraphResponse({
-					count: values.services,
-					health: values.health,
-					tags: body.tags,
-				});
-			}),
-		),
-
-		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_keys',
-			response.json((req) =>
-				attributeKeysResponse(
-					values.resourceAttributes
-						? attributeKeysFor(req.url.searchParams.get('searchText'))
-						: [],
+	handlers: (values, response) => {
+		return [
+			rest.post(
+				'http://localhost/api/v1/dependency_graph',
+				async (req, res, ctx) => {
+					if (values.graphFails) {
+						return res(
+							ctx.status(500),
+							ctx.json({ error: 'dependency graph unavailable' }),
+						);
+					}
+					const body = (await req.json()) as DependencyGraphBody;
+					return res(
+						ctx.json(
+							dependencyGraphResponse({
+								count: values.services,
+								health: values.health,
+								tags: body.tags,
+							}),
+						),
+					);
+				},
+			),
+			rest.post(
+				'http://localhost/api/v5/query_range',
+				response.json(async (req) =>
+					mapQueryRangeResponse(
+						(await req.json()) as QueryRangeRequestV5,
+						dependencyGraphResponse({
+							count: values.services,
+							health: values.health,
+						}),
+					),
 				),
 			),
-		),
-
-		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_values',
-			response.json((req) =>
-				attributeValuesResponse(
-					values.resourceAttributes
-						? attributeValuesFor(
-								req.url.searchParams.get('attributeKey'),
-								values.environments,
-							)
-						: [],
+			rest.post(
+				'http://localhost/api/v2/service/top_operations',
+				response.json(() => ({ status: 'success', data: topOperationsResponse() })),
+			),
+			rest.post(
+				'http://localhost/api/v1/service/top_level_operations',
+				response.json(() => ({})),
+			),
+			rest.get('http://localhost/api/v1/settings/apdex', (req, res, ctx) =>
+				res(
+					ctx.json(
+						apDexSettingsResponse(req.url.searchParams.get('services') ?? '', 0.5),
+					),
 				),
 			),
-		),
-	],
+			rest.get(
+				'http://localhost/api/v3/autocomplete/attribute_keys',
+				response.json((req) =>
+					attributeKeysResponse(
+						values.resourceAttributes
+							? attributeKeysFor(req.url.searchParams.get('searchText'))
+							: [],
+					),
+				),
+			),
+
+			rest.get(
+				'http://localhost/api/v3/autocomplete/attribute_values',
+				response.json((req) =>
+					attributeValuesResponse(
+						values.resourceAttributes
+							? attributeValuesFor(
+									req.url.searchParams.get('attributeKey'),
+									values.environments,
+								)
+							: [],
+					),
+				),
+			),
+		];
+	},
 	config: (values) => ({ route: serviceMapRoute(values.filters) }),
 });
 

@@ -32,7 +32,7 @@ legacy chart or table in a panel body renders as before.
 
 - Services list (`pages/Services/components/ServicesList`)
 - Service detail (`pages/MetricsApplication`, `container/MetricsApplication`)
-- Service map and top-level operations (`modules/Servicemap`, `pages/ServiceTopLevelOperations`)
+- Service map and top-level operations (`pages/ServiceMap`, `pages/ServiceTopLevelOperations`)
 - Traces funnels and funnel detail (`pages/TracesFunnels`, `pages/TracesFunnelDetails`)
 - Saved views of every explorer (`pages/SaveView`)
 - Trace details (`pages/TraceDetailsV3`)
