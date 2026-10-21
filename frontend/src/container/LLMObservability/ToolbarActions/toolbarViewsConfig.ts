@@ -1,46 +1,54 @@
+import { Terminal } from '@signozhq/icons';
 import {
-	Atom,
-	Binoculars,
-	SquareMousePointer,
-	Terminal,
-} from '@signozhq/icons';
+	ChartLine,
+	ChartNoAxesGantt,
+	List,
+	LucideIcon,
+	Table,
+} from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
 export interface ToolbarViewConfig {
-	icon: typeof Atom;
+	icon: LucideIcon | typeof Terminal;
 	label: string;
+	tooltip: string;
 	className: string;
 	testId: string;
 }
 
 export const TOOLBAR_VIEW_CONFIG: Record<string, ToolbarViewConfig> = {
 	[ExplorerViews.LIST]: {
-		icon: SquareMousePointer,
-		label: 'List View',
+		icon: List,
+		label: 'List',
+		tooltip: 'List View',
 		className: 'list-view-tab',
 		testId: 'search-view',
 	},
 	[ExplorerViews.TRACE]: {
-		icon: SquareMousePointer,
-		label: 'Trace View',
+		icon: ChartNoAxesGantt,
+		label: 'Traces',
+		tooltip: 'Trace View',
 		className: 'trace-view-tab',
 		testId: 'trace-view',
 	},
 	[ExplorerViews.TIMESERIES]: {
-		icon: Atom,
-		label: 'Time Series',
+		icon: ChartLine,
+		label: 'Time series',
+		tooltip: 'Time Series',
 		className: 'timeseries-view-tab',
 		testId: 'query-builder-view',
 	},
 	[ExplorerViews.CLICKHOUSE]: {
 		icon: Terminal,
 		label: 'Clickhouse',
+		tooltip: 'Clickhouse',
 		className: 'clickhouse-view-tab',
 		testId: 'clickhouse-view',
 	},
 	[ExplorerViews.TABLE]: {
-		icon: Binoculars,
+		icon: Table,
 		label: 'Table',
+		tooltip: 'Table',
 		className: 'table-view-tab',
 		testId: 'query-builder-view-v2',
 	},

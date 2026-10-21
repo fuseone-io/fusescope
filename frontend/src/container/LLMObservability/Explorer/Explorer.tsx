@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
+import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import explorerChrome from 'components/ExplorerChrome/ExplorerChrome.module.scss';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
@@ -191,7 +193,9 @@ function Explorer(): JSX.Element {
 			>
 				<div className="trace-explorer">
 					<div className="trace-explorer-header">
-						<div className="llm-explorer-toolbar">
+						<div
+							className={cx('llm-explorer-toolbar', explorerChrome.explorerChrome)}
+						>
 							<LeftToolbarActions
 								items={TOOLBAR_VIEWS}
 								selectedView={selectedView}
