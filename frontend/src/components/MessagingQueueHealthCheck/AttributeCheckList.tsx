@@ -1,40 +1,9 @@
-import { Typography } from '@signozhq/ui/typography';
-import { ReactNode, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import {
-	OctagonAlert,
-	Bolt,
-	Check,
-	ChevronDown,
-	ChevronRight,
-	Loader,
-	X,
-} from '@signozhq/icons';
-import { Modal, Select, Spin, Tooltip, Tree, TreeDataNode } from 'antd';
-import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
-import { History } from 'history';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import {
-	KAFKA_SETUP_DOC_LINK,
-	MessagingQueueHealthCheckService,
-} from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { openInNewTab } from 'utils/navigation';
-import { v4 as uuid } from 'uuid';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import { Button } from 'components/ui/button';
+import { CircleCheck, Layers, TriangleAlert } from 'lucide-react';
+import { MessagingQueueHealthCheckService } from 'pages/MessagingQueues/MessagingQueuesUtils';
 
-import './MessagingQueueHealthCheck.styles.scss';
-
-interface AttributeCheckListProps {
-	visible: boolean;
-	onClose: () => void;
-	onboardingStatusResponses: {
-		title: string;
-		data: OnboardingStatusResponse['data'];
-		errorMsg?: string;
-	}[];
-	loading: boolean;
-}
+import { ServiceHealthResponse } from './useKafkaHealthChecks';
 
 export enum AttributesFilters {
 	ALL = 'all',
@@ -42,230 +11,133 @@ export enum AttributesFilters {
 	ERROR = 'error',
 }
 
-function ErrorTitleAndKey({
-	title,
-	parentTitle,
-	history,
-	isCloudUserVal,
-	errorMsg,
-	isLeaf,
-}: {
-	title: string;
-	parentTitle: string;
-	isCloudUserVal: boolean;
-	history: History<unknown>;
-	errorMsg?: string;
-	isLeaf?: boolean;
-}): TreeDataNode {
-	const handleRedirection = (): void => {
-		let link = '';
-
-		switch (parentTitle) {
-			case 'Consumers':
-				link = `${ROUTES.GET_STARTED_WITH_CLOUD}?${QueryParams.getStartedSource}=self-hosted-kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Consumers}`;
-				break;
-			case 'Producers':
-				link = `${ROUTES.GET_STARTED_WITH_CLOUD}?${QueryParams.getStartedSource}=self-hosted-kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Producers}`;
-				break;
-			case 'Kafka':
-				link = `${ROUTES.GET_STARTED_WITH_CLOUD}?${QueryParams.getStartedSource}=self-hosted-kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Kafka}`;
-				break;
-			default:
-				link = '';
-		}
-
-		if (isCloudUserVal && !!link) {
-			history.push(link);
-		} else {
-			openInNewTab(KAFKA_SETUP_DOC_LINK);
-		}
-	};
-	return {
-		key: `${title}-key-${uuid()}`,
-		title: (
-			<div className="attribute-error-title">
-				<Typography.Text title={title} className="tree-text" truncate={1}>
-					{title}
-				</Typography.Text>
-				<Tooltip title={errorMsg}>
-					<div
-						className="attribute-error-warning"
-						onClick={(e): void => {
-							e.preventDefault();
-							handleRedirection();
-						}}
-					>
-						<OctagonAlert size={14} />
-						Fix
-					</div>
-				</Tooltip>
-			</div>
-		),
-		isLeaf,
-	};
+interface AttributeCheckListProps {
+	responses: ServiceHealthResponse[];
+	filter: AttributesFilters;
+	onFix: (service: MessagingQueueHealthCheckService) => void;
 }
 
-function AttributeLabels({ title }: { title: ReactNode }): JSX.Element {
+interface AttributeRowProps {
+	name: string;
+	ok: boolean;
+	reason?: string;
+	onFix: () => void;
+}
+
+function AttributeRow({
+	name,
+	ok,
+	reason,
+	onFix,
+}: AttributeRowProps): JSX.Element {
 	return (
-		<div className="attribute-label">
-			<Bolt size={14} />
-			{title}
-		</div>
+		<li
+			data-testid={`attribute-${ok ? 'found' : 'missing'}`}
+			className="tw:flex tw:min-h-8 tw:items-center tw:gap-2 tw:rounded-md tw:py-1 tw:pr-2 tw:pl-7 tw:text-[13px] tw:hover:bg-muted"
+		>
+			{ok ? (
+				<CircleCheck
+					aria-label="Found"
+					className="tw:size-3.5 tw:flex-none tw:text-success"
+				/>
+			) : (
+				<TriangleAlert
+					aria-label="Missing"
+					className="tw:size-3.5 tw:flex-none tw:text-warning"
+				/>
+			)}
+			<span className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:leading-snug">
+				<span className="tw:truncate tw:font-mono tw:text-xs" title={name}>
+					{name}
+				</span>
+				{!ok && reason && (
+					<span className="tw:text-xs tw:text-muted-foreground">{reason}</span>
+				)}
+			</span>
+			{!ok && (
+				<Button
+					variant="ghost"
+					size="xs"
+					onClick={onFix}
+					aria-label={`Fix ${name}`}
+					className="tw:text-primary"
+				>
+					Fix
+				</Button>
+			)}
+		</li>
 	);
 }
 
-function treeTitleAndKey({
-	title,
-	isLeaf,
-}: {
-	title: string;
-	isLeaf?: boolean;
-}): TreeDataNode {
-	return {
-		key: `${title}-key-${uuid()}`,
-		title: (
-			<div className="attribute-success-title">
-				<Typography.Text title={title} className="tree-text" truncate={1}>
-					{title}
-				</Typography.Text>
-				{isLeaf && (
-					<div className="success-attribute-icon">
-						<Tooltip title="Success">
-							<Check size={14} />
-						</Tooltip>
-					</div>
-				)}
-			</div>
-		),
-		isLeaf,
-	};
-}
-
-function renderSwitcherIcon(props: { expanded?: boolean }): JSX.Element {
-	return props.expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />;
-}
-
-function generateTreeDataNodes(
-	response: OnboardingStatusResponse['data'],
-	parentTitle: string,
-	isCloudUserVal: boolean,
-	history: History<unknown>,
-): TreeDataNode[] {
-	return response
-		.map((item) => {
-			if (item.attribute) {
-				if (item.status === '1') {
-					return treeTitleAndKey({ title: item.attribute, isLeaf: true });
-				}
-				if (item.status === '0') {
-					return ErrorTitleAndKey({
-						title: item.attribute,
-						errorMsg: item.error_message || '',
-						parentTitle,
-						history,
-						isCloudUserVal,
-					});
-				}
-			}
-			return null;
-		})
-		.filter(Boolean) as TreeDataNode[];
+function matchesFilter(
+	status: string | undefined,
+	filter: AttributesFilters,
+): boolean {
+	if (filter === AttributesFilters.SUCCESS) {
+		return status === '1';
+	}
+	if (filter === AttributesFilters.ERROR) {
+		return status === '0';
+	}
+	return true;
 }
 
 function AttributeCheckList({
-	visible,
-	onClose,
-	onboardingStatusResponses,
-	loading,
+	responses,
+	filter,
+	onFix,
 }: AttributeCheckListProps): JSX.Element {
-	const [filter, setFilter] = useState<AttributesFilters>(AttributesFilters.ALL);
-	const [treeData, setTreeData] = useState<TreeDataNode[]>([]);
-
-	const handleFilterChange = (value: AttributesFilters): void => {
-		setFilter(value);
-	};
-	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
-	const history = useHistory();
-
-	useEffect(() => {
-		const filteredData = onboardingStatusResponses.map((response) => {
-			if (response.errorMsg) {
-				return ErrorTitleAndKey({
-					title: response.title,
-					errorMsg: response.errorMsg,
-					isLeaf: true,
-					parentTitle: response.title,
-					history,
-					isCloudUserVal,
-				});
-			}
-			let filteredData = response.data;
-
-			if (filter === AttributesFilters.SUCCESS) {
-				filteredData = response.data.filter((item) => item.status === '1');
-			} else if (filter === AttributesFilters.ERROR) {
-				filteredData = response.data.filter((item) => item.status === '0');
-			}
-
-			return {
-				...treeTitleAndKey({ title: response.title }),
-				children: generateTreeDataNodes(
-					filteredData,
-					response.title,
-					isCloudUserVal,
-					history,
-				),
-			};
-		});
-
-		setTreeData(filteredData);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [filter, onboardingStatusResponses]);
-
 	return (
-		<Modal
-			title="Kafka Service Attributes"
-			open={visible}
-			onCancel={onClose}
-			footer={false}
-			className="mq-health-check-modal"
-			closeIcon={<X size={14} />}
+		<div
+			className="tw:flex tw:flex-col tw:gap-3"
+			data-testid="attribute-check-list"
 		>
-			{loading ? (
-				<div className="loader-container">
-					<Spin indicator={<Loader className="animate-spin" />} size="large" />
-				</div>
-			) : (
-				<div className="modal-content">
-					<Select
-						defaultValue={AttributesFilters.ALL}
-						className="attribute-select"
-						onChange={handleFilterChange}
-						options={[
-							{
-								value: AttributesFilters.ALL,
-								label: AttributeLabels({ title: 'Attributes: All' }),
-							},
-							{
-								value: AttributesFilters.SUCCESS,
-								label: AttributeLabels({ title: 'Attributes: Success' }),
-							},
-							{
-								value: AttributesFilters.ERROR,
-								label: AttributeLabels({ title: 'Attributes: Error' }),
-							},
-						]}
-					/>
-					<Tree
-						showLine
-						switcherIcon={renderSwitcherIcon}
-						treeData={treeData}
-						height={450}
-						className="attribute-tree"
-					/>
-				</div>
-			)}
-		</Modal>
+			{responses.map(({ service, title, data, errorMsg }) => {
+				const attributes = data.filter((item) => !!item.attribute);
+				const missing = attributes.filter((item) => item.status === '0').length;
+				const visible = attributes.filter((item) =>
+					matchesFilter(item.status, filter),
+				);
+				if (!errorMsg && visible.length === 0) {
+					return null;
+				}
+				return (
+					<section key={service} aria-label={title} className="tw:flex tw:flex-col">
+						<div className="tw:flex tw:h-8 tw:items-center tw:gap-2 tw:px-2">
+							<Layers className="tw:size-3.5 tw:text-muted-foreground" aria-hidden />
+							<h3 className="tw:text-[13px] tw:font-semibold">{title}</h3>
+							{errorMsg && <StatusBadge tone="error">Check failed</StatusBadge>}
+							{!errorMsg &&
+								(missing > 0 ? (
+									<StatusBadge tone="warning">{missing} missing</StatusBadge>
+								) : (
+									<StatusBadge tone="success">All found</StatusBadge>
+								))}
+						</div>
+						<ul className="tw:m-0 tw:flex tw:list-none tw:flex-col tw:p-0">
+							{errorMsg ? (
+								<AttributeRow
+									name={title}
+									ok={false}
+									reason={errorMsg}
+									onFix={(): void => onFix(service)}
+								/>
+							) : (
+								visible.map((item) => (
+									<AttributeRow
+										key={item.attribute}
+										name={item.attribute || ''}
+										ok={item.status === '1'}
+										reason={item.error_message}
+										onFix={(): void => onFix(service)}
+									/>
+								))
+							)}
+						</ul>
+					</section>
+				);
+			})}
+		</div>
 	);
 }
 

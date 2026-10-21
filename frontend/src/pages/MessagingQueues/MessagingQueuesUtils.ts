@@ -6,7 +6,7 @@ import {
 import { getPartitionLatencyDetails } from 'api/messagingQueues/getPartitionLatencyDetails';
 import { getTopicThroughputDetails } from 'api/messagingQueues/getTopicThroughputDetails';
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
@@ -18,10 +18,6 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
-
-export const KAFKA_SETUP_DOC_LINK = signozDocsUrl(
-	'/messaging-queues/kafka?utm_source=product&utm_medium=kafka-get-started',
-);
 
 export function convertToTitleCase(text: string): string {
 	return text
@@ -398,3 +394,19 @@ export enum MessagingQueueHealthCheckService {
 	Producers = 'producers',
 	Kafka = 'kafka',
 }
+
+const INSTRUMENTATION_DOC_LINK = fuseScopeDocsUrl(
+	'/sending-data/instrumentation/',
+);
+
+/** Where to fix each part of the Kafka setup: spans come from the SDKs, broker and lag metrics from a collector. */
+export const KAFKA_SETUP_DOC_LINKS: Record<
+	MessagingQueueHealthCheckService,
+	string
+> = {
+	[MessagingQueueHealthCheckService.Producers]: INSTRUMENTATION_DOC_LINK,
+	[MessagingQueueHealthCheckService.Consumers]: INSTRUMENTATION_DOC_LINK,
+	[MessagingQueueHealthCheckService.Kafka]: fuseScopeDocsUrl(
+		'/sending-data/otlp/#from-another-collector',
+	),
+};

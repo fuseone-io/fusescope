@@ -1,0 +1,80 @@
+// The new UI's dense table look for the antd tables of the messaging-queue pages.
+// Rules go through `.ant-table-wrapper .ant-table-container` so they outrank
+// antd's `size` variants.
+.skin {
+	:global {
+		.ant-table-wrapper .ant-table {
+			background: transparent;
+		}
+
+		.ant-table-wrapper .ant-table-container {
+			.ant-table-thead > tr > th,
+			.ant-table-thead > tr > td {
+				height: 36px;
+				padding: 0 12px;
+				border-bottom: 1px solid var(--fs-border);
+				background: var(--fs-muted);
+				color: var(--fs-muted-foreground);
+				font-size: 12px;
+				font-weight: 500;
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
+				white-space: nowrap;
+
+				&::before {
+					display: none;
+				}
+			}
+
+			.ant-table-tbody > tr > td {
+				height: 48px;
+				padding: 8px 12px;
+				border-bottom: 1px solid var(--fs-border);
+				background: transparent;
+				color: var(--fs-foreground);
+				font-size: 13px;
+				font-variant-numeric: tabular-nums;
+			}
+
+			.ant-table-tbody > tr:last-child > td {
+				border-bottom: 0;
+			}
+
+			.ant-table-thead > tr > :first-child,
+			.ant-table-tbody > tr > td:first-child {
+				padding-left: 20px;
+			}
+
+			.ant-table-thead > tr > :last-child,
+			.ant-table-tbody > tr > td:last-child {
+				padding-right: 20px;
+			}
+
+			.ant-table-tbody > tr.ant-table-row:hover > td,
+			.ant-table-tbody > tr > td.ant-table-cell-row-hover {
+				background: var(--fs-muted);
+			}
+
+			.ant-table-tbody > tr.is-selected > td,
+			.ant-table-tbody > tr.ant-table-row-selected > td {
+				background: var(--fs-primary-soft);
+			}
+
+			.ant-table-placeholder > td {
+				border-bottom: 0;
+				color: var(--fs-muted-foreground);
+			}
+		}
+
+		.clickable-row,
+		.mq-overview-row-clickable .ant-table-row {
+			cursor: pointer;
+		}
+
+		.ant-table-wrapper .ant-pagination {
+			margin: 0;
+			padding: 10px 20px;
+			border-top: 1px solid var(--fs-border);
+		}
+	}
+}
