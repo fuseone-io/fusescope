@@ -2,10 +2,11 @@ import { useCallback, useMemo } from 'react';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { FileSearch } from '@signozhq/icons';
-import { Button, Card, Col, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
+import KpiStrip from 'components/PageTemplate/components/KpiStrip';
+import Stat from 'components/PageTemplate/components/Stat';
+import { Button } from 'components/ui/button';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -25,7 +26,19 @@ import {
 } from '../CeleryOverviewGraphUtils';
 import { getQueryPayloadFromWidgetsData } from '../CeleryOverviewUtils';
 
-import './ValueInfo.styles.scss';
+const ERROR_RATE_ALERT = 5;
+
+const HAS_ERROR_FILTER = (): TagFilterItem => ({
+	id: uuidv4(),
+	key: {
+		dataType: DataTypes.bool,
+		id: 'has_error--bool----true',
+		key: 'has_error',
+		type: '',
+	},
+	op: '=',
+	value: 'true',
+});
 
 export default function ValueInfo({
 	filters,
@@ -94,174 +107,72 @@ export default function ValueInfo({
 		return (numericValue / 1000000).toFixed(2);
 	}, [avgLatency]);
 
-	const getColorBasedOnValue = (value: string): string => {
-		const numericValue = parseFloat(value);
-		if (value === 'NaN') {
-			return 'gray';
-		}
-		if (numericValue < 3) {
-			return 'green';
-		}
-		if (numericValue < 8) {
-			return 'yellow';
-		}
-		return 'red';
-	};
-
-	const getColorForLatency = (value: string): string => {
-		const numericValue = parseFloat(value);
-		if (value === 'NaN') {
-			return 'gray';
-		}
-		if (numericValue < 100) {
-			return 'green';
-		}
-		if (numericValue < 200) {
-			return 'yellow';
-		}
-		return 'red';
-	};
-
-	const getColorForErrorRate = (value: string): string => {
-		const numericValue = parseFloat(value);
-		if (value === 'NaN') {
-			return 'gray';
-		}
-		if (numericValue < 60) {
-			return 'green';
-		}
-		if (numericValue < 90) {
-			return 'yellow';
-		}
-		return 'red';
-	};
-
 	const mqAnalyticsTitle =
 		'MQ Overview Page: Right drawer navigation to trace page';
 
+	const traceLink = (
+		source: string,
+		extraFilters: TagFilterItem[] = [],
+	): JSX.Element => (
+		<Button
+			variant="link"
+			size="xs"
+			className="tw:h-auto tw:px-0 tw:text-xs"
+			disabled={isLoading}
+			onClick={(): void => {
+				logEvent(mqAnalyticsTitle, {
+					filters,
+					minTime,
+					maxTime,
+					source,
+				});
+				navigateToExplorer({
+					filters: [...(filters ?? []), ...extraFilters],
+					dataSource: DataSource.TRACES,
+					startTime: minTime,
+					endTime: maxTime,
+				});
+			}}
+		>
+			{source === 'error rate' ? 'View error traces' : 'View traces'}
+		</Button>
+	);
+
+	const display = (value: string): string => (value === 'NaN' ? '0' : value);
+
 	return (
-		<Card className="value-info-card">
-			<Row gutter={16}>
-				<Col span={8} className="metric-column">
-					<div className="metric-title">Request Rate</div>
-					<div className="metric-value-container">
-						<div
-							className={`metric-value ${getColorBasedOnValue(requestRate)} ${
-								isLoading ? 'loading' : ''
-							}`}
-						>
-							{requestRate === 'NaN' ? '0' : requestRate}
-						</div>
-						<div className="metric-unit">req/s</div>
-					</div>
-					<Button
-						type="primary"
-						icon={<FileSearch size="md" />}
-						className="trace-button"
-						disabled={isLoading}
-						onClick={(): void => {
-							logEvent(mqAnalyticsTitle, {
-								filters,
-								minTime,
-								maxTime,
-								source: 'request rate',
-							});
-							navigateToExplorer({
-								filters: filters ?? [],
-								dataSource: DataSource.TRACES,
-								startTime: minTime,
-								endTime: maxTime,
-							});
-						}}
+		<KpiStrip
+			label="Request rate, error rate and latency"
+			testId="celery-overview-kpis"
+			className="tw:grid-cols-3 tw:[&>div]:px-4 tw:[&>div]:py-3.5"
+		>
+			<Stat
+				label="Request rate"
+				value={display(requestRate)}
+				unit="req/s"
+				note={traceLink('request rate')}
+			/>
+			<Stat
+				label="Error rate"
+				value={
+					<span
+						className={
+							Number(errorRate) >= ERROR_RATE_ALERT ? 'tw:text-error-ink' : undefined
+						}
 					>
-						View Traces
-					</Button>
-				</Col>
-				<Col span={8} className="metric-column">
-					<div className="metric-title">Error Rate</div>
-					<div className="metric-value-container">
-						<div
-							className={`metric-value ${getColorForErrorRate(errorRate)} ${
-								isLoading ? 'loading' : ''
-							}`}
-						>
-							{errorRate === 'NaN' ? '0' : errorRate}
-						</div>
-						<div className="metric-unit">%</div>
-					</div>
-					<Button
-						type="primary"
-						icon={<FileSearch size="md" />}
-						className="trace-button"
-						disabled={isLoading}
-						onClick={(): void => {
-							logEvent(mqAnalyticsTitle, {
-								filters,
-								minTime,
-								maxTime,
-								source: 'error rate',
-							});
-							navigateToExplorer({
-								filters: [
-									...(filters ?? []),
-									{
-										id: uuidv4(),
-										key: {
-											dataType: DataTypes.bool,
-											id: 'has_error--bool----true',
-											key: 'has_error',
-											type: '',
-										},
-										op: '=',
-										value: 'true',
-									},
-								],
-								dataSource: DataSource.TRACES,
-								startTime: minTime,
-								endTime: maxTime,
-							});
-						}}
-					>
-						View Traces
-					</Button>
-				</Col>
-				<Col span={8} className="metric-column">
-					<div className="metric-title">Average Latency</div>
-					<div className="metric-value-container">
-						<div
-							className={`metric-value ${getColorForLatency(avgLatencyInMs)} ${
-								isLoading ? 'loading' : ''
-							}`}
-						>
-							{avgLatencyInMs === 'NaN' ? '0' : avgLatencyInMs}
-						</div>
-						<div className="metric-unit">ms</div>
-					</div>
-					<Button
-						type="primary"
-						icon={<FileSearch size="md" />}
-						className="trace-button"
-						disabled={isLoading}
-						onClick={(): void => {
-							logEvent(mqAnalyticsTitle, {
-								filters,
-								minTime,
-								maxTime,
-								source: 'average latency',
-							});
-							navigateToExplorer({
-								filters: filters ?? [],
-								dataSource: DataSource.TRACES,
-								startTime: minTime,
-								endTime: maxTime,
-							});
-						}}
-					>
-						View Traces
-					</Button>
-				</Col>
-			</Row>
-		</Card>
+						{display(errorRate)}
+					</span>
+				}
+				unit="%"
+				note={traceLink('error rate', [HAS_ERROR_FILTER()])}
+			/>
+			<Stat
+				label="Avg latency"
+				value={display(avgLatencyInMs)}
+				unit="ms"
+				note={traceLink('average latency')}
+			/>
+		</KpiStrip>
 	);
 }
 

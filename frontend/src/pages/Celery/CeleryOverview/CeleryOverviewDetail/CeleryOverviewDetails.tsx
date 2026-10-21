@@ -1,18 +1,12 @@
 import { useMemo } from 'react';
-import { Color, Spacing } from '@signozhq/design-tokens';
-import { Drawer } from 'antd';
-import { Divider } from '@signozhq/ui/divider';
-import { Typography } from '@signozhq/ui/typography';
 import { RowData } from 'components/CeleryOverview/CeleryOverviewTable/CeleryOverviewTable';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { X } from '@signozhq/icons';
+import SideSheet from 'components/PageTemplate/components/SideSheet';
+import TagChip from 'components/PageTemplate/components/TagChip';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getFiltersFromKeyValue } from '../CeleryOverviewUtils';
 import OverviewRightPanelGraph from './OverviewRightPanelGraph';
 import ValueInfo from './ValueInfo';
-
-import './CeleryOverviewDetails.styles.scss';
 
 export default function CeleryOverviewDetails({
 	details,
@@ -21,8 +15,6 @@ export default function CeleryOverviewDetails({
 	details: RowData;
 	onClose: () => void;
 }): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
 	const filters: TagFilterItem[] = useMemo(() => {
 		const keyValues = Object.entries(details).map(([key, value]) => {
 			switch (key) {
@@ -53,45 +45,25 @@ export default function CeleryOverviewDetails({
 	}, [details]);
 
 	return (
-		<Drawer
-			width="60%"
-			title={
-				<div>
-					<Typography.Text className="title">{details.service_name}</Typography.Text>
-					<div>
-						<Typography.Text className="subtitle">
-							{details.span_name}
-						</Typography.Text>
-						<Divider type="vertical" />
-						<Typography.Text className="subtitle">
-							{details.messaging_system}
-						</Typography.Text>
-						<Divider type="vertical" />
-						<Typography.Text className="subtitle">
-							{details.destination}
-						</Typography.Text>
-						<Divider type="vertical" />
-						<Typography.Text className="subtitle">
-							{details.kind_string}
-						</Typography.Text>
-					</div>
-				</div>
-			}
-			placement="right"
+		<SideSheet
+			open
 			onClose={onClose}
-			open={!!details}
-			style={{
-				overscrollBehavior: 'contain',
-				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
-			}}
-			className="celery-task-detail-drawer"
-			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			modal={false}
+			width={600}
+			testId="celery-overview-detail"
+			title={<span className="tw:font-mono">{details.service_name}</span>}
+			subtitle={
+				<>
+					<span className="tw:font-mono">{details.span_name}</span>
+					<TagChip>{details.messaging_system}</TagChip>
+					<span className="tw:font-mono">{details.destination}</span>
+					<span>{details.kind_string}</span>
+				</>
+			}
+			bodyClassName="tw:flex tw:flex-col tw:gap-4"
 		>
-			<div className="celery-overview-detail-container">
-				<ValueInfo filters={filters} />
-				<OverviewRightPanelGraph filters={filters} />
-			</div>
-		</Drawer>
+			<ValueInfo filters={filters} />
+			<OverviewRightPanelGraph filters={filters} />
+		</SideSheet>
 	);
 }

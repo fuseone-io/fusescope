@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, waitFor, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -43,7 +43,7 @@ export const FailingQueues: Story = {
 	args: { failing: true },
 };
 
-/** One queue opened up: its rate, error rate and latency over the range. */
+/** One queue opened in a side sheet: its rate, error rate and latency over the range. */
 export const QueueDetails: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		// Every row opens the same panel, so the first one will do. The header row
@@ -72,6 +72,13 @@ export const QueueDetails: Story = {
 		// The click handler is on the row, and a click routed at one of its cells
 		// does not reach it.
 		await userEvent.click(firstRow);
-		await screen.findByText('Request Rate', undefined, untilLoaded);
+		const kpis = await screen.findByTestId(
+			'celery-overview-kpis',
+			undefined,
+			untilLoaded,
+		);
+		await within(kpis).findByText('Request rate');
+		await expect(screen.getByTestId('celery-overview-detail')).toBeVisible();
+		await expect(firstRow).toHaveClass('is-selected');
 	},
 };

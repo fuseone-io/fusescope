@@ -94,6 +94,7 @@ export function FilterSelect({
 		<Select
 			key={filterType.toString()}
 			placeholder={placeholder}
+			aria-label={placeholder}
 			showSearch
 			{...(isMultiple ? { mode: 'multiple' } : {})}
 			options={mergedOptions}
