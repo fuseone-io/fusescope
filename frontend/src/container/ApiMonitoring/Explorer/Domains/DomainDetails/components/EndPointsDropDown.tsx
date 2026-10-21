@@ -53,6 +53,7 @@ function EndPointsDropDown({
 			}
 			dropdownStyle={dropdownStyle}
 			allowClear
+			bordered={false}
 			onClear={(): void => {
 				setSelectedEndPointName('');
 			}}

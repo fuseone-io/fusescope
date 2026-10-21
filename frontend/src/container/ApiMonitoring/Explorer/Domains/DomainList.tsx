@@ -1,61 +1,37 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
-import { Loader, MoveUpRight } from '@signozhq/icons';
-import { Spin, Table } from 'antd';
-import logEvent from 'api/common/logEvent';
-import emptyStateUrl from 'assets/Icons/emptyState.svg';
-import cx from 'classnames';
-import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import { SortState } from 'components/PageTemplate/types';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
-import { initialQueriesMap } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { useListOverview } from 'hooks/thirdPartyApis/useListOverview';
-import { get } from 'lodash-es';
-import { AppState } from 'store/reducers';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
-import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import DOCLINKS from 'utils/docLinks';
 
-import { ApiMonitoringHardcodedAttributeKeys } from '../../constants';
-import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
-import { columnsConfig, formatDataForTable } from '../../utils';
-import DomainDetails from './DomainDetails/DomainDetails';
+import { DomainSortKey, sortDomains } from '../../domainList';
+import { DOMAINS_DEFAULT_QUERY } from './List/constants';
+import DomainsEmptyState from './List/DomainsEmptyState';
+import DomainsTable from './List/DomainsTable';
+import DomainsToolbar from './List/DomainsToolbar';
+import { useDomainCallers } from './List/useDomainCallers';
+import { useDomainList } from './List/useDomainList';
 
-import '../Explorer.styles.scss';
+const DEFAULT_SORT: SortState<DomainSortKey> = {
+	key: 'errorRate',
+	direction: 'desc',
+};
 
 function DomainList(): JSX.Element {
-	const [params, setParams] = useApiMonitoringParams();
-	const { showIP, selectedDomain } = params;
-	const [selectedDomainIndex, setSelectedDomainIndex] = useState<number>(-1);
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
 	const queryClient = useQueryClient();
-	const { currentQuery, handleRunQuery } = useQueryBuilder();
-	const query = useMemo(
-		() => currentQuery?.builder?.queryData[0] || null,
-		[currentQuery],
-	);
-
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query,
-		entityVersion: '',
-	});
-
-	const compositeData = useGetCompositeQueryParam();
-
+	const { currentQuery, handleRunQuery, redirectWithQueryBuilderData } =
+		useQueryBuilder();
+	const { rows, filterExpression, isLoading, isFetching, isError } =
+		useDomainList();
+	const callers = useDomainCallers(filterExpression);
 	const [isCancelled, setIsCancelled] = useState(false);
+	const [search, setSearch] = useState('');
+	const [sort, setSort] = useState<SortState<DomainSortKey>>(DEFAULT_SORT);
+
+	useShareBuilderUrl({ defaultValue: DOMAINS_DEFAULT_QUERY });
 
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries([REACT_QUERY_KEY.GET_DOMAINS_LIST]);
@@ -68,179 +44,101 @@ function DomainList(): JSX.Element {
 		handleRunQuery();
 	}, [queryClient, handleRunQuery]);
 
-	const { data, isLoading, isFetching } = useListOverview({
-		start: minTime,
-		end: maxTime,
-		show_ip: Boolean(showIP),
-		filter: {
-			expression: `kind_string = 'Client' ${get(
-				compositeData,
-				'builder.queryData[0].filter.expression',
-				'',
-			)}`,
-		},
-	});
-
-	// initialise tab with default query.
-	useShareBuilderUrl({
-		defaultValue: {
-			...initialQueriesMap.traces,
-			builder: {
-				...initialQueriesMap.traces.builder,
-				queryData: [
-					{
-						...initialQueriesMap.traces.builder.queryData[0],
-						dataSource: DataSource.TRACES,
-						aggregateOperator: 'noop',
-						aggregateAttribute: {
-							...(initialQueriesMap.traces.builder.queryData[0]
-								.aggregateAttribute as BaseAutocompleteData),
-						},
-					},
-				],
-			},
-		},
-	});
-
-	const handleSearchChange = useCallback(
-		(value: string) => {
-			(handleChangeQueryData as HandleChangeQueryDataV5)('filter', {
-				expression: value,
-			});
-		},
-		[handleChangeQueryData],
-	);
-
-	const formattedDataForTable = useMemo(
-		() =>
-			formatDataForTable(
-				data?.data?.data?.data.results[0]?.data || [],
-				data?.data?.data?.data.results[0]?.columns || [],
-			),
-		[data],
-	);
-
-	// Auto-reset cancelled state when a new fetch starts
 	useEffect(() => {
 		if (isFetching) {
 			setIsCancelled(false);
 		}
 	}, [isFetching]);
 
-	// Open drawer if selectedDomain is set in URL
-	useEffect(() => {
-		if (selectedDomain && formattedDataForTable?.length > 0) {
-			const idx = formattedDataForTable.findIndex(
-				(item) => item.domainName === selectedDomain,
-			);
-			setSelectedDomainIndex(idx);
-		}
-	}, [selectedDomain, formattedDataForTable]);
+	const handleSort = (key: DomainSortKey): void =>
+		setSort((current) => ({
+			key,
+			direction:
+				current.key === key && current.direction === 'desc' ? 'asc' : 'desc',
+		}));
+
+	const visibleRows = useMemo(() => {
+		const term = search.trim().toLowerCase();
+		const matching = term
+			? rows.filter((row) => row.domain.toLowerCase().includes(term))
+			: rows;
+		return sortDomains(matching, sort);
+	}, [rows, search, sort]);
+
+	const isFiltered = Boolean(filterExpression.trim()) || Boolean(search.trim());
+	const clearFilters = (): void => {
+		setSearch('');
+		const [first, ...others] = currentQuery.builder.queryData;
+		redirectWithQueryBuilderData({
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: [
+					{
+						...first,
+						filter: { expression: '' },
+						filters: { op: 'AND', items: [] },
+					},
+					...others,
+				],
+			},
+		});
+	};
+
+	const loading = isLoading || isFetching;
+	const noDomains = !loading && !isCancelled && rows.length === 0;
 
 	return (
-		<section className={cx('api-module-right-section')}>
-			<div className={cx('api-monitoring-list-header')}>
-				<QuerySearch
-					dataSource={DataSource.TRACES}
-					queryData={query}
-					onChange={handleSearchChange}
-					placeholder="Enter your filter query (e.g., deployment.environment = 'otel-demo' AND service.name = 'frontend')"
-					hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
-				/>
-				<RightToolbarActions
-					onStageRunQuery={handleStageAndRunQuery}
-					isLoadingQueries={isFetching}
-					handleCancelQuery={handleCancelQuery}
-				/>
-			</div>
-			{isCancelled && formattedDataForTable.length === 0 && (
+		<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-4 tw:px-4 tw:pt-4 tw:pb-8 tw:md:px-6">
+			<DomainsToolbar
+				search={search}
+				onSearch={setSearch}
+				isFetching={isFetching}
+				onRunQuery={handleStageAndRunQuery}
+				onCancelQuery={handleCancelQuery}
+			/>
+			{isCancelled && rows.length === 0 && (
 				<QueryCancelledPlaceholder subText='Click "Run Query" to load API monitoring data.' />
 			)}
-			{!isCancelled &&
-				!isFetching &&
-				!isLoading &&
-				formattedDataForTable.length === 0 && (
-					<div className="no-filtered-domains-message-container">
-						<div className="no-filtered-domains-message-content">
-							<img
-								src={emptyStateUrl}
-								alt="thinking-emoji"
-								className="empty-state-svg"
-							/>
-
-							<div className="no-filtered-domains-message">
-								<div className="no-domain-title">
-									No External API calls detected with applied filters.
-								</div>
-								<div className="no-domain-subtitle">
-									Ensure all HTTP client spans are being sent with kind as{' '}
-									<span className="attribute">Client</span> and url set in{' '}
-									<span className="attribute">url.full</span> or{' '}
-									<span className="attribute">http.url</span> attribute.
-								</div>
-								<a
-									href={DOCLINKS.EXTERNAL_API_MONITORING}
-									target="_blank"
-									rel="noreferrer"
-									className="external-api-doc-link"
-								>
-									Learn how External API monitoring works in FuseScope{' '}
-									<MoveUpRight size={14} />
-								</a>
-							</div>
-						</div>
-					</div>
-				)}
-			{(isFetching || isLoading || formattedDataForTable.length > 0) && (
-				<div
-					className="api-monitoring-table-panel"
-					data-testid="api-monitoring-domains-table"
+			{noDomains && (
+				<DomainsEmptyState onClearFilters={isFiltered ? clearFilters : undefined} />
+			)}
+			{!noDomains && !(isCancelled && rows.length === 0) && (
+				<ContentPanel
+					testId="api-monitoring-domains-table"
+					title="Domains"
+					subtitle="HTTP calls from spans with kind Client, grouped by the host in url.full or http.url."
+					divided
+					footer={
+						<>
+							<span className="tw:tabular-nums">
+								{visibleRows.length} of {rows.length} domains
+							</span>
+							<span>Error % is the share of calls whose span status is Error</span>
+						</>
+					}
 				>
-					<Table
-						className="api-monitoring-domain-list-table"
-						dataSource={isFetching || isLoading ? [] : formattedDataForTable}
-						columns={columnsConfig}
-						loading={{
-							spinning: isFetching || isLoading,
-							indicator: (
-								<Spin indicator={<Loader size={14} className="animate-spin" />} />
-							),
-						}}
-						scroll={{ x: true }}
-						tableLayout="fixed"
-						onRow={(record, index): { onClick: () => void; className: string } => ({
-							onClick: (): void => {
-								if (index !== undefined) {
-									const dataIndex = formattedDataForTable.findIndex(
-										(item) => item.key === record.key,
-									);
-									setSelectedDomainIndex(dataIndex);
-									setParams({ selectedDomain: record.domainName });
-									logEvent('API Monitoring: Domain name row clicked', {});
-								}
-							},
-							className: 'expanded-clickable-row',
-						})}
-						rowClassName={(_, index): string =>
-							index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
-						}
-					/>
-				</div>
+					{isError && !loading ? (
+						<p className="fs-ui tw:px-5 tw:py-10 tw:text-center tw:font-sans tw:text-[13px] tw:text-muted-foreground">
+							The domains could not be loaded. Run the query again.
+						</p>
+					) : (
+						<DomainsTable
+							rows={visibleRows}
+							loading={loading}
+							callers={callers}
+							sort={sort}
+							onSort={handleSort}
+						/>
+					)}
+					{!loading && rows.length > 0 && visibleRows.length === 0 && (
+						<p className="fs-ui tw:px-5 tw:py-10 tw:text-center tw:font-sans tw:text-[13px] tw:text-muted-foreground">
+							No domains match “{search.trim()}”.
+						</p>
+					)}
+				</ContentPanel>
 			)}
-			{selectedDomainIndex !== -1 && (
-				<DomainDetails
-					domainData={formattedDataForTable[selectedDomainIndex]}
-					selectedDomainIndex={selectedDomainIndex}
-					setSelectedDomainIndex={setSelectedDomainIndex}
-					domainListLength={formattedDataForTable.length}
-					handleClose={(): void => {
-						setSelectedDomainIndex(-1);
-						setParams(DEFAULT_PARAMS);
-					}}
-					domainListFilters={query?.filters}
-				/>
-			)}
-		</section>
+		</div>
 	);
 }
 

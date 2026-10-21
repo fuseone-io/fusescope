@@ -18,7 +18,7 @@ export interface ApiMonitoringParams {
 export const DEFAULT_PARAMS: ApiMonitoringParams = {
 	showIP: true,
 	selectedDomain: '',
-	selectedView: 'all_endpoints',
+	selectedView: 'endpoint_stats',
 	selectedEndPointName: '',
 	groupBy: [],
 	allEndpointsLocalFilters: undefined,

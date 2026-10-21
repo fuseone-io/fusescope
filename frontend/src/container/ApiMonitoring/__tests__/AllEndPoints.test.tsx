@@ -17,22 +17,25 @@ jest.mock('container/ApiMonitoring/utils', () => ({
 	getGroupByFiltersFromGroupByValues: jest.fn(),
 }));
 
-jest.mock('container/WidgetCard/Card', () => ({
-	__esModule: true,
-	default: jest.fn().mockImplementation(({ customOnRowClick }) => (
-		<div data-testid="grid-card-mock">
-			<button
-				type="button"
-				data-testid="row-click-button"
-				onClick={(): void =>
-					customOnRowClick({ [SPAN_ATTRIBUTES.HTTP_URL]: '/api/test' })
-				}
-			>
-				Click Row
-			</button>
-		</div>
-	)),
-}));
+jest.mock(
+	'../Explorer/Domains/DomainDetails/components/EndpointsTable',
+	() => ({
+		__esModule: true,
+		default: jest.fn().mockImplementation(({ onRowClick }) => (
+			<div data-testid="grid-card-mock">
+				<button
+					type="button"
+					data-testid="row-click-button"
+					onClick={(): void =>
+						onRowClick({ [SPAN_ATTRIBUTES.HTTP_URL]: '/api/test' })
+					}
+				>
+					Click Row
+				</button>
+			</div>
+		)),
+	}),
+);
 
 jest.mock(
 	'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2',

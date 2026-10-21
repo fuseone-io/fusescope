@@ -49,6 +49,18 @@ import {
 
 export const isEmptyFilterValue = (value: unknown): boolean =>
 	value === '' || value === null || value === undefined || value === 'n/a';
+
+/** A max(timestamp) over no spans comes back as the epoch. */
+const isUsedTimestamp = (value: unknown): boolean => {
+	if (isEmptyFilterValue(value)) {
+		return false;
+	}
+	const time = /^\d+$/.test(String(value))
+		? Number(value)
+		: new Date(value as string).getTime();
+	return time > 0;
+};
+
 /**
  * Returns '-' if value is empty, otherwise returns value as string
  */
@@ -543,7 +555,7 @@ export const formatDomainMetricsDataForTable = (
 		: undefined;
 
 	// Convert nanoseconds to milliseconds for timestamp, then format (only if valid)
-	const lastUsedFormatted = !isEmptyFilterValue(dataMap.D)
+	const lastUsedFormatted = isUsedTimestamp(dataMap.D)
 		? getLastUsedRelativeTime(new Date(dataMap.D as string).getTime())
 		: undefined;
 
@@ -2272,7 +2284,7 @@ export const getFormattedEndPointMetricsData = (
 		: undefined;
 
 	// Convert timestamp to relative time (only if valid)
-	const lastUsedFormatted = !isEmptyFilterValue(data[0].data.D)
+	const lastUsedFormatted = isUsedTimestamp(data[0].data.D)
 		? getLastUsedRelativeTime(new Date(data[0].data.D as string).getTime())
 		: undefined;
 

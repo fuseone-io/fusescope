@@ -17,12 +17,6 @@ interface MockQueryResult {
 // Mock the utility function
 jest.mock('container/ApiMonitoring/utils', () => ({
 	getFormattedDependentServicesData: jest.fn(),
-	dependentServicesColumns: [
-		{ title: 'Dependent Services', dataIndex: 'serviceData', key: 'serviceData' },
-		{ title: 'AVG. LATENCY', dataIndex: 'latency', key: 'latency' },
-		{ title: 'ERROR %', dataIndex: 'errorPercentage', key: 'errorPercentage' },
-		{ title: 'AVG. RATE', dataIndex: 'rate', key: 'rate' },
-	],
 }));
 
 // Mock the ErrorState component
@@ -36,48 +30,6 @@ jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
 		</div>
 	)),
 }));
-
-// Mock antd components
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
-	return {
-		...originalModule,
-		Table: jest
-			.fn()
-			.mockImplementation(({ dataSource, loading, pagination, onRow }) => (
-				<div data-testid="table-mock">
-					<div data-testid="loading-state">
-						{loading ? 'Loading' : 'Not Loading'}
-					</div>
-					<div data-testid="row-count">{dataSource?.length || 0}</div>
-					<div data-testid="page-size">{pagination?.pageSize}</div>
-					{dataSource?.map((item: any, index: number) => (
-						<div
-							key={`service-${item.key || index}`}
-							data-testid={`table-row-${index}`}
-							onClick={(): void => onRow?.(item)?.onClick?.()}
-							onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>): void => {
-								if (e.key === 'Enter' || e.key === ' ') {
-									onRow?.(item)?.onClick?.();
-								}
-							}}
-							role="button"
-							tabIndex={0}
-						>
-							{item.serviceData.serviceName}
-						</div>
-					))}
-				</div>
-			)),
-		Typography: {
-			Text: jest
-				.fn()
-				.mockImplementation(({ children }) => (
-					<div data-testid="typography-text">{children}</div>
-				)),
-		},
-	};
-});
 
 describe('DependentServices', () => {
 	// Sample mock data to use in tests
@@ -132,7 +84,7 @@ describe('DependentServices', () => {
 		};
 
 		// Act
-		const { container } = render(
+		render(
 			<DependentServices
 				dependentServicesQuery={mockQuery as any}
 				timeRange={mockTimeRange}
@@ -140,7 +92,9 @@ describe('DependentServices', () => {
 		);
 
 		// Assert
-		expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
+		expect(
+			screen.getAllByTestId('dependent-service-row-loading').length,
+		).toBeGreaterThan(0);
 	});
 
 	it('renders error state correctly', () => {
@@ -164,7 +118,7 @@ describe('DependentServices', () => {
 		// Assert
 		expect(screen.getByTestId('error-state-mock')).toBeInTheDocument();
 		expect(ErrorState).toHaveBeenCalledWith(
-			{ refetch: expect.any(Function) },
+			expect.objectContaining({ refetch: expect.any(Function) }),
 			expect.anything(),
 		);
 	});
@@ -216,13 +170,12 @@ describe('DependentServices', () => {
 			mockData.payload.data.result[0].table.rows,
 		);
 
-		// Check the table was rendered with the correct data
-		expect(screen.getByTestId('table-mock')).toBeInTheDocument();
-		expect(screen.getByTestId('loading-state')).toHaveTextContent('Not Loading');
-		expect(screen.getByTestId('row-count')).toHaveTextContent('2');
-
-		// Default (collapsed) pagination should be 5
-		expect(screen.getByTestId('page-size')).toHaveTextContent('5');
+		const rows = screen.getAllByTestId('dependent-service-row');
+		expect(rows).toHaveLength(2);
+		expect(rows[0]).toHaveTextContent('auth-service');
+		expect(rows[0]).toHaveTextContent('120 ms');
+		expect(rows[0]).toHaveTextContent('2.5%');
+		expect(screen.getByText('p99 latency')).toBeInTheDocument();
 	});
 
 	it('handles refetching state correctly', () => {
@@ -236,7 +189,7 @@ describe('DependentServices', () => {
 		};
 
 		// Act
-		const { container } = render(
+		render(
 			<DependentServices
 				dependentServicesQuery={mockQuery as any}
 				timeRange={mockTimeRange}
@@ -244,7 +197,9 @@ describe('DependentServices', () => {
 		);
 
 		// Assert
-		expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
+		expect(
+			screen.getAllByTestId('dependent-service-row-loading').length,
+		).toBeGreaterThan(0);
 	});
 
 	it('handles row click correctly', () => {
@@ -294,7 +249,7 @@ describe('DependentServices', () => {
 		);
 
 		// Click on the first row
-		fireEvent.click(screen.getByTestId('table-row-0'));
+		fireEvent.click(screen.getAllByTestId('dependent-service-row')[0]);
 
 		// Assert
 		expect(window.open).toHaveBeenCalledWith(
@@ -347,14 +302,12 @@ describe('DependentServices', () => {
 		const showMoreButton = screen.getByText(/Show more/i);
 		expect(showMoreButton).toBeInTheDocument();
 
-		// Initial page size should be 5
-		expect(screen.getByTestId('page-size')).toHaveTextContent('5');
+		expect(screen.getAllByTestId('dependent-service-row')).toHaveLength(5);
 
 		// Click the button to expand
 		fireEvent.click(showMoreButton);
 
-		// Page size should now be the full data length
-		expect(screen.getByTestId('page-size')).toHaveTextContent('8');
+		expect(screen.getAllByTestId('dependent-service-row')).toHaveLength(8);
 
 		// Text should have changed to "Show less"
 		expect(screen.getByText(/Show less/i)).toBeInTheDocument();

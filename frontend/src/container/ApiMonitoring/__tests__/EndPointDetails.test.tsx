@@ -18,6 +18,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
+import EndPointMetrics from '../Explorer/Domains/DomainDetails/components/EndPointMetrics';
 import EndPointDetails from '../Explorer/Domains/DomainDetails/EndPointDetails';
 
 // Mock dependencies
@@ -240,9 +241,12 @@ describe('EndPointDetails Component', () => {
 			screen.getByTestId('metric-graph-Latency Over Time'),
 		).toBeInTheDocument();
 
-		// Check endpoint metadata is displayed
-		expect(screen.getByText(/8080/i)).toBeInTheDocument();
-		expect(screen.getByText('/api/test')).toBeInTheDocument();
+		// The port stays beside the filters; the KPIs name the endpoint.
+		expect(screen.getByTestId('endpoint-port')).toHaveTextContent('8080');
+		expect(EndPointMetrics).toHaveBeenCalledWith(
+			expect.objectContaining({ endpointName: '/api/test' }),
+			expect.anything(),
+		);
 	});
 
 	it('calls getEndPointDetailsQueryPayload with correct parameters', () => {

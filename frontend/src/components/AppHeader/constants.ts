@@ -104,6 +104,11 @@ export const CRUMB_ROUTES: Record<string, CrumbRoute> = {
 		parent: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		label: 'Attribute mapping',
 	},
+	[ROUTES.API_MONITORING_DOMAIN]: {
+		parent: ROUTES.API_MONITORING,
+		label: param('domain'),
+		mono: true,
+	},
 	[ROUTES.METER_EXPLORER]: { parent: ROUTES.METER, label: 'Explorer' },
 	[ROUTES.METER_EXPLORER_VIEWS]: {
 		parent: ROUTES.METER_EXPLORER,

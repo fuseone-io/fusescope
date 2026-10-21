@@ -300,21 +300,45 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 
 			renderComponent(mockQuery);
 
-			// Wait for skeletons to disappear
-			await waitFor(() => {
-				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons).toHaveLength(0);
-			});
-
-			// Verify all metric labels are displayed
+			// The latency KPI is p99 and is labelled so.
 			expect(screen.getByText('Rate')).toBeInTheDocument();
-			expect(screen.getByText('AVERAGE LATENCY')).toBeInTheDocument();
-			expect(screen.getByText('ERROR %')).toBeInTheDocument();
-			expect(screen.getByText('LAST USED')).toBeInTheDocument();
+			expect(screen.getByText('p99 latency')).toBeInTheDocument();
+			expect(screen.getByText('Error rate')).toBeInTheDocument();
+			expect(screen.getByText('Last used')).toBeInTheDocument();
+			expect(screen.queryByText(/AVERAGE LATENCY/i)).not.toBeInTheDocument();
 
-			// Verify metric values are displayed
-			expect(screen.getByText('85.5 ops/sec')).toBeInTheDocument();
-			expect(screen.getByText('245ms')).toBeInTheDocument();
+			expect(screen.getByTestId('endpoint-kpi-rate')).toHaveTextContent(
+				/85\.5\s*ops\/s/,
+			);
+			expect(screen.getByTestId('endpoint-kpi-p99')).toHaveTextContent('245 ms');
+		});
+
+		it('names the selected endpoint, or counts the endpoints', () => {
+			const mockQuery = createMockQueryResult(mockSuccessResponse);
+
+			const { rerender } = render(
+				<QueryClientProvider client={queryClient}>
+					<EndPointMetrics endPointMetricsDataQuery={mockQuery} endpointCount={3} />
+				</QueryClientProvider>,
+			);
+
+			expect(screen.getByTestId('endpoint-kpi-scope')).toHaveTextContent(
+				/Endpoints\s*3/,
+			);
+
+			rerender(
+				<QueryClientProvider client={queryClient}>
+					<EndPointMetrics
+						endPointMetricsDataQuery={mockQuery}
+						endpointCount={3}
+						endpointName="/charge"
+					/>
+				</QueryClientProvider>,
+			);
+
+			expect(screen.getByTestId('endpoint-kpi-scope')).toHaveTextContent(
+				/Endpoint\s*\/charge/,
+			);
 		});
 	});
 
@@ -340,15 +364,8 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 
 			renderComponent(mockQuery);
 
-			await waitFor(() => {
-				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons).toHaveLength(0);
-			});
-
-			// When no data, all values should show "-"
-			const dashValues = screen.getAllByText('-');
-			// Should have at least 2 dashes (rate and last used - latency shows "-", error % shows progress bar)
-			expect(dashValues.length).toBeGreaterThanOrEqual(2);
+			expect(screen.getByTestId('endpoint-kpi-rate')).toHaveTextContent('—');
+			expect(screen.getByTestId('endpoint-kpi-p99')).toHaveTextContent('—');
 		});
 	});
 
@@ -406,7 +423,9 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 
 			// Wait for successful load
 			await waitFor(() => {
-				expect(screen.getByText('85.5 ops/sec')).toBeInTheDocument();
+				expect(screen.getByTestId('endpoint-kpi-rate')).toHaveTextContent(
+					/85\.5\s*ops\/s/,
+				);
 			});
 		});
 	});

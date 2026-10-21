@@ -19,7 +19,6 @@ jest.mock(
 					<select
 						data-testid="endpoints-select"
 						onChange={(e): void => setSelectedEndPointName(e.target.value)}
-						role="combobox"
 					>
 						<option value="/api/test">/api/test</option>
 						<option value="/api/new-endpoint">/api/new-endpoint</option>
@@ -35,7 +34,7 @@ jest.mock('components/CeleryTask/useNavigateToExplorer', () => ({
 }));
 
 describe('TopErrors', () => {
-	const TABLE_BODY_SELECTOR = '.ant-table-tbody';
+	const TABLE_BODY_SELECTOR = 'tbody';
 	const V5_QUERY_RANGE_API_PATH = '*/api/v5/query_range';
 
 	const mockProps = {

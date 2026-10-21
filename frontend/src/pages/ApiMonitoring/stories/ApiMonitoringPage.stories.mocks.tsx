@@ -3,15 +3,14 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/fuseScope.schemas';
 import {
-	QuickfiltertypesSourceDTO,
 	TelemetrytypesFieldContextDTO,
-	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/fuseScope.schemas';
 import ROUTES from 'constants/routes';
 import { VIEWS } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
+import { domainPath } from 'container/ApiMonitoring/domainRoute';
+import { SPAN_ATTRIBUTES } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
 import { DEFAULT_PARAMS } from 'container/ApiMonitoring/queryParams';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { rest } from 'msw';
@@ -29,13 +28,13 @@ import {
 	fieldKeysResponse,
 	fieldValuesResponse,
 } from '@/storybook/msw/__story_mockdata__/fields';
-import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
 import {
 	allEndpointsResponse,
 	DEPENDENT_SERVICE_MAX,
 	dependentServicesResponse,
 	DOMAIN_MAX,
+	domainCallersResponse,
 	domainListResponse,
 	domainMetricsResponse,
 	type DrawerDomain,
@@ -55,28 +54,10 @@ import {
 } from './__story_mockdata__/apiMonitoring';
 
 const DOMAINS = 'External APIs · domains';
-const DRAWER = 'External APIs · drawer';
-const FILTERS = 'External APIs · filters';
+const DRAWER = 'External APIs · domain page';
 
-const QUICK_FILTERS: TelemetrytypesTelemetryFieldKeyDTO[] = [
-	{
-		name: 'deployment.environment',
-		fieldDataType: TelemetrytypesFieldDataTypeDTO.string,
-		fieldContext: TelemetrytypesFieldContextDTO.resource,
-	},
-	{
-		name: 'service.name',
-		fieldDataType: TelemetrytypesFieldDataTypeDTO.string,
-		fieldContext: TelemetrytypesFieldContextDTO.resource,
-	},
-	{
-		name: 'rpc.method',
-		fieldDataType: TelemetrytypesFieldDataTypeDTO.string,
-		fieldContext: TelemetrytypesFieldContextDTO.attribute,
-	},
-];
-
-const QUICK_FILTER_VALUES: Record<string, string[]> = {
+/** Values the toolbar's Environment and Calling service menus offer. */
+const FIELD_VALUES: Record<string, string[]> = {
 	'deployment.environment': ['production', 'staging'],
 	'service.name': ['checkout', 'payments', 'cart'],
 	'rpc.method': ['GET', 'POST'],
@@ -154,7 +135,7 @@ const apiMonitoringRoute = ({
 		return ROUTES.API_MONITORING;
 	}
 
-	const params = {
+	const { selectedDomain, ...params } = {
 		...DEFAULT_PARAMS,
 		selectedDomain: domainName,
 		selectedView: VIEW_OF[drawer],
@@ -163,9 +144,12 @@ const apiMonitoringRoute = ({
 		...(serviceFilter ? { endPointDetailsLocalFilters: serviceFilterItems } : {}),
 	};
 
-	return `${ROUTES.API_MONITORING}?apiMonitoringParams=${encodeURIComponent(
-		JSON.stringify(params),
-	)}`;
+	return domainPath(
+		selectedDomain,
+		`?apiMonitoringParams=${encodeURIComponent(
+			encodeURIComponent(JSON.stringify(params)),
+		)}`,
+	);
 };
 
 /** The parts of a query spec the handler tells the page's requests apart by. */
@@ -221,17 +205,17 @@ export const apiMonitoringMocks = defineStoryMocks({
 			value: DOMAIN_MAX,
 			max: DOMAIN_MAX,
 		}),
-		drawer: choiceControl<DrawerState>('Domain drawer', {
+		drawer: choiceControl<DrawerState>('Domain page', {
 			group: DRAWER,
 			description:
-				'The drawer a domain row opens, and which of its three views is showing.',
+				'The domain page a row opens, and which of its three tabs is showing (closed: the list).',
 			options: DRAWER_STATES,
 			value: 'closed',
 		}),
-		drawerDomain: choiceControl<DrawerDomain>('Drawer domain', {
+		drawerDomain: choiceControl<DrawerDomain>('Domain', {
 			group: DRAWER,
 			description:
-				'Which row the drawer opens: a healthy host, one failing most calls, or a bare address on a non-standard port.',
+				'Which domain the page shows: a healthy host, one failing most calls, or a bare address on a non-standard port.',
 			options: DRAWER_DOMAINS,
 			value: 'healthy',
 		}),
@@ -268,25 +252,8 @@ export const apiMonitoringMocks = defineStoryMocks({
 				'Puts a service.name filter on the endpoint stats view, which drops the Dependent Services block.',
 			value: false,
 		}),
-		quickFilters: countControl('Quick filters', {
-			group: FILTERS,
-			description:
-				'Configured API Monitoring quick filters shown beside the domain list.',
-			value: QUICK_FILTERS.length,
-			max: QUICK_FILTERS.length,
-		}),
 	},
 	handlers: (values, response) => [
-		rest.get(
-			'http://localhost/api/v2/quick_filters/:source',
-			response.json(() =>
-				quickFiltersResponse(
-					QuickfiltertypesSourceDTO.api_monitoring,
-					QUICK_FILTERS.slice(0, values.quickFilters),
-				),
-			),
-		),
-
 		rest.post(
 			'http://localhost/api/v1/third-party-apis/overview/list',
 			response.json(async (req) => {
@@ -316,7 +283,7 @@ export const apiMonitoringMocks = defineStoryMocks({
 					boolAttributeValues: null,
 					numberAttributeValues: null,
 					stringAttributeValues:
-						QUICK_FILTER_VALUES[req.url.searchParams.get('attributeKey') ?? ''] ?? [],
+						FIELD_VALUES[req.url.searchParams.get('attributeKey') ?? ''] ?? [],
 				},
 			})),
 		),
@@ -340,7 +307,7 @@ export const apiMonitoringMocks = defineStoryMocks({
 			'http://localhost/api/v1/fields/values',
 			response.json((req) =>
 				fieldValuesResponse(
-					QUICK_FILTER_VALUES[req.url.searchParams.get('name') ?? ''] ?? [],
+					FIELD_VALUES[req.url.searchParams.get('name') ?? ''] ?? [],
 				),
 			),
 		),
@@ -400,6 +367,13 @@ export const apiMonitoringMocks = defineStoryMocks({
 						shape.groupBy,
 						Date.now(),
 					);
+				}
+
+				if (
+					shape.groupBy.includes(SPAN_ATTRIBUTES.SERVER_NAME) &&
+					shape.groupBy.includes('service.name')
+				) {
+					return domainCallersResponse(values.domains);
 				}
 
 				if (shape.groupBy.includes('service.name')) {

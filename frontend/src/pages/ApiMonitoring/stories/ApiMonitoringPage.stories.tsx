@@ -1,27 +1,40 @@
+import { Route, Switch } from 'react-router-dom';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+import ROUTES from 'constants/routes';
+import { expect, screen, userEvent, waitFor } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import { apiMonitoringMocks } from './ApiMonitoringPage.stories.mocks';
+import ApiDomainPage from '../ApiDomainPage';
 import ApiMonitoringPage from '../ApiMonitoringPage';
 
 type ApiMonitoringArgs = PageStoryArgs<typeof apiMonitoringMocks>;
 
 const pageStory = storyMocks(apiMonitoringMocks, { layout: 'app' });
 
+/** The list and the domain page, as the app routes them. */
+function ApiMonitoringRoutes(): JSX.Element {
+	return (
+		<Switch>
+			<Route path={ROUTES.API_MONITORING_DOMAIN} component={ApiDomainPage} />
+			<Route component={ApiMonitoringPage} />
+		</Switch>
+	);
+}
+
 /**
  * Third party domains instrumented services call, their endpoints, status codes
- * and the services depending on them. The domain drawer is part of the route, so
- * it is a control rather than a play.
+ * and the services depending on them. The domain page is a route, so it is a
+ * control rather than a play.
  *
- * Route: `/api-monitoring/explorer`.
+ * Routes: `/api-monitoring/explorer`, `/api-monitoring/domains/:domain`.
  */
 const meta = {
 	title: 'Pages/External APIs',
 	tags: ['play'],
-	component: ApiMonitoringPage,
+	component: ApiMonitoringRoutes,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<ApiMonitoringArgs>;
@@ -59,67 +72,20 @@ export const PortDomain: Story = {
 /** The page fetches before it renders a filter, which outlasts the 1s default. */
 const untilLoaded = { timeout: 15_000 };
 
-const openQuickFiltersSettings = async (): Promise<void> => {
-	// The settings control renders disabled while its permission check is in
-	// flight and is swapped for the enabled one once the check answers, so it is
-	// looked up again on every attempt; a click on the disabled one is dropped in
-	// silence.
-	const control = await waitFor(() => {
-		const settings = screen.getByTestId('settings-icon-container');
-
-		expect(settings).not.toHaveAttribute('aria-disabled', 'true');
-
-		return settings;
-	}, untilLoaded);
-
-	await userEvent.click(control);
-	await screen.findByText('Edit quick filters', undefined, untilLoaded);
-};
-
-const dirtyQuickFiltersSettings = async (): Promise<void> => {
-	await openQuickFiltersSettings();
-
-	// One checked row per added filter; unchecking the first removes it.
-	const [removeFilter] = await screen.findAllByTestId(/^qf-added-filter-/);
-
-	await userEvent.click(removeFilter);
-	await screen.findByRole('button', { name: 'Save changes' });
-};
-
-/**
- * The quick-filter panel has no test id of its own, and it only mounts once the
- * workspace's filters have answered.
- */
-const selectFirstQuickFilterValue = async (
-	canvasElement: HTMLElement,
+const pickMenuValue = async (
+	triggerTestId: string,
+	value: string,
 ): Promise<void> => {
-	const panel = await waitFor(() => {
-		const found = canvasElement.querySelector<HTMLElement>('.quick-filters');
-
-		if (!found) {
-			throw new Error('Quick filters did not render');
-		}
-
-		return found;
-	}, untilLoaded);
-
-	// The V2 checkbox panel starts with every value selected, so its checkbox only
-	// toggles an exclusion. The value's own label is what selects it on its own
-	// ("Only"), which is the state this story shows.
-	const [row] = await within(panel).findAllByTestId(
-		/^checkbox-value-row-/,
+	const trigger = await screen.findByTestId(
+		triggerTestId,
 		undefined,
 		untilLoaded,
 	);
-
-	await userEvent.click(within(row).getAllByRole('button')[0]);
-
-	// The panel re-renders around the new query, so the checkbox is looked up
-	// again on every attempt rather than held from before the click.
-	await waitFor(
-		() => expect(within(panel).getAllByRole('checkbox')[0]).toBeChecked(),
-		untilLoaded,
+	await userEvent.click(trigger);
+	await userEvent.click(
+		await screen.findByRole('menuitemradio', { name: value }, untilLoaded),
 	);
+	await waitFor(() => expect(trigger).toHaveTextContent(value), untilLoaded);
 };
 
 /** The domain drawer's real empty endpoint-table branch. */
@@ -127,10 +93,44 @@ export const EmptyEndpointDrawer: Story = {
 	args: { drawer: 'all-endpoints', endpoints: 0 },
 };
 
-/** A selected API Monitoring quick-filter value. */
-export const QuickFilterSelected: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await selectFirstQuickFilterValue(canvasElement);
+/** The list narrowed to one environment from the toolbar. */
+export const EnvironmentSelected: Story = {
+	play: async (): Promise<void> => {
+		await pickMenuValue('api-monitoring-environment', 'production');
+	},
+};
+
+/** The list narrowed to the domains one service calls. */
+export const CallingServiceSelected: Story = {
+	play: async (): Promise<void> => {
+		await pickMenuValue('api-monitoring-service', 'checkout');
+	},
+};
+
+/** The domain search keeps only the hosts whose name matches. */
+export const DomainSearch: Story = {
+	play: async (): Promise<void> => {
+		await screen.findAllByTestId('domain-row', undefined, untilLoaded);
+		const search = screen.getByTestId('api-monitoring-domain-search');
+		await userEvent.type(search, 'stripe');
+		await waitFor(() => {
+			screen
+				.getAllByTestId('domain-row')
+				.forEach((row) => expect(row).toHaveTextContent(/stripe/i));
+		});
+	},
+};
+
+/** Show IP addresses off: the list drops bare addresses. */
+export const IpAddressesHidden: Story = {
+	play: async (): Promise<void> => {
+		await screen.findAllByTestId('domain-row', undefined, untilLoaded);
+		await userEvent.click(screen.getByTestId('api-monitoring-show-ip'));
+		await waitFor(() => {
+			screen
+				.getAllByTestId('domain-row')
+				.forEach((row) => expect(row).not.toHaveTextContent(/^\s*\d+\.\d+/));
+		}, untilLoaded);
 	},
 };
 
@@ -169,25 +169,4 @@ export const NoExternalCalls: Story = {
 /** The domain list mid-query, with the cancel action the toolbar offers. */
 export const Loading: Story = {
 	args: { dataState: 'loading' },
-};
-
-/** The editable quick-filter settings panel. */
-export const QuickFiltersSettings: Story = {
-	play: openQuickFiltersSettings,
-};
-
-/** Settings with an unsaved filter removal and the fixed action footer. */
-export const QuickFiltersSettingsDirty: Story = {
-	play: dirtyQuickFiltersSettings,
-};
-
-/**
- * The same panel with a banner above the shell. The banner takes 48px off the
- * layout, so this is the case where the footer used to be pushed off screen:
- * the panel is sized from the filters pane rather than the viewport, which
- * keeps Save changes reachable.
- */
-export const QuickFiltersSettingsWithBanner: Story = {
-	args: { banner: 'trial-expiry' },
-	play: dirtyQuickFiltersSettings,
 };
