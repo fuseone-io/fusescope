@@ -14,6 +14,8 @@ import '@testing-library/jest-dom';
 
 import * as appContextHooks from '../../../providers/App/App';
 import { LicenseEvent } from '../../../types/api/licensesV3/getActive';
+import { useAllErrorsQueryState } from 'pages/AllErrors/QueryStateContext';
+
 import AllErrors from '../index';
 import {
 	INIT_URL_WITH_COMMON_QUERY,
@@ -122,6 +124,28 @@ describe('Exceptions - All Errors', () => {
 		);
 	});
 
+	it('links each exception to its service', async () => {
+		renderExceptions();
+		await screen.findByText(/redis timeout/i);
+
+		const service = screen.getByTestId('exception-service');
+		expect(service).toHaveAttribute(
+			'href',
+			expect.stringMatching(/^\/services\/redis-manual(\?|$)/),
+		);
+		expect(service).toHaveTextContent('redis-manual');
+	});
+
+	it('shares the number of exception groups with the page header', async () => {
+		useAllErrorsQueryState.setState({ groupCount: null });
+		renderExceptions();
+		await screen.findByText(/redis timeout/i);
+
+		await waitFor(() =>
+			expect(useAllErrorsQueryState.getState().groupCount).toBe(540),
+		);
+	});
+
 	it('should sort Error Message appropriately', async () => {
 		renderExceptions();
 		await screen.findByText(/redis timeout/i);
@@ -155,9 +179,12 @@ describe('Exceptions - All Errors', () => {
 		await screen.findByText(/redis timeout/i);
 
 		fireEvent.click(screen.getByTestId('exceptions-filter-exceptionType'));
-		fireEvent.change(await screen.findByPlaceholderText('Search By Exception'), {
-			target: { value: 'redis' },
-		});
+		fireEvent.change(
+			await screen.findByPlaceholderText('Search by exception type'),
+			{
+				target: { value: 'redis' },
+			},
+		);
 		fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
 		await waitFor(() => {

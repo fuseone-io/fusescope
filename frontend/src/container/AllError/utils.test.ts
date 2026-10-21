@@ -1,7 +1,4 @@
-import { Order, OrderBy } from 'types/api/errors/getAll';
-
 import {
-	getDefaultOrder,
 	getLimit,
 	getOffSet,
 	getOrder,
@@ -35,26 +32,6 @@ describe('Error utils', () => {
 		expect(isOrder('invalid')).toBe(false);
 		expect(isOrder(null)).toBe(false);
 		expect(isOrder('')).toBe(false);
-	});
-
-	it('Default Order', () => {
-		const OrderBy: OrderBy[] = [
-			'exceptionCount',
-			'exceptionType',
-			'firstSeen',
-			'lastSeen',
-			'serviceName',
-		];
-
-		const order: Order[] = ['ascending', 'descending'];
-
-		const ascOrd = order[0];
-		const desOrd = order[1];
-
-		OrderBy.forEach((order) => {
-			expect(getDefaultOrder(order, ascOrd, order)).toBe('ascend');
-			expect(getDefaultOrder(order, desOrd, order)).toBe('descend');
-		});
 	});
 
 	it('Limit', () => {

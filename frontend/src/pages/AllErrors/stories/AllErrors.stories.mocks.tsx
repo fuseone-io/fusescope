@@ -4,6 +4,7 @@
  */
 
 import { rest } from 'msw';
+import { apmQueryRangeResponse } from 'pages/MetricsApplication/stories/__story_mockdata__/apmQueryRange';
 import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { screen, userEvent, waitFor, within } from 'storybook/test';
@@ -24,6 +25,7 @@ import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
 import {
 	EXCEPTION_CATALOGUE_SIZE,
 	EXCEPTION_QUICK_FILTER_CAP,
+	EXCEPTION_SERVICE_NAMES,
 	exceptionAttributeKeysResponse,
 	exceptionAttributeValuesResponse,
 	exceptionFieldKeysResponse,
@@ -77,6 +79,15 @@ export const exceptionsMocks = defineStoryMocks({
 
 				return exceptionRows(values.exceptions, body);
 			}),
+		),
+
+		rest.post(
+			'http://localhost/api/v5/query_range',
+			response.json(async (req) =>
+				apmQueryRangeResponse(await req.json(), {
+					'service.name': EXCEPTION_SERVICE_NAMES,
+				}),
+			),
 		),
 
 		rest.post(

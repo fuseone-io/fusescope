@@ -9,10 +9,13 @@ import {
 } from 'components/ui/table';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import { formatCount } from 'lib/apm/format';
+import { useServiceKinds } from 'lib/apm/useServiceKinds';
 import { useTimezone } from 'providers/Timezone';
 import { Exception } from 'types/api/errors/getAll';
 
-import { EXCEPTION_COLUMNS, SKELETON_ROWS } from './constants';
+import { EXCEPTION_COLUMNS, SEEN_FORMAT, SKELETON_ROWS } from './constants';
+import ExceptionServiceCell from './ExceptionServiceCell';
 import ExceptionsHeadCell from './ExceptionsHeadCell';
 import { AllErrorsParams } from './useAllErrorsParams';
 import { getNanoSeconds } from './utils';
@@ -29,7 +32,10 @@ function ExceptionsTable({
 	params,
 }: ExceptionsTableProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const formatDate = (value: string): string =>
+	const serviceIdentity = useServiceKinds();
+	const formatSeen = (value: string): string =>
+		formatTimezoneAdjustedTimestamp(value, SEEN_FORMAT);
+	const formatFull = (value: string): string =>
 		formatTimezoneAdjustedTimestamp(value, DATE_TIME_FORMATS.UK_DATETIME_SECONDS);
 
 	const filterValues = {
@@ -38,7 +44,7 @@ function ExceptionsTable({
 	};
 
 	return (
-		<Table className="tw:min-w-[860px] tw:table-fixed tw:[&_td]:px-3 tw:[&_th]:px-3">
+		<Table className="tw:min-w-[760px] tw:table-fixed tw:[&_td]:px-3 tw:[&_td]:py-2.5 tw:[&_th]:px-3 tw:[&_tr>*:first-child]:pl-5 tw:[&_tr>*:last-child]:pr-5">
 			<TableHeader className="tw:bg-surface-sunken">
 				<TableRow>
 					{EXCEPTION_COLUMNS.map((column) => (
@@ -69,7 +75,7 @@ function ExceptionsTable({
 							colSpan={EXCEPTION_COLUMNS.length}
 							className="tw:h-24 tw:text-center tw:text-muted-foreground"
 						>
-							No data
+							No exceptions in this time range.
 						</TableCell>
 					</TableRow>
 				)}
@@ -82,30 +88,40 @@ function ExceptionsTable({
 										record.groupID
 									}&timestamp=${getNanoSeconds(record.lastSeen)}`}
 									title={record.exceptionType}
-									className="tw:font-mono tw:text-xs tw:text-primary!"
+									className="tw:font-mono tw:text-xs tw:font-medium tw:text-primary! tw:hover:underline"
 								>
 									{record.exceptionType}
 								</Link>
 							</TableCell>
-							<TableCell className="tw:whitespace-normal">
-								<span
-									title={record.exceptionMessage}
-									className="tw:line-clamp-2 tw:font-mono tw:text-xs tw:break-words tw:text-muted-foreground"
-								>
-									{record.exceptionMessage}
-								</span>
+							<TableCell
+								title={record.exceptionMessage}
+								className="tw:truncate tw:font-mono tw:text-xs tw:text-muted-foreground"
+							>
+								{record.exceptionMessage}
 							</TableCell>
-							<TableCell className="tw:text-right tw:font-medium tw:tabular-nums">
-								{record.exceptionCount}
+							<TableCell
+								title={record.exceptionCount.toLocaleString('en-US')}
+								className="tw:text-right tw:font-medium tw:tabular-nums"
+							>
+								{formatCount(record.exceptionCount)}
 							</TableCell>
-							<TableCell className="tw:text-xs tw:tabular-nums">
-								{formatDate(record.lastSeen)}
+							<TableCell
+								title={formatFull(record.lastSeen)}
+								className="tw:text-xs tw:tabular-nums"
+							>
+								{formatSeen(record.lastSeen)}
 							</TableCell>
-							<TableCell className="tw:text-xs tw:text-muted-foreground tw:tabular-nums">
-								{formatDate(record.firstSeen)}
+							<TableCell
+								title={formatFull(record.firstSeen)}
+								className="tw:text-xs tw:text-muted-foreground tw:tabular-nums"
+							>
+								{formatSeen(record.firstSeen)}
 							</TableCell>
-							<TableCell className="tw:truncate tw:font-mono tw:text-xs">
-								{record.serviceName}
+							<TableCell>
+								<ExceptionServiceCell
+									serviceName={record.serviceName}
+									identity={serviceIdentity(record.serviceName)}
+								/>
 							</TableCell>
 						</TableRow>
 					))}
