@@ -129,7 +129,7 @@ describe('MembersSettings (integration)', () => {
 		fireEvent.click(screen.getByRole('button', { name: /invite member/i }));
 
 		await expect(
-			screen.findAllByPlaceholderText('e.g. john@signoz.io'),
+			screen.findAllByPlaceholderText('e.g. john@example.com'),
 		).resolves.toHaveLength(3);
 	});
 
@@ -139,7 +139,7 @@ describe('MembersSettings (integration)', () => {
 		});
 
 		await expect(
-			screen.findAllByPlaceholderText('e.g. john@signoz.io'),
+			screen.findAllByPlaceholderText('e.g. john@example.com'),
 		).resolves.toHaveLength(3);
 	});
 });

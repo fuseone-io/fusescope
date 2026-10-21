@@ -22,19 +22,9 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 					type="info"
 					showIcon
 					title={
-						<span>
-							<a
-								href={DOCLINKS.QUERY_CLICKHOUSE_TRACES}
-								target="_blank"
-								rel="noopener"
-							>
-								Learn to write faster, optimized queries
-							</a>
-							{' · Using AI? '}
-							<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
-								Install the FuseScope ClickHouse query agent skill
-							</a>
-						</span>
+						<a href={DOCLINKS.QUERY_CLICKHOUSE_TRACES} target="_blank" rel="noopener">
+							Learn to write faster, optimized queries
+						</a>
 					}
 				/>
 			</div>

@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import SystemPagePanel from 'components/SystemPagePanel/SystemPagePanel';
 import { Button } from 'components/ui/button';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { ArrowUpRight, CloudUpload, Wrench } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -76,7 +76,7 @@ function Version(): JSX.Element {
 						className="tw:bg-primary! tw:text-primary-foreground! tw:hover:bg-primary/90!"
 					>
 						<a
-							href={signozDocsUrl('/opentelemetry-collection-agents/docker/overview/')}
+							href={fuseScopeDocsUrl('/install/helm/#upgrade-and-uninstall')}
 							target="_blank"
 							rel="noreferrer"
 						>

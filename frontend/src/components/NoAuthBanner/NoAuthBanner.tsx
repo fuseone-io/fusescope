@@ -1,6 +1,6 @@
 import { PersistedAnnouncementBanner } from '@signozhq/ui/announcement-banner';
 
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import styles from './NoAuthBanner.module.scss';
 
@@ -15,9 +15,7 @@ export function NoAuthBanner(): JSX.Element {
 			Impersonation mode: authentication is disabled. Anyone with access to this
 			instance has admin privileges.{' '}
 			<a
-				href={signozDocsUrl(
-					'/manage/administrator-guide/configuration/impersonation-mode/',
-				)}
+				href={fuseScopeDocsUrl('/configuration/impersonation-mode/')}
 				target="_blank"
 				rel="noreferrer"
 			>

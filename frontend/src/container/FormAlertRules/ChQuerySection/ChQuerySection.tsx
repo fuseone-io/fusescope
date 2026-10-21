@@ -13,12 +13,6 @@ const ALERT_TYPE_DOC_LINK: Partial<Record<AlertTypes, string>> = {
 	[AlertTypes.METRICS_BASED_ALERT]: DOCLINKS.QUERY_CLICKHOUSE_METRICS,
 };
 
-const ALERT_TYPES_WITH_AGENT_SKILL: AlertTypes[] = [
-	AlertTypes.LOGS_BASED_ALERT,
-	AlertTypes.TRACES_BASED_ALERT,
-	AlertTypes.EXCEPTIONS_BASED_ALERT,
-];
-
 interface ChQuerySectionProps {
 	alertType: AlertTypes;
 }
@@ -26,7 +20,6 @@ interface ChQuerySectionProps {
 function ChQuerySection({ alertType }: ChQuerySectionProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const docLink = ALERT_TYPE_DOC_LINK[alertType];
-	const showAgentSkill = ALERT_TYPES_WITH_AGENT_SKILL.includes(alertType);
 
 	return (
 		<>
@@ -36,19 +29,9 @@ function ChQuerySection({ alertType }: ChQuerySectionProps): JSX.Element {
 						type="info"
 						showIcon
 						title={
-							<span>
-								<a href={docLink} target="_blank" rel="noopener">
-									Learn to write faster, optimized queries
-								</a>
-								{showAgentSkill && (
-									<>
-										{' · Using AI? '}
-										<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
-											Install the FuseScope ClickHouse query agent skill
-										</a>
-									</>
-								)}
-							</span>
+							<a href={docLink} target="_blank" rel="noopener">
+								Learn to write faster, optimized queries
+							</a>
 						}
 					/>
 				</div>

@@ -38,7 +38,7 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+			const emailInputs = screen.getAllByPlaceholderText('e.g. john@example.com');
 			await user.type(emailInputs[0], 'alice@signoz.io');
 			await user.click(screen.getAllByText('Select roles')[0]);
 			await user.click(await screen.findByTitle('Viewer'));
@@ -70,7 +70,7 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+			const emailInputs = screen.getAllByPlaceholderText('e.g. john@example.com');
 
 			await user.type(emailInputs[0], 'alice@signoz.io');
 			await user.click(screen.getAllByText('Select roles')[0]);
@@ -123,7 +123,7 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+			const emailInputs = screen.getAllByPlaceholderText('e.g. john@example.com');
 			await user.type(emailInputs[0], VALID_EMAIL);
 			await user.click(screen.getAllByText('Select roles')[0]);
 			await user.click(await screen.findByTitle('Viewer'));
@@ -152,7 +152,7 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+			const emailInputs = screen.getAllByPlaceholderText('e.g. john@example.com');
 			await user.type(emailInputs[0], VALID_EMAIL);
 			await user.click(screen.getAllByText('Select roles')[0]);
 			await user.click(await screen.findByTitle('Viewer'));
@@ -215,7 +215,7 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+			const emailInputs = screen.getAllByPlaceholderText('e.g. john@example.com');
 
 			await user.type(emailInputs[0], 'alice@signoz.io');
 			await user.click(screen.getAllByText('Select roles')[0]);
@@ -274,7 +274,7 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+			const emailInputs = screen.getAllByPlaceholderText('e.g. john@example.com');
 			await user.type(emailInputs[0], VALID_EMAIL);
 			await user.click(screen.getAllByText('Select roles')[0]);
 			await user.click(await screen.findByTitle('Viewer'));
@@ -301,7 +301,7 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+			const emailInputs = screen.getAllByPlaceholderText('e.g. john@example.com');
 			await user.type(emailInputs[0], VALID_EMAIL);
 			await user.click(screen.getAllByText('Select roles')[0]);
 			await user.click(await screen.findByTitle('Viewer'));
@@ -331,7 +331,7 @@ describe('InviteMembers - Submission', () => {
 
 			expect(screen.getByTestId('submit-btn')).toBeDisabled();
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+			const emailInputs = screen.getAllByPlaceholderText('e.g. john@example.com');
 			await user.type(emailInputs[0], VALID_EMAIL);
 
 			expect(screen.getByTestId('submit-btn')).not.toBeDisabled();
@@ -351,7 +351,7 @@ describe('InviteMembers - Submission', () => {
 
 			expect(screen.getByTestId('touched-count')).toHaveTextContent('0');
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+			const emailInputs = screen.getAllByPlaceholderText('e.g. john@example.com');
 			await user.type(emailInputs[0], 'a@b.com');
 
 			expect(screen.getByTestId('touched-count')).toHaveTextContent('1');

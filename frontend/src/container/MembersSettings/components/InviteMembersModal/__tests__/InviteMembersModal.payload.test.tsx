@@ -23,7 +23,7 @@ describe('InviteMembersModal payload', () => {
 
 		render(<InviteMembersModal open onClose={onClose} />);
 
-		const emails = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+		const emails = screen.getAllByPlaceholderText('e.g. john@example.com');
 		await user.type(emails[0], 'ana@example.com');
 		await user.click(screen.getAllByText('Select roles')[0]);
 		await user.click(await screen.findByTitle('Editor'));
