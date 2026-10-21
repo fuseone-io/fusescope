@@ -78,6 +78,30 @@ describe('LLMObservabilityAttributeMapping', () => {
 		).resolves.toBeInTheDocument();
 	});
 
+	it('opens the test tab from ?tab=test', async () => {
+		window.history.pushState(null, '', '/?tab=test');
+		render(<LLMObservabilityAttributeMapping />);
+
+		expect(screen.getByRole('tab', { name: 'Test' })).toHaveAttribute(
+			'aria-selected',
+			'true',
+		);
+		await expect(
+			screen.findByTestId('span-json-editor'),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('keeps the selected tab in ?tab=', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<LLMObservabilityAttributeMapping />);
+
+		await user.click(screen.getByRole('tab', { name: 'Test' }));
+
+		await waitFor(() =>
+			expect(new URLSearchParams(window.location.search).get('tab')).toBe('test'),
+		);
+	});
+
 	it('renders no Save/Discard while pristine', () => {
 		render(<LLMObservabilityAttributeMapping />);
 

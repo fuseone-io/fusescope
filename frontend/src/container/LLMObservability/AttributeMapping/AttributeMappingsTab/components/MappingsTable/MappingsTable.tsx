@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import { ChevronDown, ChevronRight, Layers, Plus } from '@signozhq/icons';
-import { Collapse, type CollapseProps, Skeleton } from 'antd';
+import { Layers, Plus } from '@signozhq/icons';
+import { Skeleton } from 'antd';
+import { Button } from 'components/ui/button';
 
 import MapperFormDrawer from 'container/LLMObservability/AttributeMapping/components/MapperFormDrawer/MapperFormDrawer';
 import { useMapperFormDrawer } from 'container/LLMObservability/AttributeMapping/components/MapperFormDrawer/hooks/useMapperFormDrawer';
@@ -12,10 +12,7 @@ import {
 } from 'container/LLMObservability/AttributeMapping/types';
 import { AttributeMappingEditor } from 'container/LLMObservability/AttributeMapping/hooks/useAttributeMappingEditor';
 import { useCanManageAttributeMapping } from 'container/LLMObservability/AttributeMapping/hooks/useCanManageAttributeMapping';
-import GroupHeader from './GroupHeader/GroupHeader';
-import GroupHeaderActions from './GroupHeaderActions/GroupHeaderActions';
-import GroupMappers from './GroupMappers/GroupMappers';
-import MappingsColgroup from './MappingsColgroup/MappingsColgroup';
+import GroupPanel from './GroupPanel/GroupPanel';
 import styles from './MappingsTable.module.scss';
 
 const SKELETON_ROW_COUNT = 3;
@@ -65,6 +62,14 @@ function MappingsTable({
 		drawer.close();
 	}, [targetGroupId, upsertMapper, drawer]);
 
+	const handleToggleOpen = useCallback((groupLocalId: string): void => {
+		setExpandedGroups((prev) =>
+			prev.includes(groupLocalId)
+				? prev.filter((id) => id !== groupLocalId)
+				: [...prev, groupLocalId],
+		);
+	}, []);
+
 	const handleDeleteMapper = useCallback((): void => {
 		if (targetGroupId && drawer.draft.id) {
 			removeMapper(targetGroupId, drawer.draft.id);
@@ -73,27 +78,6 @@ function MappingsTable({
 	}, [targetGroupId, removeMapper, drawer]);
 
 	const isEmpty = !editor.isLoading && editor.groups.length === 0;
-
-	const items: CollapseProps['items'] = editor.groups.map((group) => ({
-		key: group.localId,
-		label: <GroupHeader group={group} />,
-		extra: (
-			<GroupHeaderActions
-				group={group}
-				onToggle={editor.toggleGroup}
-				onEdit={onEditGroup}
-				onRemove={editor.removeGroup}
-			/>
-		),
-		children: (
-			<GroupMappers
-				group={group}
-				editor={editor}
-				onAddMapper={handleAddMapper}
-				onEditMapper={handleEditMapper}
-			/>
-		),
-	}));
 
 	const skeletonBanners = (
 		<div className={styles.skeletonList}>
@@ -125,14 +109,15 @@ function MappingsTable({
 			{canManage && (
 				<div className={styles.toolbar}>
 					<Button
-						size="md"
-						variant="solid"
-						color="primary"
-						prefix={<Plus size={14} />}
+						type="button"
+						variant="outline"
+						size="sm"
 						onClick={onAddGroup}
-						testId="add-group-row"
-						loading={editor.isLoading}
+						disabled={editor.isLoading}
+						data-testid="add-group-row"
+						className="fs-ui"
 					>
+						<Plus size={14} />
 						Add a new group
 					</Button>
 				</div>
@@ -146,34 +131,21 @@ function MappingsTable({
 					</Typography.Text>
 				</div>
 			) : (
-				<div data-testid="mappings-table">
-					<table className={styles.table}>
-						<MappingsColgroup />
-						<thead>
-							<tr className={styles.headerRow}>
-								<th className={styles.headerCell}>Target</th>
-								<th className={styles.headerCell}>Sources</th>
-								<th className={styles.headerCell}>Actions</th>
-							</tr>
-						</thead>
-					</table>
-					{editor.isLoading ? (
-						skeletonBanners
-					) : (
-						<Collapse
-							className={styles.groupsCollapse}
-							activeKey={expandedGroups}
-							onChange={(keys): void =>
-								setExpandedGroups(Array.isArray(keys) ? keys : [keys])
-							}
-							bordered={false}
-							destroyInactivePanel
-							expandIcon={({ isActive }): JSX.Element =>
-								isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-							}
-							items={items}
-						/>
-					)}
+				<div data-testid="mappings-table" className={styles.groupList}>
+					{editor.isLoading
+						? skeletonBanners
+						: editor.groups.map((group) => (
+								<GroupPanel
+									key={group.localId}
+									group={group}
+									open={expandedGroups.includes(group.localId)}
+									onToggleOpen={handleToggleOpen}
+									editor={editor}
+									onEditGroup={onEditGroup}
+									onAddMapper={handleAddMapper}
+									onEditMapper={handleEditMapper}
+								/>
+							))}
 				</div>
 			)}
 

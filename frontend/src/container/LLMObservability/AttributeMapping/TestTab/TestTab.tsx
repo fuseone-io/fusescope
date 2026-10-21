@@ -2,6 +2,7 @@ import MEditor from '@monaco-editor/react';
 import { Play, RotateCcw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import styles from './TestTab.module.scss';
@@ -77,88 +78,93 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 
 	return (
 		<div className={styles.testTab} data-testid="test-tab">
-			<div className={styles.header}>
-				<div className={styles.headerText}>
-					<h3 className={styles.heading}>Test with sample span</h3>
-					<p className={styles.description}>
-						Paste a JSON span object to see which target attributes get populated and
-						which source key matched.
-					</p>
-				</div>
-
-				<div className={styles.headerActions}>
-					<Button
-						size="md"
-						testId="reset-template-button"
-						variant="outlined"
-						color="secondary"
-						prefix={<RotateCcw size={14} />}
-						onClick={resetToTemplate}
-						disabled={isTemplateInput}
-						disabledTooltip="Already showing the default span"
-					>
-						Reset to Default Span
-					</Button>
-
-					<Button
-						size="md"
-						testId="run-test-button"
-						variant="solid"
-						color="primary"
-						prefix={<Play size={14} />}
-						onClick={run}
-						loading={isRunning}
-						disabled={validationError !== null}
-						disabledTooltip={validationError}
-					>
-						Run Test
-					</Button>
-				</div>
-			</div>
-
-			<div className={styles.body}>
-				<div
-					className={styles.editor}
-					data-testid="test-span-input"
-					aria-label="Sample span JSON"
+			<div className={styles.panelGrid}>
+				<ContentPanel
+					title="Test with sample span"
+					subtitle="Paste a JSON span object to see which target attributes get populated and which source key matched."
+					divided
+					className={styles.panel}
+					bodyClassName={styles.inputBody}
 				>
-					<MEditor
-						language="json"
-						value={input}
-						onChange={(value): void => setInput(value ?? '')}
-						height="100%"
-						loading={<JsonEditorSkeleton />}
-						theme={isDarkMode ? SIGNOZ_JSON_THEME_DARK : SIGNOZ_JSON_THEME_LIGHT}
-						beforeMount={defineSignozJsonTheme}
-						options={{
-							minimap: { enabled: false },
-							fontSize: 12,
-							lineNumbers: 'on',
-							wordWrap: 'on',
-							scrollBeyondLastLine: false,
-							formatOnPaste: true,
-							tabSize: 2,
-							automaticLayout: true,
-							scrollbar: { alwaysConsumeMouseWheel: false },
-						}}
-					/>
-				</div>
+					<div
+						className={styles.editor}
+						data-testid="test-span-input"
+						aria-label="Sample span JSON"
+					>
+						<MEditor
+							language="json"
+							value={input}
+							onChange={(value): void => setInput(value ?? '')}
+							height="100%"
+							loading={<JsonEditorSkeleton />}
+							theme={isDarkMode ? SIGNOZ_JSON_THEME_DARK : SIGNOZ_JSON_THEME_LIGHT}
+							beforeMount={defineSignozJsonTheme}
+							options={{
+								minimap: { enabled: false },
+								fontSize: 12,
+								lineNumbers: 'on',
+								wordWrap: 'on',
+								scrollBeyondLastLine: false,
+								formatOnPaste: true,
+								tabSize: 2,
+								automaticLayout: true,
+								scrollbar: { alwaysConsumeMouseWheel: false },
+							}}
+						/>
+					</div>
 
-				<div className={styles.resultsPanel} data-testid="test-results-panel">
-					{renderResults()}
-				</div>
+					{validationError && (
+						<Callout
+							type="error"
+							size="small"
+							showIcon
+							title={validationError}
+							testId="test-input-error"
+							className={styles.validationCallout}
+						/>
+					)}
+
+					<div className={styles.inputActions}>
+						<Button
+							size="md"
+							testId="reset-template-button"
+							variant="outlined"
+							color="secondary"
+							prefix={<RotateCcw size={14} />}
+							onClick={resetToTemplate}
+							disabled={isTemplateInput}
+							disabledTooltip="Already showing the default span"
+						>
+							Reset to Default Span
+						</Button>
+
+						<Button
+							size="md"
+							testId="run-test-button"
+							variant="solid"
+							color="primary"
+							prefix={<Play size={14} />}
+							onClick={run}
+							loading={isRunning}
+							disabled={validationError !== null}
+							disabledTooltip={validationError}
+						>
+							Run Test
+						</Button>
+					</div>
+				</ContentPanel>
+
+				<ContentPanel
+					title="Resulting attributes"
+					subtitle="Targets the mappers populate, and the source key each came from."
+					divided
+					className={styles.panel}
+				>
+					<div className={styles.resultsPanel} data-testid="test-results-panel">
+						{renderResults()}
+					</div>
+				</ContentPanel>
 			</div>
-
-			{validationError && (
-				<Callout
-					type="error"
-					size="small"
-					showIcon
-					title={validationError}
-					testId="test-input-error"
-					className={styles.validationCallout}
-				/>
-			)}
 		</div>
 	);
 }

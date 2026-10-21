@@ -1,21 +1,25 @@
 import { useEffect } from 'react';
-import { Badge } from '@signozhq/ui/badge';
-import { Tabs } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useListUnmappedLLMModels } from 'api/generated/services/llmpricingrules';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 
-import { MODEL_COSTS_TAB, TAB_KEY, UNPRICED_MODELS_TAB } from './constants';
-import styles from './LLMObservabilityModelPricing.module.scss';
+import {
+	MODEL_COSTS_TAB,
+	type ModelPricingTab,
+	TAB_KEY,
+	UNPRICED_MODELS_TAB,
+} from './constants';
 import ModelCostTabPanel from './ModelCostTabPanel';
 import UnpricedModelsTab from './UnpricedModelsTab';
 
 function LLMObservabilityModelPricing(): JSX.Element {
 	const [activeTab, setActiveTab] = useQueryState(
 		TAB_KEY,
-		parseAsStringEnum([MODEL_COSTS_TAB, UNPRICED_MODELS_TAB]).withDefault(
+		parseAsStringEnum<ModelPricingTab>([
 			MODEL_COSTS_TAB,
-		),
+			UNPRICED_MODELS_TAB,
+		]).withDefault(MODEL_COSTS_TAB),
 	);
 
 	// Count powers the tab badge; deduped with the tab's own fetch by react-query.
@@ -28,36 +32,37 @@ function LLMObservabilityModelPricing(): JSX.Element {
 
 	return (
 		<div
-			className={styles.llmObservabilityModelPricing}
+			className="tw:flex tw:flex-col tw:gap-4 tw:p-4 tw:md:p-6"
 			data-testid="llm-observability-model-pricing-page"
 		>
-			<Tabs
-				activeKey={activeTab}
-				onChange={(key): void => {
-					void setActiveTab(key as typeof activeTab);
+			<SegmentedControl<ModelPricingTab>
+				label="Pricing list"
+				value={activeTab}
+				onChange={(tab): void => {
+					void setActiveTab(tab);
 				}}
-				items={[
+				className="tw:self-start"
+				options={[
 					{
-						key: MODEL_COSTS_TAB,
-						label: 'Model Costs',
-						children: <ModelCostTabPanel />,
+						value: MODEL_COSTS_TAB,
+						label: 'Model costs',
+						testId: 'model-costs-tab',
 					},
 					{
-						key: UNPRICED_MODELS_TAB,
-						label: (
-							<span className={styles.tabLabel}>
-								Unpriced models
-								{unpricedCount > 0 && (
-									<Badge color="primary" variant="solid" testId="unpriced-models-count">
-										{unpricedCount}
-									</Badge>
-								)}
-							</span>
-						),
-						children: <UnpricedModelsTab />,
+						value: UNPRICED_MODELS_TAB,
+						label: 'Unpriced models',
+						testId: 'unpriced-models-tab',
+						count: unpricedCount > 0 ? unpricedCount : undefined,
+						countTone: 'warning',
+						countTestId: 'unpriced-models-count',
 					},
 				]}
 			/>
+			{activeTab === MODEL_COSTS_TAB ? (
+				<ModelCostTabPanel />
+			) : (
+				<UnpricedModelsTab />
+			)}
 		</div>
 	);
 }

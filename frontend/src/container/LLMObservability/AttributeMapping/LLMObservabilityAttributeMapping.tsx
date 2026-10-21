@@ -1,6 +1,7 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Tabs } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
 
 import AttributeMappingActions from './components/AttributeMappingActions/AttributeMappingActions';
@@ -12,11 +13,19 @@ import TestTab from './TestTab/TestTab';
 import { useAttributeMappingEditor } from './hooks/useAttributeMappingEditor';
 import { useGroupFormDrawer } from './components/GroupFormDrawer/hooks/useGroupFormDrawer';
 import { useTestSpanMapper } from './TestTab/useTestSpanMapper';
+import { summarizeDraftChanges } from './summaries';
 
 const MAPPINGS_TAB_KEY = 'attribute-mappings';
 const TEST_TAB_KEY = 'test';
+const TAB_PARAM = 'tab';
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
+	const [activeTab, setActiveTab] = useQueryState(
+		TAB_PARAM,
+		parseAsStringEnum([MAPPINGS_TAB_KEY, TEST_TAB_KEY]).withDefault(
+			MAPPINGS_TAB_KEY,
+		),
+	);
 	const editor = useAttributeMappingEditor();
 	const groupDrawer = useGroupFormDrawer();
 	const spanTest = useTestSpanMapper(editor.snapshot, editor.groups);
@@ -32,6 +41,14 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 		useCallback(async (): Promise<void> => {
 			discard();
 		}, [discard]),
+	);
+
+	const changeSummary = useMemo(
+		() =>
+			editor.isDirty
+				? summarizeDraftChanges(editor.snapshot, editor.groups)
+				: null,
+		[editor.isDirty, editor.snapshot, editor.groups],
 	);
 
 	const handleGroupSave = useCallback((): void => {
@@ -69,17 +86,21 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 				</div>
 			)}
 
+			<AttributeMappingActions
+				isDirty={editor.isDirty}
+				isSaving={editor.isSaving}
+				summary={changeSummary}
+				onDiscard={discardConfirm.request}
+				onSave={editor.save}
+			/>
+
 			<Tabs
-				defaultActiveKey={MAPPINGS_TAB_KEY}
+				className={styles.tabs}
+				activeKey={activeTab}
+				onChange={(key): void => {
+					void setActiveTab(key === TEST_TAB_KEY ? TEST_TAB_KEY : null);
+				}}
 				items={tabItems}
-				tabBarExtraContent={
-					<AttributeMappingActions
-						isDirty={editor.isDirty}
-						isSaving={editor.isSaving}
-						onDiscard={discardConfirm.request}
-						onSave={editor.save}
-					/>
-				}
 			/>
 			{groupDrawer.isOpen && (
 				<GroupFormDrawer

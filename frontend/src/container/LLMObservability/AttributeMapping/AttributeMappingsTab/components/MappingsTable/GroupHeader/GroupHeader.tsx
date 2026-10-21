@@ -1,31 +1,44 @@
-import { Info } from '@signozhq/icons';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
+import { cn } from 'lib/utils';
+import { ChevronRight } from 'lucide-react';
 
+import { summarizeConditions } from 'container/LLMObservability/AttributeMapping/summaries';
 import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
 
 import ConditionsTooltip from './ConditionsTooltip';
-import styles from './GroupHeader.module.scss';
 
 interface GroupHeaderProps {
 	group: DraftGroup;
+	open: boolean;
+	onToggle: () => void;
 }
 
-function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
-	const conditionCount = group.attributes.length + group.resource.length;
-
+/** The group's toggle (chevron and name) and its condition summary. */
+function GroupHeader({ group, open, onToggle }: GroupHeaderProps): JSX.Element {
 	return (
-		<div
-			className={styles.groupHeaderLabel}
-			data-testid={`group-expand-${group.localId}`}
-		>
-			<Typography.Text
-				as="span"
-				className={styles.groupName}
-				testId={`group-name-${group.localId}`}
+		<div className="tw:flex tw:min-w-0 tw:flex-1 tw:items-center tw:gap-x-3">
+			<button
+				type="button"
+				aria-expanded={open}
+				aria-label={`Toggle ${group.name}`}
+				onClick={onToggle}
+				data-testid={`group-expand-${group.localId}`}
+				className="tw:-ml-2 tw:flex tw:min-w-0 tw:flex-none tw:cursor-pointer tw:items-center tw:gap-2 tw:rounded-md tw:border-0 tw:bg-transparent tw:px-2 tw:py-1 tw:text-foreground tw:outline-none tw:hover:bg-muted tw:focus-visible:ring-2 tw:focus-visible:ring-ring"
 			>
-				{group.name}
-			</Typography.Text>
+				<ChevronRight
+					aria-hidden="true"
+					className={cn(
+						'tw:size-4 tw:flex-none tw:text-muted-foreground tw:transition-transform',
+						open && 'tw:rotate-90',
+					)}
+				/>
+				<span
+					data-testid={`group-name-${group.localId}`}
+					className="tw:truncate tw:font-mono tw:text-[13px] tw:font-semibold"
+				>
+					{group.name}
+				</span>
+			</button>
 			<Tooltip
 				title={
 					<ConditionsTooltip
@@ -37,11 +50,10 @@ function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 				align="start"
 			>
 				<span
-					className={styles.conditionCount}
 					data-testid={`group-condition-count-${group.localId}`}
+					className="tw:min-w-0 tw:cursor-help tw:truncate tw:text-xs tw:text-muted-foreground"
 				>
-					· {conditionCount} {conditionCount === 1 ? 'condition' : 'conditions'}
-					<Info size={12} className={styles.conditionInfoIcon} />
+					{summarizeConditions(group.attributes, group.resource)}
 				</span>
 			</Tooltip>
 		</div>

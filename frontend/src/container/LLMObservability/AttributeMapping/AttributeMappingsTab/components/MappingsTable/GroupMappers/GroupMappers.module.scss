@@ -1,11 +1,37 @@
 .table {
 	width: 100%;
+	min-width: 720px;
 	border-collapse: collapse;
 	table-layout: fixed;
 }
 
+.headerRow {
+	background: var(--fs-muted);
+}
+
+.headerCell {
+	height: 32px;
+	padding: 0 20px;
+	text-align: left;
+	font-family:
+		Inter,
+		'Segoe UI',
+		-apple-system,
+		system-ui,
+		sans-serif;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--fs-muted-foreground);
+
+	&:last-child {
+		text-align: right;
+	}
+}
+
 .mapperStateRow .stateCell {
-	color: var(--l3-foreground);
+	color: var(--fs-muted-foreground);
 }
 
 .stateContent {
@@ -23,11 +49,16 @@
 	padding-bottom: var(--spacing-2);
 }
 
+.addMapperRow {
+	border-top: 1px solid var(--fs-border);
+}
+
 .stateCell {
-	padding: var(--spacing-4) var(--spacing-6) var(--spacing-4) var(--spacing-12);
-	font-size: var(--periscope-font-size-base);
+	padding: 12px 20px;
+	border-top: 1px solid var(--fs-border);
+	font-size: 13px;
 }
 
 .addMapperCell {
-	padding: var(--spacing-4) var(--spacing-6) var(--spacing-4) var(--spacing-6);
+	padding: 6px 12px;
 }

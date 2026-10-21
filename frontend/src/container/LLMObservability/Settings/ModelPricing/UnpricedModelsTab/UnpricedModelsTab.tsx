@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Callout } from '@signozhq/ui/callout';
 import { Typography } from '@signozhq/ui/typography';
 import { useListUnmappedLLMModels } from 'api/generated/services/llmpricingrules';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
@@ -79,25 +79,27 @@ function UnpricedModelsTab(): JSX.Element {
 	);
 
 	return (
-		<div className={styles.unpricedModelsTab}>
-			<Callout type="warning" size="small" showIcon className={styles.banner}>
-				Models detected in traces without pricing. Map each to a billing model or
-				create pricing so estimated cost can be computed.
-			</Callout>
+		<>
+			<ContentPanel
+				title="Unpriced models"
+				subtitle="Models detected in traces without pricing. Map each to a billing model or create pricing so estimated cost can be computed."
+				divided
+				testId="unpriced-models-panel"
+			>
+				{isError && (
+					<div className={styles.error}>
+						<Typography.Text as="p" size="small" color="danger" role="alert">
+							Failed to load unpriced models. Please try again.
+						</Typography.Text>
+					</div>
+				)}
 
-			{isError && (
-				<div className={styles.error}>
-					<Typography.Text as="p" size="small" color="danger" role="alert">
-						Failed to load unpriced models. Please try again.
-					</Typography.Text>
-				</div>
-			)}
-
-			<UnpricedModelsTable
-				models={models}
-				isLoading={isLoading}
-				columnsConfig={columnsConfig}
-			/>
+				<UnpricedModelsTable
+					models={models}
+					isLoading={isLoading}
+					columnsConfig={columnsConfig}
+				/>
+			</ContentPanel>
 
 			{pendingMapping && (
 				<MapConfirmDialog
@@ -122,7 +124,7 @@ function UnpricedModelsTab(): JSX.Element {
 					canManage={canManagePricing}
 				/>
 			)}
-		</div>
+		</>
 	);
 }
 

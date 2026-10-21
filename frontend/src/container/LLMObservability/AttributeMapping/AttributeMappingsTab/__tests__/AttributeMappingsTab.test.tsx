@@ -156,22 +156,21 @@ describe('AttributeMappingsTab (integration)', () => {
 		setupGroups();
 		render(<AttributeMappingsTabWithStore />);
 
-		// Condition filters are no longer shown inline as clauses — the header
-		// carries a count instead (the keys surface in the group drawer).
+		// The header summarizes the condition keys; the full list is in its tooltip.
 		// Every field carries a group-scoped testId, so assert on them directly.
 		await screen.findByTestId('group-name-group-1');
 
 		// group-1: enabled, with attribute + resource condition keys.
 		expect(screen.getByTestId('group-name-group-1')).toHaveTextContent('demo');
 		expect(screen.getByTestId('group-condition-count-group-1')).toHaveTextContent(
-			'2 conditions',
+			'Runs when an attribute or resource key contains ai.embeddings, cloud.account.id',
 		);
 		expect(screen.getByTestId('group-enabled-group-1')).toBeChecked();
 
 		// group-2: disabled.
 		expect(screen.getByTestId('group-name-group-2')).toHaveTextContent('Tool');
 		expect(screen.getByTestId('group-condition-count-group-2')).toHaveTextContent(
-			'0 conditions',
+			'No conditions',
 		);
 		expect(screen.getByTestId('group-enabled-group-2')).not.toBeChecked();
 	});

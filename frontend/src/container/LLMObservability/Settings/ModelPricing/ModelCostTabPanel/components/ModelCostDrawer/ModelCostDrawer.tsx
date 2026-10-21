@@ -1,8 +1,8 @@
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
+import SideSheet from 'components/PageTemplate/components/SideSheet';
 import { Controller, useForm } from 'react-hook-form';
 
 import PatternEditor from './components/PatternEditor';
@@ -69,7 +69,7 @@ function ModelCostDrawer({
 	}
 
 	const footer = (
-		<div className={styles.footer}>
+		<>
 			<Button
 				size="md"
 				variant="outlined"
@@ -93,23 +93,19 @@ function ModelCostDrawer({
 					Save
 				</Button>
 			)}
-		</div>
+		</>
 	);
 
 	return (
-		<DrawerWrapper
+		<SideSheet
 			open={isOpen}
-			onOpenChange={(open): void => {
-				if (!open) {
-					onClose();
-				}
-			}}
-			direction="right"
-			width="base"
-			className={styles.modelCostDrawer}
-			footer={footer}
+			onClose={onClose}
 			title={drawerTitle}
-			drawerHeaderProps={{ className: styles.title }}
+			subtitle="Prices in USD per 1M tokens."
+			footer={footer}
+			width={480}
+			testId="model-cost-drawer"
+			bodyClassName={styles.body}
 		>
 			<div className={styles.drawerSection}>
 				<label htmlFor="billing-model-id" className={styles.fieldLabel}>
@@ -236,7 +232,7 @@ function ModelCostDrawer({
 					{saveError}
 				</Typography.Text>
 			)}
-		</DrawerWrapper>
+		</SideSheet>
 	);
 }
 

@@ -11,6 +11,8 @@ import type {
 	GetDashboardV2200,
 } from 'api/generated/services/fuseScope.schemas';
 
+import { arrangeOverviewLayouts } from '../arrangeOverviewLayouts';
+
 const SYSTEM_DASHBOARD_NAME = 'ai-o11y-overview';
 
 const DASHBOARD_ID = 'llm-observability-overview';
@@ -36,6 +38,10 @@ export function useSystemDashboard(): UseSystemDashboardResult {
 				? ({
 						...data.data,
 						id: DASHBOARD_ID,
+						spec: {
+							...data.data.spec,
+							layouts: arrangeOverviewLayouts(data.data.spec.layouts ?? []),
+						},
 					} as DashboardtypesGettableDashboardV2DTO)
 				: undefined,
 		[data],

@@ -1,88 +1,19 @@
 .tableWrapper {
 	display: flex;
 	flex-direction: column;
+	gap: 16px;
 }
 
 .toolbar {
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
-	padding: var(--spacing-4);
 }
 
-.table {
-	width: 100%;
-	border-collapse: collapse;
-	table-layout: fixed;
-}
-
-.headerRow {
-	border-top: 1px solid var(--l2-border);
-}
-
-.headerCell {
-	padding: var(--spacing-4) var(--spacing-6);
-	text-align: left;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-normal);
-	color: var(--l2-foreground);
-
-	&:last-child {
-		text-align: right;
-	}
-}
-
-.groupsCollapse:global(.ant-collapse) {
-	background: transparent;
-	border: none;
-	border-radius: 0;
-
-	> :global(.ant-collapse-item) {
-		border-bottom: none;
-		border-top: 1px solid var(--l2-border);
-		border-radius: 0;
-
-		&:last-child {
-			border-bottom: 1px solid var(--l2-border);
-			border-radius: 0;
-		}
-
-		> :global(.ant-collapse-header) {
-			align-items: center;
-			gap: var(--spacing-3);
-			background: var(--l2-background);
-			border-radius: 0;
-			padding: var(--spacing-3) var(--spacing-6);
-			color: var(--l3-foreground);
-
-			:global(.ant-collapse-expand-icon) {
-				display: flex;
-				align-items: center;
-				height: auto;
-				padding-inline-end: 0;
-				color: var(--l3-foreground);
-			}
-
-			:global(.ant-collapse-header-text) {
-				min-width: 0;
-			}
-
-			:global(.ant-collapse-extra) {
-				display: flex;
-				align-items: center;
-			}
-		}
-	}
-
-	:global(.ant-collapse-content) {
-		background: transparent;
-		border-top: none;
-		color: inherit;
-
-		> :global(.ant-collapse-content-box) {
-			padding: 0;
-		}
-	}
+.groupList {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
 }
 
 .tableState {
@@ -92,29 +23,31 @@
 	justify-content: center;
 	gap: var(--spacing-3);
 	padding: var(--spacing-12) var(--spacing-6);
+	border: 1px dashed var(--fs-border);
+	border-radius: 12px;
 	text-align: center;
-	color: var(--l3-foreground);
-	font-size: var(--periscope-font-size-base);
+	color: var(--fs-muted-foreground);
+	font-size: 13px;
 }
 
 .skeletonList {
 	display: flex;
 	flex-direction: column;
+	gap: 12px;
 }
 
-// Mirrors the Collapse header banner while groups load.
+// Mirrors a group card's header while groups load.
 .skeletonBanner {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--spacing-4);
-	padding: var(--spacing-3) var(--spacing-6);
-	background: var(--l2-background);
-	border-top: 1px solid var(--l2-border);
+	min-height: 52px;
+	padding: 8px 12px 8px 20px;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
 
-	&:last-child {
-		border-bottom: 1px solid var(--l2-border);
-	}
 	:global(.ant-skeleton-input) {
 		min-height: 18px !important;
 		height: 18px !important;

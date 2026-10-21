@@ -17,8 +17,6 @@ interface LeftToolbarActionsProps {
 	items: Record<string, ToolbarViewItem>;
 	selectedView: string;
 	onChangeSelectedView: (view: ExplorerViews) => void;
-	showFilter: boolean;
-	handleFilterVisibilityChange: () => void;
 }
 
 const activeTab = 'active-tab';

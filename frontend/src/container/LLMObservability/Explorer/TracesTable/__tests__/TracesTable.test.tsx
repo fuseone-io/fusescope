@@ -67,7 +67,7 @@ describe('TracesTable column-init race', () => {
 		await user.click(screen.getByRole('button', { name: 'columns-ready' }));
 
 		await expect(screen.findByRole('table')).resolves.toBeInTheDocument();
-		expect(screen.getByText('trace_id')).toBeInTheDocument();
+		expect(screen.getByText('Trace')).toBeInTheDocument();
 		expect(screen.queryByText('unlisted_aggregate')).not.toBeInTheDocument();
 		expect(persistedState()?.hiddenColumnIds).toStrictEqual([
 			'unlisted_aggregate',
