@@ -11,6 +11,7 @@ import {
 	useCoordinates,
 } from 'periscope/components/ContextMenu';
 import {
+	OpenPanelPoint,
 	PanelPoint,
 	PanelPointMenu,
 } from 'container/WidgetCard/Panels/pointMenu.types';
@@ -31,6 +32,7 @@ function getPanelPoint(
 	widget: Widgets,
 	timestamp: number,
 	metric: Record<string, string> | undefined,
+	focusedSeries: { seriesName: string; value: number } | null | undefined,
 ): PanelPoint {
 	const queryData = widget.query?.builder?.queryData?.[0];
 	const step = queryData?.stepInterval || DEFAULT_STEP_INTERVAL;
@@ -44,6 +46,10 @@ function getPanelPoint(
 				isApmMetric(queryData?.aggregateAttribute?.key),
 		),
 		labels,
+		...(focusedSeries && {
+			value: focusedSeries.value,
+			seriesName: focusedSeries.seriesName,
+		}),
 	};
 }
 
@@ -60,6 +66,8 @@ export const usePanelContextMenu = ({
 		header?: string | React.ReactNode;
 		items?: React.ReactNode;
 	};
+	/** The clicked point and its menu, when `pointMenu` is set. */
+	openPoint: OpenPanelPoint | null;
 	clickHandlerWithContextMenu: (...args: any[]) => void;
 } => {
 	const {
@@ -88,12 +96,27 @@ export const usePanelContextMenu = ({
 	const clickHandlerWithContextMenu = useCallback(
 		(...args: any[]) => {
 			if (pointMenu) {
-				const [xValue, , , , metric, queryData, absoluteMouseX, absoluteMouseY] =
-					args;
+				const [
+					xValue,
+					,
+					,
+					,
+					metric,
+					queryData,
+					absoluteMouseX,
+					absoluteMouseY,
+					,
+					focusedSeries,
+				] = args;
 				if (queryData?.queryName) {
 					onClick(
 						{ x: absoluteMouseX, y: absoluteMouseY },
-						getPanelPoint(widget, metric?.clickedTimestamp ?? xValue, metric),
+						getPanelPoint(
+							widget,
+							metric?.clickedTimestamp ?? xValue,
+							metric,
+							focusedSeries,
+						),
 					);
 				}
 				return;
@@ -155,26 +178,20 @@ export const usePanelContextMenu = ({
 		[enableDrillDown, onClick, queryResponse, pointMenu, widget],
 	);
 
-	const pointMenuItemsConfig = useMemo(
-		() =>
-			pointMenu && clickedData
-				? { items: pointMenu(clickedData as PanelPoint, onClose) }
-				: {},
-		[pointMenu, clickedData, onClose],
-	);
-
-	let activeMenuItemsConfig = {};
-	if (pointMenu) {
-		activeMenuItemsConfig = pointMenuItemsConfig;
-	} else if (enableDrillDown) {
-		activeMenuItemsConfig = menuItemsConfig;
-	}
+	const openPoint = useMemo((): OpenPanelPoint | null => {
+		if (!pointMenu || !clickedData) {
+			return null;
+		}
+		const point = clickedData as PanelPoint;
+		return { point, content: pointMenu(point) };
+	}, [pointMenu, clickedData]);
 
 	return {
 		coordinates,
 		popoverPosition,
 		onClose,
-		menuItemsConfig: activeMenuItemsConfig,
+		menuItemsConfig: !pointMenu && enableDrillDown ? menuItemsConfig : {},
+		openPoint,
 		clickHandlerWithContextMenu,
 	};
 };

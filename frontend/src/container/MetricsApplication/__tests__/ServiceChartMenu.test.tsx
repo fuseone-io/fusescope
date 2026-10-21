@@ -1,3 +1,4 @@
+import ChartPointPopover from 'components/ChartPointPopover/ChartPointPopover';
 import ROUTES from 'constants/routes';
 import { PanelPoint } from 'container/WidgetCard/Panels/pointMenu.types';
 import { fireEvent, render, screen } from 'tests/test-utils';
@@ -34,20 +35,36 @@ const POINT: PanelPoint = {
 	labels: { address: 'mysql:3306' },
 };
 
+const APM_POINT: PanelPoint = {
+	...POINT,
+	timeRange: { startTime: 1_699_999_940, endTime: 1_700_000_060 },
+};
+
 const onClose = jest.fn();
 
-function Menu({ withApis = false }: { withApis?: boolean }): JSX.Element {
+function Menu({
+	withApis = false,
+	point = POINT,
+}: {
+	withApis?: boolean;
+	point?: PanelPoint;
+}): JSX.Element {
 	const tracesQuery = useGetAPMToTracesQueries({ servicename: 'frontend' });
 	const logsQuery = useGetAPMToLogsQueries({ servicename: 'frontend' });
 	const menuFor = useServiceChartMenu('frontend');
+	const { actions, context } = menuFor({
+		tracesQuery,
+		logsQuery,
+		externalApis: withApis ? { isError: false } : undefined,
+	})(point);
 	return (
-		<>
-			{menuFor({
-				tracesQuery,
-				logsQuery,
-				externalApis: withApis ? { isError: false } : undefined,
-			})(POINT, onClose)}
-		</>
+		<ChartPointPopover
+			anchor={{ left: 0, top: 0, height: 100 }}
+			time="22:13:20 UTC"
+			actions={actions}
+			context={context}
+			onClose={onClose}
+		/>
 	);
 }
 
@@ -70,7 +87,9 @@ describe('Service chart point menu', () => {
 	it('opens the traces of the service in the clicked bucket, with its filters', () => {
 		render(<Menu />);
 
-		fireEvent.click(screen.getByRole('button', { name: 'View traces' }));
+		fireEvent.click(
+			screen.getByRole('menuitem', { name: 'View traces at this time' }),
+		);
 
 		const url = navigatedTo();
 		expect(url.pathname).toBe(ROUTES.TRACES_EXPLORER);
@@ -85,7 +104,9 @@ describe('Service chart point menu', () => {
 	it('opens the logs of the service in the clicked bucket, with its filters', () => {
 		render(<Menu />);
 
-		fireEvent.click(screen.getByRole('button', { name: 'View logs' }));
+		fireEvent.click(
+			screen.getByRole('menuitem', { name: 'View logs at this time' }),
+		);
 
 		const url = navigatedTo();
 		expect(url.pathname).toBe(ROUTES.LOGS_EXPLORER);
@@ -98,12 +119,39 @@ describe('Service chart point menu', () => {
 	it('offers the clicked address in External APIs', () => {
 		render(<Menu withApis />);
 
-		fireEvent.click(screen.getByRole('button', { name: 'View External APIs' }));
+		fireEvent.click(screen.getByRole('menuitem', { name: 'View External APIs' }));
 
 		const url = navigatedTo();
 		expect(url.pathname).toBe(ROUTES.API_MONITORING);
 		expect(url.searchParams.get('apiMonitoringParams')).toContain(
 			'"selectedDomain":"mysql:3306"',
 		);
+	});
+
+	it('offers External APIs only on External charts', () => {
+		render(<Menu />);
+
+		expect(
+			screen.queryByRole('menuitem', { name: 'View External APIs' }),
+		).not.toBeInTheDocument();
+	});
+
+	it('describes the bucket the links open, the service and its env', () => {
+		const { unmount } = render(<Menu />);
+
+		expect(
+			screen.getByText(
+				'1 min from the point · service.name = frontend · deployment.environment = prod',
+			),
+		).toBeInTheDocument();
+		unmount();
+
+		render(<Menu point={APM_POINT} />);
+
+		expect(
+			screen.getByText(
+				'±1 min around the point · service.name = frontend · deployment.environment = prod',
+			),
+		).toBeInTheDocument();
 	});
 });

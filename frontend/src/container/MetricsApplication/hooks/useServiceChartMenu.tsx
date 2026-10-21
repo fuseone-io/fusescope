@@ -1,18 +1,20 @@
 import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Binoculars, DraftingCompass, ScrollText } from '@signozhq/icons';
+import { ChartPointAction } from 'components/ChartPointPopover/types';
 import {
 	PanelPoint,
 	PanelPointMenu,
+	PanelPointMenuContent,
 } from 'container/WidgetCard/Panels/pointMenu.types';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import ContextMenu from 'periscope/components/ContextMenu';
+import { Binoculars, DraftingCompass, ScrollText } from 'lucide-react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { secondsToMilliseconds } from 'utils/timeUtils';
 
 import { externalApisPath, serviceExplorerPath } from '../Tabs/util';
+import { servicePointContext } from './pointContext';
 
 export interface ServiceChartMenuTargets {
 	tracesQuery: Query;
@@ -39,9 +41,9 @@ export function useServiceChartMenu(
 
 	return useCallback(
 		({ tracesQuery, logsQuery, externalApis }: ServiceChartMenuTargets) =>
-			(point: PanelPoint, onClose: () => void): JSX.Element => {
+			(point: PanelPoint): PanelPointMenuContent => {
 				const { startTime, endTime } = point.timeRange;
-				const openExplorer = (query: Query, isLogs: boolean): void => {
+				const openExplorer = (query: Query, isLogs: boolean): void =>
 					safeNavigate(
 						serviceExplorerPath({
 							isLogs,
@@ -53,48 +55,47 @@ export function useServiceChartMenu(
 							endTimeMs: secondsToMilliseconds(endTime),
 						}),
 					);
-					onClose();
-				};
 				const address = point.labels.address;
 
-				return (
-					<>
-						<ContextMenu.Item
-							icon={<DraftingCompass size={16} />}
-							onClick={(): void => openExplorer(tracesQuery, false)}
-						>
-							View traces
-						</ContextMenu.Item>
-						{logsQuery && (
-							<ContextMenu.Item
-								icon={<ScrollText size={16} />}
-								onClick={(): void => openExplorer(logsQuery, true)}
-							>
-								View logs
-							</ContextMenu.Item>
-						)}
-						{externalApis && address && (
-							<ContextMenu.Item
-								icon={<Binoculars size={16} />}
-								onClick={(): void => {
-									safeNavigate(
-										externalApisPath({
-											servicename,
-											domainName: address,
-											isError: externalApis.isError,
-											startTime,
-											endTime,
-										}),
-									);
-									onClose();
-								}}
-							>
-								View External APIs
-							</ContextMenu.Item>
-						)}
-					</>
-				);
+				const actions: ChartPointAction[] = [
+					{
+						key: 'traces',
+						label: 'View traces at this time',
+						icon: <DraftingCompass />,
+						onSelect: (): void => openExplorer(tracesQuery, false),
+					},
+				];
+				if (logsQuery) {
+					actions.push({
+						key: 'logs',
+						label: 'View logs at this time',
+						icon: <ScrollText />,
+						onSelect: (): void => openExplorer(logsQuery, true),
+					});
+				}
+				if (externalApis && address) {
+					actions.push({
+						key: 'external-apis',
+						label: 'View External APIs',
+						icon: <Binoculars />,
+						onSelect: (): void =>
+							safeNavigate(
+								externalApisPath({
+									servicename,
+									domainName: address,
+									isError: externalApis.isError,
+									startTime,
+									endTime,
+								}),
+							),
+					});
+				}
+
+				return {
+					actions,
+					context: servicePointContext(point, servicename, queries),
+				};
 			},
-		[safeNavigate, search, selectedTraceTags, servicename],
+		[safeNavigate, search, selectedTraceTags, servicename, queries],
 	);
 }

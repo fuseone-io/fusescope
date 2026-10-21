@@ -51,8 +51,11 @@ function clickPoint(handler: (...args: unknown[]) => void): void {
 }
 
 describe('usePanelContextMenu with a point menu', () => {
-	it('opens the point menu at the click, for the clicked bucket and series', () => {
-		const pointMenu = jest.fn((point: PanelPoint) => `menu ${point.timestamp}`);
+	it('opens the point menu for the clicked bucket and series', () => {
+		const pointMenu = jest.fn((point: PanelPoint) => ({
+			actions: [],
+			context: `menu ${point.timestamp}`,
+		}));
 
 		const { result } = renderHook(() =>
 			usePanelContextMenu({ widget, queryResponse, pointMenu }),
@@ -60,16 +63,19 @@ describe('usePanelContextMenu with a point menu', () => {
 
 		clickPoint(result.current.clickHandlerWithContextMenu);
 
-		expect(result.current.coordinates).toStrictEqual({ x: 10, y: 20 });
-		expect(result.current.menuItemsConfig.items).toBe('menu 1700000000');
-		expect(pointMenu).toHaveBeenLastCalledWith(
-			{
-				timestamp: 1_700_000_000,
-				timeRange: { startTime: 1_700_000_000, endTime: 1_700_000_060 },
-				labels: { address: 'mysql' },
-			},
-			result.current.onClose,
-		);
+		const point = {
+			timestamp: 1_700_000_000,
+			timeRange: { startTime: 1_700_000_000, endTime: 1_700_000_060 },
+			labels: { address: 'mysql' },
+			value: 5,
+			seriesName: 'mysql',
+		};
+		expect(result.current.openPoint).toStrictEqual({
+			point,
+			content: { actions: [], context: 'menu 1700000000' },
+		});
+		expect(result.current.menuItemsConfig).toStrictEqual({});
+		expect(pointMenu).toHaveBeenLastCalledWith(point);
 	});
 
 	it('closes the point menu', () => {
@@ -77,15 +83,14 @@ describe('usePanelContextMenu with a point menu', () => {
 			usePanelContextMenu({
 				widget,
 				queryResponse,
-				pointMenu: (): string => 'menu',
+				pointMenu: () => ({ actions: [], context: 'menu' }),
 			}),
 		);
 
 		clickPoint(result.current.clickHandlerWithContextMenu);
 		act(() => result.current.onClose());
 
-		expect(result.current.coordinates).toBeNull();
-		expect(result.current.menuItemsConfig).toStrictEqual({});
+		expect(result.current.openPoint).toBeNull();
 	});
 
 	it('ignores clicks outside any point', () => {
@@ -107,7 +112,7 @@ describe('usePanelContextMenu with a point menu', () => {
 			);
 		});
 
-		expect(result.current.coordinates).toBeNull();
+		expect(result.current.openPoint).toBeNull();
 		expect(pointMenu).not.toHaveBeenCalled();
 	});
 });

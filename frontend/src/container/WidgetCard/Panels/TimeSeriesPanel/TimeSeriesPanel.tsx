@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import TimeSeries from 'lib/visualization/charts/TimeSeries/TimeSeries';
 import ChartManager from 'lib/visualization/components/ChartManager/ChartManager';
+import PanelPointPopover from 'container/WidgetCard/Panels/components/PanelPointPopover';
 import { usePanelContextMenu } from 'container/WidgetCard/Panels/hooks/usePanelContextMenu';
 import { PanelWrapperProps } from 'container/WidgetCard/Panels/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -14,6 +15,7 @@ import {
 	SyncTooltipFilterMode,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
+import { cn } from 'lib/utils';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
@@ -38,6 +40,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		pointMenu,
 	} = props;
 	const graphRef = useRef<HTMLDivElement>(null);
+	const plotRef = useRef<uPlot | null>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const containerDimensions = useResizeObserver(graphRef);
@@ -64,6 +67,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		popoverPosition,
 		onClose,
 		menuItemsConfig,
+		openPoint,
 		clickHandlerWithContextMenu,
 	} = usePanelContextMenu({
 		widget,
@@ -80,7 +84,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	}, [queryResponse?.data?.payload]);
 
 	const config = useMemo(() => {
-		return prepareUPlotConfig({
+		const builder = prepareUPlotConfig({
 			widget,
 			isDarkMode,
 			currentQuery: widget.query,
@@ -92,6 +96,12 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 			minTimeScale: minTimeScale,
 			maxTimeScale: maxTimeScale,
 		});
+		if (pointMenu) {
+			builder.addHook('init', (plot: uPlot): void => {
+				plotRef.current = plot;
+			});
+		}
+		return builder;
 	}, [
 		widget,
 		isDarkMode,
@@ -102,6 +112,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		minTimeScale,
 		maxTimeScale,
 		timezone,
+		pointMenu,
 	]);
 
 	const layoutChildren = useMemo(() => {
@@ -136,7 +147,11 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	);
 
 	return (
-		<div className="panel-container" ref={graphRef}>
+		<div
+			className={cn('panel-container', pointMenu && 'tw:relative tw:outline-none')}
+			ref={graphRef}
+			tabIndex={pointMenu ? -1 : undefined}
+		>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 				<TimeSeries
 					config={config}
@@ -165,6 +180,16 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 						onClose={onClose}
 					/>
 				</TimeSeries>
+			)}
+			{openPoint && (
+				<PanelPointPopover
+					openPoint={openPoint}
+					yAxisUnit={widget.yAxisUnit}
+					decimalPrecision={widget.decimalPrecision}
+					plot={plotRef.current}
+					container={graphRef.current}
+					onClose={onClose}
+				/>
 			)}
 		</div>
 	);
