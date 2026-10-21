@@ -1,4 +1,4 @@
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import { Button } from 'components/ui/button';
 
 import HomeChecklist, { ChecklistItem } from '../HomeChecklist/HomeChecklist';
@@ -20,12 +20,12 @@ function WelcomeChecklistPanel({
 	const completed = checklistItems.filter((item) => item.completed).length;
 
 	return (
-		<Panel
+		<ContentPanel
 			testId="home-welcome-checklist"
 			title="Build your observability base"
 			subtitle={
 				<span className="tw:tabular-nums">
-					Step {completed} / {checklistItems.length}
+					{completed} of {checklistItems.length} steps done
 				</span>
 			}
 			actions={
@@ -40,9 +40,9 @@ function WelcomeChecklistPanel({
 				</Button>
 			}
 			className="tw:flex-[1_1_340px]"
-			bodyClassName="tw:flex tw:flex-col tw:gap-3 tw:px-5 tw:pt-3 tw:pb-4"
+			bodyClassName="tw:flex tw:flex-col tw:gap-2 tw:px-3 tw:pb-3"
 		>
-			<div className="fs-ui">
+			<div className="fs-ui tw:px-2 tw:pb-1">
 				<StepsProgress checklistItems={checklistItems} />
 			</div>
 			<HomeChecklist
@@ -50,7 +50,7 @@ function WelcomeChecklistPanel({
 				onSkip={onSkip}
 				isLoading={isLoading}
 			/>
-		</Panel>
+		</ContentPanel>
 	);
 }
 

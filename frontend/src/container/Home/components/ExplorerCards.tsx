@@ -20,40 +20,38 @@ interface Shortcut {
 	icon: ReactNode;
 }
 
-const EXPLORER_DESCRIPTION = 'Filter and save views with the Explorer';
-
 const SHORTCUTS: Shortcut[] = [
 	{
-		title: 'Open Logs Explorer',
-		description: EXPLORER_DESCRIPTION,
+		title: 'Logs explorer',
+		description: 'Filter logs and save views for the team',
 		source: 'Logs',
 		route: ROUTES.LOGS_EXPLORER,
 		icon: <ScrollText />,
 	},
 	{
-		title: 'Open Traces Explorer',
-		description: EXPLORER_DESCRIPTION,
+		title: 'Traces explorer',
+		description: 'Find slow and failing requests',
 		source: 'Traces',
 		route: ROUTES.TRACES_EXPLORER,
 		icon: <DraftingCompass />,
 	},
 	{
-		title: 'Open Metrics Explorer',
-		description: EXPLORER_DESCRIPTION,
+		title: 'Metrics explorer',
+		description: 'Query and plot any metric',
 		source: 'Metrics',
 		route: ROUTES.METRICS_EXPLORER_EXPLORER,
 		icon: <BarChart3 />,
 	},
 	{
-		title: 'Create dashboard',
-		description: 'Create a dashboard to visualize your data.',
+		title: 'Create a dashboard',
+		description: 'Visualize your data in panels',
 		source: 'Dashboards',
 		route: ROUTES.ALL_DASHBOARD,
 		icon: <LayoutDashboard />,
 	},
 	{
 		title: 'Create an alert',
-		description: 'Create bespoke alerting rules to suit your needs.',
+		description: 'Get notified when a rule fires',
 		source: 'Alerts',
 		route: ROUTES.ALERTS_NEW,
 		icon: <BellPlus />,
@@ -79,7 +77,7 @@ function ExplorerCards(): JSX.Element {
 					key={shortcut.source}
 					type="button"
 					onClick={(event): void => handleClick(shortcut, event)}
-					className="tw:flex tw:cursor-pointer tw:items-start tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3.5 tw:text-left tw:text-foreground tw:outline-none tw:transition-colors tw:hover:border-primary tw:focus-visible:ring-2 tw:focus-visible:ring-ring"
+					className="tw:flex tw:cursor-pointer tw:items-start tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3.5 tw:text-left tw:text-foreground tw:outline-none tw:transition-colors tw:hover:border-primary tw:focus-visible:ring-2 tw:focus-visible:ring-ring"
 				>
 					<span
 						aria-hidden="true"
