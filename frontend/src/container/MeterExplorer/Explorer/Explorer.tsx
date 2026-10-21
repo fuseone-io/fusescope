@@ -152,7 +152,7 @@ function Explorer(): JSX.Element {
 							/>
 						}
 						divided
-						bodyClassName="meter-explorer-explore-content tw:py-2"
+						bodyClassName="meter-explorer-explore-content qb-filter-field-skin tw:py-2"
 					>
 						<QueryBuilderV2
 							config={{

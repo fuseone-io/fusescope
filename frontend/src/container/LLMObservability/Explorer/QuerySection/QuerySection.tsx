@@ -15,13 +15,15 @@ function QuerySection(): JSX.Element {
 	);
 
 	return (
-		<QueryBuilderV2
-			isRawQuery={isRawQuery}
-			config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
-			panelType={panelTypes}
-			showOnlyWhereClause={isRawQuery}
-			version="v3" // setting this to v3 as we this is rendered in logs explorer
-		/>
+		<div className="qb-filter-field-skin">
+			<QueryBuilderV2
+				isRawQuery={isRawQuery}
+				config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
+				panelType={panelTypes}
+				showOnlyWhereClause={isRawQuery}
+				version="v3" // setting this to v3 as we this is rendered in logs explorer
+			/>
+		</div>
 	);
 }
 
