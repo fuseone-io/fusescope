@@ -15,7 +15,7 @@ To configure metrics and logs collection for an AWS RDS for PostgreSQL, you need
  The CloudWatch Exporter used to collect the metrics requires a Java runtime environment version 11 or newer. Alternatively, you can also run a docker container https://github.com/prometheus/cloudwatch_exporter#docker-images
 
 - **Ensure that an OTEL collector is running in your deployment environment**  
- Please [install an OTEL Collector](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) If already installed, ensure that the collector version is v0.88.0 or newer. Also, ensure that you can provide config files to the collector and that you can set environment variables and command line flags used for running it.
+ Please [install an OTEL Collector](https://opentelemetry.io/docs/collector/installation/) If already installed, ensure that the collector version is v0.88.0 or newer. Also, ensure that you can provide config files to the collector and that you can set environment variables and command line flags used for running it.
 
 
 - **Ensure that the OTEL collector can access the Postgres server**

@@ -28,7 +28,7 @@ To configure metrics and logs collection for a Clickhouse server, you need the f
 ### Ensure OTEL Collector is running and has access to the Clickhouse server
 
 - **Ensure that an OTEL collector is running in your deployment environment**  
-  If needed, please [install SigNoz OTEL Collector](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/)  
+  If needed, please [install an OTEL Collector](https://opentelemetry.io/docs/collector/installation/)  
   If already installed, ensure that the collector version is v0.88.0 or newer.  
   If collecting logs from system.query_log table, ensure that the collector version is v0.88.23 or newer.
 

@@ -3,9 +3,9 @@
   "title": "AWS ElastiCache (redis)",
   "description": "Monitor AWS ElastiCache with metrics and logs",
   "author": {
-    "name": "SigNoz",
-    "email": "integrations@signoz.io",
-    "homepage": "https://signoz.io"
+    "name": "FuseScope",
+    "email": "",
+    "homepage": "https://github.com/fuseone-io/fusescope"
   },
   "icon": "file://icon.svg",
   "categories": [
