@@ -1,13 +1,10 @@
 import { useState } from 'react';
-import { Color, Spacing } from '@signozhq/design-tokens';
-import { Drawer } from 'antd';
-import { Divider } from '@signozhq/ui/divider';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import cx from 'classnames';
+import tableStyles from 'components/MessagingQueues/MQTable.module.scss';
+import SideSheet from 'components/PageTemplate/components/SideSheet';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import dayjs from 'dayjs';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { X } from '@signozhq/icons';
 import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
@@ -15,8 +12,6 @@ import { DataSource } from 'types/common/queryBuilder';
 import CeleryTaskGraph from '../CeleryTaskGraph/CeleryTaskGraph';
 import { createFiltersFromData } from '../CeleryUtils';
 import { useNavigateToExplorer } from '../useNavigateToExplorer';
-
-import './CeleryTaskDetail.style.scss';
 
 export type CeleryTaskData = {
 	entity: string;
@@ -41,8 +36,6 @@ export default function CeleryTaskDetail({
 	onClose,
 	drawerOpen,
 }: CeleryTaskDetailProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
 	const shouldShowDrawer =
 		!!taskData.entity && !!taskData.timeRange[0] && drawerOpen;
 
@@ -61,63 +54,65 @@ export default function CeleryTaskDetail({
 	const navigateToExplorer = useNavigateToExplorer();
 
 	return (
-		<Drawer
-			width="45%"
-			title={
-				<div>
-					<Typography.Text className="title">{`Details - ${taskData.entity}`}</Typography.Text>
-					<div>
-						<Typography.Text className="subtitle">
-							{`${formatTimestamp(startTime)} ${
-								endTime ? `- ${formatTimestamp(endTime)}` : ''
-							}`}
-						</Typography.Text>
-						<Divider type="vertical" />
-						<Typography.Text className="subtitle">{taskData.value}</Typography.Text>
-					</div>
-				</div>
-			}
-			placement="right"
-			onClose={onClose}
+		<SideSheet
 			open={shouldShowDrawer}
-			style={{
-				overscrollBehavior: 'contain',
-				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
-			}}
-			className="celery-task-detail-drawer"
-			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			onClose={onClose}
+			modal={false}
+			width={640}
+			testId="celery-task-detail"
+			title={widgetData.title || `Details - ${taskData.entity}`}
+			subtitle={
+				<>
+					<span className="tw:font-mono">
+						{taskData.entity}: {taskData.value}
+					</span>
+					<span>
+						{`${formatTimestamp(startTime)}${
+							endTime ? ` – ${formatTimestamp(endTime)}` : ''
+						}`}
+					</span>
+				</>
+			}
 			footer={
-				<Typography.Text className="footer-text">{`Total Task: ${totalTask}`}</Typography.Text>
+				<span className="tw:mr-auto tw:text-xs tw:text-subtle-foreground">
+					{`Total tasks: ${totalTask ?? 0}`}
+				</span>
 			}
 		>
-			<CeleryTaskGraph
-				widgetData={widgetData}
-				getGraphData={getGraphData}
-				panelType={PANEL_TYPES.TABLE}
-				queryEnabled
-				openTracesButton
-				onOpenTraceBtnClick={(rowData): void => {
-					const filters = createFiltersFromData({
-						...rowData,
-						[taskData.entity]: taskData.value,
-					});
-					logEvent('MQ Celery: navigation to trace page', {
-						filters,
-						startTime,
-						endTime,
-						source: widgetData.title,
-					});
-					navigateToExplorer({
-						filters,
-						dataSource: DataSource.TRACES,
-						startTime,
-						endTime,
-					});
-				}}
-				start={startTime}
-				end={endTime}
-			/>
-		</Drawer>
+			<div
+				className={cx(
+					'celery-task-detail-table tw:overflow-hidden tw:rounded-xl tw:border tw:border-border',
+					tableStyles.skin,
+				)}
+			>
+				<CeleryTaskGraph
+					widgetData={widgetData}
+					getGraphData={getGraphData}
+					panelType={PANEL_TYPES.TABLE}
+					queryEnabled
+					openTracesButton
+					onOpenTraceBtnClick={(rowData): void => {
+						const filters = createFiltersFromData({
+							...rowData,
+							[taskData.entity]: taskData.value,
+						});
+						logEvent('MQ Celery: navigation to trace page', {
+							filters,
+							startTime,
+							endTime,
+							source: widgetData.title,
+						});
+						navigateToExplorer({
+							filters,
+							dataSource: DataSource.TRACES,
+							startTime,
+							endTime,
+						});
+					}}
+					start={startTime}
+					end={endTime}
+				/>
+			</div>
+		</SideSheet>
 	);
 }

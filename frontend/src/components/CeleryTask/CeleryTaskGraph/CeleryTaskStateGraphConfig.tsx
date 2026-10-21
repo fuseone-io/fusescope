@@ -1,8 +1,8 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
-import { Col, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { cn } from 'lib/utils';
 
 import {
 	applyCeleryFilterOnWidgetData,
@@ -16,11 +16,10 @@ import {
 } from './CeleryTaskGraphUtils';
 import { useGetValueFromWidget } from './useGetValueFromWidget';
 
-import './CeleryTaskGraph.style.scss';
-
 interface TabData {
 	label: string;
 	key: string;
+	swatch: string;
 }
 
 export enum CeleryTaskState {
@@ -38,10 +37,14 @@ function CeleryTaskStateGraphConfig({
 	barState: CeleryTaskState;
 }): JSX.Element {
 	const tabs: TabData[] = [
-		{ label: 'All Tasks', key: CeleryTaskState.All },
-		{ label: 'Failed', key: CeleryTaskState.Failed },
-		{ label: 'Retry', key: CeleryTaskState.Retry },
-		{ label: 'Successful', key: CeleryTaskState.Successful },
+		{ label: 'All tasks', key: CeleryTaskState.All, swatch: 'tw:bg-series-1' },
+		{ label: 'Failed', key: CeleryTaskState.Failed, swatch: 'tw:bg-error' },
+		{ label: 'Retry', key: CeleryTaskState.Retry, swatch: 'tw:bg-warning' },
+		{
+			label: 'Successful',
+			key: CeleryTaskState.Successful,
+			swatch: 'tw:bg-success',
+		},
 	];
 
 	const urlQuery = useUrlQuery();
@@ -75,33 +78,47 @@ function CeleryTaskStateGraphConfig({
 		'celery-task-states',
 	]);
 
+	const countFor = (index: number): string | number => {
+		if (isLoading || isError || Number.isNaN(values[index])) {
+			return '-';
+		}
+		return Math.round(Number(values[index]));
+	};
+
 	return (
-		<Row className="celery-task-states">
-			{tabs.map((tab, index) => (
-				<Col
-					key={tab.key}
-					onClick={(): void => handleTabClick(tab.key as CeleryTaskState)}
-					className={`celery-task-states__tab ${
-						tab.key === barState ? 'celery-task-states__tab--selected' : ''
-					}`}
-					data-last-tab={index === tabs.length - 1}
-				>
-					<div className="celery-task-states__label-wrapper">
-						<div className="celery-task-states__label">{tab.label}</div>
-						<div className="celery-task-states__value">
-							{isLoading
-								? '-'
-								: isError
-									? '-'
-									: Number.isNaN(values[index])
-										? '-'
-										: Math.round(Number(values[index]))}
-						</div>
-					</div>
-					{tab.key === barState && <div className="celery-task-states__indicator" />}
-				</Col>
-			))}
-		</Row>
+		<div
+			role="group"
+			aria-label="Task state"
+			className="fs-ui tw:flex tw:flex-wrap tw:gap-1 tw:font-sans"
+		>
+			{tabs.map((tab, index) => {
+				const pressed = tab.key === barState;
+				return (
+					<button
+						key={tab.key}
+						type="button"
+						aria-pressed={pressed}
+						data-testid={`celery-task-state-${tab.key}`}
+						onClick={(): void => handleTabClick(tab.key as CeleryTaskState)}
+						className={cn(
+							'tw:flex tw:min-w-[120px] tw:cursor-pointer tw:flex-col tw:items-start tw:gap-1 tw:rounded-lg tw:border tw:border-transparent tw:bg-transparent tw:px-3 tw:py-2 tw:text-left tw:transition-colors tw:hover:bg-muted tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:outline-none',
+							pressed && 'tw:border-border tw:bg-surface-sunken',
+						)}
+					>
+						<span className="tw:flex tw:items-center tw:gap-1.5 tw:text-xs tw:font-medium tw:text-muted-foreground">
+							<span
+								aria-hidden
+								className={cn('tw:size-2 tw:rounded-[2px]', tab.swatch)}
+							/>
+							{tab.label}
+						</span>
+						<span className="tw:text-lg tw:font-semibold tw:text-foreground tw:tabular-nums">
+							{countFor(index)}
+						</span>
+					</button>
+				);
+			})}
+		</div>
 	);
 }
 
