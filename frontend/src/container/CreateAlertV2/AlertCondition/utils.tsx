@@ -5,7 +5,7 @@ import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import {
 	AlertThresholdMatchType,
@@ -243,7 +243,7 @@ function TooltipLink(): JSX.Element {
 	return (
 		<div className="tooltip-link">
 			<a
-				href={signozDocsUrl()}
+				href={fuseScopeDocsUrl('/alerts/alert-rules/#conditions')}
 				target="_blank"
 				rel="noopener noreferrer"
 				className="tooltip-link-text"
