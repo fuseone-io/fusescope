@@ -5,6 +5,7 @@
 
 import { EXCEPTION_CATALOGUE } from 'pages/AllErrors/stories/__story_mockdata__/exceptions';
 import type { ExceptionShape } from 'pages/AllErrors/stories/__story_mockdata__/exceptions';
+import type { Exception } from 'types/api/errors/getAll';
 import type { PayloadProps as ErrorEvent } from 'types/api/errors/getByErrorTypeAndService';
 import type { PayloadProps as NextPrevIds } from 'types/api/errors/getNextPrevId';
 
@@ -230,3 +231,12 @@ export const ERROR_EVENT_NOT_FOUND = {
 	error: 'Error/Exception not found',
 	data: null,
 };
+
+/** `/listErrors` filtered to the event's type and service: its group, with the totals the stats read. */
+export const errorGroupRows = (language: ExceptionLanguage): Exception[] => [
+	{
+		...EVENTS[language].group,
+		firstSeen: STEP_TIMESTAMPS.older.at,
+		lastSeen: STEP_TIMESTAMPS.newer.at,
+	},
+];

@@ -4,6 +4,8 @@
  */
 
 import { rest } from 'msw';
+import { apmQueryRangeResponse } from 'pages/MetricsApplication/stories/__story_mockdata__/apmQueryRange';
+import { EXCEPTION_SERVICE_NAMES } from 'pages/AllErrors/stories/__story_mockdata__/exceptions';
 import ROUTES from 'constants/routes';
 
 import { choiceControl, toggleControl } from '@/storybook/controls/controls';
@@ -16,6 +18,7 @@ import {
 	ERROR_EVENT_NOT_FOUND,
 	errorDetailsSearch,
 	errorEvent,
+	errorGroupRows,
 	errorNeighbours,
 	EXCEPTION_LANGUAGES,
 	type ExceptionLanguage,
@@ -81,6 +84,20 @@ export const errorDetailsMocks = defineStoryMocks({
 						}),
 					)
 				: eventNotFound,
+		),
+
+		rest.post(
+			'http://localhost/api/v1/listErrors',
+			response.json(() => errorGroupRows(values.language)),
+		),
+
+		rest.post(
+			'http://localhost/api/v5/query_range',
+			response.json(async (req) =>
+				apmQueryRangeResponse(await req.json(), {
+					'service.name': EXCEPTION_SERVICE_NAMES,
+				}),
+			),
 		),
 
 		rest.get(
