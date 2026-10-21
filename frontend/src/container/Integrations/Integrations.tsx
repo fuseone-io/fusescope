@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
-import PageTemplate from 'components/PageTemplate/PageTemplate';
+import CompactPageHeader from 'components/PageTemplate/components/CompactPageHeader';
+import HeaderBandLayout from 'components/PageTemplate/components/HeaderBandLayout';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { Plug } from 'lucide-react';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from './constants';
-import IntegrationsHeader from './IntegrationsHeader/IntegrationsHeader';
+import DataSourcesButton from './IntegrationsHeader/DataSourcesButton';
+import IntegrationsCountMeta from './IntegrationsHeader/IntegrationsCountMeta';
+import IntegrationsSearch from './IntegrationsHeader/IntegrationsSearch';
+import RequestIntegrationButton from './IntegrationsHeader/RequestIntegrationButton';
 import IntegrationsList from './IntegrationsList/IntegrationsList';
 import OneClickIntegrations from './OneClickIntegrations/OneClickIntegrations';
 
@@ -36,11 +41,24 @@ function Integrations(): JSX.Element {
 	}, []);
 
 	return (
-		<PageTemplate testId="integrations-page">
-			<IntegrationsHeader
-				searchQuery={searchQuery}
-				onSearchChange={setSearchQuery}
-			/>
+		<HeaderBandLayout
+			testId="integrations-page"
+			header={
+				<CompactPageHeader
+					icon={<Plug />}
+					title="Integrations"
+					meta={<IntegrationsCountMeta />}
+					actions={
+						<>
+							<RequestIntegrationButton />
+							<DataSourcesButton />
+						</>
+					}
+				/>
+			}
+			bodyClassName="tw:mx-auto tw:w-full tw:max-w-[1600px] tw:gap-5 tw:px-4 tw:pt-5 tw:pb-10 tw:md:px-6"
+		>
+			<IntegrationsSearch value={searchQuery} onChange={setSearchQuery} />
 			{(isCloudUser || isEnterpriseSelfHostedUser) && (
 				<OneClickIntegrations
 					searchQuery={searchQuery}
@@ -51,7 +69,7 @@ function Integrations(): JSX.Element {
 				searchQuery={searchQuery}
 				setSelectedIntegration={setSelectedIntegration}
 			/>
-		</PageTemplate>
+		</HeaderBandLayout>
 	);
 }
 

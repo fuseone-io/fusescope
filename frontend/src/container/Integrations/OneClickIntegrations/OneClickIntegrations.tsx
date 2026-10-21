@@ -33,7 +33,7 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 
 	return (
 		<section className="one-click-integrations fs-ui tw:flex tw:flex-col tw:gap-4 tw:font-sans tw:text-foreground">
-			<SectionLabel>One click integrations</SectionLabel>
+			<SectionLabel>One-click integrations</SectionLabel>
 
 			<CardGrid testId="one-click-integrations-list">
 				{filteredIntegrations.length === 0 && searchQuery.trim() ? (

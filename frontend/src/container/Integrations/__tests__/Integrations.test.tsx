@@ -2,10 +2,16 @@ import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { rest, server } from 'mocks-server/server';
-import { render, screen } from 'tests/test-utils';
+import logEvent from 'api/common/logEvent';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import IntegrationDetailPage from '../IntegrationDetailPage/IntegrationDetailPage';
 import Integrations from '../Integrations';
+
+jest.mock('api/common/logEvent', () => ({
+	__esModule: true,
+	default: jest.fn(() => Promise.resolve({ statusCode: 200 })),
+}));
 
 jest.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: jest.fn(),
@@ -55,10 +61,70 @@ describe('Integrations list', () => {
 			render(<Integrations />);
 
 			await expect(screen.findByText('Redis')).resolves.toBeInTheDocument();
-			expect(screen.queryByText('One click integrations') !== null).toBe(shown);
+			expect(screen.queryByText('One-click integrations') !== null).toBe(shown);
 			expect(screen.queryByText('Amazon Web Services') !== null).toBe(shown);
 		},
 	);
+});
+
+describe('Integrations header', () => {
+	it('sends a self-hosted workspace to the sending data docs', async () => {
+		mockLicense.mockReturnValue(COMMUNITY);
+		render(<Integrations />);
+
+		const link = await screen.findByTestId('integrations-data-sources');
+		expect(link).toHaveAttribute(
+			'href',
+			'https://fuseone-io.github.io/fusescope-docs/sending-data/instrumentation/',
+		);
+		expect(link).toHaveAttribute('target', '_blank');
+	});
+
+	it('opens the data source onboarding in a cloud workspace', async () => {
+		mockLicense.mockReturnValue(CLOUD);
+		render(
+			<Switch>
+				<Route exact path={ROUTES.INTEGRATIONS}>
+					<Integrations />
+				</Route>
+				<Route path={ROUTES.GET_STARTED_WITH_CLOUD}>
+					<div data-testid="onboarding-route" />
+				</Route>
+			</Switch>,
+			undefined,
+			{ initialRoute: ROUTES.INTEGRATIONS },
+		);
+
+		await userEvent.click(await screen.findByTestId('integrations-data-sources'));
+
+		await expect(
+			screen.findByTestId('onboarding-route'),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('requests an integration as a prefilled GitHub issue', async () => {
+		mockLicense.mockReturnValue(COMMUNITY);
+		const open = jest.spyOn(window, 'open').mockReturnValue(null);
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<Integrations />);
+
+		await user.click(await screen.findByTestId('integrations-request-button'));
+		await user.type(
+			await screen.findByTestId('integrations-request-name'),
+			'Kafka & ZooKeeper',
+		);
+		await user.click(screen.getByTestId('integrations-request-submit'));
+
+		expect(open).toHaveBeenCalledWith(
+			'https://github.com/fuseone-io/fusescope/issues/new?template=request_integration.md&title=%5BIntegration%20Request%5D%20Kafka%20%26%20ZooKeeper',
+			'_blank',
+		);
+		expect(logEvent).toHaveBeenCalledWith('Integration requested', {
+			screen: 'Integration list page',
+			integration: 'Kafka & ZooKeeper',
+		});
+		open.mockRestore();
+	});
 });
 
 describe('Integration detail', () => {
