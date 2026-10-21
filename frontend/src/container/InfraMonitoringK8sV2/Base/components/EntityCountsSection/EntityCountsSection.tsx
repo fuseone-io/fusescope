@@ -1,14 +1,11 @@
-import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
-import { Compass } from '@signozhq/icons';
-import { TextNoData } from '../../../components/TextNoData';
 import { Link } from 'react-router-dom';
+import KpiStrip from 'components/PageTemplate/components/KpiStrip';
+import Stat from 'components/PageTemplate/components/Stat';
+import { ChevronRight } from 'lucide-react';
 
 import { InfraMonitoringEntity } from '../../../constants';
 import { getDrawerDurationMs } from '../../useDrawerLifecycleStore';
 import { buildK8sListNavigationUrl } from '../../utils';
-import styles from './EntityCountsSection.module.scss';
 import { logInfraExplorerNavigatedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 export interface EntityCountConfig<T> {
@@ -49,55 +46,35 @@ export function EntityCountsSection<T>({
 	};
 
 	return (
-		<div className={styles.countsContainer}>
-			{countsConfig.map((config) => (
-				<div
-					key={config.label}
-					className={styles.countCard}
-					data-testid={`count-card-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
-				>
-					<Typography.Text
-						color="muted"
-						size="small"
-						weight="medium"
-						className={styles.countLabel}
-					>
-						{config.label}
-					</Typography.Text>
-					{config.getValue(entity) ? (
-						<Typography.Text
-							className={styles.countValue}
-							size="xl"
-							weight="semibold"
-						>
-							{config.getValue(entity)}
-						</Typography.Text>
-					) : (
-						<TextNoData type="typography" className={styles.countValue} />
-					)}
-					<Link
-						to={buildK8sListNavigationUrl(config.targetCategory, filterExpression)}
-						onClick={(): void => handleCardNavigate(config.label)}
-						data-testid={`navigate-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
-						className={styles.navigateButton}
-					>
-						<Tooltip
-							title={`View ${config.label.toLowerCase()} of '${selectedItem}'`}
-							side="top"
-						>
-							<Button
-								aria-label="Action"
-								size="sm"
-								icon
-								variant="ghost"
-								color="secondary"
+		<KpiStrip
+			label="Related resources"
+			testId="entity-counts"
+			className="tw:rounded-xl"
+		>
+			{countsConfig.map((config) => {
+				const slug = config.label.toLowerCase().replace(/\s+/g, '-');
+				const value = config.getValue(entity);
+				return (
+					<Stat
+						key={config.label}
+						testId={`count-card-${slug}`}
+						label={config.label}
+						value={value || '—'}
+						note={
+							<Link
+								to={buildK8sListNavigationUrl(config.targetCategory, filterExpression)}
+								onClick={(): void => handleCardNavigate(config.label)}
+								data-testid={`navigate-${slug}`}
+								title={`View ${config.label.toLowerCase()} of '${selectedItem}'`}
+								className="tw:inline-flex tw:items-center tw:gap-0.5 tw:text-xs tw:text-primary-ink! tw:hover:underline"
 							>
-								<Compass size={14} />
-							</Button>
-						</Tooltip>
-					</Link>
-				</div>
-			))}
-		</div>
+								View {config.label.toLowerCase()}
+								<ChevronRight size={12} aria-hidden="true" />
+							</Link>
+						}
+					/>
+				);
+			})}
+		</KpiStrip>
 	);
 }

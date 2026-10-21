@@ -1,46 +1,25 @@
-import { Typography } from '@signozhq/ui/typography';
-import { ArrowRight } from '@signozhq/icons';
+import { Button } from 'components/ui/button';
 import { fuseScopeDocsUrl } from 'constants/docs';
-import { openInNewTab } from 'utils/navigation';
+import { ExternalLink, History } from 'lucide-react';
 
-import emptyStateUrl from '@/assets/Icons/emptyState.svg';
-
-import styles from './EventsNotConfigured.module.scss';
+import InfraEmptyState from '../../components/InfraEmptyState';
 
 const K8S_EVENTS_DOCS_URL = fuseScopeDocsUrl('/sending-data/kubernetes/');
 
 export default function EventsNotConfigured(): JSX.Element {
-	const handleLearnMore = (): void => {
-		openInNewTab(K8S_EVENTS_DOCS_URL);
-	};
-
 	return (
-		<div className={styles.container}>
-			<div className={styles.content}>
-				<img src={emptyStateUrl} alt="not-configured" className={styles.icon} />
-				<Typography.Text>
-					<span className={styles.title}>No Kubernetes events received yet. </span>
-					To view events, enable the k8s events receiver in your OpenTelemetry
-					Collector.
-				</Typography.Text>
-
-				<div
-					className={styles.learnMore}
-					onClick={handleLearnMore}
-					role="button"
-					tabIndex={0}
-					onKeyDown={(e): void => {
-						if (e.key === 'Enter') {
-							handleLearnMore();
-						}
-					}}
-				>
-					<Typography.Link className={styles.learnMoreText}>
+		<InfraEmptyState
+			icon={<History />}
+			title="No Kubernetes events received yet."
+			description="To view events, enable the k8s events receiver in your OpenTelemetry Collector."
+			actions={
+				<Button asChild variant="outline" size="sm">
+					<a href={K8S_EVENTS_DOCS_URL} target="_blank" rel="noopener noreferrer">
 						Learn how to configure
-					</Typography.Link>
-					<ArrowRight size={14} />
-				</div>
-			</div>
-		</div>
+						<ExternalLink />
+					</a>
+				</Button>
+			}
+		/>
 	);
 }

@@ -150,7 +150,6 @@ export const statefulSetEntityConfig: K8sEntityConfig<
 				getQueryPayload: getStatefulSetPodMetricsQueryPayload,
 				category: InfraMonitoringEntity.STATEFULSETS,
 				queryKey: 'statefulSetPodMetrics',
-				docBasePath: '/infrastructure-monitoring/kubernetes/statefulsets/',
 			}),
 		],
 	},

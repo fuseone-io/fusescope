@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { SheetTitle } from 'components/ui/sheet';
 import { GlobalTimeProvider } from 'store/globalTime';
 
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -9,10 +9,9 @@ import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	InfraMonitoringEntity,
 } from '../../constants';
+import EntityDetailSheet from '../../Base/components/EntityDetailSheet';
 import EntityOverview, { EntityOverviewProps } from './EntityOverview';
 import { overviewMocks } from './EntityOverview.stories.mocks';
-
-import drawerStyles from '../entityDetails.module.scss';
 
 const POD_UID = '63edbad0-398e-48e5-baba-f7ded7c73f1b';
 
@@ -36,17 +35,19 @@ const meta = {
 	...storyMocks(overviewMocks, { route }),
 	decorators: [
 		(Story): JSX.Element => (
-			<DrawerWrapper
+			<EntityDetailSheet
 				open
-				direction="right"
-				title="app-demo-loadgenerator-579fbdd749-q5kgd"
 				onOpenChange={(): void => undefined}
-				className={drawerStyles.entityDetailDrawer}
+				header={
+					<SheetTitle className="fs-ui tw:border-b tw:border-border tw:bg-surface-raised tw:px-4 tw:py-3 tw:font-mono tw:text-base tw:font-medium">
+						app-demo-loadgenerator-579fbdd749-q5kgd
+					</SheetTitle>
+				}
 			>
 				<GlobalTimeProvider>
 					<Story />
 				</GlobalTimeProvider>
-			</DrawerWrapper>
+			</EntityDetailSheet>
 		),
 	],
 } satisfies Meta<OverviewArgs>;

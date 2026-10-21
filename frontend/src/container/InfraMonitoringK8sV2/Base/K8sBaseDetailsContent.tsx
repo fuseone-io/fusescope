@@ -1,15 +1,13 @@
 import { Fragment, useEffect, useMemo, useRef } from 'react';
+import { Button } from 'components/ui/button';
 import {
-	BarChart,
-	ChevronsLeftRight,
+	ChartLine,
 	Compass,
 	DraftingCompass,
+	History,
 	LayoutGrid,
 	ScrollText,
-} from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
-import { Tooltip } from '@signozhq/ui/tooltip';
+} from 'lucide-react';
 import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -44,10 +42,12 @@ import {
 
 import { EntityCountsSection } from './components/EntityCountsSection/EntityCountsSection';
 import { EntityMetadataItem } from './components/EntityMetadataItem/EntityMetadataItem';
+import EntityDetailTabs, {
+	EntityDetailTab,
+} from './components/EntityDetailTabs';
 import { K8sBaseDetailsContentProps } from './types';
 import { getDrawerDurationMs } from './useDrawerLifecycleStore';
 
-import styles from '../EntityDetailsUtils/entityDetails.module.scss';
 import { logInfraDrawerTabViewedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 import { logInfraExplorerNavigatedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
@@ -110,6 +110,41 @@ export default function K8sBaseDetailsContent<T>({
 		if (customTabs) {
 			tabs.push(...customTabs.map((t) => t.key));
 		}
+		return tabs;
+	}, [tabVisibility, customTabs]);
+
+	const detailTabs = useMemo((): EntityDetailTab[] => {
+		const tabs: EntityDetailTab[] = [];
+		if (tabVisibility.showOverview) {
+			tabs.push({
+				value: VIEW_TYPES.OVERVIEW,
+				label: 'Overview',
+				icon: <LayoutGrid />,
+			});
+		}
+		if (tabVisibility.showMetrics) {
+			tabs.push({
+				value: VIEW_TYPES.METRICS,
+				label: 'Metrics',
+				icon: <ChartLine />,
+			});
+		}
+		if (tabVisibility.showLogs) {
+			tabs.push({ value: VIEW_TYPES.LOGS, label: 'Logs', icon: <ScrollText /> });
+		}
+		if (tabVisibility.showTraces) {
+			tabs.push({
+				value: VIEW_TYPES.TRACES,
+				label: 'Traces',
+				icon: <DraftingCompass />,
+			});
+		}
+		if (tabVisibility.showEvents) {
+			tabs.push({ value: VIEW_TYPES.EVENTS, label: 'Events', icon: <History /> });
+		}
+		customTabs?.forEach((tab) =>
+			tabs.push({ value: tab.key, label: tab.label, icon: tab.icon }),
+		);
 		return tabs;
 	}, [tabVisibility, customTabs]);
 
@@ -258,10 +293,20 @@ export default function K8sBaseDetailsContent<T>({
 		}
 	};
 
+	const explorerTarget =
+		effectiveView === VIEW_TYPES.LOGS
+			? 'Logs Explorer'
+			: effectiveView === VIEW_TYPES.TRACES
+				? 'Traces Explorer'
+				: null;
+
 	return (
-		<>
-			<div className={styles.entityDetailsEntity}>
-				<div className={styles.entityDetailsGrid}>
+		<div className="tw:flex tw:flex-col tw:gap-4">
+			{metadataConfig.length > 0 && (
+				<div
+					className="tw:grid tw:grid-cols-[repeat(auto-fit,minmax(160px,1fr))] tw:gap-x-6 tw:gap-y-3"
+					data-testid="entity-attributes"
+				>
 					{metadataConfig.map((config) => {
 						const value = config.getValue(entity);
 
@@ -275,139 +320,42 @@ export default function K8sBaseDetailsContent<T>({
 						);
 					})}
 				</div>
+			)}
 
-				{countsConfig &&
-					countsConfig.length > 0 &&
-					selectedItem &&
-					getCountsFilterExpression && (
-						<EntityCountsSection
-							entity={entity}
-							countsConfig={countsConfig}
-							selectedItem={selectedItem}
-							filterExpression={getCountsFilterExpression(entity)}
-							closeDrawer={handleClose}
-							entityType={category}
-							activeTab={effectiveView}
-						/>
-					)}
-			</div>
+			{countsConfig &&
+				countsConfig.length > 0 &&
+				selectedItem &&
+				getCountsFilterExpression && (
+					<EntityCountsSection
+						entity={entity}
+						countsConfig={countsConfig}
+						selectedItem={selectedItem}
+						filterExpression={getCountsFilterExpression(entity)}
+						closeDrawer={handleClose}
+						entityType={category}
+						activeTab={effectiveView}
+					/>
+				)}
 
 			{!hideDetailViewTabs && (
-				<div className={styles.viewsTabsContainer}>
-					<ToggleGroup
-						variant="outlined"
-						color="secondary"
-						size="sm"
-						type="single"
-						onChange={handleTabChange}
-						value={effectiveView}
-						items={[
-							...(tabVisibility.showOverview
-								? [
-										{
-											value: VIEW_TYPES.OVERVIEW,
-											label: (
-												<div className={styles.viewTitle}>
-													<LayoutGrid size={14} />
-													Overview
-												</div>
-											),
-										},
-									]
-								: []),
-							...(tabVisibility.showMetrics
-								? [
-										{
-											value: VIEW_TYPES.METRICS,
-											label: (
-												<div className={styles.viewTitle}>
-													<BarChart size={14} />
-													Metrics
-												</div>
-											),
-										},
-									]
-								: []),
-							...(tabVisibility.showLogs
-								? [
-										{
-											value: VIEW_TYPES.LOGS,
-											label: (
-												<div className={styles.viewTitle}>
-													<ScrollText size={14} />
-													Logs
-												</div>
-											),
-										},
-									]
-								: []),
-							...(tabVisibility.showTraces
-								? [
-										{
-											value: VIEW_TYPES.TRACES,
-											label: (
-												<div className={styles.viewTitle}>
-													<DraftingCompass size={14} />
-													Traces
-												</div>
-											),
-										},
-									]
-								: []),
-							...(tabVisibility.showEvents
-								? [
-										{
-											value: VIEW_TYPES.EVENTS,
-											label: (
-												<div className={styles.viewTitle}>
-													<ChevronsLeftRight size={14} />
-													Events
-												</div>
-											),
-										},
-									]
-								: []),
-							...(customTabs?.map((tab) => ({
-								value: tab.key,
-								label: (
-									<div className={styles.viewTitle}>
-										{tab.icon}
-										{tab.label}
-									</div>
-								),
-							})) ?? []),
-						]}
-					/>
-
-					{effectiveView === VIEW_TYPES.LOGS && (
-						<Tooltip title="Go to Logs Explorer" side="left">
+				<EntityDetailTabs
+					tabs={detailTabs}
+					value={effectiveView}
+					onValueChange={handleTabChange}
+					actions={
+						explorerTarget && (
 							<Button
-								aria-label="Action"
-								variant="ghost"
+								variant="outline"
 								size="sm"
-								icon
-								color="secondary"
 								onClick={handleExplorePagesRedirect}
+								data-testid="entity-open-in-explorer"
 							>
-								<Compass size={18} />
+								<Compass />
+								Open in {explorerTarget}
 							</Button>
-						</Tooltip>
-					)}
-					{effectiveView === VIEW_TYPES.TRACES && (
-						<Tooltip title="Go to Traces Explorer" side="left">
-							<Button
-								aria-label="Action"
-								variant="ghost"
-								size="sm"
-								icon
-								color="secondary"
-								onClick={handleExplorePagesRedirect}
-							>
-								<Compass size={18} />
-							</Button>
-						</Tooltip>
-					)}
-				</div>
+						)
+					}
+				/>
 			)}
 
 			{effectiveView === VIEW_TYPES.OVERVIEW && tabVisibility.showOverview && (
@@ -467,6 +415,6 @@ export default function K8sBaseDetailsContent<T>({
 					</Fragment>
 				) : null,
 			)}
-		</>
+		</div>
 	);
 }

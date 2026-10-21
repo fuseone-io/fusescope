@@ -1,61 +1,16 @@
 .container {
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-4);
-	margin-top: var(--spacing-8);
+	gap: 12px;
 	min-width: 0;
-}
-
-.controls {
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
-	gap: var(--spacing-3);
-	flex-wrap: wrap;
 }
 
 .tableHeader {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-3);
-	padding: var(--spacing-4) var(--spacing-8);
-	border-bottom: 1px solid var(--l1-border);
-}
-
-.resourcePicker {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-3);
-	flex: 0 0 auto;
-}
-
-.resourceTrigger {
-	--select-trigger-width: 240px;
-	--select-trigger-height: 2rem;
-}
-
-.resourceOptions {
-	// The drawer is a dialog at z-index 50 and select content ships without one,
-	// so without this the dropdown paints behind the drawer.
-	z-index: 60;
-
-	// Radix measures the trigger for us; without this the list is narrower than it
-	min-width: var(--radix-select-trigger-width);
-}
-
-.filterRow {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-3);
-	padding-left: var(--spacing-3);
-	min-width: 0;
-	border: 1px solid var(--l2-border);
-	border-radius: 2px;
-	background: var(--l1-background);
-
-	// The row draws the field outline, so the editor inside it draws none
-	--query-builder-v2-border-color: transparent;
-	--query-builder-v2-background-color: transparent;
+	gap: 12px;
+	padding: 10px 16px;
+	border-bottom: 1px solid var(--fs-border);
 }
 
 .scopeChip {
@@ -65,10 +20,11 @@
 	flex: 0 1 auto;
 	min-width: 0;
 	max-width: 420px;
-	padding: var(--spacing-1) var(--spacing-3);
-	border-radius: 2px;
-	background: var(--l3-background);
-	color: var(--l2-foreground);
+	margin: 9px 0 0 10px;
+	padding: 0 8px;
+	border-radius: 4px;
+	background: var(--fs-card);
+	color: var(--fs-muted-foreground);
 	font-size: 12px;
 	line-height: 20px;
 	cursor: default;
@@ -76,7 +32,7 @@
 
 .scopeMore {
 	flex: none;
-	color: var(--l3-foreground);
+	color: var(--fs-subtle-foreground);
 }
 
 // The editor beside it is CodeMirror on the copilot theme in dark and
@@ -138,8 +94,9 @@
 	display: flex;
 	flex-direction: column;
 	min-height: 480px;
-	border: 1px solid var(--l2-border);
-	border-radius: 4px;
+	border: 1px solid var(--fs-border);
+	border-radius: 12px;
+	background: var(--fs-card);
 	overflow: hidden;
 	min-width: 0;
 }
@@ -147,7 +104,6 @@
 .table {
 	flex: 1 1 auto;
 	min-height: 0;
-	--typography-color: var(--l2-foreground);
 }
 
 .noRelations {
@@ -155,7 +111,6 @@
 	align-items: center;
 	justify-content: center;
 	min-height: 240px;
-	margin-top: var(--spacing-8);
 }
 
 .emptyState {

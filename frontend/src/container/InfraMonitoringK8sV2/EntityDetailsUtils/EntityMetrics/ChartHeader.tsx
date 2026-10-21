@@ -1,81 +1,54 @@
+import { Ref } from 'react';
 import { Link } from 'react-router-dom';
-import { Compass, Info } from '@signozhq/icons';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { Compass } from 'lucide-react';
 
-import styles from './ChartHeader.module.scss';
-import { signozDocsUrl } from 'constants/docs';
+import InfoTooltip from '../../components/InfoTooltip';
 
 interface ChartHeaderProps {
 	title: string;
-	docPath?: string;
 	tooltip?: string;
 	metricsExplorerUrl?: string;
 	metricsExplorerTestId?: string;
 	onExploreClick?: () => void;
+	/** Where the chart portals its legend. */
+	legendRef?: Ref<HTMLDivElement>;
 }
 
 function ChartHeader({
 	title,
-	docPath,
 	tooltip,
 	metricsExplorerUrl,
 	metricsExplorerTestId = 'open-metrics-explorer',
 	onExploreClick,
+	legendRef,
 }: ChartHeaderProps): JSX.Element {
-	const renderInfoIcon = (): React.ReactNode => {
-		if (docPath) {
-			const tooltipTitle = tooltip || 'Not sure what this represents?';
-			return (
-				<Tooltip
-					title={
-						<>
-							{tooltipTitle}{' '}
-							<a
-								href={signozDocsUrl(docPath)}
-								target="_blank"
-								rel="noopener"
-								onClick={(e): void => e.stopPropagation()}
-							>
-								Learn more.
-							</a>
-						</>
-					}
-				>
-					<span className={styles.infoIcon} data-testid="chart-header-info-icon">
-						<Info size="md" />
-					</span>
-				</Tooltip>
-			);
-		}
-
-		if (tooltip) {
-			return (
-				<Tooltip title={tooltip}>
-					<span className={styles.infoIcon} data-testid="chart-header-info-icon">
-						<Info size="md" />
-					</span>
-				</Tooltip>
-			);
-		}
-
-		return null;
-	};
-
 	return (
-		<div className={styles.chartHeader} data-testid="chart-header">
-			<span className={styles.chartHeaderLabel}>{title}</span>
-			{renderInfoIcon()}
+		<div
+			className="fs-ui tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-x-3 tw:gap-y-1.5 tw:px-5 tw:pt-3 tw:font-sans"
+			data-testid="chart-header"
+		>
+			<div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-wrap tw:items-center tw:gap-x-3.5 tw:gap-y-1">
+				<h3 className="tw:flex tw:items-center tw:gap-1.5 tw:text-sm tw:font-semibold tw:text-foreground">
+					{title}
+					{tooltip && (
+						<InfoTooltip title={tooltip} testId="chart-header-info-icon" />
+					)}
+				</h3>
+				<div ref={legendRef} className="tw:min-w-0 tw:empty:hidden" />
+			</div>
 			{metricsExplorerUrl && (
-				<Tooltip title="Go to Metrics Explorer">
+				<TitleTooltip title="Open in Metrics Explorer">
 					<Link
 						to={metricsExplorerUrl}
-						className={styles.metricsExplorerLink}
+						aria-label="Open in Metrics Explorer"
+						className="tw:inline-flex tw:size-7 tw:flex-none tw:items-center tw:justify-center tw:rounded-md tw:text-muted-foreground! tw:hover:bg-muted tw:hover:text-foreground!"
 						data-testid={metricsExplorerTestId}
 						onClick={onExploreClick}
 					>
 						<Compass size={14} />
 					</Link>
-				</Tooltip>
+				</TitleTooltip>
 			)}
 		</div>
 	);

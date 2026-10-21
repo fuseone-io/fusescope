@@ -1,7 +1,6 @@
 import { TableColumnsType as ColumnsType } from 'antd';
-import { Badge } from '@signozhq/ui/badge';
-import { Typography } from '@signozhq/ui/typography';
-import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
+import HttpStatusCodeBadge from 'components/PageTemplate/components/HttpStatusCodeBadge';
+import TagChip from 'components/PageTemplate/components/TagChip';
 import { TextNoData } from '../../components/TextNoData';
 import { getMs } from 'utils/timeUtils';
 import {
@@ -82,7 +81,7 @@ export const getTraceListColumns = (
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography.Text className={styles.cellText}>{date}</Typography.Text>
+							<span className={styles.cellText}>{date}</span>
 						</BlockLink>
 					);
 				}
@@ -90,13 +89,9 @@ export const getTraceListColumns = (
 				if (value === '') {
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography
-								data-testid={key}
-								className={styles.cellText}
-								data-novalue="true"
-							>
+							<span data-testid={key} className={styles.cellText} data-novalue="true">
 								-
-							</Typography>
+							</span>
 						</BlockLink>
 					);
 				}
@@ -107,23 +102,16 @@ export const getTraceListColumns = (
 					if (!httpMethod) {
 						return (
 							<BlockLink to={getTraceLink(itemData)} openInNewTab>
-								<Typography className={styles.cellText} data-novalue="true">
+								<span className={styles.cellText} data-novalue="true">
 									-
-								</Typography>
+								</span>
 							</BlockLink>
 						);
 					}
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Badge
-								textTransform="none"
-								testId={key}
-								color="primary"
-								variant="outlined"
-							>
-								{httpMethod}
-							</Badge>
+							<TagChip testId={key}>{httpMethod}</TagChip>
 						</BlockLink>
 					);
 				}
@@ -139,7 +127,7 @@ export const getTraceListColumns = (
 								{numericCode === 0 || !statusCode ? (
 									<TextNoData type="typography" className={styles.cellText} />
 								) : (
-									<Typography className={styles.cellText}>{statusCode}</Typography>
+									<span className={styles.cellText}>{statusCode}</span>
 								)}
 							</BlockLink>
 						);
@@ -147,7 +135,7 @@ export const getTraceListColumns = (
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<HttpStatusBadge statusCode={statusCode} testId={key} />
+							<HttpStatusCodeBadge statusCode={statusCode} testId={key} />
 						</BlockLink>
 					);
 				}
@@ -157,18 +145,18 @@ export const getTraceListColumns = (
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography data-testid={key} className={styles.cellText}>
+							<span data-testid={key} className={styles.cellText}>
 								{getMs(durationNano)}ms
-							</Typography>
+							</span>
 						</BlockLink>
 					);
 				}
 
 				return (
 					<BlockLink to={getTraceLink(itemData)} openInNewTab>
-						<Typography data-testid={key} className={styles.cellText}>
+						<span data-testid={key} className={styles.cellText}>
 							{getValueForKey(itemData, key)}
-						</Typography>
+						</span>
 					</BlockLink>
 				);
 			},

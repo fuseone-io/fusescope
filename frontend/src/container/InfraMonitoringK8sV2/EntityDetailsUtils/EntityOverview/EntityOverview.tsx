@@ -1,15 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Compass } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { Button } from 'components/ui/button';
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@signozhq/ui/select';
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuTrigger,
+} from 'components/ui/dropdown-menu';
+import { ChevronDown, Compass } from 'lucide-react';
 import {
 	QuerySearchV2Provider,
 	useExpression,
@@ -51,6 +50,7 @@ import {
 	METRIC_NAMESPACE_BY_ENTITY,
 	VIEW_TYPES,
 } from '../../constants';
+import EntityTabToolbar from '../EntityTabToolbar';
 import EntityDateTimeSelector from '../EntityDateTimeSelector/EntityDateTimeSelector';
 import { useEntityDetailsTime } from '../EntityDateTimeSelector/useEntityDetailsTime';
 import { logInfraDrawerFilterCustomizedEvent } from '../events';
@@ -134,10 +134,8 @@ function EntityOverviewContent({
 	);
 
 	const handleCategoryChange = useCallback(
-		(value: string | string[]): void => {
-			if (typeof value === 'string') {
-				onCategoryChange(value);
-			}
+		(value: string): void => {
+			onCategoryChange(value);
 		},
 		[onCategoryChange],
 	);
@@ -189,81 +187,88 @@ function EntityOverviewContent({
 
 	return (
 		<div className={styles.container}>
-			<div className={styles.controls}>
-				<EntityDateTimeSelector
-					eventEntity={eventEntity}
-					category={category}
-					view={VIEW_TYPES.OVERVIEW}
-				/>
-
-				<RunQueryBtn
-					isLoadingQueries={isFetching}
-					onStageRunQuery={(): void => handleRunQuery()}
-					handleCancelQuery={cancel}
-				/>
-			</div>
-
-			<div className={styles.filterRow}>
-				<ScopeChip clauses={lockedClauses} expression={lockedExpression} />
-
-				<div className={styles.filterInput}>
-					<QuerySearch
-						queryData={queryData}
-						dataSource={DataSource.METRICS}
-						onChange={querySearchOnChange}
-						onRun={handleRunQuery}
-						signalSource=""
-						showFilterSuggestionsWithoutMetric
-						placeholder={`Filter these ${targetLabel.toLowerCase()}`}
-						metricNamespace={METRIC_NAMESPACE_BY_ENTITY[targetCategory]}
-						initialExpression={querySearchInitialExpressionProp}
+			<EntityTabToolbar
+				time={
+					<EntityDateTimeSelector
+						eventEntity={eventEntity}
+						category={category}
+						view={VIEW_TYPES.OVERVIEW}
 					/>
-				</div>
-			</div>
+				}
+				run={
+					<RunQueryBtn
+						isLoadingQueries={isFetching}
+						onStageRunQuery={(): void => handleRunQuery()}
+						handleCancelQuery={cancel}
+					/>
+				}
+				prefix={<ScopeChip clauses={lockedClauses} expression={lockedExpression} />}
+				search={
+					<div className={styles.filterInput}>
+						<QuerySearch
+							queryData={queryData}
+							dataSource={DataSource.METRICS}
+							onChange={querySearchOnChange}
+							onRun={handleRunQuery}
+							signalSource=""
+							showFilterSuggestionsWithoutMetric
+							placeholder={`Filter these ${targetLabel.toLowerCase()}`}
+							metricNamespace={METRIC_NAMESPACE_BY_ENTITY[targetCategory]}
+							initialExpression={querySearchInitialExpressionProp}
+						/>
+					</div>
+				}
+			/>
 
 			<RelatedEntitiesTable
 				key={targetCategory}
 				targetCategory={targetCategory}
 				header={
-					<div className={styles.resourcePicker}>
-						<Typography.Text color="muted" size="small">
-							Showing
-						</Typography.Text>
+					<div className="fs-ui tw:flex tw:flex-none tw:items-center tw:gap-2 tw:font-sans">
+						<span className="tw:text-[13px] tw:text-muted-foreground">Showing</span>
 
-						<Select value={targetCategory} onChange={handleCategoryChange}>
-							<SelectTrigger
-								className={styles.resourceTrigger}
-								data-testid="overview-resource-select"
-							>
-								<SelectValue>{targetLabel}</SelectValue>
-							</SelectTrigger>
-							{/* The drawer sits at z-index 50 and select content ships without one */}
-							<SelectContent className={styles.resourceOptions}>
-								{getRelatedCategories(category, attributes).map((relatedCategory) => (
-									<SelectItem
-										key={relatedCategory}
-										value={relatedCategory}
-										testId={`overview-resource-option-${relatedCategory}`}
-									>
-										{K8S_CATEGORY_LABELS[relatedCategory]}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button
+									variant="outline"
+									size="sm"
+									className="tw:min-w-44 tw:justify-between"
+									data-testid="overview-resource-select"
+								>
+									{targetLabel}
+									<ChevronDown className="tw:text-muted-foreground" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="start" className="tw:z-[1100] tw:min-w-44">
+								<DropdownMenuRadioGroup
+									value={targetCategory}
+									onValueChange={handleCategoryChange}
+								>
+									{getRelatedCategories(category, attributes).map((relatedCategory) => (
+										<DropdownMenuRadioItem
+											key={relatedCategory}
+											value={relatedCategory}
+											data-testid={`overview-resource-option-${relatedCategory}`}
+										>
+											{K8S_CATEGORY_LABELS[relatedCategory]}
+										</DropdownMenuRadioItem>
+									))}
+								</DropdownMenuRadioGroup>
+							</DropdownMenuContent>
+						</DropdownMenu>
 
-						<Tooltip title={`View on ${targetLabel.toLowerCase()} page`} side="top">
+						<TitleTooltip title={`View on ${targetLabel.toLowerCase()} page`}>
 							<Button
 								variant="ghost"
-								size="sm"
-								icon
-								color="secondary"
+								size="icon-sm"
+								className="tw:text-muted-foreground"
 								aria-label={`View on ${targetLabel.toLowerCase()} page`}
 								onClick={handleNavigate}
-								testId="overview-view-on-list-page"
+								data-testid="overview-view-on-list-page"
 							>
-								<Compass size={16} />
+								<Compass />
 							</Button>
-						</Tooltip>
+						</TitleTooltip>
 					</div>
 				}
 				listConfig={targetConfig.list}
@@ -318,9 +323,9 @@ export default function EntityOverview(
 	if (!targetCategory) {
 		return (
 			<div className={styles.noRelations}>
-				<Typography.Text color="muted">
+				<p className="tw:font-sans tw:text-[13px] tw:text-muted-foreground">
 					{`Nothing related to this ${K8S_CATEGORY_SINGULAR_LABELS[category]} was reported in this time range.`}
-				</Typography.Text>
+				</p>
 			</div>
 		);
 	}

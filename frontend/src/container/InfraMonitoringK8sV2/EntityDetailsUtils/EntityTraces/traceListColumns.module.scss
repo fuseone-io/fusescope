@@ -1,5 +1,6 @@
 .cellText {
-	color: var(--l2-foreground);
+	color: var(--fs-foreground);
+	font-size: 13px;
 
 	&[data-novalue='true'] {
 		opacity: 0.6;

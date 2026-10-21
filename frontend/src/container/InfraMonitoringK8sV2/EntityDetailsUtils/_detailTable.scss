@@ -1,0 +1,50 @@
+// The detail tabs' antd tables as panels with the list's header and rows.
+@mixin antd-table {
+	:global(.ant-table-wrapper) {
+		overflow: hidden;
+		border: 1px solid var(--fs-border);
+		border-radius: 12px;
+	}
+
+	:global(.ant-table) {
+		background: var(--fs-card);
+
+		:global(.ant-table-thead) > tr > th {
+			padding: 10px 12px;
+			border-bottom: 1px solid var(--fs-border);
+			background: var(--fs-muted);
+			color: var(--fs-muted-foreground);
+			font-family: var(--tw-font-sans, inherit);
+			font-size: 12px;
+			font-weight: 500;
+			line-height: 16px;
+			letter-spacing: 0.05em;
+			text-transform: uppercase;
+
+			&::before {
+				background-color: transparent !important;
+			}
+		}
+
+		:global(.ant-table-cell) {
+			padding: 12px;
+			border-bottom: 1px solid var(--fs-border);
+			background: var(--fs-card);
+			color: var(--fs-foreground);
+			font-size: 13px;
+			line-height: 20px;
+		}
+
+		:global(.ant-table-tbody) > tr:last-child > td {
+			border-bottom: none;
+		}
+
+		:global(.ant-table-tbody) > tr:hover > td {
+			background: var(--fs-muted);
+		}
+
+		:global(.ant-empty-normal) {
+			visibility: hidden;
+		}
+	}
+}

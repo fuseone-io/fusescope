@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { Undo } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { Button } from 'components/ui/button';
+import { Undo2 } from 'lucide-react';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
@@ -53,18 +53,18 @@ function EntityDateTimeSelector({
 	return (
 		<div className={styles.container}>
 			{hasTimeChanged && (
-				<Tooltip title="Reset to list time" side="bottom">
+				<TitleTooltip title="Reset to list time" side="bottom">
 					<Button
-						size="md"
-						variant="outlined"
-						color="secondary"
+						variant="outline"
+						size="sm"
 						onClick={handleResetToParentTime}
-						testId="reset-to-list-time-button"
-						prefix={<Undo size={14} />}
+						data-testid="reset-to-list-time-button"
+						className="tw:font-sans"
 					>
+						<Undo2 />
 						Reset
 					</Button>
-				</Tooltip>
+				</TitleTooltip>
 			)}
 			<DateTimeSelectionV2
 				showAutoRefresh

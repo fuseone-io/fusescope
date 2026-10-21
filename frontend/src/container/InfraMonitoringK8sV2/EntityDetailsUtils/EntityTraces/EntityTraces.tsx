@@ -28,6 +28,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 import { validateQuery } from 'utils/queryValidationUtils';
 
+import EntityTabToolbar from '../EntityTabToolbar';
 import EntityDateTimeSelector from '../EntityDateTimeSelector/EntityDateTimeSelector';
 import { useEntityDetailsTime } from '../EntityDateTimeSelector/useEntityDetailsTime';
 import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
@@ -169,22 +170,22 @@ function EntityTracesContent({
 
 	return (
 		<div className={styles.container}>
-			<div className={styles.filterContainer}>
-				<div className={styles.filterContainerTime}>
+			<EntityTabToolbar
+				time={
 					<EntityDateTimeSelector
 						eventEntity={eventEntity}
 						category={category}
 						view={InfraMonitoringEvents.TracesView}
 					/>
-
+				}
+				run={
 					<RunQueryBtn
 						isLoadingQueries={isFetching}
 						onStageRunQuery={(): void => handleRunQuery()}
 						handleCancelQuery={cancel}
 					/>
-				</div>
-
-				<div className={styles.filterQuerySearch}>
+				}
+				search={
 					<QuerySearch
 						onChange={querySearchOnChange}
 						queryData={queryData}
@@ -192,8 +193,8 @@ function EntityTracesContent({
 						onRun={handleRunQuery}
 						initialExpression={querySearchInitialExpressionProp}
 					/>
-				</div>
-			</div>
+				}
+			/>
 
 			{isLoading && traces.length === 0 && <TracesLoading />}
 
