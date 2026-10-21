@@ -244,3 +244,15 @@ func requireMissingAttrs(t *testing.T, name string, got *inframonitoringtypes.Mi
 	require.NotEmpty(t, got.Message, name)
 	require.Equal(t, testDocLink, got.DocumentationLink, name)
 }
+
+func TestCheckSpecsLinkFuseScopeDocs(t *testing.T) {
+	const want = "https://fuseone-io.github.io/fusescope-docs/sending-data/kubernetes/"
+
+	for checkType, spec := range checkSpecs {
+		for _, bucket := range spec.Buckets {
+			t.Run(checkType.StringValue()+"/"+bucket.Component.Name, func(t *testing.T) {
+				require.Equal(t, want, bucket.DocumentationLink)
+			})
+		}
+	}
+}
