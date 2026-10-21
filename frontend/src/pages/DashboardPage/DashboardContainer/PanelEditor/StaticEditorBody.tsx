@@ -10,9 +10,8 @@ import { useDashboardEditContext } from '../hooks/useDashboardEditContext';
 import { useScrollIntoViewStore } from '../store/useScrollIntoViewStore';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
-import PanelEditorLayout, {
-	PANE_SPLIT,
-} from './PanelEditorLayout/PanelEditorLayout';
+import { usePanelEditorCrumbs } from './Header/usePanelEditorCrumbs';
+import PanelEditorLayout from './PanelEditorLayout/PanelEditorLayout';
 import PreviewPane from './PreviewPane/PreviewPane';
 import type { PanelEditorContainerProps } from './index';
 import type { PanelEditorDraftApi } from './types';
@@ -63,6 +62,12 @@ function StaticEditorBody({
 
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
 	const { showErrorModal } = useErrorModal();
+	const crumbs = usePanelEditorCrumbs({
+		panelId,
+		panelTitle: draft.spec.display.name,
+		isNew,
+		target,
+	});
 
 	const onSave = useCallback(async (): Promise<void> => {
 		if (!isEditable) {
@@ -95,9 +100,10 @@ function StaticEditorBody({
 
 	return (
 		<PanelEditorLayout
-			split={PANE_SPLIT.static}
+			mode={{ type: 'static', title: 'Markdown' }}
 			header={
 				<Header
+					crumbs={crumbs}
 					isDirty={isSpecDirty}
 					isSaving={isSaving}
 					showSwitchToView={false}

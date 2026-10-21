@@ -1,18 +1,35 @@
 .header {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
+	gap: 8px 12px;
 	min-height: 56px;
-	padding: 10px 16px;
+	padding: 8px 16px;
 	background-color: var(--fs-card);
 	border-bottom: 1px solid var(--fs-border);
+	font-family: var(--tw-font-sans);
 }
 
 .title {
 	display: flex;
+	flex: 1 1 240px;
 	align-items: center;
 	gap: 8px;
+	min-width: 0;
+}
+
+.titleStack {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	line-height: 1.25;
+}
+
+.titleRow {
+	display: flex;
+	align-items: center;
+	gap: 10px;
 	min-width: 0;
 }
 
@@ -27,8 +44,41 @@
 	white-space: nowrap;
 }
 
-.actions {
+.crumbs {
 	display: flex;
 	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	color: var(--fs-muted-foreground);
+	font-size: 12px;
+}
+
+.crumb {
+	overflow: hidden;
+	max-width: 240px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	&[aria-current='page'] {
+		color: var(--fs-foreground);
+	}
+}
+
+.crumbSeparator {
+	flex: none;
+	color: var(--fs-subtle-foreground);
+}
+
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
 	gap: 8px;
+}
+
+.timePicker {
+	display: flex;
+	align-items: center;
+	min-width: 0;
 }

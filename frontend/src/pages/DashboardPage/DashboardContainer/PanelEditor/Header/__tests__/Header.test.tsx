@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 
 import Header from '../Header';
@@ -105,5 +105,58 @@ describe('PanelEditor Header', () => {
 		expect(
 			screen.getByTestId('panel-editor-v2-unsaved-badge'),
 		).toBeInTheDocument();
+	});
+
+	it('shows where the panel lives and the time picker it is given', () => {
+		mockUseIsAIAssistantEnabled.mockReturnValue(false);
+
+		renderHeader({
+			crumbs: {
+				dashboard: 'HotROD service health',
+				section: 'Golden signals',
+				panel: 'Request rate by service',
+			},
+			timePicker: <span>Last 30 minutes</span>,
+		});
+
+		const crumbs = screen.getByTestId('panel-editor-breadcrumb');
+		expect(crumbs).toHaveTextContent(
+			'HotROD service health›Golden signals›Request rate by service',
+		);
+		expect(screen.getByText('Request rate by service')).toHaveAttribute(
+			'aria-current',
+			'page',
+		);
+		expect(screen.getByTestId('panel-editor-time-picker')).toHaveTextContent(
+			'Last 30 minutes',
+		);
+	});
+
+	it('opens the same discard confirmation from Discard as from Close', async () => {
+		mockUseIsAIAssistantEnabled.mockReturnValue(false);
+		const user = userEvent.setup();
+		const onClose = jest.fn();
+
+		renderHeader({ isDirty: true, onClose });
+		await user.click(screen.getByTestId('panel-editor-v2-discard'));
+
+		await expect(
+			screen.findByTestId('panel-editor-v2-discard-modal'),
+		).resolves.toBeInTheDocument();
+		expect(onClose).not.toHaveBeenCalled();
+
+		await user.click(screen.getByTestId('panel-editor-v2-discard-confirm'));
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('disables Discard while there is nothing to discard', () => {
+		mockUseIsAIAssistantEnabled.mockReturnValue(false);
+
+		renderHeader({ isDirty: false });
+
+		expect(screen.getByTestId('panel-editor-v2-discard')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 });

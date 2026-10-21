@@ -1,114 +1,172 @@
-import type { ReactNode } from 'react';
 import {
-	ResizableHandle,
-	ResizablePanel,
-	ResizablePanelGroup,
-	useDefaultLayout,
-} from '@signozhq/ui/resizable';
+	type PointerEvent,
+	type ReactNode,
+	useCallback,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { Button } from 'components/ui/button';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
-import layoutStorage from '../layoutStorage';
+import {
+	type PanelEditorChrome,
+	PanelEditorChromeProvider,
+} from './PanelEditorChromeContext';
+import QueryRail from './QueryRail';
+import { usePanelEditorLayout } from './usePanelEditorLayout';
 
+import 'container/MetricsExplorer/Explorer/QueryPanel/QueryPanel.styles.scss';
 import styles from '../PanelEditor.module.scss';
-
-/** A resizable pane's bounds, in the percentage strings `ResizablePanel` takes. */
-interface PaneSize {
-	minSize: string;
-	maxSize: string;
-	defaultSize: string;
-}
-
-/** How the left column divides between the preview and the editor pane. */
-export interface PaneSplit {
-	preview: PaneSize;
-	editor: PaneSize;
-}
-
-/**
- * Vertical split per authoring mode. The query builder is a compact form, so the
- * preview keeps the room; a static kind's editor pane is the surface being worked
- * in, so it gets more and can grow further.
- */
-export const PANE_SPLIT = {
-	query: {
-		preview: { minSize: '55%', maxSize: '65%', defaultSize: '60%' },
-		editor: { minSize: '35%', maxSize: '45%', defaultSize: '40%' },
-	},
-	static: {
-		preview: { minSize: '40%', maxSize: '65%', defaultSize: '55%' },
-		editor: { minSize: '35%', maxSize: '60%', defaultSize: '45%' },
-	},
-} as const satisfies Record<string, PaneSplit>;
 
 interface PanelEditorLayoutProps {
 	/** Save/close chrome — its affordances differ per authoring mode. */
 	header: ReactNode;
-	/** Upper-left: what the panel will look like once saved. */
+	/** Centre: what the panel will look like once saved. */
 	preview: ReactNode;
-	/** Lower-left: the kind's `EditorPane` — the query builder, or a static kind's own. */
+	/** Left column: the kind's `EditorPane` — the query panel, or a static kind's own. */
 	editor: ReactNode;
 	/** Right column: the kind's config sections. */
 	config: ReactNode;
-	split: PaneSplit;
+	/**
+	 * A query kind's editor brings its own header and queries; a static kind's
+	 * pane is framed here under this title.
+	 */
+	mode: { type: 'query'; onRun: () => void } | { type: 'static'; title: string };
 }
 
 /**
- * The panel editor's frame: header, the resizable three-pane arrangement, and the
- * persistence of what the user drags. Owned once so both authoring modes cannot
- * drift apart on pane bounds or share a layout id by accident — they differ only in
- * `split` and in what fills the slots.
+ * The panel editor's frame: header, then queries on the left, the preview in the
+ * middle and settings on the right. The side panes collapse to rails and the
+ * query panel resizes; all of it is remembered per browser.
  */
 function PanelEditorLayout({
 	header,
 	preview,
 	editor,
 	config,
-	split,
+	mode,
 }: PanelEditorLayoutProps): JSX.Element {
-	const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-		id: 'panel-editor-v2',
-		storage: layoutStorage,
-	});
-	const {
-		defaultLayout: mainDefaultLayout,
-		onLayoutChanged: onMainLayoutChanged,
-	} = useDefaultLayout({
-		id: 'panel-editor-v2-main',
-		storage: layoutStorage,
-	});
+	const { layout, setQueryWidth, setQueryCollapsed, setSettingsCollapsed } =
+		usePanelEditorLayout();
+	const [openQuery, setOpenQuery] = useState<string | null | undefined>();
+	const bodyRef = useRef<HTMLDivElement>(null);
+
+	const chrome = useMemo<PanelEditorChrome>(
+		() => ({
+			collapseQueryPanel: (): void => setQueryCollapsed(true),
+			settingsCollapsed: layout.settingsCollapsed,
+			setSettingsCollapsed,
+			openQuery,
+			setOpenQuery,
+		}),
+		[
+			layout.settingsCollapsed,
+			openQuery,
+			setQueryCollapsed,
+			setSettingsCollapsed,
+		],
+	);
+
+	const startResize = useCallback(
+		(event: PointerEvent<HTMLButtonElement>): void => {
+			const body = bodyRef.current;
+			if (!body) {
+				return;
+			}
+			event.preventDefault();
+			const { left } = body.getBoundingClientRect();
+			const onMove = (move: globalThis.PointerEvent): void => {
+				setQueryWidth(move.clientX - left);
+			};
+			const onUp = (): void => {
+				window.removeEventListener('pointermove', onMove);
+				window.removeEventListener('pointerup', onUp);
+			};
+			window.addEventListener('pointermove', onMove);
+			window.addEventListener('pointerup', onUp);
+		},
+		[setQueryWidth],
+	);
+
+	const leftRail =
+		mode.type === 'query' ? (
+			<QueryRail
+				onExpand={(): void => setQueryCollapsed(false)}
+				onOpenQuery={(name): void => {
+					setOpenQuery(name);
+					setQueryCollapsed(false);
+				}}
+				onRun={mode.onRun}
+			/>
+		) : (
+			<nav className="rail fs-ui" aria-label={`${mode.title} (collapsed)`}>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					className="tw:text-muted-foreground"
+					aria-label={`Expand ${mode.title}`}
+					onClick={(): void => setQueryCollapsed(false)}
+				>
+					<PanelLeftOpen />
+				</Button>
+			</nav>
+		);
 
 	return (
 		<div className={styles.page} data-testid="panel-editor-v2">
 			{header}
-			<ResizablePanelGroup
-				id="panel-editor-v2"
-				orientation="horizontal"
-				defaultLayout={defaultLayout}
-				onLayoutChanged={onLayoutChanged}
-			>
-				<ResizablePanel minSize="75%" maxSize="80%" defaultSize="80%">
-					<div className={styles.left}>
-						<ResizablePanelGroup
-							id="panel-editor-v2-main"
-							orientation="vertical"
-							defaultLayout={mainDefaultLayout}
-							onLayoutChanged={onMainLayoutChanged}
+			<PanelEditorChromeProvider value={chrome}>
+				<div className={`panel-query-cards ${styles.body}`} ref={bodyRef}>
+					{layout.queryCollapsed ? (
+						leftRail
+					) : (
+						<div
+							className={styles.left}
+							style={{ width: layout.queryWidth }}
+							data-testid="panel-editor-left"
 						>
-							<ResizablePanel {...split.preview}>{preview}</ResizablePanel>
-							<ResizableHandle withHandle className={styles.handle} />
-							<ResizablePanel {...split.editor}>{editor}</ResizablePanel>
-						</ResizablePanelGroup>
+							{mode.type === 'static' && (
+								<div className="qpanel-h fs-ui">
+									<div className="tw:flex tw:min-w-0 tw:items-center tw:gap-1.5">
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											className="tw:text-muted-foreground"
+											aria-label={`Collapse ${mode.title}`}
+											onClick={(): void => setQueryCollapsed(true)}
+										>
+											<PanelLeftClose />
+										</Button>
+										<h2 className="tw:m-0 tw:text-sm tw:font-semibold tw:text-foreground">
+											{mode.title}
+										</h2>
+									</div>
+								</div>
+							)}
+							<div className={styles.leftContent}>{editor}</div>
+							<button
+								type="button"
+								className="grip"
+								aria-label="Resize query panel"
+								title="Drag to resize"
+								data-testid="panel-editor-grip"
+								onPointerDown={startResize}
+							>
+								<span />
+								<span />
+							</button>
+						</div>
+					)}
+					<div className={styles.center}>{preview}</div>
+					<div
+						className={layout.settingsCollapsed ? styles.rightRail : styles.right}
+						data-testid="panel-editor-right"
+					>
+						{config}
 					</div>
-				</ResizablePanel>
-				<ResizableHandle withHandle className={styles.handle} />
-				<ResizablePanel
-					minSize="20%"
-					maxSize="25%"
-					defaultSize="20%"
-					className={styles.right}
-				>
-					{config}
-				</ResizablePanel>
-			</ResizablePanelGroup>
+				</div>
+			</PanelEditorChromeProvider>
 		</div>
 	);
 }

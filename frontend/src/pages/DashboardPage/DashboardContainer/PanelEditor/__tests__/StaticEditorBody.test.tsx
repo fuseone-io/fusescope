@@ -11,6 +11,13 @@ jest.mock('../hooks/usePanelEditorSave', () => ({
 }));
 // Chrome + collaborators stubbed: this suite asserts the static body's wiring —
 // the save shape above all — not their internals.
+// The breadcrumb reads the loaded dashboard, which these cases don't stand up.
+jest.mock('../Header/usePanelEditorCrumbs', () => ({
+	usePanelEditorCrumbs: (): unknown => ({
+		dashboard: 'Dashboard',
+		panel: 'Panel',
+	}),
+}));
 jest.mock('../Header/Header', () => ({
 	__esModule: true,
 	default: ({ onSave }: { onSave: () => void }): JSX.Element => (

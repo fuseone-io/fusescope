@@ -57,3 +57,10 @@
 	justify-content: center;
 	gap: 1rem;
 }
+
+.sidePanelHost {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+}

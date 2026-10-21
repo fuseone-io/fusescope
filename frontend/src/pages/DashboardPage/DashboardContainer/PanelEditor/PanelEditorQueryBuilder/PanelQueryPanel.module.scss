@@ -1,0 +1,287 @@
+@use '../../../../../styles/scrollbar' as *;
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	background: var(--fs-background);
+
+	:global(.qpanel-f) {
+		position: sticky;
+		bottom: 0;
+		margin-top: auto;
+	}
+}
+
+.modes {
+	flex: none;
+	padding: 10px 12px 0;
+}
+
+.segmented {
+	display: flex;
+	gap: 2px;
+	padding: 2px;
+	border: 1px solid var(--fs-border);
+	border-radius: 8px;
+	background: var(--fs-muted);
+	font-family: var(--tw-font-sans);
+
+	button {
+		display: inline-flex;
+		flex: 1;
+		align-items: center;
+		justify-content: center;
+		min-width: 0;
+		height: 26px;
+		padding: 0 6px;
+		border: 1px solid transparent;
+		border-radius: 6px;
+		background: none;
+		color: var(--fs-muted-foreground);
+		font: inherit;
+		font-size: 12px;
+		font-weight: 500;
+		white-space: nowrap;
+		cursor: pointer;
+
+		&:hover {
+			color: var(--fs-foreground);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--fs-ring);
+			outline-offset: 1px;
+		}
+
+		&[aria-pressed='true'] {
+			border-color: var(--fs-border);
+			background: var(--fs-card);
+			color: var(--fs-foreground);
+			box-shadow: 0 1px 2px 0
+				color-mix(in srgb, var(--fs-foreground) 5%, transparent);
+		}
+	}
+}
+
+.body {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 12px;
+	scrollbar-gutter: stable;
+
+	@include custom-scrollbar;
+
+	:global {
+		.query-builder-v2 {
+			padding: 0 !important;
+			border: 0;
+		}
+
+		.qb-content-container {
+			gap: 10px;
+			width: 100%;
+		}
+
+		.query-names-section {
+			display: none;
+		}
+
+		.qb-formulas-container {
+			gap: 10px;
+			margin: 0;
+			padding: 0;
+		}
+
+		// The builder's add buttons, as the board's dashed pair.
+		.query-builder-v2 .qb-content-container .qb-footer {
+			padding: 0;
+			border: 0;
+		}
+
+		.query-builder-v2 .qb-content-container .qb-footer .qb-footer-container {
+			display: grid;
+			margin: 0;
+			grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+			gap: 8px;
+			width: 100%;
+
+			> div,
+			.ant-btn {
+				width: 100%;
+			}
+
+			.qb-add-new-query::before {
+				display: none;
+			}
+
+			.ant-btn {
+				justify-content: center;
+				height: 32px;
+				border: 1px dashed var(--fs-input) !important;
+				border-radius: 8px !important;
+				background: var(--fs-card) !important;
+				box-shadow: none !important;
+				color: var(--fs-foreground);
+				font-size: 13px;
+				font-weight: 500;
+
+				&:not(:disabled):hover {
+					border-style: solid !important;
+				}
+			}
+		}
+
+		.qb-trace-operator-button-container {
+			display: flex;
+			grid-column: 1 / -1;
+			align-items: center;
+			gap: 8px;
+		}
+
+		// Cards: the builder's controls laid out as fields.
+		// Source beside the metric where both fit; the metric picker carries its
+		// own source menu, so it takes a row of its own in a narrow panel.
+		.qcard .pq-source-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px 8px;
+
+			> .field {
+				flex: 1 1 112px;
+			}
+
+			> .field:has(.pq-metric) {
+				flex: 1 1 260px;
+			}
+		}
+
+		.qcard .pq-source .ant-select,
+		.qcard .pq-source .query-data-source-dropdown {
+			width: 100% !important;
+		}
+
+		.qcard .pq-metric {
+			display: flex;
+			align-items: center;
+			min-width: 0;
+
+			.metrics-container {
+				display: flex;
+				flex: 1;
+				align-items: center;
+				gap: 8px;
+				min-width: 0;
+			}
+
+			.metrics-source-select-container,
+			.ant-select {
+				flex: 1;
+				min-width: 0;
+			}
+		}
+
+		.qcard .pq-where {
+			min-width: 0;
+
+			.qb-search-filter-container {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 8px;
+				min-width: 0;
+			}
+
+			.query-search-container {
+				flex: 1 1 100%;
+				min-width: 0;
+			}
+
+			.traces-search-filter-container {
+				display: flex;
+				flex: none;
+				align-items: center;
+				gap: 6px;
+			}
+		}
+
+		.qcard .pq-aggregation,
+		.qcard .pq-addons {
+			min-width: 0;
+
+			> * {
+				max-width: 100%;
+			}
+		}
+
+		.qcard .pq-aggregation .query-aggregation-select-container {
+			flex: 1 1 100%;
+			min-width: 0;
+		}
+
+		// The metrics aggregation rows: labels above their controls, rows wrapping.
+		.qcard .pq-aggregation {
+			.metrics-aggregate-section,
+			.non-histogram-container,
+			.metrics-time-aggregation-section,
+			.metrics-space-aggregation-section {
+				flex-wrap: wrap;
+				width: 100%;
+				min-width: 0;
+			}
+
+			.metrics-aggregation-section-content {
+				flex-wrap: wrap;
+				gap: 12px 8px;
+				width: 100%;
+				min-width: 0;
+			}
+
+			.metrics-aggregation-section-content-item {
+				flex: 1 1 140px;
+				flex-direction: column;
+				align-items: stretch;
+				gap: 4px;
+				min-width: 0;
+			}
+
+			.metrics-aggregation-section-content-item:has(.group-by-filter-container),
+			.metrics-aggregation-section-content-item:last-child:not(:first-child) {
+				flex-basis: 100%;
+			}
+
+			.metrics-aggregation-section-content
+				.metrics-aggregation-section-content-item
+				.metrics-aggregation-section-content-item-label {
+				width: auto;
+				min-width: 0;
+				color: var(--fs-foreground);
+				font-family: var(--tw-font-sans);
+				font-size: 12px;
+				font-weight: 500;
+				letter-spacing: normal;
+				text-transform: none;
+			}
+		}
+
+		.qcard .query-functions-part--disabled {
+			opacity: 0.5;
+			pointer-events: none;
+		}
+
+		// A formula's own header repeats the card's; the card owns it here.
+		.pq-formula .qbody .qb-entity-options {
+			display: none;
+		}
+	}
+}
+
+.rawEditor {
+	min-width: 0;
+}
+
+.extra {
+	margin-top: 12px;
+}
