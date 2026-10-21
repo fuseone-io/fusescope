@@ -73,16 +73,18 @@ function DomainsToolbar({
 			data-testid="api-monitoring-toolbar"
 			className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-3 tw:gap-y-2"
 		>
-			<div className="tw:flex tw:min-w-0 tw:flex-[1_1_420px] tw:items-start tw:gap-2">
-				<div className="tw:min-w-0 tw:flex-1">
-					<QuerySearch
-						dataSource={DataSource.TRACES}
-						queryData={query}
-						onChange={handleSearchChange}
-						onRun={onRunQuery}
-						placeholder="Filter, e.g. deployment.environment = 'dev' AND service.name = 'frontend'"
-						hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
-					/>
+			<div className="tw:flex tw:min-w-0 tw:flex-[1_1_420px] tw:items-start tw:gap-2 tw:[&_[data-run-query-btn]]:h-9! tw:[&_[data-run-query-btn]]:rounded-md!">
+				<div className="qb-filter-field-skin tw:min-w-0 tw:flex-1">
+					<div className="query-search-container">
+						<QuerySearch
+							dataSource={DataSource.TRACES}
+							queryData={query}
+							onChange={handleSearchChange}
+							onRun={onRunQuery}
+							placeholder="Filter, e.g. deployment.environment = 'dev' AND service.name = 'frontend'"
+							hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
+						/>
+					</div>
 				</div>
 				<RightToolbarActions
 					onStageRunQuery={onRunQuery}

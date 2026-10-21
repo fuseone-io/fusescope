@@ -259,7 +259,7 @@ function EndPointDetails({
 	return (
 		<div className="endpoint-details-container tw:flex tw:flex-col tw:gap-4">
 			<div className="endpoint-details-filters-container tw:flex tw:flex-wrap tw:items-center tw:gap-x-3 tw:gap-y-2">
-				<div className="endpoint-details-filters-container-dropdown fs-ui tw:flex tw:h-9 tw:w-[340px] tw:max-w-full tw:items-center tw:gap-2 tw:rounded-lg tw:border tw:border-input tw:bg-surface-raised tw:pl-3 tw:font-sans">
+				<div className="endpoint-details-filters-container-dropdown fs-ui tw:flex tw:h-9 tw:w-[340px] tw:max-w-full tw:items-center tw:gap-2 tw:rounded-md tw:border tw:border-input tw:bg-surface-raised tw:pl-3 tw:font-sans">
 					<span className="tw:text-xs tw:text-subtle-foreground">Endpoint</span>
 					<div className="tw:min-w-0 tw:flex-1">
 						<EndPointsDropDown
@@ -271,7 +271,7 @@ function EndPointDetails({
 						/>
 					</div>
 				</div>
-				<div className="endpoint-details-filters-container-search tw:min-w-0 tw:flex-[1_1_360px]">
+				<div className="endpoint-details-filters-container-search tw:min-w-0 tw:flex-[1_1_360px] tw:[&_.ant-select-selector]:min-h-9! tw:[&_.ant-select-selector]:rounded-md! tw:[&_.ant-select-selector]:bg-surface-raised!">
 					<QueryBuilderSearchV2
 						query={query}
 						onChange={handleFilterChange}
