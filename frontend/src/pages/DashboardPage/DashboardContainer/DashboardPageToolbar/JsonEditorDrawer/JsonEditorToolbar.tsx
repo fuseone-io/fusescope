@@ -1,7 +1,11 @@
-import { AlignLeft, Copy, Download, RotateCcw } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
+import { Button } from 'components/ui/button';
+import { AlignLeft, Copy, Download, RotateCcw } from 'lucide-react';
 
-import styles from './JsonEditorToolbar.module.scss';
+import {
+	BUTTON_GHOST,
+	BUTTON_OUTLINE,
+} from '../../DashboardSettings/components/settingsClassNames';
+import DisabledReason from '../../DashboardSettings/components/DisabledReason';
 
 const READ_ONLY_REASON = 'This dashboard is read-only';
 
@@ -23,53 +27,66 @@ function JsonEditorToolbar({
 	onDownload,
 	onReset,
 }: JsonEditorToolbarProps): JSX.Element {
+	let resetReason: string | undefined;
+	if (readOnly) {
+		resetReason = READ_ONLY_REASON;
+	} else if (!isDirty) {
+		resetReason = 'No changes to reset';
+	}
+
 	return (
-		<div className={styles.toolbar}>
+		<div className="tw:flex tw:flex-none tw:flex-wrap tw:items-center tw:gap-1.5 tw:border-b tw:border-border tw:px-6 tw:pt-1 tw:pb-3">
+			<DisabledReason reason={readOnly ? READ_ONLY_REASON : undefined}>
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					className={BUTTON_OUTLINE}
+					data-testid="json-editor-format"
+					disabled={readOnly}
+					onClick={onFormat}
+				>
+					<AlignLeft aria-hidden="true" />
+					Format
+				</Button>
+			</DisabledReason>
 			<Button
-				disabledTooltip={READ_ONLY_REASON}
-				variant="ghost"
-				color="secondary"
+				type="button"
+				variant="outline"
 				size="sm"
-				prefix={<AlignLeft size={14} />}
-				testId="json-editor-format"
-				disabled={readOnly}
-				onClick={onFormat}
-			>
-				Format
-			</Button>
-			<Button
-				variant="ghost"
-				color="secondary"
-				size="sm"
-				prefix={<Copy size={14} />}
-				testId="json-editor-copy"
+				className={BUTTON_OUTLINE}
+				data-testid="json-editor-copy"
 				onClick={onCopy}
 			>
+				<Copy aria-hidden="true" />
 				Copy
 			</Button>
 			<Button
-				variant="ghost"
-				color="secondary"
+				type="button"
+				variant="outline"
 				size="sm"
-				prefix={<Download size={14} />}
-				testId="json-editor-download"
+				className={BUTTON_OUTLINE}
+				data-testid="json-editor-download"
 				onClick={onDownload}
 			>
+				<Download aria-hidden="true" />
 				Download
 			</Button>
-			<div className={styles.spacer} />
-			<Button
-				disabledTooltip={readOnly ? READ_ONLY_REASON : 'No changes to reset'}
-				variant="ghost"
-				color="secondary"
-				size="sm"
-				prefix={<RotateCcw size={14} />}
-				testId="json-editor-reset"
-				disabled={readOnly || !isDirty}
-				onClick={onReset}
-			>
-				Reset
-			</Button>
+			<span className="tw:flex-1" />
+			<DisabledReason reason={resetReason}>
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					className={BUTTON_GHOST}
+					data-testid="json-editor-reset"
+					disabled={!!resetReason}
+					onClick={onReset}
+				>
+					<RotateCcw aria-hidden="true" />
+					Reset
+				</Button>
+			</DisabledReason>
 		</div>
 	);
 }

@@ -1,11 +1,9 @@
 import { KeyboardEvent, useCallback } from 'react';
 import MEditor from '@monaco-editor/react';
-import { TriangleAlert } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
-import cx from 'classnames';
-import { Drawer } from 'antd';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
+import { Button } from 'components/ui/button';
+import { cn } from 'lib/utils';
+import { Loader2, TriangleAlert } from 'lucide-react';
 import logEvent from 'api/common/logEvent';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/fuseScope.schemas';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
@@ -13,11 +11,19 @@ import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
 
 import { defineJsonEditorTheme, JSON_EDITOR_THEME } from './editorTheme';
-import styles from './JsonEditorDrawer.module.scss';
 import JsonEditorToolbar from './JsonEditorToolbar';
 import { useJsonEditor } from './useJsonEditor';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
+import {
+	BADGE_ERROR,
+	BADGE_SUCCESS,
+	BUTTON_GHOST,
+	BUTTON_SM,
+} from '../../DashboardSettings/components/settingsClassNames';
+import DisabledReason from '../../DashboardSettings/components/DisabledReason';
+import SettingsSheetFooter from '../../DashboardSettings/components/SettingsSheetFooter';
+import SettingsDrawer from '../SettingsDrawer';
 
 interface JsonEditorDrawerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -121,86 +127,32 @@ function JsonEditorDrawer({
 				)} ${missingPanelRefs.length === 1 ? 'references' : 'reference'} a panel that no longer exists.`
 			: null;
 
+	const warnings = [
+		{
+			text: danglingWarning,
+			ids: danglingPanelIds,
+			testId: 'json-editor-dangling-warning',
+		},
+		{
+			text: missingRefWarning,
+			ids: missingPanelRefs,
+			testId: 'json-editor-missing-ref-warning',
+		},
+	];
+
 	return (
-		<Drawer
-			title="Dashboard JSON"
-			placement="right"
-			width={660}
+		<SettingsDrawer
+			drawerTitle="Dashboard JSON"
+			subtitle={dashboard.spec?.display?.name || dashboard.name}
+			testId="json-editor-sheet"
+			isOpen={isOpen}
 			onClose={onClose}
-			open={isOpen}
-			rootClassName={styles.root}
-			footer={
-				<div className={styles.footer}>
-					<div className={styles.footerStatus}>
-						<Typography.Text
-							className={cx(styles.validation, {
-								[styles.validationValid]: validity.valid,
-								[styles.validationInvalid]: !validity.valid,
-							})}
-							data-testid="json-editor-validation"
-						>
-							{validationText}
-						</Typography.Text>
-						{danglingWarning && (
-							<Tooltip title={danglingPanelIds.join(', ')}>
-								<span
-									className={styles.danglingWarning}
-									data-testid="json-editor-dangling-warning"
-								>
-									<TriangleAlert size={12} className={styles.warningIcon} />
-									<Typography.Text className={styles.warningText}>
-										{danglingWarning}
-									</Typography.Text>
-								</span>
-							</Tooltip>
-						)}
-						{missingRefWarning && (
-							<Tooltip title={missingPanelRefs.join(', ')}>
-								<span
-									className={styles.danglingWarning}
-									data-testid="json-editor-missing-ref-warning"
-								>
-									<TriangleAlert size={12} className={styles.warningIcon} />
-									<Typography.Text className={styles.warningText}>
-										{missingRefWarning}
-									</Typography.Text>
-								</span>
-							</Tooltip>
-						)}
-					</div>
-					<div className={styles.footerActions}>
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="md"
-							testId="json-editor-cancel"
-							onClick={onClose}
-						>
-							Cancel
-						</Button>
-						<AuthZTooltip
-							checks={readOnlyChecks}
-							disabledTooltip={readOnly ? readOnlyTooltip : undefined}
-						>
-							<Button
-								disabledTooltip={applyDisabledReason}
-								variant="solid"
-								color="primary"
-								size="md"
-								testId="json-editor-apply"
-								disabled={applyDisabled}
-								loading={isSaving}
-								onClick={readOnly ? undefined : (): void => void apply()}
-							>
-								Apply changes
-							</Button>
-						</AuthZTooltip>
-					</div>
-				</div>
-			}
 		>
 			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-			<div className={styles.body} onKeyDown={onKeyDown}>
+			<div
+				className="tw:flex tw:min-h-0 tw:flex-1 tw:flex-col"
+				onKeyDown={onKeyDown}
+			>
 				<JsonEditorToolbar
 					isDirty={isDirty}
 					readOnly={readOnly}
@@ -209,29 +161,100 @@ function JsonEditorDrawer({
 					onDownload={onDownload}
 					onReset={reset}
 				/>
-				<div className={styles.editor}>
-					<MEditor
-						language="json"
-						height="100%"
-						value={draft}
-						onChange={(value): void => setDraft(value ?? '')}
-						options={{
-							readOnly,
-							scrollbar: { alwaysConsumeMouseWheel: false },
-							minimap: { enabled: false },
-							fontSize: 13,
-							fontFamily: 'Space Mono',
-						}}
-						theme="vs-dark"
-						onMount={(editor, monaco): void => {
-							defineJsonEditorTheme(monaco, editor.getContainerDomNode());
-							monaco.editor.setTheme(JSON_EDITOR_THEME);
-							void document.fonts.ready.then(() => monaco.editor.remeasureFonts());
-						}}
-					/>
+				<div className="tw:flex tw:min-h-0 tw:flex-1 tw:flex-col tw:gap-2.5 tw:px-6 tw:py-4">
+					<div className="tw:min-h-0 tw:flex-1 tw:overflow-hidden tw:rounded-lg tw:border tw:border-border">
+						<MEditor
+							language="json"
+							height="100%"
+							value={draft}
+							onChange={(value): void => setDraft(value ?? '')}
+							options={{
+								readOnly,
+								scrollbar: { alwaysConsumeMouseWheel: false },
+								minimap: { enabled: false },
+								fontSize: 13,
+								fontFamily: 'Space Mono',
+							}}
+							theme="vs-dark"
+							onMount={(editor, monaco): void => {
+								defineJsonEditorTheme(monaco, editor.getContainerDomNode());
+								monaco.editor.setTheme(JSON_EDITOR_THEME);
+								void document.fonts.ready.then(() => monaco.editor.remeasureFonts());
+							}}
+						/>
+					</div>
+					<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5">
+						<span
+							className={cn(
+								validity.valid ? BADGE_SUCCESS : BADGE_ERROR,
+								'tw:max-w-full tw:self-start tw:font-mono',
+							)}
+							data-testid="json-editor-validation"
+						>
+							<span className="tw:truncate">{validationText}</span>
+						</span>
+						{warnings.map(({ text, ids, testId }) =>
+							text ? (
+								<TitleTooltip key={testId} title={ids.join(', ')}>
+									<span
+										className="tw:flex tw:min-w-0 tw:items-center tw:gap-1.5 tw:self-start tw:text-xs tw:text-warning-ink"
+										data-testid={testId}
+									>
+										<TriangleAlert
+											className="tw:size-3.5 tw:flex-none tw:text-warning"
+											aria-hidden="true"
+										/>
+										<span className="tw:truncate">{text}</span>
+									</span>
+								</TitleTooltip>
+							) : null,
+						)}
+					</div>
 				</div>
+				<SettingsSheetFooter
+					status={
+						readOnly ? null : (
+							<span className="tw:text-xs tw:text-subtle-foreground">
+								Apply with{' '}
+								<kbd className="tw:rounded tw:border tw:border-border tw:px-1.5 tw:py-px tw:font-mono tw:text-[11px] tw:text-subtle-foreground">
+									⌘↵
+								</kbd>
+							</span>
+						)
+					}
+				>
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						className={BUTTON_GHOST}
+						data-testid="json-editor-cancel"
+						onClick={onClose}
+					>
+						Cancel
+					</Button>
+					<DisabledReason reason={applyDisabledReason}>
+						<AuthZTooltip
+							checks={readOnlyChecks}
+							disabledTooltip={readOnly ? readOnlyTooltip : undefined}
+						>
+							<Button
+								type="button"
+								size="sm"
+								className={cn(BUTTON_SM, 'tw:hover:bg-primary-strong')}
+								data-testid="json-editor-apply"
+								disabled={applyDisabled || isSaving}
+								aria-disabled={applyDisabled || isSaving || undefined}
+								onClick={readOnly ? undefined : (): void => void apply()}
+							>
+								{isSaving && <Loader2 className="tw:animate-spin" aria-hidden="true" />}
+								<span>Apply changes</span>
+							</Button>
+						</AuthZTooltip>
+					</DisabledReason>
+				</SettingsSheetFooter>
 			</div>
-		</Drawer>
+		</SettingsDrawer>
 	);
 }
 
