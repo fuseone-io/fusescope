@@ -1,6 +1,21 @@
+// Placeholder and typed text start 10px in and sit on the field's centre
+// line, like the other query builder fields. Pages with their own field skin
+// (the Metrics explorer panel) override these with `!important`.
 .metric-name-selector {
+	&.ant-select .ant-select-selector {
+		padding-inline: 10px;
+	}
+
+	.ant-select-selection-search {
+		inset-inline: 10px;
+	}
+
 	.ant-select-selection-placeholder {
-		color: var(--l3-foreground);
-		font-style: italic;
+		align-self: center;
+		height: auto;
+		padding-inline: 0;
+		color: var(--fs-subtle-foreground);
+		font-style: normal;
+		line-height: 20px;
 	}
 }

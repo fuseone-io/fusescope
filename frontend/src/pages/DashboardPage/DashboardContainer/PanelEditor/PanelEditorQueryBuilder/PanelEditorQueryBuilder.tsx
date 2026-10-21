@@ -179,7 +179,7 @@ function PanelEditorQueryBuilder({
 
 	return (
 		<div
-			className={styles.container}
+			className={cx(styles.container, 'qb-filter-field-skin')}
 			data-testid="panel-editor-v2-query-builder"
 			onKeyDownCapture={handleKeyDownCapture}
 			role="presentation"
