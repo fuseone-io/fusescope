@@ -8,8 +8,6 @@ import CeleryTaskGraphGrid from 'components/CeleryTask/CeleryTaskGraph/CeleryTas
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 
-import './CeleryTask.styles.scss';
-
 export default function CeleryTask(): JSX.Element {
 	const [task, setTask] = useState<CaptureDataProps | null>(null);
 	const loggedRef = useRef(false);
@@ -30,14 +28,12 @@ export default function CeleryTask(): JSX.Element {
 	};
 
 	return (
-		<div className="celery-task-container">
-			<div className="celery-content">
-				<CeleryTaskGraphGrid
-					onClick={onTaskClick}
-					queryEnabled={!task}
-					configureOptionComponent={<CeleryTaskConfigOptions />}
-				/>
-			</div>
+		<div className="celery-task-container" data-testid="celery-task-page">
+			<CeleryTaskGraphGrid
+				onClick={onTaskClick}
+				queryEnabled={!task}
+				configureOptionComponent={<CeleryTaskConfigOptions />}
+			/>
 			{!!task && (
 				<CeleryTaskDetail
 					onClose={(): void => {

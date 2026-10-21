@@ -2,16 +2,14 @@ import { useCallback, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Col, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
 import GridCard from 'container/WidgetCard/Card';
-import { Card } from 'container/WidgetCard/styles';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
 import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
@@ -52,7 +50,6 @@ function CeleryTaskLatencyGraph({
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
-	const isDarkMode = useIsDarkMode();
 
 	const tabs: TabData[] = [
 		{ label: CeleryTaskGraphState.P99, key: CeleryTaskGraphState.P99 },
@@ -158,97 +155,47 @@ function CeleryTaskLatencyGraph({
 		});
 	}, [entityData, navigateToExplorer, selectedTimeStamp]);
 
-	return (
-		<Card
-			isDarkMode={isDarkMode}
-			$panelType={PANEL_TYPES.TIME_SERIES}
-			className="celery-task-graph-task-latency"
-		>
-			<Row className="celery-task-states">
-				{tabs.map((tab, index) => (
-					<Col
-						key={tab.key}
-						onClick={(): void => handleTabClick(tab.key as CeleryTaskGraphState)}
-						className={`celery-task-states__tab ${
-							tab.key === graphState ? 'celery-task-states__tab--selected' : ''
-						}`}
-						data-last-tab={index === tabs.length - 1}
-					>
-						<div className="celery-task-states__label-wrapper">
-							<div className="celery-task-states__label">
-								{tab.label.toUpperCase()}
-							</div>
-						</div>
-						{tab.key === graphState && (
-							<div className="celery-task-states__indicator" />
-						)}
-					</Col>
-				))}
-			</Row>
-			<div className="celery-task-graph-grid-content">
-				{graphState === CeleryTaskGraphState.P99 && (
-					<>
-						<Button
-							type="default"
-							size="small"
-							id="Celery_p99_latency_button"
-							onClick={goToTraces}
-						>
-							View Traces
-						</Button>
-						<GridCard
-							widget={updatedWidgetData}
-							headerMenuList={[...ViewMenuAction]}
-							onDragSelect={onDragSelect}
-							onClickHandler={onGraphClick('Celery_p99_latency')}
-							isQueryEnabled={queryEnabled}
-							dataAvailable={checkIfDataExists}
-						/>
-					</>
-				)}
+	const buttonId = `Celery_${graphState}_latency`;
 
-				{graphState === CeleryTaskGraphState.P95 && (
-					<>
-						<Button
-							type="default"
-							size="small"
-							id="Celery_p95_latency_button"
-							onClick={goToTraces}
-						>
-							View Traces
-						</Button>
-						<GridCard
-							widget={updatedWidgetData}
-							headerMenuList={[...ViewMenuAction]}
-							onDragSelect={onDragSelect}
-							onClickHandler={onGraphClick('Celery_p95_latency')}
-							isQueryEnabled={queryEnabled}
-							dataAvailable={checkIfDataExists}
-						/>
-					</>
-				)}
-				{graphState === CeleryTaskGraphState.P90 && (
-					<>
-						<Button
-							type="default"
-							size="small"
-							id="Celery_p90_latency_button"
-							onClick={goToTraces}
-						>
-							View Traces
-						</Button>
-						<GridCard
-							widget={updatedWidgetData}
-							headerMenuList={[...ViewMenuAction]}
-							onDragSelect={onDragSelect}
-							onClickHandler={onGraphClick('Celery_p90_latency')}
-							isQueryEnabled={queryEnabled}
-							dataAvailable={checkIfDataExists}
-						/>
-					</>
-				)}
+	return (
+		<ContentPanel
+			testId="celery-task-latency"
+			className="celery-task-graph-task-latency"
+			bodyClassName="tw:flex tw:min-h-0 tw:flex-col"
+		>
+			<div className="tw:absolute tw:top-2.5 tw:right-12 tw:z-10">
+				<SegmentedControl
+					label="Percentile"
+					size="sm"
+					value={graphState}
+					onChange={handleTabClick}
+					options={tabs.map((tab) => ({
+						value: tab.key as CeleryTaskGraphState,
+						label: tab.label.toUpperCase(),
+						testId: `celery-latency-${tab.key}`,
+					}))}
+				/>
 			</div>
-		</Card>
+			<div className="celery-task-graph-grid-content tw:pt-2">
+				<Button
+					type="default"
+					size="small"
+					id={`${buttonId}_button`}
+					onClick={goToTraces}
+				>
+					View Traces
+				</Button>
+				<GridCard
+					key={graphState}
+					widget={updatedWidgetData}
+					headerMenuList={[...ViewMenuAction]}
+					onDragSelect={onDragSelect}
+					onClickHandler={onGraphClick(buttonId)}
+					isQueryEnabled={queryEnabled}
+					dataAvailable={checkIfDataExists}
+				/>
+			</div>
+		</ContentPanel>
 	);
 }
 

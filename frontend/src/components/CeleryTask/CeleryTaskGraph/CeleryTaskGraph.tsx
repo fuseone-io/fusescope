@@ -7,8 +7,6 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
 import GridCard from 'container/WidgetCard/Card';
-import { Card } from 'container/WidgetCard/styles';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
@@ -29,7 +27,6 @@ function CeleryTaskGraph({
 	getGraphData,
 	queryEnabled,
 	rightPanelTitle,
-	panelType,
 	openTracesButton,
 	onOpenTraceBtnClick,
 	applyCeleryTaskFilter,
@@ -58,7 +55,6 @@ function CeleryTaskGraph({
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
-	const isDarkMode = useIsDarkMode();
 
 	const selectedFilters = useMemo(
 		() =>
@@ -93,11 +89,7 @@ function CeleryTaskGraph({
 	);
 
 	return (
-		<Card
-			isDarkMode={isDarkMode}
-			$panelType={PANEL_TYPES.TIME_SERIES || panelType}
-			className="celery-task-graph"
-		>
+		<div className="celery-task-graph">
 			<GridCard
 				widget={applyCeleryTaskFilter ? updatedWidgetData : widgetData}
 				headerMenuList={[...ViewMenuAction]}
@@ -133,7 +125,7 @@ function CeleryTaskGraph({
 				dataAvailable={checkIfDataExists}
 				analyticsEvent={analyticsEvent}
 			/>
-		</Card>
+		</div>
 	);
 }
 

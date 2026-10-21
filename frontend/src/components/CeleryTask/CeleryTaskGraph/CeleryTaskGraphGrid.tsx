@@ -1,12 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Card } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { CardContainer } from 'container/WidgetCard/styles';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronDown, ChevronUp } from '@signozhq/icons';
+import MQChartPanel from 'components/MessagingQueues/MQChartPanel/MQChartPanel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
@@ -79,22 +76,6 @@ export default function CeleryTaskGraphGrid({
 		DataTypes.String,
 		'tag',
 	);
-	const isDarkMode = useIsDarkMode();
-
-	const [collapsedSections, setCollapsedSections] = useState<{
-		[key: string]: boolean;
-	}>({
-		metricBasedGraphs: false,
-		traceBasedGraphs: false,
-	});
-
-	const toggleCollapse = (key: string): void => {
-		setCollapsedSections((prev) => ({
-			...prev,
-			[key]: !prev[key],
-		}));
-	};
-
 	const checkIfDataExists = (isDataAvailable: boolean, title: string): void => {
 		if (isDataAvailable) {
 			logEvent(`MQ Celery: ${title} data exists`, {
@@ -104,121 +85,73 @@ export default function CeleryTaskGraphGrid({
 		}
 	};
 
+	const workersOnline = options.filter((option) => option.value).length;
+
 	return (
 		<div className="celery-task-graph-grid-container">
-			<div className="metric-based-graphs">
-				<CardContainer className="row-card" isDarkMode={isDarkMode}>
-					<div className="row-panel">
-						<div className="row-panel-section">
-							<Typography.Text className="section-title">
-								Flower Metrics
-							</Typography.Text>
-							{collapsedSections.metricBasedGraphs ? (
-								<ChevronDown
-									size={14}
-									onClick={(): void => toggleCollapse('metricBasedGraphs')}
-									className="row-icon"
-								/>
-							) : (
-								<ChevronUp
-									size={14}
-									onClick={(): void => toggleCollapse('metricBasedGraphs')}
-									className="row-icon"
-								/>
-							)}
-						</div>
-					</div>
-				</CardContainer>
-				{!collapsedSections.metricBasedGraphs && (
-					<div className="metric-page-grid">
-						<CeleryTaskGraph
-							key={celeryActiveTasksData.id}
-							widgetData={celeryActiveTasksData}
-							queryEnabled={queryEnabled}
-							customErrorMessage="Enable Flower metrics to view this graph"
-							checkIfDataExists={(isDataAvailable): void =>
-								checkIfDataExists(isDataAvailable, 'Active Tasks by worker')
-							}
-							analyticsEvent="MQ Celery: Flower metric not enabled"
-						/>
-						<Card className="celery-task-graph-worker-count">
-							<div className="worker-count-header">
-								<Typography.Text className="worker-count-header-text">
-									Worker Online
-								</Typography.Text>
-							</div>
-							<div className="worker-count-text-container">
-								<Typography.Text className="celery-task-graph-worker-count-text">
-									{options.filter((option) => option.value).length}
-								</Typography.Text>
-							</div>
-						</Card>
-					</div>
-				)}
+			<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-3 tw:gap-y-2">
+				{configureOptionComponent}
+				<span className="fs-ui tw:font-sans tw:text-xs tw:text-subtle-foreground">
+					Select a point on any chart to list the tasks behind it
+				</span>
 			</div>
-			<div className="trace-based-graphs">
-				<div className="trace-based-graphs-header">
-					<CardContainer className="row-card" isDarkMode={isDarkMode}>
-						<div className="row-panel">
-							<div className="row-panel-section">
-								<Typography.Text className="section-title">
-									Span Based Stats
-								</Typography.Text>
-								{collapsedSections.traceBasedGraphs ? (
-									<ChevronDown
-										size={14}
-										onClick={(): void => toggleCollapse('traceBasedGraphs')}
-										className="row-icon"
-									/>
-								) : (
-									<ChevronUp
-										size={14}
-										onClick={(): void => toggleCollapse('traceBasedGraphs')}
-										className="row-icon"
-									/>
-								)}
-							</div>
-						</div>
-					</CardContainer>
-					<div className="configure-option-Info">
-						{configureOptionComponent}
-						<Typography.Text className="configure-option-Info-text">
-							Click on a graph co-ordinate to see more details
-						</Typography.Text>
-					</div>
-				</div>
-				{!collapsedSections.traceBasedGraphs && (
-					<>
-						<CeleryTaskBar
-							queryEnabled={queryEnabled}
+			<div className="celery-task-graph-flower">
+				<MQChartPanel height="small" testId="celery-flower-active-tasks">
+					<CeleryTaskGraph
+						key={celeryActiveTasksData.id}
+						widgetData={celeryActiveTasksData}
+						queryEnabled={queryEnabled}
+						customErrorMessage="Enable Flower metrics to view this graph"
+						checkIfDataExists={(isDataAvailable): void =>
+							checkIfDataExists(isDataAvailable, 'Active Tasks by worker')
+						}
+						analyticsEvent="MQ Celery: Flower metric not enabled"
+					/>
+				</MQChartPanel>
+				<ContentPanel
+					testId="celery-workers-online"
+					className="tw:justify-center"
+					bodyClassName="fs-ui tw:flex tw:flex-col tw:justify-center tw:gap-1 tw:px-5 tw:py-4 tw:font-sans"
+				>
+					<span className="tw:text-[11px] tw:font-medium tw:tracking-[0.05em] tw:text-muted-foreground tw:uppercase">
+						Workers online
+					</span>
+					<span className="tw:text-[32px] tw:leading-[1.1] tw:font-semibold tw:tabular-nums">
+						{workersOnline}
+					</span>
+					<span className="tw:text-xs tw:text-muted-foreground">
+						from Flower metrics
+					</span>
+				</ContentPanel>
+			</div>
+			<CeleryTaskBar
+				queryEnabled={queryEnabled}
+				onClick={onClick}
+				checkIfDataExists={(isDataAvailable): void =>
+					checkIfDataExists(isDataAvailable, 'State Graph')
+				}
+			/>
+			<CeleryTaskLatencyGraph
+				queryEnabled={queryEnabled}
+				checkIfDataExists={(isDataAvailable): void =>
+					checkIfDataExists(isDataAvailable, 'Task Latency')
+				}
+			/>
+			<div className="celery-task-graph-grid-bottom">
+				{bottomWidgetData.map((widgetData, index) => (
+					<MQChartPanel key={widgetData.id} height="medium">
+						<CeleryTaskGraph
+							widgetData={widgetData}
 							onClick={onClick}
-							checkIfDataExists={(isDataAvailable): void =>
-								checkIfDataExists(isDataAvailable, 'State Graph')
-							}
-						/>
-						<CeleryTaskLatencyGraph
 							queryEnabled={queryEnabled}
+							rightPanelTitle={rightPanelTitle[index]}
+							applyCeleryTaskFilter
 							checkIfDataExists={(isDataAvailable): void =>
-								checkIfDataExists(isDataAvailable, 'Task Latency')
+								checkIfDataExists(isDataAvailable, rightPanelTitle[index])
 							}
 						/>
-						<div className="celery-task-graph-grid-bottom">
-							{bottomWidgetData.map((widgetData, index) => (
-								<CeleryTaskGraph
-									key={widgetData.id}
-									widgetData={widgetData}
-									onClick={onClick}
-									queryEnabled={queryEnabled}
-									rightPanelTitle={rightPanelTitle[index]}
-									applyCeleryTaskFilter
-									checkIfDataExists={(isDataAvailable): void =>
-										checkIfDataExists(isDataAvailable, rightPanelTitle[index])
-									}
-								/>
-							))}
-						</div>
-					</>
-				)}
+					</MQChartPanel>
+				))}
 			</div>
 		</div>
 	);

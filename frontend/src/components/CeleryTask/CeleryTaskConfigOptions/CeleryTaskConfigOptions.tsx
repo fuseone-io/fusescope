@@ -24,11 +24,12 @@ function CeleryTaskConfigOptions(): JSX.Element {
 	return (
 		<div className="celery-task-filters">
 			<div className="celery-filters">
-				<Typography.Text style={{ whiteSpace: 'nowrap' }}>
-					Task Name
+				<Typography.Text className="celery-filters-label">
+					Task name
 				</Typography.Text>
 				<Select
 					placeholder="Task Name"
+					aria-label="Task name"
 					showSearch
 					mode="multiple"
 					options={options}

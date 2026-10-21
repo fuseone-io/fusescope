@@ -3,11 +3,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
 import GridCard from 'container/WidgetCard/Card';
-import { Card } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
@@ -173,12 +172,17 @@ function CeleryTaskBar({
 	});
 
 	return (
-		<Card
-			isDarkMode={isDarkMode}
-			$panelType={PANEL_TYPES.BAR}
+		<ContentPanel
+			testId="celery-task-states"
 			className="celery-task-graph-bar"
+			bodyClassName="tw:flex tw:min-h-0 tw:flex-col"
 		>
-			<CeleryTaskStateGraphConfig barState={barState} setBarState={setBarState} />
+			<div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-x-3 tw:gap-y-2 tw:px-3 tw:pt-3">
+				<CeleryTaskStateGraphConfig barState={barState} setBarState={setBarState} />
+				<span className="fs-ui tw:pr-2 tw:font-sans tw:text-xs tw:text-subtle-foreground">
+					Tasks per interval, from span status
+				</span>
+			</div>
 			<div className="celery-task-graph-grid-content">
 				{barState === CeleryTaskState.All && (
 					<GridCard
@@ -258,7 +262,7 @@ function CeleryTaskBar({
 					/>
 				)}
 			</div>
-		</Card>
+		</ContentPanel>
 	);
 }
 
