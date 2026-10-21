@@ -14,16 +14,16 @@ const (
 	componentNameK8sAttributesProcessor     = "k8sattributesprocessor"
 )
 
-// Documentation link emitted on missing entries. The Kubernetes page covers
-// every component, host metrics included, since the k8s-infra chart runs them.
+// Documentation links emitted on missing entries: each component's section on
+// the Kubernetes page, host metrics included, since the k8s-infra chart runs them.
 const docLinkKubernetes = "https://fuseone-io.github.io/fusescope-docs/sending-data/kubernetes/"
 
 const (
-	docLinkHostMetricsReceiver        = docLinkKubernetes
-	docLinkKubeletStatsReceiver       = docLinkKubernetes
-	docLinkK8sClusterReceiver         = docLinkKubernetes
-	docLinkResourceDetectionProcessor = docLinkKubernetes
-	docLinkK8sAttributesProcessor     = docLinkKubernetes
+	docLinkHostMetricsReceiver        = docLinkKubernetes + "#hostmetrics-receiver"
+	docLinkKubeletStatsReceiver       = docLinkKubernetes + "#kubeletstats-receiver"
+	docLinkK8sClusterReceiver         = docLinkKubernetes + "#k8scluster-receiver"
+	docLinkResourceDetectionProcessor = docLinkKubernetes + "#resourcedetection-processor"
+	docLinkK8sAttributesProcessor     = docLinkKubernetes + "#k8sattributes-processor"
 )
 
 var (

@@ -246,11 +246,20 @@ func requireMissingAttrs(t *testing.T, name string, got *inframonitoringtypes.Mi
 }
 
 func TestCheckSpecsLinkFuseScopeDocs(t *testing.T) {
-	const want = "https://fuseone-io.github.io/fusescope-docs/sending-data/kubernetes/"
+	const kubernetesDocs = "https://fuseone-io.github.io/fusescope-docs/sending-data/kubernetes/"
+	wantByComponent := map[string]string{
+		componentNameHostMetricsReceiver:        kubernetesDocs + "#hostmetrics-receiver",
+		componentNameKubeletStatsReceiver:       kubernetesDocs + "#kubeletstats-receiver",
+		componentNameK8sClusterReceiver:         kubernetesDocs + "#k8scluster-receiver",
+		componentNameResourceDetectionProcessor: kubernetesDocs + "#resourcedetection-processor",
+		componentNameK8sAttributesProcessor:     kubernetesDocs + "#k8sattributes-processor",
+	}
 
 	for checkType, spec := range checkSpecs {
 		for _, bucket := range spec.Buckets {
 			t.Run(checkType.StringValue()+"/"+bucket.Component.Name, func(t *testing.T) {
+				want, ok := wantByComponent[bucket.Component.Name]
+				require.True(t, ok, "no docs section for %s", bucket.Component.Name)
 				require.Equal(t, want, bucket.DocumentationLink)
 			})
 		}

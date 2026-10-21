@@ -45,7 +45,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 			require.NotEmpty(t, clause.Warnings, "expected warning for: %s", expr)
 			require.Contains(t, clause.Warnings[0], "operator used without wildcards")
-			require.Contains(t, clause.WarningsDocURL, "operators-reference/#string-matching-operators")
+			require.Contains(t, clause.WarningsDocURL, "search-syntax/#comparisons")
 		})
 	}
 }
