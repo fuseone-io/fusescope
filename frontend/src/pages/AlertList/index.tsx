@@ -13,11 +13,27 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import AlertDetails from 'pages/AlertDetails';
 import ChannelsEdit from 'pages/ChannelsEdit';
 import ChannelsNew from 'pages/ChannelsNew';
+import {
+	Bell,
+	BellRing,
+	CalendarClock,
+	ListChecks,
+	Route,
+	Send,
+	Settings2,
+} from 'lucide-react';
 
 import AlertsPageShell, { FILL_TAB_PANEL } from './components/AlertsPageShell';
 import { AlertListSubTabs, AlertListTabs } from './types';
 
-const TAB_PANE_CLASS = 'tw:flex tw:flex-1 tw:flex-col';
+function tabLabel(Icon: typeof Bell, label: string): JSX.Element {
+	return (
+		<>
+			<Icon aria-hidden="true" className="tw:size-4" />
+			{label}
+		</>
+	);
+}
 
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
@@ -30,7 +46,6 @@ function AllAlertList(): JSX.Element {
 	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
 	const isChannelsNew = location.pathname === ROUTES.CHANNELS_NEW;
 	const isChannelsEdit = location.pathname.startsWith('/alerts/channels/edit/');
-	const isChannelDetails = isChannelsNew || isChannelsEdit;
 
 	const handleConfigurationTabChange = useCallback(
 		(subTab: string): void => {
@@ -46,12 +61,12 @@ function AllAlertList(): JSX.Element {
 	const configurationTabs: PageTab[] = [
 		{
 			value: AlertListSubTabs.PLANNED_DOWNTIME,
-			label: 'Planned Downtime',
+			label: tabLabel(CalendarClock, 'Planned Downtime'),
 			content: <PlannedDowntime />,
 		},
 		{
 			value: AlertListSubTabs.ROUTING_POLICIES,
-			label: 'Routing Policies',
+			label: tabLabel(Route, 'Routing Policies'),
 			content: <RoutingPolicies />,
 		},
 	];
@@ -59,32 +74,22 @@ function AllAlertList(): JSX.Element {
 	const tabs: PageTab[] = [
 		{
 			value: AlertListTabs.TRIGGERED_ALERTS,
-			label: 'Triggered Alerts',
+			label: tabLabel(BellRing, 'Triggered Alerts'),
 			content: <TriggeredAlerts />,
 		},
 		{
 			value: AlertListTabs.ALERT_RULES,
-			label: 'Alert Rules',
-			content: (
-				<div className={TAB_PANE_CLASS}>
-					{isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />}
-				</div>
-			),
+			label: tabLabel(ListChecks, 'Alert Rules'),
+			content: <AllAlertRules />,
 		},
 		{
 			value: AlertListTabs.CHANNELS,
-			label: 'Notification Channels',
-			content: (
-				<div className={TAB_PANE_CLASS}>
-					{isChannelsNew && <ChannelsNew />}
-					{isChannelsEdit && <ChannelsEdit />}
-					{!isChannelDetails && <AllAlertChannels />}
-				</div>
-			),
+			label: tabLabel(Send, 'Notification Channels'),
+			content: <AllAlertChannels />,
 		},
 		{
 			value: AlertListTabs.CONFIGURATION,
-			label: 'Configuration',
+			label: tabLabel(Settings2, 'Configuration'),
 			content: (
 				<PageTabs
 					label="Configuration sections"
@@ -97,15 +102,15 @@ function AllAlertList(): JSX.Element {
 		},
 	];
 
-	const getActiveKey = (): string => {
-		if (isAlertHistory || isAlertOverview) {
-			return AlertListTabs.ALERT_RULES;
-		}
-		if (isChannelDetails) {
-			return AlertListTabs.CHANNELS;
-		}
-		return tab || AlertListTabs.ALERT_RULES;
-	};
+	if (isAlertHistory || isAlertOverview) {
+		return <AlertDetails />;
+	}
+	if (isChannelsNew) {
+		return <ChannelsNew />;
+	}
+	if (isChannelsEdit) {
+		return <ChannelsEdit />;
+	}
 
 	const handleTabChange = (tab: string): void => {
 		const queryParams = new URLSearchParams();
@@ -127,7 +132,7 @@ function AllAlertList(): JSX.Element {
 	return (
 		<AlertsPageShell
 			tabs={tabs}
-			activeTab={getActiveKey()}
+			activeTab={tab || AlertListTabs.ALERT_RULES}
 			onTabChange={handleTabChange}
 		/>
 	);

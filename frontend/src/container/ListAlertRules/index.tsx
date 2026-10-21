@@ -13,6 +13,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
+import AlertsHeaderActions from 'pages/AlertList/components/AlertsHeaderActions';
 import { Plus } from 'lucide-react';
 
 import TextToolTip from 'components/TextToolTip';
@@ -47,7 +48,7 @@ function ListAlertRules(): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
-		rowHeight: 46,
+		rowHeight: 56,
 	});
 
 	const { orderBy, page, limit, setLimit, setPage } = useTableParams(
@@ -105,11 +106,9 @@ function ListAlertRules(): JSX.Element {
 			...columns,
 			{
 				id: 'actions',
-				header: (): JSX.Element => (
-					<span style={{ textAlign: 'right', display: 'block' }}>Actions</span>
-				),
+				header: (): JSX.Element => <span className="tw:sr-only">Actions</span>,
 				accessorKey: 'id',
-				width: { fixed: '96px', ignoreLastColumnFill: true },
+				width: { fixed: '64px', ignoreLastColumnFill: true },
 				enableSort: false,
 				enableRemove: false,
 				enableMove: false,
@@ -134,6 +133,18 @@ function ListAlertRules(): JSX.Element {
 
 	return (
 		<div className={styles.container}>
+			{!isEmptyNoRules && addNewAlert && (
+				<AlertsHeaderActions>
+					<Button
+						className="fs-ui tw:font-sans"
+						onClick={handleNewAlert}
+						data-testid="list-alerts-new-alert-button"
+					>
+						<Plus aria-hidden="true" />
+						New Alert
+					</Button>
+				</AlertsHeaderActions>
+			)}
 			{!isEmptyNoRules && (
 				<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
 					<ToolbarSearch
@@ -149,16 +160,6 @@ function ListAlertRules(): JSX.Element {
 							urlText="Learn More"
 						/>
 						<ColumnSelector columns={columns} storageKey="alert-rules-columns" />
-						{addNewAlert && (
-							<Button
-								className="fs-ui tw:font-sans"
-								onClick={handleNewAlert}
-								data-testid="list-alerts-new-alert-button"
-							>
-								<Plus aria-hidden="true" />
-								New Alert
-							</Button>
-						)}
 					</div>
 				</div>
 			)}
