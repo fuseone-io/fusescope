@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Info } from '@signozhq/icons';
 // eslint-disable-next-line signoz/no-antd-components -- lightweight description tooltip, matches V1
 import { Tooltip } from 'antd';
+import cx from 'classnames';
+import { Link2, Loader2 } from 'lucide-react';
 
 import type { VariableFormModel } from '../../../DashboardSettings/Variables/variableFormModel';
 import type {
@@ -29,7 +30,7 @@ interface VariableSelectorProps {
 	onAutoSelect: (selection: VariableSelection) => void;
 }
 
-/** One labelled variable control; dispatches on the variable type. */
+/** One `$name | value` pill; dispatches on the variable type. */
 function VariableSelector({
 	variable,
 	variables,
@@ -53,12 +54,13 @@ function VariableSelector({
 	// never sits over the open list.
 	const [hasFocus, setHasFocus] = useState(false);
 
+	const dependsOnLabel = dependsOn.map((parent) => '$' + parent).join(', ');
+
 	const hasTooltip =
 		!!variable.description || dependsOn.length > 0 || usedBy.length > 0;
 
-	// Surface the fetch on the bar itself: a bar flush along the control's bottom
-	// edge while a QUERY/DYNAMIC variable is loading (or waiting on a parent), so the
-	// user sees options are being fetched without opening the dropdown.
+	// Surface the fetch on the pill itself while a QUERY/DYNAMIC variable is
+	// loading (or waiting on a parent), without opening the dropdown.
 	const { isVariableFetching, isVariableWaiting } = useVariableFetchState(
 		variable.name,
 	);
@@ -85,29 +87,50 @@ function VariableSelector({
 			/>
 		);
 
+	const name = (
+		<span
+			className={cx(styles.variableName, {
+				[styles.variableNameHint]: hasTooltip,
+			})}
+		>
+			<span
+				className={styles.name}
+				title={hasTooltip ? undefined : `$${variable.name}`}
+			>
+				${variable.name}
+			</span>
+			{dependsOn.length > 0 ? (
+				<Link2
+					className={styles.dependencyIcon}
+					size={12}
+					role="img"
+					aria-label={`Depends on ${dependsOnLabel}`}
+				/>
+			) : null}
+		</span>
+	);
+
 	return (
 		<div
 			className={styles.variableItem}
 			data-testid={`variable-${variable.name}`}
+			aria-busy={isFetchingOptions || undefined}
 		>
-			<span className={styles.variableName}>
-				<span className={styles.name} title={`$${variable.name}`}>
-					${variable.name}
-				</span>
-				{hasTooltip ? (
-					<Tooltip
-						title={
-							<VariableTooltip
-								description={variable.description}
-								dependsOn={dependsOn}
-								usedBy={usedBy}
-							/>
-						}
-					>
-						<Info className={styles.infoIcon} size={12} />
-					</Tooltip>
-				) : null}
-			</span>
+			{hasTooltip ? (
+				<Tooltip
+					title={
+						<VariableTooltip
+							description={variable.description}
+							dependsOn={dependsOn}
+							usedBy={usedBy}
+						/>
+					}
+				>
+					{name}
+				</Tooltip>
+			) : (
+				name
+			)}
 
 			<div
 				className={styles.variableValue}
@@ -119,15 +142,16 @@ function VariableSelector({
 					}
 				}}
 			>
+				{isFetchingOptions ? (
+					<span
+						className={styles.loading}
+						data-testid={`variable-loading-${variable.name}`}
+					>
+						<Loader2 size={14} aria-label="Refreshing values..." role="img" />
+					</span>
+				) : null}
 				{renderControl()}
 			</div>
-
-			{isFetchingOptions ? (
-				<span
-					className={styles.loadingBar}
-					data-testid={`variable-loading-${variable.name}`}
-				/>
-			) : null}
 		</div>
 	);
 }

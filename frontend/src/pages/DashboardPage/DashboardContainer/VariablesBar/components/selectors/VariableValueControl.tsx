@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { RotateCw, TriangleAlert } from 'lucide-react';
 
 import {
 	VARIABLE_TYPE_EVENT_LABEL,
@@ -15,6 +16,7 @@ import {
 import { useAutoSelect } from '../../hooks/useAutoSelect';
 import ValueSelector from './ValueSelector';
 import { useVariableOptions } from '../../hooks/useVariableOptions';
+import styles from '../VariableSelector/VariableSelector.module.scss';
 
 interface VariableValueControlProps {
 	variable: VariableFormModel;
@@ -54,21 +56,40 @@ function VariableValueControl({
 	}, [variable, options]);
 
 	return (
-		<ValueSelector
-			options={options}
-			variableType={VARIABLE_TYPE_EVENT_LABEL[variable.type]}
-			multiSelect={variable.multiSelect}
-			showAllOption={variable.showAllOption}
-			loading={loading}
-			errorMessage={errorMessage}
-			onRetry={onRetry}
-			isRetryable={isRetryable}
-			dynamic={dynamic}
-			selection={selection}
-			onChange={onChange}
-			emptyFallback={emptyFallback}
-			testId={`variable-select-${variable.name}`}
-		/>
+		<>
+			{errorMessage ? (
+				<span className={styles.errorIcon} title={errorMessage} data-variable-error>
+					<TriangleAlert size={14} role="img" aria-label="Couldn't load values" />
+				</span>
+			) : null}
+			<ValueSelector
+				options={options}
+				variableType={VARIABLE_TYPE_EVENT_LABEL[variable.type]}
+				multiSelect={variable.multiSelect}
+				showAllOption={variable.showAllOption}
+				loading={loading}
+				errorMessage={errorMessage}
+				onRetry={onRetry}
+				isRetryable={isRetryable}
+				dynamic={dynamic}
+				selection={selection}
+				onChange={onChange}
+				emptyFallback={emptyFallback}
+				testId={`variable-select-${variable.name}`}
+			/>
+			{errorMessage && onRetry && isRetryable !== false ? (
+				<button
+					type="button"
+					className={styles.retry}
+					title="Retry"
+					aria-label="Retry"
+					data-testid={`variable-retry-${variable.name}`}
+					onClick={onRetry}
+				>
+					<RotateCw size={14} aria-hidden="true" />
+				</button>
+			) : null}
+		</>
 	);
 }
 

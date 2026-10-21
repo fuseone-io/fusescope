@@ -42,7 +42,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 		itemCount: variables.length,
 		gap: 8,
 		// Reserve room for the "+N" trigger and "Add variable" so both stay on one line.
-		reserveWidth: isEditable ? 176 : 48,
+		reserveWidth: isEditable ? 216 : 88,
 		enabled: !expanded,
 	});
 
@@ -67,7 +67,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 			onClick={(): void => setVariablesExpanded(dashboardId, !expanded)}
 		>
 			{expanded && <ChevronLeft />}
-			<span>{expanded ? 'Less' : `+${overflowCount}`}</span>
+			<span>{expanded ? 'Less' : `+${overflowCount} more`}</span>
 		</Button>
 	);
 
