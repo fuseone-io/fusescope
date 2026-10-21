@@ -191,7 +191,14 @@ export async function selectEvaluationTimeframe(
 	await expect(evaluationSettingsButton(page)).toContainText(
 		EVALUATION_WINDOW_PRESETS[value],
 	);
+	// Escape only returns focus to the trigger; the popover stays open and can
+	// cover the controls below it, so close it from its trigger.
 	await page.keyboard.press('Escape');
+	const popover = page.locator('.evaluation-window-popover');
+	if (await popover.isVisible()) {
+		await evaluationSettingsButton(page).click();
+	}
+	await expect(popover).toBeHidden();
 }
 
 /**
