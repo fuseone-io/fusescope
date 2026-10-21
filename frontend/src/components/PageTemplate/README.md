@@ -21,6 +21,8 @@ The parts a new-UI page is built from. Built on `components/ui` and the
 | `Sparkline`, `TrendCell`, `DeltaText` | A cell's trend line; a cell with sparkline, value and change; a change against the previous period, coloured when notable. |
 | `ShareBar`, `TabCountBadge` | A share bar with its number (`tone="error"` for error rates); a count beside a tab or panel title. |
 | `ChartHeaderLegend` + `useSeriesVisibility` | A chart's series as colour squares in its panel header, with optional figures (totals); the hook wires each item to show or hide its uPlot series. |
+| `SideSheet` | A right-side sheet for the detail of a selection: title, subtitle, toolbar (tabs, filters), scrolling body and footer; `modal={false}` keeps the page usable behind it. antd popups render inside it. |
+| `SegmentedControl` counts | An option's `count`, plain or as a warning badge (`countTone="warning"`). |
 
 ## `fs-ui` scope
 
@@ -37,5 +39,6 @@ legacy chart or table in a panel body renders as before.
 - Traces funnels and funnel detail (`pages/TracesFunnels`, `pages/TracesFunnelDetails`)
 - Saved views of every explorer (`pages/SaveView`)
 - Trace details (`pages/TraceDetailsV3`)
+- Messaging Queues: Kafka, Celery and the queue overview (`pages/MessagingQueues`, `pages/Celery`)
 
 Stories: `Components/Page Template` (light and dark).

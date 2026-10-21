@@ -4,6 +4,10 @@ export interface SegmentedOption<T extends string> {
 	value: T;
 	label: string;
 	testId?: string;
+	/** A count after the label; `warning` draws it as a badge. */
+	count?: number;
+	countTone?: 'neutral' | 'warning';
+	countTestId?: string;
 }
 
 interface SegmentedControlProps<T extends string> {
@@ -58,6 +62,19 @@ function SegmentedControl<T extends string>({
 						)}
 					>
 						{option.label}
+						{option.count !== undefined && (
+							<span
+								data-testid={option.countTestId}
+								className={cn(
+									'tw:tabular-nums',
+									option.countTone === 'warning'
+										? 'tw:inline-flex tw:h-[18px] tw:items-center tw:rounded-sm tw:bg-warning-soft tw:px-1.5 tw:text-[11px] tw:text-warning-ink'
+										: 'tw:text-subtle-foreground',
+								)}
+							>
+								{option.count}
+							</span>
+						)}
 					</button>
 				);
 			})}
