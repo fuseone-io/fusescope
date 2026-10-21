@@ -37,10 +37,10 @@ export default function LeftToolbarActions({
 						return null;
 					}
 
-					const { icon: Icon, label, className, testId } = config;
+					const { icon: Icon, label, tooltip, className, testId } = config;
 
 					return (
-						<Tooltip key={item.key} title={label}>
+						<Tooltip key={item.key} title={tooltip}>
 							<Button
 								disabled={item.disabled}
 								className={cx(
