@@ -1,26 +1,30 @@
-import { useEffect, useMemo } from 'react';
+import { ReactNode, useEffect, useMemo } from 'react';
 import type { RuletypesRuleDTO } from 'api/generated/services/fuseScope.schemas';
+import SubpageHeader from 'components/Alerts/SubpageHeader/SubpageHeader';
+import TagChip from 'components/PageTemplate/components/TagChip';
+import ROUTES from 'constants/routes';
 import CreateAlertV2Header from 'container/CreateAlertV2/CreateAlertHeader';
-import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAlertRule } from 'providers/Alert';
 import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypesV2';
+import { isModifierKeyPressed } from 'utils/app';
 
 import AlertActionButtons from './ActionButtons/ActionButtons';
-import AlertLabels from './AlertLabels/AlertLabels';
-import AlertSeverity from './AlertSeverity/AlertSeverity';
-import AlertState from './AlertState/AlertState';
-
-import './AlertHeader.styles.scss';
+import AlertHeaderBadges from './AlertHeaderBadges';
 
 export type AlertHeaderProps = {
 	alertDetails: RuletypesRuleDTO | PostableAlertRuleV2;
+	/** The Overview / History tabs at the bottom of the band. */
+	tabs?: ReactNode;
 };
-function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
+
+function AlertHeader({ alertDetails, tabs }: AlertHeaderProps): JSX.Element {
 	const { state, alert: alertName, labels } = alertDetails;
 	const { alertRuleState, alertRuleName, setAlertRuleName } = useAlertRule();
+	const { safeNavigate } = useSafeNavigate();
 
 	useEffect(() => {
 		if (alertRuleName === undefined && alertName) {
@@ -32,55 +36,60 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 
 	const displayName = alertRuleName ?? alertName;
 
-	const labelsWithoutSeverity = useMemo(() => {
-		if (labels) {
-			return Object.fromEntries(
-				Object.entries(labels).filter(([key]) => key !== 'severity'),
-			);
-		}
-		return {};
-	}, [labels]);
+	const labelsWithoutSeverity = useMemo(
+		() =>
+			Object.entries(labels ?? {}).filter(([key]) => key !== 'severity') as [
+				string,
+				string,
+			][],
+		[labels],
+	);
 
 	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
 
-	const CreateAlertV1Header = (
-		<div className="alert-info__info-wrapper">
-			<div className="top-section">
-				<div className="alert-title-wrapper">
-					<AlertState
-						state={alertRuleState ?? state ?? ''}
-						testId="alert-header-state"
-					/>
-					<div className="alert-title" data-testid="alert-header-title">
-						<LineClampedText text={displayName || ''} />
-					</div>
-				</div>
-			</div>
-			<div className="bottom-section">
-				{labels?.severity && (
-					<AlertSeverity severity={labels.severity} testId="alert-header-severity" />
-				)}
-
-				{/* // TODO(shaheer): Get actual data when we are able to get alert firing from state from API */}
-				{/* <AlertStatus
-						status="firing"
-						timestamp={dayjs().subtract(1, 'd').valueOf()}
-					/> */}
-				<AlertLabels labels={labelsWithoutSeverity} testId="alert-header-labels" />
-			</div>
-		</div>
-	);
-
 	return (
-		<div className="alert-info">
-			{isV2Alert ? <CreateAlertV2Header /> : CreateAlertV1Header}
-			<div className="alert-info__action-buttons">
+		<SubpageHeader
+			testId="alert-details-header"
+			title={
+				<span data-testid="alert-header-title" title={displayName || ''}>
+					{displayName || 'Untitled rule'}
+				</span>
+			}
+			backLabel="Back to alert rules"
+			onBack={(e): void =>
+				safeNavigate(ROUTES.LIST_ALL_ALERT, { newTab: isModifierKeyPressed(e) })
+			}
+			badges={
+				<AlertHeaderBadges
+					state={alertRuleState ?? state ?? ''}
+					severity={labels?.severity}
+				/>
+			}
+			actions={
 				<AlertActionButtons
 					alertDetails={alertDetails}
 					ruleId={alertDetails?.id || ''}
 				/>
-			</div>
-		</div>
+			}
+			tabs={tabs}
+		>
+			{isV2Alert ? (
+				<CreateAlertV2Header />
+			) : (
+				labelsWithoutSeverity.length > 0 && (
+					<div
+						data-testid="alert-header-labels"
+						className="fs-ui tw:flex tw:flex-wrap tw:items-center tw:gap-1.5 tw:font-sans"
+					>
+						{labelsWithoutSeverity.map(([key, value]) => (
+							<TagChip key={key} title={`${key}: ${value}`}>
+								{key}: {value}
+							</TagChip>
+						))}
+					</div>
+				)
+			)}
+		</SubpageHeader>
 	);
 }
 

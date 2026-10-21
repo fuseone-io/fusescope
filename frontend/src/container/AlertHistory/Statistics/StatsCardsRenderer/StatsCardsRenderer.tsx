@@ -1,11 +1,12 @@
 import { useEffect, useMemo } from 'react';
 import { useGetAlertRuleDetailsStats } from 'pages/AlertDetails/hooks';
-import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
+import HistoryDataState from 'container/AlertHistory/HistoryDataState/HistoryDataState';
 import { StatsTimeSeriesItem } from 'types/api/alerts/def';
 
 import AverageResolutionCard from '../AverageResolutionCard/AverageResolutionCard';
 import StatsCard from '../StatsCard/StatsCard';
 import TotalTriggeredCard from '../TotalTriggeredCard/TotalTriggeredCard';
+import StatsLoading from './StatsLoading';
 
 const hasTotalTriggeredStats = (
 	totalCurrentTriggers: number | string,
@@ -74,11 +75,13 @@ function StatsCardsRenderer({
 	}, [adaptedData, setTotalCurrentTriggers]);
 
 	return (
-		<DataStateRenderer
+		<HistoryDataState
 			isLoading={isLoading}
 			isRefetching={isRefetching}
 			isError={isError || !isValidRuleId || !ruleId}
 			data={adaptedData}
+			loading={<StatsLoading />}
+			className="tw:col-span-full tw:bg-surface-raised"
 		>
 			{(data): JSX.Element => {
 				const {
@@ -125,7 +128,7 @@ function StatsCardsRenderer({
 					</>
 				);
 			}}
-		</DataStateRenderer>
+		</HistoryDataState>
 	);
 }
 

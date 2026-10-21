@@ -1,3 +1,5 @@
+import { Info } from 'lucide-react';
+
 import TopContributorsRows from './TopContributorsRows';
 import { TopContributorsCardProps } from './types';
 
@@ -9,9 +11,9 @@ function TopContributorsContent({
 
 	if (isEmpty) {
 		return (
-			<div className="empty-content">
-				<div className="empty-content__icon">ℹ️</div>
-				<div className="empty-content__text">
+			<div className="fs-ui tw:flex tw:h-full tw:items-center tw:px-5 tw:py-4 tw:font-sans">
+				<div className="tw:flex tw:w-full tw:items-start tw:gap-3 tw:rounded-lg tw:border tw:border-dashed tw:border-border tw:px-4 tw:py-5 tw:text-[13px] tw:text-muted-foreground">
+					<Info aria-hidden="true" className="tw:mt-0.5 tw:size-4 tw:flex-none" />
 					Top contributors highlight the most frequently triggering group-by
 					attributes in multi-dimensional alerts
 				</div>
@@ -20,12 +22,10 @@ function TopContributorsContent({
 	}
 
 	return (
-		<div className="top-contributors-card__content">
-			<TopContributorsRows
-				topContributors={topContributorsData.slice(0, 3)}
-				totalCurrentTriggers={totalCurrentTriggers}
-			/>
-		</div>
+		<TopContributorsRows
+			topContributors={topContributorsData.slice(0, 3)}
+			totalCurrentTriggers={totalCurrentTriggers}
+		/>
 	);
 }
 

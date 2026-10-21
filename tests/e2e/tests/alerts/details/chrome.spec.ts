@@ -25,17 +25,13 @@ test.describe('Alert details — page chrome', () => {
 		expect(copied).toBe(expected);
 	});
 
-	test('TC-02 breadcrumb navigates back to the alert list', async ({
+	test('TC-02 the back button navigates to the alert list', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId);
 
-		const breadcrumb = page.locator('.ant-breadcrumb');
-		await expect(breadcrumb).toContainText('Alert Rules');
-		await expect(breadcrumb).toContainText(alertHistory.ruleId);
-
-		await breadcrumb.getByText('Alert Rules').click();
+		await page.getByTestId('alerts-subpage-back').click();
 
 		await expect(page).toHaveURL(new RegExp(`${ALERTS_LIST_PATH}$`));
 	});

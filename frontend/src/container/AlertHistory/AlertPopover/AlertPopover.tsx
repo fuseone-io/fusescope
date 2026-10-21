@@ -1,64 +1,18 @@
-import React from 'react';
+import { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
-import { Color } from '@signozhq/design-tokens';
-import { Popover } from 'antd';
-import LogsIcon from 'assets/AlertHistory/LogsIcon';
+import { Popover, PopoverContent, PopoverTrigger } from 'components/ui/popover';
 import ROUTES from 'constants/routes';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { DraftingCompass } from '@signozhq/icons';
-
-import './AlertPopover.styles.scss';
+import { DraftingCompass, ScrollText } from 'lucide-react';
 
 type Props = {
-	children: React.ReactNode;
+	/** The trigger; must accept a ref. */
+	children: ReactElement;
 	relatedTracesLink?: string;
 	relatedLogsLink?: string;
 };
 
-function PopoverContent({
-	relatedTracesLink,
-	relatedLogsLink,
-}: {
-	relatedTracesLink?: Props['relatedTracesLink'];
-	relatedLogsLink?: Props['relatedLogsLink'];
-}): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-	return (
-		<div className="contributor-row-popover-buttons">
-			{!!relatedLogsLink && (
-				<Link
-					to={`${ROUTES.LOGS_EXPLORER}?${relatedLogsLink}`}
-					className="contributor-row-popover-buttons__button"
-					data-testid="alert-popover-view-logs"
-				>
-					<div className="icon">
-						<LogsIcon />
-					</div>
-					<div className="text">View Logs</div>
-				</Link>
-			)}
-			{!!relatedTracesLink && (
-				<Link
-					to={`${ROUTES.TRACES_EXPLORER}?${relatedTracesLink}`}
-					className="contributor-row-popover-buttons__button"
-					data-testid="alert-popover-view-traces"
-				>
-					<div className="icon">
-						<DraftingCompass
-							size={14}
-							color={isDarkMode ? Color.BG_VANILLA_400 : Color.TEXT_INK_400}
-						/>
-					</div>
-					<div className="text">View Traces</div>
-				</Link>
-			)}
-		</div>
-	);
-}
-PopoverContent.defaultProps = {
-	relatedTracesLink: '',
-	relatedLogsLink: '',
-};
+const LINK_CLASS =
+	'tw:flex tw:h-8 tw:items-center tw:gap-2 tw:rounded-sm tw:px-2 tw:text-[13px] tw:text-foreground tw:no-underline tw:outline-none tw:hover:bg-accent tw:hover:text-foreground tw:focus-visible:bg-accent';
 
 function AlertPopover({
 	children,
@@ -66,24 +20,40 @@ function AlertPopover({
 	relatedLogsLink,
 }: Props): JSX.Element {
 	return (
-		<div className="alert-popover-trigger-action">
-			<Popover
-				showArrow={false}
-				placement="bottom"
-				color="linear-gradient(139deg, rgba(18, 19, 23, 1) 0%, rgba(18, 19, 23, 1) 98.68%)"
-				destroyTooltipOnHide
-				rootClassName="alert-history-popover"
-				content={
-					<PopoverContent
-						relatedTracesLink={relatedTracesLink}
-						relatedLogsLink={relatedLogsLink}
-					/>
-				}
-				trigger="click"
+		<Popover>
+			<PopoverTrigger asChild>{children}</PopoverTrigger>
+			<PopoverContent
+				align="end"
+				className="tw:z-[1050] tw:flex tw:w-44 tw:flex-col tw:p-1 tw:font-sans"
 			>
-				{children}
-			</Popover>
-		</div>
+				{!!relatedLogsLink && (
+					<Link
+						to={`${ROUTES.LOGS_EXPLORER}?${relatedLogsLink}`}
+						className={LINK_CLASS}
+						data-testid="alert-popover-view-logs"
+					>
+						<ScrollText
+							aria-hidden="true"
+							className="tw:size-4 tw:text-muted-foreground"
+						/>
+						View Logs
+					</Link>
+				)}
+				{!!relatedTracesLink && (
+					<Link
+						to={`${ROUTES.TRACES_EXPLORER}?${relatedTracesLink}`}
+						className={LINK_CLASS}
+						data-testid="alert-popover-view-traces"
+					>
+						<DraftingCompass
+							aria-hidden="true"
+							className="tw:size-4 tw:text-muted-foreground"
+						/>
+						View Traces
+					</Link>
+				)}
+			</PopoverContent>
+		</Popover>
 	);
 }
 
@@ -95,7 +65,7 @@ AlertPopover.defaultProps = {
 type ConditionalAlertPopoverProps = {
 	relatedTracesLink: string;
 	relatedLogsLink: string;
-	children: React.ReactNode;
+	children: ReactElement;
 };
 export function ConditionalAlertPopover({
 	children,
@@ -112,6 +82,6 @@ export function ConditionalAlertPopover({
 			</AlertPopover>
 		);
 	}
-	return <div>{children}</div>;
+	return children;
 }
 export default AlertPopover;

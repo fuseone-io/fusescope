@@ -1,9 +1,3 @@
-@mixin flex-center {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
 .alert-empty-card {
 	margin-top: 50px;
 	.ant-empty-description {
@@ -12,41 +6,14 @@
 }
 
 .alert-details {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
+	&__filters .filters {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 
-	&__breadcrumb {
-		ol {
+		.reset-button {
+			display: flex;
 			align-items: center;
-		}
-		.breadcrumb-item {
-			color: var(--l2-foreground);
-			font-size: 14px;
-			line-height: 20px;
-			letter-spacing: 0.25px;
-			padding: 0;
-		}
-
-		.ant-breadcrumb-separator,
-		.breadcrumb-item--last {
-			color: var(--muted-foreground);
-			font-family: 'Geist Mono';
-		}
-	}
-
-	&__filters {
-		position: absolute;
-		top: 0;
-		right: 0;
-		z-index: 1;
-
-		.filters {
-			@include flex-center;
-			gap: 16px;
-			.reset-button {
-				@include flex-center;
-			}
 		}
 	}
 
@@ -54,6 +21,15 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 8px;
+		gap: 6px;
+	}
+}
+
+// The editor's action bar spans the page, not the padded content column.
+.alert-details .create-alert-v2-footer {
+	margin-inline: -16px;
+
+	@media (min-width: 768px) {
+		margin-inline: -24px;
 	}
 }

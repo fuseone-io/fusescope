@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { useGetAlertRuleDetailsTopContributors } from 'pages/AlertDetails/hooks';
 import { labelsArrayToObject } from 'container/AlertHistory/utils/labelAdapters';
-import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
+import HistoryDataState from 'container/AlertHistory/HistoryDataState/HistoryDataState';
 import { AlertRuleStats, AlertRuleTopContributors } from 'types/api/alerts/def';
 
 import TopContributorsCard from '../TopContributorsCard/TopContributorsCard';
+import TopContributorsLoading from './TopContributorsLoading';
 
 type TopContributorsRendererProps = {
 	totalCurrentTriggers: AlertRuleStats['totalCurrentTriggers'];
@@ -31,11 +32,13 @@ function TopContributorsRenderer({
 	}, [data?.data]);
 
 	return (
-		<DataStateRenderer
+		<HistoryDataState
 			isLoading={isLoading}
 			isRefetching={isRefetching}
 			isError={isError || !isValidRuleId || !ruleId}
 			data={adaptedData}
+			loading={<TopContributorsLoading />}
+			className="tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised"
 		>
 			{(topContributorsData): JSX.Element => (
 				<TopContributorsCard
@@ -43,7 +46,7 @@ function TopContributorsRenderer({
 					totalCurrentTriggers={totalCurrentTriggers}
 				/>
 			)}
-		</DataStateRenderer>
+		</HistoryDataState>
 	);
 }
 
