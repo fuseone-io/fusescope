@@ -10,13 +10,14 @@ import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLag
 import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import axios from 'axios';
 import cx from 'classnames';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import tableStyles from 'components/MessagingQueues/MQTable.module.scss';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import { isNumber } from 'lodash-es';
 import {
 	convertToTitleCase,
-	MessagingQueuesViewType,
 	RowData,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { AppState } from 'store/reducers';
@@ -28,7 +29,6 @@ import {
 	DropRateAPIResponse,
 	DropRateResponse,
 } from './dropRateViewUtils';
-import EvaluationTimeSelector from './EvaluationTimeSelector';
 
 import '../MQDetails.style.scss';
 
@@ -161,7 +161,7 @@ const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 	</>
 );
 
-function DropRateView(): JSX.Element {
+function DropRateView({ interval }: { interval: string }): JSX.Element {
 	const [columns, setColumns] = useState<any[]>([]);
 	const [tableData, setTableData] = useState<any[]>([]);
 	const { notifications } = useNotifications();
@@ -171,7 +171,6 @@ function DropRateView(): JSX.Element {
 	const [data, setData] = useState<
 		DropRateAPIResponse['data']['result'][0]['list']
 	>([]);
-	const [interval, setInterval] = useState<string>('');
 
 	const [visibleCounts, setVisibleCounts] = useState<Record<number, number>>({});
 
@@ -252,11 +251,13 @@ function DropRateView(): JSX.Element {
 	}, [JSON.stringify(tableData)]);
 
 	return (
-		<div className={cx('mq-overview-container', 'droprate-view')}>
-			<div className="mq-overview-title">
-				{MessagingQueuesViewType.dropRate.label}
-				<EvaluationTimeSelector setInterval={setInterval} />
-			</div>
+		<ContentPanel
+			testId="mq-drop-rate"
+			divided
+			title="Drop rate"
+			subtitle="Messages whose producer-to-consumer time exceeded the evaluation interval. Trace IDs open the trace."
+			bodyClassName={cx('droprate-view', tableStyles.skin)}
+		>
 			<Table
 				className={cx('mq-table', 'pagination-left')}
 				pagination={paginationConfig}
@@ -266,7 +267,7 @@ function DropRateView(): JSX.Element {
 				bordered={false}
 				loading={isLoading}
 			/>
-		</div>
+		</ContentPanel>
 	);
 }
 

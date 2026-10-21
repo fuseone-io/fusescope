@@ -1,7 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Typography } from '@signozhq/ui/typography';
-import { CardContainer } from 'container/WidgetCard/styles';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import { Widgets } from 'types/api/widgets/widget';
 
 import MetricPageGridGraph from './MetricPageGraph';
@@ -35,28 +33,21 @@ function MetricSection({
 	graphCount,
 	checkIfDataExists,
 }: MetricSectionProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
 	return (
-		<div className="metric-column-graph">
-			<CardContainer className="row-card" isDarkMode={isDarkMode}>
-				<div className="row-panel">
-					<Typography.Text className="section-title">{title}</Typography.Text>
-				</div>
-			</CardContainer>
-			<Typography.Text className="graph-description">
-				{description}
-			</Typography.Text>
-			<div className="metric-page-grid">
-				{graphCount.map((widgetData) => (
-					<MetricPageGridGraph
-						key={`graph-${widgetData.id}`}
-						widgetData={widgetData}
-						checkIfDataExists={checkIfDataExists}
-					/>
-				))}
-			</div>
-		</div>
+		<ContentPanel
+			title={title}
+			subtitle={description}
+			className="metric-column-graph"
+			bodyClassName="metric-page-grid"
+		>
+			{graphCount.map((widgetData) => (
+				<MetricPageGridGraph
+					key={`graph-${widgetData.id}`}
+					widgetData={widgetData}
+					checkIfDataExists={checkIfDataExists}
+				/>
+			))}
+		</ContentPanel>
 	);
 }
 

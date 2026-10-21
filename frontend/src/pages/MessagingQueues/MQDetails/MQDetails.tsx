@@ -1,10 +1,14 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
+import { useHistory, useLocation } from 'react-router-dom';
+import SheetTabs from 'components/MessagingQueues/SheetTabs/SheetTabs';
+import SideSheet from 'components/PageTemplate/components/SideSheet';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
+import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -16,10 +20,10 @@ import {
 	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 	SelectedTimelineQuery,
+	setConfigDetail,
 } from '../MessagingQueuesUtils';
+import { getDetailSelection } from './detailSelection';
 import MessagingQueuesTable from './MQTables/MQTables';
-
-import './MQDetails.style.scss';
 
 const MQServiceDetailTypePerView = (
 	producerLatencyOption: ProducerLatencyOptions,
@@ -40,48 +44,9 @@ const MQServiceDetailTypePerView = (
 	],
 });
 
-interface MessagingQueuesOptionsProps {
-	currentTab: MessagingQueueServiceDetailType;
-	setCurrentTab: Dispatch<SetStateAction<MessagingQueueServiceDetailType>>;
-	selectedView: MessagingQueuesViewTypeOptions;
-	producerLatencyOption: ProducerLatencyOptions;
-}
-
-function MessagingQueuesOptions({
-	currentTab,
-	setCurrentTab,
-	selectedView,
-	producerLatencyOption,
-}: MessagingQueuesOptionsProps): JSX.Element {
-	const handleChange = (value: MessagingQueueServiceDetailType): void => {
-		setCurrentTab(value);
-	};
-
-	const detailTypes =
-		MQServiceDetailTypePerView(producerLatencyOption)[selectedView] || [];
-
-	return (
-		<ToggleGroup
-			variant="outlined"
-			color="secondary"
-			size="sm"
-			type="single"
-			onChange={(value: string): void =>
-				handleChange(value as MessagingQueueServiceDetailType)
-			}
-			value={currentTab}
-			items={detailTypes.map((detailType) => ({
-				value: detailType,
-				label: ConsumerLagDetailTitle[detailType],
-			}))}
-		/>
-	);
-}
-
 const checkValidityOfDetailConfigs = (
 	selectedTimelineQuery: SelectedTimelineQuery,
 	selectedView: MessagingQueuesViewTypeOptions,
-	currentTab: MessagingQueueServiceDetailType,
 	configDetails?: {
 		[key: string]: string;
 	},
@@ -114,13 +79,18 @@ const checkValidityOfDetailConfigs = (
 	return selectedView === MessagingQueuesViewType.dropRate.value;
 };
 
+/**
+ * The detail of the selected chart point (consumer lag) or table row
+ * (partition and producer latency), in a sheet that closes by clearing the
+ * selection from the URL.
+ */
 function MessagingQueuesDetails({
 	selectedView,
 	producerLatencyOption,
 }: {
 	selectedView: MessagingQueuesViewTypeOptions;
 	producerLatencyOption: ProducerLatencyOptions;
-}): JSX.Element {
+}): JSX.Element | null {
 	const [currentTab, setCurrentTab] = useState<MessagingQueueServiceDetailType>(
 		MessagingQueueServiceDetailType.ProducerDetails,
 	);
@@ -139,6 +109,10 @@ function MessagingQueuesDetails({
 	}, [selectedView, producerLatencyOption]);
 
 	const urlQuery = useUrlQuery();
+	const history = useHistory();
+	const location = useLocation();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	const timelineQuery = decodeURIComponent(
 		urlQuery.get(QueryParams.selectedTimelineQuery) || '',
 	);
@@ -175,27 +149,85 @@ function MessagingQueuesDetails({
 		[configDetailQueryData, currentTab, maxTime, minTime, timelineQueryData],
 	);
 
+	const detailTypes =
+		MQServiceDetailTypePerView(producerLatencyOption)[selectedView] || [];
+
+	const isOpen =
+		detailTypes.length > 0 &&
+		checkValidityOfDetailConfigs(
+			timelineQueryData,
+			selectedView,
+			configDetailQueryData,
+		);
+
+	if (!isOpen) {
+		return null;
+	}
+
+	const isConsumerLag =
+		selectedView === MessagingQueuesViewType.consumerLag.value;
+
+	const closeDetail = (): void => {
+		if (isConsumerLag) {
+			urlQuery.delete(QueryParams.selectedTimelineQuery);
+			history.replace(`${location.pathname}?${urlQuery.toString()}`);
+		} else {
+			setConfigDetail(urlQuery, location, history, {});
+		}
+	};
+
+	const selection = getDetailSelection({
+		isConsumerLag,
+		timeline: timelineQueryData,
+		config: configDetailQueryData,
+		formatTime: (ms) =>
+			formatTimezoneAdjustedTimestamp(ms, DATE_TIME_FORMATS.TIME),
+	});
+
 	return (
-		<div className="mq-details">
-			<MessagingQueuesOptions
-				currentTab={currentTab}
-				setCurrentTab={setCurrentTab}
-				selectedView={selectedView}
-				producerLatencyOption={producerLatencyOption}
-			/>
-			<MessagingQueuesTable
-				currentTab={currentTab}
-				selectedView={selectedView}
-				tableApi={serviceConfigDetails[selectedView]?.tableApi}
-				validConfigPresent={checkValidityOfDetailConfigs(
-					timelineQueryData,
-					selectedView,
-					currentTab,
-					configDetailQueryData,
-				)}
-				tableApiPayload={serviceConfigDetails[selectedView]?.tableApiPayload}
-			/>
-		</div>
+		<SideSheet
+			open
+			onClose={closeDetail}
+			modal={false}
+			width={600}
+			testId="mq-detail-sheet"
+			title={ConsumerLagDetailTitle[currentTab]}
+			subtitle={
+				selection.length > 0 && (
+					<span className="tw:font-mono">{selection.join(' · ')}</span>
+				)
+			}
+			toolbar={
+				detailTypes.length > 1 ? (
+					<SheetTabs
+						label="Detail sections"
+						tabs={detailTypes.map((detailType) => ({
+							value: detailType,
+							label: ConsumerLagDetailTitle[detailType],
+						}))}
+						value={currentTab}
+						onChange={setCurrentTab}
+					/>
+				) : undefined
+			}
+			footer={
+				isConsumerLag ? (
+					<span className="tw:mr-auto tw:text-xs tw:text-subtle-foreground">
+						Window is ±5 minutes around the selected point.
+					</span>
+				) : undefined
+			}
+		>
+			<div className="tw:overflow-hidden tw:rounded-xl tw:border tw:border-border">
+				<MessagingQueuesTable
+					currentTab={currentTab}
+					selectedView={selectedView}
+					tableApi={serviceConfigDetails[selectedView]?.tableApi}
+					validConfigPresent
+					tableApiPayload={serviceConfigDetails[selectedView]?.tableApiPayload}
+				/>
+			</div>
+		</SideSheet>
 	);
 }
 

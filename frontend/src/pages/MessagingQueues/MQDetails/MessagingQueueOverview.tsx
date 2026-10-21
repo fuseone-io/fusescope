@@ -2,11 +2,12 @@ import { Dispatch, SetStateAction, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
 import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
 import { getTopicThroughputOverview } from 'api/messagingQueues/getTopicThroughputOverview';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -19,11 +20,7 @@ import {
 } from '../MessagingQueuesUtils';
 import MessagingQueuesTable from './MQTables/MQTables';
 
-import './MQDetails.style.scss';
-
-type SelectedViewType = keyof typeof MessagingQueuesViewType;
-
-function ProducerLatencyTabs({
+export function ProducerLatencyTabs({
 	option,
 	setOption,
 }: {
@@ -35,17 +32,14 @@ function ProducerLatencyTabs({
 	const history = useHistory();
 
 	return (
-		<ToggleGroup
-			variant="outlined"
-			color="secondary"
-			size="sm"
-			type="single"
-			onChange={(value: string): void => {
-				setConfigDetail(urlQuery, location, history, {});
-				setOption(value as ProducerLatencyOptions);
-			}}
+		<SegmentedControl
+			label="Producers or consumers"
 			value={option}
-			items={[
+			onChange={(value): void => {
+				setConfigDetail(urlQuery, location, history, {});
+				setOption(value);
+			}}
+			options={[
 				{
 					value: ProducerLatencyOptions.Producers,
 					label: ProducerLatencyOptions.Producers,
@@ -69,14 +63,33 @@ const getTableApi = (selectedView: MessagingQueuesViewTypeOptions): any => {
 	return getPartitionLatencyOverview;
 };
 
+function panelCopy(
+	selectedView: MessagingQueuesViewTypeOptions,
+	option: ProducerLatencyOptions,
+): { title: string; subtitle: string } {
+	if (selectedView === MessagingQueuesViewType.producerLatency.value) {
+		return option === ProducerLatencyOptions.Producers
+			? {
+					title: 'Producers',
+					subtitle: 'Select a row for its producer details.',
+				}
+			: {
+					title: 'Consumers',
+					subtitle: 'Select a row for its consumer group details.',
+				};
+	}
+	return {
+		title: 'Partitions',
+		subtitle: 'Select a partition for its producers and consumer groups.',
+	};
+}
+
 function MessagingQueueOverview({
 	selectedView,
 	option,
-	setOption,
 }: {
 	selectedView: MessagingQueuesViewTypeOptions;
 	option: ProducerLatencyOptions;
-	setOption: Dispatch<SetStateAction<ProducerLatencyOptions>>;
 }): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -97,15 +110,15 @@ function MessagingQueueOverview({
 		[minTime, maxTime, selectedView, option],
 	);
 
+	const { title, subtitle } = panelCopy(selectedView, option);
+
 	return (
-		<div className="mq-overview-container">
-			{selectedView === MessagingQueuesViewType.producerLatency.value ? (
-				<ProducerLatencyTabs option={option} setOption={setOption} />
-			) : (
-				<div className="mq-overview-title">
-					{MessagingQueuesViewType[selectedView as SelectedViewType].label}
-				</div>
-			)}
+		<ContentPanel
+			testId="mq-overview-panel"
+			divided
+			title={title}
+			subtitle={subtitle}
+		>
 			<MessagingQueuesTable
 				selectedView={selectedView}
 				tableApiPayload={tableApiPayload}
@@ -114,7 +127,7 @@ function MessagingQueueOverview({
 				type="Overview"
 				option={option}
 			/>
-		</div>
+		</ContentPanel>
 	);
 }
 export default MessagingQueueOverview;

@@ -1,15 +1,12 @@
 import { useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
-import { Color } from '@signozhq/design-tokens';
-import { Button, Select, Spin, Tooltip } from 'antd';
+import { Select, Spin } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import { History, Location } from 'history';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Check, Share2 } from '@signozhq/icons';
 
 import { useGetAllConfigOptions } from './useGetAllConfigOptions';
 
@@ -101,15 +98,12 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 		options: partitionOptions,
 	} = useConfigOptions('partition');
 
-	const [isURLCopied, setIsURLCopied] = useState(false);
-
-	const [, handleCopyToClipboard] = useCopyToClipboard();
-
 	return (
 		<div className="mq-config">
 			<div className="config-options">
 				<Select
 					placeholder={getPlaceholder('group')}
+					aria-label={getPlaceholder('group')}
 					showSearch
 					mode="multiple"
 					options={consumerGrpOptions}
@@ -144,6 +138,7 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 				/>
 				<Select
 					placeholder={getPlaceholder('topic')}
+					aria-label={getPlaceholder('topic')}
 					showSearch
 					mode="multiple"
 					options={topicOptions}
@@ -176,6 +171,7 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 				/>
 				<Select
 					placeholder={getPlaceholder('partition')}
+					aria-label={getPlaceholder('partition')}
 					showSearch
 					mode="multiple"
 					options={partitionOptions}
@@ -209,25 +205,6 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 					}}
 				/>
 			</div>
-			<Tooltip title="Share This" arrow={false}>
-				<Button
-					className="periscope-btn copy-url-btn"
-					onClick={(): void => {
-						handleCopyToClipboard(window.location.href);
-						setIsURLCopied(true);
-						setTimeout(() => {
-							setIsURLCopied(false);
-						}, 1000);
-					}}
-					icon={
-						isURLCopied ? (
-							<Check size={14} color={Color.BG_FOREST_500} />
-						) : (
-							<Share2 size={14} />
-						)
-					}
-				/>
-			</Tooltip>
 		</div>
 	);
 }

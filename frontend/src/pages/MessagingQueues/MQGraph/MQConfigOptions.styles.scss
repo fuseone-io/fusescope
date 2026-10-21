@@ -1,4 +1,23 @@
 .mq-config {
 	display: flex;
-	justify-content: space-between;
+	min-width: 0;
+
+	.config-options {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+
+		.config-select-option {
+			min-width: 160px;
+			max-width: 320px;
+
+			.ant-select-selector {
+				min-height: 36px;
+				border-radius: 8px;
+				border: 1px solid var(--fs-border);
+				background: var(--fs-card);
+			}
+		}
+	}
 }
