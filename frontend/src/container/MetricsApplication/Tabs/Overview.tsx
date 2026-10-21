@@ -11,6 +11,7 @@ import { serviceHighlights } from 'lib/apm/highlights';
 import history from 'lib/history';
 import {
 	ERROR_SPANS_FILTER,
+	SLOWEST_FIRST,
 	useTracesLink,
 } from 'pages/MetricsApplication/hooks/useTracesLink';
 import { UpdateTimeInterval } from 'store/actions';
@@ -106,7 +107,7 @@ function Application({
 	);
 	const targets = useMemo(
 		() => ({
-			slowTraces: tracesLink(),
+			slowTraces: tracesLink([], SLOWEST_FIRST),
 			errorTraces: tracesLink([ERROR_SPANS_FILTER]),
 			onOpenEndpoints,
 			onOpenDependencies,
