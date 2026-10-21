@@ -1,91 +1,48 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Info } from '@signozhq/icons';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import {
-	Button,
 	DatePicker,
-	Flex,
 	Form,
 	FormInstance,
 	Input,
-	Modal,
 	Select,
 	SelectProps,
-	Spin,
-	Tooltip,
 } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
-import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import {
-	createDowntimeSchedule,
-	updateDowntimeScheduleByID,
-} from 'api/generated/services/downtimeschedules';
 import type {
 	AlertmanagertypesPlannedMaintenanceDTO,
-	AlertmanagertypesPostablePlannedMaintenanceDTO,
 	AlertmanagertypesRecurrenceDTO,
 } from 'api/generated/services/fuseScope.schemas';
-import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
-import { AxiosError } from 'axios';
+import FormSheet from 'components/Alerts/FormSheet/FormSheet';
+import { Button } from 'components/ui/button';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { fuseScopeDocsUrl } from 'constants/docs';
-import {
-	ModalButtonWrapper,
-	ModalTitle,
-} from 'container/PipelinePage/PipelineListsView/styles';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo, isEmpty } from 'lodash-es';
-import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
-import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
+import { Check, Loader2 } from 'lucide-react';
 
 import 'dayjs/locale/en';
 
-import { AlertRuleTags } from './PlannedDowntimeList';
+import {
+	ALERT_RULES_FIELD,
+	DowntimeAlertRulesField,
+} from './DowntimeAlertRulesField';
+import { TZ_OPTIONS } from './constants';
+import { DowntimeRecurrenceFields } from './DowntimeRecurrenceFields';
+import { DowntimeScopeField } from './DowntimeScopeField';
 import {
 	getAlertOptionsFromIds,
 	getDurationInfo,
 	isScheduleRecurring,
 	recurrenceOptions,
-	recurrenceOptionWithSubmenu,
-	recurrenceWeeklyOptions,
 } from './PlannedDowntimeutils';
-
-import './PlannedDowntime.styles.scss';
-import { RadioGroup } from '@signozhq/ui/radio-group';
+import { AlertRuleScope, PlannedDowntimeFormData } from './types';
+import { useSaveDowntime } from './useSaveDowntime';
+import { useScheduleInfoText } from './useScheduleInfoText';
 
 dayjs.locale('en');
 dayjs.extend(utc);
 dayjs.extend(timezone);
-
-const TIME_FORMAT = DATE_TIME_FORMATS.TIME;
-const DATE_FORMAT = DATE_TIME_FORMATS.ORDINAL_DATE;
-const ORDINAL_FORMAT = DATE_TIME_FORMATS.ORDINAL_ONLY;
-
-const TZ_OPTIONS: DefaultOptionType[] = ALL_TIME_ZONES.map(
-	(timezone: string) => ({
-		label: timezone,
-		value: timezone,
-		key: timezone,
-	}),
-);
-
-type AlertRuleScope = 'all' | 'specific';
-
-interface PlannedDowntimeFormData {
-	name: string;
-	startTime: dayjs.Dayjs | null;
-	endTime: dayjs.Dayjs | null;
-	recurrence?: AlertmanagertypesRecurrenceDTO;
-	alertRuleScope: AlertRuleScope;
-	alertRules: DefaultOptionType[];
-	recurrenceSelect?: AlertmanagertypesRecurrenceDTO;
-	timezone?: string;
-	scope?: string;
-}
 
 const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
 
@@ -119,8 +76,7 @@ export function PlannedDowntimeForm(
 	const [selectedTags, setSelectedTags] = React.useState<DefaultOptionType[]>(
 		[],
 	);
-	const alertRuleFormName = 'alertRules';
-	const [saveLoading, setSaveLoading] = useState(false);
+	const alertRuleFormName = ALERT_RULES_FIELD;
 	const [durationUnit, setDurationUnit] = useState<string>(
 		getDurationInfo(initialValues.schedule?.recurrence?.duration)?.unit || 'm',
 	);
@@ -140,71 +96,19 @@ export function PlannedDowntimeForm(
 			: 'specific',
 	);
 
-	const { notifications } = useNotifications();
-	const { showErrorModal } = useErrorModal();
-
 	const requiredFieldRule = [{ required: true }];
 
-	const datePickerFooter = (mode: any): any =>
+	const datePickerFooter = (mode: string): ReactNode =>
 		mode === 'time' ? (
-			<span style={{ color: 'gray' }}>Please select the time</span>
+			<span className="tw:text-muted-foreground">Please select the time</span>
 		) : null;
 
-	const saveHandler = useCallback(
-		async (values: PlannedDowntimeFormData) => {
-			const { startTime, timezone } = values;
-			if (!startTime || !timezone) {
-				// unreachable: required fields should always be present on submitting.
-				return;
-			}
-			const data: AlertmanagertypesPostablePlannedMaintenanceDTO = {
-				alertIds:
-					values.alertRuleScope === 'all'
-						? []
-						: (values.alertRules
-								.map((alert) => alert.value)
-								.filter((alert) => alert !== undefined) as string[]),
-				name: values.name,
-				scope: values.scope,
-				schedule: {
-					startTime: startTime.format(),
-					endTime: values.endTime?.format(),
-					timezone,
-					recurrence: values.recurrence,
-				},
-			};
-
-			setSaveLoading(true);
-			try {
-				if (isEditMode && initialValues.id) {
-					await updateDowntimeScheduleByID({ id: initialValues.id }, data);
-				} else {
-					await createDowntimeSchedule(data);
-				}
-				setIsOpen(false);
-				notifications.success({
-					message: 'Success',
-					description: isEditMode
-						? 'Schedule updated successfully'
-						: 'Schedule created successfully',
-				});
-				refetchAllSchedules();
-			} catch (e: unknown) {
-				showErrorModal(
-					convertToApiError(e as AxiosError<RenderErrorResponseDTO>) as APIError,
-				);
-			}
-			setSaveLoading(false);
-		},
-		[
-			initialValues.id,
-			isEditMode,
-			notifications,
-			refetchAllSchedules,
-			setIsOpen,
-			showErrorModal,
-		],
-	);
+	const { saveLoading, saveHandler } = useSaveDowntime({
+		id: initialValues.id,
+		isEditMode,
+		setIsOpen,
+		refetchAllSchedules,
+	});
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
 		const rec = values.recurrence;
 		const recurrence =
@@ -260,8 +164,6 @@ export function PlannedDowntimeForm(
 		setSelectedTags(Array.isArray(options) ? options : [options]);
 	};
 
-	const noTagRenderer: SelectProps['tagRender'] = () => <></>;
-
 	const handleClose = (removedTag: DefaultOptionType['value']): void => {
 		if (!removedTag) {
 			return;
@@ -304,62 +206,51 @@ export function PlannedDowntimeForm(
 		form.setFieldsValue({ ...formattedInitialValues });
 	}, [form, formattedInitialValues, initialValues]);
 
-	const startTimeText = useMemo((): string => {
-		const startTime = formData.startTime;
-		if (!startTime) {
-			return '';
-		}
+	const { startTimeText, endTimeText } = useScheduleInfoText(
+		formData,
+		recurrenceType,
+	);
+	const formName = isEditMode ? 'edit-form' : 'create-form';
 
-		const daysOfWeek = formData.recurrence?.repeatOn;
-
-		const formattedStartTime = startTime.format(TIME_FORMAT);
-		const formattedStartDate = startTime.format(DATE_FORMAT);
-		const ordinalFormat = startTime.format(ORDINAL_FORMAT);
-
-		const formattedDaysOfWeek = daysOfWeek?.join(', ');
-		switch (recurrenceType) {
-			case 'daily':
-				return `Scheduled from ${formattedStartDate}, daily starting at ${formattedStartTime}.`;
-			case 'monthly':
-				return `Scheduled from ${formattedStartDate}, monthly on the ${ordinalFormat} starting at ${formattedStartTime}.`;
-			case 'weekly':
-				return `Scheduled from ${formattedStartDate}, weekly ${
-					formattedDaysOfWeek ? `on [${formattedDaysOfWeek}]` : ''
-				} starting at ${formattedStartTime}`;
-			default:
-				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
-		}
-	}, [formData, recurrenceType]);
-
-	const endTimeText = useMemo((): string => {
-		const endTime = formData.endTime;
-		if (!endTime) {
-			return '';
-		}
-
-		const formattedEndTime = endTime.format(TIME_FORMAT);
-		const formattedEndDate = endTime.format(DATE_FORMAT);
-		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	}, [formData]);
+	const hint = (text: string): ReactNode =>
+		isEmpty(text) ? undefined : <span className="tw:text-xs">{text}</span>;
 
 	return (
-		<Modal
-			title={
-				<ModalTitle level={4}>
-					{isEditMode ? 'Edit planned downtime' : 'New planned downtime'}
-				</ModalTitle>
-			}
-			centered
+		<FormSheet
 			open={isOpen}
-			className="createDowntimeModal"
-			onCancel={handleCancel}
-			footer={null}
+			onClose={handleCancel}
+			title={isEditMode ? 'Edit planned downtime' : 'New planned downtime'}
+			description="Silence alerts for a one-off or recurring window."
+			testId="planned-downtime-form-sheet"
+			footer={
+				<>
+					<Button variant="outline" onClick={handleCancel}>
+						Cancel
+					</Button>
+					<Button
+						type="submit"
+						form={formName}
+						onClick={handleOk}
+						disabled={saveLoading || isLoading}
+						aria-busy={saveLoading || isLoading}
+						className="downtime-schedule-btn"
+					>
+						{saveLoading || isLoading ? (
+							<Loader2 aria-hidden="true" className="tw:animate-spin" />
+						) : (
+							<Check aria-hidden="true" />
+						)}
+						<span className="translate-safe">
+							{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+						</span>
+					</Button>
+				</>
+			}
 		>
 			<Form<PlannedDowntimeFormData>
-				name={isEditMode ? 'edit-form' : 'create-form'}
+				name={formName}
 				form={form}
 				layout="vertical"
-				className="createForm"
 				onFinish={onFinish}
 				onValuesChange={(): void => {
 					setRecurrenceType(form.getFieldValue('recurrence')?.repeatType as string);
@@ -375,68 +266,21 @@ export function PlannedDowntimeForm(
 					label="Starts from"
 					name="startTime"
 					rules={requiredFieldRule}
-					className={!isEmpty(startTimeText) ? 'formItemWithBullet' : ''}
+					extra={hint(startTimeText)}
 				>
 					<DatePicker
 						format={(date) => date.format(customFormat)}
 						showTime
 						renderExtraFooter={datePickerFooter}
 						showNow={false}
-						popupClassName="datePicker"
+						className="tw:w-full"
 					/>
 				</Form.Item>
-				{!isEmpty(startTimeText) && (
-					<div className="scheduleTimeInfoText">{startTimeText}</div>
-				)}
-				<Form.Item
-					label="Repeats every"
-					name={['recurrence', 'repeatType']}
-					rules={requiredFieldRule}
-				>
-					<Select
-						placeholder="Select option..."
-						options={recurrenceOptionWithSubmenu}
-					/>
-				</Form.Item>
-				{recurrenceType === recurrenceOptions.weekly.value && (
-					<Form.Item
-						label="Weekly occurrence"
-						name={['recurrence', 'repeatOn']}
-						rules={requiredFieldRule}
-					>
-						<Select
-							placeholder="Select option..."
-							mode="multiple"
-							options={Object.values(recurrenceWeeklyOptions)}
-						/>
-					</Form.Item>
-				)}
-				{recurrenceType &&
-					recurrenceType !== recurrenceOptions.doesNotRepeat.value && (
-						<Form.Item
-							label="Duration"
-							name={['recurrence', 'duration']}
-							rules={requiredFieldRule}
-						>
-							<Input
-								addonAfter={
-									<Select
-										defaultValue="m"
-										value={durationUnit}
-										onChange={(value): void => setDurationUnit(value)}
-									>
-										<Select.Option value="m">Mins</Select.Option>
-										<Select.Option value="h">Hours</Select.Option>
-									</Select>
-								}
-								className="duration-input"
-								type="number"
-								placeholder="Enter duration"
-								min={1}
-								onWheel={(e): void => e.currentTarget.blur()}
-							/>
-						</Form.Item>
-					)}
+				<DowntimeRecurrenceFields
+					recurrenceType={recurrenceType}
+					durationUnit={durationUnit}
+					onDurationUnitChange={setDurationUnit}
+				/>
 				<Form.Item label="Timezone" name="timezone" rules={requiredFieldRule}>
 					<Select options={TZ_OPTIONS} placeholder="Select timezone" showSearch />
 				</Form.Item>
@@ -449,144 +293,28 @@ export function PlannedDowntimeForm(
 							required: recurrenceType === recurrenceOptions.doesNotRepeat.value,
 						},
 					]}
-					className={!isEmpty(endTimeText) ? 'formItemWithBullet' : ''}
+					extra={hint(endTimeText)}
 				>
 					<DatePicker
 						format={(date) => date.format(customFormat)}
 						showTime
 						showNow={false}
 						renderExtraFooter={datePickerFooter}
-						popupClassName="datePicker"
+						className="tw:w-full"
 					/>
 				</Form.Item>
-				{!isEmpty(endTimeText) && (
-					<div className="scheduleTimeInfoText">{endTimeText}</div>
-				)}
-				<div>
-					<Typography>Silence Alerts</Typography>
-					<Form.Item
-						name="alertRuleScope"
-						initialValue="specific"
-						className="alert-rule-scope"
-					>
-						<RadioGroup
-							color="primary"
-							items={[
-								{ value: 'all', label: 'All alert rules' },
-								{ value: 'specific', label: 'Specific alert rules' },
-							]}
-						/>
-					</Form.Item>
-					{alertRuleScope === 'specific' && (
-						<>
-							<Form.Item noStyle shouldUpdate>
-								<AlertRuleTags
-									closable
-									selectedTags={selectedTags}
-									handleClose={handleClose}
-								/>
-							</Form.Item>
-							<Form.Item
-								name={alertRuleFormName}
-								rules={[
-									{
-										validator: async (
-											_rule,
-											value: DefaultOptionType[] | undefined,
-										): Promise<void> => {
-											if (!value || value.length === 0) {
-												throw new Error(
-													'Select at least one alert rule, or choose "All alert rules" to silence everything.',
-												);
-											}
-										},
-									},
-								]}
-							>
-								<Select
-									placeholder="Search for alert rules or groups..."
-									mode="multiple"
-									status={isError ? 'error' : undefined}
-									loading={isLoading}
-									tagRender={noTagRenderer}
-									onChange={handleAlertRulesChange}
-									showSearch
-									options={alertOptions}
-									filterOption={(input, option): boolean =>
-										(option?.label as string)
-											?.toLowerCase()
-											?.includes(input.toLowerCase())
-									}
-									notFoundContent={
-										isLoading ? (
-											<span>
-												<Spin size="small" /> Loading...
-											</span>
-										) : (
-											<span>No alert available.</span>
-										)
-									}
-								>
-									{alertOptions?.map((option) => (
-										<Select.Option key={option.value} value={option.value}>
-											{option.label}
-										</Select.Option>
-									))}
-								</Select>
-							</Form.Item>
-						</>
-					)}
-				</div>
-				<Form.Item
-					label={
-						<span>
-							Scope&nbsp;
-							<Tooltip
-								mouseLeaveDelay={0.3}
-								title={
-									<span>
-										Scope the planned downtime by alert labels.{' '}
-										<a
-											href={fuseScopeDocsUrl(
-												'/alerts/routing-and-downtime/#planned-downtime',
-											)}
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											Learn more
-										</a>
-									</span>
-								}
-							>
-								<Info size={13} />
-							</Tooltip>
-						</span>
-					}
-					name="scope"
-				>
-					<Input.TextArea
-						placeholder='e.g. env = "prod" AND region = "us-east-1"'
-						autoSize={{ minRows: 2, maxRows: 4 }}
-					/>
-				</Form.Item>
-				<Form.Item style={{ marginBottom: 0 }}>
-					<ModalButtonWrapper>
-						<Button
-							key="submit"
-							type="primary"
-							htmlType="submit"
-							onClick={handleOk}
-							loading={saveLoading || isLoading}
-							className="downtime-schedule-btn"
-						>
-							<Flex align="center" gap={4}>
-								<Check size={16} />
-								{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
-							</Flex>
-						</Button>
-					</ModalButtonWrapper>
-				</Form.Item>
+				<DowntimeAlertRulesField
+					alertRuleScope={alertRuleScope}
+					onScopeChange={setAlertRuleScope}
+					selectedTags={selectedTags}
+					onRulesChange={handleAlertRulesChange}
+					onRemoveRule={handleClose}
+					alertOptions={alertOptions}
+					isError={isError}
+					isLoading={isLoading}
+				/>
+				<DowntimeScopeField />
 			</Form>
-		</Modal>
+		</FormSheet>
 	);
 }

@@ -141,8 +141,9 @@ export const fillNewPolicy = async (): Promise<void> => {
 		await screen.findByPlaceholderText(/e\.g\. service\.name/),
 		'severity = "critical"',
 	);
-	await userEvent.click(await screen.findByRole('combobox'));
-	await userEvent.click(await screen.findByTitle('ops-slack'));
+	const sheet = await screen.findByTestId('routing-policy-form-sheet');
+	await userEvent.click(await within(sheet).findByRole('combobox'));
+	await userEvent.click(await within(sheet).findByTitle('ops-slack'));
 	await userEvent.keyboard('{Escape}');
 	await userEvent.click(
 		await screen.findByRole('button', { name: 'Save Routing Policy' }),

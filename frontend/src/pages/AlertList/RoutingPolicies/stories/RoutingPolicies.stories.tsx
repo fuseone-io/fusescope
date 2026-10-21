@@ -60,7 +60,7 @@ export const Expanded: Story = {
 		await userEvent.click(
 			await canvas.findByText(FIRST_POLICY_NAME, undefined, untilLoaded),
 		);
-		await canvas.findByText(/expression/i);
+		await canvas.findByText(/created by/i);
 	},
 };
 

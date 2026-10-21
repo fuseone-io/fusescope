@@ -48,16 +48,6 @@ export interface RoutingPolicyListItemProps {
 	handleDeleteModalOpen: HandleDeleteModalOpen;
 }
 
-export interface PolicyListItemHeaderProps {
-	name: string;
-	handleEdit: () => void;
-	handleDelete: () => void;
-}
-
-export interface PolicyListItemContentProps {
-	routingPolicy: RoutingPolicy;
-}
-
 export interface RoutingPolicyDetailsProps {
 	routingPolicy: RoutingPolicy | null;
 	closeModal: () => void;

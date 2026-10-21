@@ -111,20 +111,20 @@ export const clickFirstRowAction = async (
 	canvasElement: HTMLElement,
 	action: 'edit' | 'delete',
 ): Promise<void> => {
-	const icon = (
+	const row = (
 		await within(canvasElement).findByText(
 			FIRST_DOWNTIME_NAME,
 			undefined,
 			untilLoaded,
 		)
-	)
-		.closest('.header-content')
-		// The row action holds edit then delete, neither of them labelled.
-		?.querySelectorAll('.action-btn svg')[action === 'edit' ? 0 : 1];
+	).closest('tr');
+	const button = row?.querySelector<HTMLElement>(
+		`[data-testid="${action}-downtime"]`,
+	);
 
-	if (!icon) {
+	if (!button) {
 		throw new Error(`Downtime ${action} action did not render`);
 	}
 
-	await userEvent.click(icon);
+	await userEvent.click(button);
 };

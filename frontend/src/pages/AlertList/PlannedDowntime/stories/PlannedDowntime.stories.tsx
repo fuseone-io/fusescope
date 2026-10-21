@@ -96,8 +96,9 @@ export const DeleteDowntimeConfirm: Story = {
 export const EditDowntime: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await clickFirstRowAction(canvasElement, 'edit');
-		await screen.findByText(/edit planned downtime/i);
-		await screen.findByText(/^Postgres connections/);
+		const sheet = await screen.findByTestId('planned-downtime-form-sheet');
+		await within(sheet).findByText(/edit planned downtime/i);
+		await within(sheet).findByText(/^Postgres connections/);
 	},
 };
 
@@ -109,7 +110,9 @@ export const NewDowntimeRecurring: Story = {
 			await screen.findByRole('combobox', { name: 'Repeats every' }),
 		);
 		await userEvent.click(await screen.findByText('Weekly'));
-		await screen.findByText('Duration');
+		await within(
+			await screen.findByTestId('planned-downtime-form-sheet'),
+		).findByText('Duration');
 	},
 };
 

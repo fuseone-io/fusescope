@@ -1,299 +1,46 @@
-import React, { ReactNode, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Color } from '@signozhq/design-tokens';
-import { Collapse, Flex, Space, Table, TableProps, Tooltip } from 'antd';
-import { Badge } from '@signozhq/ui/badge';
-import { Pill } from '@signozhq/ui/pill';
-import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import type {
+	AlertmanagertypesPlannedMaintenanceDTO,
 	ListDowntimeSchedules200,
 	RenderErrorResponseDTO,
-	AlertmanagertypesPlannedMaintenanceDTO,
-	AlertmanagertypesScheduleDTO,
 } from 'api/generated/services/fuseScope.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
-import cx from 'classnames';
+import ConfigListSkeleton from 'components/Alerts/ConfigSectionHeader/ConfigListSkeleton';
+import ConfigListState from 'components/Alerts/ConfigSectionHeader/ConfigListState';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import TablePagination from 'components/PageTemplate/components/TablePagination';
+import { Button } from 'components/ui/button';
+import {
+	Table,
+	TableBody,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from 'components/ui/table';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
-import { defaultTo } from 'lodash-es';
-import { CalendarClock, PenLine, Trash2 } from '@signozhq/icons';
+import { CalendarClock, Plus, Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
-
 import { showErrorNotification } from 'utils/error';
-import {
-	formatDateTime,
-	getAlertOptionsFromIds,
-	getDuration,
-	recurrenceInfo,
-} from './PlannedDowntimeutils';
 
-import './PlannedDowntime.styles.scss';
+import { DOWNTIME_PAGE_SIZE } from './constants';
+import { DowntimeRow } from './DowntimeRow';
+import { getAlertOptionsFromIds } from './PlannedDowntimeutils';
+import { DowntimeSchedulesTableData } from './types';
 
-const { Panel } = Collapse;
+export type { DowntimeSchedulesTableData } from './types';
 
-interface AlertRuleTagsProps {
-	selectedTags: DefaultOptionType | DefaultOptionType[];
-	closable: boolean;
-	handleClose?: (removedTag: DefaultOptionType['value']) => void;
-	classname?: string;
-}
-export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
-	const { closable, selectedTags, handleClose, classname } = props;
-	return (
-		<Space
-			wrap
-			style={{ marginBottom: 8 }}
-			className={cx('alert-rule-tags', classname)}
-		>
-			{selectedTags?.map((tag: DefaultOptionType, index: number) => {
-				if (closable) {
-					return (
-						<Pill.Closeable
-							key={tag.value}
-							maxWidth={200}
-							onClose={(): void => handleClose?.(tag.value)}
-						>
-							{tag.label}
-						</Pill.Closeable>
-					);
-				}
-
-				const isLongTag = (tag?.label as string)?.length > 20;
-				const tagElem = (
-					<Badge
-						textTransform="none"
-						key={tag.value}
-						color={index % 2 ? 'highlight-danger' : 'primary'}
-						variant="outlined"
-					>
-						{isLongTag
-							? `${(tag?.label as string | null)?.slice(0, 20)}...`
-							: tag?.label}
-					</Badge>
-				);
-				return (
-					<Tooltip title={isLongTag ? tag?.label : undefined} key={tag?.value}>
-						{tagElem}
-					</Tooltip>
-				);
-			})}
-		</Space>
-	);
-}
-
-function HeaderComponent({
-	name,
-	duration,
-	handleEdit,
-	handleDelete,
-}: {
-	name: string;
-	duration: string;
-	handleEdit: () => void;
-	handleDelete: () => void;
-}): JSX.Element {
-	const { user } = useAppContext();
-	const isCrudEnabled = user?.role !== USER_ROLES.VIEWER;
-	return (
-		<Flex className="header-content" justify="space-between">
-			<Flex gap={8}>
-				<Typography>{name}</Typography>
-				<Badge textTransform="none" variant="solid" color="secondary">
-					{duration}
-				</Badge>
-			</Flex>
-
-			{isCrudEnabled && (
-				<div className="action-btn">
-					<PenLine
-						size={14}
-						onClick={(e): void => {
-							e.preventDefault();
-							e.stopPropagation();
-							handleEdit();
-						}}
-					/>
-					<Trash2
-						size={14}
-						color={Color.BG_CHERRY_500}
-						onClick={(e): void => {
-							e.preventDefault();
-							e.stopPropagation();
-							handleDelete();
-						}}
-					/>
-				</div>
-			)}
-		</Flex>
-	);
-}
-
-export function CollapseListContent({
-	created_at,
-	created_by_name,
-	created_by_email,
-	schedule,
-	updated_at,
-	updated_by_name,
-	alertOptions,
-}: {
-	created_at?: string;
-	created_by_name?: string;
-	created_by_email?: string;
-	schedule?: AlertmanagertypesScheduleDTO;
-	updated_at?: string;
-	updated_by_name?: string;
-	alertOptions?: DefaultOptionType[];
-}): JSX.Element {
-	const renderItems = (title: string, value: ReactNode): JSX.Element => (
-		<div className="render-item-collapse-list">
-			<Typography>{title}</Typography>
-			<div className="render-item-value">{value}</div>
-		</div>
-	);
-	const startTime = formatDateTime(schedule?.startTime, schedule?.timezone);
-	const endTime = formatDateTime(schedule?.endTime, schedule?.timezone);
-
-	return (
-		<Flex vertical>
-			{renderItems(
-				'Created by',
-				created_by_name ? (
-					<Flex gap={8}>
-						<Typography>{created_by_name}</Typography>
-						{created_by_email && (
-							<Badge textTransform="none" variant="solid" color="secondary">
-								{created_by_email}
-							</Badge>
-						)}
-					</Flex>
-				) : (
-					'-'
-				),
-			)}
-			{renderItems(
-				'Created on',
-				created_at ? (
-					<Typography>{`${formatDateTime(created_at)}`}</Typography>
-				) : (
-					'-'
-				),
-			)}
-			{updated_at &&
-				renderItems(
-					'Updated on',
-					<Typography>{`${formatDateTime(updated_at)}`}</Typography>,
-				)}
-			{updated_by_name &&
-				renderItems('Updated by', <Typography>{updated_by_name}</Typography>)}
-
-			{renderItems(
-				'Timeframe',
-				schedule?.startTime ? (
-					<Typography>{`${startTime} — ${endTime}`}</Typography>
-				) : (
-					'-'
-				),
-			)}
-			{renderItems(
-				'Timezone',
-				<Typography>{schedule?.timezone || '-'}</Typography>,
-			)}
-			{renderItems('Repeats', <Typography>{recurrenceInfo(schedule)}</Typography>)}
-			{renderItems(
-				'Alerts silenced',
-				alertOptions?.length ? (
-					<AlertRuleTags
-						closable={false}
-						classname="alert-rule-collapse-list"
-						selectedTags={alertOptions}
-					/>
-				) : (
-					<Badge variant="solid" color="secondary">
-						All alert rules
-					</Badge>
-				),
-			)}
-		</Flex>
-	);
-}
-
-export function CustomCollapseList(
-	props: DowntimeSchedulesTableData & {
-		setInitialValues: React.Dispatch<
-			React.SetStateAction<Partial<AlertmanagertypesPlannedMaintenanceDTO>>
-		>;
-		setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-		handleDeleteDowntime: (id: string, name: string) => void;
-		setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
-	},
-): JSX.Element {
-	const {
-		createdAt,
-		createdBy,
-		schedule,
-		updatedAt,
-		updatedBy,
-		name,
-		id,
-		alertOptions,
-		setInitialValues,
-		setModalOpen,
-		handleDeleteDowntime,
-		setEditMode,
-	} = props;
-
-	const scheduleTime = schedule?.startTime
-		? dayjs(schedule.startTime).tz(schedule.timezone)
-		: createdAt || '';
-	const formattedDateAndTime = `Start time — ${formatDateTime(scheduleTime)} ${schedule?.timezone}`;
-
-	return (
-		<>
-			<Collapse accordion className="collapse-list">
-				<Panel
-					header={
-						<HeaderComponent
-							duration={
-								schedule?.recurrence?.duration
-									? schedule.recurrence.duration
-									: getDuration(schedule?.startTime || '', schedule?.endTime || '')
-							}
-							name={defaultTo(name, '')}
-							handleEdit={() => {
-								setInitialValues({ ...props });
-								setModalOpen(true);
-								setEditMode(true);
-							}}
-							handleDelete={() => handleDeleteDowntime(id ?? '', name || '')}
-						/>
-					}
-					key={id ?? ''}
-				>
-					<CollapseListContent
-						created_at={createdAt ? dayjs(createdAt).toISOString() : ''}
-						created_by_name={defaultTo(createdBy, '')}
-						schedule={schedule}
-						updated_at={updatedAt ? dayjs(updatedAt).toISOString() : ''}
-						updated_by_name={defaultTo(updatedBy, '')}
-						alertOptions={alertOptions}
-					/>
-				</Panel>
-			</Collapse>
-			<div className="schedule-created-at">
-				<CalendarClock size={14} />
-				<Typography.Text>{formattedDateAndTime}</Typography.Text>
-			</div>
-		</>
-	);
-}
-
-export type DowntimeSchedulesTableData =
-	AlertmanagertypesPlannedMaintenanceDTO & {
-		alertOptions: DefaultOptionType[];
-	};
+const COLUMNS = [
+	'Downtime',
+	'Status',
+	'Timeframe',
+	'Repeats',
+	'Duration',
+	'Silenced alerts',
+];
 
 export function PlannedDowntimeList({
 	downtimeSchedules,
@@ -303,6 +50,7 @@ export function PlannedDowntimeList({
 	handleDeleteDowntime,
 	setEditMode,
 	searchValue,
+	onCreate,
 }: {
 	downtimeSchedules: UseQueryResult<
 		ListDowntimeSchedules200,
@@ -316,24 +64,17 @@ export function PlannedDowntimeList({
 	handleDeleteDowntime: (id: string, name: string) => void;
 	setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	searchValue: string | number;
+	onCreate?: () => void;
 }): JSX.Element {
-	const columns: TableProps<DowntimeSchedulesTableData>['columns'] = [
-		{
-			title: 'Downtime',
-			key: 'downtime',
-			render: (data: DowntimeSchedulesTableData): JSX.Element =>
-				CustomCollapseList({
-					...data,
-					setInitialValues,
-					setModalOpen,
-					handleDeleteDowntime,
-					setEditMode,
-				}),
-		},
-	];
 	const { notifications } = useNotifications();
+	const { user } = useAppContext();
+	const isCrudEnabled = user?.role !== USER_ROLES.VIEWER;
+	const [page, setPage] = useState(1);
+	const columnCount = COLUMNS.length + 1;
 
-	const tableData = [...(downtimeSchedules.data?.data || [])]
+	const tableData: DowntimeSchedulesTableData[] = [
+		...(downtimeSchedules.data?.data || []),
+	]
 		.sort((a, b): number => {
 			if (a?.updatedAt && b?.updatedAt) {
 				return dayjs(b.updatedAt).diff(dayjs(a.updatedAt));
@@ -360,20 +101,104 @@ export function PlannedDowntimeList({
 		}
 	}, [downtimeSchedules.error, downtimeSchedules.isError, notifications]);
 
-	const paginationConfig = {
-		pageSize: 5,
-		showSizeChanger: false,
-		hideOnSinglePage: true,
-	};
+	const pageCount = Math.max(
+		1,
+		Math.ceil(tableData.length / DOWNTIME_PAGE_SIZE),
+	);
+	const currentPage = Math.min(page, pageCount);
+	const pageRows = tableData.slice(
+		(currentPage - 1) * DOWNTIME_PAGE_SIZE,
+		currentPage * DOWNTIME_PAGE_SIZE,
+	);
+	const isLoading = downtimeSchedules.isLoading || downtimeSchedules.isFetching;
+	const hasSearch = searchValue.toLocaleString().length > 0;
+
+	const renderEmpty = (): JSX.Element =>
+		hasSearch ? (
+			<ConfigListState
+				colSpan={columnCount}
+				icon={<Search />}
+				title="No matching planned downtime found."
+				description="Try a different name or schedule ID."
+				testId="planned-downtime-empty"
+			/>
+		) : (
+			<ConfigListState
+				colSpan={columnCount}
+				icon={<CalendarClock />}
+				title="No planned downtime yet"
+				description="Schedule a window to silence alerts during maintenance or deploys."
+				testId="planned-downtime-empty"
+				action={
+					isCrudEnabled && onCreate ? (
+						<Button variant="outline" size="sm" onClick={onCreate}>
+							<Plus aria-hidden="true" />
+							New downtime
+						</Button>
+					) : undefined
+				}
+			/>
+		);
+
 	return (
-		<Table<DowntimeSchedulesTableData>
-			columns={columns}
-			className="planned-downtime-table"
-			bordered={false}
-			dataSource={tableData || []}
-			loading={downtimeSchedules.isLoading || downtimeSchedules.isFetching}
-			showHeader={false}
-			pagination={paginationConfig}
-		/>
+		<ContentPanel
+			testId="planned-downtime-panel"
+			footer={
+				tableData.length > DOWNTIME_PAGE_SIZE || !tableData.length ? undefined : (
+					<span className="tw:tabular-nums">
+						{`${tableData.length} ${tableData.length === 1 ? 'schedule' : 'schedules'}`}
+					</span>
+				)
+			}
+		>
+			<Table aria-busy={isLoading}>
+				<TableHeader className="tw:bg-surface-sunken">
+					<TableRow>
+						{COLUMNS.map((column) => (
+							<TableHead key={column}>{column}</TableHead>
+						))}
+						<TableHead>
+							<span className="tw:sr-only">Actions</span>
+						</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody
+					className={isLoading && tableData.length ? 'tw:opacity-60' : undefined}
+				>
+					{isLoading && !tableData.length && (
+						<ConfigListSkeleton colSpan={columnCount} />
+					)}
+					{!isLoading && !tableData.length && renderEmpty()}
+					{pageRows.map((downtime) => (
+						<DowntimeRow
+							key={downtime.id}
+							downtime={downtime}
+							columnCount={columnCount}
+							onEdit={
+								isCrudEnabled
+									? (): void => {
+											setInitialValues({ ...downtime });
+											setModalOpen(true);
+											setEditMode(true);
+										}
+									: undefined
+							}
+							onDelete={
+								isCrudEnabled
+									? (): void =>
+											handleDeleteDowntime(downtime.id ?? '', downtime.name || '')
+									: undefined
+							}
+						/>
+					))}
+				</TableBody>
+			</Table>
+			<TablePagination
+				page={currentPage}
+				pageSize={DOWNTIME_PAGE_SIZE}
+				total={tableData.length}
+				onPageChange={setPage}
+			/>
+		</ContentPanel>
 	);
 }

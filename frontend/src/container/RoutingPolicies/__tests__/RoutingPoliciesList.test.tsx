@@ -1,8 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import * as appHooks from 'providers/App/App';
 
 import RoutingPoliciesList from '../RoutingPolicyList';
 import { RoutingPolicyListItemProps } from '../types';
-import { getUseRoutingPoliciesMockData } from './testUtils';
+import {
+	getAppContextMockState,
+	getUseRoutingPoliciesMockData,
+} from './testUtils';
+
+jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
 const useRoutingPolicesMockData = getUseRoutingPoliciesMockData();
 const mockHandlePolicyDetailsModalOpen = jest.fn();
@@ -12,7 +18,9 @@ const mockRefetchRoutingPolicies = jest.fn();
 jest.mock('../RoutingPolicyListItem', () => ({
 	__esModule: true,
 	default: jest.fn(({ routingPolicy }: RoutingPolicyListItemProps) => (
-		<div data-testid="routing-policy-list-item">{routingPolicy.name}</div>
+		<tr data-testid="routing-policy-list-item">
+			<td>{routingPolicy.name}</td>
+		</tr>
 	)),
 }));
 
@@ -60,10 +68,10 @@ describe('RoutingPoliciesList', () => {
 				isRoutingPoliciesFetching={false}
 			/>,
 		);
-		// Check for loading spinner by class name
-		expect(document.querySelector('.ant-spin-spinning')).toBeInTheDocument();
-		// Check that the table is in loading state (blurred)
-		expect(document.querySelector('.ant-spin-blur')).toBeInTheDocument();
+		expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'true');
+		expect(screen.getAllByTestId(ROUTING_POLICY_LIST_ITEM_TEST_ID)).toHaveLength(
+			2,
+		);
 	});
 
 	it('renders loading state when data is being fetched', () => {
@@ -79,10 +87,10 @@ describe('RoutingPoliciesList', () => {
 				isRoutingPoliciesFetching
 			/>,
 		);
-		// Check for loading spinner by class name
-		expect(document.querySelector('.ant-spin-spinning')).toBeInTheDocument();
-		// Check that the table is in loading state (blurred)
-		expect(document.querySelector('.ant-spin-blur')).toBeInTheDocument();
+		expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'true');
+		expect(screen.getAllByTestId(ROUTING_POLICY_LIST_ITEM_TEST_ID)).toHaveLength(
+			2,
+		);
 	});
 
 	it('renders error state', () => {
@@ -121,6 +129,6 @@ describe('RoutingPoliciesList', () => {
 				isRoutingPoliciesFetching={false}
 			/>,
 		);
-		expect(screen.getByText('No routing policies yet,')).toBeInTheDocument();
+		expect(screen.getByText('No routing policies yet')).toBeInTheDocument();
 	});
 });

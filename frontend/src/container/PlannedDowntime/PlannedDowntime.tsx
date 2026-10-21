@@ -6,8 +6,9 @@ import {
 	useListDowntimeSchedules,
 } from 'api/generated/services/downtimeschedules';
 import { useListRules } from 'api/generated/services/rules';
-import ConfigSectionHeader from 'components/Alerts/ConfigSectionHeader/ConfigSectionHeader';
 import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/fuseScope.schemas';
+import ConfigSectionHeader from 'components/Alerts/ConfigSectionHeader/ConfigSectionHeader';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
@@ -25,8 +26,6 @@ import {
 	defaultInitialValues,
 	deleteDowntimeHandler,
 } from './PlannedDowntimeutils';
-
-import './PlannedDowntime.styles.scss';
 
 dayjs.locale('en');
 
@@ -122,62 +121,64 @@ export function PlannedDowntime(): JSX.Element {
 		});
 	};
 
+	const openCreateForm = (): void => {
+		setInitialValues(defaultInitialValues);
+		setIsOpen(true);
+		setEditMode(false);
+		form.resetFields();
+	};
+
 	return (
-		<div className="planned-downtime-container">
-			<div className="planned-downtime-content">
-				<ConfigSectionHeader
-					title="Planned Downtime"
-					subtitle="Create and manage planned downtimes."
-					searchPlaceholder="Search for a planned downtime..."
-					searchValue={String(searchValue)}
-					onSearch={handleSearch}
-					actionLabel="New downtime"
-					onAction={(): void => {
-						setInitialValues(defaultInitialValues);
-						setIsOpen(true);
-						setEditMode(false);
-						form.resetFields();
-					}}
-					actionDisabled={user?.role === USER_ROLES.VIEWER}
-					actionTooltip={
-						user?.role === USER_ROLES.VIEWER
-							? 'You need edit permissions to create a planned downtime'
-							: ''
-					}
-				/>
-				<PlannedDowntimeList
-					downtimeSchedules={downtimeSchedules}
+		<div className="tw:flex tw:w-full tw:flex-col tw:gap-4">
+			<ConfigSectionHeader
+				title="Planned Downtime"
+				subtitle="Create and manage planned downtimes."
+				searchPlaceholder="Search for a planned downtime..."
+				searchValue={String(searchValue)}
+				onSearch={handleSearch}
+				actionLabel="New downtime"
+				onAction={openCreateForm}
+				docsUrl={fuseScopeDocsUrl('/alerts/routing-and-downtime/#planned-downtime')}
+				actionDisabled={user?.role === USER_ROLES.VIEWER}
+				actionTooltip={
+					user?.role === USER_ROLES.VIEWER
+						? 'You need edit permissions to create a planned downtime'
+						: ''
+				}
+			/>
+			<PlannedDowntimeList
+				downtimeSchedules={downtimeSchedules}
+				alertOptions={alertOptions || []}
+				setInitialValues={setInitialValues}
+				setModalOpen={setIsOpen}
+				handleDeleteDowntime={(id, name): void => {
+					setDeleteData({ id, name });
+					setIsDeleteModalOpen(true);
+				}}
+				setEditMode={setEditMode}
+				searchValue={searchValue}
+				onCreate={openCreateForm}
+			/>
+			{isOpen && (
+				<PlannedDowntimeForm
 					alertOptions={alertOptions || []}
-					setInitialValues={setInitialValues}
-					setModalOpen={setIsOpen}
-					handleDeleteDowntime={(id, name): void => {
-						setDeleteData({ id, name });
-						setIsDeleteModalOpen(true);
-					}}
-					setEditMode={setEditMode}
-					searchValue={searchValue}
+					initialValues={initialValues}
+					isError={isError}
+					isLoading={isLoading}
+					isOpen={isOpen}
+					setIsOpen={setIsOpen}
+					refetchAllSchedules={refetchAllSchedules}
+					isEditMode={isEditMode}
+					form={form}
 				/>
-				{isOpen && (
-					<PlannedDowntimeForm
-						alertOptions={alertOptions || []}
-						initialValues={initialValues}
-						isError={isError}
-						isLoading={isLoading}
-						isOpen={isOpen}
-						setIsOpen={setIsOpen}
-						refetchAllSchedules={refetchAllSchedules}
-						isEditMode={isEditMode}
-						form={form}
-					/>
-				)}
-				<PlannedDowntimeDeleteModal
-					isDeleteLoading={isDeleteLoading}
-					isDeleteModalOpen={isDeleteModalOpen}
-					onDeleteHandler={onDeleteHandler}
-					setIsDeleteModalOpen={setIsDeleteModalOpen}
-					downtimeSchedule={deleteData?.name || ''}
-				/>
-			</div>
+			)}
+			<PlannedDowntimeDeleteModal
+				isDeleteLoading={isDeleteLoading}
+				isDeleteModalOpen={isDeleteModalOpen}
+				onDeleteHandler={onDeleteHandler}
+				setIsDeleteModalOpen={setIsDeleteModalOpen}
+				downtimeSchedule={deleteData?.name || ''}
+			/>
 		</div>
 	);
 }
