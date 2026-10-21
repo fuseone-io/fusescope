@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
-import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
-import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
-import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import {
@@ -18,7 +12,12 @@ import {
 	useUpdateUser,
 } from 'api/generated/services/users';
 import { AxiosError } from 'axios';
+import MemberStatusBadge from 'components/MembersTable/MemberStatusBadge';
 import { MemberRow } from 'components/MembersTable/MembersTable';
+import SideSheet from 'components/PageTemplate/components/SideSheet';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import { Skeleton } from 'components/ui/skeleton';
 import RolesSelect, { useRoles } from 'components/RolesSelect';
 import SaveErrorItem from 'components/ServiceAccountDrawer/SaveErrorItem';
 import type { SaveError } from 'components/ServiceAccountDrawer/utils';
@@ -34,11 +33,13 @@ import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { toAPIError } from 'utils/errorUtils';
+import { RefreshCw, Trash2 } from 'lucide-react';
+import ActionButton from 'pages/Settings/components/ActionButton';
+import DrawerField from 'pages/Settings/components/DrawerField';
+import LockedValue from 'pages/Settings/components/LockedValue';
 
 import DeleteMemberDialog from './DeleteMemberDialog';
 import ResetLinkDialog from './ResetLinkDialog';
-
-import './EditMemberDrawer.styles.scss';
 
 const ROOT_USER_TOOLTIP = 'This operation is not supported for the root user';
 const SELF_DELETE_TOOLTIP =
@@ -463,79 +464,71 @@ function EditMemberDrawer({
 		[formatTimezoneAdjustedTimestamp],
 	);
 
-	const drawerBody = isFetchingUser ? (
-		<Skeleton active paragraph={{ rows: 6 }} />
-	) : (
-		<>
-			<div className="edit-member-drawer__field">
-				<label className="edit-member-drawer__label" htmlFor="member-name">
-					Name
-				</label>
-				<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
-					<Input
-						id="member-name"
-						value={localDisplayName}
-						onChange={(e): void => {
-							setLocalDisplayName(e.target.value);
-							setSaveErrors((prev) =>
-								prev.filter((err) => err.context !== 'Name update'),
-							);
-						}}
-						placeholder="Enter name"
-						disabled={isRootUser || isDeleted}
-					/>
-				</Tooltip>
-			</div>
+	const statusForBadge =
+		member?.status === MemberStatus.Active ||
+		member?.status === MemberStatus.Deleted
+			? member.status
+			: MemberStatus.Invited;
 
-			<div className="edit-member-drawer__field">
-				<label className="edit-member-drawer__label" htmlFor="member-email">
-					Email Address
-				</label>
-				<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
-					<span className="edit-member-drawer__email-text">
+	const rolesLockedReason = isRootUser
+		? ROOT_USER_TOOLTIP
+		: isDeleted
+			? undefined
+			: 'You cannot modify your own role';
+
+	const drawerBody = isFetchingUser ? (
+		<div className="tw:flex tw:flex-col tw:gap-3">
+			{[0, 1, 2, 3, 4, 5].map((row) => (
+				<Skeleton key={row} className="tw:h-5 tw:bg-muted" />
+			))}
+		</div>
+	) : (
+		<div className="edit-member-drawer__body tw:flex tw:flex-col tw:gap-5">
+			<DrawerField label="Name" htmlFor="member-name">
+				<Input
+					id="member-name"
+					value={localDisplayName}
+					title={isRootUser ? ROOT_USER_TOOLTIP : undefined}
+					onChange={(e): void => {
+						setLocalDisplayName(e.target.value);
+						setSaveErrors((prev) =>
+							prev.filter((err) => err.context !== 'Name update'),
+						);
+					}}
+					placeholder="Enter name"
+					disabled={isRootUser || isDeleted}
+				/>
+			</DrawerField>
+
+			<DrawerField label="Email Address" htmlFor="member-email">
+				<LockedValue>
+					<span className="edit-member-drawer__email-text tw:truncate">
 						{member?.email || '—'}
 					</span>
-					<LockKeyhole size={16} className="edit-member-drawer__lock-icon" />
-				</div>
-			</div>
+				</LockedValue>
+			</DrawerField>
 
-			<div className="edit-member-drawer__field">
-				<label className="edit-member-drawer__label" htmlFor="member-role">
-					Roles
-				</label>
+			<DrawerField label="Roles" htmlFor="member-role">
 				{isSelf || isRootUser || isDeleted ? (
-					<Tooltip
-						title={
-							isRootUser
-								? ROOT_USER_TOOLTIP
-								: isDeleted
-									? undefined
-									: 'You cannot modify your own role'
-						}
-					>
-						<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
-							<div className="edit-member-drawer__disabled-roles">
-								{localRoles.length > 0 ? (
-									localRoles.map((roleId) => {
-										const role = availableRoles.find((r) => r.id === roleId);
-										return (
-											<Badge
-												textTransform="none"
-												variant="solid"
-												key={roleId}
-												color="secondary"
-											>
-												{role?.name ?? roleId}
-											</Badge>
-										);
-									})
-								) : (
-									<span className="edit-member-drawer__email-text">—</span>
-								)}
-							</div>
-							<LockKeyhole size={16} className="edit-member-drawer__lock-icon" />
+					<LockedValue title={rolesLockedReason}>
+						<div className="edit-member-drawer__disabled-roles tw:flex tw:flex-wrap tw:gap-1.5">
+							{localRoles.length > 0 ? (
+								localRoles.map((roleId) => {
+									const role = availableRoles.find((r) => r.id === roleId);
+									return (
+										<span
+											key={roleId}
+											className="tw:inline-flex tw:h-5 tw:items-center tw:rounded-sm tw:bg-muted tw:px-2 tw:text-xs tw:font-medium tw:text-foreground"
+										>
+											{role?.name ?? roleId}
+										</span>
+									);
+								})
+							) : (
+								<span className="edit-member-drawer__email-text">—</span>
+							)}
 						</div>
-					</Tooltip>
+					</LockedValue>
 				) : (
 					<RolesSelect
 						id="member-role"
@@ -558,44 +551,30 @@ function EditMemberDrawer({
 						placeholder="Select roles"
 					/>
 				)}
-			</div>
+			</DrawerField>
 
-			<div className="edit-member-drawer__meta">
-				<div className="edit-member-drawer__meta-item">
-					<span className="edit-member-drawer__meta-label">Status</span>
-					{member?.status === MemberStatus.Active ? (
-						<Badge color="success" variant="outlined">
-							ACTIVE
-						</Badge>
-					) : member?.status === MemberStatus.Deleted ? (
-						<Badge color="danger" variant="outlined">
-							DELETED
-						</Badge>
-					) : (
-						<Badge color="warning" variant="outlined">
-							INVITED
-						</Badge>
-					)}
-				</div>
+			<dl className="edit-member-drawer__meta tw:grid tw:grid-cols-[140px_1fr] tw:gap-x-4 tw:gap-y-3 tw:rounded-lg tw:border tw:border-border tw:px-4 tw:py-3 tw:text-[13px]">
+				<dt className="tw:text-muted-foreground">Status</dt>
+				<dd>
+					<MemberStatusBadge status={statusForBadge} />
+				</dd>
 
-				<div className="edit-member-drawer__meta-item">
-					<span className="edit-member-drawer__meta-label">{joinedOnLabel}</span>
-					<Badge textTransform="none" variant="solid" color="secondary">
-						{formatTimestamp(member?.joinedOn)}
-					</Badge>
-				</div>
+				<dt className="tw:text-muted-foreground">{joinedOnLabel}</dt>
+				<dd className="tw:text-foreground tw:tabular-nums">
+					{formatTimestamp(member?.joinedOn)}
+				</dd>
 				{!isInvited && (
-					<div className="edit-member-drawer__meta-item">
-						<span className="edit-member-drawer__meta-label">Last Modified</span>
-						<Badge textTransform="none" variant="solid" color="secondary">
+					<>
+						<dt className="tw:text-muted-foreground">Last Modified</dt>
+						<dd className="tw:text-foreground tw:tabular-nums">
 							{formatTimestamp(member?.updatedAt)}
-						</Badge>
-					</div>
+						</dd>
+					</>
 				)}
-			</div>
+			</dl>
 
 			{saveErrors.length > 0 && (
-				<div className="edit-member-drawer__save-errors">
+				<div className="edit-member-drawer__save-errors tw:flex tw:flex-col tw:gap-2">
 					{saveErrors.map((e) => (
 						<SaveErrorItem
 							key={e.context}
@@ -606,102 +585,81 @@ function EditMemberDrawer({
 					))}
 				</div>
 			)}
-		</>
-	);
-
-	const drawerContent = (
-		<div className="edit-member-drawer__layout">
-			<div className="edit-member-drawer__body">{drawerBody}</div>
 		</div>
 	);
 
-	const footer = (
-		<div className="edit-member-drawer__footer">
-			{!isDeleted && (
-				<>
-					<div className="edit-member-drawer__footer-left">
-						<Button
-							disabledTooltip={getDeleteTooltip(isRootUser, isSelf)}
-							size="md"
-							onClick={(): void => setShowDeleteConfirm(true)}
-							disabled={isRootUser || isSelf}
-							variant="link"
-							color="danger"
-							prefix={<Trash2 size={12} />}
-						>
-							{isInvited ? 'Revoke Invite' : 'Delete Member'}
-						</Button>
+	const resetLinkLabel = isGeneratingLink
+		? 'Generating...'
+		: isInvited
+			? getInviteButtonLabel(
+					isLoadingTokenStatus,
+					existingToken,
+					isTokenExpired,
+					tokenNotFound,
+				)
+			: 'Generate Password Reset Link';
 
-						<div className="edit-member-drawer__footer-divider" />
-						<Button
-							disabledTooltip={ROOT_USER_TOOLTIP}
-							size="md"
-							onClick={handleGenerateResetLink}
-							disabled={isRootUser}
-							loading={isGeneratingLink || isLoadingTokenStatus}
-							variant="link"
-							color="warning"
-							prefix={<RefreshCw size={12} />}
-						>
-							{isGeneratingLink
-								? 'Generating...'
-								: isInvited
-									? getInviteButtonLabel(
-											isLoadingTokenStatus,
-											existingToken,
-											isTokenExpired,
-											tokenNotFound,
-										)
-									: 'Generate Password Reset Link'}
-						</Button>
-					</div>
+	const footer = isDeleted ? null : (
+		<div className="edit-member-drawer__footer tw:flex tw:w-full tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
+			<div className="edit-member-drawer__footer-left tw:flex tw:flex-wrap tw:items-center tw:gap-1">
+				<ActionButton
+					variant="ghost"
+					className="tw:text-error-ink tw:hover:bg-error-soft tw:hover:text-error-ink tw:dark:text-error"
+					disabledReason={getDeleteTooltip(isRootUser, isSelf)}
+					onClick={(): void => setShowDeleteConfirm(true)}
+					disabled={isRootUser || isSelf}
+					icon={<Trash2 aria-hidden="true" />}
+				>
+					<span className="translate-safe">
+						{isInvited ? 'Revoke Invite' : 'Delete Member'}
+					</span>
+				</ActionButton>
 
-					<div className="edit-member-drawer__footer-right">
-						<Button
-							size="md"
-							variant="outlined"
-							color="secondary"
-							onClick={handleClose}
-							prefix={<X size={14} />}
-						>
-							Cancel
-						</Button>
+				<ActionButton
+					variant="ghost"
+					disabledReason={ROOT_USER_TOOLTIP}
+					onClick={handleGenerateResetLink}
+					disabled={isRootUser}
+					loading={isGeneratingLink || isLoadingTokenStatus}
+					icon={<RefreshCw aria-hidden="true" />}
+				>
+					<span className="translate-safe">{resetLinkLabel}</span>
+				</ActionButton>
+			</div>
 
-						<Button
-							disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : 'No changes to save'}
-							size="md"
-							variant="solid"
-							color="primary"
-							disabled={!isDirty || isRootUser}
-							onClick={handleSave}
-							loading={isSaving}
-						>
-							{isSaving ? 'Saving...' : 'Save Member Details'}
-						</Button>
-					</div>
-				</>
-			)}
+			<div className="edit-member-drawer__footer-right tw:ml-auto tw:flex tw:items-center tw:gap-2">
+				<Button type="button" variant="outline" onClick={handleClose}>
+					Cancel
+				</Button>
+
+				<ActionButton
+					disabledReason={isRootUser ? ROOT_USER_TOOLTIP : 'No changes to save'}
+					disabled={!isDirty || isRootUser}
+					onClick={handleSave}
+					loading={isSaving}
+				>
+					<span className="translate-safe">
+						{isSaving ? 'Saving...' : 'Save Member Details'}
+					</span>
+				</ActionButton>
+			</div>
 		</div>
 	);
 
 	return (
 		<>
-			<DrawerWrapper
+			<SideSheet
 				open={open}
-				onOpenChange={(isOpen): void => {
-					if (!isOpen) {
-						handleClose();
-					}
-				}}
-				direction="right"
-				showCloseButton
-				showOverlay={false}
+				onClose={handleClose}
+				modal={false}
 				title="Member Details"
 				footer={footer}
-				width="wide"
+				width={560}
+				testId="edit-member-drawer"
+				className="edit-member-drawer"
 			>
-				{drawerContent}
-			</DrawerWrapper>
+				{drawerBody}
+			</SideSheet>
 
 			<ResetLinkDialog
 				open={showResetLinkDialog}

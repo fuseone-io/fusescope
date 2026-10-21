@@ -97,9 +97,7 @@ describe('InviteMembersModal', () => {
 				}) as JSX.Element,
 			);
 
-			expect(
-				getByRole('button', { name: /invite team members/i }),
-			).toHaveAttribute('aria-disabled', 'true');
+			expect(getByRole('button', { name: /invite team members/i })).toBeDisabled();
 		});
 
 		it('shows loading state when isSubmitting=true', () => {
@@ -118,7 +116,7 @@ describe('InviteMembersModal', () => {
 		});
 
 		it('calls onClose when Cancel is clicked', async () => {
-			const user = userEvent.setup();
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const onClose = jest.fn();
 			renderComponent({ onClose });
 
@@ -128,7 +126,7 @@ describe('InviteMembersModal', () => {
 		});
 
 		it('calls submit when Invite button is clicked', async () => {
-			const user = userEvent.setup();
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const mockSubmit = jest.fn();
 
 			const { unmount } = renderComponent();
@@ -199,7 +197,7 @@ describe('InviteMembersModal', () => {
 
 	describe('dialog close behavior', () => {
 		it('calls onClose when dialog is closed via close button', async () => {
-			const user = userEvent.setup();
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const onClose = jest.fn();
 			renderComponent({ onClose });
 

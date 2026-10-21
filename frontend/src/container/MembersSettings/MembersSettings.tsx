@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useListUsers } from 'api/generated/services/users';
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import { Button } from 'components/ui/button';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
 import InviteMembersModal from 'container/MembersSettings/components/InviteMembersModal/InviteMembersModal';
@@ -154,7 +154,7 @@ function MembersSettings(): JSX.Element {
 					}}
 				/>
 			</div>
-			<Panel className="tw:overflow-hidden">
+			<ContentPanel>
 				<MembersTable
 					data={filteredMembers}
 					loading={isLoading}
@@ -165,7 +165,7 @@ function MembersSettings(): JSX.Element {
 					onPageChange={setPage}
 					onRowClick={handleRowClick}
 				/>
-			</Panel>
+			</ContentPanel>
 
 			<InviteMembersModal
 				open={isInviteModalOpen}
