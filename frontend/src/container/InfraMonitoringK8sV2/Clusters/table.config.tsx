@@ -1,5 +1,4 @@
-import { Color } from '@signozhq/design-tokens';
-import { Boxes } from '@signozhq/icons';
+import { Boxes } from 'lucide-react';
 import {
 	InframonitoringtypesClusterRecordDTO,
 	InframonitoringtypesNodeConditionDTO,
@@ -65,7 +64,6 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 			<EntityGroupHeader
 				title="Cluster Name"
 				icon={<Boxes data-hide-expanded="true" size={14} />}
-				docPath="/infrastructure-monitoring/kubernetes/clusters#cluster-name"
 			/>
 		),
 		accessorFn: (row): string => row.clusterName || '',
@@ -81,11 +79,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 	},
 	{
 		id: 'nodeCountsByReadiness',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#node-readiness">
-				Node Readiness
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Node Readiness</ColumnHeader>,
 		accessorFn: (
 			row,
 		): InframonitoringtypesClusterRecordDTO['nodeCountsByReadiness'] =>
@@ -105,13 +99,13 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 						{
 							value: row.nodeCountsByReadiness.ready,
 							label: 'Ready',
-							color: Color.BG_FOREST_500,
+							color: 'var(--fs-success)',
 							statuses: [InframonitoringtypesNodeConditionDTO.ready],
 						},
 						{
 							value: row.nodeCountsByReadiness.notReady,
 							label: 'Not Ready',
-							color: Color.BG_AMBER_500,
+							color: 'var(--fs-warning)',
 							statuses: [InframonitoringtypesNodeConditionDTO.not_ready],
 						},
 					]}
@@ -121,11 +115,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 	},
 	{
 		id: 'podCountsByStatus',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#pod-counts-by-status">
-				Pod Status
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Pod Status</ColumnHeader>,
 		accessorFn: (
 			row,
 		): InframonitoringtypesClusterRecordDTO['podCountsByStatus'] =>
@@ -148,11 +138,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 	},
 	{
 		id: 'cpu',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#cpu-usage-cores">
-				CPU Usage (cores)
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>CPU Usage (cores)</ColumnHeader>,
 		accessorFn: (row): number => row.clusterCPU,
 		width: { min: 160 },
 		enableSort: true,
@@ -173,9 +159,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 	{
 		id: 'cpu_allocatable',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#cpu-alloc-cores">
-				CPU Allocatable (cores)
-			</ColumnHeader>
+			<ColumnHeader>CPU Allocatable (cores)</ColumnHeader>
 		),
 		accessorFn: (row): number => row.clusterCPUAllocatable,
 		width: { min: 200 },
@@ -197,9 +181,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 	{
 		id: 'memory',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#memory-usage-wss">
-				Memory Usage (WSS)
-			</ColumnHeader>
+			<ColumnHeader>Memory Usage (WSS)</ColumnHeader>
 		),
 		accessorFn: (row): number => row.clusterMemory,
 		width: { min: 180 },
@@ -221,9 +203,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 	{
 		id: 'memory_allocatable',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#memory-allocatable">
-				Memory Allocatable
-			</ColumnHeader>
+			<ColumnHeader>Memory Allocatable</ColumnHeader>
 		),
 		accessorFn: (row): number => row.clusterMemoryAllocatable,
 		width: { min: 180 },

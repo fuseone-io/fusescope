@@ -103,6 +103,8 @@ export function RelatedEntitiesTable({
 			{isEmpty ? (
 				<div className={styles.emptyState}>
 					<K8sEmptyState
+						entity={targetCategory}
+						hasFilters
 						isError={isError}
 						error={error}
 						isLoading={isLoading}

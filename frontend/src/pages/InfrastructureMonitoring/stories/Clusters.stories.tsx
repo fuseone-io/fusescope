@@ -34,12 +34,10 @@ export default meta;
 export const Default: StoryObj<ClustersArgs> = {};
 
 /**
- * The tooltips of the cluster's details drawer: one per counts card, each naming
- * the cluster it would filter the namespaces, nodes or workloads by, the cluster
- * name above them, and on every metrics chart the header's own paragraph, its
- * docs link, the Go to Metrics Explorer button and the series names in the
- * legend. The counts cards are the clusters and namespaces tabs only, so this is
- * where they are reviewable.
+ * The cluster's details sheet with the Tooltips control on: the counts strip
+ * (namespaces, nodes and workloads, each linking to its list) and the metrics
+ * charts with their series in the panel header. The counts strip is on the
+ * clusters and namespaces sheets only, so this is where it is reviewable.
  */
 export const Tooltips: StoryObj<ClustersArgs> = {
 	args: { tooltipsOpen: true, drawer: true },

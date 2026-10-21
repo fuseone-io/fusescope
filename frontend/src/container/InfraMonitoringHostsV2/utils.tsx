@@ -1,20 +1,16 @@
 import React from 'react';
-import { Color } from '@signozhq/design-tokens';
-import { Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
 import {
 	FiltersType,
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
-import { TriangleAlert } from '@signozhq/icons';
+import { TriangleAlert } from 'lucide-react';
 import TanStackTable from 'components/TanStackTableView';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
-const HOSTNAME_DOCS_URL = signozDocsUrl(
-	'/infrastructure-monitoring/hostmetrics/#host-name-is-blankempty',
-);
+const HOSTNAME_DOCS_URL = fuseScopeDocsUrl('/sending-data/kubernetes/');
 
 export function HostnameCell({
 	hostName,
@@ -27,8 +23,8 @@ export function HostnameCell({
 	}
 	return (
 		<>
-			<Typography.Text color="muted">-</Typography.Text>
-			<Tooltip
+			<span className="tw:text-muted-foreground">-</span>
+			<TitleTooltip
 				title={
 					<div>
 						Missing host.name metadata.
@@ -43,7 +39,6 @@ export function HostnameCell({
 						</a>
 					</div>
 				}
-				trigger={['hover', 'focus']}
 			>
 				<span
 					className="hostname-cell-warning-icon"
@@ -57,9 +52,9 @@ export function HostnameCell({
 						}
 					}}
 				>
-					<TriangleAlert size={14} color={Color.BG_CHERRY_500} />
+					<TriangleAlert size={14} color="var(--fs-error)" />
 				</span>
-			</Tooltip>
+			</TitleTooltip>
 		</>
 	);
 }

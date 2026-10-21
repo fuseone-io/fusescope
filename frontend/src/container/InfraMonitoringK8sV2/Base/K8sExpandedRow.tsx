@@ -2,15 +2,14 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/fuseScope.schemas';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from 'components/ui/button';
 import APIError from 'types/api/error';
 import TanStackTable, {
 	SortState,
 	TableColumnDef,
 	TanStackTableStateProvider,
 } from 'components/TanStackTableView';
-import { CornerDownRight } from '@signozhq/icons';
+import { CornerDownRight } from 'lucide-react';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { v4 as uuid } from 'uuid';
@@ -291,14 +290,14 @@ export function K8sExpandedRow<
 
 	const footerContent = hasMoreItems ? (
 		<Button
-			size="md"
+			size="sm"
 			type="button"
-			color="secondary"
-			variant="outlined"
-			testId="expanded-row-view-all"
+			variant="outline"
+			data-testid="expanded-row-view-all"
 			onClick={handleViewAllClick}
-			prefix={<CornerDownRight size={14} />}
+			className="tw:m-2 tw:font-sans"
 		>
+			<CornerDownRight />
 			View All
 		</Button>
 	) : null;
@@ -309,7 +308,9 @@ export function K8sExpandedRow<
 			data-testid="expanded-table-container"
 		>
 			{isError && (
-				<Typography>{data?.error?.toString() || 'Something went wrong'}</Typography>
+				<p className="tw:px-4 tw:py-3 tw:text-[13px] tw:text-error-ink">
+					{data?.error?.toString() || 'Something went wrong'}
+				</p>
 			)}
 
 			<div data-testid="expanded-table">

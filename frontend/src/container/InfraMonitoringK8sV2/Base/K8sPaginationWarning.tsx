@@ -1,9 +1,7 @@
-import { Color } from '@signozhq/design-tokens';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/fuseScope.schemas';
 
-import styles from './K8sPaginationWarning.module.scss';
-import TriangleAlert from '@signozhq/icons/TriangleAlert';
+import { TriangleAlert } from 'lucide-react';
 
 export type K8sPaginationWarningProps = {
 	warning: Querybuildertypesv5QueryWarnDataDTO;
@@ -23,13 +21,9 @@ export function K8sPaginationWarning({
 						warning.warnings?.map((w) => ({ message: w.message ?? '' })) ?? [],
 				}}
 			>
-				<div className={styles.paginationWarning}>
+				<div className="fs-ui tw:flex tw:h-7 tw:cursor-pointer tw:items-center tw:gap-2 tw:rounded-md tw:bg-warning-soft tw:px-2.5 tw:font-sans tw:text-xs tw:font-medium tw:text-warning-ink">
+					<TriangleAlert size={14} aria-hidden="true" />
 					Your data contains some warnings
-					<TriangleAlert
-						size={16}
-						className={styles.warningIcon}
-						color={Color.BG_AMBER_500}
-					/>
 				</div>
 			</WarningPopover>
 		</span>

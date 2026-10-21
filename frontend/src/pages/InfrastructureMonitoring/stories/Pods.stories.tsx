@@ -84,22 +84,18 @@ export const PodMetadataCopiedToast: StoryObj<PodsArgs> = {
 };
 
 /**
- * Every tooltip the pod list carries, held open: Collapse Filters beside the
- * quick filters, Options above the table, the Pod Name, Status, Age and Restarts
- * headers sharing the generic note and its docs link, and the CPU and memory
- * limit headers, whose tooltip is the whole threshold legend rather than a
- * sentence. The matching request columns are hidden until the Options panel adds
- * them, and their legend is the same shape.
+ * The pod list with the Tooltips control on. The CPU and memory limit headers'
+ * threshold legends and the Options button are new-UI tooltips that open on
+ * hover or focus; the control holds the row tooltips, such as the status badge's
+ * Filter by hint.
  */
 export const Tooltips: StoryObj<PodsArgs> = {
 	args: { tooltipsOpen: true },
 };
 
 /**
- * The tooltips of the pod's details drawer on its logs tab: the namespace,
- * cluster and node metadata values, the node one long enough to wrap, and the
- * Go to Logs Explorer button beside the tab strip, with the list's own header
- * tooltips still open behind the drawer.
+ * The pod's details sheet on its logs tab with a node name long enough to
+ * truncate in the header attributes, and Open in Logs Explorer beside the tabs.
  */
 export const TooltipsInDetailsDrawer: StoryObj<PodsArgs> = {
 	args: { tooltipsOpen: true, drawer: true, drawerTab: VIEWS.LOGS },

@@ -1,17 +1,16 @@
 import type { ComponentProps } from 'react';
 import {
-	ArrowUpDown,
-	Bolt,
+	ArrowRight,
 	Box,
-	Boxes,
-	Computer,
+	CirclePlus,
+	ClipboardList,
 	Container,
-	FilePenLine,
-	Group,
-	HardDrive,
+	Database,
+	Hexagon,
+	LayoutGrid,
+	Rows3,
 	Server,
-	Workflow,
-} from '@signozhq/icons';
+} from 'lucide-react';
 
 import { InfraMonitoringEntity } from '../constants';
 
@@ -23,16 +22,16 @@ type IconSize = ComponentProps<typeof Container>['size'];
 
 const CATEGORY_ICONS: Record<InfraMonitoringEntity, typeof Container> = {
 	[InfraMonitoringEntity.HOSTS]: Server,
-	[InfraMonitoringEntity.PODS]: Container,
-	[InfraMonitoringEntity.CONTAINERS]: Box,
-	[InfraMonitoringEntity.NODES]: Workflow,
-	[InfraMonitoringEntity.NAMESPACES]: FilePenLine,
-	[InfraMonitoringEntity.CLUSTERS]: Boxes,
-	[InfraMonitoringEntity.DEPLOYMENTS]: Computer,
-	[InfraMonitoringEntity.STATEFULSETS]: ArrowUpDown,
-	[InfraMonitoringEntity.DAEMONSETS]: Group,
-	[InfraMonitoringEntity.JOBS]: Bolt,
-	[InfraMonitoringEntity.VOLUMES]: HardDrive,
+	[InfraMonitoringEntity.PODS]: Box,
+	[InfraMonitoringEntity.CONTAINERS]: Container,
+	[InfraMonitoringEntity.NODES]: Server,
+	[InfraMonitoringEntity.NAMESPACES]: LayoutGrid,
+	[InfraMonitoringEntity.CLUSTERS]: Hexagon,
+	[InfraMonitoringEntity.DEPLOYMENTS]: ArrowRight,
+	[InfraMonitoringEntity.STATEFULSETS]: Rows3,
+	[InfraMonitoringEntity.DAEMONSETS]: CirclePlus,
+	[InfraMonitoringEntity.JOBS]: ClipboardList,
+	[InfraMonitoringEntity.VOLUMES]: Database,
 };
 
 export function CategoryIcon({

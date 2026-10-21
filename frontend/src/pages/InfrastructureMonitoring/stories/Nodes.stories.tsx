@@ -36,11 +36,10 @@ export default meta;
 export const Default: StoryObj<NodesArgs> = {};
 
 /**
- * Every tooltip the node list carries, held open over a hovered row: the Pod
- * Status cell, whose tooltip is a count per phase and only exists while the row
- * is hovered, beside the column headers sharing the generic note and the
- * Collapse Filters and Options buttons. The pod list renders its own count cells
- * only once grouped, so this is where that breakdown is reviewable.
+ * The node list's row tooltips, held open over a hovered row: the Pod Status
+ * cell, whose tooltip is a count per phase and only exists while the row is
+ * hovered. The pod list renders its own count cells only once grouped, so this
+ * is where that breakdown is reviewable.
  */
 export const Tooltips: StoryObj<NodesArgs> = {
 	args: { tooltipsOpen: true },

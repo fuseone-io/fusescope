@@ -18,6 +18,7 @@ import {
 	METRIC_NAMESPACE_BY_ENTITY,
 } from '../constants';
 import { useInfraMonitoringPageListing } from '../hooks';
+import InfraSearchField from '../components/InfraSearchField';
 
 import styles from './K8sHeader.module.scss';
 import { logInfraFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
@@ -124,7 +125,7 @@ function K8sHeader({
 		<div className={styles.k8SListControls}>
 			{controlListPrefix}
 
-			<div className={styles.k8SQbSearchContainer}>
+			<InfraSearchField testId="k8s-list-search">
 				<QuerySearch
 					queryData={queryData}
 					dataSource={DataSource.METRICS}
@@ -135,7 +136,7 @@ function K8sHeader({
 					placeholder={ENTITY_FILTER_PLACEHOLDERS[entity]}
 					metricNamespace={METRIC_NAMESPACE_BY_ENTITY[entity]}
 				/>
-			</div>
+			</InfraSearchField>
 
 			<RunQueryBtn
 				isLoadingQueries={isFetching}

@@ -1,4 +1,4 @@
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import {
 	StatusFilterValue,
@@ -7,7 +7,6 @@ import {
 } from 'container/InfraMonitoringK8sV2/hooks';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
-import styles from './StatusFilter.module.scss';
 import { logInfraFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 const statusOptions: Array<{
@@ -24,9 +23,9 @@ function StatusFilter(): JSX.Element {
 	const [, setCurrentPage] = useInfraMonitoringPageListing();
 	const { currentQuery } = useQueryBuilder();
 
-	const handleChange = (value: string): void => {
+	const handleChange = (value: StatusFilterValue | 'all'): void => {
 		if (value !== undefined) {
-			void setStatusFilter(value === 'all' ? '' : (value as StatusFilterValue));
+			void setStatusFilter(value === 'all' ? '' : value);
 			void setCurrentPage(1);
 
 			const expression =
@@ -41,30 +40,18 @@ function StatusFilter(): JSX.Element {
 	};
 
 	return (
-		<div className={styles.statusFilterContainer}>
-			<div className={styles.statusLabel}>Status</div>
-			<ToggleGroup
-				type="single"
-				variant="outlined"
-				color="secondary"
+		<div className="fs-ui tw:flex tw:items-center tw:gap-2 tw:font-sans">
+			<span className="tw:text-[13px] tw:text-muted-foreground">Status</span>
+			<SegmentedControl<StatusFilterValue | 'all'>
+				label="Host status"
 				size="sm"
-				value={statusFilter === '' ? 'all' : statusFilter}
+				options={statusOptions}
+				value={
+					statusFilter === 'active' || statusFilter === 'inactive'
+						? statusFilter
+						: 'all'
+				}
 				onChange={handleChange}
-				items={statusOptions.map((option) => ({
-					value: option.value,
-					label: option.label,
-					prefix: (
-						<span
-							className={`${styles.statusDot} ${
-								option.value === 'active'
-									? styles.activeDot
-									: option.value === 'inactive'
-										? styles.inactiveDot
-										: styles.allDot
-							}`}
-						/>
-					),
-				}))}
 			/>
 		</div>
 	);

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import TanStackTable, {
 	SortState,
@@ -137,9 +136,9 @@ export function K8sBaseList<
 	const [isOptionsDrawerOpen, setIsOptionsDrawerOpen] = useState(false);
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
-		rowHeight: 42,
-		headerHeight: 58,
-		paginationHeight: 52,
+		rowHeight: 48,
+		headerHeight: 40,
+		paginationHeight: 53,
 	});
 
 	const {
@@ -455,9 +454,11 @@ export function K8sBaseList<
 		rawData: data?.rawData,
 	}) || (
 		<K8sEmptyState
+			entity={entity}
 			isError={isError}
 			error={data?.error}
 			isLoading={showTableLoadingState}
+			hasFilters={hasFilters}
 			endTimeBeforeRetention={data?.endTimeBeforeRetention}
 		/>
 	);
@@ -488,9 +489,9 @@ export function K8sBaseList<
 
 			<div ref={containerRef} className={styles.tableContainer}>
 				{isError && (
-					<Typography>
+					<p className="fs-ui tw:px-4 tw:py-3 tw:font-sans tw:text-[13px] tw:text-error-ink">
 						{data?.error?.toString() || 'Something went wrong'}
-					</Typography>
+					</p>
 				)}
 
 				{showEmptyState ? (

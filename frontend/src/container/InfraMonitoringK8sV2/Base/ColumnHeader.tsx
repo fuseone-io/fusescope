@@ -1,82 +1,31 @@
-import { Info } from '@signozhq/icons';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { ReactNode } from 'react';
+import { cn } from 'lib/utils';
 
-import styles from './ColumnHeader.module.scss';
-import cx from 'classnames';
-import { MouseEventHandler } from 'react';
-import { signozDocsUrl } from 'constants/docs';
+import InfoTooltip from '../components/InfoTooltip';
 
 interface ColumnHeaderProps {
-	children?: React.ReactNode;
-	docPath?: string;
-	tooltip?: React.ReactNode;
+	children?: ReactNode;
+	tooltip?: ReactNode;
 	className?: string;
 }
 
 function ColumnHeader({
 	children,
-	docPath,
 	tooltip,
 	className,
 }: ColumnHeaderProps): JSX.Element {
-	const stopPropagationHandler: MouseEventHandler = (e): void =>
-		e.stopPropagation();
-
-	const renderContent = (): React.ReactNode => {
-		if (children) {
-			return children;
-		}
-
-		return null;
-	};
-
-	const renderInfoIcon = (): React.ReactNode => {
-		if (docPath) {
-			const tooltipTitle = tooltip || 'Not sure what this means?';
-			const isJustStringTitle = typeof tooltipTitle === 'string';
-
-			return (
-				<Tooltip
-					title={
-						<div onClick={stopPropagationHandler}>
-							{tooltipTitle}{' '}
-							<a
-								href={signozDocsUrl(docPath)}
-								target="_blank"
-								rel="noopener"
-								onClick={stopPropagationHandler}
-							>
-								{isJustStringTitle
-									? 'Learn more.'
-									: 'Check the documentation to learn more.'}
-							</a>
-						</div>
-					}
-				>
-					<div className={styles.infoIcon}>
-						<Info size="md" />
-					</div>
-				</Tooltip>
-			);
-		}
-
-		if (tooltip) {
-			return (
-				<Tooltip title={<div onClick={stopPropagationHandler}>{tooltip}</div>}>
-					<div className={styles.infoIcon}>
-						<Info size="md" />
-					</div>
-				</Tooltip>
-			);
-		}
-
-		return null;
-	};
-
 	return (
-		<div className={cx(styles.columnHeader, className)} data-slot="column-header">
-			<div className={styles.columnHeaderLabel}>{renderContent()}</div>
-			{renderInfoIcon()}
+		<div
+			className={cn(
+				'tw:inline-flex tw:items-center tw:gap-1.5 tw:text-wrap',
+				className,
+			)}
+			data-slot="column-header"
+		>
+			<div className="tw:py-1 tw:text-left tw:text-xs tw:font-medium tw:tracking-[0.05em] tw:uppercase">
+				{children}
+			</div>
+			{tooltip && <InfoTooltip title={tooltip} />}
 		</div>
 	);
 }

@@ -1,25 +1,23 @@
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/ui/button';
-import { Callout } from '@signozhq/ui/callout';
-import { RefreshCw } from '@signozhq/icons';
 import setLocalStorage from 'api/browser/localstorage/set';
 import {
 	invalidateGetChecks,
 	useGetChecks,
 } from 'api/generated/services/inframonitoring';
 import { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/fuseScope.schemas';
-import { InfraMonitoringEntity } from '../../../constants';
+import { Button } from 'components/ui/button';
+import { cn } from 'lib/utils';
+import { ChevronDown, ChevronUp, RefreshCw, TriangleAlert } from 'lucide-react';
 
-import styles from './K8sInstrumentationChecksCallout.module.scss';
-import { MissingEntryRow } from './MissingEntryRow';
-import { PresentEntryRow } from './PresentEntryRow';
+import { InfraMonitoringEntity } from '../../../constants';
+import { CheckEntryRow } from './CheckEntryRow';
 import {
+	countEntries,
 	ENTITY_TO_CHECK_TYPE,
 	getStorageKey,
-	hasAnyEntries,
-	hasMissingEntries,
 	readExpandedState,
+	toCheckRows,
 } from './utils';
 
 export interface InstrumentationChecksCalloutProps {
@@ -61,102 +59,83 @@ export function K8sInstrumentationChecksCallout({
 
 	const checksData = data?.data;
 
-	const hasMissingItems = useMemo(
-		() => (checksData ? hasMissingEntries(checksData) : false),
+	const rows = useMemo(
+		() => (checksData ? toCheckRows(checksData) : []),
 		[checksData],
 	);
 
-	if (!checkType || isLoading) {
+	if (!checkType || isLoading || !checksData || checksData.ready) {
 		return null;
 	}
 
-	if (!checksData || checksData.ready) {
-		return null;
-	}
+	const { total, missing } = countEntries(rows);
 
-	if (!hasAnyEntries(checksData)) {
+	if (total === 0) {
 		return null;
 	}
 
 	return (
-		<div className={styles.checkContainer}>
-			<Callout
-				type={hasMissingItems ? 'warning' : 'info'}
-				showIcon
-				size="medium"
-				title={
-					<div className={styles.header}>
-						Instrumentation checks
-						<Button
-							variant="solid"
-							color="warning"
-							size="sm"
-							onClick={handleRecheck}
-							loading={isFetching}
-							prefix={<RefreshCw size={12} />}
-							testId="instrumentation-checks-recheck-btn"
-						>
-							Recheck
-						</Button>
-					</div>
-				}
-				action="expandable"
-				defaultExpanded={isExpanded}
-				onClick={handleExpandToggle}
+		<section
+			role="status"
+			aria-label="Instrumentation checks"
+			className={cn(
+				'fs-ui tw:rounded-xl tw:px-4 tw:pt-3 tw:font-sans',
+				isExpanded ? 'tw:pb-1.5' : 'tw:pb-3',
+				missing > 0
+					? 'tw:bg-warning-soft tw:text-warning-ink'
+					: 'tw:bg-primary-soft tw:text-primary-ink',
+			)}
+		>
+			<div
+				className={cn(
+					'tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2',
+					isExpanded && 'tw:pb-2',
+				)}
 			>
-				<div className={styles.container} onClick={(e) => e.stopPropagation()}>
-					<div className={styles.entriesList}>
-						{checksData.presentDefaultEnabledMetrics?.map((entry) => (
-							<PresentEntryRow
-								key={`present-default-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Default enabled metrics"
-								itemType="metrics"
-							/>
-						))}
-						{checksData.presentOptionalMetrics?.map((entry) => (
-							<PresentEntryRow
-								key={`present-optional-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Optional metrics"
-								itemType="metrics"
-							/>
-						))}
-						{checksData.presentRequiredAttributes?.map((entry) => (
-							<PresentEntryRow
-								key={`present-attrs-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Required attributes"
-								itemType="attributes"
-							/>
-						))}
-						{checksData.missingDefaultEnabledMetrics?.map((entry) => (
-							<MissingEntryRow
-								key={`missing-default-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Missing default metrics"
-								itemType="metrics"
-							/>
-						))}
-						{checksData.missingOptionalMetrics?.map((entry) => (
-							<MissingEntryRow
-								key={`missing-optional-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Missing optional metrics"
-								itemType="metrics"
-							/>
-						))}
-						{checksData.missingRequiredAttributes?.map((entry) => (
-							<MissingEntryRow
-								key={`missing-attrs-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Missing required attributes"
-								itemType="attributes"
-							/>
-						))}
-					</div>
-				</div>
-			</Callout>
-		</div>
+				<span className="tw:flex tw:items-center tw:gap-2.5">
+					<TriangleAlert size={18} aria-hidden="true" />
+					<strong className="tw:text-sm tw:font-semibold">
+						Instrumentation checks
+					</strong>
+					<span className="tw:text-[13px] tw:tabular-nums">
+						{missing} of {total} need attention
+					</span>
+				</span>
+				<span className="tw:flex tw:gap-1.5">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={handleRecheck}
+						disabled={isFetching}
+						data-testid="instrumentation-checks-recheck-btn"
+						className="tw:border-current tw:bg-transparent tw:text-inherit tw:hover:bg-transparent tw:hover:text-inherit"
+					>
+						<RefreshCw className={cn(isFetching && 'tw:animate-spin')} />
+						Recheck
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						aria-label={isExpanded ? 'Collapse checks' : 'Expand checks'}
+						aria-expanded={isExpanded}
+						onClick={handleExpandToggle}
+						className="tw:text-inherit tw:hover:bg-transparent tw:hover:text-inherit"
+					>
+						{isExpanded ? <ChevronUp /> : <ChevronDown />}
+					</Button>
+				</span>
+			</div>
+			{isExpanded &&
+				rows.map((row) => (
+					<CheckEntryRow
+						key={`${row.kind}-${row.componentName}`}
+						passed={row.passed}
+						typeLabel={row.typeLabel}
+						items={row.items}
+						componentName={row.componentName}
+						documentationLink={row.documentationLink}
+					/>
+				))}
+		</section>
 	);
 }

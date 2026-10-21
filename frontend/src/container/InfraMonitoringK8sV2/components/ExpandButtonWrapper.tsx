@@ -1,7 +1,6 @@
-import { Button } from '@signozhq/ui/button';
-import { ChevronDown, ChevronRight } from '@signozhq/icons';
-import styles from './ExpandedButtonWrapper.module.scss';
 import { useEffect, useState } from 'react';
+import { Button } from 'components/ui/button';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 export function ExpandButtonWrapper({
 	toggleExpanded,
@@ -21,18 +20,17 @@ export function ExpandButtonWrapper({
 	}, [isExpanded]);
 
 	return (
-		<div className={styles.expandButtonContainer}>
+		<div className="fs-ui tw:flex tw:min-w-0 tw:items-center tw:gap-2">
 			<Button
 				aria-label={localIsExpanded ? 'Collapse' : 'Expand'}
 				variant="ghost"
-				color="secondary"
+				size="icon-xs"
+				className="tw:text-muted-foreground"
 				onClick={(e): void => {
 					e.stopPropagation();
 					setLocalIsExpanded((v) => !v);
 					toggleExpanded();
 				}}
-				size="sm"
-				icon
 			>
 				{localIsExpanded ? <ChevronDown /> : <ChevronRight />}
 			</Button>

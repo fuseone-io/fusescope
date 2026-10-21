@@ -1,5 +1,5 @@
-import { Box } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
+import { Box } from 'lucide-react';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import {
 	InframonitoringtypesContainerReadyDTO,
 	InframonitoringtypesContainerRecordDTO,
@@ -31,7 +31,6 @@ import {
 	CONTAINER_READY_LABELS,
 	CONTAINER_STATUS_COLORS,
 	CONTAINER_STATUS_LABELS,
-	CONTAINERS_DOC_PATH,
 	getContainerImageWithTag,
 	getContainerReadyItems,
 	getContainerStatusItems,
@@ -97,7 +96,6 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			<EntityGroupHeader
 				title="Container Name"
 				icon={<Box data-hide-expanded="true" size={14} />}
-				docPath={`${CONTAINERS_DOC_PATH}#container-name`}
 			/>
 		),
 		accessorFn: (row): string =>
@@ -116,11 +114,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'podName',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#pod-name`}>
-				Pod Name
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Pod Name</ColumnHeader>,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 		width: { min: 260 },
@@ -135,11 +129,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'namespace',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#additional-columns`}>
-				Namespace
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Namespace</ColumnHeader>,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { min: 160 },
@@ -150,11 +140,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'image',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#imagetag`}>
-				Image:Tag
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Image:Tag</ColumnHeader>,
 		accessorFn: (row): string => getContainerImageWithTag(row),
 		width: { min: 240 },
 		enableSort: false,
@@ -168,9 +154,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'containerStatus',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#status`}>Status</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Status</ColumnHeader>,
 		accessorFn: (row): string => row.status,
 		width: { min: STATUS_COLUMN_WIDTH },
 		enableSort: false,
@@ -185,7 +169,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 
 			return (
 				<ClickableStatusBadge
-					color={CONTAINER_STATUS_COLORS[row.status]}
+					tone={CONTAINER_STATUS_COLORS[row.status]}
 					label={CONTAINER_STATUS_LABELS[row.status]}
 					status={row.status}
 					kind="container"
@@ -196,9 +180,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'containerCountsByStatus',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#status`}>Status</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Status</ColumnHeader>,
 		accessorFn: (
 			row,
 		): InframonitoringtypesContainerRecordDTO['containerCountsByStatus'] =>
@@ -221,9 +203,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'containerReady',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#ready`}>Ready</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Ready</ColumnHeader>,
 		accessorFn: (row): string => row.ready,
 		width: { min: 130 },
 		enableSort: false,
@@ -237,17 +217,15 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			}
 
 			return (
-				<Badge color={CONTAINER_READY_COLORS[row.ready]} variant="outlined">
+				<StatusBadge tone={CONTAINER_READY_COLORS[row.ready]} dot>
 					{CONTAINER_READY_LABELS[row.ready]}
-				</Badge>
+				</StatusBadge>
 			);
 		},
 	},
 	{
 		id: 'containerCountsByReady',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#ready`}>Ready</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Ready</ColumnHeader>,
 		accessorFn: (
 			row,
 		): InframonitoringtypesContainerRecordDTO['containerCountsByReady'] =>
@@ -269,11 +247,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'containerRestarts',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#restarts`}>
-				Restarts
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Restarts</ColumnHeader>,
 		accessorFn: (row): number => row.restarts,
 		width: { min: 130 },
 		enableSort: false,
@@ -291,10 +265,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	{
 		id: 'cpu_request',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				docPath={`${CONTAINERS_DOC_PATH}#cpu-req-usage-`}
-				tooltip={<EntityProgressThresholds type="cpu-request" />}
-			>
+			<ColumnHeader tooltip={<EntityProgressThresholds type="cpu-request" />}>
 				CPU Request Usage (%)
 			</ColumnHeader>
 		),
@@ -315,10 +286,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	{
 		id: 'cpu_limit',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				docPath={`${CONTAINERS_DOC_PATH}#cpu-limit-usage-`}
-				tooltip={<EntityProgressThresholds type="cpu-limit" />}
-			>
+			<ColumnHeader tooltip={<EntityProgressThresholds type="cpu-limit" />}>
 				CPU Limit Usage (%)
 			</ColumnHeader>
 		),
@@ -338,11 +306,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'cpu',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#cpu-usage-cores`}>
-				CPU Usage (cores)
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>CPU Usage (cores)</ColumnHeader>,
 		accessorFn: (row): number => row.cpu,
 		width: { min: 160 },
 		enableSort: true,
@@ -360,10 +324,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	{
 		id: 'memory_request',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				docPath={`${CONTAINERS_DOC_PATH}#mem-req-usage-`}
-				tooltip={<EntityProgressThresholds type="memory-request" />}
-			>
+			<ColumnHeader tooltip={<EntityProgressThresholds type="memory-request" />}>
 				Memory Request Usage (%)
 			</ColumnHeader>
 		),
@@ -384,10 +345,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	{
 		id: 'memory_limit',
 		header: (): React.ReactNode => (
-			<ColumnHeader
-				docPath={`${CONTAINERS_DOC_PATH}#mem-limit-usage-`}
-				tooltip={<EntityProgressThresholds type="memory-limit" />}
-			>
+			<ColumnHeader tooltip={<EntityProgressThresholds type="memory-limit" />}>
 				Memory Limit Usage (%)
 			</ColumnHeader>
 		),
@@ -408,9 +366,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	{
 		id: 'memory',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#mem-usage-wss`}>
-				Memory Usage (WSS)
-			</ColumnHeader>
+			<ColumnHeader>Memory Usage (WSS)</ColumnHeader>
 		),
 		accessorFn: (row): number => row.memory,
 		width: { min: 210, default: '100%' },
@@ -428,11 +384,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'node',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#additional-columns`}>
-				Node
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Node</ColumnHeader>,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME] || '',
 		width: { default: 100 },
@@ -444,11 +396,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'cluster',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#additional-columns`}>
-				Cluster
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Cluster</ColumnHeader>,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		width: { default: 100 },
@@ -460,11 +408,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	},
 	{
 		id: 'deployment',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#additional-columns`}>
-				Deployment
-			</ColumnHeader>
-		),
+		header: (): React.ReactNode => <ColumnHeader>Deployment</ColumnHeader>,
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] || '',
 		width: { default: 100 },
