@@ -18,7 +18,8 @@ interface ServiceKpiState extends ServiceKpis {
 
 /**
  * The service's totals for this and the previous period, from span metrics or
- * traces like the charts (`use_span_metrics`).
+ * traces like the charts (`use_span_metrics`). Waits for the top-level
+ * operations, which scope span metrics and the Apdex.
  */
 export function useServiceKpis(servicename: string): ServiceKpiState {
 	const source = useApmSource();
@@ -27,7 +28,7 @@ export function useServiceKpis(servicename: string): ServiceKpiState {
 	const apdexThreshold = useApdexThreshold(servicename);
 	const { operations, isLoading: operationsLoading } =
 		useServiceTopLevelOperations(servicename);
-	const waits = source === 'span-metrics' && operationsLoading;
+	const waits = operationsLoading;
 
 	const request = useMemo(
 		() =>

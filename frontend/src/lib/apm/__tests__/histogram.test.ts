@@ -62,13 +62,19 @@ describe('percentileBucket', () => {
 });
 
 describe('apdexFromBuckets', () => {
-	it('counts satisfied requests up to T and tolerating ones up to 4T', () => {
+	it('reads T and 4T at the next bucket bound up, over all requests', () => {
 		const buckets = latencyBuckets(cumulative);
-		// T = 500 ms: 2,800 satisfied; 4T = 2 s rounds down to the ≤ 1k bucket.
-		expect(apdexFromBuckets(buckets, 500)).toBeCloseTo(
-			(2800 + (5660 - 2800) / 2) / 6120,
+		// T = 500 ms: 2,800 satisfied; 4T = 2 s rounds up to the ≤ 2.5k bucket.
+		expect(apdexFromBuckets(buckets, 500, 6120)).toBeCloseTo(
+			(2800 + (6112 - 2800) / 2) / 6120,
 			5,
 		);
-		expect(apdexFromBuckets([], 500)).toBeUndefined();
+		// 120 more requests failed: they only add to the total.
+		expect(apdexFromBuckets(buckets, 500, 6240)).toBeCloseTo(
+			(2800 + (6112 - 2800) / 2) / 6240,
+			5,
+		);
+		expect(apdexFromBuckets([], 500, 10)).toBe(0);
+		expect(apdexFromBuckets([], 500, 0)).toBeUndefined();
 	});
 });

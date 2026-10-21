@@ -6,9 +6,11 @@ import {
 	errorSpansFilter,
 	inList,
 	metricErrorFilter,
+	metricOkFilter,
+	okSpansFilter,
 	serviceFilter,
 } from './filters';
-import { apdexFromBuckets, latencyBuckets } from './histogram';
+import { apdexFromBuckets, apdexScore, latencyBuckets } from './histogram';
 import {
 	metricQuery,
 	rangeRequest,
@@ -52,15 +54,20 @@ export const metricServiceFilter = (
 		resourceFilter,
 	);
 
-function traceAggregations(apdexThreshold: number): string[] {
+const TRACE_AGGREGATIONS = [
+	'count()',
+	`countIf(${errorSpansFilter})`,
+	'p99(duration_nano)',
+	'avg(duration_nano)',
+];
+
+/** As the Apdex chart counts: OK spans within T and within 4T, over all spans. */
+function traceApdexAggregations(apdexThreshold: number): string[] {
 	const satisfied = Math.round(apdexThreshold * 1e9);
 	return [
 		'count()',
-		`countIf(${errorSpansFilter})`,
-		'p99(duration_nano)',
-		'avg(duration_nano)',
-		`countIf(duration_nano <= ${satisfied})`,
-		`countIf(duration_nano > ${satisfied} AND duration_nano <= ${satisfied * 4})`,
+		`countIf(${okSpansFilter} AND duration_nano <= ${satisfied})`,
+		`countIf(${okSpansFilter} AND duration_nano <= ${satisfied * 4})`,
 	];
 }
 
@@ -99,7 +106,9 @@ function metricQueries(
 		}),
 		increase(names[3], SPAN_METRIC.latencySum, filter),
 		increase(names[4], SPAN_METRIC.latencyCount, filter),
-		increase(names[5], SPAN_METRIC.latencyBucket, filter, ['le']),
+		increase(names[5], SPAN_METRIC.latencyBucket, allOf(filter, metricOkFilter), [
+			'le',
+		]),
 	];
 }
 
@@ -122,10 +131,33 @@ export function serviceKpiRequest(input: ServiceKpiInput): QueryRangeRequestV5 {
 		entrySpansFilter,
 		resourceFilter,
 	);
-	const aggregations = traceAggregations(input.apdexThreshold);
-	return rangeRequest(window, 'scalar', [
+	const aggregations = TRACE_AGGREGATIONS;
+	const queries = [
 		traceQuery({ name: 'A', filter, aggregations }),
 		traceQuery({ name: 'B', filter, aggregations, shift: window.seconds }),
+	];
+	if (input.topLevelOperations.length === 0) {
+		return rangeRequest(window, 'scalar', queries);
+	}
+	const apdexFilter = allOf(
+		serviceFilter(servicename),
+		`name IN ${inList(input.topLevelOperations)}`,
+		resourceFilter,
+	);
+	const apdexAggregations = traceApdexAggregations(input.apdexThreshold);
+	return rangeRequest(window, 'scalar', [
+		...queries,
+		traceQuery({
+			name: 'C',
+			filter: apdexFilter,
+			aggregations: apdexAggregations,
+		}),
+		traceQuery({
+			name: 'D',
+			filter: apdexFilter,
+			aggregations: apdexAggregations,
+			shift: window.seconds,
+		}),
 	]);
 }
 
@@ -151,23 +183,34 @@ function stats(
 	};
 }
 
-function tracePeriod(
+function traceApdex(
 	response: RangeResponse | undefined,
 	name: string,
-	window: ApmWindow,
-): PeriodStats | undefined {
+): number | undefined {
 	const [row] = scalarRows(response, name);
 	if (!row) {
 		return undefined;
 	}
-	const [requests, errors, p99, avg, satisfied, tolerating] =
-		row.values.map(finite);
+	const [total, satisfied, withinFourT] = row.values.map(finite);
+	return apdexScore({ total, satisfied, tolerating: withinFourT - satisfied });
+}
+
+function tracePeriod(
+	response: RangeResponse | undefined,
+	names: [string, string],
+	window: ApmWindow,
+): PeriodStats | undefined {
+	const [row] = scalarRows(response, names[0]);
+	if (!row) {
+		return undefined;
+	}
+	const [requests, errors, p99, avg] = row.values.map(finite);
 	return stats(
 		requests,
 		errors,
 		p99 / NS_PER_MS,
 		avg / NS_PER_MS,
-		requests > 0 ? (satisfied + tolerating / 2) / requests : undefined,
+		traceApdex(response, names[1]),
 		window.seconds,
 	);
 }
@@ -197,7 +240,7 @@ function metricPeriod(
 		finite(first(names[1])),
 		finite(first(names[2])),
 		latencyCount > 0 ? latencySum / latencyCount : 0,
-		apdexFromBuckets(buckets, apdexThreshold * 1000),
+		apdexFromBuckets(buckets, apdexThreshold * 1000, latencyCount),
 		window.seconds,
 	);
 }
@@ -215,7 +258,7 @@ export function serviceKpis(
 		};
 	}
 	return {
-		current: tracePeriod(response, 'A', window),
-		previous: tracePeriod(response, 'B', window),
+		current: tracePeriod(response, ['A', 'C'], window),
+		previous: tracePeriod(response, ['B', 'D'], window),
 	};
 }

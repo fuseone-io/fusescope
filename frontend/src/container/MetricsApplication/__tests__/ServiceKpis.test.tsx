@@ -142,4 +142,15 @@ describe('useServiceKpis', () => {
 			new Set(['traces']),
 		);
 	});
+
+	it('scores Apdex on the top-level operations from traces, like the chart', async () => {
+		const onRequest = captureQueryRange();
+		renderHook(() => useServiceKpis('checkout'), { wrapper: wrapperWith(false) });
+
+		await waitFor(() => expect(onRequest).toHaveBeenCalled());
+		const { queries } = onRequest.mock.calls[0][0].compositeQuery;
+		expect(queries[2].spec.filter.expression).toBe(
+			"service.name = 'checkout' AND name IN ['GET /cart']",
+		);
+	});
 });
