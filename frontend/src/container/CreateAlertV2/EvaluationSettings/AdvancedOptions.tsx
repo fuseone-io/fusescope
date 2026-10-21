@@ -12,7 +12,7 @@ function AdvancedOptions(): JSX.Element {
 	return (
 		<div className="advanced-options-container">
 			<Collapse bordered={false}>
-				<Collapse.Panel header="ADVANCED OPTIONS" key="1">
+				<Collapse.Panel header="Advanced options" key="1">
 					<EvaluationCadence />
 					<AdvancedOptionItem
 						title="Alert when data stops coming"

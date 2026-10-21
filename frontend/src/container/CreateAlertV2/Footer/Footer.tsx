@@ -211,7 +211,7 @@ function Footer(): JSX.Element {
 					alertValidationMessage || 'Wait for the alert rule to finish saving'
 				}
 				size="md"
-				variant="solid"
+				variant="outlined"
 				color="secondary"
 				onClick={handleTestNotification}
 				disabled={isSavingAlertRule || Boolean(alertValidationMessage)}
@@ -232,24 +232,30 @@ function Footer(): JSX.Element {
 
 	return (
 		<div className="create-alert-v2-footer">
-			<Button
-				disabledTooltip={
-					isTestingAlertRule
-						? 'Wait for the test notification to finish'
-						: 'Wait for the alert rule to finish saving'
-				}
-				size="md"
-				variant="solid"
-				color="secondary"
-				onClick={handleDiscard}
-				disabled={disableButtons}
-				testId="discard-alert-rule-button"
-				prefix={<X size={14} />}
+			<span
+				className="create-alert-v2-footer__hint"
+				data-testid="create-alert-footer-hint"
 			>
-				Discard
-			</Button>
+				{alertValidationMessage}
+			</span>
 			<div className="button-group">
 				{testAlertButton}
+				<Button
+					disabledTooltip={
+						isTestingAlertRule
+							? 'Wait for the test notification to finish'
+							: 'Wait for the alert rule to finish saving'
+					}
+					size="md"
+					variant="ghost"
+					color="secondary"
+					onClick={handleDiscard}
+					disabled={disableButtons}
+					testId="discard-alert-rule-button"
+					prefix={<X size={14} />}
+				>
+					Discard
+				</Button>
 				{saveAlertButton}
 			</div>
 		</div>

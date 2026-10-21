@@ -23,11 +23,13 @@ function CreateAlertV2({ alertType }: CreateAlertV2Props): JSX.Element {
 	return (
 		<CreateAlertProvider initialAlertType={alertType}>
 			<Spinner />
-			<div className="create-alert-v2-container">
+			<div className="tw:flex tw:min-h-full tw:w-full tw:flex-1 tw:flex-col tw:self-start tw:bg-background tw:text-foreground">
 				<CreateAlertHeader />
-				<AlertSteps />
+				<div className="create-alert-v2-container tw:mx-auto tw:box-border tw:w-full tw:max-w-[1600px] tw:flex-1 tw:px-4 tw:pt-5 tw:md:px-6">
+					<AlertSteps />
+				</div>
+				<Footer />
 			</div>
-			<Footer />
 		</CreateAlertProvider>
 	);
 }

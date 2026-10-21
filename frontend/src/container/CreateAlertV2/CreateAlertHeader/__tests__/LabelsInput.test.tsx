@@ -12,7 +12,7 @@ const defaultProps: LabelsInputProps = {
 	validateLabelsKey: mockValidateLabelsKey,
 };
 
-const ADD_LABELS_TEXT = '+ Add labels';
+const ADD_LABELS_TEXT = 'Add labels';
 const ENTER_KEY_PLACEHOLDER = 'Enter key';
 const ENTER_VALUE_PLACEHOLDER = 'Enter value';
 

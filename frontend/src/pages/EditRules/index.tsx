@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Card } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetRuleByID } from 'api/generated/services/rules';
 import type {
@@ -9,6 +8,7 @@ import type {
 } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
+import { Button } from 'components/ui/button';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import EditRulesContainer from 'container/EditRules';
@@ -80,14 +80,14 @@ function EditRules(): JSX.Element {
 		const errorMsg = apiError?.getErrorMessage() || '';
 		return (
 			<div className="edit-rules-container edit-rules-container--error">
-				<Card size="small" className="edit-rules-card">
-					<p className="content">{errorMsg || t('something_went_wrong')}</p>
-					<div className="btn-container">
-						<Button type="default" size="large" onClick={clickHandler}>
-							Return to Alerts Page
-						</Button>
-					</div>
-				</Card>
+				<div className="edit-rules-card fs-ui tw:flex tw:w-full tw:max-w-sm tw:flex-col tw:items-center tw:gap-4 tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised tw:p-6 tw:text-center tw:font-sans">
+					<p className="tw:text-sm tw:text-foreground">
+						{errorMsg || t('something_went_wrong')}
+					</p>
+					<Button variant="outline" onClick={clickHandler}>
+						Return to Alerts Page
+					</Button>
+				</div>
 			</div>
 		);
 	}

@@ -74,7 +74,7 @@ describe('CreateAlertHeader', () => {
 
 	it('renders LabelsInput component', () => {
 		renderCreateAlertHeader();
-		expect(screen.getByText('+ Add labels')).toBeInTheDocument();
+		expect(screen.getByText('Add labels')).toBeInTheDocument();
 	});
 
 	it('updates name when typing in name input', () => {

@@ -8,6 +8,8 @@ import {
 	RE_NOTIFICATION_TIME_UNIT_OPTIONS,
 } from '../context/constants';
 import AdvancedOptionItem from '../EvaluationSettings/AdvancedOptionItem';
+import AlertsFormTheme from 'components/Alerts/FormSheet/AlertsFormTheme';
+
 import Stepper from '../Stepper';
 import { ALERT_STEP_IDS } from '../StepsNav/constants';
 import MultipleNotifications from './MultipleNotifications';
@@ -82,33 +84,35 @@ function NotificationSettings(): JSX.Element {
 	);
 
 	return (
-		<section
-			id={ALERT_STEP_IDS.NOTIFICATION}
-			className="notification-settings-container alert-step-panel"
-		>
-			<Stepper stepNumber={3} label="Notification settings" />
-			<NotificationMessage />
-			<div className="notification-settings-content">
-				<MultipleNotifications />
-				<AdvancedOptionItem
-					title="Repeat notifications"
-					description="Send periodic notifications while the alert condition remains active."
-					tooltipText="Continue sending periodic notifications while the alert condition persists. Useful for ensuring critical alerts aren't missed during long-running incidents. Configure how often to repeat and under what conditions."
-					input={repeatNotificationsInput}
-					onToggle={(): void => {
-						setNotificationSettings({
-							type: 'SET_RE_NOTIFICATION',
-							payload: {
-								...notificationSettings.reNotification,
-								enabled: !notificationSettings.reNotification.enabled,
-							},
-						});
-					}}
-					defaultShowInput={notificationSettings.reNotification.enabled}
-					data-testid="repeat-notifications-container"
-				/>
-			</div>
-		</section>
+		<AlertsFormTheme controlHeight={32}>
+			<section
+				id={ALERT_STEP_IDS.NOTIFICATION}
+				className="notification-settings-container alert-step-panel"
+			>
+				<Stepper stepNumber={3} label="Notification settings" />
+				<NotificationMessage />
+				<div className="notification-settings-content">
+					<MultipleNotifications />
+					<AdvancedOptionItem
+						title="Repeat notifications"
+						description="Send periodic notifications while the alert condition remains active."
+						tooltipText="Continue sending periodic notifications while the alert condition persists. Useful for ensuring critical alerts aren't missed during long-running incidents. Configure how often to repeat and under what conditions."
+						input={repeatNotificationsInput}
+						onToggle={(): void => {
+							setNotificationSettings({
+								type: 'SET_RE_NOTIFICATION',
+								payload: {
+									...notificationSettings.reNotification,
+									enabled: !notificationSettings.reNotification.enabled,
+								},
+							});
+						}}
+						defaultShowInput={notificationSettings.reNotification.enabled}
+						data-testid="repeat-notifications-container"
+					/>
+				</div>
+			</section>
+		</AlertsFormTheme>
 	);
 }
 

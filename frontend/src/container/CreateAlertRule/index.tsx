@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Form } from 'antd';
 import logEvent from 'api/common/logEvent';
-import AlertBreadcrumb from 'components/AlertBreadcrumb';
-import { PageTab } from 'components/PageTemplate/types';
+import SubpageHeader from 'components/Alerts/SubpageHeader/SubpageHeader';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -11,13 +10,13 @@ import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import AlertsPageShell from 'pages/AlertList/components/AlertsPageShell';
 import { AlertListTabs } from 'pages/AlertList/types';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
 import { ALERT_TYPE_VS_SOURCE_MAPPING } from './config';
-import { ALERTS_VALUES_MAP, ALERT_TYPE_BREADCRUMB_TITLE } from './defaults';
+import AlertTypeBadge from './AlertTypeBadge';
+import { ALERTS_VALUES_MAP } from './defaults';
 import SelectAlertType from './SelectAlertType';
 
 import './CreateAlertRule.styles.scss';
@@ -63,16 +62,6 @@ function CreateRules(): JSX.Element {
 			version: version || ENTITY_VERSION_V5,
 		}),
 		[alertType, version],
-	);
-
-	const handleTabChange = useCallback(
-		(tab: string): void => {
-			queryParams.set('tab', tab);
-			queryParams.delete('subTab');
-			queryParams.delete('search');
-			safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${queryParams.toString()}`);
-		},
-		[safeNavigate, queryParams],
 	);
 
 	const handleSelectType = useCallback(
@@ -121,61 +110,40 @@ function CreateRules(): JSX.Element {
 		initialAlertValue,
 	]);
 
-	const tabs: PageTab[] = [
-		{
-			value: AlertListTabs.TRIGGERED_ALERTS,
-			label: 'Triggered Alerts',
-			content: null,
-		},
-		{
-			value: AlertListTabs.ALERT_RULES,
-			label: 'Alert Rules',
-			content: (
-				<div className="create-alert-wrapper">
-					<AlertBreadcrumb
-						className="create-alert__breadcrumb"
-						showDivider={false}
-						items={
-							isTypeSelectionMode
-								? [
-										{
-											title: 'Alert Rules',
-											route: `${ROUTES.LIST_ALL_ALERT}?tab=${AlertListTabs.ALERT_RULES}`,
-										},
-										{ title: 'Select Alert Type', isLast: true },
-									]
-								: [
-										{
-											title: 'Alert Rules',
-											route: `${ROUTES.LIST_ALL_ALERT}?tab=${AlertListTabs.ALERT_RULES}`,
-										},
-										{ title: 'Select Alert Type', route: ROUTES.ALERTS_NEW },
-										{
-											title: ALERT_TYPE_BREADCRUMB_TITLE[alertType],
-											isLast: true,
-										},
-									]
-						}
-					/>
-					{alertContent}
-				</div>
-			),
-		},
-		{
-			value: AlertListTabs.CONFIGURATION,
-			label: 'Configuration',
-			content: null,
-		},
-	];
+	if (
+		!isTypeSelectionMode &&
+		!showClassicCreateAlertsPageFlag &&
+		alertType !== AlertTypes.ANOMALY_BASED_ALERT
+	) {
+		return (
+			<div
+				data-testid="create-alert-page"
+				className="tw:flex tw:min-h-full tw:w-full tw:flex-col tw:self-start"
+			>
+				{alertContent}
+			</div>
+		);
+	}
 
 	return (
-		<AlertsPageShell
-			testId="create-alert-page"
-			tabs={tabs}
-			activeTab={AlertListTabs.ALERT_RULES}
-			onTabChange={handleTabChange}
-			showHeaderRightSection={false}
-		/>
+		<div
+			data-testid="create-alert-page"
+			className="tw:flex tw:min-h-full tw:w-full tw:flex-col tw:self-start tw:bg-background tw:text-foreground"
+		>
+			<SubpageHeader
+				title="New Alert Rule"
+				backLabel="Back to alert rules"
+				onBack={(): void =>
+					safeNavigate(`${ROUTES.LIST_ALL_ALERT}?tab=${AlertListTabs.ALERT_RULES}`)
+				}
+				badges={
+					isTypeSelectionMode ? undefined : <AlertTypeBadge alertType={alertType} />
+				}
+			/>
+			<div className="create-alert-wrapper tw:mx-auto tw:box-border tw:flex tw:w-full tw:max-w-[1600px] tw:flex-1 tw:flex-col tw:px-4 tw:pt-5 tw:md:px-6">
+				{alertContent}
+			</div>
+		</div>
 	);
 }
 

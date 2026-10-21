@@ -95,11 +95,12 @@ jest.mock(
 jest.mock(
 	'../../Stepper',
 	() =>
-		function MockStepper({ stepNumber, label }: any): JSX.Element {
+		function MockStepper({ stepNumber, label, actions }: any): JSX.Element {
 			return (
 				<div data-testid="stepper">
 					<div data-testid="step-number">{stepNumber}</div>
 					<div data-testid="step-label">{label}</div>
+					{actions}
 				</div>
 			);
 		},
