@@ -10,19 +10,19 @@
 	z-index: 1;
 	display: flex;
 	flex-direction: column;
-	gap: 14px;
+	gap: 12px;
 	margin-top: -16px;
-	padding-block: 16px;
-	border-bottom: 1px dashed var(--fs-border);
+	padding-block: 16px 12px;
+	border-bottom: 1px solid var(--fs-border);
 	// Matches the drawer surface, which the app pins to l1 for every drawer.
 	background: var(--fs-background);
 }
 
 .search {
 	box-sizing: border-box;
-	--input-wrapper-background: var(--fs-card);
-	--input-wrapper-border-color: var(--fs-border);
-	--input-hover-border-color: var(--fs-border);
+	--input-wrapper-background: var(--fs-muted);
+	--input-wrapper-border-color: var(--fs-input);
+	--input-hover-border-color: var(--fs-input);
 	--input-box-shadow: none;
 }
 
@@ -36,82 +36,119 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	padding: 5px 11px;
+	height: 28px;
+	padding: 0 10px;
 	border: 1px solid var(--fs-border);
 	border-radius: 999px;
-	background: transparent;
+	background: var(--fs-card);
 	color: var(--fs-muted-foreground);
 	font: inherit;
 	font-size: 12px;
+	font-weight: 500;
 	white-space: nowrap;
 	cursor: pointer;
 
 	&:hover {
 		color: var(--fs-foreground);
 	}
+
+	&:focus-visible {
+		outline: 2px solid var(--fs-ring);
+		outline-offset: 1px;
+	}
 }
 
 .categoryActive {
-	border-color: var(--fs-border);
-	background: var(--fs-muted);
-	color: var(--fs-foreground);
+	border-color: var(--fs-primary);
+	background: var(--fs-primary-soft);
+	color: var(--fs-primary-ink);
 }
 
 .categoryCount {
-	color: var(--fs-subtle-foreground);
-	font-size: 10.5px;
+	color: inherit;
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	opacity: 0.75;
 }
 
 .groups {
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
-	padding-top: 20px;
+	gap: 18px;
+	padding-top: 14px;
 }
 
 .group {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 8px;
 }
 
 .groupLabel {
-	color: var(--bg-sienna-400);
+	margin: 0;
+	color: var(--fs-muted-foreground);
 	font-size: 11px;
-	letter-spacing: 0.88px;
+	font-weight: 500;
+	letter-spacing: 0.05em;
 	text-transform: uppercase;
 }
 
 .grid {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 12px;
+	grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+	gap: 8px;
 }
 
 .tile {
 	display: flex;
-	flex-direction: column;
+	align-items: flex-start;
 	gap: 12px;
+	min-height: 88px;
 	padding: 12px;
 	border: 1px solid var(--fs-border);
-	border-radius: 6px;
+	border-radius: 10px;
 	background: var(--fs-card);
+	color: var(--fs-foreground);
 	font: inherit;
 	text-align: left;
 	cursor: pointer;
-	transition:
-		background-color 200ms cubic-bezier(0.08, 0.52, 0.52, 1),
-		border-color 200ms cubic-bezier(0.08, 0.52, 0.52, 1);
+	transition: border-color 150ms ease;
 
 	&:hover {
-		background: var(--fs-muted);
+		border-color: var(--fs-input);
 	}
+
+	&:focus-visible {
+		outline: 2px solid var(--fs-ring);
+		outline-offset: 2px;
+	}
+}
+
+.tileIcon {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
+	background: var(--fs-muted);
+	color: var(--fs-muted-foreground);
 }
 
 .tileSelected {
 	border-color: var(--fs-primary);
-	box-shadow: inset 0 0 0 1px var(--fs-primary);
-	background: var(--fs-muted);
+	box-shadow: 0 0 0 1px var(--fs-primary);
+	background: var(--fs-primary-soft);
+
+	.tileIcon,
+	.dataChip {
+		background: var(--fs-card);
+	}
+
+	.tileIcon {
+		color: var(--fs-primary-ink);
+	}
 }
 
 .tileDisabled {
@@ -119,43 +156,64 @@
 	cursor: not-allowed;
 
 	&:hover {
-		background: var(--fs-card);
+		border-color: var(--fs-border);
 	}
 }
 
 .tileText {
 	display: flex;
+	flex: 1;
 	flex-direction: column;
-	gap: 3px;
+	gap: 4px;
+	min-width: 0;
 }
 
 .tileTitle {
 	display: flex;
 	align-items: center;
-	gap: 7px;
+	gap: 6px;
 }
 
 .tileName {
 	color: var(--fs-foreground);
-	font-size: 13.5px;
-	font-weight: 500;
+	font-size: 13px;
+	font-weight: 600;
 }
 
 .newBadge {
-	padding: 2px 6px;
-	border: 1px solid var(--bg-sienna-400);
-	border-radius: 3px;
-	color: var(--bg-sienna-400);
-	font-size: 9.5px;
+	display: inline-flex;
+	align-items: center;
+	height: 18px;
+	padding: 0 6px;
+	border-radius: 4px;
+	background: var(--fs-primary-soft);
+	color: var(--fs-primary-ink);
+	font-size: 11px;
 	font-weight: 500;
-	letter-spacing: 0.6px;
-	text-transform: uppercase;
 }
 
 .tileDescription {
 	color: var(--fs-muted-foreground);
 	font-size: 12px;
-	line-height: 1.45;
+	line-height: 1.4;
+}
+
+.tileData {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 2px;
+}
+
+.dataChip {
+	display: inline-flex;
+	align-items: center;
+	height: 18px;
+	padding: 0 6px;
+	border-radius: 4px;
+	background: var(--fs-muted);
+	color: var(--fs-muted-foreground);
+	font-size: 11px;
 }
 
 .empty {
@@ -163,7 +221,7 @@
 	flex-direction: column;
 	align-items: center;
 	gap: 8px;
-	padding: 48px 0;
+	padding: 32px 0;
 	color: var(--fs-muted-foreground);
 	font-size: 13px;
 	text-align: center;

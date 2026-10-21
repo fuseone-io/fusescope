@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { useDashboardSections } from '../../../../hooks/useDashboardSections';
 import { usePanelPickerTargetStore } from '../../../../store/usePanelPickerTargetStore';
+import { acceptedData } from '../acceptedData';
 import PanelTypeSelectionModal from '../PanelTypeSelectionModal';
 
 // Stub the registry so the test doesn't pull in the real renderers and chart libs.
@@ -86,6 +87,21 @@ describe('PanelTypeSelectionModal', () => {
 			type: 'section',
 			layoutIndex: 0,
 		});
+	});
+
+	it('groups tiles under their category and says what data each accepts', () => {
+		renderDrawer();
+
+		const distributions = screen.getByRole('region', { name: 'Distributions' });
+		expect(
+			within(distributions).getByRole('heading', { name: 'Distributions' }),
+		).toBeInTheDocument();
+		expect(
+			within(distributions).getByTestId('panel-type-signoz/HistogramPanel'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByTestId('panel-type-data-signoz/ListPanel'),
+		).toHaveTextContent(acceptedData('signoz/ListPanel').join(''));
 	});
 
 	it('selects a tile, then adds it on confirm', async () => {
