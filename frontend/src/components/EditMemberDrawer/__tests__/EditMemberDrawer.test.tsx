@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -37,49 +36,6 @@ jest.mock('api/generated/services/users', () => ({
 
 jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
 	convertToApiError: jest.fn(),
-}));
-
-jest.mock('@signozhq/ui/drawer', () => ({
-	...jest.requireActual('@signozhq/ui/drawer'),
-	DrawerWrapper: ({
-		children,
-		footer,
-		open,
-	}: {
-		children?: ReactNode;
-		footer?: ReactNode;
-		open: boolean;
-	}): JSX.Element | null =>
-		open ? (
-			<div>
-				{children}
-				{footer}
-			</div>
-		) : null,
-}));
-
-jest.mock('@signozhq/ui/dialog', () => ({
-	...jest.requireActual('@signozhq/ui/dialog'),
-	DialogWrapper: ({
-		children,
-		footer,
-		open,
-		title,
-	}: {
-		children?: ReactNode;
-		footer?: ReactNode;
-		open: boolean;
-		title?: string;
-	}): JSX.Element | null =>
-		open ? (
-			<div role="dialog" aria-label={title}>
-				{children}
-				{footer}
-			</div>
-		) : null,
-	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
 }));
 
 jest.mock('@signozhq/ui/sonner', () => ({
