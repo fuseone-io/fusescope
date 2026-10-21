@@ -1,6 +1,6 @@
 import ROUTES from 'constants/routes';
 
-import { whilelistedKeys } from '../config';
+import { serviceMapGraphKeys, whilelistedKeys } from '../config';
 import {
 	filterServiceMapSupportedQueries,
 	mappingWithRoutesAndKeys,
@@ -18,6 +18,28 @@ describe('useResourceAttribute config', () => {
 			expect(whilelistedKeys).toContain('resource_deployment.environment');
 			expect(whilelistedKeys).toContain('resource_k8s.cluster.name');
 			expect(whilelistedKeys).toContain('resource_k8s.cluster.namespace');
+		});
+
+		it.each([
+			'resource_service.namespace',
+			'resource_service_namespace',
+			'resource_k8s.namespace.name',
+			'resource_k8s_namespace_name',
+		])('should offer %s on the service map', (key) => {
+			expect(whilelistedKeys).toContain(key);
+		});
+	});
+
+	describe('serviceMapGraphKeys', () => {
+		it('should be the keys the dependency graph filters on itself', () => {
+			expect(serviceMapGraphKeys).toStrictEqual(
+				expect.arrayContaining([
+					'resource_deployment.environment',
+					'resource_k8s.cluster.name',
+					'resource_k8s.namespace.name',
+				]),
+			);
+			expect(serviceMapGraphKeys).not.toContain('resource_service.namespace');
 		});
 	});
 
