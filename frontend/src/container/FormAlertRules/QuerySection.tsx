@@ -297,7 +297,7 @@ function QuerySection({
 			{!hideTitle && (
 				<StepHeading> {t('alert_form_step2', { step: step2Label })}</StepHeading>
 			)}
-			<FormContainer className="alert-query-section-container">
+			<FormContainer className="alert-query-section-container qb-filter-field-skin">
 				<div>{renderTabs(alertType)}</div>
 				{renderQuerySection(currentTab)}
 			</FormContainer>
