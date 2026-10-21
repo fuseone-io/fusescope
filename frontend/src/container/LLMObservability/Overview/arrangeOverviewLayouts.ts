@@ -2,6 +2,7 @@ import type {
 	DashboardGridItemDTO,
 	DashboardtypesLayoutDTO,
 } from 'api/generated/services/fuseScope.schemas';
+import { extractPanelIdFromRef } from 'pages/DashboardPage/DashboardContainer/utils';
 
 /** Grid rows of a KPI tile in the compact strip (98px). */
 export const KPI_ROW_HEIGHT = 2;
@@ -95,4 +96,12 @@ export function arrangeOverviewLayouts(
 		...lone,
 		...layouts.filter((layout) => !known.has(layout)),
 	].filter((layout): layout is DashboardtypesLayoutDTO => layout !== undefined);
+}
+
+/** The panels of the untitled KPI row, which render as compact tiles. */
+export function kpiPanelIds(layouts: DashboardtypesLayoutDTO[]): string[] {
+	const kpis = layouts.find((layout) => !titleOf(layout));
+	return (kpis?.spec.items ?? [])
+		.map((entry) => extractPanelIdFromRef(entry.content?.$ref))
+		.filter((id): id is string => !!id);
 }
