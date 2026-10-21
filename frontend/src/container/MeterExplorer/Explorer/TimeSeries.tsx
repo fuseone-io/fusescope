@@ -1,24 +1,24 @@
 import { useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
-import BarChart from 'lib/visualization/charts/BarChart/BarChart';
+import { Skeleton } from 'components/ui/skeleton';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
-import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { StackMode } from 'lib/uPlotV2/config/types';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
 
+import { describeMeterQueryData } from '../describeMeterQuery';
 import { buildMeterChartConfig } from './configBuilder';
 import EmptyMeterSearch from './EmptyMeterSearch';
-import MeterLoading from './MeterLoading';
+import MeterResultChart from './MeterResultChart';
 import styles from './TimeSeries.module.scss';
 import { useTimeSeriesQueries } from './useTimeSeriesQueries';
 import { useTimeSeriesTimeManagement } from './useTimeSeriesTimeManagement';
@@ -70,52 +70,71 @@ function TimeSeries({
 		[currentQuery],
 	);
 
-	const chartsData = useMemo(() => {
-		return responseData.map((response, index) => {
-			const apiResponse = response?.payload;
+	const unit = yAxisUnit || 'short';
 
-			const config = buildMeterChartConfig({
-				id: `${WIDGET_ID}-${index}`,
-				isDarkMode,
-				currentQuery,
-				onDragSelect,
-				apiResponse,
-				timezone,
-				yAxisUnit: yAxisUnit || 'short',
-				minTimeScale,
-				maxTimeScale,
-			});
-
-			const chartData = apiResponse ? prepareChartData(apiResponse) : [];
-
-			return {
-				config,
-				chartData,
-				hasData: chartData.length > 0 && chartData[0]?.length > 0,
-			};
-		});
-	}, [
-		responseData,
-		currentQuery,
-		yAxisUnit,
-		isDarkMode,
-		onDragSelect,
-		timezone,
-		minTimeScale,
-		maxTimeScale,
-	]);
+	const chartsData = useMemo(
+		() =>
+			responseData.map((response, index) => {
+				const apiResponse = response?.payload;
+				const config = buildMeterChartConfig({
+					id: `${WIDGET_ID}-${index}`,
+					isDarkMode,
+					currentQuery,
+					onDragSelect,
+					apiResponse,
+					timezone,
+					yAxisUnit: unit,
+					minTimeScale,
+					maxTimeScale,
+				});
+				const chartData = apiResponse ? prepareChartData(apiResponse) : [];
+				return {
+					config,
+					chartData,
+					apiResponse,
+					hasData: chartData.length > 0 && chartData[0]?.length > 0,
+				};
+			}),
+		[
+			responseData,
+			currentQuery,
+			unit,
+			isDarkMode,
+			onDragSelect,
+			timezone,
+			minTimeScale,
+			maxTimeScale,
+		],
+	);
 
 	const hasAnyData = chartsData.some((chart) => chart.hasData);
+	const title =
+		(stagedQuery && describeMeterQueryData(stagedQuery.builder.queryData)) ||
+		'No query yet';
+	const showChart =
+		!isCancelled && hasMetricSelected && !isLoading && !isError && hasAnyData;
 
 	return (
-		<div className={styles.meterTimeSeriesContainer}>
-			<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
+		<ContentPanel
+			testId="meter-explorer-result"
+			title={<span className="tw:font-mono tw:text-[13px]">{title}</span>}
+			actions={
+				<div className={styles.unitFilter}>
+					<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
+				</div>
+			}
+		>
 			<div className={styles.timeSeriesContainer} ref={graphRef}>
 				{!hasMetricSelected && <EmptyMeterSearch />}
 				{isCancelled && hasMetricSelected && (
 					<QueryCancelledPlaceholder subText='Click "Run Query" to load metrics.' />
 				)}
-				{isLoading && hasMetricSelected && !isCancelled && <MeterLoading />}
+				{isLoading && hasMetricSelected && !isCancelled && (
+					<Skeleton
+						data-testid="meter-explorer-loading"
+						className="tw:h-full tw:w-full tw:bg-muted"
+					/>
+				)}
 				{!isCancelled &&
 					hasMetricSelected &&
 					!isLoading &&
@@ -123,37 +142,27 @@ function TimeSeries({
 					!hasAnyData && (
 						<EmptyMeterSearch hasQueryResult={responseData[0] !== undefined} />
 					)}
-				{!isCancelled &&
-					hasMetricSelected &&
-					!isLoading &&
-					!isError &&
+				{showChart &&
 					containerDimensions.width > 0 &&
 					containerDimensions.height > 0 &&
 					chartsData.map(
 						(chart, index) =>
 							chart.hasData && (
-								<div
-									className={styles.timeSeriesViewPanel}
+								<MeterResultChart
 									// oxlint-disable-next-line react/no-array-index-key -- query responses have no stable ID
 									key={`${WIDGET_ID}-${index}`}
-								>
-									<BarChart
-										stack={StackMode.Normal}
-										config={chart.config}
-										legendConfig={{
-											position: LegendPosition.BOTTOM,
-										}}
-										data={chart.chartData as uPlot.AlignedData}
-										width={containerDimensions.width}
-										height={containerDimensions.height}
-										yAxisUnit={yAxisUnit || 'short'}
-										timezone={timezone}
-									/>
-								</div>
+									config={chart.config}
+									data={chart.chartData as uPlot.AlignedData}
+									response={chart.apiResponse}
+									width={containerDimensions.width}
+									height={containerDimensions.height}
+									yAxisUnit={unit}
+									timezone={timezone}
+								/>
 							),
 					)}
 			</div>
-		</div>
+		</ContentPanel>
 	);
 }
 

@@ -19,6 +19,7 @@ function MeterExplorerPage(): JSX.Element {
 		<ModuleTabsLayout
 			title="Cost Meter"
 			icon={<ChartArea />}
+			description="Ingested logs, spans and metric datapoints — aggregated per hour, billed per UTC day"
 			routes={routes}
 			activeKey={Meter.key}
 			history={history}
