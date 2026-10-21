@@ -1,9 +1,7 @@
 import { useQueryClient } from 'react-query';
-import { Trash2, X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { Button } from 'components/ui/button';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { buildSADeletePermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
-import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -20,6 +18,9 @@ import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import { Trash2 } from 'lucide-react';
+import ActionButton from 'pages/Settings/components/ActionButton';
+import SettingsDialog from 'pages/Settings/components/SettingsDialog';
 
 function DeleteAccountModal(): JSX.Element {
 	const queryClient = useQueryClient();
@@ -72,41 +73,37 @@ function DeleteAccountModal(): JSX.Element {
 
 	const content = (
 		<p className="sa-delete-dialog__body">
-			Are you sure you want to delete <strong>{accountName}</strong>? This action
-			cannot be undone. All keys associated with this service account will be
-			permanently removed.
+			Are you sure you want to delete{' '}
+			<strong className="tw:font-medium tw:text-foreground">{accountName}</strong>?
+			This action cannot be undone. All keys associated with this service account
+			will be permanently removed.
 		</p>
 	);
 
 	const footer = (
-		<div className="sa-delete-dialog__footer">
-			<Button
-				size="md"
-				variant="solid"
-				color="secondary"
-				onClick={handleCancel}
-				prefix={<X size={12} />}
-			>
+		<>
+			<Button type="button" variant="outline" onClick={handleCancel}>
 				Cancel
 			</Button>
-			<AuthZButton
-				size="md"
+			<AuthZTooltip
 				checks={[buildSADeletePermission(accountId ?? '')]}
-				authZEnabled={!!accountId}
-				variant="solid"
-				color="danger"
-				loading={isDeleting}
-				onClick={handleConfirm}
-				data-testid="confirm-delete-btn"
-				prefix={<Trash2 size={12} />}
+				enabled={!!accountId}
 			>
-				Delete
-			</AuthZButton>
-		</div>
+				<ActionButton
+					variant="destructive"
+					loading={isDeleting}
+					onClick={handleConfirm}
+					data-testid="confirm-delete-btn"
+					icon={<Trash2 aria-hidden="true" />}
+				>
+					Delete
+				</ActionButton>
+			</AuthZTooltip>
+		</>
 	);
 
 	return (
-		<DialogWrapper
+		<SettingsDialog
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
@@ -115,14 +112,14 @@ function DeleteAccountModal(): JSX.Element {
 			}}
 			title={`Delete service account ${accountName ?? ''}?`}
 			width="narrow"
-			className="alert-dialog sa-delete-dialog"
+			className="sa-delete-dialog"
 			showCloseButton={false}
 			disableOutsideClick={isErrorModalVisible}
 			testId="delete-service-account-modal"
 			footer={footer}
 		>
 			{content}
-		</DialogWrapper>
+		</SettingsDialog>
 	);
 }
 

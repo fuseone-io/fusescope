@@ -79,10 +79,9 @@ describe('KeysTab', () => {
 
 	it('renders loading state', async () => {
 		renderKeysTab({ isLoading: true });
-		// Wait for authz to complete, then check for skeleton
-		await waitFor(() => {
-			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
-		});
+		await expect(
+			screen.findByTestId('keys-tab-loading'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('renders empty state when no keys and clicking add sets add-key param', async () => {
@@ -100,7 +99,7 @@ describe('KeysTab', () => {
 		await expect(
 			screen.findByText(/No keys. Start by creating one./i),
 		).resolves.toBeInTheDocument();
-		const addBtn = screen.getByRole('button', { name: /\+ Add your first key/i });
+		const addBtn = screen.getByRole('button', { name: /add your first key/i });
 		await user.click(addBtn);
 		expect(onUrlUpdate).toHaveBeenCalledWith(
 			expect.objectContaining({

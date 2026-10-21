@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -22,13 +21,12 @@ import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
+import SettingsDialog from 'pages/Settings/components/SettingsDialog';
 
 import { RevokeKeyFooter } from '../RevokeKeyModal';
 import EditKeyForm from './EditKeyForm';
 import type { FormValues } from './types';
 import { DEFAULT_FORM_VALUES, ExpiryMode } from './types';
-
-import './EditKeyModal.styles.scss';
 
 export interface EditKeyModalProps {
 	keyItem: ServiceaccounttypesGettableFactorAPIKeyDTO | null;
@@ -154,7 +152,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 	}
 
 	return (
-		<DialogWrapper
+		<SettingsDialog
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
@@ -171,9 +169,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 					: 'Edit Key Details'
 			}
 			width={isRevokeConfirmOpen ? 'narrow' : 'base'}
-			className={
-				isRevokeConfirmOpen ? 'alert-dialog sa-delete-dialog' : 'edit-key-modal'
-			}
+			className={isRevokeConfirmOpen ? 'sa-delete-dialog' : 'edit-key-modal'}
 			showCloseButton={!isRevokeConfirmOpen}
 			disableOutsideClick={isErrorModalVisible}
 			testId="edit-key-modal"
@@ -190,10 +186,10 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 			}
 		>
 			{isRevokeConfirmOpen ? (
-				<>
+				<p>
 					Revoking this key will permanently invalidate it. Any systems using this
 					key will lose access immediately.
-				</>
+				</p>
 			) : (
 				<EditKeyForm
 					register={register}
@@ -211,7 +207,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 					accountId={selectedAccountId ?? ''}
 				/>
 			)}
-		</DialogWrapper>
+		</SettingsDialog>
 	);
 }
 

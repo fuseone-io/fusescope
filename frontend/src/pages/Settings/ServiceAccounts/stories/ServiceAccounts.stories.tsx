@@ -195,22 +195,19 @@ export const NoKeys: Story = {
 /**
  * Enough keys to paginate. The drawer resets the page to 1 whenever the account
  * loads, so the second page is reached by clicking rather than by the route.
- * The table carries a second, hidden pagination of its own, so the page number
- * has to be taken from the visible one.
  */
 export const KeysSecondPage: Story = {
 	args: { keys: 20 },
 	parameters: at(KEYS_TAB),
 	play: async (): Promise<void> => {
-		const pagination = await waitFor(() => {
-			const rendered = document.querySelector('.sa-drawer__keys-pagination');
-			if (!rendered) {
-				throw new Error('the keys pagination has not rendered yet');
-			}
-			return rendered as HTMLElement;
-		}, untilLoaded);
-
-		await userEvent.click(within(pagination).getByTitle('2'));
+		const drawer = await screen.findByTestId(
+			'service-account-drawer',
+			undefined,
+			untilLoaded,
+		);
+		await userEvent.click(
+			await within(drawer).findByTestId('pagination-next', undefined, untilLoaded),
+		);
 		await screen.findByText('archive-exporter', undefined, untilLoaded);
 	},
 };

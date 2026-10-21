@@ -1,15 +1,17 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
-import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import { Label } from 'components/ui/label';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import {
 	APIKeyCreatePermission,
 	buildSAAttachPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
+import ActionButton from 'pages/Settings/components/ActionButton';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate } from '../utils';
@@ -43,18 +45,22 @@ function KeyFormPhase({
 
 	return (
 		<>
-			<form id={FORM_ID} className="add-key-modal__form" onSubmit={onSubmit}>
+			<form
+				id={FORM_ID}
+				className="add-key-modal__form tw:flex tw:flex-col tw:gap-4"
+				onSubmit={onSubmit}
+			>
 				<AuthZGuardContent checks={checks}>
 					<>
-						<div className="add-key-modal__field">
-							<label className="add-key-modal__label" htmlFor="key-name">
-								Name <span style={{ color: 'var(--destructive)' }}>*</span>
-							</label>
+						<div className="tw:flex tw:flex-col tw:gap-2">
+							<Label htmlFor="key-name" className="tw:text-foreground">
+								Name <span className="tw:text-error-ink tw:dark:text-error">*</span>
+							</Label>
 							<Input
 								id="key-name"
 								placeholder="Enter key name e.g.: Service Owner"
 								className="add-key-modal__input"
-								testId="add-key-name-input"
+								data-testid="add-key-name-input"
 								{...register('keyName', {
 									required: true,
 									validate: (v) => !!v.trim(),
@@ -62,25 +68,20 @@ function KeyFormPhase({
 							/>
 						</div>
 
-						<div className="add-key-modal__field">
-							<span className="add-key-modal__label">Expiration</span>
+						<div className="tw:flex tw:flex-col tw:gap-2">
+							<span className="tw:text-sm tw:font-medium tw:text-foreground">
+								Expiration
+							</span>
 							<Controller
 								name="expiryMode"
 								control={control}
 								render={({ field }): JSX.Element => (
-									<ToggleGroup
-										variant="outlined"
-										color="secondary"
-										type="single"
+									<SegmentedControl
+										label="Expiration"
 										value={field.value}
-										onChange={(val: string): void => {
-											if (val) {
-												field.onChange(val);
-											}
-										}}
-										size="sm"
-										width="60%"
-										items={[
+										onChange={field.onChange}
+										className="tw:self-start"
+										options={[
 											{ value: ExpiryMode.NONE, label: 'No Expiration' },
 											{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
 										]}
@@ -90,10 +91,10 @@ function KeyFormPhase({
 						</div>
 
 						{expiryMode === ExpiryMode.DATE && (
-							<div className="add-key-modal__field">
-								<label className="add-key-modal__label" htmlFor="expiry-date">
+							<div className="tw:flex tw:flex-col tw:gap-2">
+								<Label htmlFor="expiry-date" className="tw:text-foreground">
 									Expiration Date
-								</label>
+								</Label>
 								<div className="add-key-modal__datepicker">
 									<Controller
 										name="expiryDate"
@@ -106,6 +107,7 @@ function KeyFormPhase({
 												popupClassName="add-key-modal-datepicker-popup"
 												getPopupContainer={popupContainer}
 												disabledDate={disabledDate}
+												style={{ width: '100%' }}
 											/>
 										)}
 									/>
@@ -116,32 +118,26 @@ function KeyFormPhase({
 				</AuthZGuardContent>
 			</form>
 
-			<div className="add-key-modal__footer">
-				<div className="add-key-modal__footer-right">
-					<Button
-						size="md"
-						variant="solid"
-						color="secondary"
-						onClick={onClose}
-						testId="add-key-cancel-btn"
-					>
-						Cancel
-					</Button>
-					<AuthZButton
-						size="md"
-						checks={checks}
-						authZEnabled={!!accountId}
+			<div className="add-key-modal__footer tw:-mx-5 tw:mt-5 tw:-mb-4 tw:flex tw:justify-end tw:gap-2 tw:border-t tw:border-border tw:px-5 tw:py-3">
+				<Button
+					type="button"
+					variant="outline"
+					onClick={onClose}
+					data-testid="add-key-cancel-btn"
+				>
+					Cancel
+				</Button>
+				<AuthZTooltip checks={checks} enabled={!!accountId}>
+					<ActionButton
 						type="submit"
 						form={FORM_ID}
-						variant="solid"
-						color="primary"
 						loading={isSubmitting}
 						disabled={!isValid}
 						testId="add-key-submit-btn"
 					>
 						Create Key
-					</AuthZButton>
-				</div>
+					</ActionButton>
+				</AuthZTooltip>
 			</div>
 		</>
 	);
