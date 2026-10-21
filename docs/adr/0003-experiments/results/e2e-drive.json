@@ -1,0 +1,34 @@
+{
+  "sampled": {
+    "tab1": {
+      "id": "53980d2a3a50248fd1b29a7d6b76f5ae",
+      "startedAt": 1792624035817,
+      "lastActiveAt": 1792624038629,
+      "sampled": true
+    },
+    "tab2": {
+      "id": "53980d2a3a50248fd1b29a7d6b76f5ae",
+      "startedAt": 1792624035817,
+      "lastActiveAt": 1792624038629,
+      "sampled": true
+    },
+    "cors": "{\"fetch\":200}\n{\"xhr\":200}\n{\"path\":\"/echo\",\"traceparent\":\"00-9822110f1d31a5893dc6737eecdd83fb-f3edf1f49c50b4bc-01\"}\n{\"path\":\"/deny\",\"traceparent\":null}\n",
+    "otlp": [
+      "POST http://localhost:14318/v1/traces",
+      "POST http://localhost:14318/v1/logs",
+      "200 http://localhost:14318/v1/traces",
+      "200 http://localhost:14318/v1/logs"
+    ]
+  },
+  "unsampled": {
+    "session": {
+      "id": "af8c8d4e946c71a0b95da98b45730adf",
+      "startedAt": 1792624043251,
+      "lastActiveAt": 1792624043251,
+      "sampled": false
+    },
+    "traceparentSent": [
+      null
+    ]
+  }
+}

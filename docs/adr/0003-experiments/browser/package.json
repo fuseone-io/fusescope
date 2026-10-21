@@ -1,0 +1,35 @@
+{
+  "name": "@fusescope/browser-spike",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node build.mjs",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/api-logs": "0.223.0",
+    "@opentelemetry/browser-instrumentation": "0.8.2",
+    "@opentelemetry/core": "2.12.0",
+    "@opentelemetry/exporter-logs-otlp-http": "0.223.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.223.0",
+    "@opentelemetry/instrumentation": "0.223.0",
+    "@opentelemetry/instrumentation-document-load": "0.68.0",
+    "@opentelemetry/instrumentation-fetch": "0.223.0",
+    "@opentelemetry/instrumentation-user-interaction": "0.67.0",
+    "@opentelemetry/instrumentation-xml-http-request": "0.223.0",
+    "@opentelemetry/resources": "2.12.0",
+    "@opentelemetry/sdk-logs": "0.223.0",
+    "@opentelemetry/sdk-trace": "2.12.0",
+    "@opentelemetry/sdk-trace-web": "2.12.0",
+    "@opentelemetry/semantic-conventions": "1.43.0",
+    "web-vitals": "6.2.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3"
+  }
+}

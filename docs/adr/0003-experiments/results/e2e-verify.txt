@@ -1,0 +1,25 @@
+   ┌─check─────────┬─name───────────────────────┬──n─┬─routes───────────────────────────────┐
+1. │ spans by name │ GET                        │  4 │ ['/orders/:id']                      │
+2. │ spans by name │ Navigation: /customers/392 │  1 │ ['/orders/:id']                      │
+3. │ spans by name │ Navigation: /orders/123    │  1 │ ['/']                                │
+4. │ spans by name │ click                      │ 17 │ ['/orders/:id','/','/customers/:id'] │
+5. │ spans by name │ documentFetch              │  2 │ ['/orders/:id','/']                  │
+6. │ spans by name │ documentLoad               │  2 │ ['/orders/:id','/']                  │
+7. │ spans by name │ resourceFetch              │  4 │ ['/orders/:id','/']                  │
+8. │ spans by name │ view                       │  4 │ ['/orders/:id','/','/customers/:id'] │
+   └───────────────┴────────────────────────────┴────┴──────────────────────────────────────┘
+   ┌─check──────┬─browser_span─┬─child_service─┬─child_span─┬─trace_id─────────────────────────┐
+1. │ trace link │ GET          │ frontend      │ /dispatch  │ 394c43cc7d47cc313314952af16a273d │
+2. │ trace link │ GET          │ frontend      │ /dispatch  │ 5cdbf3f7a55b9b54517a983c1eb32d2a │
+   └────────────┴──────────────┴───────────────┴────────────┴──────────────────────────────────┘
+   ┌─check──────┬─severity_text─┬─event_name─┬─vital─┬─exception_type─┬─source─────────────┬─route──────────┐
+1. │ log events │ INFO          │ rum.vital  │ TTFB  │                │                    │ /              │
+2. │ log events │ INFO          │ rum.vital  │ LCP   │                │                    │ /              │
+3. │ log events │ ERROR         │            │       │ TypeError      │ onerror            │ /customers/:id │
+4. │ log events │ ERROR         │            │       │ Error          │ unhandledrejection │ /customers/:id │
+5. │ log events │ INFO          │ rum.vital  │ TTFB  │                │                    │ /orders/:id    │
+6. │ log events │ INFO          │ rum.vital  │ CLS   │                │                    │ /              │
+7. │ log events │ INFO          │ rum.vital  │ INP   │                │                    │ /              │
+8. │ log events │ INFO          │ rum.vital  │ CLS   │                │                    │ /orders/:id    │
+   └────────────┴───────────────┴────────────┴───────┴────────────────┴────────────────────┴────────────────┘
+without session.id	0
