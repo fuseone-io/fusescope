@@ -65,20 +65,27 @@ function SettingsDialog({
 				}}
 				className={cn(WIDTHS[width], 'tw:max-h-[calc(100vh-4rem)]', className)}
 			>
-				<DialogHeader className="tw:border-b tw:border-border tw:pb-3">
-					<DialogTitle className="tw:pr-6">{title}</DialogTitle>
-				</DialogHeader>
-				<div
-					className={cn(
-						'tw:min-h-0 tw:flex-1 tw:overflow-y-auto tw:px-5 tw:py-4 tw:text-[13px] tw:text-muted-foreground',
-						bodyClassName,
-					)}
-				>
-					<ConfigProvider getPopupContainer={popupContainer}>
-						{children}
-					</ConfigProvider>
+				{/*
+				 * Header, body and footer share one clipped wrapper, so the content's
+				 * rounded corners survive the cmdK palette's background rule on
+				 * `[data-slot='dialog-content'] > div`.
+				 */}
+				<div className="tw:flex tw:min-h-0 tw:flex-1 tw:flex-col tw:overflow-hidden tw:rounded-[inherit]">
+					<DialogHeader className="tw:border-b tw:border-border tw:pb-3">
+						<DialogTitle className="tw:pr-6">{title}</DialogTitle>
+					</DialogHeader>
+					<div
+						className={cn(
+							'tw:min-h-0 tw:flex-1 tw:overflow-y-auto tw:px-5 tw:py-4 tw:text-[13px] tw:text-muted-foreground',
+							bodyClassName,
+						)}
+					>
+						<ConfigProvider getPopupContainer={popupContainer}>
+							{children}
+						</ConfigProvider>
+					</div>
+					{footer && <DialogFooter>{footer}</DialogFooter>}
 				</div>
-				{footer && <DialogFooter>{footer}</DialogFooter>}
 			</DialogContent>
 		</Dialog>
 	);

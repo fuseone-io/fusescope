@@ -2,12 +2,7 @@ import { useCallback } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import InviteMembers from 'components/InviteMembers/InviteMembers';
 import { Button } from 'components/ui/button';
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from 'components/ui/dialog';
+import SettingsDialog from 'pages/Settings/components/SettingsDialog';
 import { Loader2, UserPlus } from 'lucide-react';
 
 export interface InviteMembersModalProps {
@@ -33,53 +28,44 @@ function InviteMembersModal({
 	}, [onComplete]);
 
 	return (
-		<Dialog
+		<SettingsDialog
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
 					onClose();
 				}
 			}}
+			title="Invite Team Members"
+			width="wide"
+			className="invite-members-modal"
 		>
-			<DialogContent
-				aria-describedby={undefined}
-				className="invite-members-modal tw:max-w-[700px]"
-			>
-				<DialogHeader className="tw:border-b tw:border-border tw:pb-3">
-					<DialogTitle>Invite Team Members</DialogTitle>
-				</DialogHeader>
-				<div className="tw:px-5 tw:pt-4 tw:pb-3">
-					<InviteMembers
-						onSuccess={handleSuccess}
-						onPartialSuccess={handlePartialSuccess}
-						renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
-							<div className="invite-members-modal__footer tw:-mx-5 tw:-mb-3 tw:flex tw:items-center tw:justify-end tw:gap-2 tw:border-t tw:border-border tw:px-5 tw:py-3">
-								<Button type="button" variant="outline" onClick={onClose}>
-									Cancel
-								</Button>
-								<span
-									className="tw:inline-flex"
-									title={
-										canSubmit ? undefined : 'Add at least one team member to invite'
-									}
-								>
-									<Button type="button" onClick={submit} disabled={!canSubmit}>
-										{isSubmitting ? (
-											<Loader2 className="tw:animate-spin" aria-hidden="true" />
-										) : (
-											<UserPlus aria-hidden="true" />
-										)}
-										<span className="translate-safe">
-											{isSubmitting ? 'Inviting...' : 'Invite Team Members'}
-										</span>
-									</Button>
+			<InviteMembers
+				onSuccess={handleSuccess}
+				onPartialSuccess={handlePartialSuccess}
+				renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
+					<div className="invite-members-modal__footer tw:-mx-5 tw:-mb-4 tw:mt-4 tw:flex tw:items-center tw:justify-end tw:gap-2 tw:border-t tw:border-border tw:px-5 tw:py-3">
+						<Button type="button" variant="outline" onClick={onClose}>
+							Cancel
+						</Button>
+						<span
+							className="tw:inline-flex"
+							title={canSubmit ? undefined : 'Add at least one team member to invite'}
+						>
+							<Button type="button" onClick={submit} disabled={!canSubmit}>
+								{isSubmitting ? (
+									<Loader2 className="tw:animate-spin" aria-hidden="true" />
+								) : (
+									<UserPlus aria-hidden="true" />
+								)}
+								<span className="translate-safe">
+									{isSubmitting ? 'Inviting...' : 'Invite Team Members'}
 								</span>
-							</div>
-						)}
-					/>
-				</div>
-			</DialogContent>
-		</Dialog>
+							</Button>
+						</span>
+					</div>
+				)}
+			/>
+		</SettingsDialog>
 	);
 }
 
