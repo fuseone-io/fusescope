@@ -10,7 +10,7 @@ import { Callout } from '@signozhq/ui/callout';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
 import { Collapse, Form, Input as AntdInput, Tooltip } from 'antd';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 
 import DomainMappingList from './components/DomainMappingList';
@@ -65,7 +65,7 @@ function ConfigureGoogleAuthAuthnProvider({
 					Enter OAuth 2.0 credentials obtained from the Google API Console below.
 					Read the{' '}
 					<a
-						href={signozDocsUrl('/manage/administrator-guide/sso/overview/')}
+						href={fuseScopeDocsUrl('/configuration/sso/')}
 						target="_blank"
 						rel="noreferrer"
 					>

@@ -104,5 +104,4 @@ export function docsUrl(path: string): string {
 	return `${DOCS_BASE_URL}${path}`;
 }
 
-export const MCP_DOCS_URL = signozDocsUrl('/ai/signoz-mcp-server/');
 export const MCP_USE_CASES_URL = signozDocsUrl('/ai/use-cases/');
