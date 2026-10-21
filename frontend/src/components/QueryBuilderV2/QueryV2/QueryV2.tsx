@@ -6,10 +6,13 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { Tooltip } from 'antd';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { DataSourceDropdown } from 'container/QueryBuilder/components';
 import QBEntityOptions from 'container/QueryBuilder/components/QBEntityOptions/QBEntityOptions';
+import QueryFunctions from 'container/QueryBuilder/components/QueryFunctions/QueryFunctions';
 import { QueryProps } from 'container/QueryBuilder/type';
 import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -162,6 +165,93 @@ export const QueryV2 = forwardRef(function QueryV2(
 		[handleChangeQueryData],
 	);
 
+	const showFunctions =
+		!functions.hidden &&
+		((version && version === ENTITY_VERSION_V4) ||
+			query.dataSource === DataSource.LOGS ||
+			query.dataSource === DataSource.METRICS ||
+			hasQueryFunctions ||
+			false);
+
+	const searchNode = (
+		<div className="qb-search-filter-container">
+			<div className="query-search-container">
+				<QuerySearch
+					key={`query-search-${query.queryName}-${query.dataSource}`}
+					onChange={handleSearchChange}
+					queryData={query}
+					dataSource={dataSource}
+					signalSource={signalSource}
+				/>
+			</div>
+
+			{showSpanScopeSelector && (
+				<div className="traces-search-filter-container">
+					<div className="traces-search-filter-in">in</div>
+					<SpanScopeSelector query={query} />
+				</div>
+			)}
+		</div>
+	);
+
+	const metricNode =
+		dataSource === DataSource.METRICS ? (
+			<div className="metrics-container">
+				<MetricsSelect
+					query={query}
+					index={index}
+					version={ENTITY_VERSION_V5}
+					signalSource={signalSource as 'meter' | ''}
+					onSignalSourceChange={onSignalSourceChange}
+					signalSourceChangeEnabled={signalSourceChangeEnabled}
+					savePreviousQuery={savePreviousQuery}
+				/>
+				{metricSelectAddon?.(query)}
+			</div>
+		) : null;
+
+	const signalAggregationNode =
+		!showOnlyWhereClause &&
+		!aggregation.hidden &&
+		!(hasTraceOperator && dataSource === DataSource.TRACES) &&
+		dataSource !== DataSource.METRICS ? (
+			<QueryAggregation
+				dataSource={dataSource}
+				key={`query-search-${query.queryName}-${query.dataSource}`}
+				panelType={panelType || undefined}
+				onAggregationIntervalChange={handleChangeAggregateEvery}
+				onChange={handleChangeAggregation}
+				queryData={query}
+				fieldsConfig={fieldsConfig}
+			/>
+		) : null;
+
+	const metricAggregationNode =
+		!showOnlyWhereClause && dataSource === DataSource.METRICS ? (
+			<MetricsAggregateSection
+				panelType={panelType}
+				query={query}
+				index={index}
+				key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}-${signalSource}`}
+				version="v4"
+				fieldsConfig={fieldsConfig}
+			/>
+		) : null;
+
+	const addOnsNode =
+		!showOnlyWhereClause &&
+		!(hasTraceOperator && query.dataSource === DataSource.TRACES) ? (
+			<QueryAddOns
+				index={index}
+				query={query}
+				version="v3"
+				isRawQuery={isRawQuery}
+				showReduceTo={showReduceTo}
+				panelType={panelType}
+				fieldsConfig={fieldsConfig}
+			/>
+		) : null;
+
 	const editor = (
 		<div
 			className={cx('query-v2', { 'where-clause-view': showOnlyWhereClause })}
@@ -175,14 +265,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 								<QBEntityOptions
 									hasTraceOperator={hasTraceOperator}
 									isMetricsDataSource={dataSource === DataSource.METRICS}
-									showFunctions={
-										!functions.hidden &&
-										((version && version === ENTITY_VERSION_V4) ||
-											query.dataSource === DataSource.LOGS ||
-											query.dataSource === DataSource.METRICS ||
-											hasQueryFunctions ||
-											false)
-									}
+									showFunctions={showFunctions}
 									areFunctionsDisabled={functions.disabled}
 									functionsDisabledReason={functions.reason}
 									isCollapsed={isCollapsed}
@@ -205,26 +288,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 								/>
 							</div>
 
-							{!isCollapsed && showInlineQuerySearch && (
-								<div className="qb-search-filter-container">
-									<div className="query-search-container">
-										<QuerySearch
-											key={`query-search-${query.queryName}-${query.dataSource}`}
-											onChange={handleSearchChange}
-											queryData={query}
-											dataSource={dataSource}
-											signalSource={signalSource}
-										/>
-									</div>
-
-									{showSpanScopeSelector && (
-										<div className="traces-search-filter-container">
-											<div className="traces-search-filter-in">in</div>
-											<SpanScopeSelector query={query} />
-										</div>
-									)}
-								</div>
-							)}
+							{!isCollapsed && showInlineQuerySearch && searchNode}
 
 							{isMultiQueryAllowed && (
 								<QueryActionsMenu
@@ -242,81 +306,16 @@ export const QueryV2 = forwardRef(function QueryV2(
 				{!isCollapsed && (
 					<div className="qb-elements-container">
 						<div className="qb-search-container">
-							{dataSource === DataSource.METRICS && (
-								<div className="metrics-container">
-									<MetricsSelect
-										query={query}
-										index={index}
-										version={ENTITY_VERSION_V5}
-										signalSource={signalSource as 'meter' | ''}
-										onSignalSourceChange={onSignalSourceChange}
-										signalSourceChangeEnabled={signalSourceChangeEnabled}
-										savePreviousQuery={savePreviousQuery}
-									/>
-									{metricSelectAddon?.(query)}
-								</div>
-							)}
+							{metricNode}
 
-							{!showInlineQuerySearch && (
-								<div className="qb-search-filter-container">
-									<div className="query-search-container">
-										<QuerySearch
-											key={`query-search-${query.queryName}-${query.dataSource}`}
-											onChange={handleSearchChange}
-											queryData={query}
-											dataSource={dataSource}
-											signalSource={signalSource}
-										/>
-									</div>
-
-									{showSpanScopeSelector && (
-										<div className="traces-search-filter-container">
-											<div className="traces-search-filter-in">in</div>
-											<SpanScopeSelector query={query} />
-										</div>
-									)}
-								</div>
-							)}
+							{!showInlineQuerySearch && searchNode}
 						</div>
 
-						{!showOnlyWhereClause &&
-							!aggregation.hidden &&
-							!(hasTraceOperator && dataSource === DataSource.TRACES) &&
-							dataSource !== DataSource.METRICS && (
-								<QueryAggregation
-									dataSource={dataSource}
-									key={`query-search-${query.queryName}-${query.dataSource}`}
-									panelType={panelType || undefined}
-									onAggregationIntervalChange={handleChangeAggregateEvery}
-									onChange={handleChangeAggregation}
-									queryData={query}
-									fieldsConfig={fieldsConfig}
-								/>
-							)}
+						{signalAggregationNode}
 
-						{!showOnlyWhereClause && dataSource === DataSource.METRICS && (
-							<MetricsAggregateSection
-								panelType={panelType}
-								query={query}
-								index={index}
-								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}-${signalSource}`}
-								version="v4"
-								fieldsConfig={fieldsConfig}
-							/>
-						)}
+						{metricAggregationNode}
 
-						{!showOnlyWhereClause &&
-							!(hasTraceOperator && query.dataSource === DataSource.TRACES) && (
-								<QueryAddOns
-									index={index}
-									query={query}
-									version="v3"
-									isRawQuery={isRawQuery}
-									showReduceTo={showReduceTo}
-									panelType={panelType}
-									fieldsConfig={fieldsConfig}
-								/>
-							)}
+						{addOnsNode}
 					</div>
 				)}
 			</div>
@@ -326,13 +325,54 @@ export const QueryV2 = forwardRef(function QueryV2(
 	if (!presenter) {
 		return editor;
 	}
+
+	const functionsNode =
+		showFunctions &&
+		!isRawQuery &&
+		(dataSource === DataSource.METRICS || dataSource === DataSource.LOGS) ? (
+			<Tooltip title={functions.reason}>
+				<div
+					className={cx('query-functions-part', {
+						'query-functions-part--disabled': functions.disabled,
+					})}
+					aria-disabled={functions.disabled}
+				>
+					<QueryFunctions
+						query={query}
+						queryFunctions={query.functions || []}
+						key={query.functions?.toString()}
+						onChange={handleQueryFunctionsUpdates}
+						maxFunctions={dataSource === DataSource.LOGS ? 1 : 3}
+					/>
+				</div>
+			</Tooltip>
+		) : null;
+
 	return (
 		<>
 			{presenter.renderQuery({
 				query,
 				index,
 				editor,
+				parts: {
+					dataSource:
+						(queryVariant || 'static') === 'dropdown' ? (
+							<DataSourceDropdown
+								onChange={handleChangeDataSource}
+								data-testid={`query-data-source-selector-${index}`}
+								value={query.dataSource || DataSource.METRICS}
+								allowedDataSources={allowedDataSources}
+								className="query-data-source-dropdown"
+							/>
+						) : null,
+					metric: metricNode,
+					search: searchNode,
+					aggregation: signalAggregationNode ?? metricAggregationNode,
+					functions: functionsNode,
+					addOns: addOnsNode,
+				},
 				onToggleVisibility: handleToggleDisableQuery,
+				canToggleVisibility: !(isRawQuery && !showTraceOperator),
 				actionsMenu: isMultiQueryAllowed ? (
 					<QueryActionsMenu
 						queryName={query.queryName}

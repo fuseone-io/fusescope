@@ -1,5 +1,6 @@
 // The Metrics explorer's split view, after the split board: a resizable
-// `.qpanel` of query cards (or a `.rail`) beside the `.results`.
+// `.qpanel` of query cards (or a `.rail`) beside the `.results`. The cards,
+// rail and grip also dress the dashboard panel editor's `.panel-query-cards`.
 
 @mixin box {
 	height: 32px;
@@ -56,7 +57,7 @@
 	}
 }
 
-.metrics-split .qa {
+:is(.metrics-split, .panel-query-cards) .qa {
 	display: inline-flex;
 	flex: none;
 	align-items: center;
@@ -77,7 +78,7 @@
 	}
 }
 
-.metrics-split .rail {
+:is(.metrics-split, .panel-query-cards) .rail {
 	display: flex;
 	flex: none;
 	flex-direction: column;
@@ -119,8 +120,8 @@
 	background: var(--fs-background);
 }
 
-.metrics-split .qpanel-h,
-.metrics-split .qpanel-f {
+:is(.metrics-split, .panel-query-cards) .qpanel-h,
+:is(.metrics-split, .panel-query-cards) .qpanel-f {
 	display: flex;
 	flex: none;
 	flex-wrap: wrap;
@@ -131,13 +132,13 @@
 	font-family: var(--tw-font-sans);
 }
 
-.metrics-split .qpanel-h {
+:is(.metrics-split, .panel-query-cards) .qpanel-h {
 	min-height: 48px;
 	padding: 8px 12px 8px 8px;
 	border-bottom: 1px solid var(--fs-border);
 }
 
-.metrics-split .qpanel-f {
+:is(.metrics-split, .panel-query-cards) .qpanel-f {
 	padding: 10px 12px;
 	border-top: 1px solid var(--fs-border);
 }
@@ -176,7 +177,7 @@
 	}
 }
 
-.metrics-split .grip {
+:is(.metrics-split, .panel-query-cards) .grip {
 	position: absolute;
 	top: 50%;
 	right: -6px;
@@ -216,7 +217,7 @@
 	padding: 12px 16px 16px;
 }
 
-.metrics-split .qp-add {
+:is(.metrics-split, .panel-query-cards) .qp-add {
 	border-style: dashed;
 }
 
@@ -235,7 +236,7 @@
 }
 
 // Cards.
-.metrics-split .qcard {
+:is(.metrics-split, .panel-query-cards) .qcard {
 	min-width: 0;
 	border: 1px solid var(--fs-border);
 	border-radius: 10px;

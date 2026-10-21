@@ -9,20 +9,20 @@ export type SectionKind = 'aggregation' | 'functions' | 'result';
 
 type Stored = Partial<Record<SectionKind, boolean>>;
 
-function readStored(): Stored {
+function readStored(storageKey: string): Stored {
 	try {
-		const stored = JSON.parse(getLocalStorageKey(SECTIONS_KEY) || 'null');
+		const stored = JSON.parse(getLocalStorageKey(storageKey) || 'null');
 		return stored && typeof stored === 'object' ? stored : {};
 	} catch {
 		return {};
 	}
 }
 
-function remember(kind: SectionKind, open: boolean): void {
+function remember(storageKey: string, kind: SectionKind, open: boolean): void {
 	try {
 		setLocalStorageKey(
-			SECTIONS_KEY,
-			JSON.stringify({ ...readStored(), [kind]: open }),
+			storageKey,
+			JSON.stringify({ ...readStored(storageKey), [kind]: open }),
 		);
 	} catch {
 		// A convenience only; blocked storage keeps the in-memory state.
@@ -38,6 +38,8 @@ interface QuerySectionProps {
 	summary: string;
 	/** Values differ from the defaults: start open so they are not hidden. */
 	isSet: boolean;
+	/** Where the last toggle per kind is remembered; each page keeps its own. */
+	storageKey?: string;
 	children: ReactNode;
 }
 
@@ -53,16 +55,17 @@ function QuerySection({
 	hint,
 	summary,
 	isSet,
+	storageKey = SECTIONS_KEY,
 	children,
 }: QuerySectionProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState(
-		() => isSet || readStored()[kind] === true,
+		() => isSet || readStored(storageKey)[kind] === true,
 	);
 	const bodyId = `qp-section-${name}-${kind}`;
 
 	const toggle = (): void => {
 		setIsOpen((open) => {
-			remember(kind, !open);
+			remember(storageKey, kind, !open);
 			return !open;
 		});
 	};

@@ -13,6 +13,8 @@ interface CardHeadProps {
 	isHidden: boolean;
 	onToggleOpen: () => void;
 	onToggleVisibility: () => void;
+	/** The builder disables hiding a lone raw query. */
+	isVisibilityDisabled?: boolean;
 	actions: ReactNode;
 }
 
@@ -26,6 +28,7 @@ function CardHead({
 	isHidden,
 	onToggleOpen,
 	onToggleVisibility,
+	isVisibilityDisabled = false,
 	actions,
 }: CardHeadProps): JSX.Element {
 	const ref = useRef<HTMLDivElement>(null);
@@ -64,6 +67,7 @@ function CardHead({
 				className="tw:size-7 tw:text-muted-foreground"
 				aria-label={`${isHidden ? 'Show' : 'Hide'} ${letter}`}
 				aria-pressed={isHidden}
+				disabled={isVisibilityDisabled}
 				onClick={onToggleVisibility}
 			>
 				{isHidden ? <EyeOff /> : <Eye />}
