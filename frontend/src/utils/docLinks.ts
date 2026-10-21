@@ -4,12 +4,10 @@ const DOCLINKS = {
 	TRACES_EXPLORER_EMPTY_STATE: fuseScopeDocsUrl(
 		'/sending-data/instrumentation/',
 	),
-	USER_GUIDE: signozDocsUrl('/introduction/'),
+	USER_GUIDE: fuseScopeDocsUrl('/explore/'),
 	TRACES_DETAILS_LINK: fuseScopeDocsUrl('/explore/traces/#views'),
-	METRICS_EXPLORER_EMPTY_STATE: signozDocsUrl(
-		'/metrics-management/send-metrics/',
-	),
-	EXTERNAL_API_MONITORING: signozDocsUrl('/external-api-monitoring/overview/'),
+	METRICS_EXPLORER_EMPTY_STATE: fuseScopeDocsUrl('/sending-data/otlp/'),
+	EXTERNAL_API_MONITORING: fuseScopeDocsUrl('/analyze/external-apis/'),
 	QUERY_CLICKHOUSE_TRACES: fuseScopeDocsUrl(
 		'/querying/clickhouse-promql/#tables',
 	),

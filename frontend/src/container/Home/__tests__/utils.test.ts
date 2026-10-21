@@ -110,6 +110,7 @@ describe('savedViewsDocsLink', () => {
 		['logs', '/explore/logs/#alerts-dashboards-and-saved-views'],
 		['traces', '/explore/traces/#saved-views'],
 		['metrics', '/explore/metrics/#views-alerts-and-dashboards'],
+		['meter', '/analyze/cost-meter/#views'],
 	])('links the %s views to their docs section', (entity, path) => {
 		expect(savedViewsDocsLink(entity)).toMatch(new RegExp(`${path}$`));
 	});

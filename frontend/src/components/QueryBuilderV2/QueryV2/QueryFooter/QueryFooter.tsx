@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
-import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DraftingCompass, Plus, Sigma } from '@signozhq/icons';
@@ -130,8 +130,8 @@ export default function QueryFooter({
 									<div style={{ textAlign: 'center' }}>
 										Add New Formula
 										<Typography.Link
-											href={signozDocsUrl(
-												'/querying/multi-query-analysis/#advanced-comparisons',
+											href={fuseScopeDocsUrl(
+												'/querying/query-builder/#several-queries-and-formulas',
 											)}
 											target="_blank"
 											style={{ textDecoration: 'underline' }}

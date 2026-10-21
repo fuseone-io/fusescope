@@ -5,7 +5,7 @@ import { Button, Input } from 'antd';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
@@ -147,7 +147,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 						</Typography.Link>
 						or{' '}
 						<a
-							href={signozDocsUrl('/introduction/')}
+							href={fuseScopeDocsUrl('/start/what-is-fusescope/')}
 							target="_blank"
 							rel="noreferrer"
 							className="read-docs-link"

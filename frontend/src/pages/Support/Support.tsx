@@ -8,7 +8,7 @@ import { createSubscription } from 'api/generated/services/subscriptions';
 import PageHeader from 'components/PageTemplate/components/PageHeader';
 import PageTemplate from 'components/PageTemplate/PageTemplate';
 import type { CreateSubscription201 } from 'api/generated/services/fuseScope.schemas';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -53,7 +53,7 @@ const supportChannels = [
 		name: 'Documentation',
 		icon: <Book size={16} />,
 		title: 'Find answers in the documentation.',
-		url: signozDocsUrl('/'),
+		url: fuseScopeDocsUrl(),
 		btnText: 'Visit docs',
 		isExternal: true,
 	},

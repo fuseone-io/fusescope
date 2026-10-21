@@ -9,7 +9,7 @@ import {
 } from 'components/ExplorerCard/utils';
 import PageTemplate from 'components/PageTemplate/PageTemplate';
 import { Input } from 'components/ui/input';
-import { fuseScopeDocsUrl } from 'constants/docs';
+import { savedViewsDocsLink } from 'container/Home/utils';
 import { describeMeterQuery } from 'container/MeterExplorer/describeMeterQuery';
 import {
 	MeterExplorerEventKeys,
@@ -225,7 +225,7 @@ function SaveView(): JSX.Element {
 				<p className="tw:m-0 tw:text-[13px] tw:text-muted-foreground">
 					Manage your saved views for {ROUTES_VS_SOURCEPAGE[pathname]}.{' '}
 					<a
-						href={fuseScopeDocsUrl('/explore/metrics/#chart-a-metric')}
+						href={savedViewsDocsLink(sourcepage)}
 						target="_blank"
 						rel="noreferrer"
 						className="tw:text-primary! tw:hover:text-primary-strong! tw:hover:underline"

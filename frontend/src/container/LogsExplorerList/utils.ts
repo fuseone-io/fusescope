@@ -1,6 +1,6 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { isEmpty } from 'lodash-es';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { IField } from 'types/api/logs/fields';
 import {
 	IBuilderQuery,
@@ -60,11 +60,11 @@ export const getEmptyLogsListConfig = (
 	documentationLinks: [
 		{
 			text: 'Sending logs to FuseScope',
-			url: signozDocsUrl('/logs-management/send-logs-to-signoz/'),
+			url: fuseScopeDocsUrl('/sending-data/instrumentation/#logs'),
 		},
 		{
 			text: 'Correlate traces and logs',
-			url: signozDocsUrl('/traces-management/guides/correlate-traces-and-logs/'),
+			url: fuseScopeDocsUrl('/guides/logs-for-a-request/'),
 		},
 	],
 	clearFiltersButtonText: 'Clear filters from Trace to view other logs',

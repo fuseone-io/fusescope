@@ -29,7 +29,7 @@ describe('TracesTable empty states', () => {
 	});
 
 	it.each([
-		['llm-empty-state-docs', '/sending-data/instrumentation/'],
+		['llm-empty-state-docs', '/analyze/ai-observability/#get-started'],
 		[
 			'llm-empty-state-mapping-test',
 			'/ai-observability/attribute-mapping?tab=test',

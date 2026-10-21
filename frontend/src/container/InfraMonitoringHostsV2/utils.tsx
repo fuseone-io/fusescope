@@ -10,7 +10,9 @@ import { fuseScopeDocsUrl } from 'constants/docs';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
-const HOSTNAME_DOCS_URL = fuseScopeDocsUrl('/sending-data/kubernetes/');
+const HOSTNAME_DOCS_URL = fuseScopeDocsUrl(
+	'/sending-data/kubernetes/#resourcedetection-processor',
+);
 
 export function HostnameCell({
 	hostName,

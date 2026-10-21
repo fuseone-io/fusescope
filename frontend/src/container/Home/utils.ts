@@ -103,6 +103,7 @@ const SAVED_VIEWS_DOCS: Record<string, string> = {
 	logs: '/explore/logs/#alerts-dashboards-and-saved-views',
 	traces: '/explore/traces/#saved-views',
 	metrics: '/explore/metrics/#views-alerts-and-dashboards',
+	meter: '/analyze/cost-meter/#views',
 };
 
 export function savedViewsDocsLink(entity: string): string {

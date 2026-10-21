@@ -16,6 +16,8 @@ const EXCLUDED_DIRS = new Set([
 ]);
 
 const SIGNOZ_DOCS_CALL = /signozDocsUrl\(\s*(['"`])([^'"`]*)\1/g;
+/** Onboarding catalog entries resolve `link: '/docs/…'` against the SigNoz site. */
+const ONBOARDING_DOCS_LINK = /link:\s*(['"`])\/docs(\/[^'"`]*)\1/g;
 const DOCUMENTED_TOPICS = new Set([
 	'/alerts',
 	'/alerts-management/metrics-based-alerts',
@@ -67,6 +69,19 @@ const DOCUMENTED_TOPICS = new Set([
 	'/userguide/manage-variables#note-about-all',
 	'/userguide/manage-variables#dynamic-variable-dropdowns-display-values-in-two-sections',
 	'/userguide/manage-variables#why-avoid-clickhouse-query-variables',
+	'',
+	'/introduction',
+	'/external-api-monitoring/overview',
+	'/metrics-management/send-metrics',
+	'/messaging-queues/kafka',
+	'/messaging-queues/celery-setup',
+	'/cost-meter/overview#get-started',
+	'/logs-management/send-logs-to-signoz',
+	'/logs-management/features/logs-quick-filters',
+	'/traces-management/guides/correlate-traces-and-logs',
+	'/traces-management/troubleshooting/faqs#q-why-are-some-spans-missing-from-a-trace',
+	'/userguide/query-builder-v5#result-manipulation',
+	'/querying/multi-query-analysis#advanced-comparisons',
 ]);
 
 /** Drops the query string and trailing slash so `/a/?x#b` matches `/a#b`. */
@@ -100,8 +115,9 @@ describe('documentation links', () => {
 
 	it('point topics documented on the FuseScope docs site there', () => {
 		const offenders = sourceFiles(SRC).flatMap((file) =>
-			[...readFileSync(file, 'utf8').matchAll(SIGNOZ_DOCS_CALL)]
-				.map(([, , path]) => path)
+			[SIGNOZ_DOCS_CALL, ONBOARDING_DOCS_LINK]
+				.flatMap((pattern) => [...readFileSync(file, 'utf8').matchAll(pattern)])
+				.map(([, , path]) => path.replace(/#?\$\{.*$/, ''))
 				.filter((path) => DOCUMENTED_TOPICS.has(normalizeDocsPath(path)))
 				.map((path) => `${relative(SRC, file).split(sep).join('/')}: ${path}`),
 		);

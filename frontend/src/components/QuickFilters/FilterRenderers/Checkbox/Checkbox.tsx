@@ -155,7 +155,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							))}
 						</section>
 					) : isEmptyStateWithDocsEnabled ? (
-						<LogsQuickFilterEmptyState attributeKey={filter.attributeKey.key} />
+						<LogsQuickFilterEmptyState />
 					) : (
 						<section className="no-data">
 							<Typography.Text>No values found</Typography.Text>{' '}
