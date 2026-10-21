@@ -86,21 +86,14 @@ async function deleteVariableByName(page: Page, varName: string) {
 	const dialog = await openConfigureDrawer(page);
 	await dialog.getByRole('tab', { name: 'Variables' }).click();
 	const tabpanel = dialog.getByRole('tabpanel', { name: 'Variables' });
-	const nameCell = tabpanel.getByText(varName, { exact: true }).first();
-	await nameCell.hover();
-	// Walk up to the surrounding row container to scope the delete-button
-	// search; `.variable-item` (or the variable row container) wraps the
-	// hover-revealed delete button.
-	await nameCell
-		.locator('xpath=ancestor::*[contains(@class,"variable-item") or self::tr][1]')
-		.locator('.delete-variable-button')
-		.first()
-		.dispatchEvent('click');
-	const confirm = page
-		.getByRole('dialog')
-		.filter({ hasText: /delete variable/i })
-		.last();
-	await confirm.getByRole('button', { name: 'OK' }).click();
+	await tabpanel.getByTestId(`variable-delete-${varName}`).click();
+	// Unreferenced variables confirm inline; referenced ones open the impact review.
+	const inlineConfirm = tabpanel.getByTestId(/^variable-delete-confirm-/);
+	const impactConfirm = page.getByTestId('variable-impact-confirm');
+	await expect(inlineConfirm.or(impactConfirm)).toBeVisible();
+	await (
+		(await inlineConfirm.isVisible()) ? inlineConfirm : impactConfirm
+	).click();
 	await expect(tabpanel.getByText(varName, { exact: true })).toHaveCount(0);
 	await dialog.getByRole('button', { name: /close/i }).first().click();
 }
@@ -149,7 +142,7 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 
 		await dialog.getByTestId('dashboard-desc').fill('Automated test description');
 
-		const tagInput = dialog.getByPlaceholder('Start typing your tag name');
+		const tagInput = dialog.getByPlaceholder('key:value');
 		await tagInput.fill(`e2e-tag-${ts}`);
 		await tagInput.press('Enter');
 
@@ -245,7 +238,7 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 
 		const dialog = await openConfigureDrawer(page);
 		await dialog.getByRole('tab', { name: 'Variables' }).click();
-		await dialog.getByTestId('add-new-variable').click();
+		await dialog.getByTestId('add-variable').click();
 
 		await dialog.getByPlaceholder('Unique name of the variable').fill(varName);
 		await dialog.getByRole('button', { name: 'Textbox' }).click();
@@ -287,7 +280,7 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 
 		const dialog = await openConfigureDrawer(page);
 		await dialog.getByRole('tab', { name: 'Variables' }).click();
-		await dialog.getByTestId('add-new-variable').click();
+		await dialog.getByTestId('add-variable').click();
 
 		await dialog.getByPlaceholder('Unique name of the variable').fill(varName);
 		await dialog.getByRole('button', { name: 'Custom' }).click();
@@ -327,7 +320,7 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 
 		const dialog = await openConfigureDrawer(page);
 		await dialog.getByRole('tab', { name: 'Variables' }).click();
-		await dialog.getByTestId('add-new-variable').click();
+		await dialog.getByTestId('add-variable').click();
 
 		await dialog.getByPlaceholder('Unique name of the variable').fill(varName);
 		await dialog.getByRole('button', { name: /Query/ }).click();
@@ -352,7 +345,7 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 
 		const dialog = await openConfigureDrawer(page);
 		await dialog.getByRole('tab', { name: 'Variables' }).click();
-		await dialog.getByTestId('add-new-variable').click();
+		await dialog.getByTestId('add-variable').click();
 
 		const nameField = dialog.getByPlaceholder('Unique name of the variable');
 		await expect(nameField).toHaveValue('');
@@ -412,17 +405,7 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 		await dialog.getByRole('tab', { name: 'Variables' }).click();
 		const tabpanel = dialog.getByRole('tabpanel', { name: 'Variables' });
 
-		// Hover the row to reveal the edit button (Pylon overlay can intercept,
-		// so dispatchEvent fires the click directly on the React onClick).
-		const nameCell = tabpanel.getByText('tb_env', { exact: true }).first();
-		await nameCell.hover();
-		await nameCell
-			.locator(
-				'xpath=ancestor::*[contains(@class,"variable-item") or self::tr][1]',
-			)
-			.locator('.edit-variable-button')
-			.first()
-			.dispatchEvent('click');
+		await tabpanel.getByTestId('variable-edit-tb_env').click();
 
 		// Editor form mounts; rename and save.
 		const renamed = `tb_env_renamed_${Date.now()}`;
@@ -453,15 +436,7 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 		const dialog = await openConfigureDrawer(page);
 		await dialog.getByRole('tab', { name: 'Variables' }).click();
 		const tabpanel = dialog.getByRole('tabpanel', { name: 'Variables' });
-		const nameCell = tabpanel.getByText('cu_single', { exact: true }).first();
-		await nameCell.hover();
-		await nameCell
-			.locator(
-				'xpath=ancestor::*[contains(@class,"variable-item") or self::tr][1]',
-			)
-			.locator('.edit-variable-button')
-			.first()
-			.dispatchEvent('click');
+		await tabpanel.getByTestId('variable-edit-cu_single').click();
 
 		// Change type from Custom to Query and verify the form swaps to the
 		// Query editor (Monaco SQL editor mounts where the comma-separated
@@ -503,15 +478,7 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 		const dialog = await openConfigureDrawer(page);
 		await dialog.getByRole('tab', { name: 'Variables' }).click();
 		const tabpanel = dialog.getByRole('tabpanel', { name: 'Variables' });
-		const nameCell = tabpanel.getByText('tb_env', { exact: true }).first();
-		await nameCell.hover();
-		await nameCell
-			.locator(
-				'xpath=ancestor::*[contains(@class,"variable-item") or self::tr][1]',
-			)
-			.locator('.edit-variable-button')
-			.first()
-			.dispatchEvent('click');
+		await tabpanel.getByTestId('variable-edit-tb_env').click();
 
 		// Update the default textbox value. The Default Value input is the
 		// second/third field (Name first); locate it via its placeholder.
@@ -572,7 +539,7 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 
 		const dialog = await openConfigureDrawer(page);
 		await dialog.getByRole('tab', { name: 'Variables' }).click();
-		await dialog.getByTestId('add-new-variable').click();
+		await dialog.getByTestId('add-variable').click();
 
 		await dialog.getByPlaceholder('Unique name of the variable').fill('tb_env');
 		await dialog.getByRole('button', { name: 'Textbox' }).click();
@@ -651,15 +618,7 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 		const dialog = await openConfigureDrawer(page);
 		await dialog.getByRole('tab', { name: 'Variables' }).click();
 		const tabpanel = dialog.getByRole('tabpanel', { name: 'Variables' });
-		const nameCell = tabpanel.getByText('tb_env', { exact: true }).first();
-		await nameCell.hover();
-		await nameCell
-			.locator(
-				'xpath=ancestor::*[contains(@class,"variable-item") or self::tr][1]',
-			)
-			.locator('.edit-variable-button')
-			.first()
-			.dispatchEvent('click');
+		await tabpanel.getByTestId('variable-edit-tb_env').click();
 
 		const nameInput = dialog.getByPlaceholder('Unique name of the variable');
 		await expect(nameInput).toHaveValue('tb_env');

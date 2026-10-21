@@ -449,20 +449,14 @@ test.describe('Dashboard Detail — Variables', () => {
 		await dialog.getByRole('tab', { name: 'Variables' }).click();
 		const tabpanel = dialog.getByRole('tabpanel', { name: 'Variables' });
 
-		const nameCell = tabpanel.getByText('tb_service', { exact: true }).first();
-		await nameCell.hover();
-		await nameCell
-			.locator(
-				'xpath=ancestor::*[contains(@class,"variable-item") or self::tr][1]',
-			)
-			.locator('.delete-variable-button')
-			.first()
-			.dispatchEvent('click');
-		const confirm = page
-			.getByRole('dialog')
-			.filter({ hasText: /delete variable/i })
-			.last();
-		await confirm.getByRole('button', { name: 'OK' }).click();
+		await tabpanel.getByTestId('variable-delete-tb_service').click();
+		// Unreferenced variables confirm inline; referenced ones open the impact review.
+		const inlineConfirm = tabpanel.getByTestId(/^variable-delete-confirm-/);
+		const impactConfirm = page.getByTestId('variable-impact-confirm');
+		await expect(inlineConfirm.or(impactConfirm)).toBeVisible();
+		await (
+			(await inlineConfirm.isVisible()) ? inlineConfirm : impactConfirm
+		).click();
 
 		await expect(tabpanel.getByText('tb_service', { exact: true })).toHaveCount(
 			0,
