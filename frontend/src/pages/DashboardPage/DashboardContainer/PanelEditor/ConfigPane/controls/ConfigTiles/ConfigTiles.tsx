@@ -22,8 +22,8 @@ interface ConfigTilesProps<T extends string> {
 }
 
 /**
- * Single-choice tiles. Columns follow the container width: rows of 4 fold to 2×2 and
- * any row too narrow for its tiles becomes a full-width list.
+ * Single-choice segmented control. Options share the row and wrap when the pane is
+ * too narrow for them.
  */
 function ConfigTiles<T extends string>({
 	testId,
@@ -61,7 +61,6 @@ function ConfigTiles<T extends string>({
 								aria-label={item.ariaLabel ?? item.label}
 								onChange={(): void => onChange(item.value)}
 							/>
-							{item.drawing}
 							<span className={styles.label}>{item.label}</span>
 						</label>
 					);

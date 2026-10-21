@@ -1,38 +1,43 @@
 .container {
-	container-type: inline-size;
+	min-width: 0;
 }
 
 .grid {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr);
-	gap: 8px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px;
+	padding: 2px;
+	border: 1px solid var(--fs-border);
+	border-radius: 8px;
+	background: var(--fs-muted);
 }
 
 .tile {
 	position: relative;
 	display: flex;
+	flex: 1 1 auto;
 	align-items: center;
-	gap: 14px;
+	justify-content: center;
 	min-width: 0;
-	height: 52px;
-	padding: 0 14px;
-	border: 1px solid var(--fs-border);
-	border-radius: 4px;
-	background: var(--fs-card);
+	height: 26px;
+	padding: 0 8px;
+	border: 1px solid transparent;
+	border-radius: 6px;
 	color: var(--fs-muted-foreground);
 	font: inherit;
-	font-size: 13px;
+	font-size: 12px;
+	font-weight: 500;
 	cursor: pointer;
 	transition:
-		border-color 150ms,
+		color 150ms,
 		background 150ms;
 
 	&:hover {
-		border-color: var(--fs-border);
+		color: var(--fs-foreground);
 	}
 
 	&:has(:focus-visible) {
-		outline: 1px solid var(--fs-primary);
+		outline: 2px solid var(--fs-ring);
 		outline-offset: 1px;
 	}
 }
@@ -46,13 +51,11 @@
 }
 
 .selected {
-	border-color: var(--fs-primary);
-	background: color-mix(in srgb, var(--fs-primary) 12%, var(--fs-background));
+	border-color: var(--fs-border);
+	background: var(--fs-card);
 	color: var(--fs-foreground);
-
-	&:hover {
-		border-color: var(--fs-primary);
-	}
+	box-shadow: 0 1px 2px 0
+		color-mix(in srgb, var(--fs-foreground) 5%, transparent);
 }
 
 .label {
@@ -61,50 +64,7 @@
 	text-overflow: ellipsis;
 }
 
-@mixin stacked-tiles($columns) {
-	grid-template-columns: repeat($columns, minmax(0, 1fr));
-
-	.tile {
-		flex-direction: column;
-		justify-content: center;
-		gap: 10px;
-		height: 88px;
-		padding: 0 4px;
-	}
-}
-
-@container (min-width: 200px) {
-	.grid[data-count='2'] {
-		@include stacked-tiles(2);
-	}
-}
-
-@container (min-width: 216px) {
-	.grid[data-count='3'] {
-		@include stacked-tiles(3);
-	}
-}
-
-@container (min-width: 220px) {
-	.grid[data-count='4'] {
-		@include stacked-tiles(2);
-	}
-}
-
-@container (min-width: 420px) {
-	.grid[data-count='4'] {
-		@include stacked-tiles(4);
-	}
-}
-
-.grid.compact {
-	grid-auto-flow: column;
-	grid-auto-columns: minmax(0, 1fr);
-	gap: 6px;
-
-	.tile {
-		justify-content: center;
-		height: 36px;
-		padding: 0 4px;
-	}
+.grid.compact .tile {
+	flex: 1 1 0;
+	padding: 0 4px;
 }

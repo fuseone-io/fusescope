@@ -7,11 +7,11 @@
 // A field row rather than a button: the label spans the trigger so the
 // Change chip sits at the far end.
 .trigger {
-	--button-height: 36px;
+	--button-height: 32px;
 	--button-padding: 0 5px 0 12px;
 	--button-justify-content: flex-start;
 	--button-label-display: flex;
-	--button-variant-outlined-border: 1px solid var(--fs-border);
+	--button-variant-outlined-border: 1px solid var(--fs-input);
 	--button-variant-outlined-background-color: var(--fs-card);
 	--button-variant-outlined-hover-background-color: var(--fs-card);
 

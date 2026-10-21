@@ -1,18 +1,20 @@
 .card {
 	display: flex;
-	align-items: center;
-	gap: 14px;
-	padding: 14px 16px;
-	border: 1px solid var(--fs-border);
-	border-radius: 4px;
-	background: var(--fs-card);
+	align-items: flex-start;
+	gap: 10px;
+	min-width: 0;
+
+	> :first-child {
+		flex: none;
+		margin-top: 1px;
+	}
 }
 
 .text {
 	display: flex;
 	flex: 1;
 	flex-direction: column;
-	gap: 3px;
+	gap: 2px;
 	min-width: 0;
 }
 
@@ -20,12 +22,13 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	font-size: 14px;
 	color: var(--fs-foreground);
+	font-size: 12px;
+	font-weight: 500;
 }
 
 .description {
-	font-size: 12px;
-	line-height: 17px;
-	color: var(--fs-muted-foreground);
+	color: var(--fs-subtle-foreground);
+	font-size: 11px;
+	line-height: 16px;
 }

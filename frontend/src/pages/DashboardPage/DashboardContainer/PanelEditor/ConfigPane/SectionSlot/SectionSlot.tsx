@@ -12,6 +12,11 @@ import type { SectionEditorContext } from '../sectionContext';
 import { getSectionDefault, resolveSectionEditor } from '../sectionRegistry';
 import SettingsSection from '../SettingsSection/SettingsSection';
 import { isDifferent } from '../utils/changes';
+import { isSectionInitiallyOpen } from '../utils/sectionOpen';
+import {
+	type SectionSummaryInput,
+	summarizeSection,
+} from '../utils/sectionSummary';
 import SectionHeaderQuickAdd from './SectionHeaderQuickAdd';
 
 type SectionSlotProps = {
@@ -24,6 +29,9 @@ type SectionSlotProps = {
 	defaults: SeededPluginSpec;
 	/** Renders the editor alone, for a section promoted into the Panel Details fields. */
 	bare?: boolean;
+	/** Controlled open state, so the pane can collapse every section at once. */
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 } & Omit<SectionEditorContext, 'yAxisUnit' | 'registerHeaderAction'>;
 
 // Per-section header content; `trigger` expands the section and runs the editor's handler.
@@ -61,6 +69,8 @@ function SectionSlot({
 	onChangeSpec,
 	defaults,
 	bare,
+	open: controlledOpen,
+	onOpenChange,
 	legendSeries,
 	tableColumns,
 	signal,
@@ -73,13 +83,20 @@ function SectionSlot({
 }: SectionSlotProps): JSX.Element | null {
 	const editor = resolveSectionEditor(config.kind);
 	// Controlled so the header slot can expand on click; list sections open when populated.
-	const [open, setOpen] = useState(() => {
-		if (config.kind === SectionKind.Visualization) {
-			return true;
-		}
-		const value = editor?.get(spec);
-		return Array.isArray(value) && value.length > 0;
-	});
+	const [internalOpen, setInternalOpen] = useState(() =>
+		isSectionInitiallyOpen(config.kind, editor?.get(spec)),
+	);
+	const open = controlledOpen ?? internalOpen;
+	const setOpen = useCallback(
+		(next: boolean): void => {
+			if (onOpenChange) {
+				onOpenChange(next);
+			} else {
+				setInternalOpen(next);
+			}
+		},
+		[onOpenChange],
+	);
 	// The editor mounts only while open, so a collapsed-click defers the handler until it registers.
 	const actionHandlerRef = useRef<(() => void) | null>(null);
 	const pendingActionRef = useRef(false);
@@ -102,7 +119,7 @@ function SectionSlot({
 		} else {
 			pendingActionRef.current = true;
 		}
-	}, []);
+	}, [setOpen]);
 
 	if (config.isHidden?.(spec)) {
 		return null;
@@ -154,13 +171,25 @@ function SectionSlot({
 		return editorElement;
 	}
 
+	// The descriptor erases the kind; `value` and `controls` are this kind's.
+	const summary = summarizeSection({
+		kind: config.kind,
+		value,
+		defaultValue,
+		controls,
+		panelKind: panelKind ?? spec.plugin.kind,
+		legendSeriesCount: legendSeries?.length ?? 0,
+	} as SectionSummaryInput);
+
 	return (
 		<SettingsSection
 			title={title}
 			changed={isDifferent(value, savedValue)}
 			open={open}
 			onOpenChange={setOpen}
+			summary={summary}
 			headerSlot={headerSlot}
+			sectionId={config.kind}
 		>
 			{editorElement}
 		</SettingsSection>

@@ -4,64 +4,68 @@
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	// padding: 18px 18px 44px;
-	background-color: var(--fs-background);
+	min-width: 0;
+	background-color: var(--fs-card);
 	overflow-y: auto;
 	overflow-x: hidden;
 	scrollbar-gutter: stable;
-	padding-bottom: 44px;
+	padding-bottom: 24px;
+	font-family: var(--tw-font-sans);
 
 	@include custom-scrollbar;
 }
 
 .heading {
-	padding: 16px;
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 48px;
+	padding: 8px 8px 8px 16px;
+	border-bottom: 1px solid var(--fs-border);
+}
+
+.headingTitle {
+	margin: 0;
+	color: var(--fs-foreground);
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.headingActions {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-}
-
-.marker {
-	display: inline-block;
-	width: 8px;
-	height: 4px;
-	border-radius: 20px;
-	background-color: var(--primary);
-}
-
-.title {
-	display: flex;
-	align-items: baseline;
-	gap: 9px;
-	white-space: nowrap;
-}
-
-.subtitle {
-	font-size: 12px;
-	color: var(--text-vanilla-400);
+	gap: 2px;
 }
 
 .eyebrow {
 	display: block;
-	padding: 18px 20px 12px;
-	font-family: 'Geist Mono', monospace;
-	font-size: 12px;
-	letter-spacing: 0.1em;
-	text-transform: uppercase;
+	padding: 14px 16px 6px;
 	color: var(--fs-muted-foreground);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 }
 
 .group {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
-	padding: 16px;
+	gap: 12px;
+	padding: 14px 16px 16px;
 }
 
 .field {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 4px;
+}
+
+.label {
+	color: var(--fs-foreground);
+	font-size: 12px;
+	font-weight: 500;
 }
 
 .divider {
@@ -75,5 +79,5 @@
 .sections {
 	display: flex;
 	flex-direction: column;
-	border-bottom: 1px solid var(--fs-border);
+	border-top: 1px solid var(--fs-border);
 }
