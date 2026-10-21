@@ -8,7 +8,13 @@ import {
 import { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/fuseScope.schemas';
 import { Button } from 'components/ui/button';
 import { cn } from 'lib/utils';
-import { ChevronDown, ChevronUp, RefreshCw, TriangleAlert } from 'lucide-react';
+import {
+	ChevronDown,
+	ChevronUp,
+	CircleCheck,
+	RefreshCw,
+	TriangleAlert,
+} from 'lucide-react';
 
 import { InfraMonitoringEntity } from '../../../constants';
 import { CheckEntryRow } from './CheckEntryRow';
@@ -79,11 +85,9 @@ export function K8sInstrumentationChecksCallout({
 			role="status"
 			aria-label="Instrumentation checks"
 			className={cn(
-				'fs-ui tw:rounded-xl tw:px-4 tw:pt-3 tw:font-sans',
+				'fs-ui tw:rounded-xl tw:border tw:border-l-[3px] tw:border-border tw:bg-surface-raised tw:px-4 tw:pt-3 tw:font-sans tw:text-foreground',
 				isExpanded ? 'tw:pb-1.5' : 'tw:pb-3',
-				missing > 0
-					? 'tw:bg-warning-soft tw:text-warning-ink'
-					: 'tw:bg-primary-soft tw:text-primary-ink',
+				missing > 0 ? 'tw:border-l-warning' : 'tw:border-l-success',
 			)}
 		>
 			<div
@@ -93,11 +97,15 @@ export function K8sInstrumentationChecksCallout({
 				)}
 			>
 				<span className="tw:flex tw:items-center tw:gap-2.5">
-					<TriangleAlert size={18} aria-hidden="true" />
+					{missing > 0 ? (
+						<TriangleAlert size={18} aria-hidden="true" className="tw:text-warning" />
+					) : (
+						<CircleCheck size={18} aria-hidden="true" className="tw:text-success" />
+					)}
 					<strong className="tw:text-sm tw:font-semibold">
 						Instrumentation checks
 					</strong>
-					<span className="tw:text-[13px] tw:tabular-nums">
+					<span className="tw:text-[13px] tw:text-muted-foreground tw:tabular-nums">
 						{missing} of {total} need attention
 					</span>
 				</span>
@@ -108,7 +116,6 @@ export function K8sInstrumentationChecksCallout({
 						onClick={handleRecheck}
 						disabled={isFetching}
 						data-testid="instrumentation-checks-recheck-btn"
-						className="tw:border-current tw:bg-transparent tw:text-inherit tw:hover:bg-transparent tw:hover:text-inherit"
 					>
 						<RefreshCw className={cn(isFetching && 'tw:animate-spin')} />
 						Recheck
@@ -119,7 +126,7 @@ export function K8sInstrumentationChecksCallout({
 						aria-label={isExpanded ? 'Collapse checks' : 'Expand checks'}
 						aria-expanded={isExpanded}
 						onClick={handleExpandToggle}
-						className="tw:text-inherit tw:hover:bg-transparent tw:hover:text-inherit"
+						className="tw:text-muted-foreground"
 					>
 						{isExpanded ? <ChevronUp /> : <ChevronDown />}
 					</Button>
