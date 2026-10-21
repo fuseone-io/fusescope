@@ -82,7 +82,7 @@ function VariableImpactDialog({
 		intro = `$${variableName} is used in ${count} place${plural}. Edit or remove each usage before deleting.`;
 		title = `Delete $${variableName}`;
 	} else {
-		intro = `Applying $${variableName} can update upto ${count} panel quer${count === 1 ? 'y' : 'ies'}. Review the changes before applying.`;
+		intro = `Applying $${variableName} can update up to ${count} panel quer${count === 1 ? 'y' : 'ies'}. Review the changes before applying.`;
 		title = `Apply $${variableName} to panels`;
 	}
 	const confirmLabel = isRename ? 'Rename' : isDelete ? 'Delete' : 'Apply';
