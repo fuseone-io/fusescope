@@ -1,41 +1,34 @@
-import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 // since we don't have a card in alert creation for anomaly based alert
+
+const SAMPLE_ALERT_GUIDE = fuseScopeDocsUrl('/guides/first-alert/');
+const ALERT_RULES_GUIDE = fuseScopeDocsUrl('/alerts/alert-rules/');
 
 export const ALERT_TYPE_URL_MAP: Record<
 	AlertTypes,
 	{ selection: string; creation: string }
 > = {
 	[AlertTypes.METRICS_BASED_ALERT]: {
-		selection: signozDocsUrl(
-			'/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
-		),
-		creation: fuseScopeDocsUrl('/alerts/alert-rules/'),
+		selection: SAMPLE_ALERT_GUIDE,
+		creation: ALERT_RULES_GUIDE,
 	},
 	[AlertTypes.LOGS_BASED_ALERT]: {
-		selection: signozDocsUrl(
-			'/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
-		),
-		creation: fuseScopeDocsUrl('/alerts/alert-rules/'),
+		selection: SAMPLE_ALERT_GUIDE,
+		creation: ALERT_RULES_GUIDE,
 	},
 	[AlertTypes.TRACES_BASED_ALERT]: {
-		selection: signozDocsUrl(
-			'/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
-		),
-		creation: fuseScopeDocsUrl('/alerts/alert-rules/'),
+		selection: SAMPLE_ALERT_GUIDE,
+		creation: ALERT_RULES_GUIDE,
 	},
 	[AlertTypes.EXCEPTIONS_BASED_ALERT]: {
-		selection: signozDocsUrl(
-			'/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
-		),
-		creation: fuseScopeDocsUrl('/alerts/alert-rules/'),
+		selection: SAMPLE_ALERT_GUIDE,
+		creation: ALERT_RULES_GUIDE,
 	},
 	[AlertTypes.ANOMALY_BASED_ALERT]: {
-		selection: signozDocsUrl('/alerts-management/anomaly-based-alerts/'),
-		creation: signozDocsUrl(
-			'/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
-		),
+		selection: ALERT_RULES_GUIDE,
+		creation: ALERT_RULES_GUIDE,
 	},
 };
 

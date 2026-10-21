@@ -21,7 +21,7 @@ import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/Que
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -86,9 +86,7 @@ const ALERT_SETUP_GUIDE_URLS: Record<AlertTypes, string> = {
 	[AlertTypes.LOGS_BASED_ALERT]: fuseScopeDocsUrl('/alerts/alert-rules/'),
 	[AlertTypes.TRACES_BASED_ALERT]: fuseScopeDocsUrl('/alerts/alert-rules/'),
 	[AlertTypes.EXCEPTIONS_BASED_ALERT]: fuseScopeDocsUrl('/alerts/alert-rules/'),
-	[AlertTypes.ANOMALY_BASED_ALERT]: signozDocsUrl(
-		'/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
-	),
+	[AlertTypes.ANOMALY_BASED_ALERT]: fuseScopeDocsUrl('/alerts/alert-rules/'),
 };
 
 function FormAlertRules({
