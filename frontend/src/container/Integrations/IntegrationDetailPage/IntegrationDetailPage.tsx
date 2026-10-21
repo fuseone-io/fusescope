@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Redirect, useParams } from 'react-router-dom';
 import PageTemplate from 'components/PageTemplate/PageTemplate';
+import ROUTES from 'constants/routes';
 import { Skeleton } from 'components/ui/skeleton';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { defaultTo } from 'lodash-es';
+import { useAppContext } from 'providers/App/App';
 
 import CloudIntegration from '../CloudIntegration/CloudIntegration';
 import BackToIntegrations from '../components/BackToIntegrations';
@@ -36,7 +38,9 @@ function IntegrationDetailPage(): JSX.Element {
 			integrationId: integrationId || '',
 		});
 
-	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+	const { isCloudUser: isCloudUserVal, isEnterpriseSelfHostedUser } =
+		useGetTenantLicense();
+	const { isFetchingActiveLicense } = useAppContext();
 
 	const { data: integrationStatus, isLoading: isStatusLoading } =
 		useGetIntegrationStatus({
@@ -55,6 +59,13 @@ function IntegrationDetailPage(): JSX.Element {
 	);
 
 	if (integrationId && cloudIntegrationTypeById[integrationId]) {
+		if (
+			!isFetchingActiveLicense &&
+			!isCloudUserVal &&
+			!isEnterpriseSelfHostedUser
+		) {
+			return <Redirect to={ROUTES.INTEGRATIONS} />;
+		}
 		return <CloudIntegration type={cloudIntegrationTypeById[integrationId]} />;
 	}
 

@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import PageTemplate from 'components/PageTemplate/PageTemplate';
 import ROUTES from 'constants/routes';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from './constants';
@@ -13,6 +14,7 @@ import OneClickIntegrations from './OneClickIntegrations/OneClickIntegrations';
 function Integrations(): JSX.Element {
 	const history = useHistory();
 	const [searchQuery, setSearchQuery] = useState('');
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const setSelectedIntegration = useCallback(
 		(integration: IntegrationsProps | null) => {
@@ -39,10 +41,12 @@ function Integrations(): JSX.Element {
 				searchQuery={searchQuery}
 				onSearchChange={setSearchQuery}
 			/>
-			<OneClickIntegrations
-				searchQuery={searchQuery}
-				setSelectedIntegration={setSelectedIntegration}
-			/>
+			{(isCloudUser || isEnterpriseSelfHostedUser) && (
+				<OneClickIntegrations
+					searchQuery={searchQuery}
+					setSelectedIntegration={setSelectedIntegration}
+				/>
+			)}
 			<IntegrationsList
 				searchQuery={searchQuery}
 				setSelectedIntegration={setSelectedIntegration}
