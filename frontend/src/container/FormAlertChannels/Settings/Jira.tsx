@@ -238,6 +238,7 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 
 			<Collapse
 				ghost
+				className="tw:rounded-none! tw:border-t tw:border-border tw:pt-1 tw:[&_.ant-collapse-content-box]:px-0! tw:[&_.ant-collapse-header]:px-0!"
 				items={[
 					{
 						key: 'advanced',

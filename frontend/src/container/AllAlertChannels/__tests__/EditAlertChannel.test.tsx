@@ -36,8 +36,8 @@ describe('Should check if the edit alert channel is properly displayed', () => {
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
-	it('Should check if the title is "Edit Notification Channels"', () => {
-		expect(screen.getByText('page_title_edit')).toBeInTheDocument();
+	it('Should group the channel fields under a "Channel" panel', () => {
+		expect(screen.getByRole('heading', { name: 'Channel' })).toBeInTheDocument();
 	});
 
 	it('Should check if the name label and textbox are displayed properly', () => {

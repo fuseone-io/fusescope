@@ -25,7 +25,6 @@ describe('FormAlertChannels', () => {
 				onTestHandler={jest.fn()}
 				testingState={false}
 				savingState={false}
-				title="Edit"
 				initialValue={{ name: 'Dummy-Channel', type: ChannelType.Slack }}
 				editing
 			/>,

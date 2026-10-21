@@ -55,8 +55,6 @@ import {
 	prepareJsmOpsRequest,
 } from './utils';
 
-import './CreateAlertChannels.styles.scss';
-
 function CreateAlertChannels({
 	preType = ChannelType.Slack,
 }: CreateAlertChannelsProps): JSX.Element {
@@ -789,7 +787,7 @@ function CreateAlertChannels({
 	);
 
 	return (
-		<div className="create-alert-channels-container">
+		<div className="tw:flex tw:flex-1 tw:flex-col">
 			<FormAlertChannels
 				{...{
 					formInstance,
@@ -800,7 +798,6 @@ function CreateAlertChannels({
 					onSaveHandler,
 					savingState,
 					testingState,
-					title: t('page_title_create'),
 					initialValue: {
 						type,
 						...selectedConfig,

@@ -1,22 +1,15 @@
-import AlertBreadcrumb from 'components/AlertBreadcrumb';
-import ROUTES from 'constants/routes';
+import { useTranslation } from 'react-i18next';
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
-import styles from './styles.module.scss';
+import ChannelFormPage from 'container/FormAlertChannels/components/ChannelFormPage';
 
 function ChannelsNew(): JSX.Element {
+	const { t } = useTranslation('channels');
+
 	return (
-		<>
-			<AlertBreadcrumb
-				items={[
-					{ title: 'Channels', route: ROUTES.ALL_CHANNELS },
-					{ title: 'New Channel', isLast: true },
-				]}
-			/>
-			<div className={styles.content}>
-				<CreateAlertChannels preType={ChannelType.Slack} />
-			</div>
-		</>
+		<ChannelFormPage title={t('page_title_create')}>
+			<CreateAlertChannels preType={ChannelType.Slack} />
+		</ChannelFormPage>
 	);
 }
 
