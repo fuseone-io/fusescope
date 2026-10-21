@@ -1,39 +1,3 @@
-import { ServicesList } from 'types/api/metrics/getService';
-
-export interface ServiceColumn {
-	key: 'serviceName' | 'p99' | 'errorRate' | 'callRate';
-	title: string;
-	numeric: boolean;
-	render: (service: ServicesList) => string;
-}
-
-export const columns: ServiceColumn[] = [
-	{
-		title: 'APPLICATION',
-		key: 'serviceName',
-		numeric: false,
-		render: (service): string => service.serviceName,
-	},
-	{
-		title: 'P99 LATENCY (in ms)',
-		key: 'p99',
-		numeric: true,
-		render: (service): string => (service.p99 / 1000000).toFixed(2),
-	},
-	{
-		title: 'ERROR RATE (% of total)',
-		key: 'errorRate',
-		numeric: true,
-		render: (service): string => service.errorRate.toFixed(2),
-	},
-	{
-		title: 'OPS / SEC',
-		key: 'callRate',
-		numeric: true,
-		render: (service): string => service.callRate.toFixed(2),
-	},
-];
-
 export enum TimeIntervalsEnum {
 	LAST_5_MINUTES = 60 * 5 * 1000, // 300000
 	LAST_15_MINUTES = 60 * 15 * 1000, // 900000

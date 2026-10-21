@@ -1,4 +1,5 @@
 import { MouseEvent } from 'react';
+import logEvent from 'api/common/logEvent';
 import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import {
 	Table,
@@ -8,68 +9,96 @@ import {
 	TableHeader,
 	TableRow,
 } from 'components/ui/table';
-import { cn } from 'lib/utils';
+import ROUTES from 'constants/routes';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { formatLatencyMs, formatPercent, formatRate } from 'lib/apm/format';
+import { useServiceKinds } from 'lib/apm/useServiceKinds';
+import {
+	errorRateDelta,
+	p99Delta,
+	rateDelta,
+} from 'pages/Services/components/ServicesList/serviceCells';
+import ServiceNameCell from 'pages/Services/components/ServicesList/ServiceNameCell';
+import { ServiceRow } from 'pages/Services/components/ServicesList/serviceRows';
 import { errorRateTone } from 'pages/Services/components/ServicesList/utils';
-import { ServicesList } from 'types/api/metrics/getService';
+import { isModifierKeyPressed } from 'utils/app';
 
-import { columns, ServiceColumn } from './constants';
+import MetricCell from './MetricCell';
 
-const CELL_CLASSES: Record<ServiceColumn['key'], string> = {
-	serviceName:
-		'tw:max-w-0 tw:truncate tw:px-5 tw:font-mono tw:text-xs tw:text-primary',
-	p99: 'tw:px-3 tw:text-right tw:tabular-nums',
-	errorRate: 'tw:px-3 tw:text-right',
-	callRate: 'tw:px-5 tw:text-right tw:text-muted-foreground tw:tabular-nums',
-};
+const HEAD =
+	'tw:h-8 tw:px-3 tw:text-right tw:text-[11px] tw:first:pl-5 tw:first:text-left tw:last:pr-5';
+const NUMBER_CELL = 'tw:px-3 tw:text-right tw:last:pr-5';
 
-interface ServicesTableProps {
-	services: ServicesList[];
-	onRowClick: (record: ServicesList, event: MouseEvent) => void;
+const serviceHref = (serviceName: string): string =>
+	`${ROUTES.APPLICATION}/${encodeURIComponent(serviceName)}`;
+
+/** Before the name link stops the click, so link and row clicks both count. */
+function logServiceClick(serviceName: string, event: MouseEvent): void {
+	if (event.target instanceof Element && event.target.closest('button')) {
+		return;
+	}
+	void logEvent('Homepage: Service clicked', { serviceName });
 }
 
-function ServicesTable({
-	services,
-	onRowClick,
-}: ServicesTableProps): JSX.Element {
+function ServicesTable({ rows }: { rows: ServiceRow[] }): JSX.Element {
+	const identify = useServiceKinds();
+	const { safeNavigate } = useSafeNavigate();
+
 	return (
 		<div className="fs-ui tw:overflow-x-auto tw:font-sans">
-			<Table className="tw:min-w-[420px]">
-				<TableHeader>
-					<TableRow className="tw:bg-muted tw:hover:bg-muted">
-						{columns.map((column) => (
-							<TableHead
-								key={column.key}
-								className={cn(
-									'tw:h-auto tw:px-3 tw:py-2 tw:text-[11px] tw:font-medium tw:tracking-[0.05em] tw:whitespace-normal tw:text-muted-foreground tw:first:pl-5 tw:last:pr-5',
-									column.numeric && 'tw:text-right',
-								)}
-							>
-								{column.title}
-							</TableHead>
-						))}
+			<Table className="tw:min-w-[480px]">
+				<TableHeader className="tw:bg-surface-sunken">
+					<TableRow className="tw:hover:bg-transparent">
+						<TableHead className={HEAD}>Service</TableHead>
+						<TableHead className={HEAD}>p99</TableHead>
+						<TableHead className={HEAD}>Error rate</TableHead>
+						<TableHead className={HEAD}>Rate</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{services.map((service) => (
-						<TableRow
-							key={service.serviceName}
-							data-testid="home-service-row"
-							className="tw:cursor-pointer"
-							onClick={(event): void => onRowClick(service, event)}
-						>
-							{columns.map((column) => (
-								<TableCell key={column.key} className={CELL_CLASSES[column.key]}>
-									{column.key === 'errorRate' ? (
-										<StatusBadge tone={errorRateTone(service.errorRate)}>
-											{column.render(service)}
-										</StatusBadge>
-									) : (
-										column.render(service)
-									)}
+					{rows.map((row) => {
+						const tone = errorRateTone(row.errorRate);
+						return (
+							<TableRow
+								key={row.serviceName}
+								data-testid="home-service-row"
+								className="tw:cursor-pointer"
+								onClickCapture={(event): void =>
+									logServiceClick(row.serviceName, event)
+								}
+								onClick={(event): void =>
+									safeNavigate(serviceHref(row.serviceName), {
+										newTab: isModifierKeyPressed(event),
+									})
+								}
+							>
+								<TableCell className="tw:max-w-0 tw:py-2 tw:pr-3 tw:pl-5">
+									<ServiceNameCell
+										service={row.service}
+										badges={row.badges}
+										identity={identify(row.serviceName)}
+										href={serviceHref(row.serviceName)}
+									/>
 								</TableCell>
-							))}
-						</TableRow>
-					))}
+								<TableCell className={NUMBER_CELL}>
+									<MetricCell value={formatLatencyMs(row.p99)} delta={p99Delta(row)} />
+								</TableCell>
+								<TableCell className={NUMBER_CELL}>
+									<MetricCell
+										delta={errorRateDelta(row)}
+										value={
+											<StatusBadge tone={tone === 'success' ? 'neutral' : tone}>
+												{formatPercent(row.errorRate)}
+											</StatusBadge>
+										}
+									/>
+								</TableCell>
+								<TableCell className={NUMBER_CELL}>
+									<MetricCell value={formatRate(row.callRate)} delta={rateDelta(row)} />
+								</TableCell>
+							</TableRow>
+						);
+					})}
 				</TableBody>
 			</Table>
 		</div>

@@ -1,4 +1,3 @@
-import { MouseEvent } from 'react';
 import logEvent from 'api/common/logEvent';
 import { Button } from 'components/ui/button';
 import { fuseScopeDocsUrl } from 'constants/docs';
@@ -7,7 +6,7 @@ import history from 'lib/history';
 import { ArrowRight, Server } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
-import { ServicesList } from 'types/api/metrics/getService';
+import { ServiceRow } from 'pages/Services/components/ServicesList/serviceRows';
 import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
 
@@ -21,23 +20,21 @@ import TimeIntervalMenu from './TimeIntervalMenu';
 interface ServicesWidgetProps {
 	/** Analytics `source` of the empty state's actions. */
 	source: 'Service Traces' | 'Service Metrics';
-	services: ServicesList[];
+	rows: ServiceRow[];
 	pending: boolean;
 	selectedInterval: number;
 	onIntervalChange: (value: number) => void;
-	onRowClick: (record: ServicesList, event: MouseEvent) => void;
 }
 
 function ServicesWidget({
 	source,
-	services,
+	rows,
 	pending,
 	selectedInterval,
 	onIntervalChange,
-	onRowClick,
 }: ServicesWidgetProps): JSX.Element {
 	const { user, activeLicense } = useAppContext();
-	const servicesExist = services.length > 0;
+	const servicesExist = rows.length > 0;
 
 	const handleGetStarted = (): void => {
 		void logEvent('Homepage: Get Started clicked', { source });
@@ -54,6 +51,9 @@ function ServicesWidget({
 	return (
 		<HomeWidget
 			title="Services"
+			subtitle={
+				servicesExist ? 'Highlighted first, then by error rate' : undefined
+			}
 			testId="home-services"
 			pending={pending}
 			actions={
@@ -62,7 +62,7 @@ function ServicesWidget({
 						<TimeIntervalMenu value={selectedInterval} onChange={onIntervalChange} />
 						<WidgetLink
 							to={ROUTES.APPLICATION}
-							label="All Services"
+							label="All services"
 							onClick={(): void => {
 								void logEvent('Homepage: All Services clicked', {});
 							}}
@@ -72,7 +72,7 @@ function ServicesWidget({
 			}
 		>
 			{servicesExist ? (
-				<ServicesTable services={services} onRowClick={onRowClick} />
+				<ServicesTable rows={rows} />
 			) : (
 				<HomeEmptyState
 					icon={<Server />}
@@ -86,7 +86,7 @@ function ServicesWidget({
 								onClick={handleGetStarted}
 								className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
 							>
-								Get Started
+								Get started
 								<ArrowRight aria-hidden="true" />
 							</Button>
 						)

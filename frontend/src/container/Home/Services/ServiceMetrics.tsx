@@ -1,10 +1,9 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
-import ROUTES from 'constants/routes';
 import {
 	getQueryRangeRequestData,
 	getServiceListFromQuery,
@@ -13,15 +12,15 @@ import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
 import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'hooks/useResourceAttribute/types';
-import { isModifierKeyPressed } from 'utils/app';
 
 import { TIME_PICKER_OPTIONS } from './constants';
+import { homeServiceRows } from './homeServiceRows';
 import ServicesWidget from './ServicesWidget';
+import { useHomeServicesApm } from './useHomeServicesApm';
 
 const homeInterval = 30 * 60 * 1000;
 
@@ -47,7 +46,6 @@ function ServiceMetrics({
 	});
 
 	const { queries } = useResourceAttribute();
-	const { safeNavigate } = useSafeNavigate();
 
 	const selectedTags = useMemo(
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
@@ -145,21 +143,17 @@ function ServiceMetrics({
 		[dataQueries, topLevelOperations, isLoading],
 	);
 
-	const sortedServices = useMemo(
-		() =>
-			services?.sort((a, b) => {
-				const aUpdateAt = new Date(a.p99).getTime();
-				const bUpdateAt = new Date(b.p99).getTime();
-				return bUpdateAt - aUpdateAt;
-			}) || [],
-		[services],
+	const stats = useHomeServicesApm(
+		'span-metrics',
+		timeRange.startTime,
+		timeRange.endTime,
+		topLevelOperations,
 	);
-
-	const servicesExist = sortedServices.length > 0;
-	const top5Services = useMemo(
-		() => sortedServices.slice(0, 5),
-		[sortedServices],
+	const rows = useMemo(
+		() => homeServiceRows(services, stats, true),
+		[services, stats],
 	);
+	const servicesExist = rows.length > 0;
 
 	useEffect(() => {
 		if (!loadingUserPreferences && servicesExist) {
@@ -167,22 +161,10 @@ function ServiceMetrics({
 		}
 	}, [onUpdateChecklistDoneItem, loadingUserPreferences, servicesExist]);
 
-	const handleRowClick = useCallback(
-		(record: ServicesList, event: React.MouseEvent) => {
-			void logEvent('Homepage: Service clicked', {
-				serviceName: record.serviceName,
-			});
-			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, {
-				newTab: isModifierKeyPressed(event),
-			});
-		},
-		[safeNavigate],
-	);
-
 	return (
 		<ServicesWidget
 			source="Service Metrics"
-			services={top5Services}
+			rows={rows}
 			pending={
 				isLoadingTopLevelOperations ||
 				isLoading ||
@@ -191,7 +173,6 @@ function ServiceMetrics({
 			}
 			selectedInterval={timeRange.selectedInterval}
 			onIntervalChange={handleTimeIntervalChange}
-			onRowClick={handleRowClick}
 		/>
 	);
 }

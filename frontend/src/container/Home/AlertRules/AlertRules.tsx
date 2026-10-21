@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import { useListRules } from 'api/generated/services/rules';
 import type { RuletypesRuleDTO } from 'api/generated/services/fuseScope.schemas';
+import { STATE_LABELS } from 'components/Alerts/constants';
+import { SEVERITY_TONES, STATE_TONES } from 'components/Alerts/tones';
 import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import { Button } from 'components/ui/button';
 import { fuseScopeDocsUrl } from 'constants/docs';
@@ -19,7 +21,7 @@ import HomeEmptyState from '../components/HomeEmptyState';
 import HomeListItem from '../components/HomeListItem';
 import HomeWidget from '../components/HomeWidget';
 import WidgetLink from '../components/WidgetLink';
-import { severityTone } from '../utils';
+import { alertsSummary } from '../utils';
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
@@ -142,13 +144,14 @@ export default function AlertRules({
 	return (
 		<HomeWidget
 			title="Alerts"
+			subtitle={alertsSummary(alerts?.data ?? []) || undefined}
 			testId="home-alert-rules"
 			pending={isLoading || isError}
 			actions={
 				rulesExist && (
 					<WidgetLink
 						to={ROUTES.LIST_ALL_ALERT}
-						label="All Alert Rules"
+						label="All alert rules"
 						onClick={(): void => {
 							void logEvent('Homepage: All alert rules clicked', {});
 						}}
@@ -168,15 +171,16 @@ export default function AlertRules({
 								<>
 									{rule.labels?.severity && (
 										<StatusBadge
-											tone={severityTone(rule.labels.severity)}
-											className="tw:uppercase"
+											tone={
+												SEVERITY_TONES[rule.labels.severity.toLowerCase()] ?? 'neutral'
+											}
 										>
-											{rule.labels.severity}
+											{rule.labels.severity.toLowerCase()}
 										</StatusBadge>
 									)}
-									{rule.state === 'firing' && (
-										<StatusBadge tone="error" dot className="tw:uppercase">
-											{rule.state}
+									{STATE_LABELS[rule.state] && (
+										<StatusBadge tone={STATE_TONES[rule.state] ?? 'neutral'} dot>
+											{STATE_LABELS[rule.state]}
 										</StatusBadge>
 									)}
 								</>
