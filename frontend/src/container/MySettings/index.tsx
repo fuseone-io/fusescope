@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { Badge } from '@signozhq/ui/badge';
-import { Switch } from '@signozhq/ui/switch';
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -10,18 +7,18 @@ import { AxiosError } from 'axios';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import useThemeMode, { useIsDarkMode, useSystemTheme } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
-import { MonitorCog, Moon, Sun } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { UserPreference } from 'types/api/preferences/preference';
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import { Switch } from 'components/ui/switch';
 import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
 import { showErrorNotification } from 'utils/error';
 
 import LicenseSection from './LicenseSection';
+import PreferenceRow from './PreferenceRow';
+import ThemeSelector from './ThemeSelector';
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
 import UserInfo from './UserInfo';
-
-import './MySettings.styles.scss';
 
 function MySettings(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -53,36 +50,6 @@ function MySettings(): JSX.Element {
 			showErrorNotification(notifications, error as AxiosError);
 		},
 	});
-
-	const themeOptions = [
-		{
-			label: (
-				<div className="theme-option">
-					<Moon data-testid="dark-theme-icon" size={12} /> Dark{' '}
-				</div>
-			),
-			value: 'dark',
-		},
-		{
-			label: (
-				<div className="theme-option">
-					<Sun size={12} data-testid="light-theme-icon" /> Light{' '}
-					<Badge variant="solid" color="primary">
-						Beta
-					</Badge>
-				</div>
-			),
-			value: 'light',
-		},
-		{
-			label: (
-				<div className="theme-option">
-					<MonitorCog size={12} data-testid="auto-theme-icon" /> System{' '}
-				</div>
-			),
-			value: 'auto',
-		},
-	];
 
 	const [theme, setTheme] = useState(() => {
 		if (autoSwitch) {
@@ -168,70 +135,50 @@ function MySettings(): JSX.Element {
 			description="Manage your account settings."
 			narrow
 		>
-			<Panel testId="user-info-section" bodyClassName="user-info-container">
+			<ContentPanel testId="user-info-section" bodyClassName="user-info-container">
 				<UserInfo />
-			</Panel>
+			</ContentPanel>
 
-			<Panel
+			<ContentPanel
 				title="User Preferences"
 				subtitle="Tailor the FuseScope console to work according to your needs."
 				testId="user-preference-section"
-				bodyClassName="tw:mt-3 tw:border-t tw:border-border"
+				divided
 			>
 				<div className="user-preference-section-content tw:divide-y tw:divide-border">
-					<div className="user-preference-section-content-item theme-selector">
-						<div className="user-preference-section-content-item-title-action">
-							Select your theme
-							<ToggleGroup
-								variant="outlined"
-								color="secondary"
-								size="sm"
-								type="single"
-								onChange={handleThemeChange}
-								value={theme}
-								testId="theme-selector"
-								items={themeOptions}
-							/>
-						</div>
-
-						<div className="user-preference-section-content-item-description">
-							Select if FuseScope&apos;s appearance should be light, dark, or
-							automatically follow your system preference
-						</div>
-
+					<PreferenceRow
+						className="theme-selector"
+						title="Select your theme"
+						description="Select if FuseScope's appearance should be light, dark, or automatically follow your system preference"
+						control={<ThemeSelector value={theme} onChange={handleThemeChange} />}
+					>
 						{autoSwitch && (
-							<div className="auto-theme-info">
-								<div className="auto-theme-status">
-									Currently following system theme:{' '}
-									<strong>{systemTheme === 'dark' ? 'Dark' : 'Light'}</strong>
-								</div>
+							<div className="auto-theme-info tw:rounded-md tw:bg-surface-sunken tw:px-3 tw:py-2 tw:text-xs tw:text-muted-foreground">
+								Currently following system theme:{' '}
+								<strong className="tw:font-semibold tw:text-primary-ink">
+									{systemTheme === 'dark' ? 'Dark' : 'Light'}
+								</strong>
 							</div>
 						)}
-					</div>
+					</PreferenceRow>
 
 					<TimezoneAdaptation />
 
-					<div className="user-preference-section-content-item">
-						<div className="user-preference-section-content-item-title-action">
-							Keep the primary sidebar always open{' '}
+					<PreferenceRow
+						title="Keep the primary sidebar always open"
+						description="Keep the primary sidebar always open by default, unless collapsed with the keyboard shortcut"
+						control={
 							<Switch
-								color="primary"
-								textPlacement="right"
-								value={sideNavPinned}
-								onChange={handleSideNavPinnedChange}
+								aria-label="Keep the primary sidebar always open"
+								checked={sideNavPinned}
+								onCheckedChange={handleSideNavPinnedChange}
 								disabled={isUpdatingUserPreference}
-								disabledTooltip="Saving your preference"
-								testId="side-nav-pinned-switch"
+								data-testid="side-nav-pinned-switch"
 							/>
-						</div>
-
-						<div className="user-preference-section-content-item-description">
-							Keep the primary sidebar always open by default, unless collapsed with
-							the keyboard shortcut
-						</div>
-					</div>
+						}
+					/>
 				</div>
-			</Panel>
+			</ContentPanel>
 
 			<LicenseSection />
 		</SettingsPageShell>

@@ -194,17 +194,8 @@ describe('MySettings Flows', () => {
 			// The first button is the one in the user info section
 			fireEvent.click(resetPasswordButtons[0]);
 
-			// Check if modal is opened (look for modal title)
 			expect(
-				screen.getByText((content, element) =>
-					Boolean(
-						element &&
-						'className' in element &&
-						typeof element.className === 'string' &&
-						element.className.includes('title') &&
-						content === RESET_PASSWORD_BUTTON_TEXT,
-					),
-				),
+				screen.getByRole('dialog', { name: RESET_PASSWORD_BUTTON_TEXT }),
 			).toBeInTheDocument();
 			expect(screen.getByTestId(CURRENT_PASSWORD_TEST_ID)).toBeInTheDocument();
 			expect(screen.getByTestId(NEW_PASSWORD_TEST_ID)).toBeInTheDocument();
@@ -318,9 +309,9 @@ describe('MySettings Flows', () => {
 			);
 
 			// Close the modal
-			const closeButton = document.querySelector(
-				'.reset-password-modal .ant-modal-close',
-			) as HTMLElement;
+			const closeButton = within(screen.getByRole('dialog')).getByRole('button', {
+				name: 'Close',
+			});
 			fireEvent.click(closeButton);
 
 			// Reopen the modal
