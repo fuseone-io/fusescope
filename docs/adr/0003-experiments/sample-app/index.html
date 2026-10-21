@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>RUM spike sample</title>
+    <script>
+      const params = new URLSearchParams(location.search);
+      window.FUSESCOPE = {
+        endpoint: params.get('otlp') ?? 'http://localhost:14318',
+        serviceName: params.get('app') ?? 'rum-spike-web',
+        serviceVersion: '1.0.0',
+        environment: 'rum-spike',
+        sessionSampleRate: Number(params.get('rate') ?? 1),
+        propagateTo: [/^http:\/\/127\.0\.0\.1:3350\/echo/],
+        extra: { 'fusescope.spike': 'rum0' },
+      };
+    </script>
+    <script type="module" src="/rum/full/full.js"></script>
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <nav>
+      <a href="/" data-nav>Home</a>
+      <a href="/orders/123" data-nav>Order 123</a>
+      <a href="/customers/392?email=a@b.c#tab" data-nav>Customer 392</a>
+    </nav>
+    <h1 id="title">Home</h1>
+    <button id="dispatch">Dispatch (fetch → HotROD)</button>
+    <button id="dispatch-xhr">Dispatch (XHR → HotROD)</button>
+    <button id="cors">Cross-origin calls</button>
+    <button id="throw">Throw</button>
+    <button id="reject">Reject</button>
+    <pre id="out"></pre>
+  </body>
+</html>

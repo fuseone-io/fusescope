@@ -1,0 +1,78 @@
+-- One app, one day of synthetic RUM log events: 4 vitals and 1-2 errors per session.
+-- Session ids, resources and timing match spans.sql.
+INSERT INTO signoz_logs.logs_v2
+(
+    ts_bucket_start, resource_fingerprint, timestamp, observed_timestamp, id, trace_id, span_id, trace_flags,
+    severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool,
+    resources_string, scope_name, scope_version, scope_string, inserted_at
+)
+WITH
+    {app:UInt8} AS a,
+    {day:UInt8} AS d,
+    ['shop-web', 'backoffice-web', 'docs-web'][a + 1] AS app,
+    ['/', '/products/:id', '/category/:id', '/search', '/cart', '/checkout', '/orders', '/orders/:id', '/account', '/help', '/blog/:id', '/wishlist'] AS routes,
+    toUnixTimestamp(now()) - 3600 - (d + 1) * 86400 AS day_start,
+    intDiv(number, 6) AS s,
+    number % 6 AS k,
+    cityHash64('rum0', a, d, s) AS h,
+    lower(hex(MD5(concat('rum0-', toString(a), '-', toString(d), '-', toString(s))))) AS session_id,
+    bitShiftRight(h, 8) % 150 AS ua_idx,
+    ['Windows', 'macOS', 'Linux', 'Android', 'iOS'][ua_idx % 5 + 1] AS platform,
+    if(platform IN ('Android', 'iOS'), 'true', 'false') AS mobile,
+    multiIf(bitShiftRight(h, 16) % 10 < 6, '2.4.1', bitShiftRight(h, 16) % 10 < 9, '2.4.0', '2.3.7') AS version,
+    concat('Mozilla/5.0 (', platform, ') AppleWebKit/537.36 (KHTML, like Gecko) Chrome/', toString(120 + ua_idx % 30), '.0.', toString(6000 + ua_idx), '.0 Safari/537.36') AS ua,
+    map('service.name', app, 'service.version', version, 'deployment.environment.name', 'production',
+        'fusescope.rum.platform', 'web', 'fusescope.spike', 'rum0', 'telemetry.distro.name', '@fusescope/browser',
+        'telemetry.sdk.language', 'webjs', 'user_agent.original', ua, 'browser.platform', platform,
+        'browser.mobile', mobile, 'browser.language', 'en-US') AS res,
+    concat('service.name=', app, ';hash=', toString(cityHash64(toJSONString(res)))) AS fingerprint,
+    30 + h % 90 AS view_gap_s,
+    toInt64(day_start + h % 86400) * 1000 AS session_start_ms,
+    cityHash64(h, k, 'log') AS hk,
+    k < 4 AS is_vital,
+    ['LCP', 'INP', 'CLS', 'TTFB'][k % 4 + 1] AS vital,
+    multiIf(vital = 'LCP', 800 + hk % 4500, vital = 'INP', 40 + hk % 700, vital = 'CLS', (hk % 40) / 100, 80 + hk % 2000) AS value,
+    multiIf(
+        vital = 'LCP', multiIf(value <= 2500, 'good', value <= 4000, 'needs-improvement', 'poor'),
+        vital = 'INP', multiIf(value <= 200, 'good', value <= 500, 'needs-improvement', 'poor'),
+        vital = 'CLS', multiIf(value <= 0.1, 'good', value <= 0.25, 'needs-improvement', 'poor'),
+        multiIf(value <= 800, 'good', value <= 1800, 'needs-improvement', 'poor')) AS rating,
+    if(is_vital, 0, bitShiftRight(hk, 4) % 15) AS view_idx,
+    routes[(h + view_idx * 7) % length(routes) + 1] AS route,
+    toUInt8(floor(8 * pow((hk % 1000) / 1000, 2))) AS err_idx,
+    ['TypeError', 'ChunkLoadError', 'TypeError', 'ReferenceError', 'Error', 'SyntaxError', 'RangeError', 'Error'][err_idx + 1] AS err_type,
+    ['Cannot read properties of undefined (reading ''items'')', 'Loading chunk 412 failed', 'x.map is not a function',
+     'analytics is not defined', 'Request failed with status code 500', 'Unexpected token < in JSON at position 0',
+     'Maximum call stack size exceeded', 'ResizeObserver loop completed with undelivered notifications'][err_idx + 1] AS err_msg,
+    session_start_ms + view_idx * view_gap_s * 1000 + if(is_vital, [2500, 60000, 61000, 400][k % 4 + 1], 3000 + hk % 20000) AS ts_ms,
+    toUInt64(ts_ms) * 1000000 AS ts_ns
+SELECT
+    intDiv(intDiv(ts_ms, 1000), 1800) * 1800,
+    fingerprint,
+    ts_ns,
+    ts_ns,
+    concat(toString(ts_ns), substring(session_id, 1, 8), toString(k)),
+    '',
+    '',
+    0,
+    if(is_vital, 'INFO', 'ERROR'),
+    if(is_vital, 9, 17),
+    if(is_vital, concat(vital, ' ', toString(value)), err_msg),
+    if(is_vital,
+       map('session.id', session_id, 'fusescope.rum.view.route', route, 'event.name', 'rum.vital',
+           'fusescope.rum.vital.name', vital, 'fusescope.rum.vital.rating', rating, 'fusescope.rum.vital.navigation_type', 'navigate'),
+       map('session.id', session_id, 'fusescope.rum.view.route', route, 'event.name', 'exception',
+           'exception.type', err_type, 'exception.message', err_msg,
+           'exception.stacktrace', concat(err_type, ': ', err_msg, '\n    at ', ['render', 'loadChunk', 'mapItems', 'track', 'fetchJson', 'parse', 'walk', 'observe'][err_idx + 1],
+                                          ' (https://', app, '.example.com/assets/app-', version, '.js:1:', toString(1000 + err_idx * 137), ')'),
+           'fusescope.rum.error.source', if(hk % 3 = 0, 'unhandledrejection', 'onerror'))),
+    if(is_vital, map('fusescope.rum.vital.value', toFloat64(value)), map()),
+    map(),
+    res,
+    '@fusescope/browser',
+    '0.0.0-spike',
+    map(),
+    now64(3)
+FROM numbers({sessions:UInt32} * 6)
+WHERE k < 5 OR h % 2 = 1
+SETTINGS max_block_size = 65536, max_threads = 4;

@@ -1,0 +1,13 @@
+query	days	mode	runs	p50_ms	p95_ms	read_mrows	read_mb	peak_mem_mb
+q1_sessions_list	1	cold	5	203	211	2.75	580	216
+q1_sessions_list	1	warm	10	154	160	2.72	566	205
+q1_sessions_list	7	cold	5	1003	1030	19.13	3962	390
+q1_sessions_list	7	warm	10	906	946	19.01	3912	377
+q2_session_timeline	1	cold	5	112	133	2.73	436	28
+q2_session_timeline	1	warm	10	87	92	2.7	421	22
+q2_session_timeline	7	cold	5	708	881	19.04	2960	157
+q2_session_timeline	7	warm	10	747	819	18.93	2910	138
+q4_error_groups	1	cold	5	66	66	0.36	125	24
+q4_error_groups	1	warm	10	55	64	0.34	118	23
+q4_error_groups	7	cold	5	191	198	2.48	885	145
+q4_error_groups	7	warm	10	161	172	2.42	859	158

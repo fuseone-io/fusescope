@@ -1,0 +1,103 @@
+# Throwaway stack for the RUM spike. Separate project, names and ports from .devenv.
+name: rum-spike
+
+services:
+  zookeeper:
+    image: signoz/zookeeper:3.7.1
+    container_name: rum-spike-zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -m 2 http://localhost:8080/commands/ruok | grep error | grep null"]
+      interval: 10s
+      retries: 6
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.12.5
+    container_name: rum-spike-clickhouse
+    mem_limit: 12g
+    volumes:
+      - ./clickhouse/config.xml:/etc/clickhouse-server/config.d/config.xml
+      - ./clickhouse/users.xml:/etc/clickhouse-server/users.d/users.xml
+      - clickhouse-data:/var/lib/clickhouse/
+    ports:
+      - "127.0.0.1:18123:8123"
+      - "127.0.0.1:19000:9000"
+    environment:
+      - CLICKHOUSE_SKIP_USER_SETUP=1
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "0.0.0.0:8123/ping"]
+      interval: 10s
+      retries: 6
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+
+  migrator:
+    image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
+    container_name: rum-spike-migrator
+    environment: &chenv
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
+      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - /fusescope-otel-collector migrate bootstrap && /fusescope-otel-collector migrate sync up && /fusescope-otel-collector migrate async up
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: on-failure
+
+  collector:
+    image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
+    container_name: rum-spike-collector
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - /fusescope-otel-collector migrate sync check && /fusescope-otel-collector --config=/etc/otel-collector-config.yaml
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=host.name=rum-spike,os.type=linux
+      - LOW_CARDINAL_EXCEPTION_GROUPING=false
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
+      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
+    ports:
+      - "127.0.0.1:14318:4318"
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+
+  fusescope:
+    image: ghcr.io/fuseone-io/fusescope:0.150.0
+    container_name: rum-spike-fusescope
+    environment:
+      - SIGNOZ_SQLSTORE_SQLITE_PATH=/var/lib/fusescope/signoz.db
+      - SIGNOZ_TOKENIZER_JWT_SECRET=rum-spike-secret
+      - SIGNOZ_ALERTMANAGER_PROVIDER=signoz
+      - SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse
+      - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster
+    volumes:
+      - fusescope-data:/var/lib/fusescope/
+    ports:
+      - "127.0.0.1:18080:8080"
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+
+  hotrod:
+    image: jaegertracing/example-hotrod:1.76.0
+    container_name: rum-spike-hotrod
+    command: ["all"]
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4318
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=rum-spike
+    ports:
+      - "127.0.0.1:18083:8080"
+
+volumes:
+  clickhouse-data:
+  fusescope-data:
