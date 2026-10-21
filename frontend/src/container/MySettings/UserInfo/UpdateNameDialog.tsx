@@ -37,11 +37,14 @@ function UpdateNameDialog({
 				}
 			}}
 		>
-			<DialogContent className="update-name-modal tw:max-w-md">
-				<DialogHeader>
+			<DialogContent
+				aria-describedby={undefined}
+				className="update-name-modal tw:max-w-md"
+			>
+				<DialogHeader className="tw:border-b tw:border-border tw:pb-3">
 					<DialogTitle>Update name</DialogTitle>
 				</DialogHeader>
-				<DialogBody className="tw:gap-2">
+				<DialogBody className="tw:gap-2 tw:pt-4">
 					<Label htmlFor="update-name-input" className="tw:text-foreground">
 						Name
 					</Label>
