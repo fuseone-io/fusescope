@@ -72,6 +72,7 @@ function ValueSelector({
 	// selection is known, only its options are pending. Display only, so it can never
 	// be committed as a value.
 	const isAllPendingOptions = selection.allSelected && options.length === 0;
+	const emptyPlaceholder = loading ? 'Refreshing values...' : 'Select value';
 
 	// Buffer edits while the dropdown is open; the committed selection is shown
 	// when closed. This defers the dependent cascade to a single commit-on-close.
@@ -124,6 +125,7 @@ function ValueSelector({
 		return (
 			<CustomMultiSelect
 				className={styles.control}
+				popupClassName={styles.dropdown}
 				data-testid={testId}
 				options={optionData}
 				value={isOpen ? draft : committedValues}
@@ -136,7 +138,7 @@ function ValueSelector({
 				// appear on hover, in a row of variable pills, for an action whose result is
 				// not visible.
 				allowClear={isOpen && !draftIsAll}
-				placeholder={isAllPendingOptions ? 'ALL' : 'Select value'}
+				placeholder={isAllPendingOptions ? 'ALL' : emptyPlaceholder}
 				maxTagCount={1}
 				maxTagTextLength={10}
 				maxTagPlaceholder={(omitted): JSX.Element => (
@@ -188,6 +190,7 @@ function ValueSelector({
 	return (
 		<CustomSelect
 			className={styles.control}
+			popupClassName={styles.dropdown}
 			data-testid={testId}
 			options={optionData}
 			value={
@@ -200,7 +203,7 @@ function ValueSelector({
 			onRetry={onRetry}
 			showRetryButton={isRetryable}
 			showSearch
-			placeholder="Select value"
+			placeholder={emptyPlaceholder}
 			isDynamicVariable={!!dynamic}
 			onSearch={dynamic?.onSearch}
 			showIncompleteDataMessage={
