@@ -22,7 +22,9 @@ export const DOCS_LINKS = {
 	SEND_TRACES: fuseScopeDocsUrl('/explore/traces/'),
 	SEND_METRICS: fuseScopeDocsUrl('/explore/metrics/'),
 	SETUP_ALERTS: fuseScopeDocsUrl('/alerts/alert-rules/'),
-	SETUP_SAVED_VIEWS: fuseScopeDocsUrl('/explore/metrics/#chart-a-metric'),
+	SETUP_SAVED_VIEWS: fuseScopeDocsUrl(
+		'/explore/logs/#alerts-dashboards-and-saved-views',
+	),
 	SETUP_DASHBOARDS: fuseScopeDocsUrl('/dashboards/dashboards/'),
 };
 
@@ -85,9 +87,9 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 	},
 	{
 		id: 'SETUP_ALERTS',
-		title: 'Setup Alerts',
+		title: 'Set up alerts',
 		description:
-			'Setup alerts to get notified when your resources are not performing as expected.',
+			'Set up alerts to get notified when your resources are not performing as expected.',
 		completed: false,
 		isSkipped: false,
 		isSkippable: true,
@@ -97,7 +99,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 	},
 	{
 		id: 'SETUP_SAVED_VIEWS',
-		title: 'Setup Saved Views',
+		title: 'Set up saved views',
 		description:
 			'Save your views to get a quick overview of your data and share it with your team.',
 		completed: false,
@@ -109,7 +111,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 	},
 	{
 		id: 'SETUP_DASHBOARDS',
-		title: 'Setup Dashboards',
+		title: 'Set up dashboards',
 		description:
 			'Create dashboards to visualize your data and share it with your team.',
 		completed: false,

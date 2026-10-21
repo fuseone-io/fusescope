@@ -30,6 +30,7 @@ function WelcomeChecklistPopover({
 			<PopoverTrigger asChild>
 				<Button
 					variant="outline"
+					size="sm"
 					className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
 				>
 					<ClipboardList aria-hidden="true" />

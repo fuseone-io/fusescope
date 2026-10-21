@@ -4,7 +4,8 @@ import logEvent from 'api/common/logEvent';
 import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
-import PageTemplate from 'components/PageTemplate/PageTemplate';
+import HeaderPageActions from 'components/AppHeader/components/HeaderPageActions';
+import HeaderBandLayout from 'components/PageTemplate/components/HeaderBandLayout';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import NoAuthBanner from 'components/NoAuthBanner/NoAuthBanner';
 import { getIsNoAuthMode } from 'utils/noAuthMode';
@@ -24,15 +25,17 @@ import { isIngestionActive } from 'utils/app';
 
 import AlertRules from './AlertRules/AlertRules';
 import ExplorerCards from './components/ExplorerCards';
+import HomeHeader from './components/HomeHeader';
 import IngestionPanel from './components/IngestionPanel';
 import WelcomeChecklistPanel from './components/WelcomeChecklistPanel';
 import WelcomeChecklistPopover from './components/WelcomeChecklistPopover';
+import WorkspaceReadyPanel from './components/WorkspaceReadyPanel';
 import { defaultChecklistItemsState } from './constants';
 import Dashboards from './Dashboards/Dashboards';
-import DataSourceInfo from './DataSourceInfo/DataSourceInfo';
 import { ChecklistItem } from './HomeChecklist/HomeChecklist';
 import SavedViews from './SavedViews/SavedViews';
 import Services from './Services/Services';
+import { ingestedCount } from './utils';
 
 const homeInterval = 30 * 60 * 1000;
 
@@ -239,42 +242,57 @@ export default function Home(): JSX.Element {
 		void logEvent('Homepage: Visited', {});
 	}, []);
 
+	const signals = {
+		logs: isLogsIngestionActive,
+		traces: isTracesIngestionActive,
+		metrics: isMetricsIngestionActive,
+	};
 	const isIngestionActiveForAny =
 		isLogsIngestionActive || isTracesIngestionActive || isMetricsIngestionActive;
+	const isDetecting = isLogsLoading || isTracesLoading;
 	const showChecklist = !isWelcomeChecklistSkipped && !loadingUserPreferences;
 	const checklistBusy = updatingUserPreferences || loadingUserPreferences;
+	const isViewer = user?.role === USER_ROLES.VIEWER;
+	const widgetProps = {
+		onUpdateChecklistDoneItem: handleUpdateChecklistDoneItem,
+		loadingUserPreferences,
+	};
 
 	return (
-		<PageTemplate testId="home-page">
-			{getIsNoAuthMode() && <NoAuthBanner />}
-			<DataSourceInfo
-				dataSentToSigNoz={isIngestionActiveForAny}
-				isLoading={isLogsLoading || isTracesLoading}
-				actions={
-					<>
-						<HeaderRightSection
-							enableAnnouncements={false}
-							enableFeedback={false}
-							enableShare={false}
+		<HeaderBandLayout
+			testId="home-page"
+			header={<HomeHeader signals={signals} isLoading={isDetecting} />}
+			bodyClassName="tw:gap-4 tw:px-4 tw:pt-4 tw:pb-8 tw:md:px-6"
+		>
+			<HeaderPageActions>
+				<div className="fs-ui tw:flex tw:items-center tw:gap-2 tw:font-sans">
+					<HeaderRightSection
+						enableAnnouncements={false}
+						enableFeedback={false}
+						enableShare={false}
+					/>
+					{isWelcomeChecklistSkipped && (
+						<WelcomeChecklistPopover
+							checklistItems={checklistItems}
+							onSkip={handleSkipChecklistItem}
+							isLoading={checklistBusy}
 						/>
-						{isWelcomeChecklistSkipped && (
-							<WelcomeChecklistPopover
-								checklistItems={checklistItems}
-								onSkip={handleSkipChecklistItem}
-								isLoading={checklistBusy}
-							/>
-						)}
-					</>
-				}
-			/>
+					)}
+				</div>
+			</HeaderPageActions>
+
+			{getIsNoAuthMode() && <NoAuthBanner />}
+
+			{!isDetecting && !isIngestionActiveForAny && <WorkspaceReadyPanel />}
 
 			{(isIngestionActiveForAny || showChecklist) && (
 				<div className="tw:flex tw:flex-wrap tw:items-start tw:gap-4">
 					{isIngestionActiveForAny && (
 						<IngestionPanel
-							logs={isLogsIngestionActive}
-							traces={isTracesIngestionActive}
-							metrics={isMetricsIngestionActive}
+							signals={signals}
+							logRecords={ingestedCount(logsData?.payload)}
+							spans={ingestedCount(tracesData?.payload)}
+							canConnect={!isViewer}
 							className="tw:flex-[2_1_520px]"
 						/>
 					)}
@@ -289,28 +307,28 @@ export default function Home(): JSX.Element {
 				</div>
 			)}
 
-			{user?.role !== USER_ROLES.VIEWER && <ExplorerCards />}
+			{!isViewer && <ExplorerCards />}
 
 			{isIngestionActiveForAny && (
-				<div className="tw:grid tw:items-start tw:gap-4 tw:xl:grid-cols-2">
-					<AlertRules
-						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						loadingUserPreferences={loadingUserPreferences}
-					/>
-					<Services
-						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						loadingUserPreferences={loadingUserPreferences}
-					/>
-					<Dashboards
-						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						loadingUserPreferences={loadingUserPreferences}
-					/>
-					<SavedViews
-						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						loadingUserPreferences={loadingUserPreferences}
-					/>
-				</div>
+				<>
+					<div className="tw:flex tw:flex-wrap tw:items-start tw:gap-4">
+						<div className="tw:flex tw:min-w-0 tw:flex-[1_1_340px] tw:flex-col">
+							<AlertRules {...widgetProps} />
+						</div>
+						<div className="tw:flex tw:min-w-0 tw:flex-[1.6_1_560px] tw:flex-col">
+							<Services {...widgetProps} />
+						</div>
+					</div>
+					<div className="tw:flex tw:flex-wrap tw:items-start tw:gap-4">
+						<div className="tw:flex tw:min-w-0 tw:flex-[1_1_340px] tw:flex-col">
+							<Dashboards {...widgetProps} />
+						</div>
+						<div className="tw:flex tw:min-w-0 tw:flex-[1_1_340px] tw:flex-col">
+							<SavedViews {...widgetProps} />
+						</div>
+					</div>
+				</>
 			)}
-		</PageTemplate>
+		</HeaderBandLayout>
 	);
 }
