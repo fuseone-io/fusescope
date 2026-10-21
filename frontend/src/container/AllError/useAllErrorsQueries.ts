@@ -40,6 +40,7 @@ export function useAllErrorsQueries(params: AllErrorsParams): AllErrorsQueries {
 	const compositeData = useGetCompositeQueryParam();
 
 	const setIsFetching = useAllErrorsQueryState((s) => s.setIsFetching);
+	const setGroupCount = useAllErrorsQueryState((s) => s.setGroupCount);
 	const isCancelled = useAllErrorsQueryState((s) => s.isCancelled);
 
 	const tags = convertCompositeQueryToTraceSelectedTags(
@@ -100,6 +101,11 @@ export function useAllErrorsQueries(params: AllErrorsParams): AllErrorsQueries {
 	useEffect(() => {
 		setIsFetching(isFetching);
 	}, [isFetching, setIsFetching]);
+
+	const groupCount = errorCountResponse.data?.payload;
+	useEffect(() => {
+		setGroupCount(typeof groupCount === 'number' ? groupCount : null);
+	}, [groupCount, setGroupCount]);
 
 	const { notifications } = useNotifications();
 

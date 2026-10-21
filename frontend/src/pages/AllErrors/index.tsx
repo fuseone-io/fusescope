@@ -15,6 +15,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isNull } from 'lodash-es';
 import { Bug } from 'lucide-react';
 
+import ExceptionsCountLine from './ExceptionsCountLine';
 import { useAllErrorsQueryState } from './QueryStateContext';
 
 import './AllErrors.styles.scss';
@@ -56,7 +57,12 @@ function AllErrors(): JSX.Element {
 			bounded
 			testId="exceptions-page"
 			header={
-				<CompactPageHeader icon={<Bug />} iconTone="error" title="Exceptions" />
+				<CompactPageHeader
+					icon={<Bug />}
+					iconTone="error"
+					title="Exceptions"
+					meta={<ExceptionsCountLine />}
+				/>
 			}
 		>
 			<QuickFiltersLayout
