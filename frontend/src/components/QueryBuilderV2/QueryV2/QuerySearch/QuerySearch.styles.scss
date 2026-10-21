@@ -605,3 +605,73 @@ $max-recents-shown: 5;
 		margin-top: -6px !important;
 	}
 }
+
+// The filter field as the explorers draw it, for builders and standalone
+// filters outside them (alert editor, panel editor, External APIs): the outer
+// container owns the border, radius and ring, the editor inside is bare, and
+// the docs icon sits centred in a right gutter the text never runs into.
+.qb-filter-field-skin {
+	.query-search-container {
+		display: flex;
+		min-width: 0;
+		min-height: 36px;
+		border: 1px solid var(--fs-input);
+		border-radius: 8px;
+		background: var(--query-builder-v2-background-color, var(--l2-background));
+
+		&:has(.cm-focused) {
+			border-color: var(--fs-ring);
+			box-shadow: 0 0 0 3px color-mix(in srgb, var(--fs-ring) 50%, transparent);
+		}
+
+		&:has(.hasErrors) {
+			border-color: var(--fs-error);
+		}
+
+		.code-mirror-where-clause,
+		.query-where-clause-editor-container,
+		.query-where-clause-editor {
+			flex: 1;
+			min-width: 0;
+		}
+
+		.cm-editor,
+		.cm-editor .cm-scroller,
+		.cm-editor .cm-content,
+		.cm-editor .cm-line {
+			border: 0 !important;
+			border-radius: 0 !important;
+			background: transparent !important;
+			box-shadow: none !important;
+		}
+
+		.cm-editor.cm-focused {
+			outline: 0;
+		}
+
+		.cm-editor .cm-content {
+			min-height: 34px;
+			padding: 7px 32px 7px 0 !important;
+			font-size: 12px;
+		}
+
+		.cm-editor .cm-line {
+			padding-left: 10px;
+			line-height: 20px !important;
+		}
+
+		.query-status-container {
+			border: 0 !important;
+			background: transparent !important;
+		}
+
+		.query-where-clause-editor-container > a {
+			top: 50% !important;
+			transform: translateY(-50%);
+		}
+
+		.query-where-clause-editor-container > a svg {
+			color: var(--fs-subtle-foreground) !important;
+		}
+	}
+}
