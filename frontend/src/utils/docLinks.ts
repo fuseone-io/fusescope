@@ -1,4 +1,4 @@
-import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 const DOCLINKS = {
 	TRACES_EXPLORER_EMPTY_STATE: fuseScopeDocsUrl(
@@ -13,7 +13,6 @@ const DOCLINKS = {
 	),
 	QUERY_CLICKHOUSE_LOGS: fuseScopeDocsUrl('/querying/clickhouse-promql/'),
 	QUERY_CLICKHOUSE_METRICS: fuseScopeDocsUrl('/querying/clickhouse-promql/'),
-	AGENT_SKILL_INSTALL: signozDocsUrl('/ai/agent-skills/#install-the-plugin'),
 };
 
 export default DOCLINKS;

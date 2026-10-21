@@ -14,7 +14,7 @@ function InviteMembers({
 	className,
 	initialRowCount = 3,
 	minRows = 1,
-	emailPlaceholder = 'e.g. john@signoz.io',
+	emailPlaceholder = 'e.g. john@example.com',
 	showHeader = true,
 	showAddButton = true,
 	onSuccess,

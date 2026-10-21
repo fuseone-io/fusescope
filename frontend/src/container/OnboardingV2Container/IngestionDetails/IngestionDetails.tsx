@@ -4,7 +4,7 @@ import { Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
 import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/fuseScope.schemas';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 import { Button } from 'components/ui/button';
@@ -117,7 +117,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						<span>
 							Find your ingestion URL and learn more about sending data to FuseScope{' '}
 							<a
-								href={signozDocsUrl('/ingestion/signoz-cloud/overview/')}
+								href={fuseScopeDocsUrl('/sending-data/otlp/')}
 								target="_blank"
 								className={LINK}
 								rel="noreferrer"

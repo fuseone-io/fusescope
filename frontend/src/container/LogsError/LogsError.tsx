@@ -1,6 +1,8 @@
 import { Typography } from '@signozhq/ui/typography';
+import { FUSESCOPE_NEW_ISSUE_URL } from 'components/AppSidebar/constants';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
+import { openInNewTab } from 'utils/navigation';
 import { ArrowRight } from '@signozhq/icons';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
@@ -14,7 +16,7 @@ export default function LogsError(): JSX.Element {
 		if (isCloudUserVal) {
 			history.push('/support');
 		} else {
-			window.open('https://signoz.io/slack', '_blank');
+			openInNewTab(FUSESCOPE_NEW_ISSUE_URL);
 		}
 	};
 
