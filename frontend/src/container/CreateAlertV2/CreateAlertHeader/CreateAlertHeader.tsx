@@ -1,50 +1,28 @@
-import { useCallback, useMemo } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
+import { useCallback } from 'react';
 import logEvent from 'api/common/logEvent';
-import classNames from 'classnames';
+import SubpageHeader from 'components/Alerts/SubpageHeader/SubpageHeader';
+import { Button } from 'components/ui/button';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import AlertTypeBadge from 'container/CreateAlertRule/AlertTypeBadge';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { RotateCcw } from '@signozhq/icons';
-import { useAlertRuleOptional } from 'providers/Alert';
-import { Labels } from 'types/api/alerts/def';
+import { AlertListTabs } from 'pages/AlertList/types';
+import { RotateCcw } from 'lucide-react';
 
 import { useCreateAlertState } from '../context';
-import LabelsInput from './LabelsInput';
+import AlertRuleFields from './AlertRuleFields';
 
 import './styles.scss';
 
+/**
+ * The rule name and labels. Creating a rule, they sit in the page's header
+ * band with the title, the rule type and the way back to the classic form.
+ */
 function CreateAlertHeader(): JSX.Element {
-	const { alertState, setAlertState, isEditMode } = useCreateAlertState();
-	const alertRuleContext = useAlertRuleOptional();
-
-	const { currentQuery } = useQueryBuilder();
+	const { isEditMode, alertType } = useCreateAlertState();
 	const { safeNavigate } = useSafeNavigate();
 	const urlQuery = useUrlQuery();
-
-	const groupByLabels = useMemo(() => {
-		const labels = new Array<string>();
-		currentQuery.builder.queryData.forEach((query) => {
-			query.groupBy.forEach((groupBy) => {
-				labels.push(groupBy.key);
-			});
-		});
-		return labels;
-	}, [currentQuery]);
-
-	// If the label key is a group by label, then it is not allowed to be used as a label key
-	const validateLabelsKey = useCallback(
-		(key: string): string | null => {
-			if (groupByLabels.includes(key)) {
-				return `Cannot use ${key} as a key`;
-			}
-			return null;
-		},
-		[groupByLabels],
-	);
 
 	const handleSwitchToClassicExperience = useCallback(() => {
 		logEvent('Alert: Switch to classic experience button clicked', {});
@@ -54,48 +32,27 @@ function CreateAlertHeader(): JSX.Element {
 		safeNavigate(url, { replace: true });
 	}, [safeNavigate, urlQuery]);
 
+	if (isEditMode) {
+		return <AlertRuleFields />;
+	}
+
 	return (
-		<div
-			className={classNames('alert-header', { 'edit-alert-header': isEditMode })}
+		<SubpageHeader
+			title="New Alert Rule"
+			backLabel="Back to alert rules"
+			onBack={(): void =>
+				safeNavigate(`${ROUTES.LIST_ALL_ALERT}?tab=${AlertListTabs.ALERT_RULES}`)
+			}
+			badges={<AlertTypeBadge alertType={alertType} />}
+			actions={
+				<Button variant="ghost" size="sm" onClick={handleSwitchToClassicExperience}>
+					<RotateCcw aria-hidden="true" />
+					Switch to Classic Experience
+				</Button>
+			}
 		>
-			{!isEditMode && (
-				<div className="alert-header__tab-bar">
-					<div className="alert-header__tab">New Alert Rule</div>
-					<Button
-						prefix={<RotateCcw size={12} />}
-						onClick={handleSwitchToClassicExperience}
-						variant="solid"
-						color="secondary"
-						size="sm"
-					>
-						Switch to Classic Experience
-					</Button>
-				</div>
-			)}
-			<div className="alert-header__content">
-				<Input
-					type="text"
-					value={alertState.name}
-					onChange={(e): void => {
-						const newName = e.target.value;
-						setAlertState({ type: 'SET_ALERT_NAME', payload: newName });
-						if (isEditMode && alertRuleContext?.setAlertRuleName) {
-							alertRuleContext.setAlertRuleName(newName);
-						}
-					}}
-					className="alert-header__input title"
-					placeholder="Enter alert rule name"
-					data-testid="alert-name-input"
-				/>
-				<LabelsInput
-					labels={alertState.labels}
-					onLabelsChange={(labels: Labels): void =>
-						setAlertState({ type: 'SET_ALERT_LABELS', payload: labels })
-					}
-					validateLabelsKey={validateLabelsKey}
-				/>
-			</div>
-		</div>
+			<AlertRuleFields />
+		</SubpageHeader>
 	);
 }
 

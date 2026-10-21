@@ -20,7 +20,7 @@ const SWITCH_ROLE_SELECTOR = '[role="switch"]';
 describe('AdvancedOptions', () => {
 	it('should render evaluation cadence and the advanced options minimized by default', () => {
 		render(<AdvancedOptions />);
-		expect(screen.getByText('ADVANCED OPTIONS')).toBeInTheDocument();
+		expect(screen.getByText('Advanced options')).toBeInTheDocument();
 		expect(screen.queryByText('How often to check')).not.toBeInTheDocument();
 		expect(
 			screen.queryByText(ALERT_WHEN_DATA_STOPS_COMING_TEXT),

@@ -10,6 +10,8 @@ import APIError from 'types/api/error';
 
 import { useCreateAlertState } from '../context';
 import AdvancedOptions from '../EvaluationSettings/AdvancedOptions';
+import AlertsFormTheme from 'components/Alerts/FormSheet/AlertsFormTheme';
+
 import Stepper from '../Stepper';
 import { ALERT_STEP_IDS } from '../StepsNav/constants';
 import AlertThreshold from './AlertThreshold';
@@ -68,52 +70,54 @@ function AlertCondition(): JSX.Element {
 	};
 
 	return (
-		<section
-			id={ALERT_STEP_IDS.CONDITION}
-			className="alert-condition-container alert-step-panel"
-		>
-			<Stepper stepNumber={2} label="Set alert conditions" />
-			<div className="alert-condition">
-				<div className="alert-condition-tabs">
-					{tabs.map((tab) => (
-						<Tooltip key={tab.value} title={getTabTooltip(tab)}>
-							<Button
-								className={classNames('list-view-tab', 'explorer-view-option', {
-									'active-tab': alertType === tab.value,
-								})}
-								onClick={(): void => {
-									if (alertType !== tab.value) {
-										handleAlertTypeChange(tab.value as AlertTypes);
-									}
-								}}
-							>
-								{tab.icon}
-								{tab.label}
-							</Button>
-						</Tooltip>
-					))}
+		<AlertsFormTheme controlHeight={32}>
+			<section
+				id={ALERT_STEP_IDS.CONDITION}
+				className="alert-condition-container alert-step-panel"
+			>
+				<Stepper stepNumber={2} label="Set alert conditions" />
+				<div className="alert-condition">
+					<div className="alert-condition-tabs">
+						{tabs.map((tab) => (
+							<Tooltip key={tab.value} title={getTabTooltip(tab)}>
+								<Button
+									className={classNames('list-view-tab', 'explorer-view-option', {
+										'active-tab': alertType === tab.value,
+									})}
+									onClick={(): void => {
+										if (alertType !== tab.value) {
+											handleAlertTypeChange(tab.value as AlertTypes);
+										}
+									}}
+								>
+									{tab.icon}
+									{tab.label}
+								</Button>
+							</Tooltip>
+						))}
+					</div>
 				</div>
-			</div>
-			{alertType !== AlertTypes.ANOMALY_BASED_ALERT && (
-				<AlertThreshold
-					channels={channels}
-					isLoadingChannels={isLoadingChannels}
-					isErrorChannels={isErrorChannels}
-					refreshChannels={refreshChannels}
-				/>
-			)}
-			{alertType === AlertTypes.ANOMALY_BASED_ALERT && (
-				<AnomalyThreshold
-					channels={channels}
-					isLoadingChannels={isLoadingChannels}
-					isErrorChannels={isErrorChannels}
-					refreshChannels={refreshChannels}
-				/>
-			)}
-			<div className="condensed-advanced-options-container">
-				<AdvancedOptions />
-			</div>
-		</section>
+				{alertType !== AlertTypes.ANOMALY_BASED_ALERT && (
+					<AlertThreshold
+						channels={channels}
+						isLoadingChannels={isLoadingChannels}
+						isErrorChannels={isErrorChannels}
+						refreshChannels={refreshChannels}
+					/>
+				)}
+				{alertType === AlertTypes.ANOMALY_BASED_ALERT && (
+					<AnomalyThreshold
+						channels={channels}
+						isLoadingChannels={isLoadingChannels}
+						isErrorChannels={isErrorChannels}
+						refreshChannels={refreshChannels}
+					/>
+				)}
+				<div className="condensed-advanced-options-container">
+					<AdvancedOptions />
+				</div>
+			</section>
+		</AlertsFormTheme>
 	);
 }
 

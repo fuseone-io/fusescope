@@ -1,20 +1,32 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Row } from 'antd';
-import { Badge } from '@signozhq/ui/badge';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { signozDocsUrl } from 'constants/docs';
 import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
+import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import {
+	Activity,
+	BarChart3,
+	Bug,
+	DraftingCompass,
+	ScrollText,
+} from 'lucide-react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
+import { ALERT_TYPE_URL_MAP } from '../constants';
 import { getOptionList } from './config';
-import { AlertTypeCard, SelectTypeContainer } from './styles';
 import { OptionType } from './types';
+
+const ALERT_TYPE_ICONS: Record<AlertTypes, typeof Activity> = {
+	[AlertTypes.ANOMALY_BASED_ALERT]: Activity,
+	[AlertTypes.METRICS_BASED_ALERT]: BarChart3,
+	[AlertTypes.LOGS_BASED_ALERT]: ScrollText,
+	[AlertTypes.TRACES_BASED_ALERT]: DraftingCompass,
+	[AlertTypes.EXCEPTIONS_BASED_ALERT]: Bug,
+};
 
 function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 	const { t } = useTranslation(['alerts']);
@@ -27,34 +39,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 	const optionList = getOptionList(t, isAnomalyDetectionEnabled);
 
 	function handleRedirection(option: AlertTypes): void {
-		let url = '';
-		switch (option) {
-			case AlertTypes.ANOMALY_BASED_ALERT:
-				url = signozDocsUrl('/alerts-management/anomaly-based-alerts/');
-				break;
-			case AlertTypes.METRICS_BASED_ALERT:
-				url = signozDocsUrl(
-					'/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
-				);
-				break;
-			case AlertTypes.LOGS_BASED_ALERT:
-				url = signozDocsUrl(
-					'/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
-				);
-				break;
-			case AlertTypes.TRACES_BASED_ALERT:
-				url = signozDocsUrl(
-					'/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
-				);
-				break;
-			case AlertTypes.EXCEPTIONS_BASED_ALERT:
-				url = signozDocsUrl(
-					'/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
-				);
-				break;
-			default:
-				break;
-		}
+		const url = ALERT_TYPE_URL_MAP[option]?.selection ?? '';
 
 		logEvent('Alert: Sample alert link clicked', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[option],
@@ -67,51 +52,68 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 	const renderOptions = useMemo(
 		() => (
 			<>
-				{optionList.map((option: OptionType) => (
-					<AlertTypeCard
-						key={option.selection}
-						title={option.title}
-						extra={
-							option.isBeta ? (
-								<Badge variant="solid" color="primary">
-									Beta
-								</Badge>
-							) : undefined
-						}
-						onClick={(e): void => {
-							onSelect(option.selection, isModifierKeyPressed(e));
-						}}
-						data-testid={`alert-type-card-${option.selection}`}
-					>
-						{option.description}{' '}
-						<Typography.Link
+				{optionList.map((option: OptionType) => {
+					const Icon = ALERT_TYPE_ICONS[option.selection];
+					return (
+						<div
+							key={option.selection}
+							role="button"
+							tabIndex={0}
+							data-testid={`alert-type-card-${option.selection}`}
 							onClick={(e): void => {
-								e.preventDefault();
-								e.stopPropagation();
-								handleRedirection(option.selection);
+								onSelect(option.selection, isModifierKeyPressed(e));
 							}}
+							onKeyDown={(e): void => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									onSelect(option.selection);
+								}
+							}}
+							className="tw:flex tw:cursor-pointer tw:flex-col tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-surface-raised tw:p-5 tw:text-left tw:transition-colors tw:outline-none tw:hover:border-primary tw:focus-visible:ring-2 tw:focus-visible:ring-ring"
 						>
-							Click here to see how to create a sample alert.
-						</Typography.Link>{' '}
-					</AlertTypeCard>
-				))}
+							<div className="tw:flex tw:items-center tw:gap-3">
+								<span
+									aria-hidden="true"
+									className="tw:flex tw:size-8 tw:flex-none tw:items-center tw:justify-center tw:rounded-lg tw:bg-primary-soft tw:text-primary-ink"
+								>
+									<Icon className="tw:size-[18px]" />
+								</span>
+								<h2 className="tw:text-[15px] tw:font-semibold tw:text-foreground">
+									{option.title}
+								</h2>
+								{option.isBeta && <StatusBadge tone="info">Beta</StatusBadge>}
+							</div>
+							<p className="tw:text-[13px] tw:leading-relaxed tw:text-muted-foreground">
+								{option.description}{' '}
+								<button
+									type="button"
+									onClick={(e): void => {
+										e.preventDefault();
+										e.stopPropagation();
+										handleRedirection(option.selection);
+									}}
+									className="tw:cursor-pointer tw:border-0 tw:bg-transparent tw:p-0 tw:text-left tw:text-primary tw:hover:underline"
+								>
+									Click here to see how to create a sample alert.
+								</button>
+							</p>
+						</div>
+					);
+				})}
 			</>
 		),
 		[onSelect, optionList],
 	);
 
 	return (
-		<SelectTypeContainer>
-			<Typography.Title
-				level={4}
-				style={{
-					padding: '0 8px',
-				}}
-			>
+		<div className="fs-ui tw:flex tw:flex-col tw:gap-4 tw:font-sans">
+			<h2 className="tw:text-base tw:font-semibold tw:text-foreground">
 				{t('choose_alert_type')}
-			</Typography.Title>
-			<Row>{renderOptions}</Row>
-		</SelectTypeContainer>
+			</h2>
+			<div className="tw:grid tw:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] tw:gap-4">
+				{renderOptions}
+			</div>
+		</div>
 	);
 }
 

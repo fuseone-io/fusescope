@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { X } from '@signozhq/icons';
+import { Plus, X } from '@signozhq/icons';
 import { useNotifications } from 'hooks/useNotifications';
 
 import { LabelInputState, LabelsInputProps } from './types';
@@ -136,7 +136,7 @@ function LabelsInput({
 								aria-label={`Remove label ${key}`}
 								onClick={(): void => handleRemoveLabel(key)}
 							>
-								<X size="md" />
+								<X size={12} />
 							</button>
 						</span>
 					))}
@@ -150,7 +150,8 @@ function LabelsInput({
 					onClick={handleAddLabelsClick}
 					data-testid="alert-add-label-button"
 				>
-					+ Add labels
+					<Plus size={14} aria-hidden="true" />
+					Add labels
 				</button>
 			) : (
 				<div className="labels-input__input-container">

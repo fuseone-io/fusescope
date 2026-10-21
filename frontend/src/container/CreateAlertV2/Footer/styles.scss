@@ -7,12 +7,31 @@
 	justify-content: space-between;
 	align-items: center;
 	gap: 8px;
-	padding: 12px 0;
+	margin-top: 24px;
+	padding: 12px 16px;
 	border-top: 1px solid var(--fs-border);
-	background-color: var(--fs-background);
+	background-color: var(--fs-card);
+	font-family:
+		Inter,
+		'Segoe UI',
+		-apple-system,
+		system-ui,
+		sans-serif;
+
+	@media (min-width: 768px) {
+		padding: 12px 24px;
+	}
+
+	&__hint {
+		min-width: 0;
+		font-size: 12px;
+		color: var(--fs-subtle-foreground);
+	}
 
 	.button-group {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 8px;
+		margin-left: auto;
 	}
 }

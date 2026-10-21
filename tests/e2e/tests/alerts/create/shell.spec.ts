@@ -17,7 +17,7 @@ import {
 import { v1SaveButton } from '../../../helpers/alert-forms/v1';
 
 // TC-* — the create *shell*: type selection, how a card click writes the
-// URL, the breadcrumb, the surrounding alerts tab bar, and the two ways to reach
+// URL, the header band (type badge, Change type, back), and the two ways to reach
 // the classic form. Nothing here saves a rule, so no scenario needs a channel.
 
 test.describe('Alert create — shell & type selection', () => {
@@ -94,31 +94,29 @@ test.describe('Alert create — shell & type selection', () => {
 		await newTab.close();
 	});
 
-	test('TC-05 breadcrumb gains a third crumb after a type is picked', async ({
+	test('TC-05 the header shows the picked type and Change type returns to the list of types', async ({
 		authedPage: page,
 	}) => {
 		await gotoAlertTypeSelection(page);
 
-		const breadcrumb = page.locator('.ant-breadcrumb');
-		await expect(breadcrumb.getByText('Alert Rules')).toBeVisible();
-		await expect(breadcrumb.getByText('Select Alert Type')).toBeVisible();
+		await expect(page.getByTestId('alert-type-badge')).toHaveCount(0);
 
 		await alertTypeCard(page, AlertType.METRICS).click();
 		await expect(page.getByTestId('alert-name-input')).toBeVisible();
 
-		await expect(breadcrumb.getByText('Metric-Based Alert')).toBeVisible();
+		await expect(page.getByTestId('alert-type-badge')).toHaveText(
+			'Metric-Based Alert',
+		);
 
-		// The middle crumb is now navigable and goes back to bare /alerts/new.
-		await breadcrumb.getByRole('button', { name: 'Select Alert Type' }).click();
+		// Change type goes back to bare /alerts/new.
+		await page.getByTestId('alert-change-type').click();
 		await expect(alertTypeCard(page, AlertType.METRICS)).toBeVisible();
 		expect(new URL(page.url()).searchParams.get('alertType')).toBeNull();
 	});
 
-	test('TC-06 create renders inside the Alert Rules tab and leaving drops subTab/search', async ({
+	test('TC-06 the back button leaves the editor for the Alert Rules tab', async ({
 		authedPage: page,
 	}) => {
-		// `subTab` and `search` are seeded here precisely so their removal is
-		// observable — `handleTabChange` deletes them while keeping everything else.
 		await page.goto(
 			createAlertUrl({
 				alertType: AlertType.LOGS,
@@ -127,13 +125,12 @@ test.describe('Alert create — shell & type selection', () => {
 		);
 		await expect(page.getByTestId('alert-name-input')).toBeVisible();
 
-		await expect(page.getByRole('tab', { name: /Alert Rules/ })).toBeVisible();
-		await page.getByRole('tab', { name: /Triggered Alerts/ }).click();
+		await page.getByTestId('alerts-subpage-back').click();
 
 		await page.waitForURL(/\/alerts\?/);
 		const params = new URL(page.url()).searchParams;
 		// The param carries the space-less enum value, not the tab's visible label.
-		expect(params.get('tab')).toBe(AlertListTab.TRIGGERED_ALERTS);
+		expect(params.get('tab')).toBe(AlertListTab.ALERT_RULES);
 		expect(params.get('subTab')).toBeNull();
 		expect(params.get('search')).toBeNull();
 	});

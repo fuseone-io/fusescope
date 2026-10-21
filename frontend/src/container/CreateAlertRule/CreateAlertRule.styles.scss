@@ -1,30 +1,8 @@
 .create-alert-wrapper {
-	display: flex;
-	flex-direction: column;
 	gap: 16px;
 
 	.divider {
 		border-color: var(--l1-border);
 		margin: 16px 0;
-	}
-}
-
-.create-alert__breadcrumb {
-	ol {
-		align-items: center;
-	}
-
-	.breadcrumb-item {
-		color: var(--l2-foreground);
-		font-size: 14px;
-		line-height: 20px;
-		letter-spacing: 0.25px;
-		padding: 0;
-	}
-
-	.ant-breadcrumb-separator,
-	.breadcrumb-item--last {
-		color: var(--muted-foreground);
-		font-family: 'Geist Mono';
 	}
 }

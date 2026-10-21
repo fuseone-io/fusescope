@@ -132,31 +132,35 @@ function QuerySection(): JSX.Element {
 
 	return (
 		<section id={ALERT_STEP_IDS.QUERY} className="query-section alert-step-panel">
-			<Stepper stepNumber={1} label="Define the query" />
-			<ChartPreview
-				alertDef={alertDef}
-				source={source}
-				isCancelled={isCancelled}
-				onFetchingStateChange={setIsLoadingQueries}
-			/>
-			<div className="query-section-tabs">
-				<div className="query-section-query-actions">
-					{tabs.map((tab) => (
-						<Button
-							key={tab.value}
-							className={classNames('list-view-tab', 'explorer-view-option', {
-								'active-tab': alertType === tab.value,
-							})}
-							onClick={(): void => {
-								setAlertType(tab.value as AlertTypes);
-							}}
+			<Stepper
+				stepNumber={1}
+				label="Define the query"
+				actions={
+					<div className="query-section-tabs">
+						<div
+							role="group"
+							aria-label="Data source"
+							className="query-section-query-actions"
 						>
-							{tab.icon}
-							{tab.label}
-						</Button>
-					))}
-				</div>
-			</div>
+							{tabs.map((tab) => (
+								<Button
+									key={tab.value}
+									aria-pressed={alertType === tab.value}
+									className={classNames('list-view-tab', 'explorer-view-option', {
+										'active-tab': alertType === tab.value,
+									})}
+									onClick={(): void => {
+										setAlertType(tab.value as AlertTypes);
+									}}
+								>
+									{tab.icon}
+									{tab.label}
+								</Button>
+							))}
+						</div>
+					</div>
+				}
+			/>
 			<QuerySectionComponent
 				queryCategory={currentQuery.queryType}
 				setQueryCategory={onQueryCategoryChange}
@@ -169,6 +173,12 @@ function QuerySection(): JSX.Element {
 				key={currentQuery.queryType}
 				ruleId=""
 				hideTitle
+			/>
+			<ChartPreview
+				alertDef={alertDef}
+				source={source}
+				isCancelled={isCancelled}
+				onFetchingStateChange={setIsLoadingQueries}
 			/>
 		</section>
 	);

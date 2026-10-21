@@ -137,11 +137,11 @@
 					border: 1px solid var(--l1-border);
 					border-radius: 4px;
 					color: var(--l2-foreground) !important;
-					font-family: 'Space Mono';
+					font-family: inherit;
 					font-size: 13px;
 
 					&::placeholder {
-						font-family: 'Space Mono';
+						font-family: inherit;
 						color: var(--muted-foreground) !important;
 					}
 				}
@@ -161,8 +161,9 @@
 						border: 1px solid var(--l1-border);
 
 						.ant-select-selector {
-							background-color: var(--l2-background);
-							border: 1px solid var(--l1-border);
+							background-color: var(--fs-card);
+							border: 1px solid var(--fs-input);
+							border-radius: 8px;
 							color: var(--l1-foreground);
 
 							&:hover {
@@ -170,7 +171,7 @@
 							}
 
 							&:focus {
-								border-color: var(--l1-border);
+								border-color: var(--fs-ring);
 							}
 						}
 					}
