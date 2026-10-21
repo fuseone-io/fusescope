@@ -131,37 +131,18 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			// The second input is the S3 retention field
 			const s3Input = inputs[1] as HTMLInputElement;
 
-			// Find the S3 dropdown (next sibling of the S3 input)
-			const s3Dropdown = s3Input
-				?.closest('.retention-row-controls')
-				?.querySelectorAll('.ant-select-selector')[1] as HTMLElement;
-			expect(s3Dropdown).toBeInTheDocument();
-
-			// Click the S3 dropdown to open it
-			fireEvent.mouseDown(s3Dropdown);
-
-			// Wait for dropdown options to appear and verify only "Days" is available
-			await waitFor(() => {
-				const dropdownOptions = document.querySelectorAll('.ant-select-item');
-				expect(dropdownOptions).toHaveLength(1);
-				expect(dropdownOptions[0]).toHaveTextContent('Days');
-			});
-
-			// Close dropdown
-			fireEvent.click(document.body);
+			// The S3 unit select offers only Days
+			const s3Dropdown = screen.getByTestId('retention-logs-s3-unit');
+			const dropdownOptions = s3Dropdown.querySelectorAll('option');
+			expect(dropdownOptions).toHaveLength(1);
+			expect(dropdownOptions[0]).toHaveTextContent('Days');
 
 			// Change S3 retention value to 5 days
 			fireEvent.change(s3Input, { target: { value: '5' } });
 
-			// Find the save button in the Logs row
-			const saveButton = logsRow.querySelector(
-				'button:not([disabled])',
-			) as HTMLButtonElement;
-			expect(saveButton).toBeInTheDocument();
-
-			// Wait for button to be enabled
+			const saveButton = screen.getByTestId('retention-logs-save');
 			await waitFor(() => {
-				expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
+				expect(saveButton).toBeEnabled();
 			});
 
 			fireEvent.click(saveButton);
@@ -231,37 +212,16 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			const totalInput = inputs[0] as HTMLInputElement;
 
 			// First, change the dropdown to Days (it defaults to Months)
-			const totalDropdown = logsRow.querySelector(
-				'.ant-select-selector',
-			) as HTMLElement;
-			fireEvent.mouseDown(totalDropdown);
-
-			// Wait for dropdown options to appear
-			await waitFor(() => {
-				const options = document.querySelectorAll('.ant-select-item');
-				expect(options.length).toBeGreaterThan(0);
+			fireEvent.change(screen.getByTestId('retention-logs-total-unit'), {
+				target: { value: 'day' },
 			});
-
-			// Find and click the Days option
-			const options = document.querySelectorAll('.ant-select-item');
-			const daysOption = Array.from(options).find((opt) =>
-				opt.textContent?.includes('Days'),
-			);
-			expect(daysOption).toBeInTheDocument();
-			fireEvent.click(daysOption as HTMLElement);
 
 			// Now change the value
 			fireEvent.change(totalInput, { target: { value: '60' } });
 
-			// Find the save button
-			const saveButton = logsRow.querySelector(
-				'button:not([disabled])',
-			) as HTMLButtonElement;
-			expect(saveButton).toBeInTheDocument();
-
-			// Wait for button to be enabled
+			const saveButton = screen.getByTestId('retention-logs-save');
 			await waitFor(() => {
-				expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
+				expect(saveButton).toBeEnabled();
 			});
 
 			// Click save button
@@ -313,9 +273,8 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			expect(s3Input.value).toBe('24');
 
 			// Verify dropdowns: total shows Months, S3 shows Days
-			const dropdowns = logsRow.querySelectorAll('.ant-select-selection-item');
-			expect(dropdowns[0]).toHaveTextContent('Months');
-			expect(dropdowns[1]).toHaveTextContent('Days');
+			expect(screen.getByTestId('retention-logs-total-unit')).toHaveValue('month');
+			expect(screen.getByTestId('retention-logs-s3-unit')).toHaveValue('day');
 		});
 	});
 
@@ -336,15 +295,10 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			const logsRow = getLogsRow();
 			expect(logsRow).toBeInTheDocument();
 
-			// Find the save button by accessible name within the Logs row
-			const allSaveButtons = screen.getAllByRole('button', { name: /save/i });
-			const saveButton = allSaveButtons.find((btn) =>
-				logsRow.contains(btn),
-			) as HTMLButtonElement;
-			expect(saveButton).toBeInTheDocument();
+			const saveButton = screen.getByTestId('retention-logs-save');
 
 			// Verify save button is disabled on initial load
-			expect(saveButton).toHaveAttribute('aria-disabled', 'true');
+			expect(saveButton).toBeDisabled();
 
 			// Find the total retention input
 			const inputs = logsRow.querySelectorAll('input[type="number"]');
@@ -355,7 +309,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Button should now be enabled after change
 			await waitFor(() => {
-				expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
+				expect(saveButton).toBeEnabled();
 			});
 
 			// Revert to original value (30 days displays as 1 Month)
@@ -363,7 +317,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Button should be disabled again (back to original state)
 			await waitFor(() => {
-				expect(saveButton).toHaveAttribute('aria-disabled', 'true');
+				expect(saveButton).toBeDisabled();
 			});
 		});
 	});

@@ -2,9 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
-import { BarChart, Compass, ScrollText } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Modal } from 'antd';
+import { BarChart3, Compass, ScrollText } from 'lucide-react';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
@@ -43,12 +41,10 @@ import { USER_ROLES } from 'types/roles';
 import LicenseRowDismissibleCallout from './LicenseKeyRow/LicenseRowDismissibleCallout/LicenseRowDismissibleCallout';
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
-
-import { ActionItemsContainer, ErrorText, ErrorTextContainer } from './styles';
-
-import './GeneralSettings.styles.scss';
+import RetentionConfirmDialog from './RetentionConfirmDialog';
+import RetentionSaveButton from './RetentionSaveButton';
 
 type NumberOrNull = number | null;
 
@@ -488,7 +484,7 @@ function GeneralSettings({
 		{
 			name: 'Metrics',
 			type: 'metrics',
-			icon: <BarChart size={14} />,
+			icon: <BarChart3 />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -533,7 +529,7 @@ function GeneralSettings({
 		{
 			name: 'Traces',
 			type: 'traces',
-			icon: <Compass size={14} />,
+			icon: <Compass />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -576,7 +572,7 @@ function GeneralSettings({
 		{
 			name: 'Logs',
 			type: 'logs',
-			icon: <ScrollText size={14} />,
+			icon: <ScrollText />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -622,71 +618,57 @@ function GeneralSettings({
 			Array.isArray(category.retentionFields) &&
 			category.retentionFields.length > 0
 		) {
+			const categoryType = category.name.toLowerCase() as TTTLType;
 			return (
 				<Fragment key={category.name}>
-					<div className="retention-row tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-t tw:border-border tw:px-5 tw:py-2.5 tw:first:border-t-0">
-						<span className="retention-row-label fs-ui tw:flex tw:items-center tw:gap-2 tw:font-sans tw:text-sm tw:font-medium tw:text-foreground tw:[&_svg]:text-muted-foreground">
+					<div
+						data-testid={`retention-row-${categoryType}`}
+						className="retention-row fs-ui tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-3 tw:border-t tw:border-border tw:px-5 tw:py-3 tw:font-sans tw:first:border-t-0"
+					>
+						<span className="retention-row-label tw:flex tw:h-9 tw:items-center tw:gap-2 tw:text-sm tw:font-medium tw:text-foreground tw:[&_svg]:size-4 tw:[&_svg]:text-muted-foreground">
 							{category.icon}
 							{category.name}
 						</span>
-						<div className="retention-row-controls tw:flex tw:flex-wrap tw:items-center tw:gap-3">
-							{category.retentionFields.map((field) => (
+						<div className="retention-row-controls tw:flex tw:flex-wrap tw:items-end tw:gap-3">
+							{category.retentionFields.map((field, index) => (
 								<Retention
 									key={field.name}
+									field={index === 0 ? 'total' : 's3'}
 									type={category.type as TTTLType}
 									text={field.name}
 									retentionValue={field.value}
 									setRetentionValue={field.setValue}
 									hide={!!field.hide}
 									isS3Field={'isS3Field' in field && !!field.isS3Field}
-									compact
 								/>
 							))}
 							{!isCloudUserVal && (
-								<Button
-									disabledTooltip={category.save.disabledReason}
-									variant="solid"
-									size="sm"
-									color="primary"
+								<RetentionSaveButton
+									testId={`retention-${categoryType}-save`}
+									disabledReason={category.save.disabledReason}
 									onClick={category.save.modalOpen}
 									disabled={category.save.isDisabled}
 									loading={category.save.isLoading}
 								>
 									{category.save.saveButtonText}
-								</Button>
+								</RetentionSaveButton>
 							)}
 						</div>
 					</div>
 
-					{!isCloudUserVal && (
-						<ActionItemsContainer className="tw:px-5">
-							{category.statusComponent}
-						</ActionItemsContainer>
-					)}
+					{!isCloudUserVal && category.statusComponent}
 
 					{!isCloudUserVal && (
-						<Modal
-							title={t('retention_confirmation')}
-							focusTriggerAfterClose
-							forceRender
-							destroyOnClose
-							closable
-							onCancel={(): void =>
-								onModalToggleHandler(category.name.toLowerCase() as TTTLType)
-							}
-							onOk={(): Promise<void> =>
-								onOkHandler(category.name.toLowerCase() as TTTLType)
-							}
-							centered
+						<RetentionConfirmDialog
 							open={category.save.modal}
-							confirmLoading={category.save.apiLoading}
-						>
-							<p className="retention-modal-description">
-								{t('retention_confirmation_description', {
-									name: category.name.toLowerCase(),
-								})}
-							</p>
-						</Modal>
+							title={t('retention_confirmation')}
+							description={t('retention_confirmation_description', {
+								name: categoryType,
+							})}
+							loading={category.save.apiLoading}
+							onCancel={(): void => onModalToggleHandler(categoryType)}
+							onConfirm={(): Promise<void> => onOkHandler(categoryType)}
+						/>
 					)}
 				</Fragment>
 			);
@@ -720,27 +702,34 @@ function GeneralSettings({
 				</div>
 			)}
 
-			<Panel
+			<ContentPanel
 				title="Retention Controls"
-				testId="retention-controls"
-				bodyClassName="tw:mt-3 tw:border-t tw:border-border tw:pb-1"
-			>
-				{renderConfig}
-			</Panel>
-
-			{(!isCloudUserVal || errorText) && (
-				<ErrorTextContainer>
-					{!isCloudUserVal && (
+				subtitle="How long FuseScope keeps each signal before deleting it."
+				actions={
+					!isCloudUserVal && (
 						<TextToolTip
 							{...{
 								text: `More details on how to set retention period`,
 								url: fuseScopeDocsUrl('/administration/retention/'),
 							}}
 						/>
-					)}
-					{errorText && <ErrorText>{errorText}</ErrorText>}
-				</ErrorTextContainer>
-			)}
+					)
+				}
+				footer={
+					errorText && (
+						<span
+							data-testid="retention-error-text"
+							className="retention-error-text tw:text-xs tw:text-warning-ink"
+						>
+							{errorText}
+						</span>
+					)
+				}
+				divided
+				testId="retention-controls"
+			>
+				{renderConfig}
+			</ContentPanel>
 
 			{isCloudUserVal && <GeneralSettingsCloud />}
 		</SettingsPageShell>

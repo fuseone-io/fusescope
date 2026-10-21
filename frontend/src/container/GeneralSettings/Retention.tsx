@@ -7,18 +7,12 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Input as SignozInput } from '@signozhq/ui/input';
-import { Col, Row, Select } from 'antd';
+import { Input } from 'components/ui/input';
+import { NativeSelect, NativeSelectOption } from 'components/ui/native-select';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { find } from 'lodash-es';
 import { TTTLType } from 'types/api/settings/common';
 
-import {
-	Input,
-	RetentionContainer,
-	RetentionFieldInputContainer,
-	RetentionFieldLabel,
-} from './styles';
 import {
 	convertHoursValueToRelevantUnit,
 	SettingPeriod,
@@ -26,16 +20,14 @@ import {
 	TimeUnitsValues,
 } from './utils';
 
-const { Option } = Select;
-
 function Retention({
 	type,
 	retentionValue,
 	setRetentionValue,
 	text,
 	hide,
+	field,
 	isS3Field = false,
-	compact = false,
 }: RetentionProps): JSX.Element | null {
 	// Filter available units based on type and field
 	const availableUnits = useMemo(
@@ -77,12 +69,6 @@ function Retention({
 			setSelectTimeUnit(initialTimeUnitValue);
 		}
 	}, [initialTimeUnitValue]);
-
-	const menuItems = availableUnits.map((option) => (
-		<Option key={option.value} value={option.value}>
-			{option.key}
-		</Option>
-	));
 
 	const currentSelectedOption = (option: SettingPeriod): void => {
 		const selectedValue = find(availableUnits, (e) => e.value === option)?.value;
@@ -126,53 +112,40 @@ function Retention({
 		return null;
 	}
 
-	if (compact) {
-		return (
-			<div className="retention-input-group">
-				<SignozInput
+	return (
+		<div className="retention-input-group tw:flex tw:flex-col tw:gap-1">
+			<span title={text} className="tw:text-xs tw:text-muted-foreground">
+				{text.split('\n')[0]}
+			</span>
+			<div className="tw:flex">
+				<Input
 					type="number"
 					min={0}
+					aria-label={`${type} ${text}`}
+					data-testid={`retention-${type}-${field}-input`}
 					value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
 					disabled={isCloudUserVal}
 					onChange={(e): void => onChangeHandler(e, setSelectedValue)}
+					className="tw:w-24 tw:rounded-r-none tw:tabular-nums tw:[appearance:textfield] tw:[&::-webkit-inner-spin-button]:appearance-none tw:[&::-webkit-outer-spin-button]:appearance-none"
 				/>
-				<Select
+				<NativeSelect
+					aria-label={`${type} ${text} unit`}
+					data-testid={`retention-${type}-${field}-unit`}
 					value={selectedTimeUnit}
-					onChange={currentSelectedOption}
+					onChange={(e): void =>
+						currentSelectedOption(e.target.value as SettingPeriod)
+					}
 					disabled={isCloudUserVal}
+					className="tw:w-28 tw:-ml-px tw:rounded-l-none"
 				>
-					{menuItems}
-				</Select>
+					{availableUnits.map((option) => (
+						<NativeSelectOption key={option.value} value={option.value}>
+							{option.key}
+						</NativeSelectOption>
+					))}
+				</NativeSelect>
 			</div>
-		);
-	}
-
-	return (
-		<RetentionContainer>
-			<Row justify="space-between">
-				<Col span={12} style={{ display: 'flex' }}>
-					<RetentionFieldLabel>{text}</RetentionFieldLabel>
-				</Col>
-				<Row justify="end">
-					<RetentionFieldInputContainer>
-						<Input
-							value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
-							disabled={isCloudUserVal}
-							onChange={(e): void => onChangeHandler(e, setSelectedValue)}
-							style={{ width: 75 }}
-						/>
-						<Select
-							value={selectedTimeUnit}
-							onChange={currentSelectedOption}
-							disabled={isCloudUserVal}
-							style={{ width: 100 }}
-						>
-							{menuItems}
-						</Select>
-					</RetentionFieldInputContainer>
-				</Row>
-			</Row>
-		</RetentionContainer>
+		</div>
 	);
 }
 
@@ -182,12 +155,12 @@ interface RetentionProps {
 	text: string;
 	setRetentionValue: Dispatch<SetStateAction<number | null>>;
 	hide: boolean;
+	/** Names the input and unit test ids. */
+	field: 'total' | 's3';
 	isS3Field?: boolean;
-	compact?: boolean;
 }
 
 Retention.defaultProps = {
 	isS3Field: false,
-	compact: false,
 };
 export default Retention;
