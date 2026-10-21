@@ -5,12 +5,28 @@ import {
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
 
+/**
+ * The builder's own controls for a query, one per group, for a presenter that
+ * lays them out itself. A part is null when the builder would not show it.
+ */
+export interface QueryEditorParts {
+	dataSource: ReactNode;
+	metric: ReactNode;
+	search: ReactNode;
+	aggregation: ReactNode;
+	functions: ReactNode;
+	addOns: ReactNode;
+}
+
 export interface QueryPresentationArgs {
 	query: IBuilderQuery;
 	index: number;
 	/** The builder's own editor for this query, unchanged. */
 	editor: ReactNode;
+	parts: QueryEditorParts;
 	onToggleVisibility: () => void;
+	/** False where the builder disables its hide toggle (a single raw query). */
+	canToggleVisibility: boolean;
 	/** The query's clone/delete menu, when the builder offers one. */
 	actionsMenu: ReactNode;
 }
