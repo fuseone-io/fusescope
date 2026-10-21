@@ -1,12 +1,18 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
+import removeLocalStorageKey from 'api/browser/localstorage/remove';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import ROUTES from 'constants/routes';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import {
+	PANEL_EDITOR_LAYOUT_KEY,
+	QUERY_PANEL_WIDTH,
+} from '../../DashboardContainer/PanelEditor/PanelEditorLayout/usePanelEditorLayout';
 import { panelEditorMocks, savePanel } from './PanelEditorPage.stories.mocks';
 
 import PanelEditorPage from '../PanelEditorPage';
@@ -248,4 +254,48 @@ export const PanelSavedToast: Story = {
 export const TextPanelSavedToast: Story = {
 	args: { panel: 'new', newPanelKind: 'text' },
 	play: PanelSavedToast.play,
+};
+
+const openAllResultAddOns: Story['play'] = async ({ canvasElement }) => {
+	const canvas = within(canvasElement);
+	const card = await canvas.findByTestId('query-card-A', {}, { timeout: 10000 });
+	const result = within(card).getByTestId('query-section-A-result');
+	if (result.getAttribute('aria-expanded') === 'false') {
+		await userEvent.click(result);
+	}
+	const addOns = within(card).getAllByTestId(/^query-add-on-/);
+	for (const addOn of addOns) {
+		await userEvent.click(addOn);
+	}
+
+	await waitFor(() =>
+		expect(card.querySelectorAll('.add-on-content')).toHaveLength(addOns.length),
+	);
+	await expect(card.scrollWidth).toBeLessThanOrEqual(card.clientWidth);
+};
+
+/**
+ * Every Result option of a query turned on: each row fits the query card at
+ * the query panel's default width.
+ */
+export const ResultOptions: Story = {
+	play: openAllResultAddOns,
+};
+
+/** The Result options at the query panel's narrowest width. */
+export const ResultOptionsNarrow: Story = {
+	beforeEach: () => {
+		setLocalStorageKey(
+			PANEL_EDITOR_LAYOUT_KEY,
+			JSON.stringify({
+				queryWidth: QUERY_PANEL_WIDTH.min,
+				queryCollapsed: false,
+				settingsCollapsed: false,
+			}),
+		);
+		return (): void => {
+			removeLocalStorageKey(PANEL_EDITOR_LAYOUT_KEY);
+		};
+	},
+	play: openAllResultAddOns,
 };

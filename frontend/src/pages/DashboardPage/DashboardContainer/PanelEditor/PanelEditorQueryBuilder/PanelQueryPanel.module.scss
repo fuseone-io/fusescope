@@ -216,6 +216,24 @@
 			}
 		}
 
+		// The builder lays its Result rows out at 420px or wider; here they take
+		// the card's width.
+		.qcard .pq-addons {
+			.selected-add-ons-content {
+				grid-template-columns: minmax(0, 1fr);
+			}
+
+			.add-on-content {
+				min-width: 0;
+			}
+		}
+
+		// The builder sizes a multi-select's search input to max-content, wider
+		// than a narrow card.
+		.qcard .ant-select-multiple .ant-select-selector {
+			overflow: hidden;
+		}
+
 		.qcard .pq-aggregation .query-aggregation-select-container {
 			flex: 1 1 100%;
 			min-width: 0;
@@ -245,6 +263,12 @@
 				align-items: stretch;
 				gap: 4px;
 				min-width: 0;
+			}
+
+			// The builder pins Group By at 340px (!important) or 420px for histograms.
+			.group-by-filter-container {
+				width: 100%;
+				min-width: 0 !important;
 			}
 
 			.metrics-aggregation-section-content-item:has(.group-by-filter-container),
