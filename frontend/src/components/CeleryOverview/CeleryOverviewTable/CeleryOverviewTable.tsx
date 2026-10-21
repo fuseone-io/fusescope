@@ -15,7 +15,6 @@ import {
 	TableColumnType,
 	Tooltip,
 } from 'antd';
-import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
 import type { FilterDropdownProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
@@ -23,6 +22,10 @@ import {
 	getQueueOverview,
 	QueueOverviewResponse,
 } from 'api/messagingQueues/celery/getQueueOverview';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import ShareBar from 'components/PageTemplate/components/ShareBar';
+import TagChip from 'components/PageTemplate/components/TagChip';
+import tableStyles from 'components/MessagingQueues/MQTable.module.scss';
 import { ResizeTable } from 'components/ResizeTable';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
@@ -33,8 +36,6 @@ import { isEmpty } from 'lodash-es';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { formatNumericValue } from 'utils/numericUtils';
-
-import './CeleryOverviewTable.styles.scss';
 
 const INITIAL_PAGE_SIZE = 20;
 
@@ -52,28 +53,39 @@ export type RowData = {
 	[key: string]: string | number;
 };
 
-function ProgressRender(item: string | number): JSX.Element {
+const ERROR_RATE_ALERT = 5;
+
+function ErrorRateRender(item: string | number): JSX.Element {
 	const percent = Number(Number(item).toFixed(1));
 	return (
-		<div className="progress-container">
-			<Progress
-				percent={percent}
-				strokeLinecap="butt"
-				showInfo
-				strokeColor={((): string => {
-					const cpuPercent = percent;
-					if (cpuPercent >= 90) {
-						return Color.BG_SAKURA_500;
-					}
-					if (cpuPercent >= 60) {
-						return Color.BG_AMBER_500;
-					}
-					return Color.BG_FOREST_500;
-				})()}
-				className="progress-bar"
-			/>
-		</div>
+		<ShareBar
+			value={percent}
+			tone={percent >= ERROR_RATE_ALERT ? 'error' : 'primary'}
+			text={`${percent}%`}
+			className="fs-ui tw:font-sans"
+		/>
 	);
+}
+
+function withUnit(unit: string): (item: string | number) => JSX.Element {
+	return function UnitCell(item: string | number): JSX.Element {
+		return (
+			<span className="tw:tabular-nums">
+				{formatNumericValue(item)}
+				<span className="tw:ml-1 tw:text-subtle-foreground">{unit}</span>
+			</span>
+		);
+	};
+}
+
+function monoRender(className: string): (item: string) => JSX.Element {
+	return function TextCell(item: string): JSX.Element {
+		return (
+			<Tooltip placement="topLeft" title={item}>
+				<span className={className}>{item}</span>
+			</Tooltip>
+		);
+	};
 }
 
 const getColumnSearchProps = (
@@ -146,69 +158,63 @@ const getColumnSearchProps = (
 			.includes((value as string).toLowerCase()),
 });
 
-function getColumns(data: RowData[]): TableColumnsType<RowData> {
-	if (data?.length === 0) {
-		return [];
-	}
-
-	const tooltipRender = (item: string): JSX.Element => (
-		<Tooltip placement="topLeft" title={item}>
-			{item}
-		</Tooltip>
+function getColumns(): TableColumnsType<RowData> {
+	const systemRender = (item: string): JSX.Element => (
+		<TagChip className="fs-ui">{item}</TagChip>
 	);
 
 	return [
 		{
-			title: 'SERVICE NAME',
+			title: 'Service',
 			dataIndex: 'service_name',
 			key: 'service_name',
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 200,
+			width: 170,
 			sorter: (a: RowData, b: RowData): number =>
 				String(a.service_name).localeCompare(String(b.service_name)),
-			render: tooltipRender,
+			render: monoRender('tw:font-mono tw:font-medium'),
 			fixed: 'left',
 		},
 		{
-			title: 'SPAN NAME',
+			title: 'Span name',
 			dataIndex: 'span_name',
 			key: 'span_name',
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 200,
+			width: 210,
 			sorter: (a: RowData, b: RowData): number =>
 				String(a.span_name).localeCompare(String(b.span_name)),
-			render: tooltipRender,
+			render: monoRender('tw:font-mono tw:text-xs tw:text-muted-foreground'),
 		},
 		{
-			title: 'MESSAGING SYSTEM',
+			title: 'System',
 			dataIndex: 'messaging_system',
 			key: 'messaging_system',
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 200,
+			width: 100,
 			sorter: (a: RowData, b: RowData): number =>
 				String(a.messaging_system).localeCompare(String(b.messaging_system)),
-			render: tooltipRender,
+			render: systemRender,
 		},
 		{
-			title: 'DESTINATION',
+			title: 'Destination',
 			dataIndex: 'destination',
 			key: 'destination',
 			ellipsis: {
 				showTitle: false,
 			},
-			render: tooltipRender,
-			width: 200,
+			render: monoRender('tw:font-mono tw:text-xs'),
+			width: 150,
 			sorter: (a: RowData, b: RowData): number =>
 				String(a.destination).localeCompare(String(b.destination)),
 		},
 		{
-			title: 'KIND',
+			title: 'Kind',
 			dataIndex: 'kind_string',
 			key: 'kind_string',
 			ellipsis: {
@@ -217,52 +223,54 @@ function getColumns(data: RowData[]): TableColumnsType<RowData> {
 			width: 100,
 			sorter: (a: RowData, b: RowData): number =>
 				String(a.kind_string).localeCompare(String(b.kind_string)),
-			render: tooltipRender,
+			render: monoRender('tw:text-muted-foreground'),
 		},
 		{
-			title: 'ERROR %',
+			title: 'Error %',
 			dataIndex: 'error_percentage',
 			key: 'error_percentage',
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 200,
+			width: 170,
 			sorter: (a: RowData, b: RowData): number => {
 				const aValue = Number(a.error_percentage);
 				const bValue = Number(b.error_percentage);
 				return aValue - bValue;
 			},
-			render: ProgressRender,
+			render: ErrorRateRender,
 		},
 		{
-			title: 'LATENCY (P95) in ms',
+			title: 'p95 latency',
+			align: 'right',
 			dataIndex: 'p95_latency',
 			key: 'p95_latency',
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 100,
+			width: 120,
 			sorter: (a: RowData, b: RowData): number => {
 				const aValue = Number(a.p95_latency);
 				const bValue = Number(b.p95_latency);
 				return aValue - bValue;
 			},
-			render: formatNumericValue,
+			render: withUnit('ms'),
 		},
 		{
-			title: 'THROUGHPUT (ops/s)',
+			title: 'Throughput',
+			align: 'right',
 			dataIndex: 'throughput',
 			key: 'throughput',
 			ellipsis: {
 				showTitle: false,
 			},
-			width: 100,
+			width: 130,
 			sorter: (a: RowData, b: RowData): number => {
 				const aValue = Number(a.throughput);
 				const bValue = Number(b.throughput);
 				return aValue - bValue;
 			},
-			render: formatNumericValue,
+			render: withUnit('ops/s'),
 		},
 	];
 }
@@ -355,8 +363,14 @@ function makeFilters(urlQuery: URLSearchParams): Filter[] {
 
 export default function CeleryOverviewTable({
 	onRowClick,
+	searchText,
+	onSearchChange,
+	selectedRowKey,
 }: {
 	onRowClick: (record: RowData) => void;
+	searchText: string;
+	onSearchChange: (text: string) => void;
+	selectedRowKey?: RowData['key'];
 }): JSX.Element {
 	const [tableData, setTableData] = useState<RowData[]>([]);
 
@@ -392,7 +406,6 @@ export default function CeleryOverviewTable({
 		LOCALSTORAGE.CELERY_OVERVIEW_COLUMNS,
 	);
 
-	const [searchText, setSearchText] = useState('');
 	const searchInput = useRef<InputRef>(null);
 
 	const handleSearch = (
@@ -400,7 +413,7 @@ export default function CeleryOverviewTable({
 		confirm: FilterDropdownProps['confirm'],
 	): void => {
 		confirm();
-		setSearchText(selectedKeys[0]);
+		onSearchChange(selectedKeys[0]);
 	};
 
 	const handleReset = (
@@ -408,7 +421,7 @@ export default function CeleryOverviewTable({
 		confirm: FilterDropdownProps['confirm'],
 	): void => {
 		clearFilters();
-		setSearchText('');
+		onSearchChange('');
 		confirm();
 	};
 
@@ -424,7 +437,7 @@ export default function CeleryOverviewTable({
 	const columns = useMemo(
 		() =>
 			getDraggedColumns<RowData>(
-				getColumns(tableData).map((item) => ({
+				getColumns().map((item) => ({
 					...item,
 					...getColumnSearchProps(
 						searchInput,
@@ -504,13 +517,13 @@ export default function CeleryOverviewTable({
 	}, [JSON.stringify(tableData)]);
 
 	return (
-		<div className="celery-overview-table-container">
-			<Input.Search
-				placeholder="Search across all columns"
-				onChange={(e): void => setSearchText(e.target.value)}
-				value={searchText}
-				allowClear
-			/>
+		<ContentPanel
+			testId="mq-overview-table"
+			divided
+			bodyClassName={tableStyles.skin}
+			title="Producer and consumer operations"
+			subtitle="From spans with messaging.system set, sorted by error rate. Select a row for its rate, errors and latency."
+		>
 			<ResizeTable
 				className="celery-overview-table"
 				pagination={paginationConfig}
@@ -525,14 +538,23 @@ export default function CeleryOverviewTable({
 					),
 				}}
 				locale={{
-					emptyText: isLoading ? null : <Typography.Text>No data</Typography.Text>,
+					emptyText: isLoading ? null : (
+						<Typography.Text>
+							{searchText
+								? `No operations match “${searchText}”.`
+								: 'No producer or consumer operations in this time range.'}
+						</Typography.Text>
+					),
 				}}
 				scroll={{ x: 'max-content' }}
 				showSorterTooltip
 				onDragColumn={handleDragColumn}
 				onRow={(record): { onClick: () => void; className: string } => ({
 					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
+					className:
+						record.key === selectedRowKey
+							? 'clickable-row is-selected'
+							: 'clickable-row',
 				})}
 				tableLayout="fixed"
 				onChange={(_pagination, _filters, sorter): void => {
@@ -542,6 +564,6 @@ export default function CeleryOverviewTable({
 					});
 				}}
 			/>
-		</div>
+		</ContentPanel>
 	);
 }

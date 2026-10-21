@@ -4,14 +4,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { FsChartColor } from 'constants/fuseScopeColors';
-import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetGraphCustomSeries } from 'components/CeleryTask/useGetGraphCustomSeries';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
+import MQChartPanel from 'components/MessagingQueues/MQChartPanel/MQChartPanel';
+import { Button } from 'container/MetricsApplication/Tabs/styles';
 import { QueryParams } from 'constants/query';
 import { ViewMenuAction } from 'container/WidgetCard/config';
 import GridCard from 'container/WidgetCard/Card';
-import { Button } from 'container/MetricsApplication/Tabs/styles';
 import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -141,70 +141,52 @@ export default function OverviewRightPanelGraph({
 		}
 	}, [requestRateStatus, errorRateStatus, avgLatencyStatus]);
 
+	const charts = [
+		{
+			id: 'Celery_request_rate',
+			widget: requestRateWidget,
+			customSeries: getCustomSeries,
+			setStatus: setRequestRateStatus,
+		},
+		{
+			id: 'Celery_error_rate',
+			widget: errorRateWidget,
+			customSeries: getCustomSeries,
+			setStatus: setErrorRateStatus,
+		},
+		{
+			id: 'Celery_avg_latency',
+			widget: avgLatencyWidget,
+			customSeries: undefined,
+			setStatus: setAvgLatencyStatus,
+		},
+	];
+
 	return (
-		<Card className="overview-right-panel-graph-card">
-			<div className="request-rate-card">
-				<Button
-					type="default"
-					size="small"
-					id="Celery_request_rate_button"
-					onClick={(): void => {
-						goToTraces(requestRateWidget);
-					}}
-				>
-					View Traces
-				</Button>
-				<GridCard
-					widget={requestRateWidget}
-					headerMenuList={[...ViewMenuAction]}
-					onDragSelect={onDragSelect}
-					onClickHandler={handleGraphClick('Celery_request_rate')}
-					customSeries={getCustomSeries}
-					dataAvailable={(isDataAvailable: boolean): void => {
-						setRequestRateStatus(isDataAvailable);
-					}}
-				/>
-			</div>
-			<div className="error-rate-card">
-				<Button
-					type="default"
-					size="small"
-					id="Celery_error_rate_button"
-					onClick={(): void => goToTraces(errorRateWidget)}
-				>
-					View Traces
-				</Button>
-				<GridCard
-					widget={errorRateWidget}
-					headerMenuList={[...ViewMenuAction]}
-					onDragSelect={onDragSelect}
-					onClickHandler={handleGraphClick('Celery_error_rate')}
-					customSeries={getCustomSeries}
-					dataAvailable={(isDataAvailable: boolean): void => {
-						setErrorRateStatus(isDataAvailable);
-					}}
-				/>
-			</div>
-			<div className="avg-latency-card">
-				<Button
-					type="default"
-					size="small"
-					id="Celery_avg_latency_button"
-					onClick={(): void => goToTraces(avgLatencyWidget)}
-				>
-					View Traces
-				</Button>
-				<GridCard
-					widget={avgLatencyWidget}
-					headerMenuList={[...ViewMenuAction]}
-					onDragSelect={onDragSelect}
-					onClickHandler={handleGraphClick('Celery_avg_latency')}
-					dataAvailable={(isDataAvailable: boolean): void => {
-						setAvgLatencyStatus(isDataAvailable);
-					}}
-				/>
-			</div>
-		</Card>
+		<div className="tw:flex tw:flex-col tw:gap-4">
+			{charts.map(({ id, widget, customSeries, setStatus }) => (
+				<MQChartPanel key={id} testId={id} height="medium">
+					<Button
+						type="default"
+						size="small"
+						id={`${id}_button`}
+						onClick={(): void => goToTraces(widget)}
+					>
+						View Traces
+					</Button>
+					<GridCard
+						widget={widget}
+						headerMenuList={[...ViewMenuAction]}
+						onDragSelect={onDragSelect}
+						onClickHandler={handleGraphClick(id)}
+						customSeries={customSeries}
+						dataAvailable={(isDataAvailable: boolean): void => {
+							setStatus(isDataAvailable);
+						}}
+					/>
+				</MQChartPanel>
+			))}
+		</div>
 	);
 }
 
