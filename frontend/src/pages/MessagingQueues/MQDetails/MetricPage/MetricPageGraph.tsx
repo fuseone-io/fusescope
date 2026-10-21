@@ -3,11 +3,8 @@ import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
 import GridCard from 'container/WidgetCard/Card';
-import { Card } from 'container/WidgetCard/styles';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { UpdateTimeInterval } from 'store/actions';
 import { Widgets } from 'types/api/widgets/widget';
@@ -25,7 +22,6 @@ function MetricPageGridGraph({
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
-	const isDarkMode = useIsDarkMode();
 
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
@@ -45,18 +41,14 @@ function MetricPageGridGraph({
 	);
 
 	return (
-		<Card
-			isDarkMode={isDarkMode}
-			$panelType={PANEL_TYPES.TIME_SERIES}
-			className="metric-graph"
-		>
+		<div className="metric-graph">
 			<GridCard
 				widget={widgetData}
 				headerMenuList={[...ViewMenuAction]}
 				onDragSelect={onDragSelect}
 				dataAvailable={checkIfDataExists}
 			/>
-		</Card>
+		</div>
 	);
 }
 

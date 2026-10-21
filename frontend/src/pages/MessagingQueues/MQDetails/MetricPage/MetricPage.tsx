@@ -1,11 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import cx from 'classnames';
-import { CardContainer } from 'container/WidgetCard/styles';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronDown, ChevronUp } from '@signozhq/icons';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Widgets } from 'types/api/widgets/widget';
 
 import MetricColumnGraphs from './MetricColumnGraphs';
@@ -24,6 +21,7 @@ import {
 import './MetricPage.styles.scss';
 
 interface CollapsibleMetricSectionProps {
+	sectionKey: string;
 	title: string;
 	description: string;
 	graphCount: Widgets[];
@@ -33,6 +31,7 @@ interface CollapsibleMetricSectionProps {
 }
 
 function CollapsibleMetricSection({
+	sectionKey,
 	title,
 	description,
 	graphCount,
@@ -40,39 +39,45 @@ function CollapsibleMetricSection({
 	onToggle,
 	checkIfDataExists,
 }: CollapsibleMetricSectionProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
+	const contentId = `metric-section-${sectionKey}`;
 	return (
-		<div className="metric-page-container">
-			<CardContainer className="row-card" isDarkMode={isDarkMode}>
-				<div className={cx('row-panel')}>
-					<div className="row-panel-section">
-						<Typography.Text className="section-title">{title}</Typography.Text>
-						{isCollapsed ? (
-							<ChevronDown size={14} onClick={onToggle} className="row-icon" />
-						) : (
-							<ChevronUp size={14} onClick={onToggle} className="row-icon" />
-						)}
-					</div>
-				</div>
-			</CardContainer>
+		<ContentPanel
+			testId={`metric-section-${sectionKey}`}
+			className="metric-page-container"
+			bodyClassName={isCollapsed ? 'tw:hidden' : 'metric-page-grid'}
+			title={
+				<button
+					type="button"
+					aria-expanded={!isCollapsed}
+					aria-controls={contentId}
+					onClick={onToggle}
+					className="tw:-ml-1 tw:flex tw:cursor-pointer tw:items-center tw:gap-2 tw:rounded-md tw:border-0 tw:bg-transparent tw:px-1 tw:text-sm tw:font-semibold tw:text-foreground tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:outline-none"
+				>
+					{isCollapsed ? (
+						<ChevronRight className="tw:size-4" aria-hidden />
+					) : (
+						<ChevronDown className="tw:size-4" aria-hidden />
+					)}
+					{title}
+					<span className="tw:text-xs tw:font-normal tw:text-subtle-foreground">
+						{graphCount.length} charts
+					</span>
+				</button>
+			}
+			subtitle={<span className="tw:pl-7">{description}</span>}
+		>
 			{!isCollapsed && (
-				<>
-					<Typography.Text className="graph-description">
-						{description}
-					</Typography.Text>
-					<div className="metric-page-grid">
-						{graphCount.map((widgetData) => (
-							<MetricPageGridGraph
-								key={`graph-${widgetData.id}`}
-								widgetData={widgetData}
-								checkIfDataExists={checkIfDataExists}
-							/>
-						))}
-					</div>
-				</>
+				<div id={contentId} className="tw:contents">
+					{graphCount.map((widgetData) => (
+						<MetricPageGridGraph
+							key={`graph-${widgetData.id}`}
+							widgetData={widgetData}
+							checkIfDataExists={checkIfDataExists}
+						/>
+					))}
+				</div>
 			)}
-		</div>
+		</ContentPanel>
 	);
 }
 
@@ -145,6 +150,7 @@ function MetricPage(): JSX.Element {
 			{metricSections.map(({ key, title, description, graphCount }) => (
 				<CollapsibleMetricSection
 					key={key}
+					sectionKey={key}
 					title={title}
 					description={description}
 					graphCount={graphCount}

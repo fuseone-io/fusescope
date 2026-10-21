@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MessagingQueuesViewTypeOptions } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -39,11 +39,30 @@ const untilLoaded = { timeout: 15_000 };
  * the producer, consumer and network latency tables for the co-ordinate that is
  * selected on the graph.
  */
-export const Default: Story = {};
+export const Default: Story = {
+	play: async (): Promise<void> => {
+		const sheet = await screen.findByTestId(
+			'mq-detail-sheet',
+			undefined,
+			untilLoaded,
+		);
+		await expect(
+			within(sheet).getByRole('heading', { name: 'Producer Details' }),
+		).toBeInTheDocument();
+	},
+};
 
-/** The same view before anything on the graph has been clicked. */
+/** The same view before anything on the graph has been clicked: no sheet. */
 export const NothingSelected: Story = {
 	args: { selected: false },
+	play: async ({ canvasElement }): Promise<void> => {
+		await within(canvasElement).findByTestId(
+			'mq-consumer-lag-chart',
+			undefined,
+			untilLoaded,
+		);
+		await expect(screen.queryByTestId('mq-detail-sheet')).not.toBeInTheDocument();
+	},
 };
 
 /**
@@ -51,16 +70,22 @@ export const NothingSelected: Story = {
  * detail tab with a client and an instance of its own.
  */
 export const NetworkLatency: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
+	play: async (): Promise<void> => {
+		const sheet = await screen.findByTestId(
+			'mq-detail-sheet',
+			undefined,
+			untilLoaded,
+		);
 
 		await userEvent.click(
-			await canvas.findByText('Network Latency', undefined, untilLoaded),
+			within(sheet).getByRole('tab', { name: 'Network Latency' }),
 		);
-		// The table refetches for the tab, and titles itself after it: the label is
-		// on the toggle and on the table once the swap is through.
+		// The sheet titles itself after the tab once the swap is through.
 		await waitFor(
-			() => expect(canvas.getAllByText('Network Latency')).toHaveLength(2),
+			() =>
+				expect(
+					within(sheet).getByRole('heading', { name: 'Network Latency' }),
+				).toBeInTheDocument(),
 			untilLoaded,
 		);
 	},

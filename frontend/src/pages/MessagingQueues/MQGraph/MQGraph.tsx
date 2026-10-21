@@ -3,13 +3,11 @@ import { useCallback, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
+import MQChartPanel from 'components/MessagingQueues/MQChartPanel/MQChartPanel';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
 import GridCard from 'container/WidgetCard/Card';
-import { Card } from 'container/WidgetCard/styles';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { UpdateTimeInterval } from 'store/actions';
 
@@ -20,8 +18,6 @@ import {
 } from '../MessagingQueuesUtils';
 
 function MessagingQueuesGraph(): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
 	const urlQuery = useUrlQuery();
 	const consumerGrp = urlQuery.get(QueryParams.consumerGrp) || '';
 	const topic = urlQuery.get(QueryParams.topic) || '';
@@ -79,10 +75,10 @@ function MessagingQueuesGraph(): JSX.Element {
 		}
 	};
 	return (
-		<Card
-			isDarkMode={isDarkMode}
-			$panelType={PANEL_TYPES.TIME_SERIES}
-			className="mq-graph"
+		<MQChartPanel
+			height="large"
+			testId="mq-consumer-lag-chart"
+			footer="Select a point to see who produced and consumed at that time."
 		>
 			<GridCard
 				widget={widgetData}
@@ -94,7 +90,7 @@ function MessagingQueuesGraph(): JSX.Element {
 				customTooltipElement={messagingQueueCustomTooltipText()}
 				dataAvailable={checkIfDataExists}
 			/>
-		</Card>
+		</MQChartPanel>
 	);
 }
 

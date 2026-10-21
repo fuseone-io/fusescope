@@ -1,36 +1,36 @@
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { isModifierKeyPressed } from 'utils/app';
-import { openInNewTab } from 'utils/navigation';
 
 import {
-	MessagingQueuesViewType,
 	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
 import DropRateView from '../MQDetails/DropRateView/DropRateView';
-import MessagingQueueOverview from '../MQDetails/MessagingQueueOverview';
+import EvaluationTimeSelector from '../MQDetails/DropRateView/EvaluationTimeSelector';
+import MessagingQueueOverview, {
+	ProducerLatencyTabs,
+} from '../MQDetails/MessagingQueueOverview';
 import MetricPage from '../MQDetails/MetricPage/MetricPage';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
 import MessagingQueuesGraph from '../MQGraph/MQGraph';
-
-import '../MessagingQueues.styles.scss';
+import { KAFKA_VIEW_OPTIONS } from './constants';
 
 function MQDetailPage(): JSX.Element {
 	const history = useHistory();
 	const [selectedView, setSelectedView] =
 		useState<MessagingQueuesViewTypeOptions>(
-			MessagingQueuesViewType.consumerLag.value,
+			MessagingQueuesViewTypeOptions.ConsumerLag,
 		);
 
 	const [producerLatencyOption, setproducerLatencyOption] =
 		useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
+
+	const [dropRateInterval, setDropRateInterval] = useState<string>('');
 
 	const mqServiceView = useUrlQuery().get(
 		QueryParams.mqServiceView,
@@ -56,95 +56,53 @@ function MQDetailPage(): JSX.Element {
 		});
 	};
 
-	const showMessagingQueueDetails =
-		selectedView !== MessagingQueuesViewType.dropRate.value &&
-		selectedView !== MessagingQueuesViewType.metricPage.value;
-
-	const handleBackClick = (
-		event?: React.MouseEvent | React.KeyboardEvent,
-	): void => {
-		if (event && isModifierKeyPressed(event as React.MouseEvent)) {
-			openInNewTab(ROUTES.MESSAGING_QUEUES_KAFKA);
-		} else {
-			history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
-		}
-	};
+	const isView = (view: MessagingQueuesViewTypeOptions): boolean =>
+		selectedView === view;
 
 	return (
-		<div className="messaging-queue-container">
-			<div className="messaging-header">
-				<div className="header-config">
-					<div
-						onClick={handleBackClick}
-						className="message-queue-text"
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter' || e.key === ' ') {
-								handleBackClick(e);
-							}
-						}}
-						role="button"
-						tabIndex={0}
-					>
-						Kafka / views /
-					</div>
-					<Select
-						className="messaging-queue-options"
-						defaultValue={MessagingQueuesViewType.consumerLag.value}
-						popupClassName="messaging-queue-options-popup"
-						onChange={(value): void => {
-							setSelectedView(value);
-							updateUrlQuery({ [QueryParams.mqServiceView]: value });
-						}}
-						value={selectedView}
-						options={[
-							{
-								label: MessagingQueuesViewType.consumerLag.label,
-								value: MessagingQueuesViewType.consumerLag.value,
-							},
-							{
-								label: MessagingQueuesViewType.partitionLatency.label,
-								value: MessagingQueuesViewType.partitionLatency.value,
-							},
-							{
-								label: MessagingQueuesViewType.producerLatency.label,
-								value: MessagingQueuesViewType.producerLatency.value,
-							},
-							{
-								label: MessagingQueuesViewType.dropRate.label,
-								value: MessagingQueuesViewType.dropRate.value,
-							},
-							{
-								label: MessagingQueuesViewType.metricPage.label,
-								value: MessagingQueuesViewType.metricPage.value,
-							},
-						]}
-					/>
-				</div>
-			</div>
-			{selectedView === MessagingQueuesViewType.consumerLag.value ? (
-				<div className="messaging-queue-main-graph">
+		<div className="tw:flex tw:flex-col tw:gap-4" data-testid="mq-detail-page">
+			<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-3 tw:gap-y-2">
+				<SegmentedControl
+					label="Kafka view"
+					value={selectedView}
+					options={KAFKA_VIEW_OPTIONS}
+					onChange={(value): void => {
+						setSelectedView(value);
+						updateUrlQuery({ [QueryParams.mqServiceView]: value });
+					}}
+				/>
+				<div className="tw:flex-1" />
+				{isView(MessagingQueuesViewTypeOptions.ConsumerLag) && (
 					<MessagingQueuesConfigOptions />
-					<MessagingQueuesGraph />
-				</div>
-			) : selectedView === MessagingQueuesViewType.dropRate.value ? (
-				<DropRateView />
-			) : selectedView === MessagingQueuesViewType.metricPage.value ? (
-				<MetricPage />
-			) : (
+				)}
+				{isView(MessagingQueuesViewTypeOptions.DropRate) && (
+					<EvaluationTimeSelector setInterval={setDropRateInterval} />
+				)}
+				{isView(MessagingQueuesViewTypeOptions.ProducerLatency) && (
+					<ProducerLatencyTabs
+						option={producerLatencyOption}
+						setOption={setproducerLatencyOption}
+					/>
+				)}
+			</div>
+			{isView(MessagingQueuesViewTypeOptions.ConsumerLag) && (
+				<MessagingQueuesGraph />
+			)}
+			{isView(MessagingQueuesViewTypeOptions.DropRate) && (
+				<DropRateView interval={dropRateInterval} />
+			)}
+			{isView(MessagingQueuesViewTypeOptions.MetricPage) && <MetricPage />}
+			{(isView(MessagingQueuesViewTypeOptions.PartitionLatency) ||
+				isView(MessagingQueuesViewTypeOptions.ProducerLatency)) && (
 				<MessagingQueueOverview
 					selectedView={selectedView}
 					option={producerLatencyOption}
-					setOption={setproducerLatencyOption}
 				/>
 			)}
-			{showMessagingQueueDetails && (
-				<div className="messaging-queue-details">
-					<MessagingQueuesDetails
-						selectedView={selectedView}
-						producerLatencyOption={producerLatencyOption}
-					/>
-				</div>
-			)}
+			<MessagingQueuesDetails
+				selectedView={selectedView}
+				producerLatencyOption={producerLatencyOption}
+			/>
 		</div>
 	);
 }

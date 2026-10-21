@@ -90,11 +90,9 @@ function EvaluationTimeSelector({
 
 	return (
 		<div className="evaluation-time-selector">
-			<Typography.Text className="eval-title">
-				Evaluation Interval:
-			</Typography.Text>
+			<Typography.Text className="eval-title">Evaluation interval</Typography.Text>
 			<Select
-				style={{ width: 220 }}
+				style={{ width: 180 }}
 				placeholder="Select time interval (ms)"
 				value={selectedInterval}
 				onChange={handleSelectChange}

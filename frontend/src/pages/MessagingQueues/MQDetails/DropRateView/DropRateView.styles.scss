@@ -4,19 +4,15 @@
 	gap: 8px;
 
 	.eval-title {
-		font-family: Inter;
-		font-size: 14px;
-		font-style: normal;
-		font-weight: 500;
-		line-height: 28px;
-		color: var(--l2-foreground);
+		color: var(--fs-muted-foreground);
+		font-size: 12px;
+		white-space: nowrap;
 	}
 
-	.ant-selector {
-		background-color: var(--l2-background);
-		border-radius: 4px;
-		border: 1px solid var(--l1-border);
-		box-shadow: none;
+	.ant-select-selector {
+		height: 36px !important;
+		align-items: center;
+		border-radius: 8px !important;
 	}
 }
 

@@ -18,14 +18,12 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
 import {
-	ConsumerLagDetailTitle,
 	convertToTitleCase,
 	MessagingQueueServiceDetailType,
 	MessagingQueuesViewType,
 	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 	RowData,
-	SelectedTimelineQuery,
 	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -35,9 +33,21 @@ import { formatNumericValue } from 'utils/numericUtils';
 
 import { getTableDataForProducerLatencyOverview } from './MQTableUtils';
 
+import tableStyles from 'components/MessagingQueues/MQTable.module.scss';
+
 import './MQTables.styles.scss';
 
 const INITIAL_PAGE_SIZE = 10;
+
+const NUMERIC_COLUMNS = [
+	'p99',
+	'error_rate',
+	'throughput',
+	'avg_msg_size',
+	'error_percentage',
+	'ingestion_rate',
+	'byte_rate',
+];
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function getColumns(
@@ -64,15 +74,8 @@ export function getColumns(
 		title: convertToTitleCase(column.name),
 		dataIndex: column.name,
 		key: column.name,
-		render: [
-			'p99',
-			'error_rate',
-			'throughput',
-			'avg_msg_size',
-			'error_percentage',
-			'ingestion_rate',
-			'byte_rate',
-		].includes(column.name)
+		align: NUMERIC_COLUMNS.includes(column.name) ? 'right' : undefined,
+		render: NUMERIC_COLUMNS.includes(column.name)
 			? formatNumericValue
 			: (text: string): ColumnTypeRender<Record<string, unknown>> => ({
 					children:
@@ -154,15 +157,6 @@ function MessagingQueuesTable({
 	const { notifications } = useNotifications();
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
-	const timelineQuery = decodeURIComponent(
-		urlQuery.get(QueryParams.selectedTimelineQuery) || '',
-	);
-
-	const timelineQueryData: SelectedTimelineQuery = useMemo(
-		() => (timelineQuery ? JSON.parse(timelineQuery) : {}),
-		[timelineQuery],
-	);
-
 	const configDetails = decodeURIComponent(
 		urlQuery.get(QueryParams.configDetail) || '',
 	);
@@ -263,15 +257,6 @@ function MessagingQueuesTable({
 		}
 	};
 
-	const subtitle =
-		selectedView === MessagingQueuesViewType.consumerLag.value
-			? `${timelineQueryData?.group || ''} ${timelineQueryData?.topic || ''} ${
-					timelineQueryData?.partition || ''
-				}`
-			: `${configDetailQueryData?.service_name || ''} ${
-					configDetailQueryData?.topic || ''
-				} ${configDetailQueryData?.partition || ''}`;
-
 	const prevTableDataRef = useRef<string>();
 
 	useEffect(() => {
@@ -310,7 +295,7 @@ function MessagingQueuesTable({
 	}, [currentTab, JSON.stringify(tableData), selectedView]);
 
 	return (
-		<div className="mq-tables-container">
+		<div className={cx('mq-tables-container', tableStyles.skin)}>
 			{!validConfigPresent ? (
 				<div className="no-data-style">
 					<Typography.Text>
@@ -325,38 +310,30 @@ function MessagingQueuesTable({
 					<Typography.Text>{error?.message || SOMETHING_WENT_WRONG}</Typography.Text>
 				</div>
 			) : (
-				<>
-					{currentTab && (
-						<div className="mq-table-title">
-							{ConsumerLagDetailTitle[currentTab]}
-							<div className="mq-table-subtitle">{subtitle}</div>
-						</div>
+				<Table
+					className={cx(
+						'mq-table',
+						type !== 'Detail' ? 'mq-overview-row-clickable' : 'pagination-left',
 					)}
-					<Table
-						className={cx(
-							'mq-table',
-							type !== 'Detail' ? 'mq-overview-row-clickable' : 'pagination-left',
-						)}
-						pagination={paginationConfig}
-						size="middle"
-						columns={columns}
-						dataSource={tableData}
-						bordered={false}
-						loading={isLoading}
-						onRow={(record): any =>
-							type !== 'Detail'
-								? {
-										onClick: (): void => onRowClick(record),
-									}
-								: {}
-						}
-						rowClassName={(record): any =>
-							selectedRowKeyGenerator(record) === selectedRowKey
-								? 'ant-table-row-selected'
-								: ''
-						}
-					/>
-				</>
+					pagination={paginationConfig}
+					size="middle"
+					columns={columns}
+					dataSource={tableData}
+					bordered={false}
+					loading={isLoading}
+					onRow={(record): any =>
+						type !== 'Detail'
+							? {
+									onClick: (): void => onRowClick(record),
+								}
+							: {}
+					}
+					rowClassName={(record): any =>
+						selectedRowKeyGenerator(record) === selectedRowKey
+							? 'ant-table-row-selected'
+							: ''
+					}
+				/>
 			)}
 		</div>
 	);
