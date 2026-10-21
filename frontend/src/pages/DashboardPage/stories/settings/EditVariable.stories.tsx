@@ -44,13 +44,14 @@ export default meta;
 type Story = StoryObj<DashboardArgs>;
 
 /**
- * `$environment`: a comma-separated list with one value by default. The preview
- * stays empty until the options are edited.
+ * `$environment`: a comma-separated list with one value by default, its options
+ * previewed as soon as the editor opens.
  */
 export const Custom: Story = {
 	play: async ({ canvasElement }) => {
 		await openVariableEditor(canvasElement, 'environment');
 		await screen.findByDisplayValue('production,staging,development');
+		await findPreviewValue('staging');
 	},
 };
 

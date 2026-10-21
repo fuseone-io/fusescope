@@ -56,6 +56,12 @@ const readDefaultValue = (model: VariableFormModel): string => {
 	return Array.isArray(dv) ? (dv[0] ?? '') : (dv ?? '');
 };
 
+const customPreview = (
+	type: VariableType,
+	customValue: string,
+): (string | number)[] =>
+	type === 'CUSTOM' && customValue ? commaValuesParser(customValue) : [];
+
 /** Form state, derivations and handlers for the variable editor. */
 export function useVariableForm({
 	initial,
@@ -66,7 +72,9 @@ export function useVariableForm({
 	const [model, setModel] = useState<VariableFormModel>(initial);
 	// Raw, unsorted preview; `previewValues` applies the chosen sort so a shown
 	// preview re-sorts when Sort changes.
-	const [rawPreview, setRawPreview] = useState<(string | number)[]>([]);
+	const [rawPreview, setRawPreview] = useState<(string | number)[]>(() =>
+		customPreview(initial.type, initial.customValue),
+	);
 	const [previewError, setPreviewError] = useState<string | null>(null);
 	const [cycleError, setCycleError] = useState<string | null>(null);
 	// In add mode, mirror the chosen attribute into the name until the user types.
@@ -77,7 +85,7 @@ export function useVariableForm({
 
 	useEffect(() => {
 		setModel(initial);
-		setRawPreview([]);
+		setRawPreview(customPreview(initial.type, initial.customValue));
 		setPreviewError(null);
 		setCycleError(null);
 		setNameTouched(false);
@@ -163,7 +171,7 @@ export function useVariableForm({
 
 	const selectType = (type: VariableType): void => {
 		set({ type });
-		setRawPreview([]);
+		setRawPreview(customPreview(type, model.customValue));
 		setPreviewError(null);
 	};
 

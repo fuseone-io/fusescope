@@ -145,3 +145,32 @@ describe('useVariableForm default reset — CUSTOM (on options edit)', () => {
 		expect(result.current.defaultValue).toBe('foo');
 	});
 });
+
+describe('useVariableForm preview — CUSTOM', () => {
+	it.each([
+		{
+			name: 'parses the saved options on open',
+			customValue: 'a, b, c',
+			expected: ['a', 'b', 'c'],
+		},
+		{
+			name: 'is empty when there are no saved options',
+			customValue: '',
+			expected: [],
+		},
+	])('$name', ({ customValue, expected }) => {
+		const { result } = renderForm(
+			args(initial({ type: 'CUSTOM', customValue, defaultValue: undefined })),
+		);
+
+		expect(result.current.previewValues).toStrictEqual(expected);
+	});
+
+	it('shows the saved options when switching back to Custom', () => {
+		const { result } = renderForm(args(initial({ customValue: 'x, y' })));
+
+		expect(result.current.previewValues).toStrictEqual([]);
+		act(() => result.current.selectType('CUSTOM'));
+		expect(result.current.previewValues).toStrictEqual(['x', 'y']);
+	});
+});
