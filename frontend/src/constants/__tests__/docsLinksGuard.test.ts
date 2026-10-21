@@ -59,6 +59,8 @@ const DOCUMENTED_TOPICS = new Set([
 	'/metrics-management/metrics-explorer',
 	'/metrics-management/metrics-explorer#saved-views-in-metrics-explorer',
 	'/apm-and-distributed-tracing/application-details',
+	'/alerts-management/apdex-alerts',
+	'/userguide/metrics',
 	'/userguide/manage-dashboards',
 	'/dashboards/interactivity#cross-panel-sync',
 	'/userguide/manage-variables#supported-variable-types',
@@ -93,7 +95,7 @@ describe('documentation links', () => {
 			.filter((file) => HARDCODED_DOCS_URL.test(readFileSync(file, 'utf8')))
 			.map((file) => relative(SRC, file).split(sep).join('/'));
 
-		expect(offenders).toEqual([]);
+		expect(offenders).toStrictEqual([]);
 	});
 
 	it('point topics documented on the FuseScope docs site there', () => {
@@ -104,6 +106,6 @@ describe('documentation links', () => {
 				.map((path) => `${relative(SRC, file).split(sep).join('/')}: ${path}`),
 		);
 
-		expect(offenders).toEqual([]);
+		expect(offenders).toStrictEqual([]);
 	});
 });

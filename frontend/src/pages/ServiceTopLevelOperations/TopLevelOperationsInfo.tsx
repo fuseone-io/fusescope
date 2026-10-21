@@ -1,4 +1,4 @@
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { Info } from 'lucide-react';
 
 function TopLevelOperationsInfo(): JSX.Element {
@@ -13,7 +13,9 @@ function TopLevelOperationsInfo(): JSX.Element {
 				FuseScope calculates the RED metrics for a service using the entry-point
 				spans. For more details, you can check out our
 				<a
-					href={signozDocsUrl('/userguide/metrics/')}
+					href={fuseScopeDocsUrl(
+						'/apm/services/#entry-points-and-internal-operations',
+					)}
 					target="_blank"
 					rel="noreferrer"
 					className="tw:font-medium tw:underline"
