@@ -1,6 +1,6 @@
 # 0003 · Real User Monitoring (RUM)
 
-- Status: proposed
+- Status: accepted (2026-10-21; open decisions resolved as recommended)
 - Deciders: FuseOne maintainers. SDKs, ingestion, auth and storage span several PRs and repos.
 
 ## Context
@@ -159,9 +159,9 @@ Each phase ships behind a feature flag and ends with docs and an e2e test.
 | **5 · Cross-platform** | React Native, Flutter, as demand appears | — |
 | **Later** | session replay, if accepted; rollup MVs, if phase 0 or 2 shows they are needed | — |
 
-## Open decisions
+## Resolved decisions
 
-| # | Question | Recommendation |
+| # | Question | Decision |
 |---|---|---|
 | 1 | Licence of the SDK distributions | **Apache-2.0**, matching upstream OpenTelemetry and keeping its NOTICE; the backend and UI stay MIT |
 | 2 | Public application keys as a new auth model (decision 4) | accept |
