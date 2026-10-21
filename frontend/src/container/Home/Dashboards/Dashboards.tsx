@@ -6,12 +6,13 @@ import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/fuseScope.schemas';
-import StatusBadge from 'components/PageTemplate/components/StatusBadge';
+import TagChip from 'components/PageTemplate/components/TagChip';
 import { Button } from 'components/ui/button';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { LayoutDashboard, Plus } from 'lucide-react';
+import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
@@ -20,12 +21,17 @@ import HomeEmptyState from '../components/HomeEmptyState';
 import HomeListItem from '../components/HomeListItem';
 import HomeWidget from '../components/HomeWidget';
 import WidgetLink from '../components/WidgetLink';
+import { timeAgo } from '../utils';
+
+const VISIBLE_TAGS = 2;
 
 // The five most-recent dashboards from the V2 list API.
 interface RecentDashboard {
 	id: string;
 	title: string;
 	tags: string[];
+	image: string;
+	updatedAt?: string;
 }
 
 export default function Dashboards({
@@ -55,6 +61,8 @@ export default function Dashboards({
 				id: d.id,
 				title: d.spec?.display?.name ?? d.name,
 				tags: (d.tags ?? []).map((t) => (t.value ? `${t.key}:${t.value}` : t.key)),
+				image: resolveDashboardImage(d.image),
+				updatedAt: d.updatedAt,
 			})),
 		[dashboardsList],
 	);
@@ -88,13 +96,14 @@ export default function Dashboards({
 	return (
 		<HomeWidget
 			title="Dashboards"
+			subtitle={dashboardsExist ? 'Recently updated' : undefined}
 			testId="home-dashboards"
 			pending={isDashboardListLoading || isDashboardListError}
 			actions={
 				dashboardsExist && (
 					<WidgetLink
 						to={ROUTES.ALL_DASHBOARD}
-						label="All Dashboards"
+						label="All dashboards"
 						onClick={(): void => {
 							void logEvent('Homepage: All dashboards clicked', {});
 						}}
@@ -107,14 +116,28 @@ export default function Dashboards({
 					{sortedDashboards.slice(0, 5).map((dashboard) => (
 						<HomeListItem
 							key={dashboard.id}
-							icon={<LayoutDashboard />}
+							icon={
+								<img src={dashboard.image} alt="" className="tw:block tw:size-4" />
+							}
 							label={dashboard.title}
 							onOpen={(event): void => openDashboard(dashboard, event)}
-							trailing={dashboard.tags.map((tag) => (
-								<StatusBadge key={tag} tone="neutral">
-									{tag}
-								</StatusBadge>
-							))}
+							trailing={
+								<>
+									{dashboard.tags.slice(0, VISIBLE_TAGS).map((tag) => (
+										<TagChip key={tag} className="tw:hidden tw:sm:inline-flex">
+											{tag}
+										</TagChip>
+									))}
+									{dashboard.tags.length > VISIBLE_TAGS && (
+										<span className="tw:hidden tw:text-xs tw:text-subtle-foreground tw:sm:inline">
+											+{dashboard.tags.length - VISIBLE_TAGS}
+										</span>
+									)}
+									<span className="tw:ml-1 tw:text-xs tw:whitespace-nowrap tw:text-subtle-foreground tw:tabular-nums">
+										{timeAgo(dashboard.updatedAt)}
+									</span>
+								</>
+							}
 						/>
 					))}
 				</ul>

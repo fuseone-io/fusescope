@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import { Skeleton } from 'components/ui/skeleton';
-import { cn } from 'lib/utils';
 
 const SKELETON_ROWS = ['a', 'b', 'c', 'd'];
 
@@ -26,18 +25,17 @@ function HomeWidget({
 	children,
 }: HomeWidgetProps): JSX.Element {
 	return (
-		<Panel
+		<ContentPanel
 			title={title}
 			subtitle={subtitle}
 			actions={pending ? undefined : actions}
 			testId={testId}
-			className={cn('tw:overflow-hidden', className)}
-			bodyClassName="tw:pt-3"
+			className={className}
 		>
 			{pending ? (
 				<div
 					data-testid="home-widget-loading"
-					className="fs-ui tw:flex tw:flex-col tw:gap-3 tw:px-5 tw:pb-5"
+					className="fs-ui tw:flex tw:flex-col tw:gap-3 tw:px-5 tw:pt-1 tw:pb-5"
 				>
 					{SKELETON_ROWS.map((row) => (
 						<Skeleton key={row} className="tw:h-5 tw:bg-muted" />
@@ -46,7 +44,7 @@ function HomeWidget({
 			) : (
 				children
 			)}
-		</Panel>
+		</ContentPanel>
 	);
 }
 

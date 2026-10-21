@@ -6,8 +6,8 @@ import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/fuseScope.schemas';
+import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 import { Button } from 'components/ui/button';
-import { fuseScopeDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
 import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
@@ -15,14 +15,21 @@ import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
 
-import { ArrowRight, Bookmark, Compass } from 'lucide-react';
+import { ArrowRight, Bookmark } from 'lucide-react';
 
 import HomeEmptyState from '../components/HomeEmptyState';
 import HomeListItem from '../components/HomeListItem';
 import HomeWidget from '../components/HomeWidget';
 import WidgetLink from '../components/WidgetLink';
-import SavedViewsTabs from './SavedViewsTabs';
+import { savedViewsDocsLink, timeAgo } from '../utils';
+
+const SIGNAL_OPTIONS = [
+	{ value: 'logs', label: 'Logs' },
+	{ value: 'traces', label: 'Traces' },
+	{ value: 'metrics', label: 'Metrics' },
+];
 
 export default function SavedViews({
 	onUpdateChecklistDoneItem,
@@ -177,7 +184,7 @@ export default function SavedViews({
 							}}
 							className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
 						>
-							Get Started
+							Get started
 							<ArrowRight aria-hidden="true" />
 						</Link>
 					</Button>
@@ -192,11 +199,7 @@ export default function SavedViews({
 								entity: selectedEntity,
 							});
 
-							window.open(
-								fuseScopeDocsUrl('/explore/metrics/#chart-a-metric'),
-								'_blank',
-								'noopener noreferrer',
-							);
+							openInNewTab(savedViewsDocsLink(selectedEntity));
 						}
 			}
 		/>
@@ -207,11 +210,24 @@ export default function SavedViews({
 			{selectedEntityViews.slice(0, 5).map((view) => (
 				<HomeListItem
 					key={view.id}
-					icon={<Bookmark />}
+					icon={
+						<span className="tw:flex tw:size-4 tw:items-center tw:justify-center">
+							<span
+								className="tw:size-2 tw:rounded-full tw:bg-primary"
+								style={
+									view.spec.display?.color
+										? { background: view.spec.display.color }
+										: undefined
+								}
+							/>
+						</span>
+					}
 					label={view.spec.displayName}
 					onOpen={(): void => handleRedirectQuery(view)}
 					trailing={
-						<Compass aria-hidden="true" className="tw:size-4 tw:text-primary" />
+						<span className="tw:text-xs tw:whitespace-nowrap tw:text-subtle-foreground tw:tabular-nums">
+							{timeAgo(view.updatedAt ?? view.createdAt)}
+						</span>
 					}
 				/>
 			))}
@@ -220,7 +236,7 @@ export default function SavedViews({
 
 	return (
 		<HomeWidget
-			title="Saved Views"
+			title="Saved views"
 			testId="home-saved-views"
 			pending={
 				logsViewsLoading ||
@@ -233,11 +249,17 @@ export default function SavedViews({
 			actions={
 				hasSavedViews && (
 					<>
-						<SavedViewsTabs value={selectedEntity} onChange={handleTabChange} />
+						<SegmentedControl
+							label="Signal"
+							size="sm"
+							options={SIGNAL_OPTIONS}
+							value={selectedEntity}
+							onChange={handleTabChange}
+						/>
 						{!isSavedViewEnabled && selectedEntityViews.length > 0 && (
 							<WidgetLink
 								to={footerLink}
-								label="All Views"
+								label="All views"
 								onClick={(): void => {
 									void logEvent('Homepage: All saved views clicked', {
 										entity: selectedEntity,
