@@ -1,200 +1,167 @@
-import { useCallback } from 'react';
+import { useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Alert } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import { signozDocsUrl } from 'constants/docs';
+import { FS_SERIES_DARK, FS_SERIES_LIGHT } from 'constants/fuseScopeColors';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import GridCard from 'container/WidgetCard/Card';
-import { Card, CardContainer } from 'container/WidgetCard/styles';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/widgets/widget';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { v4 as uuid } from 'uuid';
 
+import { useTimeSeriesTimeManagement } from '../Explorer/useTimeSeriesTimeManagement';
 import {
 	getLogCountWidgetData,
 	getLogSizeWidgetData,
 	getMetricCountWidgetData,
 	getSpanCountWidgetData,
 	getSpanSizeWidgetData,
-	getTotalLogSizeWidgetData,
-	getTotalMetricDatapointCountWidgetData,
-	getTotalTraceSizeWidgetData,
 } from './graphs';
+import MeterChartPanel from './MeterChartPanel';
+import MeterEmptyState from './MeterEmptyState';
+import MeterNote from './MeterNote';
+import MeterTotals from './MeterTotals';
+import { useMeterBreakdown } from './useMeterBreakdown';
 
-import './BreakDown.styles.scss';
-
-type MetricSection = {
-	id: string;
-	title: string;
-	graphs: Widgets[];
+const WIDGETS = {
+	logCount: getLogCountWidgetData(),
+	logSize: getLogSizeWidgetData(),
+	spanCount: getSpanCountWidgetData(),
+	spanSize: getSpanSizeWidgetData(),
+	datapoints: getMetricCountWidgetData(),
 };
 
-const sections: MetricSection[] = [
-	{
-		id: uuid(),
-		title: 'Total',
-		graphs: [
-			getTotalLogSizeWidgetData(),
-			getTotalTraceSizeWidgetData(),
-			getTotalMetricDatapointCountWidgetData(),
-		],
-	},
-	{
-		id: uuid(),
-		title: 'Logs',
-		graphs: [getLogCountWidgetData(), getLogSizeWidgetData()],
-	},
-	{
-		id: uuid(),
-		title: 'Traces',
-		graphs: [getSpanCountWidgetData(), getSpanSizeWidgetData()],
-	},
-	{
-		id: uuid(),
-		title: 'Metrics',
-		graphs: [getMetricCountWidgetData()],
-	},
-];
+const ACCURATE_FROM = dayjs.utc('2025-08-22T00:00:00Z');
+const ONE_HOUR_MS = 61 * 60 * 1000;
 
-function Section(section: MetricSection): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-	const { title, graphs } = section;
-	const history = useHistory();
-	const { pathname } = useLocation();
-	const dispatch = useDispatch();
-	const urlQuery = useUrlQuery();
-
-	const onDragSelect = useCallback(
-		(start: number, end: number) => {
-			const startTimestamp = Math.trunc(start);
-			const endTimestamp = Math.trunc(end);
-
-			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
-			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
-			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
-
-			if (startTimestamp !== endTimestamp) {
-				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-			}
-		},
-		[dispatch, history, pathname, urlQuery],
-	);
-
+function Section({
+	title,
+	children,
+}: {
+	title: string;
+	children: React.ReactNode;
+}): JSX.Element {
 	return (
-		<div className="meter-column-graph">
-			<CardContainer className="row-card" isDarkMode={isDarkMode}>
-				<Typography.Text className="section-title">{title}</Typography.Text>
-			</CardContainer>
-			<div className="meter-page-grid">
-				{graphs.map((widget) => (
-					<Card
-						key={widget?.id}
-						isDarkMode={isDarkMode}
-						$panelType={PANEL_TYPES.BAR}
-						className="meter-graph"
-					>
-						<GridCard widget={widget} onDragSelect={onDragSelect} version="v5" />
-					</Card>
-				))}
+		<section aria-label={title} className="tw:flex tw:flex-col tw:gap-4">
+			<h2 className="fs-ui tw:flex tw:items-center tw:gap-2 tw:font-sans tw:text-xs tw:font-semibold tw:tracking-[0.05em] tw:text-muted-foreground tw:uppercase tw:after:h-px tw:after:flex-1 tw:after:bg-border">
+				{title}
+			</h2>
+			<div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:xl:grid-cols-2">
+				{children}
 			</div>
-		</div>
+		</section>
 	);
 }
 
 function BreakDown(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
+	const dispatch = useDispatch();
+	const history = useHistory();
+	const { pathname, search } = useLocation();
+	const isDarkMode = useIsDarkMode();
+	const { maxTime, minTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+	const { minTimeScale, maxTimeScale, onDragSelect } =
+		useTimeSeriesTimeManagement({
+			globalSelectedTime: selectedTime,
+			maxTime,
+			minTime,
+		});
+
+	const [showInfo, setShowInfo] = useState(
+		() => getLocalStorageApi(LOCALSTORAGE.DISSMISSED_COST_METER_INFO) !== 'true',
+	);
+	const dismissInfo = (): void => {
+		setShowInfo(false);
+		setLocalStorageApi(LOCALSTORAGE.DISSMISSED_COST_METER_INFO, 'true');
+	};
+
+	const charts = useMeterBreakdown(useMemo(() => Object.values(WIDGETS), []));
+	const [logCount, logSize, spanCount, spanSize, datapoints] = charts;
+	const palette = isDarkMode ? FS_SERIES_DARK : FS_SERIES_LIGHT;
+
+	const isLoading = charts.some((chart) => chart.isLoading);
+	const hasData = charts.some((chart) => chart.summary.hasData);
+	const showShortRangeWarning = (maxTime - minTime) / 1e6 < ONE_HOUR_MS;
+	const isBeforeAccurateData = dayjs(minTime / 1e6).isBefore(ACCURATE_FROM);
+
+	const showLastWeek = (): void => {
+		const params = new URLSearchParams(search);
+		params.delete(QueryParams.startTime);
+		params.delete(QueryParams.endTime);
+		params.set(QueryParams.relativeTime, '1w');
+		history.push(`${pathname}?${params.toString()}`);
+		dispatch(UpdateTimeInterval('1w'));
+	};
+
+	const panel = (
+		title: string,
+		chart: (typeof charts)[number],
+		color: string,
+	): JSX.Element => (
+		<MeterChartPanel
+			title={title}
+			chart={chart}
+			color={color}
+			minTimeScale={minTimeScale}
+			maxTimeScale={maxTimeScale}
+			onDragSelect={onDragSelect}
+		/>
 	);
 
-	const showInfo =
-		getLocalStorageApi(LOCALSTORAGE.DISSMISSED_COST_METER_INFO) !== 'true';
-	const isDateBeforeAugust22nd2025 = (minTime: number): boolean => {
-		const august22nd2025UTC = dayjs.utc('2025-08-22T00:00:00Z');
-		return dayjs(minTime / 1e6).isBefore(august22nd2025UTC);
-	};
-	const showShortRangeWarning = (maxTime - minTime) / 1e6 < 61 * 60 * 1000;
-
 	return (
-		<div className="meter-explorer-breakdown">
-			<section className="meter-explorer-graphs">
-				{showInfo && (
-					<Alert
-						type="info"
-						showIcon
-						closable
-						onClose={(): void => {
-							setLocalStorageApi(LOCALSTORAGE.DISSMISSED_COST_METER_INFO, 'true');
-						}}
-						message="Billing is calculated in UTC. To match your meter data with billing, select full-day ranges in UTC time (00:00 – 23:59 UTC). 
-						For example, if you’re in PT, for the billing of Jan 1, select your time range as Dec 31, 4:00 PM – Jan 1, 3:59 PM PT."
+		<div
+			data-testid="meter-breakdown"
+			className="meter-explorer-breakdown tw:flex tw:flex-col tw:gap-4 tw:px-4 tw:pt-4 tw:pb-8 tw:md:px-6"
+		>
+			{showInfo && (
+				<MeterNote tone="info" onDismiss={dismissInfo} testId="meter-billing-note">
+					Billing days run in UTC. To match a bill, pick whole UTC days: for Jan 1 in
+					PT, that is Dec 31, 4:00 PM – Jan 1, 3:59 PM.
+				</MeterNote>
+			)}
+			{isCloudUser && isBeforeAccurateData && (
+				<MeterNote tone="warning">
+					Meter data is accurate from Aug 22, 2025, 00:00 UTC. Earlier data was
+					collected during the beta and may be inaccurate.
+				</MeterNote>
+			)}
+			{showShortRangeWarning && (
+				<MeterNote tone="warning">
+					Meter data is aggregated per hour. Pick a range of at least one hour.
+				</MeterNote>
+			)}
+			{!isLoading && !hasData ? (
+				<MeterEmptyState onShowLastWeek={showLastWeek} />
+			) : (
+				<>
+					<MeterTotals
+						totals={[
+							{ label: 'Log records ingested', chart: logSize },
+							{ label: 'Spans ingested', chart: spanSize },
+							{ label: 'Metric datapoints ingested', chart: datapoints },
+						]}
 					/>
-				)}
-				{isCloudUser && isDateBeforeAugust22nd2025(minTime) && (
-					<Alert
-						type="warning"
-						showIcon
-						message="Meter module data is accurate only from 22nd August 2025, 00:00 UTC onwards. Data before this time was collected during the beta phase and may be inaccurate."
-					/>
-				)}
-
-				{showShortRangeWarning && (
-					<Alert
-						type="warning"
-						showIcon
-						closable
-						message={
-							<>
-								Meter metrics data is aggregated over 1 hour period. Please select time
-								range accordingly.&nbsp;
-								<a
-									href={signozDocsUrl('/cost-meter/overview/#get-started')}
-									rel="noopener noreferrer"
-									target="_blank"
-									style={{ textDecoration: 'underline' }}
-								>
-									Learn more
-								</a>
-								.
-							</>
-						}
-					/>
-				)}
-				<section className="total">
-					<Section
-						id={sections[0].id}
-						title={sections[0].title}
-						graphs={sections[0].graphs}
-					/>
-				</section>
-				{sections.map((section, idx) => {
-					if (idx === 0) {
-						return;
-					}
-
-					return (
-						<Section
-							key={section.id}
-							id={section.id}
-							title={section.title}
-							graphs={section.graphs}
-						/>
-					);
-				})}
-			</section>
+					<Section title="Logs">
+						{panel('Log records', logCount, palette.blue)}
+						{panel('Log size', logSize, palette.blue)}
+					</Section>
+					<Section title="Traces">
+						{panel('Spans', spanCount, palette.magenta)}
+						{panel('Span size', spanSize, palette.magenta)}
+					</Section>
+					<Section title="Metrics">
+						{panel('Metric datapoints', datapoints, palette.green)}
+					</Section>
+				</>
+			)}
 		</div>
 	);
 }

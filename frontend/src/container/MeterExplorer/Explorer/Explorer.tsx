@@ -4,6 +4,7 @@ import usePersistedFiltersVisibility from 'components/QuickFilters/hooks/usePers
 import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/fuseScope.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
@@ -138,19 +139,21 @@ function Explorer(): JSX.Element {
 					useFieldApis: quickFilterFieldApis,
 				}}
 			>
-				<div className="meter-explorer-content-section">
-					<div className="meter-explorer-explore-content">
-						<div className="explore-header">
-							<div className="explore-header-left-actions"></div>
-
-							<div className="explore-header-right-actions">
-								<RightToolbarActions
-									onStageRunQuery={(): void => handleRunQuery()}
-									isLoadingQueries={isLoadingQueries}
-									handleCancelQuery={handleCancelQuery}
-								/>
-							</div>
-						</div>
+				<div className="meter-explorer-content-section tw:flex tw:flex-col tw:gap-4 tw:px-4 tw:pt-4 tw:md:px-6">
+					<ContentPanel
+						testId="meter-explorer-query"
+						title="Query"
+						subtitle="Meter metrics are written once per hour from what the collector ingests."
+						actions={
+							<RightToolbarActions
+								onStageRunQuery={(): void => handleRunQuery()}
+								isLoadingQueries={isLoadingQueries}
+								handleCancelQuery={handleCancelQuery}
+							/>
+						}
+						divided
+						bodyClassName="meter-explorer-explore-content tw:py-2"
+					>
 						<QueryBuilderV2
 							config={{
 								initialDataSource: DataSource.METRICS,
@@ -161,14 +164,11 @@ function Explorer(): JSX.Element {
 							showFunctions={false}
 							version="v3"
 						/>
-
-						<div className="explore-content">
-							<TimeSeries
-								onFetchingStateChange={setIsLoadingQueries}
-								isCancelled={isCancelled}
-							/>
-						</div>
-					</div>
+					</ContentPanel>
+					<TimeSeries
+						onFetchingStateChange={setIsLoadingQueries}
+						isCancelled={isCancelled}
+					/>
 					{!isSavedViewEnabled && (
 						<ExplorerOptionWrapper
 							disabled={!stagedQuery}

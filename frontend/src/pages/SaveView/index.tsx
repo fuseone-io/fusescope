@@ -10,6 +10,7 @@ import {
 import PageTemplate from 'components/PageTemplate/PageTemplate';
 import { Input } from 'components/ui/input';
 import { fuseScopeDocsUrl } from 'constants/docs';
+import { describeMeterQuery } from 'container/MeterExplorer/describeMeterQuery';
 import {
 	MeterExplorerEventKeys,
 	MeterExplorerEvents,
@@ -255,6 +256,11 @@ function SaveView(): JSX.Element {
 				onEdit={handleEditModelOpen}
 				onOpen={handleRedirectQuery}
 				onDelete={(view): void => handleDeleteModelOpen(view.id, view.name)}
+				describeQuery={
+					sourcepage === 'meter'
+						? (view): string => describeMeterQuery(view.compositeQuery)
+						: undefined
+				}
 			/>
 
 			<DeleteViewDialog

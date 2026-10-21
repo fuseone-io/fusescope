@@ -15,6 +15,7 @@ import {
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { CalendarClock } from 'lucide-react';
+import { cn } from 'lib/utils';
 import { useTimezone } from 'providers/Timezone';
 import { ViewProps } from 'types/api/saveViews/types';
 
@@ -30,6 +31,8 @@ interface ViewsTableProps {
 	onEdit: (view: ViewProps, color: string) => void;
 	onOpen: (view: ViewProps) => void;
 	onDelete: (view: ViewProps) => void;
+	/** Adds a Query column with each view's query in one line. */
+	describeQuery?: (view: ViewProps) => string;
 }
 
 function viewColor(view: ViewProps): string {
@@ -44,17 +47,26 @@ function ViewsTable({
 	onEdit,
 	onOpen,
 	onDelete,
+	describeQuery,
 }: ViewsTableProps): JSX.Element {
 	const [page, setPage] = useState(1);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const rows = pageOf(views, page, PAGE_SIZE);
+	const columnCount = describeQuery ? 5 : 4;
 
 	return (
 		<Panel testId="saved-views-table" className="tw:overflow-hidden">
-			<Table className="tw:min-w-[720px] tw:table-fixed" aria-label="Saved views">
+			<Table
+				className={cn(
+					'tw:table-fixed',
+					describeQuery ? 'tw:min-w-[960px]' : 'tw:min-w-[720px]',
+				)}
+				aria-label="Saved views"
+			>
 				<TableHeader className="tw:bg-surface-sunken">
 					<TableRow>
 						<TableHead className="tw:px-4">View</TableHead>
+						{describeQuery && <TableHead className="tw:px-4">Query</TableHead>}
 						<TableHead className="tw:w-[220px] tw:px-4">Created by</TableHead>
 						<TableHead className="tw:w-[300px] tw:px-4">Created</TableHead>
 						<TableHead className="tw:w-[136px] tw:px-4 tw:text-right">
@@ -66,7 +78,7 @@ function ViewsTable({
 					{loading &&
 						SKELETON_ROWS.map((row) => (
 							<TableRow key={row} data-testid="saved-view-row-loading">
-								<TableCell colSpan={4} className="tw:h-[52px] tw:px-4">
+								<TableCell colSpan={columnCount} className="tw:h-[52px] tw:px-4">
 									<Skeleton className="tw:h-5 tw:bg-muted" />
 								</TableCell>
 							</TableRow>
@@ -74,7 +86,7 @@ function ViewsTable({
 					{!loading && views.length === 0 && (
 						<TableRow className="tw:hover:bg-transparent">
 							<TableCell
-								colSpan={4}
+								colSpan={columnCount}
 								className="tw:h-24 tw:text-center tw:text-[13px] tw:text-muted-foreground"
 							>
 								No data
@@ -99,6 +111,17 @@ function ViewsTable({
 											<span className="tw:truncate tw:font-medium">{view.name}</span>
 										</span>
 									</TableCell>
+									{describeQuery && (
+										<TableCell className="tw:max-w-0 tw:px-4">
+											<span
+												data-testid="saved-view-query"
+												className="tw:block tw:truncate tw:font-mono tw:text-xs tw:text-muted-foreground"
+												title={describeQuery(view)}
+											>
+												{describeQuery(view) || '—'}
+											</span>
+										</TableCell>
+									)}
 									<TableCell className="tw:max-w-0 tw:px-4">
 										<UserAvatarCell email={view.createdBy} />
 									</TableCell>

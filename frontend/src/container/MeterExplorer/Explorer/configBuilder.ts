@@ -21,6 +21,8 @@ export interface MeterChartConfigProps {
 	yAxisUnit: string;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	/** One colour for every series, e.g. a signal's colour. */
+	seriesColor?: string;
 }
 
 export function buildMeterChartConfig({
@@ -33,6 +35,7 @@ export function buildMeterChartConfig({
 	yAxisUnit,
 	minTimeScale,
 	maxTimeScale,
+	seriesColor,
 }: MeterChartConfigProps): UPlotConfigBuilder {
 	const stepIntervals = get(
 		apiResponse,
@@ -64,6 +67,7 @@ export function buildMeterChartConfig({
 	builder.addScale({
 		scaleKey: 'y',
 		time: false,
+		softMin: 0,
 	});
 
 	builder.addAxis({
@@ -101,6 +105,7 @@ export function buildMeterChartConfig({
 			drawStyle: DrawStyle.Bar,
 			label,
 			colorMapping: {},
+			lineColor: seriesColor,
 			isDarkMode,
 			stepInterval: currentStepInterval,
 			metric: series.metric,
