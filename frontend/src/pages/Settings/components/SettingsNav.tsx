@@ -63,11 +63,19 @@ function SettingsNav({
 									onSelect(event, item);
 								}}
 								className={cn(
-									'tw:flex tw:h-8 tw:items-center tw:gap-2 tw:rounded-md tw:px-2.5 tw:text-[13px] tw:text-muted-foreground! tw:no-underline! tw:hover:bg-muted tw:hover:text-foreground! tw:focus-visible:outline-2 tw:focus-visible:outline-ring',
+									'tw:flex tw:h-8 tw:items-center tw:gap-2 tw:rounded-md tw:px-2.5 tw:text-[13px] tw:text-muted-foreground! tw:no-underline! tw:hover:bg-muted! tw:hover:text-foreground! tw:focus-visible:outline-2 tw:focus-visible:outline-ring',
 									active &&
-										'active tw:bg-primary-soft tw:font-medium tw:text-primary-ink! tw:hover:bg-primary-soft tw:hover:text-primary-ink!',
+										'active tw:bg-primary-soft! tw:font-medium tw:text-primary-ink! tw:hover:bg-primary-soft! tw:hover:text-primary-ink!',
 								)}
 							>
+								{item.icon && (
+									<span
+										aria-hidden="true"
+										className="tw:flex tw:flex-none tw:[&_svg]:size-4"
+									>
+										{item.icon}
+									</span>
+								)}
 								<span className="tw:flex-1 tw:truncate">{item.label}</span>
 								{item.isBeta && (
 									<Badge

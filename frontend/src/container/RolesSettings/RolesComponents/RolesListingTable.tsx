@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import { useListRoles } from 'api/generated/services/role';
 import { AuthtypesGettableRoleDTO } from 'api/generated/services/fuseScope.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import TablePagination from 'components/PageTemplate/components/TablePagination';
 import {
 	Table,
@@ -160,16 +160,16 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 
 	if (filteredRoles.length === 0) {
 		return (
-			<Panel>
+			<ContentPanel>
 				<ListEmptyState testId="roles-empty-state">
 					{searchQuery ? 'No roles match your search.' : 'No roles found.'}
 				</ListEmptyState>
-			</Panel>
+			</ContentPanel>
 		);
 	}
 
 	return (
-		<Panel className="tw:overflow-hidden">
+		<ContentPanel>
 			<Table className="tw:min-w-[720px] tw:table-fixed">
 				<TableHeader className="tw:bg-surface-sunken">
 					<TableRow>
@@ -217,7 +217,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 				total={totalRoleCount}
 				onPageChange={setCurrentPage}
 			/>
-		</Panel>
+		</ContentPanel>
 	);
 }
 

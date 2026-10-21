@@ -1,4 +1,4 @@
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import { Kbd, KbdGroup } from 'components/ui/kbd';
 import {
 	Table,
@@ -20,8 +20,8 @@ function Shortcuts(): JSX.Element {
 			narrow
 		>
 			{Object.keys(ALL_SHORTCUTS).map((section) => (
-				<Panel key={section} title={section} className="tw:overflow-hidden">
-					<Table className="tw:mt-3 tw:table-fixed">
+				<ContentPanel key={section} title={section} divided>
+					<Table className="tw:table-fixed">
 						<TableHeader className="tw:bg-surface-sunken">
 							<TableRow>
 								<TableHead className="tw:w-[30%]">Keyboard Shortcut</TableHead>
@@ -47,7 +47,7 @@ function Shortcuts(): JSX.Element {
 							))}
 						</TableBody>
 					</Table>
-				</Panel>
+				</ContentPanel>
 			))}
 		</SettingsPageShell>
 	);

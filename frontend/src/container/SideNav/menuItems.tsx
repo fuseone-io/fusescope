@@ -1,17 +1,18 @@
 import ROUTES from 'constants/routes';
 import {
+	Bell,
 	Bot,
-	FileKey2,
+	Building2,
+	KeyRound,
 	Keyboard,
+	LockKeyhole,
 	Receipt,
-	Rocket,
-	Settings,
 	Shield,
 	Sparkles,
 	Unplug,
-	User,
+	UserRound,
 	Users,
-} from '@signozhq/icons';
+} from 'lucide-react';
 
 import { SettingsNavSection } from './sideNav.types';
 
@@ -31,14 +32,14 @@ export const settingsNavSections: SettingsNavSection[] = [
 			{
 				key: ROUTES.SETTINGS,
 				label: 'Workspace',
-				icon: <Settings size={16} />,
+				icon: <Building2 />,
 				isEnabled: true,
 				itemKey: 'workspace',
 			},
 			{
 				key: ROUTES.MY_SETTINGS,
 				label: 'Account',
-				icon: <User size={16} />,
+				icon: <UserRound />,
 				isEnabled: true,
 				itemKey: 'account',
 			},
@@ -46,28 +47,28 @@ export const settingsNavSections: SettingsNavSection[] = [
 			{
 				key: ROUTES.ALL_CHANNELS,
 				label: 'Notification Channels',
-				icon: <FileKey2 size={16} />,
+				icon: <Bell />,
 				isEnabled: true,
 				itemKey: 'notification-channels',
 			},
 			{
 				key: ROUTES.BILLING,
 				label: 'Billing',
-				icon: <Receipt size={16} />,
+				icon: <Receipt />,
 				isEnabled: false,
 				itemKey: 'billing',
 			},
 			{
 				key: ROUTES.INTEGRATIONS,
 				label: 'Integrations',
-				icon: <Unplug size={16} />,
+				icon: <Unplug />,
 				isEnabled: false,
 				itemKey: 'integrations',
 			},
 			{
 				key: ROUTES.MCP_SERVER,
 				label: 'MCP Server',
-				icon: <Sparkles size={16} />,
+				icon: <Sparkles />,
 				isEnabled: false,
 				itemKey: 'mcp-server',
 			},
@@ -81,7 +82,7 @@ export const settingsNavSections: SettingsNavSection[] = [
 			{
 				key: ROUTES.ROLES_SETTINGS,
 				label: 'Roles',
-				icon: <Shield size={16} />,
+				icon: <Shield />,
 				isEnabled: false,
 				itemKey: 'roles',
 				isBeta: true,
@@ -89,21 +90,21 @@ export const settingsNavSections: SettingsNavSection[] = [
 			{
 				key: ROUTES.MEMBERS_SETTINGS,
 				label: 'Members',
-				icon: <Users size={16} />,
+				icon: <Users />,
 				isEnabled: false,
 				itemKey: 'members',
 			},
 			{
 				key: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
 				label: 'Service Accounts',
-				icon: <Bot size={16} />,
+				icon: <Bot />,
 				isEnabled: false,
 				itemKey: 'service-accounts',
 			},
 			{
 				key: ROUTES.INGESTION_SETTINGS,
 				label: 'Ingestion',
-				icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
+				icon: <KeyRound />,
 				isEnabled: false,
 				itemKey: 'ingestion',
 			},
@@ -116,7 +117,7 @@ export const settingsNavSections: SettingsNavSection[] = [
 			{
 				key: ROUTES.ORG_SETTINGS,
 				label: 'Single Sign-on',
-				icon: <User size={16} />,
+				icon: <LockKeyhole />,
 				isEnabled: false,
 				itemKey: 'sso',
 			},
@@ -129,7 +130,7 @@ export const settingsNavSections: SettingsNavSection[] = [
 			{
 				key: ROUTES.SHORTCUTS,
 				label: 'Keyboard Shortcuts',
-				icon: <Keyboard size={16} />,
+				icon: <Keyboard />,
 				isEnabled: true,
 				itemKey: 'keyboard-shortcuts',
 			},

@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import PageHeader from 'components/PageTemplate/components/PageHeader';
 import PageTemplate from 'components/PageTemplate/PageTemplate';
 import { cn } from 'lib/utils';
 
@@ -14,7 +13,7 @@ interface SettingsPageShellProps {
 	narrow?: boolean;
 }
 
-/** The settings content column: page header, then panels, tables or forms. */
+/** The settings content column: compact header, then panels, tables or forms. */
 function SettingsPageShell({
 	title,
 	description,
@@ -32,13 +31,30 @@ function SettingsPageShell({
 				narrow ? 'tw:max-w-[960px]' : 'tw:max-w-[1280px]',
 			)}
 		>
-			<PageHeader
-				title={title}
-				description={description}
-				badges={badges}
-				actions={actions}
-				testId="settings-page-header"
-			/>
+			<div
+				data-testid="settings-page-header"
+				className="fs-ui tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-3 tw:font-sans tw:text-foreground"
+			>
+				<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-1">
+					<div className="tw:flex tw:min-w-0 tw:flex-wrap tw:items-center tw:gap-2">
+						<h1 className="tw:min-w-0 tw:truncate tw:text-xl tw:leading-tight tw:font-semibold tw:tracking-[-0.01em]">
+							{title}
+						</h1>
+						{badges}
+					</div>
+					{description && (
+						<p className="tw:text-[13px] tw:text-muted-foreground">{description}</p>
+					)}
+				</div>
+				{actions && (
+					<div
+						data-testid="page-header-actions"
+						className="tw:flex tw:flex-wrap tw:items-center tw:gap-2"
+					>
+						{actions}
+					</div>
+				)}
+			</div>
 			{children}
 		</PageTemplate>
 	);
