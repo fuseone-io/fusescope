@@ -1,32 +1,17 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import EmptyQuickFilterIcon from 'assets/CustomIcons/EmptyQuickFilterIcon';
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { ArrowUpRight } from '@signozhq/icons';
+import { openInNewTab } from 'utils/navigation';
 
-const QUICK_FILTER_DOC_PATHS: Record<string, string> = {
-	severity_text: 'severity-text',
-	'deployment.environment': 'environment',
-	'service.name': 'service-name',
-	'host.name': 'hostname',
-	'k8s.cluster.name': 'k8s-cluster-name',
-	'k8s.deployment.name': 'k8s-deployment-name',
-	'k8s.namespace.name': 'k8s-namespace-name',
-	'k8s.pod.name': 'k8s-pod-name',
-};
+const LOG_PIPELINES_PROCESSORS_DOCS = fuseScopeDocsUrl(
+	'/sending-data/log-pipelines/#processors',
+);
 
-function LogsQuickFilterEmptyState({
-	attributeKey,
-}: {
-	attributeKey: string;
-}): JSX.Element {
+function LogsQuickFilterEmptyState(): JSX.Element {
 	const handleLearnMoreClick = (): void => {
-		const section = QUICK_FILTER_DOC_PATHS[attributeKey];
-
-		window.open(
-			signozDocsUrl(`/logs-management/features/logs-quick-filters#${section}`),
-			'_blank',
-		);
+		openInNewTab(LOG_PIPELINES_PROCESSORS_DOCS);
 	};
 	return (
 		<section className="go-to-docs">

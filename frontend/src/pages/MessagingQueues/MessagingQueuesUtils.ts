@@ -396,7 +396,7 @@ export enum MessagingQueueHealthCheckService {
 }
 
 const INSTRUMENTATION_DOC_LINK = fuseScopeDocsUrl(
-	'/sending-data/instrumentation/',
+	'/analyze/messaging-queues/#instrument-kafka-producers-and-consumers',
 );
 
 /** Where to fix each part of the Kafka setup: spans come from the SDKs, broker and lag metrics from a collector. */
@@ -407,6 +407,6 @@ export const KAFKA_SETUP_DOC_LINKS: Record<
 	[MessagingQueueHealthCheckService.Producers]: INSTRUMENTATION_DOC_LINK,
 	[MessagingQueueHealthCheckService.Consumers]: INSTRUMENTATION_DOC_LINK,
 	[MessagingQueueHealthCheckService.Kafka]: fuseScopeDocsUrl(
-		'/sending-data/otlp/#from-another-collector',
+		'/analyze/messaging-queues/#collect-kafka-metrics',
 	),
 };

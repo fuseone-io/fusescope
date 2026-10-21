@@ -227,7 +227,7 @@ describe('FeedbackModal', () => {
 		const docsLink = screen.getByText('Read our docs');
 		expect(docsLink).toHaveAttribute(
 			'href',
-			'https://signoz.io/docs/introduction/',
+			'https://fuseone-io.github.io/fusescope-docs/start/what-is-fusescope/',
 		);
 		expect(docsLink).toHaveAttribute('target', '_blank');
 		expect(docsLink).toHaveAttribute('rel', 'noreferrer');

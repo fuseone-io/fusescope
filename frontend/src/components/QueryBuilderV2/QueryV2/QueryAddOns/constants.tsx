@@ -1,5 +1,5 @@
 import { BarChart, Grid3X3, ScrollText } from '@signozhq/icons';
-import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
 
 import { QueryBuilderField } from '../../queryBuilderFields.types';
@@ -75,7 +75,9 @@ export const ADD_ON_DEFINITIONS = {
 		queryPath: 'reduceTo',
 		description:
 			'Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value.',
-		docLink: signozDocsUrl('/userguide/query-builder-v5/#result-manipulation'),
+		docLink: fuseScopeDocsUrl(
+			'/querying/query-builder/#group-by-having-order-by-and-limit',
+		),
 	},
 	[QueryBuilderField.BucketOptions]: {
 		input: false,

@@ -12,6 +12,9 @@ type K8sEmptyStateProps = Partial<K8sBaseListEmptyStateContext> & {
 };
 
 const KUBERNETES_DOCS_URL = fuseScopeDocsUrl('/sending-data/kubernetes/');
+const HOSTS_DOCS_URL = fuseScopeDocsUrl(
+	'/sending-data/kubernetes/#hosts-outside-kubernetes',
+);
 
 export function K8sEmptyState({
 	entity,
@@ -74,7 +77,11 @@ export function K8sEmptyState({
 			}
 			actions={
 				<Button asChild variant="outline" size="sm">
-					<a href={KUBERNETES_DOCS_URL} target="_blank" rel="noopener noreferrer">
+					<a
+						href={isHosts ? HOSTS_DOCS_URL : KUBERNETES_DOCS_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
 						<span className="translate-safe">
 							{isHosts ? 'Set up host metrics' : 'Set up Kubernetes monitoring'}
 						</span>

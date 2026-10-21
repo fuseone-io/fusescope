@@ -22,6 +22,7 @@ import {
 	getSpanCountWidgetData,
 	getSpanSizeWidgetData,
 } from './graphs';
+import MeterBillingNote from './MeterBillingNote';
 import MeterChartPanel from './MeterChartPanel';
 import MeterEmptyState from './MeterEmptyState';
 import MeterNote from './MeterNote';
@@ -121,12 +122,7 @@ function BreakDown(): JSX.Element {
 			data-testid="meter-breakdown"
 			className="meter-explorer-breakdown tw:flex tw:flex-col tw:gap-4 tw:px-4 tw:pt-4 tw:pb-8 tw:md:px-6"
 		>
-			{showInfo && (
-				<MeterNote tone="info" onDismiss={dismissInfo} testId="meter-billing-note">
-					Billing days run in UTC. To match a bill, pick whole UTC days: for Jan 1 in
-					PT, that is Dec 31, 4:00 PM – Jan 1, 3:59 PM.
-				</MeterNote>
-			)}
+			{showInfo && <MeterBillingNote onDismiss={dismissInfo} />}
 			{isCloudUser && isBeforeAccurateData && (
 				<MeterNote tone="warning">
 					Meter data is accurate from Aug 22, 2025, 00:00 UTC. Earlier data was

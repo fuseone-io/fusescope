@@ -7,7 +7,9 @@ interface DomainsEmptyStateProps {
 	onClearFilters?: () => void;
 }
 
-const INSTRUMENTATION_DOCS = fuseScopeDocsUrl('/sending-data/instrumentation/');
+const EMPTY_STATE_DOCS = fuseScopeDocsUrl(
+	'/analyze/external-apis/#when-no-domains-appear',
+);
 
 const Code = ({ children }: { children: string }): JSX.Element => (
 	<span className="tw:font-mono tw:text-foreground">{children}</span>
@@ -51,7 +53,7 @@ function DomainsEmptyState({
 					</Button>
 				)}
 				<Button asChild size="sm">
-					<a href={INSTRUMENTATION_DOCS} target="_blank" rel="noreferrer">
+					<a href={EMPTY_STATE_DOCS} target="_blank" rel="noreferrer">
 						Instrument your HTTP clients
 					</a>
 				</Button>

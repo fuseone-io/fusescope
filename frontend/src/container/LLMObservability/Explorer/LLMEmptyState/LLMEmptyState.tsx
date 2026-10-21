@@ -4,7 +4,9 @@ import ROUTES from 'constants/routes';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
 
-const INSTRUMENTATION_DOCS = fuseScopeDocsUrl('/sending-data/instrumentation/');
+const GET_STARTED_DOCS = fuseScopeDocsUrl(
+	'/analyze/ai-observability/#get-started',
+);
 const MAPPING_TEST_ROUTE = `${ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING}?tab=test`;
 
 const linkClass =
@@ -25,7 +27,7 @@ const STEPS: Step[] = [
 				Add an OpenTelemetry GenAI instrumentation to the service that calls the
 				model.{' '}
 				<a
-					href={INSTRUMENTATION_DOCS}
+					href={GET_STARTED_DOCS}
 					target="_blank"
 					rel="noopener noreferrer"
 					className={linkClass}

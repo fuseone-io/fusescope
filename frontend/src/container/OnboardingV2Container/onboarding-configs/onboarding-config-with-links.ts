@@ -199,6 +199,7 @@ import windowsUrl from '@/assets/Logos/windows.svg';
 import windowsEventsLogsUrl from '@/assets/Logos/windows-events-logs.svg';
 import winstonUrl from '@/assets/Logos/winston.svg';
 import zapUrl from '@/assets/Logos/zap.svg';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 const onboardingConfigWithLinks = [
 	{
@@ -4646,7 +4647,7 @@ const onboardingConfigWithLinks = [
 			'self-hosted kafka',
 			'self-hosted-kafka',
 		],
-		link: '/docs/messaging-queues/kafka/',
+		link: fuseScopeDocsUrl('/analyze/messaging-queues/#set-up-kafka-monitoring'),
 	},
 	{
 		dataSource: 'confluent-kafka',
@@ -4710,7 +4711,7 @@ const onboardingConfigWithLinks = [
 			'queues',
 			'task queue tracing',
 		],
-		link: '/docs/messaging-queues/celery-setup/',
+		link: fuseScopeDocsUrl('/analyze/messaging-queues/#send-celery-data'),
 	},
 	{
 		dataSource: 'android',

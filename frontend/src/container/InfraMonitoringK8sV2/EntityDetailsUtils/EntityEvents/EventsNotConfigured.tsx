@@ -4,7 +4,9 @@ import { ExternalLink, History } from 'lucide-react';
 
 import InfraEmptyState from '../../components/InfraEmptyState';
 
-const K8S_EVENTS_DOCS_URL = fuseScopeDocsUrl('/sending-data/kubernetes/');
+const K8S_EVENTS_DOCS_URL = fuseScopeDocsUrl(
+	'/sending-data/kubernetes/#kubernetes-events',
+);
 
 export default function EventsNotConfigured(): JSX.Element {
 	return (

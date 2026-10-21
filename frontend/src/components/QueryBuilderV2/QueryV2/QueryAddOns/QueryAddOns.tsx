@@ -4,7 +4,7 @@ import cx from 'classnames';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
-import { fuseScopeDocsUrl, signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
@@ -434,8 +434,8 @@ function QueryAddOns({
 												<TooltipContent
 													label="Reduce to"
 													description="Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value."
-													docLink={signozDocsUrl(
-														'/userguide/query-builder-v5/#result-manipulation',
+													docLink={fuseScopeDocsUrl(
+														'/querying/query-builder/#group-by-having-order-by-and-limit',
 													)}
 												/>
 											}
