@@ -127,6 +127,22 @@ describe('MCPServerSettings', () => {
 		expect(screen.queryByTestId('mcp-settings')).not.toBeInTheDocument();
 	});
 
+	it('does not send the fallback page to the SigNoz docs', () => {
+		setupGlobalConfig({ mcpUrl: null });
+
+		render(<MCPServerSettings />);
+
+		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+		screen.queryAllByRole('button').forEach((button) => button.click());
+		screen.queryAllByRole('link').forEach((link) => {
+			expect(link.getAttribute('href') ?? '').not.toMatch(/signoz\.io/);
+		});
+		open.mock.calls.forEach(([url]) => {
+			expect(String(url)).not.toMatch(/signoz\.io/);
+		});
+		open.mockRestore();
+	});
+
 	it('renders main settings page when mcp_url is present', () => {
 		setupGlobalConfig({ mcpUrl: MCP_URL });
 

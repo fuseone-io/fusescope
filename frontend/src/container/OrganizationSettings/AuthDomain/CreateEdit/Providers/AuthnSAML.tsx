@@ -6,7 +6,7 @@ import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
 import { Form, Input as AntdInput, Tooltip } from 'antd';
 
-import { signozDocsUrl } from 'constants/docs';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import AttributeMappingSection from './components/AttributeMappingSection';
 import RoleMappingSection from './components/RoleMappingSection';
@@ -39,7 +39,7 @@ function ConfigureSAMLAuthnProvider({
 				<p className="authn-provider__description">
 					Configure SAML 2.0 Single Sign-On with your Identity Provider. Read the{' '}
 					<a
-						href={signozDocsUrl('/manage/administrator-guide/sso/overview/')}
+						href={fuseScopeDocsUrl('/configuration/sso/')}
 						target="_blank"
 						rel="noreferrer"
 					>
