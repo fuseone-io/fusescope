@@ -1,4 +1,4 @@
-import Panel from 'components/PageTemplate/components/Panel';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
 import { useAppContext } from 'providers/App/App';
 
@@ -18,14 +18,15 @@ function OrganizationSettings(): JSX.Element {
 			title="Single Sign-on"
 			description="Your organization's display name and the domains that sign in through SSO."
 		>
-			<Panel
+			<ContentPanel
 				title="Organization"
-				bodyClassName="tw:flex tw:flex-col tw:gap-4 tw:px-5 tw:pt-3 tw:pb-1"
+				divided
+				bodyClassName="tw:flex tw:flex-col tw:gap-4 tw:px-5 tw:py-4"
 			>
 				{org.map((e, index) => (
 					<DisplayName key={e.id} id={e.id} index={index} />
 				))}
-			</Panel>
+			</ContentPanel>
 
 			<AuthDomain />
 		</SettingsPageShell>
