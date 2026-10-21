@@ -37,10 +37,10 @@ function RetentionConfirmDialog({
 			}}
 		>
 			<DialogContent className="tw:max-w-md">
-				<DialogHeader>
+				<DialogHeader className="tw:border-b tw:border-border tw:pb-3">
 					<DialogTitle className="tw:pr-6">{title}</DialogTitle>
 				</DialogHeader>
-				<DialogBody>
+				<DialogBody className="tw:pt-4">
 					<DialogDescription className="retention-modal-description">
 						{description}
 					</DialogDescription>

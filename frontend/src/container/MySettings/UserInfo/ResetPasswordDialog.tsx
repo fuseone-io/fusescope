@@ -57,11 +57,14 @@ function ResetPasswordDialog({
 				}
 			}}
 		>
-			<DialogContent className="reset-password-modal tw:max-w-md">
-				<DialogHeader>
+			<DialogContent
+				aria-describedby={undefined}
+				className="reset-password-modal tw:max-w-md"
+			>
+				<DialogHeader className="tw:border-b tw:border-border tw:pb-3">
 					<DialogTitle>Reset password</DialogTitle>
 				</DialogHeader>
-				<DialogBody className="tw:gap-4">
+				<DialogBody className="tw:gap-4 tw:pt-4">
 					<div className="tw:flex tw:flex-col tw:gap-2">
 						<Label htmlFor="current-password" className="tw:text-foreground">
 							Current password
