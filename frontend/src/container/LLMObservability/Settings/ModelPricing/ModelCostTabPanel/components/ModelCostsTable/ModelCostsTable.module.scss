@@ -1,7 +1,7 @@
 .modelCostsTable {
-	margin-top: var(--spacing-8);
 	--tanstack-table-row-height: 48px;
-	height: calc(100vh - 170px);
+	height: calc(100vh - 340px);
+	min-height: 320px;
 	overflow-y: auto;
 
 	:global(table) tbody tr {
@@ -17,8 +17,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin-top: var(--spacing-8);
-	min-height: 400px;
-	color: var(--l3-foreground);
-	font-size: var(--periscope-font-size-base);
+	min-height: 320px;
+	color: var(--fs-muted-foreground);
+	font-size: 13px;
 }

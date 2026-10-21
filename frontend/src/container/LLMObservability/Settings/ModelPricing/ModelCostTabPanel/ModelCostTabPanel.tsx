@@ -5,6 +5,7 @@ import { SelectSimple } from '@signozhq/ui/select';
 import { Plus, Search, X } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/fuseScope.schemas';
+import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import { useTableParams } from 'components/TanStackTableView';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useDebounce from 'hooks/useDebounce';
@@ -102,29 +103,30 @@ function ModelCostTabPanel(): JSX.Element {
 		<>
 			<div className={styles.filtersBar}>
 				<div className={styles.filtersBarLeft}>
-					<Input
-						className={styles.filtersBarSearch}
-						placeholder="Search by model or provider"
-						value={search}
-						onChange={handleSearchChange}
-						prefix={<Search size={14} />}
-						suffix={
-							search ? (
-								<Button
-									variant="ghost"
-									color="secondary"
-									size="sm"
-									icon
-									onClick={clearSearch}
-									aria-label="Clear search"
-									testId="model-cost-search-clear"
-								>
-									<X size={14} />
-								</Button>
-							) : undefined
-						}
-						testId="model-cost-search"
-					/>
+					<div className={styles.filtersBarSearch}>
+						<Input
+							placeholder="Search by model or provider"
+							value={search}
+							onChange={handleSearchChange}
+							prefix={<Search size={14} />}
+							suffix={
+								search ? (
+									<Button
+										variant="ghost"
+										color="secondary"
+										size="sm"
+										icon
+										onClick={clearSearch}
+										aria-label="Clear search"
+										testId="model-cost-search-clear"
+									>
+										<X size={14} />
+									</Button>
+								) : undefined
+							}
+							testId="model-cost-search"
+						/>
+					</div>
 					<SelectSimple
 						className={styles.filtersBarSource}
 						items={SOURCE_FILTER_OPTIONS}
@@ -147,21 +149,28 @@ function ModelCostTabPanel(): JSX.Element {
 				)}
 			</div>
 
-			{isError && (
-				<div className={styles.pageError} role="alert">
-					Failed to load pricing rules. Please try again.
-				</div>
-			)}
+			<ContentPanel
+				title="Model costs"
+				subtitle="USD per 1M tokens. A rule prices the spans whose gen_ai.request.model starts with one of its patterns."
+				divided
+				testId="model-costs-panel"
+			>
+				{isError && (
+					<div className={styles.pageError} role="alert">
+						Failed to load pricing rules. Please try again.
+					</div>
+				)}
 
-			<ModelCostsTable
-				rules={rules}
-				isLoading={isLoading}
-				total={total}
-				selectedRuleId={drawer.selectedRuleId}
-				canManage={canManagePricing}
-				onEdit={drawer.openForEdit}
-				onDelete={deletion.requestDelete}
-			/>
+				<ModelCostsTable
+					rules={rules}
+					isLoading={isLoading}
+					total={total}
+					selectedRuleId={drawer.selectedRuleId}
+					canManage={canManagePricing}
+					onEdit={drawer.openForEdit}
+					onDelete={deletion.requestDelete}
+				/>
+			</ContentPanel>
 
 			{drawer.isOpen && (
 				<ModelCostDrawer

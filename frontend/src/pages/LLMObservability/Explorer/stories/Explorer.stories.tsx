@@ -7,6 +7,7 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import LLMObservabilityPage from '../../index';
 import { llmExplorerMocks } from './Explorer.stories.mocks';
+import { aiTraceHandlers } from './__story_mockdata__/aiTraces';
 
 type LLMExplorerArgs = PageStoryArgs<typeof llmExplorerMocks>;
 
@@ -35,23 +36,20 @@ type Story = StoryObj<LLMExplorerArgs>;
 const untilLoaded = { timeout: 15_000 };
 
 /**
- * The quick-filter panel has no test id of its own, and it only mounts once the
- * workspace's filters have answered.
+ * The quick filters sit in a row of selects above the results; each opens a
+ * popover with the filter's values once the workspace's filters have answered.
  */
 const selectFirstQuickFilterValue = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
-	const panel = await waitFor(() => {
-		const found = canvasElement.querySelector<HTMLElement>('.quick-filters');
+	const [trigger] = await within(canvasElement).findAllByTestId(
+		/^quick-filter-select-/,
+		undefined,
+		untilLoaded,
+	);
+	await userEvent.click(trigger);
 
-		if (!found) {
-			throw new Error('Quick filters did not render');
-		}
-
-		return found;
-	}, untilLoaded);
-
-	const [filter] = await within(panel).findAllByTestId(
+	const filter = await screen.findByTestId(
 		'checkbox-filter-v2',
 		undefined,
 		untilLoaded,
@@ -70,7 +68,9 @@ const selectFirstQuickFilterValue = async (
 	// The rows remount around the new query and regroup into sections, so they
 	// are looked up again on every attempt rather than held from before the click.
 	await waitFor(() => {
-		const selected = within(filter).getByTestId('section-selected');
+		const selected = within(screen.getByTestId('checkbox-filter-v2')).getByTestId(
+			'section-selected',
+		);
 
 		expect(
 			within(selected)
@@ -78,6 +78,10 @@ const selectFirstQuickFilterValue = async (
 				.map((item) => item.dataset.testid),
 		).toEqual([`checkbox-value-row-${value}`]);
 	}, untilLoaded);
+	await waitFor(
+		() => expect(trigger).toHaveTextContent('1 selected'),
+		untilLoaded,
+	);
 };
 
 const openQuickFiltersSettings = async (): Promise<void> => {
@@ -98,9 +102,9 @@ const openQuickFiltersSettings = async (): Promise<void> => {
 };
 
 /**
- * A full window of LLM spans: the org's quick filters down the left, the query
- * builder and the view switcher above, and the list paging ten spans at a time
- * with the failing ones answering 503.
+ * A full window of LLM spans: the view switcher and the query builder, the
+ * org's quick filters as a row of selects, and the list paging ten spans at a
+ * time with the failing ones answering 503.
  */
 export const Default: Story = {};
 
@@ -113,6 +117,27 @@ export const RootSpans: Story = {
 };
 
 /**
+ * The Trace view over AI traces: estimated cost, tokens in and out, LLM and
+ * tool calls per trace.
+ */
+export const AITraces: Story = {
+	args: { view: ExplorerViews.TRACE },
+	parameters: { msw: { handlers: aiTraceHandlers } },
+	play: async ({ canvasElement }): Promise<void> => {
+		await within(canvasElement).findByText(
+			'Tokens in / out',
+			undefined,
+			untilLoaded,
+		);
+		await within(canvasElement).findByText(
+			'21.2k / 3.1k',
+			undefined,
+			untilLoaded,
+		);
+	},
+};
+
+/**
  * The time series view, which charts the spans the query matches instead of
  * listing them.
  */
@@ -122,8 +147,8 @@ export const TimeSeries: Story = {
 
 /**
  * A workspace with the SDK wired up but no LLM spans in the window, and no
- * quick filters configured yet, so the list and the filter panel both show
- * their empty states.
+ * quick filters configured yet: the AI onboarding steps replace the list, and
+ * the filter row says it has no filters.
  */
 export const NoSpans: Story = {
 	args: { spans: 0, quickFilters: 0, savedViews: 0 },

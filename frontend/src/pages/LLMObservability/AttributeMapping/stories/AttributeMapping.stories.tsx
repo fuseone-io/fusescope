@@ -9,6 +9,7 @@ import {
 	attributeMappingMocks,
 	wideConditionGroup,
 } from './AttributeMapping.stories.mocks';
+import { spanMappersHandler } from './__story_mockdata__/spanMappers';
 
 type AttributeMappingArgs = PageStoryArgs<typeof attributeMappingMocks>;
 
@@ -99,5 +100,62 @@ export const ChangesSavedToast: Story = {
 				expect(screen.getByText(/attribute mapping changes saved/i)).toBeVisible(),
 			);
 		}
+	},
+};
+
+const expandFirstGroup = async (canvasElement: HTMLElement): Promise<void> => {
+	const [toggle] = await within(canvasElement).findAllByTestId(
+		/^group-expand-/,
+		{},
+		{ timeout: 10000 },
+	);
+
+	await userEvent.click(toggle);
+	await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+	await within(canvasElement).findAllByTestId(
+		/^mapper-row-/,
+		{},
+		{ timeout: 10000 },
+	);
+};
+
+/** The first group open: its mappings, each with the sources tried in order. */
+export const GroupExpanded: Story = {
+	parameters: { msw: { handlers: [spanMappersHandler] } },
+	play: async ({ canvasElement }): Promise<void> => {
+		await expandFirstGroup(canvasElement);
+	},
+};
+
+/**
+ * A mapping switched off in the open group: the unsaved-changes bar names what
+ * is staged and offers Discard and Save changes.
+ */
+export const UnsavedChanges: Story = {
+	parameters: { msw: { handlers: [spanMappersHandler] } },
+	play: async ({ canvasElement }): Promise<void> => {
+		await expandFirstGroup(canvasElement);
+		const [toggle] =
+			await within(canvasElement).findAllByTestId(/^mapper-enabled-/);
+
+		await userEvent.click(toggle);
+		const bar = await within(canvasElement).findByTestId('unsaved-changes');
+		await expect(bar).toHaveTextContent(
+			'1 mapping changed in LangChain callbacks',
+		);
+	},
+};
+
+/** The Test tab: the sample span editor beside the attributes it would produce. */
+export const TestWithSpan: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'tab',
+				{ name: 'Test' },
+				{ timeout: 10000 },
+			),
+		);
+		await within(canvasElement).findByTestId('test-results-placeholder');
 	},
 };

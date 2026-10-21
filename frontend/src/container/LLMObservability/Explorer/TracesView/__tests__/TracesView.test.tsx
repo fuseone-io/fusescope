@@ -131,7 +131,7 @@ describe('TracesView column persistence', () => {
 			expect(persistedState()?.hiddenColumnIds).toStrictEqual([]);
 		});
 		expect(screen.getByText(OPTIONS_TRIGGER)).toBeInTheDocument();
-		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
+		expect(screen.getByText('LLM calls')).toBeInTheDocument();
 	});
 
 	it('persists nothing when the field keys fail', async () => {
@@ -159,10 +159,10 @@ describe('TracesView column persistence', () => {
 
 		await findTable();
 
-		expect(screen.getByText('root_span_name')).toBeInTheDocument();
-		expect(screen.getByText('trace_id')).toBeInTheDocument();
-		expect(screen.getByText('input')).toBeInTheDocument();
-		expect(screen.queryByText('llm_call_count')).not.toBeInTheDocument();
+		expect(screen.getByText('Root span')).toBeInTheDocument();
+		expect(screen.getByText('Trace')).toBeInTheDocument();
+		expect(screen.getByText('Input')).toBeInTheDocument();
+		expect(screen.queryByText('LLM calls')).not.toBeInTheDocument();
 	});
 
 	it('leaves an existing selection untouched while the field keys fail', async () => {

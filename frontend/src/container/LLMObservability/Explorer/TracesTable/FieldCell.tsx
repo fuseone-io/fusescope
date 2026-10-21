@@ -12,6 +12,7 @@ import {
 	TIMESTAMP_FIELD_NAMES,
 	TRACE_ID_FIELD_NAMES,
 } from './constants';
+import { COST_FIELD, formatCost } from './columnFormat';
 import { stringifyCellValue } from './utils';
 
 type FieldCellProps = {
@@ -37,6 +38,17 @@ function FieldCell({ name, value }: FieldCellProps): JSX.Element {
 
 	if (value === '' || value == null) {
 		return <TanStackTable.Text data-testid={name}>-</TanStackTable.Text>;
+	}
+
+	if (name === COST_FIELD) {
+		const cost = formatCost(value);
+		if (cost !== null) {
+			return (
+				<TanStackTable.Text data-testid={name} title={stringifyCellValue(value)}>
+					{cost}
+				</TanStackTable.Text>
+			);
+		}
 	}
 
 	const text = stringifyCellValue(value);

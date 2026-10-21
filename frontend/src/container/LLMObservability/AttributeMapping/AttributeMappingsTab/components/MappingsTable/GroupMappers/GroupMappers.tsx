@@ -165,6 +165,13 @@ function GroupMappers({
 	return (
 		<table className={styles.table}>
 			<MappingsColgroup />
+			<thead>
+				<tr className={styles.headerRow}>
+					<th className={styles.headerCell}>Target</th>
+					<th className={styles.headerCell}>Sources · first match wins</th>
+					<th className={styles.headerCell}>Actions</th>
+				</tr>
+			</thead>
 			<tbody>{rows}</tbody>
 		</table>
 	);

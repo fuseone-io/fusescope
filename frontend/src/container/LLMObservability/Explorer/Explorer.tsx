@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { LOCALSTORAGE } from 'constants/localStorage';
-import usePersistedFiltersVisibility from 'components/QuickFilters/hooks/usePersistedFiltersVisibility';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
@@ -9,7 +7,6 @@ import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
@@ -42,6 +39,7 @@ import {
 import LeftToolbarActions from '../ToolbarActions/LeftToolbarActions';
 import { DEFAULT_PANEL_TYPE, TOOLBAR_VIEWS } from './constants';
 import ListView from './ListView/ListView';
+import QuickFilterBar from './QuickFilterBar/QuickFilterBar';
 import QuerySection from './QuerySection/QuerySection';
 import TableView from './TableView/TableView';
 import TimeSeriesView from './TimeSeriesView/TimeSeriesView';
@@ -92,9 +90,6 @@ function Explorer(): JSX.Element {
 	);
 
 	const [warning, setWarning] = useState<Warning | undefined>();
-	const [isOpen, toggleFilters] = usePersistedFiltersVisibility(
-		LOCALSTORAGE.SHOW_LLM_QUICK_FILTERS,
-	);
 
 	const { startUnixMilli, endUnixMilli } = useSignalFieldApis();
 	// existingQuery is left unset so related values auto-extract from the current query
@@ -192,21 +187,12 @@ function Explorer(): JSX.Element {
 			<QuickFiltersLayout
 				className="trace-explorer-page"
 				testId="llm-observability-explorer"
-				showFilters={isOpen}
-				onToggleFilters={toggleFilters}
-				quickFilterProps={{
-					className: 'qf-traces-explorer',
-					source: QuickFiltersSource.AI_OBSERVABILITY,
-					signal: SignalType.AI_OBSERVABILITY,
-					useFieldApis: quickFiltersFieldApis,
-				}}
+				showFilters={false}
 			>
 				<div className="trace-explorer">
 					<div className="trace-explorer-header">
 						<div className="llm-explorer-toolbar">
 							<LeftToolbarActions
-								showFilter={isOpen}
-								handleFilterVisibilityChange={toggleFilters}
 								items={TOOLBAR_VIEWS}
 								selectedView={selectedView}
 								onChangeSelectedView={handleChangeSelectedView}
@@ -229,6 +215,10 @@ function Explorer(): JSX.Element {
 							<QuerySection />
 						</div>
 					</ExplorerCard>
+
+					<div className="llm-explorer-quick-filters">
+						<QuickFilterBar useFieldApis={quickFiltersFieldApis} />
+					</div>
 
 					<div className="traces-explorer-views">
 						{isCancelled && (

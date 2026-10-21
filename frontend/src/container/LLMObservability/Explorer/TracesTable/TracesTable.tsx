@@ -7,7 +7,7 @@ import type {
 	TableColumnDef,
 } from 'components/TanStackTableView/types';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
-import NoLogs from 'container/NoLogs/NoLogs';
+import LLMEmptyState from '../LLMEmptyState/LLMEmptyState';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
 import APIError from 'types/api/error';
 import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
@@ -78,9 +78,7 @@ function TracesTable({
 
 			{(isLoading || (isFetching && data.length === 0)) && <TracesLoading />}
 
-			{isDataAbsent && !isFilterApplied && (
-				<NoLogs dataSource={DataSource.TRACES} />
-			)}
+			{isDataAbsent && !isFilterApplied && <LLMEmptyState />}
 
 			{isDataAbsent && isFilterApplied && (
 				<EmptyLogsSearch dataSource={DataSource.TRACES} panelType={panelType} />

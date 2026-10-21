@@ -40,6 +40,9 @@ export const RULE_OPTIONS_LIMIT = 10;
 export const TAB_KEY = 'tab';
 export const MODEL_COSTS_TAB = 'model-costs';
 export const UNPRICED_MODELS_TAB = 'unpriced-models';
+export type ModelPricingTab =
+	| typeof MODEL_COSTS_TAB
+	| typeof UNPRICED_MODELS_TAB;
 
 export const PROVIDER_OPTIONS = [
 	{ value: 'OpenAI', label: 'OpenAI' },

@@ -1,5 +1,6 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
+import { OUTPUT_TOKENS_FIELD } from '../TracesTable/columnFormat';
 import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
 import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
 
@@ -41,7 +42,9 @@ export const sortByDefaultOrder = (
 	[...fields].sort((a, b) => orderRank(a) - orderRank(b));
 
 /** Anything the keys endpoint adds beyond the ordered set starts hidden; only applied at first init, since the store persists hidden ids. */
-const DEFAULT_VISIBLE_FIELDS = new Set(DEFAULT_COLUMN_ORDER);
+const DEFAULT_VISIBLE_FIELDS = new Set(
+	DEFAULT_COLUMN_ORDER.filter((name) => name !== OUTPUT_TOKENS_FIELD),
+);
 
 export const buildTraceViewColumns = (
 	fields: TelemetryFieldKey[],
