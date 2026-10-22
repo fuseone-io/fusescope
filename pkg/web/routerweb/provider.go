@@ -6,7 +6,9 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory"
@@ -77,11 +79,14 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 }
 
 func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	// Join internally call path.Clean to prevent directory traversal
-	path := filepath.Join(provider.config.Directory, req.URL.Path)
+	filePath, ok := resolveInDirectory(provider.config.Directory, req.URL.Path)
+	if !ok {
+		provider.serveIndex(rw)
+		return
+	}
 
 	// check whether a file exists or is a directory at the given path
-	fi, err := os.Stat(path)
+	fi, err := os.Stat(filePath)
 	if err != nil {
 		// if the file doesn't exist, serve index.html
 		if os.IsNotExist(err) {
@@ -108,4 +113,16 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (provider *provider) serveIndex(rw http.ResponseWriter) {
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = rw.Write(provider.indexContents)
+}
+
+// resolveInDirectory maps a URL path to a file path that cannot leave dir.
+func resolveInDirectory(dir string, urlPath string) (string, bool) {
+	resolved := filepath.Join(dir, filepath.FromSlash(path.Clean("/"+urlPath)))
+
+	rel, err := filepath.Rel(dir, resolved)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", false
+	}
+
+	return resolved, true
 }
