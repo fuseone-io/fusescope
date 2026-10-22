@@ -140,6 +140,8 @@ const preview: Preview = {
 						],
 						'Services',
 						['List', 'Detail', 'Top Level Operations', 'Service Map'],
+						'Frontend',
+						['Applications', 'Overview'],
 						'Logs',
 						['Explorer', 'Live Tail', 'Saved Views', 'Pipelines', 'Settings'],
 						'Traces',

@@ -4,6 +4,8 @@ export interface CrumbContext {
 	dashboardName?: string;
 	/** From the page's react-query cache, or the cloud provider's name. */
 	integrationTitle?: string;
+	/** From the page's react-query cache; undefined until the page loads it. */
+	rumApplicationName?: string;
 }
 
 export interface CrumbRoute {
@@ -23,5 +25,5 @@ export interface Crumb {
 
 export type CrumbNames = Pick<
 	CrumbContext,
-	'dashboardName' | 'integrationTitle'
+	'dashboardName' | 'integrationTitle' | 'rumApplicationName'
 >;

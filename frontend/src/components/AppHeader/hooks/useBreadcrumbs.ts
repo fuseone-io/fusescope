@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { useGetDashboardV2 } from 'api/generated/services/dashboard';
+import { useGetRUMApplication } from 'api/generated/services/rum';
 import { AxiosResponse } from 'axios';
 import ROUTES from 'constants/routes';
 import { ONE_CLICK_INTEGRATIONS } from 'container/Integrations/constants';
@@ -33,6 +34,17 @@ function useCachedIntegrationTitle(integrationId: string | undefined): string {
 	return cloud?.title ?? data?.data?.data?.title ?? '';
 }
 
+/** Reads the RUM application the page already loaded; never fetches. */
+function useCachedRumApplicationName(
+	applicationId: string | undefined,
+): string {
+	const { data } = useGetRUMApplication(
+		{ id: applicationId ?? '' },
+		{ query: { enabled: false, staleTime: Infinity } },
+	);
+	return applicationId ? (data?.data?.name ?? '') : '';
+}
+
 export function useBreadcrumbs(): Crumb[] {
 	const { pathname } = useLocation();
 
@@ -45,9 +57,17 @@ export function useBreadcrumbs(): Crumb[] {
 			: undefined;
 	const dashboardName = useCachedDashboardName(dashboardId);
 	const integrationTitle = useCachedIntegrationTitle(integrationId);
+	const rumApplicationName = useCachedRumApplicationName(
+		match?.path === ROUTES.RUM_APPLICATION ? match.params.id : undefined,
+	);
 
 	return useMemo(
-		() => resolveCrumbs(pathname, { dashboardName, integrationTitle }),
-		[pathname, dashboardName, integrationTitle],
+		() =>
+			resolveCrumbs(pathname, {
+				dashboardName,
+				integrationTitle,
+				rumApplicationName,
+			}),
+		[pathname, dashboardName, integrationTitle, rumApplicationName],
 	);
 }

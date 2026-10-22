@@ -118,6 +118,12 @@ export const CRUMB_ROUTES: Record<string, CrumbRoute> = {
 		parent: ROUTES.INTEGRATIONS,
 		label: ({ integrationTitle }): string => integrationTitle || 'Integration',
 	},
+	[ROUTES.RUM_APPLICATION]: {
+		parent: ROUTES.RUM_APPLICATIONS,
+		label: ({ rumApplicationName }): string =>
+			rumApplicationName || 'Application',
+		mono: true,
+	},
 	[ROUTES.MY_SETTINGS]: { parent: ROUTES.SETTINGS, label: 'Account' },
 	[ROUTES.ORG_SETTINGS]: { parent: ROUTES.SETTINGS, label: 'Single Sign-on' },
 	[ROUTES.INGESTION_SETTINGS]: { parent: ROUTES.SETTINGS, label: 'Ingestion' },

@@ -258,6 +258,18 @@ describe('AppSidebar', () => {
 			expect(within(respond).getByRole('link', { name: 'Alerts' })).toBeVisible();
 		});
 
+		it('lists Frontend after Services with a Beta badge', () => {
+			renderAppSidebar({ pinned: true });
+
+			const links = within(screen.getByRole('list', { name: 'Observe' }))
+				.getAllByRole('link')
+				.map((link) => link.textContent);
+			expect(links.indexOf('FrontendBeta')).toBe(links.indexOf('Services') + 1);
+			expect(navLink('Frontend Beta').getAttribute('href')).toMatch(
+				/^\/frontend\/applications\b/,
+			);
+		});
+
 		it('shows the Beta badge on AI Observability', () => {
 			renderAppSidebar({ pinned: true });
 

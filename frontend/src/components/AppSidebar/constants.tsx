@@ -3,6 +3,7 @@ import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 import ROUTES from 'constants/routes';
 import { AI_ASSISTANT_NAV_KEY } from 'container/SideNav/menuItems';
 import {
+	AppWindow,
 	Bell,
 	Binoculars,
 	Boxes,
@@ -41,6 +42,13 @@ export const NAV_GROUPS: NavGroup[] = [
 				itemKey: 'services',
 				label: 'Services',
 				icon: <HardDrive />,
+			},
+			{
+				key: ROUTES.RUM_APPLICATIONS,
+				itemKey: 'frontend',
+				label: 'Frontend',
+				icon: <AppWindow />,
+				badge: 'Beta',
 			},
 			{
 				key: ROUTES.TRACES_EXPLORER,

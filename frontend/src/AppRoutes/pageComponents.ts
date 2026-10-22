@@ -308,3 +308,15 @@ export const LLMObservabilityPage = Loadable(
 			/* webpackChunkName: "LLM Observability Page" */ 'pages/LLMObservability'
 		),
 );
+
+export const RumApplicationsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Rum Applications Page" */ 'pages/RumApplications'
+		),
+);
+
+export const RumApplicationPage = Loadable(
+	() =>
+		import(/* webpackChunkName: "Rum Application Page" */ 'pages/RumApplication'),
+);

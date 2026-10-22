@@ -91,6 +91,9 @@ const ROUTES = {
 	AI_OBSERVABILITY_OVERVIEW: '/ai-observability/overview',
 	AI_OBSERVABILITY_EXPLORER: '/ai-observability/explorer',
 	AI_OBSERVABILITY_CONFIGURATION: '/ai-observability/configuration',
+	RUM_BASE: '/frontend',
+	RUM_APPLICATIONS: '/frontend/applications',
+	RUM_APPLICATION: '/frontend/applications/:id',
 } as const;
 
 export default ROUTES;
