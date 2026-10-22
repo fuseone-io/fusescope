@@ -16,6 +16,25 @@ receivers:
                 - localhost:8888
               labels:
                 job_name: otel-collector
+  # The network scraper is left out: under root_path it reads the collector's own network namespace.
+  hostmetrics:
+    root_path: /hostfs
+    collection_interval: 60s
+    scrapers:
+      cpu: {}
+      load: {}
+      memory: {}
+      disk:
+        exclude:
+          devices: ["^(loop|ram|sr)[0-9]+$"]
+          match_type: regexp
+      filesystem:
+        exclude_fs_types:
+          fs_types: [autofs, binfmt_misc, bpf, cgroup, cgroup2, configfs, debugfs, devpts, devtmpfs, fusectl, hugetlbfs, mqueue, nsfs, overlay, proc, pstore, rpc_pipefs, securityfs, selinuxfs, squashfs, sysfs, tmpfs, tracefs]
+          match_type: strict
+        exclude_mount_points:
+          mount_points: ["^/(dev|proc|sys|run|var/lib/docker|var/lib/containerd)(/|$)"]
+          match_type: regexp
 
 processors:
   memory_limiter:
@@ -29,6 +48,8 @@ processors:
   resourcedetection:
     detectors: [env, system]
     timeout: 2s
+    system:
+      hostname_sources: [os]
   signozspanmetrics/delta:
     metrics_exporter: signozclickhousemetrics
     metrics_flush_interval: 60s
@@ -83,6 +104,10 @@ service:
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]
+      exporters: [signozclickhousemetrics]
+    metrics/hostmetrics:
+      receivers: [hostmetrics]
+      processors: [memory_limiter, resourcedetection, batch]
       exporters: [signozclickhousemetrics]
     metrics/prometheus:
       receivers: [prometheus]

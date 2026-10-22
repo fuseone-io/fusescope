@@ -124,11 +124,15 @@ services:
       - |
         /fusescope-otel-collector migrate sync check &&
         /fusescope-otel-collector --config=/etc/otel-collector-config.yaml
+    # Host UTS namespace so the system detector reports the host's hostname.
+    uts: host
     volumes:
       - ./otel-collector/config.yaml:/etc/otel-collector-config.yaml:ro
+      - /:/hostfs:ro
+      - /proc:/hostfs/proc:ro
+      - /sys:/hostfs/sys:ro
     environment:
       <<: *collector-env
-      OTEL_RESOURCE_ATTRIBUTES: host.name=fusescope-demo,os.type=linux
       LOW_CARDINAL_EXCEPTION_GROUPING: "false"
     depends_on:
       telemetrystore-migrator:

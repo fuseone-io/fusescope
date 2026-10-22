@@ -6,7 +6,7 @@ Single-host Docker Compose deployment of a public FuseScope demo with live sampl
 |---|---|---|
 | `clickhouse` (+ `zookeeper`, `init-clickhouse`) | telemetry store, 3-day retention | 4.5 GiB, 2 CPU (+384 MiB, 0.2) |
 | `telemetrystore-migrator` | creates/migrates the schema, then exits | 256 MiB, 0.25 |
-| `otel-collector` | OTLP receiver, internal only | 384 MiB, 0.3 |
+| `otel-collector` | OTLP receiver (internal only) and host metrics | 384 MiB, 0.3 |
 | `fusescope` | API, web UI, RUM gateway (SQLite) | 768 MiB, 0.5 |
 | `caddy` | TLS on host port 8443, the only published port | 128 MiB, 0.2 |
 | `hotrod`, `hotrod-load` | traced sample app and a slow load loop | 128 + 32 MiB |
@@ -15,6 +15,10 @@ Single-host Docker Compose deployment of a public FuseScope demo with live sampl
 
 The collector has no auth, so OTLP (`/v1/*`) is not exposed. Browsers send to `/rum/v1/*`, which FuseScope
 serves with per-application keys and allowed origins.
+
+The collector mounts the host root read-only at `/hostfs` and shares the host's UTS namespace, so the host appears in
+Infrastructure › Hosts under its own hostname. Network metrics are not collected: from a bridged container they would
+describe the collector's network namespace, not the host's.
 
 ## Install
 
