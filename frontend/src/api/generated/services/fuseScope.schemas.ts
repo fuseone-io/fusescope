@@ -11257,6 +11257,7 @@ export interface RumtypesIngestCountsDTO {
 
 export enum RumtypesRejectionReasonDTO {
 	bad_key = 'bad_key',
+	unknown_key = 'unknown_key',
 	origin_not_allowed = 'origin_not_allowed',
 	rate_limited = 'rate_limited',
 	too_large = 'too_large',
