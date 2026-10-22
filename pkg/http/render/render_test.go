@@ -107,6 +107,12 @@ func TestError(t *testing.T) {
 			err:        errors.New(errors.TypeUnauthenticated, errors.MustNewCode("not_allowed"), "not allowed").WithUrl("https://unauthenticated").WithAdditional("a1", "a2"),
 			expected:   []byte(`{"status":"error","error":{"type":"unauthenticated","code":"not_allowed","message":"not allowed","url":"https://unauthenticated","errors":[{"message":"a1","suggestions":[]},{"message":"a2","suggestions":[]}],"suggestions":[]}}`),
 		},
+		"/payload_too_large": {
+			name:       "PayloadTooLarge",
+			statusCode: http.StatusRequestEntityTooLarge,
+			err:        errors.New(errors.TypePayloadTooLarge, errors.MustNewCode("too_large"), "too large"),
+			expected:   []byte(`{"status":"error","error":{"type":"payload-too-large","code":"too_large","message":"too large","errors":[],"suggestions":[]}}`),
+		},
 	}
 
 	server := &http.Server{

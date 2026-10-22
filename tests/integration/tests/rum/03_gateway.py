@@ -162,3 +162,29 @@ def test_gateway_rejects_bad_key_and_origin(
     )
     rejections = response.json()["data"]["rejections"]
     assert [(rejection["reason"], rejection["count"], rejection["lastOrigin"]) for rejection in rejections] == [("origin_not_allowed", 1, "https://evil.example.org")]
+
+
+def test_gateway_rejects_oversized_body(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    created = create_rum_application(signoz, token, {"name": f"large-{uuid.uuid4().hex[:8]}", "platform": "web", "environment": "production", "allowedOrigins": [ORIGIN]})
+    url = signoz.self.host_configs["8080"].get("/rum/v1/traces")
+    headers = {RUM_KEY_HEADER: created["key"]["key"], "Content-Type": "application/json", "Origin": ORIGIN}
+    oversized = b" " * (4 * 1024 * 1024 + 1)
+
+    response = requests.post(url, data=oversized, headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.REQUEST_ENTITY_TOO_LARGE, response.text
+
+    response = requests.post(url, data=gzip.compress(oversized), headers={**headers, "Content-Encoding": "gzip"}, timeout=10)
+    assert response.status_code == HTTPStatus.REQUEST_ENTITY_TOO_LARGE, response.text
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{RUM_APPLICATIONS}/{created['id']}/status"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    rejections = response.json()["data"]["rejections"]
+    assert [(rejection["reason"], rejection["count"]) for rejection in rejections] == [("too_large", 2)]

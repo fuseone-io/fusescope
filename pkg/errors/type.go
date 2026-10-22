@@ -14,6 +14,7 @@ var (
 	TypeFatal                  = typ{"fatal"} // Unrecoverable failure (e.g. panic)
 	TypeLicenseUnavailable     = typ{"license-unavailable"}
 	TypeTooManyRequests        = typ{"too-many-requests"}
+	TypePayloadTooLarge        = typ{"payload-too-large"}
 )
 
 // Defines custom error types.
