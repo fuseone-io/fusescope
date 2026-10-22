@@ -10,6 +10,7 @@ import {
 	TableRow,
 } from 'components/ui/table';
 import { formatCount } from 'lib/apm/format';
+import { plural } from 'lib/rum/format';
 import { RouteVitals } from 'lib/rum/overviewTypes';
 import { VitalName } from 'lib/rum/types';
 import { formatVital, rateVital } from 'lib/rum/vitals';
@@ -52,7 +53,7 @@ function TopRoutesPanel({
 			}
 			actions={
 				<span className="tw:text-xs tw:text-muted-foreground tw:tabular-nums">
-					{routes.length} of {routeCount} routes
+					{routes.length} of {routeCount} {plural(routeCount, 'route')}
 				</span>
 			}
 			divided

@@ -3,6 +3,7 @@ import {
 	formatCountChange,
 	formatPointChange,
 	formatSessionDuration,
+	plural,
 } from '../format';
 
 describe('formatAgo', () => {
@@ -49,5 +50,15 @@ describe('formatPointChange', () => {
 		[undefined, undefined],
 	])('%s', (delta, text) => {
 		expect(formatPointChange(delta)).toBe(text);
+	});
+});
+
+describe('plural', () => {
+	it.each([
+		[0, 'applications'],
+		[1, 'application'],
+		[3, 'applications'],
+	])('names %i of them %s', (count, noun) => {
+		expect(plural(count, 'application')).toBe(noun);
 	});
 });
