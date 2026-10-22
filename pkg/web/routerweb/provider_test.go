@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -250,4 +251,39 @@ func TestServeStaticFilesUnchanged(t *testing.T) {
 	base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, global.Config{ExternalURL: &url.URL{Path: "/signoz"}})
 
 	assert.Equal(t, string(expected), httpGet(t, base+"/assets/style.css"))
+}
+
+func TestServeTraversalStaysInDirectory(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	webDir := filepath.Join(root, "web")
+	require.NoError(t, os.Mkdir(webDir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(webDir, "index.html"), []byte("index"), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "secret.txt"), []byte("secret"), 0o600))
+
+	web, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: webDir}, global.Config{})
+	require.NoError(t, err)
+	handler, ok := web.(http.Handler)
+	require.True(t, ok)
+
+	testCases := []struct {
+		name   string
+		target string
+	}{
+		{name: "DotDot", target: "/../secret.txt"},
+		{name: "NestedDotDot", target: "/assets/../../secret.txt"},
+		{name: "EncodedDotDot", target: "/%2e%2e/secret.txt"},
+		{name: "EncodedSlash", target: "/..%2fsecret.txt"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, testCase.target, nil))
+
+			assert.Equal(t, http.StatusOK, recorder.Code)
+			assert.Equal(t, "index", recorder.Body.String())
+		})
+	}
 }
