@@ -32,6 +32,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/quickfilter"
 	"github.com/fuseone-io/fusescope/pkg/modules/rawdataexport"
 	"github.com/fuseone-io/fusescope/pkg/modules/rulestatehistory"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
 	"github.com/fuseone-io/fusescope/pkg/modules/savedview"
 	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount"
 	"github.com/fuseone-io/fusescope/pkg/modules/session"
@@ -99,6 +100,8 @@ type provider struct {
 	savedViewHandler           savedview.Handler
 	quickFilterModule          quickfilter.Module
 	quickFilterHandler         quickfilter.Handler
+	rumApplicationHandler      rumapplication.Handler
+	rumGateway                 rumapplication.Gateway
 }
 
 func NewFactory(
@@ -149,6 +152,8 @@ func NewFactory(
 	web web.Web,
 	quickFilterModule quickfilter.Module,
 	quickFilterHandler quickfilter.Handler,
+	rumApplicationHandler rumapplication.Handler,
+	rumGateway rumapplication.Gateway,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -202,6 +207,8 @@ func NewFactory(
 			web,
 			quickFilterModule,
 			quickFilterHandler,
+			rumApplicationHandler,
+			rumGateway,
 		)
 	})
 }
@@ -257,6 +264,8 @@ func newProvider(
 	web web.Web,
 	quickFilterModule quickfilter.Module,
 	quickFilterHandler quickfilter.Handler,
+	rumApplicationHandler rumapplication.Handler,
+	rumGateway rumapplication.Gateway,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -307,6 +316,8 @@ func newProvider(
 		savedViewHandler:           savedViewHandler,
 		quickFilterModule:          quickFilterModule,
 		quickFilterHandler:         quickFilterHandler,
+		rumApplicationHandler:      rumApplicationHandler,
+		rumGateway:                 rumGateway,
 	}
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
@@ -327,7 +338,7 @@ func newProvider(
 		return nil, err
 	}
 
-	httpHandler := middleware.NewCors().Wrap(router)
+	httpHandler := middleware.NewCors(rumPathPrefix).Wrap(router)
 	httpHandler = middleware.NewCompress().Wrap(httpHandler)
 
 	routePrefix := globalConfig.ExternalPath()
@@ -515,6 +526,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addQuickFilterRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRUMRoutes(router); err != nil {
 		return err
 	}
 

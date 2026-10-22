@@ -35,6 +35,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/quickfilter"
 	"github.com/fuseone-io/fusescope/pkg/modules/rawdataexport"
 	"github.com/fuseone-io/fusescope/pkg/modules/rulestatehistory"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
 	"github.com/fuseone-io/fusescope/pkg/modules/savedview"
 	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount"
 	"github.com/fuseone-io/fusescope/pkg/modules/session"
@@ -113,6 +114,8 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ web.Web }{},
 		struct{ quickfilter.Module }{},
 		struct{ quickfilter.Handler }{},
+		struct{ rumapplication.Handler }{},
+		struct{ rumapplication.Gateway }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

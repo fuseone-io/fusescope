@@ -38,6 +38,7 @@ pytest_plugins = [
     "fixtures.role",
     "fixtures.savedview",
     "fixtures.seed_golden_dataset",
+    "fixtures.otelcollector",
 ]
 
 
@@ -118,4 +119,10 @@ def pytest_addoption(parser: pytest.Parser):
         action="store",
         default="0.145.0",
         help="schema migrator version",
+    )
+    parser.addoption(
+        "--collector-version",
+        action="store",
+        default="0.145.0",
+        help="fusescope otel collector version",
     )

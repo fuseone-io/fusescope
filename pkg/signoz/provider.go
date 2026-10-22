@@ -266,6 +266,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRuleViewFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddFieldTuplesFactory(sqlstore),
 		sqlmigration.NewKeepRelevantLLMPricingRulesFactory(),
+		sqlmigration.NewAddRUMApplicationsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddRUMApplicationTuplesFactory(sqlstore),
 	)
 }
 
@@ -380,6 +382,8 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			web,
 			modules.QuickFilter,
 			handlers.QuickFilter,
+			handlers.RUMApplicationHandler,
+			handlers.RUMGateway,
 		),
 	)
 }
