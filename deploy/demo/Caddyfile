@@ -1,0 +1,31 @@
+{
+	auto_https disable_redirects
+	skip_install_trust
+	servers {
+		import /etc/caddy/cloudflare-ips.caddy
+		client_ip_headers CF-Connecting-IP
+	}
+}
+
+(tls-internal) {
+	tls internal
+}
+
+# Cloudflare Origin CA certificate.
+(tls-origin) {
+	tls /certs/origin.pem /certs/origin.key
+}
+
+https://{$FUSESCOPE_HOST}:8443 {
+	import tls-{$FUSESCOPE_TLS}
+	encode zstd gzip
+
+	# The collector has no auth: OTLP stays on the internal network. Browsers use /rum/v1/*.
+	@otlp path /v1/traces /v1/logs /v1/metrics
+	respond @otlp 404
+
+	reverse_proxy fusescope:8080 {
+		header_up X-Forwarded-For {client_ip}
+		flush_interval -1
+	}
+}

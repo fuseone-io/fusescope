@@ -1,0 +1,273 @@
+name: fusescope-demo
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+x-telemetrygen: &telemetrygen
+  <<: *logging
+  image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:v0.139.0
+  restart: unless-stopped
+  mem_limit: 48m
+  cpus: 0.05
+  profiles: [generators]
+
+x-clickhouse-image: &clickhouse-image clickhouse/clickhouse-server:25.12.5
+x-collector-image: &collector-image ghcr.io/fuseone-io/fusescope-otel-collector:${COLLECTOR_VERSION:-0.145.0}
+
+x-collector-env: &collector-env
+  SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN: tcp://clickhouse:9000
+  SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER: cluster
+  SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION: "true"
+  SIGNOZ_OTEL_COLLECTOR_TIMEOUT: 10m
+
+services:
+  init-clickhouse:
+    <<: *logging
+    image: *clickhouse-image
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        [ -x /var/lib/clickhouse/user_scripts/histogramQuantile ] && exit 0
+        version="v0.0.1"
+        node_os=$$(uname -s | tr '[:upper:]' '[:lower:]')
+        node_arch=$$(uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
+        cd /tmp
+        wget -O histogram-quantile.tar.gz "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2F$${version}/histogram-quantile_$${node_os}_$${node_arch}.tar.gz"
+        tar -xzf histogram-quantile.tar.gz
+        mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
+    restart: on-failure:5
+    mem_limit: 256m
+    cpus: 0.25
+    volumes:
+      - clickhouse-user-scripts:/var/lib/clickhouse/user_scripts/
+
+  zookeeper:
+    <<: *logging
+    image: signoz/zookeeper:3.7.1
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+      ZOO_HEAP_SIZE: "192"
+      ZOO_AUTOPURGE_INTERVAL: "1"
+    volumes:
+      - zookeeper-data:/bitnami/zookeeper
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -m 2 http://localhost:8080/commands/ruok | grep error | grep null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    mem_limit: 384m
+    cpus: 0.2
+
+  clickhouse:
+    <<: *logging
+    image: *clickhouse-image
+    environment:
+      CLICKHOUSE_SKIP_USER_SETUP: "1"
+    volumes:
+      - ./clickhouse/config.d/cluster.xml:/etc/clickhouse-server/config.d/config.xml:ro
+      - ./clickhouse/config.d/zz-limits.xml:/etc/clickhouse-server/config.d/zz-limits.xml:ro
+      - ./clickhouse/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml:ro
+      - ./clickhouse/users.d/zz-limits.xml:/etc/clickhouse-server/users.d/zz-limits.xml:ro
+      - ./clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml:ro
+      - clickhouse-data:/var/lib/clickhouse/
+      - clickhouse-user-scripts:/var/lib/clickhouse/user_scripts/
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "0.0.0.0:8123/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      init-clickhouse:
+        condition: service_completed_successfully
+      zookeeper:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 4608m
+    cpus: 2
+
+  telemetrystore-migrator:
+    <<: *logging
+    image: *collector-image
+    environment: *collector-env
+    entrypoint: [/bin/sh]
+    command:
+      - -c
+      - |
+        /fusescope-otel-collector migrate bootstrap &&
+        /fusescope-otel-collector migrate sync up &&
+        /fusescope-otel-collector migrate async up
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: on-failure:5
+    mem_limit: 256m
+    cpus: 0.25
+
+  otel-collector:
+    <<: *logging
+    image: *collector-image
+    entrypoint: [/bin/sh]
+    command:
+      - -c
+      - |
+        /fusescope-otel-collector migrate sync check &&
+        /fusescope-otel-collector --config=/etc/otel-collector-config.yaml
+    volumes:
+      - ./otel-collector/config.yaml:/etc/otel-collector-config.yaml:ro
+    environment:
+      <<: *collector-env
+      OTEL_RESOURCE_ATTRIBUTES: host.name=fusescope-demo,os.type=linux
+      LOW_CARDINAL_EXCEPTION_GROUPING: "false"
+    depends_on:
+      telemetrystore-migrator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    mem_limit: 384m
+    cpus: 0.3
+
+  fusescope:
+    <<: *logging
+    image: ghcr.io/fuseone-io/fusescope:${FUSESCOPE_VERSION:?set FUSESCOPE_VERSION in .env}
+    environment:
+      SIGNOZ_WEB_ENABLED: "true"
+      SIGNOZ_GLOBAL_EXTERNAL__URL: ${FUSESCOPE_URL}
+      SIGNOZ_SQLSTORE_SQLITE_PATH: /var/lib/fusescope/signoz.db
+      SIGNOZ_TOKENIZER_JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      SIGNOZ_ALERTMANAGER_PROVIDER: signoz
+      SIGNOZ_TELEMETRYSTORE_PROVIDER: clickhouse
+      SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN: tcp://clickhouse:9000
+      SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER: cluster
+      SIGNOZ_RUM_COLLECTOR__ENDPOINT: http://otel-collector:4318
+      SIGNOZ_RUM_RATELIMIT_TRUST__FORWARDED__FOR: "true"
+    volumes:
+      - fusescope-data:/var/lib/fusescope/
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      telemetrystore-migrator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    mem_limit: 768m
+    cpus: 0.5
+
+  caddy:
+    <<: *logging
+    image: caddy:2.10.2-alpine
+    environment:
+      FUSESCOPE_HOST: ${FUSESCOPE_HOST}
+      FUSESCOPE_TLS: ${FUSESCOPE_TLS:-internal}
+    ports:
+      - "${CADDY_PORT:-8443}:8443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./generated/cloudflare-ips.caddy:/etc/caddy/cloudflare-ips.caddy:ro
+      - ./certs:/certs:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      fusescope:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: 0.2
+
+  hotrod:
+    <<: *logging
+    image: jaegertracing/example-hotrod:1.76.0
+    command: [all]
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment=demo
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: 0.15
+    profiles: [generators]
+
+  hotrod-load:
+    <<: *logging
+    image: curlimages/curl:8.17.0
+    entrypoint:
+      - sh
+      - -c
+      - |
+        while true; do
+          for customer in 123 392 731 567; do
+            curl -s -o /dev/null "http://hotrod:8080/dispatch?customer=$$customer&nonse=$$RANDOM"
+            sleep 15
+          done
+        done
+    depends_on: [hotrod]
+    restart: unless-stopped
+    mem_limit: 32m
+    cpus: 0.05
+    profiles: [generators]
+
+  logs-checkout:
+    <<: *telemetrygen
+    command: [logs, --otlp-endpoint=otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.5, --service=checkout, --otlp-attributes=deployment.environment="demo", --body=order placed, --severity-text=Info, --severity-number=9]
+
+  logs-payment-error:
+    <<: *telemetrygen
+    command: [logs, --otlp-endpoint=otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.1, --service=payment, --otlp-attributes=deployment.environment="demo", --body=card declined - insufficient funds, --severity-text=Error, --severity-number=17]
+
+  traces-payment-errors:
+    <<: *telemetrygen
+    command: [traces, --otlp-endpoint=otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.1, --service=payment, --otlp-attributes=deployment.environment="demo", --child-spans=2, --span-duration=250ms, --status-code=Error]
+
+  rum-sample:
+    <<: *logging
+    build:
+      context: ./rum-sample
+      args:
+        FUSESCOPE_BROWSER_VERSION: ${FUSESCOPE_BROWSER_VERSION:-next}
+    environment:
+      RUM_APPLICATION_ID: ${RUM_APPLICATION_ID:-}
+      RUM_PUBLIC_KEY: ${RUM_PUBLIC_KEY:-}
+      RUM_ENDPOINT: ${RUM_ENDPOINT:-http://fusescope:8080}
+      HOTROD: http://hotrod:8080
+    restart: unless-stopped
+    mem_limit: 96m
+    cpus: 0.1
+    profiles: [generators]
+
+  rum-driver:
+    <<: *logging
+    build: ./rum-driver
+    environment:
+      APP_URL: http://rum-sample:3000/
+      SESSIONS: ${RUM_DRIVER_SESSIONS:-3}
+      INTERVAL_SECONDS: ${RUM_DRIVER_INTERVAL_SECONDS:-300}
+    depends_on: [rum-sample]
+    init: true
+    shm_size: 128m
+    restart: unless-stopped
+    mem_limit: 640m
+    cpus: 0.4
+    profiles: [generators]
+
+networks:
+  default:
+    name: fusescope-demo
+
+volumes:
+  clickhouse-data:
+  clickhouse-user-scripts:
+  zookeeper-data:
+  fusescope-data:
+  caddy-data:
+  caddy-config:
