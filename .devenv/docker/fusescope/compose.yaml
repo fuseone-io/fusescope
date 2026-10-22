@@ -1,6 +1,6 @@
 services:
   fusescope:
-    image: ${FUSESCOPE_IMAGE:-ghcr.io/fuseone-io/fusescope:0.150.0}
+    image: ${FUSESCOPE_IMAGE:-ghcr.io/fuseone-io/fusescope:0.151.0}
     container_name: fusescope-dev
     environment:
       - SIGNOZ_WEB_ENABLED=false
@@ -10,6 +10,7 @@ services:
       - SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse
       - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000
       - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster
+      - SIGNOZ_RUM_COLLECTOR__ENDPOINT=http://fusescope-otel-collector-dev:4318
     volumes:
       - fusescope-data:/var/lib/fusescope/
     ports:
