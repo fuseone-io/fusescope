@@ -148,9 +148,9 @@ export const KeyShownOnce: Story = {
 		await userEvent.click(screen.getByTestId('rum-app-submit'));
 		await expect(
 			await screen.findByTestId('rum-key-value', {}, WAIT),
-		).toHaveTextContent('rum_pub_8Fh2kQ7vXz3mN9cLw4R');
+		).toHaveTextContent('rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs');
 		await expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
-			"publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLw4R'",
+			"publicKey: 'rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs'",
 		);
 		await expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
 			"version: '<your app version>'",
@@ -195,7 +195,7 @@ export const RotateKey: Story = {
 		await userEvent.click(screen.getByTestId('rum-rotate-confirm'));
 		await expect(
 			await screen.findByTestId('rum-key-value', {}, WAIT),
-		).toHaveTextContent('rum_pub_Qm2Vx8LkT4nRw6YbZq7P');
+		).toHaveTextContent('rum_pub_qm2vx3lkt4nrw6ybzq7pd5hej2ca4fgu');
 	},
 };
 

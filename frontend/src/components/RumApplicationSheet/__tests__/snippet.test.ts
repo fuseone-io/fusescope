@@ -5,7 +5,7 @@ const BASE: SnippetInput = {
 	applicationId: '01a16115-094c-79a3-aa4c-39d2a99907d1',
 	name: 'web-shop',
 	environment: 'production',
-	publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLw4Rt',
+	publicKey: 'rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs',
 	endpoint: 'https://fusescope.example.com',
 	sampleRate: 1,
 	tracePropagationUrls: [],
@@ -23,7 +23,7 @@ const HEAD = `import { init } from '@fusescope/browser';
 
 init({
   applicationId: '01a16115-094c-79a3-aa4c-39d2a99907d1',
-  publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLw4Rt',
+  publicKey: 'rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs',
   endpoint: 'https://fusescope.example.com',
   service: 'web-shop',
   version: '<your app version>', // your release, e.g. from package.json
@@ -81,7 +81,7 @@ describe('buildNpmSnippet', () => {
 
 init({
   applicationId: '01a16115-094c-79a3-aa4c-39d2a99907d1',
-  publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLw4Rt',
+  publicKey: 'rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs',
   endpoint: 'https://fusescope.example.com',
   service: 'o\\'brien',
   version: '<your app version>', // your release, e.g. from package.json

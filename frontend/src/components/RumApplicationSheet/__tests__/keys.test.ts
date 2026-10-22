@@ -20,8 +20,8 @@ const key = (id: string, status: RumtypesKeyStatusDTO) => ({
 
 describe('keys', () => {
 	it('masks and abbreviates the key', () => {
-		expect(maskedKey('9fXa')).toBe('rum_pub_••••••••••••9fXa');
-		expect(keyPlaceholder('9fXa')).toBe('rum_pub_…9fXa');
+		expect(maskedKey('x4fa')).toBe('rum_pub_••••••••••••x4fa');
+		expect(keyPlaceholder('x4fa')).toBe('rum_pub_…x4fa');
 	});
 
 	it('finds the active key and an ongoing rotation', () => {

@@ -32,7 +32,7 @@ const APP = {
 const KEY = {
 	id: 'key-1',
 	applicationId: 'app-1',
-	last4: 'Rt4w',
+	last4: 'rt4w',
 	status: 'active',
 	createdAt: '2026-10-21T10:00:00Z',
 	expiresAt: null,
@@ -64,7 +64,10 @@ function mockServer(created: { body?: unknown }): void {
 			return res(
 				ctx.status(201),
 				ctx.json(
-					ok({ ...APP, key: { ...KEY, key: 'rum_pub_8Fh2kQ7vXz3mN9cLRt4w' } }),
+					ok({
+						...APP,
+						key: { ...KEY, key: 'rum_pub_h3vq7zk2mx5cn4lw6rtp2jdy5beart4w' },
+					}),
 				),
 			);
 		}),
@@ -94,7 +97,7 @@ describe('RumApplicationSheet', () => {
 		await user.click(screen.getByTestId('rum-app-submit'));
 
 		await expect(screen.findByTestId('rum-key-value')).resolves.toHaveTextContent(
-			'rum_pub_8Fh2kQ7vXz3mN9cLRt4w',
+			'rum_pub_h3vq7zk2mx5cn4lw6rtp2jdy5beart4w',
 		);
 		expect(created.body).toMatchObject({
 			name: 'web-shop',
@@ -104,7 +107,7 @@ describe('RumApplicationSheet', () => {
 			sampleRate: 1,
 		});
 		expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
-			"publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLRt4w'",
+			"publicKey: 'rum_pub_h3vq7zk2mx5cn4lw6rtp2jdy5beart4w'",
 		);
 		await expect(screen.findByTestId('rum-rejection')).resolves.toHaveTextContent(
 			'origin http://localhost:3360 is not allowed',

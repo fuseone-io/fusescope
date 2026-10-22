@@ -23,8 +23,8 @@ const LIST = 'Frontend · applications';
 const SETUP = 'Frontend · setup';
 const APPS = 'http://localhost/api/v1/rum/applications';
 
-const NEW_KEY_VALUE = 'rum_pub_8Fh2kQ7vXz3mN9cLw4R';
-const NEW_KEY = { id: 'key-new', applicationId: 'app-new', last4: 'Lw4R' };
+const NEW_KEY_VALUE = 'rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs';
+const NEW_KEY = { id: 'key-new', applicationId: 'app-new', last4: '6eqs' };
 
 type SetupStatus = 'waiting' | 'receiving';
 
@@ -100,8 +100,8 @@ export const rumApplicationsMocks = defineStoryMocks({
 					ok({
 						...rumApplicationKeys(false)[0],
 						id: 'key-rotated',
-						last4: 'Zq7P',
-						key: 'rum_pub_Qm2Vx8LkT4nRw6YbZq7P',
+						last4: '4fgu',
+						key: 'rum_pub_qm2vx3lkt4nrw6ybzq7pd5hej2ca4fgu',
 					}),
 				),
 			),
