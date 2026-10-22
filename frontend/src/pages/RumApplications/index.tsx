@@ -6,6 +6,7 @@ import RumApplicationSheet from 'components/RumApplicationSheet/RumApplicationSh
 import { SheetTarget } from 'components/RumApplicationSheet/types';
 import { Button } from 'components/ui/button';
 import { formatCount } from 'lib/apm/format';
+import { plural } from 'lib/rum/format';
 import { useCanManageRum } from 'lib/rum/useCanManageRum';
 import { AppWindow, BookOpen, Plus } from 'lucide-react';
 
@@ -44,7 +45,7 @@ function RumApplications(): JSX.Element {
 
 	let body: JSX.Element;
 	if (state.status === 'error') {
-		body = <ApplicationsUnavailable forbidden={state.forbidden} />;
+		body = <ApplicationsUnavailable />;
 	} else if (state.status === 'ready' && rows.length === 0) {
 		body = <ApplicationsEmptyState canManage={canManage} onCreate={openNew} />;
 	} else {
@@ -63,8 +64,8 @@ function RumApplications(): JSX.Element {
 					divided
 					footer={
 						<span className="tw:flex tw:w-full tw:flex-wrap tw:justify-between tw:gap-2">
-							<span className="tw:tabular-nums">
-								{shown.length} of {rows.length} applications
+							<span data-testid="rum-applications-shown" className="tw:tabular-nums">
+								{shown.length} of {rows.length} {plural(rows.length, 'application')}
 							</span>
 							<span>
 								Supported SDK: <span className="tw:font-mono">@fusescope/browser</span>{' '}
@@ -105,19 +106,19 @@ function RumApplications(): JSX.Element {
 					meta={
 						state.status === 'ready' &&
 						rows.length > 0 && (
-							<>
+							<span data-testid="rum-applications-count">
 								<strong className="tw:font-medium tw:text-foreground">
 									{rows.length}
 								</strong>{' '}
-								applications ·{' '}
+								{plural(rows.length, 'application')} ·{' '}
 								<strong
 									data-testid="rum-applications-sessions"
 									className="tw:font-medium tw:text-foreground"
 								>
 									{formatCount(kpis.sessions)}
 								</strong>{' '}
-								sessions in the selected range
-							</>
+								{plural(kpis.sessions, 'session')} in the selected range
+							</span>
 						)
 					}
 					actions={

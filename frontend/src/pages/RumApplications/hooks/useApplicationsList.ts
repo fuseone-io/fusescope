@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { isAxiosError } from 'axios';
 import {
 	useGetRUMApplicationStatus,
 	useListRUMApplications,
@@ -16,11 +15,8 @@ import { ApplicationRow } from '../types';
 
 export type ApplicationsListState =
 	| { status: 'loading' }
-	| { status: 'error'; forbidden: boolean }
+	| { status: 'error' }
 	| { status: 'ready'; rows: ApplicationRow[]; metricsLoading: boolean };
-
-const isForbidden = (error: unknown): boolean =>
-	isAxiosError(error) && error.response?.status === 403;
 
 /** The applications with their query-side metrics in the global time range. */
 export function useApplicationsList(): ApplicationsListState {
@@ -67,7 +63,7 @@ export function useApplicationsList(): ApplicationsListState {
 		return { status: 'loading' };
 	}
 	if (list.isError) {
-		return { status: 'error', forbidden: isForbidden(list.error) };
+		return { status: 'error' };
 	}
 	return { status: 'ready', rows, metricsLoading: totals.isLoading };
 }

@@ -76,8 +76,31 @@ export const Viewer: Story = {
 	args: { access: 'viewer' },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await canvas.findAllByTestId('rum-application-row', {}, WAIT);
+		await expect(
+			await canvas.findAllByTestId('rum-application-row', {}, WAIT),
+		).toHaveLength(3);
+		await expect(canvas.getByTestId('rum-applications-count')).toHaveTextContent(
+			'3 applications',
+		);
 		await expect(canvas.queryByTestId('rum-applications-new')).toBeNull();
+		await expect(canvas.queryByTestId('rum-applications-unavailable')).toBeNull();
+	},
+};
+
+/** One application: its counts read in the singular. */
+export const SingleApplication: Story = {
+	args: { applications: 1 },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findAllByTestId('rum-application-row', {}, WAIT),
+		).toHaveLength(1);
+		await expect(canvas.getByTestId('rum-applications-shown')).toHaveTextContent(
+			'1 of 1 application',
+		);
+		await expect(canvas.getByTestId('rum-applications-count')).toHaveTextContent(
+			/^1 application ·/,
+		);
 	},
 };
 
@@ -201,5 +224,25 @@ export const ViewerSettings: Story = {
 			await screen.findByTestId('rum-app-name', {}, WAIT),
 		).toBeDisabled();
 		await expect(screen.queryByTestId('rum-app-submit')).toBeNull();
+		await expect(screen.queryByTestId('rum-app-delete')).toBeNull();
+	},
+};
+
+/** A viewer's public key tab: no keys, no actions, who manages them instead. */
+export const ViewerKeys: Story = {
+	args: { access: 'viewer' },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			(await canvas.findAllByTestId('rum-application-settings', {}, WAIT))[0],
+		);
+		await userEvent.click(
+			await screen.findByTestId('rum-sheet-tab-key', {}, WAIT),
+		);
+		await expect(
+			await screen.findByTestId('rum-keys-managed', {}, WAIT),
+		).toHaveTextContent('Keys are managed by admins and editors');
+		await expect(screen.queryByTestId('rum-key-row')).toBeNull();
+		await expect(screen.queryByTestId('rum-key-rotate')).toBeNull();
 	},
 };

@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import type { RumtypesApplicationDTO } from 'api/generated/services/fuseScope.schemas';
+import { useCanManageRum } from 'lib/rum/useCanManageRum';
 
 import { SheetTab, SheetTarget } from '../types';
 import { SheetData, useSheetData } from './useSheetData';
@@ -38,7 +39,7 @@ export function useApplicationSheet(
 	const [revealed, setRevealed] = useState<RevealedKey>();
 	const [pendingOrigin, setPendingOrigin] = useState<string>();
 
-	const data = useSheetData(applicationId, tab === 'install');
+	const data = useSheetData(applicationId, tab === 'install', useCanManageRum());
 	const mutations = useSheetMutations();
 
 	return {

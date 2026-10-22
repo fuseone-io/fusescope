@@ -16,7 +16,8 @@ creates and edits them. Reached from the **Frontend** item in the side nav.
 
 ## Data
 
-- `GET /api/v1/rum/applications` (`useListRUMApplications`); Admin and Editor only.
+- `GET /api/v1/rum/applications` (`useListRUMApplications`); every role reads it. Writes and
+  `GET …/keys` are Admin and Editor only, so viewers get the sheet read-only, without keys.
 - `GET /api/v1/rum/applications/{id}/status` for the server's supported SDK versions.
 - `POST /api/v5/query_range`: sessions, error sessions and vitals per application now and a
   period back, the latest SDK and activity (`lib/rum/applicationsQueries.ts`).
