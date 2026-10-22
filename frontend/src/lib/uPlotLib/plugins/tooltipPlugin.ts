@@ -64,7 +64,7 @@ function sortTooltipContentBasedOnValue(
 	return Object.fromEntries(focusedEntries.concat(nonFocusedEntries));
 }
 
-const generateTooltipContent = (
+export const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
 	idx: number,
@@ -86,8 +86,10 @@ const generateTooltipContent = (
 	let tooltipCount = 0;
 
 	let tooltipTitle = '';
-	const formattedData: Record<string, UplotTooltipDataProps> = {};
-	const duplicatedLegendLabels: Record<string, true> = {};
+	// Keyed by series labels from telemetry, which can be `__proto__` or `toString`.
+	const formattedData: Record<string, UplotTooltipDataProps> =
+		Object.create(null);
+	const duplicatedLegendLabels: Record<string, true> = Object.create(null);
 
 	// Pre-build a label-to-series map for O(1) lookup instead of O(n) search
 	let seriesColorMap: Map<string, string> | null = null;
