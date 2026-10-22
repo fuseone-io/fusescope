@@ -112,26 +112,41 @@ def test_application_name_is_unique(
     assert response.status_code == HTTPStatus.CONFLICT, response.text
 
 
-def test_viewer_cannot_manage_applications(
+def test_viewer_reads_but_cannot_manage_applications(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    created = create_rum_application(signoz, admin_token, {"name": f"viewed-{uuid.uuid4().hex[:8]}", "platform": "web", "environment": "production"})
     email = f"rum-viewer-{uuid.uuid4().hex[:8]}@integration.test"
     create_active_user(signoz, admin_token, email, "signoz-viewer", "password123Z$")
-    viewer_token = get_token(email, "password123Z$")
+    headers = {"Authorization": f"Bearer {get_token(email, 'password123Z$')}"}
+    applications_url = signoz.self.host_configs["8080"].get(RUM_APPLICATIONS)
+    application_url = signoz.self.host_configs["8080"].get(f"{RUM_APPLICATIONS}/{created['id']}")
 
-    response = requests.get(signoz.self.host_configs["8080"].get(RUM_APPLICATIONS), headers={"Authorization": f"Bearer {viewer_token}"}, timeout=5)
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    response = requests.get(applications_url, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert created["id"] in [application["id"] for application in response.json()["data"]]
 
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(RUM_APPLICATIONS),
-        json={"name": "viewer-app", "platform": "web", "environment": "production"},
-        headers={"Authorization": f"Bearer {viewer_token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    response = requests.get(application_url, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["name"] == created["name"]
+
+    response = requests.get(f"{application_url}/status", headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.post(applications_url, json={"name": "viewer-app", "platform": "web", "environment": "production"}, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.put(application_url, json={"name": created["name"], "environment": "staging"}, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.delete(application_url, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.get(application_url, headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    assert response.status_code == HTTPStatus.OK, "the viewer's delete must not have removed the application"
 
 
 def test_rum_fields_promoted_on_first_application(
