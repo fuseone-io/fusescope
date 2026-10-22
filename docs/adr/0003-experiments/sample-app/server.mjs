@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const PORT = Number(process.env.PORT ?? 3350);
 const HOTROD = process.env.HOTROD ?? 'http://127.0.0.1:18083';
+const HOTROD_PATHS = new Set(['/dispatch']);
 const APP_ORIGIN = `http://localhost:${PORT}`;
 const here = fileURLToPath(new URL('.', import.meta.url));
 const dist = join(here, '../browser/dist');
@@ -24,7 +25,14 @@ function serveFile(res, root, rel) {
 createServer((req, res) => {
   const url = new URL(req.url, APP_ORIGIN);
   if (url.pathname.startsWith('/api/')) {
-    const target = new URL(url.pathname.slice(4) + url.search, HOTROD);
+    const path = url.pathname.slice(4);
+    if (!HOTROD_PATHS.has(path)) {
+      res.writeHead(404).end();
+      return;
+    }
+    const target = new URL(HOTROD);
+    target.pathname = path;
+    target.search = url.search;
     const headers = { ...req.headers, host: target.host };
     const up = request(target, { method: req.method, headers }, (r) => {
       res.writeHead(r.statusCode, r.headers);
