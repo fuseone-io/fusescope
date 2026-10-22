@@ -117,6 +117,6 @@ export const canonicalOperator = (raw: string): string => {
 export const isOperatorSymbolStart = (ch: string): boolean =>
 	ch === '=' || ch === '!' || ch === '<' || ch === '>';
 
-// A single-quoted DSL string literal with embedded single quotes escaped.
+// A single-quoted DSL string literal with embedded backslashes and single quotes escaped.
 export const literal = (value: string): string =>
-	`'${value.replace(/'/g, "\\'")}'`;
+	`'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;

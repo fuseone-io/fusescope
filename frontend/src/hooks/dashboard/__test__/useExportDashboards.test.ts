@@ -55,6 +55,15 @@ describe('useExportDashboards', () => {
 		);
 	});
 
+	it('escapes backslashes and quotes in the search term', () => {
+		renderHook(() => useExportDashboards("ops\\' team"));
+
+		expect(mockUseListV2).toHaveBeenCalledWith(
+			expect.objectContaining({ query: "name CONTAINS 'ops\\\\\\' team'" }),
+			expect.anything(),
+		);
+	});
+
 	it('refetches the V2 source', () => {
 		const { result } = renderHook(() => useExportDashboards());
 

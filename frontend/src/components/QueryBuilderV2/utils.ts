@@ -68,8 +68,8 @@ const formatSingleValue = (v: string | number | boolean): string => {
 		if (isQuoted(v)) {
 			return v;
 		}
-		// Quote and escape single quotes in strings
-		return `'${v.replace(/'/g, "\\'")}'`;
+		// Quote and escape backslashes and single quotes in strings
+		return `'${v.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 	}
 	// Convert numbers and booleans to strings without quotes
 	return String(v);
@@ -178,7 +178,7 @@ function formatSingleValueForFilter(
 		if (isQuoted(value)) {
 			// Unescape `\'` → `'` (inverse of formatSingleValue) so the round-trip doesn't
 			// double the backslash each pass.
-			return unquote(value).replace(/\\'/g, "'");
+			return unquote(value).replace(/\\(['\\])/g, '$1');
 		}
 	}
 

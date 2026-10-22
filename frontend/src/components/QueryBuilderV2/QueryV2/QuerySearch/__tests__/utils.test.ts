@@ -7,6 +7,7 @@ import {
 	getFieldContextPrefix,
 	getUserExpressionFromCombined,
 	isSupportedFunction,
+	wrapStringValueInQuotes,
 } from '../utils';
 
 describe('entityLogsExpression', () => {
@@ -136,5 +137,17 @@ describe('isSupportedFunction', () => {
 		expect(isSupportedFunction(SEARCH, DataSource.LOGS)).toBe(true);
 		expect(isSupportedFunction(SEARCH, DataSource.TRACES)).toBe(false);
 		expect(isSupportedFunction(SEARCH, DataSource.METRICS)).toBe(false);
+	});
+});
+
+describe('wrapStringValueInQuotes', () => {
+	it.each([
+		['api', "'api'"],
+		["'already quoted'", "'already quoted'"],
+		["it's", "'it\\'s'"],
+		['C:\\temp\\', "'C:\\\\temp\\\\'"],
+		["x\\' OR 1", "'x\\\\\\' OR 1'"],
+	])('wraps %s', (value, expected) => {
+		expect(wrapStringValueInQuotes(value)).toBe(expected);
 	});
 });
