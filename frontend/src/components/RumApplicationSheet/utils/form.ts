@@ -17,7 +17,7 @@ export const DEFAULT_FORM_VALUES: ApplicationFormValues = {
 	dropQuery: true,
 	queryAllowlist: [],
 	urlAllowlist: [],
-	geoLookup: true,
+	geoLookup: false,
 	requireConsent: false,
 	hashUserId: true,
 };

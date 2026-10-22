@@ -49,7 +49,7 @@ describe('application form payloads', () => {
 			environment: 'production',
 			samplePercent: 100,
 			dropQuery: true,
-			geoLookup: true,
+			geoLookup: false,
 			requireConsent: false,
 			hashUserId: true,
 		});
@@ -67,7 +67,7 @@ describe('application form payloads', () => {
 				dropQuery: true,
 				queryAllowlist: ['utm_source'],
 				urlAllowlist: [],
-				geoLookup: true,
+				geoLookup: false,
 				requireConsent: true,
 				hashUserId: true,
 			},

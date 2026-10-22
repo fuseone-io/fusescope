@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import SoonBadge from 'components/Rum/SoonBadge';
 import { Switch } from 'components/ui/switch';
 
 import { ApplicationFormValues } from '../types';
@@ -20,6 +21,7 @@ interface RowProps {
 	where: 'Server' | 'SDK';
 	description: ReactNode;
 	children?: ReactNode;
+	soon?: boolean;
 }
 
 const MONO = 'tw:font-mono';
@@ -35,15 +37,20 @@ function PrivacySection({
 		where,
 		description,
 		children,
+		soon = false,
 	}: RowProps): JSX.Element => {
 		const labelId = `rum-app-${name}`;
 		return (
-			<div key={name} className="tw:flex tw:items-start tw:gap-3 tw:py-3">
+			<div
+				key={name}
+				className="tw:flex tw:items-start tw:gap-3 tw:py-3"
+				title={soon ? `${label} is coming soon` : undefined}
+			>
 				<Switch
 					aria-labelledby={labelId}
 					data-testid={labelId}
-					checked={values[name]}
-					disabled={readOnly}
+					checked={!soon && values[name]}
+					disabled={readOnly || soon}
 					onCheckedChange={(checked): void => onChange({ [name]: checked })}
 					className="tw:mt-0.5"
 				/>
@@ -53,7 +60,14 @@ function PrivacySection({
 							id={labelId}
 							className="tw:flex tw:items-center tw:gap-1.5 tw:text-[13px] tw:font-medium"
 						>
-							{label} <WhereTag where={where} />
+							{label}
+							{soon ? (
+								<span data-testid={`${labelId}-soon`}>
+									<SoonBadge />
+								</span>
+							) : (
+								<WhereTag where={where} />
+							)}
 						</span>
 						<span className="tw:text-xs tw:text-subtle-foreground">
 							{description}
@@ -114,6 +128,7 @@ function PrivacySection({
 					where: 'Server',
 					description:
 						'The IP is used for rate limiting and this lookup only. It is never stored.',
+					soon: true,
 				})}
 				{row({
 					name: 'requireConsent',
