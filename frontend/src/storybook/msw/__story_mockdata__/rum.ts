@@ -522,7 +522,7 @@ export function rumApplicationKeys(
 	const active: RumtypesGettableApplicationKeyDTO = {
 		id: 'key-active',
 		applicationId: 'app-web-shop',
-		last4: '9fXa',
+		last4: 'x4fa',
 		status: RumtypesKeyStatusDTO.active,
 		createdAt: ago(3 * 60 * MINUTE),
 		expiresAt: null,
@@ -536,7 +536,7 @@ export function rumApplicationKeys(
 		{
 			id: 'key-expiring',
 			applicationId: 'app-web-shop',
-			last4: '3c1D',
+			last4: '3cud',
 			status: RumtypesKeyStatusDTO.expiring,
 			createdAt: ago(30 * 24 * 60 * MINUTE),
 			expiresAt: new Date(Date.now() + 23 * 60 * MINUTE).toISOString(),

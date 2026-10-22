@@ -3,11 +3,11 @@ import { RumtypesKeyStatusDTO } from 'api/generated/services/fuseScope.schemas';
 
 export const KEY_PREFIX = 'rum_pub_';
 
-/** "rum_pub_••••••••••••9fXa". */
+/** "rum_pub_••••••••••••x4fa". */
 export const maskedKey = (last4: string): string =>
 	`${KEY_PREFIX}${'•'.repeat(12)}${last4}`;
 
-/** "rum_pub_…9fXa": the snippet's placeholder for a key the server no longer shows. */
+/** "rum_pub_…x4fa": the snippet's placeholder for a key the server no longer shows. */
 export const keyPlaceholder = (last4: string): string =>
 	`${KEY_PREFIX}…${last4}`;
 
