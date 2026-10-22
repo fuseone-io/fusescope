@@ -220,8 +220,8 @@ func TestGatewayDecoding(t *testing.T) {
 		{name: "InvalidJSON_BadRequest", body: []byte(`{"resourceSpans":`), contentType: "application/json", status: http.StatusBadRequest},
 		{name: "InvalidProtobuf_BadRequest", body: []byte{0xff, 0xff, 0xff}, contentType: "application/x-protobuf", status: http.StatusBadRequest},
 		{name: "UnsupportedType_BadRequest", body: []byte(testTraceJSON), contentType: "application/xml", status: http.StatusBadRequest},
-		{name: "TooLarge_BadRequest", body: bytes.Repeat([]byte(" "), 5000), contentType: "application/json", status: http.StatusBadRequest},
-		{name: "GzipBomb_BadRequest", body: bomb.Bytes(), contentType: "application/json", encoding: "gzip", status: http.StatusBadRequest},
+		{name: "TooLarge_PayloadTooLarge", body: bytes.Repeat([]byte(" "), 5000), contentType: "application/json", status: http.StatusRequestEntityTooLarge},
+		{name: "GzipBomb_PayloadTooLarge", body: bomb.Bytes(), contentType: "application/json", encoding: "gzip", status: http.StatusRequestEntityTooLarge},
 		{name: "UnsupportedEncoding_BadRequest", body: []byte(testTraceJSON), contentType: "application/json", encoding: "br", status: http.StatusBadRequest},
 	}
 
@@ -239,6 +239,16 @@ func TestGatewayDecoding(t *testing.T) {
 			}
 		})
 	}
+
+	status, err := fixture.module.Status(context.Background(), fixture.orgID, fixture.app)
+	require.NoError(t, err)
+	tooLarge := int64(0)
+	for _, rejection := range status.Rejections {
+		if rejection.Reason == rumtypes.RejectionReasonTooLarge {
+			tooLarge = rejection.Count
+		}
+	}
+	assert.Equal(t, int64(2), tooLarge)
 
 	forwarded := fixture.collector.received("/v1/traces")
 	require.Len(t, forwarded, 3)

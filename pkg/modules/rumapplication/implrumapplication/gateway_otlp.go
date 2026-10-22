@@ -131,7 +131,7 @@ func (encoding otlpEncoding) unmarshal(body []byte, fromJSON func([]byte) error,
 // readBody caps the body before and after gzip decoding.
 func readBody(req *http.Request, limit int64) ([]byte, error) {
 	if req.ContentLength > limit {
-		return nil, errors.NewInvalidInputf(ErrCodePayloadTooLarge, "request body is larger than %d bytes", limit)
+		return nil, errors.Newf(errors.TypePayloadTooLarge, ErrCodePayloadTooLarge, "request body is larger than %d bytes", limit)
 	}
 
 	reader := io.Reader(req.Body)
@@ -161,7 +161,7 @@ func readLimited(reader io.Reader, limit int64) ([]byte, error) {
 		return nil, errors.WrapInvalidInputf(err, ErrCodePayloadInvalid, "failed to read request body")
 	}
 	if int64(len(body)) > limit {
-		return nil, errors.NewInvalidInputf(ErrCodePayloadTooLarge, "request body is larger than %d bytes", limit)
+		return nil, errors.Newf(errors.TypePayloadTooLarge, ErrCodePayloadTooLarge, "request body is larger than %d bytes", limit)
 	}
 	return body, nil
 }
