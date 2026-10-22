@@ -565,6 +565,12 @@ export function rumApplicationStatus(
 				lastOrigin: 'http://localhost:5173',
 				lastSeenAt: ago(MINUTE),
 			},
+			{
+				reason: RumtypesRejectionReasonDTO.unknown_key,
+				count: 5,
+				lastOrigin: 'https://shop.example.com',
+				lastSeenAt: ago(2 * MINUTE),
+			},
 		],
 	};
 }

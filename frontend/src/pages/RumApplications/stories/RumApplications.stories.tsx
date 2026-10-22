@@ -129,7 +129,7 @@ export const NewApplication: Story = {
 
 /**
  * Right after creating: the key shown once, the snippet built from the
- * settings, and the setup status waiting with a refused origin.
+ * settings, and the setup status waiting with a refused origin and an unknown key.
  */
 export const KeyShownOnce: Story = {
 	play: async ({ canvasElement }) => {
@@ -152,9 +152,11 @@ export const KeyShownOnce: Story = {
 		await expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
 			"publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLw4R'",
 		);
-		await expect(
-			await screen.findByTestId('rum-rejection', {}, WAIT),
-		).toHaveTextContent('http://localhost:5173');
+		const rejections = await screen.findAllByTestId('rum-rejection', {}, WAIT);
+		await expect(rejections[0]).toHaveTextContent('http://localhost:5173');
+		await expect(rejections[1]).toHaveTextContent(
+			'5 requests with an unknown key from https://shop.example.com',
+		);
 	},
 };
 

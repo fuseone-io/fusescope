@@ -12,6 +12,7 @@ interface RejectionLineProps {
 const REASONS: Record<RumtypesRejectionReasonDTO, string> = {
 	[RumtypesRejectionReasonDTO.bad_key]:
 		'the key is not valid for this application',
+	[RumtypesRejectionReasonDTO.unknown_key]: 'unknown key',
 	[RumtypesRejectionReasonDTO.origin_not_allowed]: 'origin not allowed',
 	[RumtypesRejectionReasonDTO.rate_limited]: 'rate limited',
 	[RumtypesRejectionReasonDTO.too_large]: 'payload too large',
@@ -26,6 +27,8 @@ function RejectionLine({
 	const origin = rejection.lastOrigin;
 	const isOrigin =
 		rejection.reason === RumtypesRejectionReasonDTO.origin_not_allowed && origin;
+	const isUnknownKey =
+		rejection.reason === RumtypesRejectionReasonDTO.unknown_key && origin;
 
 	return (
 		<span
@@ -51,6 +54,16 @@ function RejectionLine({
 								Add origin
 							</Button>
 						)}
+					</>
+				) : isUnknownKey ? (
+					<>
+						{formatCount(rejection.count)}{' '}
+						{rejection.count === 1 ? 'request' : 'requests'} with an unknown key from{' '}
+						<span className="tw:font-mono">{origin}</span>.{' '}
+						<span className="tw:text-subtle-foreground">
+							Check the publicKey in your snippet; it may be from another application
+							or revoked.
+						</span>
 					</>
 				) : (
 					`${requests}: ${REASONS[rejection.reason] ?? rejection.reason}.`
