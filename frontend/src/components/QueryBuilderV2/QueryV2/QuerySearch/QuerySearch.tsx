@@ -67,6 +67,7 @@ import {
 	getRecentOptions,
 	isSupportedFunction,
 	renderRecentDeleteButton,
+	wrapStringValueInQuotes,
 } from './utils';
 
 import './QuerySearch.styles.scss';
@@ -397,23 +398,6 @@ function QuerySearch({
 	>(null);
 
 	// Helper function to wrap string values in quotes if they aren't already quoted
-	const wrapStringValueInQuotes = (value: string): string => {
-		// If value is already quoted (with single quotes), return as is
-		if (/^'.*'$/.test(value)) {
-			return value;
-		}
-
-		// If value contains single quotes, escape them and wrap in single quotes
-		if (value.includes("'")) {
-			// Replace single quotes with escaped single quotes
-			const escapedValue = value.replaceAll(/'/g, "\\'");
-			return `'${escapedValue}'`;
-		}
-
-		// Otherwise, simply wrap in single quotes
-		return `'${value}'`;
-	};
-
 	// Helper function to check if operator is for list operations (IN, NOT IN, etc.)
 	const isListOperator = (op: string | undefined): boolean => {
 		if (!op) {

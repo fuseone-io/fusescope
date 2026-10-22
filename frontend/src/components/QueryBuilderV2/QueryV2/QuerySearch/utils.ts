@@ -201,3 +201,12 @@ export function renderRecentDeleteButton(
 
 	return btn;
 }
+
+/** Quotes a value as a filter string literal, leaving an already single-quoted value as is. */
+export function wrapStringValueInQuotes(value: string): string {
+	if (/^'.*'$/.test(value)) {
+		return value;
+	}
+
+	return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+}

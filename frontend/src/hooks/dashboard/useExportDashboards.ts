@@ -28,10 +28,12 @@ function toExportDashboard(
 }
 
 // The V2 list `query` is a filter DSL (`key OP value`), not free text — wrap a typed term
-// as a name-contains clause (single quotes escaped).
+// as a name-contains clause (backslashes and single quotes escaped).
 function toNameQuery(search: string): string | undefined {
 	const term = search.trim();
-	return term ? `name CONTAINS '${term.replace(/'/g, "\\'")}'` : undefined;
+	return term
+		? `name CONTAINS '${term.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+		: undefined;
 }
 
 /** Picker source: searches the V2 dashboard list server-side (debounced). */

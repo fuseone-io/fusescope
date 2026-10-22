@@ -1401,6 +1401,22 @@ describe('formatValueForExpression', () => {
 		});
 	});
 
+	describe('Backslashes', () => {
+		it('escapes backslashes before quotes', () => {
+			expect(formatValueForExpression('C:\\temp\\')).toBe("'C:\\\\temp\\\\'");
+			expect(formatValueForExpression("x\\' OR 1")).toBe("'x\\\\\\' OR 1'");
+		});
+
+		it('round-trips through convertExpressionToFilters unchanged', () => {
+			const value = "C:\\it's\\";
+			const [filter] = convertExpressionToFilters(
+				`file.path = ${formatValueForExpression(value)}`,
+			);
+
+			expect(filter.value).toBe(value);
+		});
+	});
+
 	describe('Numeric string values', () => {
 		it('should return numeric strings with quotes', () => {
 			expect(formatValueForExpression('123')).toBe("'123'");

@@ -6,7 +6,7 @@ function formatQueryValue(val: string): string {
 	if (!Number.isNaN(num) && Number.isFinite(num)) {
 		return val;
 	}
-	return `'${val.replace(/'/g, "\\'")}'`;
+	return `'${val.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 }
 
 function buildQueryPart(attribute: string, values: string[]): string {
