@@ -11,6 +11,7 @@ const StatusWindow = 5 * time.Minute
 
 var (
 	RejectionReasonBadKey           = RejectionReason{valuer.NewString("bad_key")}
+	RejectionReasonUnknownKey       = RejectionReason{valuer.NewString("unknown_key")}
 	RejectionReasonOriginNotAllowed = RejectionReason{valuer.NewString("origin_not_allowed")}
 	RejectionReasonRateLimited      = RejectionReason{valuer.NewString("rate_limited")}
 	RejectionReasonTooLarge         = RejectionReason{valuer.NewString("too_large")}
@@ -45,7 +46,8 @@ type SeenSDK struct {
 }
 
 // IngestRejection groups refused requests by reason. A key the server has
-// never issued cannot be tied to an application and is not counted.
+// never issued is counted as unknown_key by every application that allows the
+// request's origin, and not at all when none does.
 type IngestRejection struct {
 	Reason     RejectionReason `json:"reason" required:"true"`
 	Count      int64           `json:"count" required:"true"`
@@ -64,5 +66,5 @@ type IngestBatch struct {
 }
 
 func (RejectionReason) Enum() []any {
-	return []any{RejectionReasonBadKey, RejectionReasonOriginNotAllowed, RejectionReasonRateLimited, RejectionReasonTooLarge, RejectionReasonInvalidPayload}
+	return []any{RejectionReasonBadKey, RejectionReasonUnknownKey, RejectionReasonOriginNotAllowed, RejectionReasonRateLimited, RejectionReasonTooLarge, RejectionReasonInvalidPayload}
 }

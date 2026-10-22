@@ -13,7 +13,8 @@ type Store interface {
 	GetApplicationByID(ctx context.Context, id valuer.UUID) (*StorableApplication, error)
 	ListApplications(ctx context.Context, orgID valuer.UUID) ([]*StorableApplication, error)
 	CountApplications(ctx context.Context) (int, error)
-	ListAllowedOrigins(ctx context.Context) ([]string, error)
+	// ListApplicationsInAllOrgs loads only the id and data columns.
+	ListApplicationsInAllOrgs(ctx context.Context) ([]*StorableApplication, error)
 	UpdateApplication(ctx context.Context, application *StorableApplication) error
 	DeleteApplication(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 	SetFirstSeenAt(ctx context.Context, id valuer.UUID, seenAt time.Time) error

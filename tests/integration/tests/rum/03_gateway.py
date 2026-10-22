@@ -161,7 +161,10 @@ def test_gateway_rejects_bad_key_and_origin(
         timeout=5,
     )
     rejections = response.json()["data"]["rejections"]
-    assert [(rejection["reason"], rejection["count"], rejection["lastOrigin"]) for rejection in rejections] == [("origin_not_allowed", 1, "https://evil.example.org")]
+    assert [(rejection["reason"], rejection["count"], rejection["lastOrigin"]) for rejection in rejections] == [
+        ("origin_not_allowed", 1, "https://evil.example.org"),
+        ("unknown_key", 1, ORIGIN),
+    ]
 
 
 def test_gateway_rejects_oversized_body(

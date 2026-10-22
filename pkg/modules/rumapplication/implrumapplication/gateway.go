@@ -83,11 +83,10 @@ func (gateway *gateway) serve(rw http.ResponseWriter, req *http.Request, signal 
 	}
 
 	origin := req.Header.Get("Origin")
-	application, keyID, err := gateway.module.Authenticate(req.Context(), keyFromRequest(req))
+	key := keyFromRequest(req)
+	application, keyID, err := gateway.module.Authenticate(req.Context(), key)
 	if err != nil {
-		if application != nil {
-			gateway.module.ObserveRejection(application.ID, rumtypes.RejectionReasonBadKey, origin)
-		}
+		gateway.observeKeyRejection(req, application, key, origin, err)
 		render.Error(rw, err)
 		return
 	}
@@ -113,6 +112,21 @@ func (gateway *gateway) serve(rw http.ResponseWriter, req *http.Request, signal 
 	rw.Header().Set("Content-Type", encoding.contentType())
 	rw.WriteHeader(http.StatusOK)
 	_, _ = rw.Write(response)
+}
+
+// observeKeyRejection ties an unknown key to the applications that allow the
+// request's origin, since the key itself names none.
+func (gateway *gateway) observeKeyRejection(req *http.Request, application *rumtypes.Application, key string, origin string, err error) {
+	if application != nil {
+		gateway.module.ObserveRejection(application.ID, rumtypes.RejectionReasonBadKey, origin)
+		return
+	}
+	if key == "" || origin == "" || !errors.Asc(err, rumtypes.ErrCodeKeyInvalid) {
+		return
+	}
+	for _, applicationID := range gateway.module.ApplicationsAllowingOrigin(req.Context(), origin) {
+		gateway.module.ObserveRejection(applicationID, rumtypes.RejectionReasonUnknownKey, origin)
+	}
 }
 
 // accept rate-limits, decodes, processes and forwards an authenticated request.
@@ -167,7 +181,7 @@ func (gateway *gateway) preflight(rw http.ResponseWriter, req *http.Request) {
 			application, _, err := gateway.module.Authenticate(req.Context(), key)
 			allowed = err == nil && application.AllowsOrigin(origin)
 		} else {
-			allowed = gateway.module.IsOriginAllowedAnywhere(req.Context(), origin)
+			allowed = len(gateway.module.ApplicationsAllowingOrigin(req.Context(), origin)) > 0
 		}
 	}
 

@@ -35,8 +35,9 @@ type Module interface {
 	// Authenticate resolves a plaintext key to its application and key id.
 	// An issued but unusable key still returns the application, with an error.
 	Authenticate(ctx context.Context, plaintext string) (*rumtypes.Application, valuer.UUID, error)
-	// IsOriginAllowedAnywhere reports whether any application allows the origin; it answers preflights, which carry no key.
-	IsOriginAllowedAnywhere(ctx context.Context, origin string) bool
+	// ApplicationsAllowingOrigin returns the ids of the applications, in any organization, that allow the origin.
+	// It answers preflights, which carry no key, and attributes requests with an unknown key.
+	ApplicationsAllowingOrigin(ctx context.Context, origin string) []valuer.UUID
 	ObserveIngest(application *rumtypes.Application, keyID valuer.UUID, batch *rumtypes.IngestBatch)
 	ObserveRejection(applicationID valuer.UUID, reason rumtypes.RejectionReason, origin string)
 

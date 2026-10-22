@@ -86,7 +86,7 @@ func (store *store) CountApplications(ctx context.Context) (int, error) {
 	return count, nil
 }
 
-func (store *store) ListAllowedOrigins(ctx context.Context) ([]string, error) {
+func (store *store) ListApplicationsInAllOrgs(ctx context.Context) ([]*rumtypes.StorableApplication, error) {
 	applications := make([]*rumtypes.StorableApplication, 0)
 	err := store.sqlstore.
 		BunDBCtx(ctx).
@@ -95,18 +95,9 @@ func (store *store) ListAllowedOrigins(ctx context.Context) ([]string, error) {
 		Column("id", "data").
 		Scan(ctx)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list rum application origins")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list rum applications")
 	}
-
-	origins := []string{}
-	for _, storable := range applications {
-		application, err := rumtypes.NewApplicationFromStorable(storable)
-		if err != nil {
-			return nil, err
-		}
-		origins = append(origins, application.AllowedOrigins...)
-	}
-	return origins, nil
+	return applications, nil
 }
 
 func (store *store) UpdateApplication(ctx context.Context, application *rumtypes.StorableApplication) error {
