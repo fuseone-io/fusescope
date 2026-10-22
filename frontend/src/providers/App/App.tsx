@@ -31,7 +31,6 @@ import {
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useGetFeatureFlag } from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
-import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import {
 	LicensePlatform,
@@ -75,9 +74,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	);
 	const [isPreflightLoading, setIsPreflightLoading] = useState<boolean>(true);
 	const [org, setOrg] = useState<Organization[] | null>(null);
-	const [changelog, setChangelog] = useState<ChangelogSchema | null>(null);
-
-	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
 
 	// Pre-flight: discover auth mode from public global config.
 	// On success: in impersonation mode → clear stale tokens, force isLoggedIn=true,
@@ -376,17 +372,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		[org],
 	);
 
-	const updateChangelog = useCallback(
-		(payload: ChangelogSchema): void => {
-			setChangelog(payload);
-		},
-		[setChangelog],
-	);
-
-	const toggleChangelogModal = useCallback(() => {
-		setShowChangelogModal((prev) => !prev);
-	}, []);
-
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
 	useGlobalEventListener('AFTER_LOGIN', (event) => {
 		if (event.detail) {
@@ -440,15 +425,11 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			featureFlagsFetchError,
 			orgPreferencesFetchError,
 			activeLicense,
-			changelog,
-			showChangelogModal,
 			activeLicenseRefetch,
 			updateUser,
 			updateOrgPreferences,
 			updateUserPreferenceInContext,
 			updateOrg,
-			updateChangelog,
-			toggleChangelogModal,
 			versionData: versionData?.data || null,
 			hasEditPermission:
 				user?.role === USER_ROLES.ADMIN || user?.role === USER_ROLES.EDITOR,
@@ -474,12 +455,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			orgPreferences,
 			activeLicenseRefetch,
 			orgPreferencesFetchError,
-			changelog,
-			showChangelogModal,
 			updateUserPreferenceInContext,
 			updateOrg,
-			updateChangelog,
-			toggleChangelogModal,
 			user,
 			userFetchError,
 			versionData,

@@ -15,7 +15,6 @@ import {
 } from 'components/ui/sidebar';
 import ROUTES from 'constants/routes';
 import { ArrowUpRight, LifeBuoy } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
 import { openInNewTab } from 'utils/navigation';
 
 import { NAV_BUTTON_CLASS } from '../constants';
@@ -28,7 +27,6 @@ const LABEL = 'Help & Support';
 
 function HelpMenu(): JSX.Element {
 	const entries = useHelpMenuEntries();
-	const appContext = useAppContext();
 	const { isMobile } = useSidebar();
 	const tooltip = useFooterTooltip(LABEL);
 
@@ -52,10 +50,6 @@ function HelpMenu(): JSX.Element {
 				if (window.pylon) {
 					window.Pylon('show');
 				}
-				break;
-			case 'changelog-1':
-			case 'changelog-2':
-				appContext.toggleChangelogModal();
 				break;
 			default:
 		}

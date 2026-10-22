@@ -96,10 +96,6 @@ const NON_APP_DIRS = new Set(['__mockdata__', 'storybook']);
 const ALLOWED_SIGNOZ_LINKS = new Set([
 	// Filters SigNoz's own cloud admin account out of user lists.
 	'AppRoutes/Private.tsx: admin@signoz.cloud',
-	// Release notes feed.
-	'api/changelog/getChangelogByVersion.ts: https://cms.signoz.cloud/api/release-changelogs?${queryParams}',
-	// Changelog modal opens for cloud workspaces only.
-	'components/ChangelogModal/ChangelogModal.tsx: https://signoz.io/upgrade-path',
 	// Licence expiry banners.
 	'container/AppLayout/index.tsx: support@signoz.io',
 	'container/AppLayout/index.tsx: https://signoz.io/terms-of-service',

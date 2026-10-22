@@ -1,7 +1,6 @@
 import { rest } from 'msw';
 
 import {
-	changelogResponse,
 	globalConfigResponse,
 	latestGithubReleaseResponse,
 	licenseWithKeyResponse,
@@ -55,10 +54,6 @@ export const appShellHandlers = [
 		'https://api.github.com/repos/signoz/signoz/releases/latest',
 		(_req, res, ctx) =>
 			res(ctx.status(200), ctx.json(latestGithubReleaseResponse)),
-	),
-
-	rest.get('https://cms.signoz.cloud/api/release-changelogs', (_req, res, ctx) =>
-		res(ctx.status(200), ctx.json(changelogResponse)),
 	),
 
 	// The webfonts `index.html` links and `styles.scss` imports. The story
