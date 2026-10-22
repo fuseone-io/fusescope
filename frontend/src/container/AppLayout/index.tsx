@@ -10,14 +10,13 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { Toaster } from '@signozhq/ui/sonner';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
 import logEvent from 'api/common/logEvent';
 import { updateSubscription } from 'api/generated/services/subscriptions';
 import type { UpdateSubscription200 } from 'api/generated/services/fuseScope.schemas';
@@ -27,36 +26,30 @@ import cx from 'classnames';
 import AppHeader from 'components/AppHeader/AppHeader';
 import AppSidebar from 'components/AppSidebar/AppSidebar';
 import AppSidebarProvider from 'components/AppSidebar/AppSidebarProvider';
-import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { SubscriptionManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
-import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
 import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
-import { USER_PREFERENCES } from 'constants/userPreferences';
 import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
 import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import BottomStrip from 'container/BottomStrip';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
-import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useAppContext } from 'providers/App/App';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
 	UPDATE_CURRENT_ERROR,
@@ -64,18 +57,12 @@ import {
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
-	ChangelogSchema,
-	DeploymentType,
-} from 'types/api/changelog/getChangelogByVersion';
 import APIError from 'types/api/error';
 import {
 	LicenseEvent,
 	LicensePlatform,
 	LicenseState,
 } from 'types/api/licensesV3/getActive';
-import AppReducer from 'types/reducer/app';
 import { getBaseUrl } from 'utils/basePath';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
@@ -91,18 +78,8 @@ import './AppLayout.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function AppLayout(props: AppLayoutProps): JSX.Element {
-	const {
-		isLoggedIn,
-		user,
-		trialInfo,
-		activeLicense,
-		isFetchingActiveLicense,
-		userPreferences,
-		updateChangelog,
-		toggleChangelogModal,
-		showChangelogModal,
-		changelog,
-	} = useAppContext();
+	const { isLoggedIn, user, trialInfo, activeLicense, isFetchingActiveLicense } =
+		useAppContext();
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const fetchAIThreads = useAIAssistantStore((s) => s.fetchThreads);
@@ -127,10 +104,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
 	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
 
-	const { currentVersion } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
-
 	const isWorkspaceAccessRestricted = useMemo(() => {
 		if (!activeLicense) {
 			return false;
@@ -151,13 +124,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			isEvaluationExpired
 		);
 	}, [activeLicense]);
-
-	const daysSinceAccountCreation = useMemo(() => {
-		const userCreationDate = dayjs(user.createdAt);
-		const currentDate = dayjs();
-
-		return Math.abs(currentDate.diff(userCreationDate, 'day'));
-	}, [user.createdAt]);
 
 	const handleBillingOnSuccess = (data: UpdateSubscription200): void => {
 		if (data?.data?.redirectURL) {
@@ -189,24 +155,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
 
-	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
-
-	const changelogForTenant = isCloudUserVal
-		? DeploymentType.CLOUD_ONLY
-		: DeploymentType.OSS_ONLY;
-
-	const seenChangelogVersion = userPreferences?.find(
-		(preference) =>
-			preference.name === USER_PREFERENCES.LAST_SEEN_CHANGELOG_VERSION,
-	)?.value as string;
-
-	const isVisible = useTabVisibility();
-
-	const [
-		getUserVersionResponse,
-		getUserLatestVersionResponse,
-		getChangelogByVersionResponse,
-	] = useQueries([
+	const [getUserVersionResponse, getUserLatestVersionResponse] = useQueries([
 		{
 			queryFn: getUserVersion,
 			queryKey: ['getUserVersion', user?.accessJwt],
@@ -217,54 +166,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			queryKey: ['getUserLatestVersion', user?.accessJwt],
 			enabled: isLoggedIn,
 		},
-		{
-			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
-				getChangelogByVersion(currentVersion, changelogForTenant),
-			queryKey: ['getChangelogByVersion', currentVersion, changelogForTenant],
-			enabled: isLoggedIn && Boolean(currentVersion),
-		},
-	]);
-
-	useEffect(() => {
-		// refetch the changelog only when the current tab becomes active + there isn't an active request
-		if (
-			isVisible &&
-			!changelog &&
-			!getChangelogByVersionResponse.isLoading &&
-			isLoggedIn &&
-			Boolean(currentVersion)
-		) {
-			getChangelogByVersionResponse.refetch();
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isVisible]);
-
-	useEffect(() => {
-		let timer: ReturnType<typeof setTimeout>;
-		if (
-			isCloudUserVal &&
-			Boolean(currentVersion) &&
-			seenChangelogVersion != null &&
-			currentVersion !== seenChangelogVersion &&
-			daysSinceAccountCreation > MIN_ACCOUNT_AGE_FOR_CHANGELOG && // Show to only users older than 2 weeks
-			!isWorkspaceAccessRestricted
-		) {
-			// Automatically open the changelog modal for cloud users after 1s, if they've not seen this version before.
-			timer = setTimeout(() => {
-				toggleChangelogModal();
-			}, 1000);
-		}
-
-		return (): void => {
-			clearTimeout(timer);
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		isCloudUserVal,
-		currentVersion,
-		seenChangelogVersion,
-		toggleChangelogModal,
-		isWorkspaceAccessRestricted,
 	]);
 
 	useEffect(() => {
@@ -366,24 +267,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getUserVersionResponse.isFetched,
 		getUserLatestVersionResponse.isSuccess,
 		notifications,
-	]);
-
-	useEffect(() => {
-		if (
-			getChangelogByVersionResponse.isFetched &&
-			getChangelogByVersionResponse.isSuccess &&
-			getChangelogByVersionResponse.data &&
-			getChangelogByVersionResponse.data.payload
-		) {
-			updateChangelog(getChangelogByVersionResponse.data.payload);
-		}
-	}, [
-		updateChangelog,
-		getChangelogByVersionResponse.isFetched,
-		getChangelogByVersionResponse.isLoading,
-		getChangelogByVersionResponse.isError,
-		getChangelogByVersionResponse.data,
-		getChangelogByVersionResponse.isSuccess,
 	]);
 
 	// reset error boundary on route change
@@ -747,9 +630,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 				{chatSupport === ChatSupportState.NeedsCard && !isSavedViewEnabled && (
 					<ChatSupportGateway />
-				)}
-				{showChangelogModal && changelog && (
-					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 				)}
 
 				<Toaster

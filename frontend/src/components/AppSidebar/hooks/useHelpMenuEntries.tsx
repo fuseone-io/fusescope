@@ -3,15 +3,7 @@ import { FeatureKeys } from 'constants/features';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Github } from '@signozhq/icons';
-import {
-	Book,
-	Bug,
-	GitCommitVertical,
-	LampDesk,
-	MessageSquareText,
-	Plus,
-	ScrollText,
-} from 'lucide-react';
+import { Book, Bug, MessageSquareText, Plus, ScrollText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -46,10 +38,9 @@ const LINKS: HelpMenuEntry[] = [
 	},
 ];
 
-/** Help & Support rows: links, gated support/invite rows, then what's new. */
+/** Help & Support rows: links, gated support/invite rows, then the changelog. */
 export function useHelpMenuEntries(): HelpMenuEntry[] {
-	const { user, featureFlags, trialInfo, isLoggedIn, changelog } =
-		useAppContext();
+	const { user, featureFlags, trialInfo, isLoggedIn } = useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const isFlagActive = (key: FeatureKeys): boolean =>
@@ -83,23 +74,7 @@ export function useHelpMenuEntries(): HelpMenuEntry[] {
 				icon: <Plus />,
 			});
 		}
-		if (!changelog) {
-			return entries;
-		}
-
 		entries.push({ type: 'separator', key: 'changelog-separator' });
-		const features = changelog.features.slice(0, 2);
-		if (features.length > 0) {
-			entries.push({ type: 'label', key: 'whats-new', label: "What's new" });
-			features.forEach((feature, idx) =>
-				entries.push({
-					type: 'item',
-					key: `changelog-${idx + 1}`,
-					label: feature.title,
-					icon: idx === 0 ? <LampDesk /> : <GitCommitVertical />,
-				}),
-			);
-		}
 		entries.push({
 			type: 'item',
 			key: 'full-changelog',
@@ -108,5 +83,5 @@ export function useHelpMenuEntries(): HelpMenuEntry[] {
 			url: FUSESCOPE_RELEASES_URL,
 		});
 		return entries;
-	}, [canChat, isAdmin, changelog]);
+	}, [canChat, isAdmin]);
 }

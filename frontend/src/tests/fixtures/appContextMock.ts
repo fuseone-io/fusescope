@@ -106,7 +106,6 @@ export function createAppContextMock(
 		},
 		isFetchingActiveLicense: false,
 		activeLicenseFetchError: null,
-		changelog: null,
 		user: {
 			accessJwt: 'some-token',
 			refreshJwt: 'some-refresh-token',
@@ -152,13 +151,10 @@ export function createAppContextMock(
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
 		isPreflightLoading: false,
-		showChangelogModal: false,
 		updateUser: createSpy(),
 		updateOrg: createSpy(),
 		updateOrgPreferences: createSpy(),
 		activeLicenseRefetch: createSpy(),
-		updateChangelog: createSpy(),
-		toggleChangelogModal: createSpy(),
 		versionData: {
 			version: '1.0.0',
 			ee: 'Y',

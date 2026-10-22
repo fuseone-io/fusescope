@@ -2,7 +2,6 @@ import { logEventMock } from '__tests__/logEventMock';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { screen, userEvent, within } from 'tests/test-utils';
-import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 
 import { renderAppSidebar } from '../../__tests__/renderAppSidebar';
 
@@ -31,12 +30,6 @@ jest.mocked(useGetTenantLicense).mockReturnValue({
 	isCommunityEnterpriseUser: false,
 });
 
-function changelog(titles: string[]): ChangelogSchema {
-	return {
-		features: titles.map((title, id) => ({ id, title })),
-	} as unknown as ChangelogSchema;
-}
-
 async function openHelpMenu(): Promise<HTMLElement> {
 	await userEvent
 		.setup({ pointerEventsCheck: 0 })
@@ -59,6 +52,7 @@ describe('HelpMenu', () => {
 			'GitHub',
 			'Report an issue',
 			'Invite a Team Member',
+			'Full Changelog',
 		]);
 	});
 
@@ -68,30 +62,6 @@ describe('HelpMenu', () => {
 		expect(itemLabels(await openHelpMenu())).not.toContain(
 			'Invite a Team Member',
 		);
-	});
-
-	it('lists the first two changelog features and the full changelog', async () => {
-		const toggleChangelogModal = jest.fn();
-		renderAppSidebar({
-			pinned: true,
-			overrides: {
-				changelog: changelog(['First', 'Second', 'Third']),
-				toggleChangelogModal,
-			},
-		});
-
-		const menu = await openHelpMenu();
-
-		expect(within(menu).getByText("What's new")).toBeVisible();
-		expect(itemLabels(menu)).toStrictEqual(
-			expect.arrayContaining(['First', 'Second', 'Full Changelog']),
-		);
-		expect(itemLabels(menu)).not.toContain('Third');
-
-		await userEvent
-			.setup({ pointerEventsCheck: 0 })
-			.click(within(menu).getByText('First'));
-		expect(toggleChangelogModal).toHaveBeenCalled();
 	});
 
 	it('opens external links in a new tab and logs the click', async () => {
@@ -150,13 +120,7 @@ describe('HelpMenu', () => {
 
 	it('points the full changelog to the FuseScope releases', async () => {
 		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
-		renderAppSidebar({
-			pinned: true,
-			overrides: {
-				changelog: changelog(['First']),
-				toggleChangelogModal: jest.fn(),
-			},
-		});
+		renderAppSidebar({ pinned: true });
 
 		const menu = await openHelpMenu();
 		await userEvent
