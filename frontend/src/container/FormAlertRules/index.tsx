@@ -5,7 +5,7 @@ import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { BellDot, CircleAlert, ExternalLink, Save } from '@signozhq/icons';
-import { Button, FormInstance, SelectProps } from 'antd';
+import { Button, FormInstance } from 'antd';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -17,7 +17,6 @@ import {
 } from 'api/generated/services/rules';
 import type { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
-import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
@@ -72,7 +71,7 @@ import {
 	StepHeading,
 } from './styles';
 import { usePrefillAlertConditions } from './usePrefillAlertConditions';
-import { getSelectedQueryOptions } from './utils';
+import { getQueryNames } from './utils';
 
 import './FormAlertRules.styles.scss';
 
@@ -200,26 +199,10 @@ function FormAlertRules({
 		[initialValue],
 	);
 
-	const queryOptions = useMemo(() => {
-		const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
-			currentQuery.builder.queryTraceOperator,
-		);
-		const queryConfig: Record<EQueryType, () => SelectProps['options']> = {
-			[EQueryType.QUERY_BUILDER]: () => [
-				...(getSelectedQueryOptions(currentQuery.builder.queryData)?.filter(
-					(option) =>
-						!involvedQueriesInTraceOperator.includes(option.value as string),
-				) || []),
-				...(getSelectedQueryOptions(currentQuery.builder.queryFormulas) || []),
-				...(getSelectedQueryOptions(currentQuery.builder.queryTraceOperator) || []),
-			],
-			[EQueryType.PROM]: () => getSelectedQueryOptions(currentQuery.promql),
-			[EQueryType.CLICKHOUSE]: () =>
-				getSelectedQueryOptions(currentQuery.clickhouse_sql),
-		};
-
-		return queryConfig[currentQuery.queryType]?.() || [];
-	}, [currentQuery]);
+	const queryOptions = useMemo(
+		() => getQueryNames(currentQuery),
+		[currentQuery],
+	);
 
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 

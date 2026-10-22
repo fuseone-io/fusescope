@@ -12,6 +12,7 @@ import {
 	ANOMALY_THRESHOLD_OPERATOR_OPTIONS,
 	ANOMALY_TIME_DURATION_OPTIONS,
 } from '../context/constants';
+import { getQueryNames } from 'container/FormAlertRules/utils';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
@@ -19,7 +20,6 @@ import {
 import { normalizeMatchType, normalizeOperator } from '../utils';
 import { AnomalyAndThresholdProps } from './types';
 import {
-	getQueryNames,
 	NotificationChannelsNotFoundContent,
 	RoutingPolicyBanner,
 } from './utils';
