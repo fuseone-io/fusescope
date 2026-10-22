@@ -64,7 +64,7 @@ make stop   # stop everything, keep data
 make dev-clean  # stop and delete the data
 ```
 
-Sign in at http://localhost:3301 as `admin@fusescope.local` / `FuseScope-dev-1`. HotROD feeds multi-service traces; `telemetrygen` adds logs at several severities and failing `payment` spans. `FUSESCOPE_IMAGE` picks another backend image and `DEV_UI_PORT` another UI port.
+Sign in at http://localhost:3301 as `admin@fusescope.local` / `FuseScope-dev-1`. HotROD feeds multi-service traces; `telemetrygen` adds logs at several severities and failing `payment` spans. RUM is on: the backend forwards browser telemetry to the dev collector. `FUSESCOPE_IMAGE` picks another backend image and `DEV_UI_PORT` another UI port.
 
 To run the backend from source instead, follow the steps below.
 
