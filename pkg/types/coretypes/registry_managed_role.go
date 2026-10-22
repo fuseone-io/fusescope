@@ -214,6 +214,12 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
+		// rum-application — editor+admin manage applications and their keys
+		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRUMApplication}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRUMApplication}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRUMApplication}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRUMApplication}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRUMApplication}, WildCardSelectorString)},
 	},
 	SigNozEditorRoleName: {
 		// cloud-integration — editor can read accounts
@@ -309,6 +315,12 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
+		// rum-application — editor+admin manage applications and their keys
+		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRUMApplication}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRUMApplication}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRUMApplication}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRUMApplication}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRUMApplication}, WildCardSelectorString)},
 	},
 	SigNozViewerRoleName: {
 		// cloud-integration — viewer can read accounts

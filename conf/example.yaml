@@ -555,3 +555,29 @@ meterreporter:
   # interval - random(0, jitter). Must be between 10m and interval. Defaults to
   # min(interval, 2h) when unset.
   jitter: 2h
+
+##################### RUM #####################
+rum:
+  # Serves the browser ingestion gateway under /rum/v1/{traces,logs}.
+  enabled: true
+  # Base URL of the collector OTLP/HTTP receiver; /v1/traces and /v1/logs are appended.
+  collector_endpoint: http://localhost:4318
+  # Timeout of one forward to the collector.
+  forward_timeout: 10s
+  # Largest accepted request body in bytes, before and after gzip decoding.
+  max_body_size: 4194304
+  # How long a key lookup, found or not, is cached. Revocations reach other instances within it.
+  key_cache_ttl: 30s
+  # How often key last-used and application first-seen times are written.
+  usage_flush_interval: 1m
+  ratelimit:
+    # Token bucket shared by every client of one key.
+    key:
+      rate: 500
+      burst: 1000
+    # Token bucket per key and client IP. The IP is kept in memory only.
+    client:
+      rate: 20
+      burst: 60
+    # Use the first X-Forwarded-For address as the client IP. Enable only behind a proxy that sets it.
+    trust_forwarded_for: false

@@ -366,6 +366,17 @@
         "update",
         "list"
       ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "rum-application",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
     }
   ],
   "signoz-editor": [
@@ -577,6 +588,17 @@
       "verbs": [
         "read",
         "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "rum-application",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
         "list"
       ]
     }

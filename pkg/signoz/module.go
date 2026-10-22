@@ -37,6 +37,8 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/retention"
 	"github.com/fuseone-io/fusescope/pkg/modules/rulestatehistory"
 	"github.com/fuseone-io/fusescope/pkg/modules/rulestatehistory/implrulestatehistory"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication"
 	"github.com/fuseone-io/fusescope/pkg/modules/savedview"
 	"github.com/fuseone-io/fusescope/pkg/modules/savedview/implsavedview"
 	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount"
@@ -95,6 +97,7 @@ type Modules struct {
 	SpanMapper           spanmapper.Module
 	LLMPricingRule       llmpricingrule.Module
 	Tag                  tag.Module
+	RUMApplication       rumapplication.Module
 }
 
 func NewModules(
@@ -165,5 +168,6 @@ func NewModules(
 		SpanMapper:           spanMapper,
 		LLMPricingRule:       impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), querier),
 		Tag:                  tagModule,
+		RUMApplication:       implrumapplication.NewModule(implrumapplication.NewStore(sqlstore), telemetryStore, providerSettings, config.RUM),
 	}
 }

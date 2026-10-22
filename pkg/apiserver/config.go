@@ -53,6 +53,8 @@ func newConfig() factory.Config {
 				"/api/v1/health",
 				"/api/v1/version",
 				"/",
+				"/rum/v1/traces",
+				"/rum/v1/logs",
 			},
 		},
 	}

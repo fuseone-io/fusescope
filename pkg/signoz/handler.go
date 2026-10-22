@@ -36,6 +36,8 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/fuseone-io/fusescope/pkg/modules/rulestatehistory"
 	"github.com/fuseone-io/fusescope/pkg/modules/rulestatehistory/implrulestatehistory"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication"
 	"github.com/fuseone-io/fusescope/pkg/modules/savedview"
 	"github.com/fuseone-io/fusescope/pkg/modules/savedview/implsavedview"
 	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount"
@@ -93,6 +95,8 @@ type Handlers struct {
 	RulerHandler            ruler.Handler
 	LLMPricingRuleHandler   llmpricingrule.Handler
 	StatsHandler            statsreporter.Handler
+	RUMApplicationHandler   rumapplication.Handler
+	RUMGateway              rumapplication.Gateway
 }
 
 func NewHandlers(
@@ -113,6 +117,7 @@ func NewHandlers(
 	prometheusService prometheus.Prometheus,
 	rulerService ruler.Ruler,
 	statsAggregator statsreporter.Aggregator,
+	rumConfig rumapplication.Config,
 ) Handlers {
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
@@ -147,5 +152,7 @@ func NewHandlers(
 		RulerHandler:            signozruler.NewHandler(rulerService),
 		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(modules.LLMPricingRule),
 		StatsHandler:            statsreporter.NewHandler(statsAggregator),
+		RUMApplicationHandler:   implrumapplication.NewHandler(modules.RUMApplication),
+		RUMGateway:              implrumapplication.NewGateway(modules.RUMApplication, rumConfig, providerSettings),
 	}
 }

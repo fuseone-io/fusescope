@@ -28,6 +28,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/cloudintegration"
 	"github.com/fuseone-io/fusescope/pkg/modules/inframonitoring"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
 	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount"
 	"github.com/fuseone-io/fusescope/pkg/modules/tracedetail"
 	"github.com/fuseone-io/fusescope/pkg/modules/user"
@@ -151,6 +152,9 @@ type Config struct {
 
 	// Authz config
 	Authz authz.Config `mapstructure:"authz"`
+
+	// RUM config
+	RUM rumapplication.Config `mapstructure:"rum"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -188,6 +192,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		cloudintegration.NewConfigFactory(),
 		tracedetail.NewConfigFactory(),
 		authz.NewConfigFactory(),
+		rumapplication.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

@@ -34,6 +34,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/retention"
 	"github.com/fuseone-io/fusescope/pkg/modules/retention/implretention"
 	"github.com/fuseone-io/fusescope/pkg/modules/rulestatehistory"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication"
 	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount"
 	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount/implserviceaccount"
 	"github.com/fuseone-io/fusescope/pkg/modules/spanmapper/implspanmapper"
@@ -612,6 +613,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("systemdashboard"), impldashboard.NewService(providerSettings, dashboard, orgGetter)),
 		factory.NewNamedService(factory.MustNewName("spanmappergroup"), implspanmapper.NewService(providerSettings, spanMapperModule, orgGetter)),
 		factory.NewNamedService(factory.MustNewName("authdomain"), implauthdomain.NewService(providerSettings, authDomainReconciler, config.AuthDomain.ReconcileInterval)),
+		factory.NewNamedService(factory.MustNewName("rumapplication"), implrumapplication.NewService(providerSettings, modules.RUMApplication, config.RUM)),
 	)
 	if err != nil {
 		return nil, err
@@ -621,7 +623,7 @@ func New(
 	registryHandler := factory.NewHandler(registry)
 	subscriptionService := subscriptionCallback(zeus, licensing)
 
-	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, subscriptionService, registryHandler, alertmanager, prometheus, rulerInstance, statsAggregator)
+	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, subscriptionService, registryHandler, alertmanager, prometheus, rulerInstance, statsAggregator, config.RUM)
 
 	// Initialize the API server (after registry so it can access service health)
 	apiserverInstance, err := factory.NewProviderFromNamedMap(
