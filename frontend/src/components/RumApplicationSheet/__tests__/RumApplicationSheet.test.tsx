@@ -115,6 +115,26 @@ describe('RumApplicationSheet', () => {
 		);
 	});
 
+	it('shows the country lookup as coming soon, off and disabled', async () => {
+		const created: { body?: unknown } = {};
+		mockServer(created);
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<RumApplicationSheet target={{ mode: 'new' }} onClose={jest.fn()} />);
+
+		const geoLookup = screen.getByTestId('rum-app-geoLookup');
+		expect(geoLookup).toBeDisabled();
+		expect(geoLookup).not.toBeChecked();
+		expect(screen.getByTestId('rum-app-geoLookup-soon')).toHaveTextContent(
+			'Soon',
+		);
+
+		await user.type(screen.getByTestId('rum-app-name'), 'web-shop');
+		await user.click(screen.getByTestId('rum-app-submit'));
+		await waitFor(() =>
+			expect(created.body).toMatchObject({ piiPolicy: { geoLookup: false } }),
+		);
+	});
+
 	it('refuses an origin with a path', async () => {
 		mockServer({});
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
