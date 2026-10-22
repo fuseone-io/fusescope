@@ -24,9 +24,9 @@ type module struct {
 }
 
 type originCache struct {
-	mu        sync.Mutex
-	origins   *rumtypes.Application
-	expiresAt time.Time
+	mu           sync.Mutex
+	applications []*rumtypes.Application
+	expiresAt    time.Time
 }
 
 func NewModule(store rumtypes.Store, telemetryStore telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings, config rumapplication.Config) rumapplication.Module {
@@ -160,22 +160,33 @@ func (module *module) HasApplications(ctx context.Context) (bool, error) {
 	return count > 0, nil
 }
 
-func (module *module) IsOriginAllowedAnywhere(ctx context.Context, origin string) bool {
+func (module *module) ApplicationsAllowingOrigin(ctx context.Context, origin string) []valuer.UUID {
 	module.origins.mu.Lock()
 	defer module.origins.mu.Unlock()
 
 	now := time.Now()
-	if module.origins.origins == nil || !now.Before(module.origins.expiresAt) {
-		origins, err := module.store.ListAllowedOrigins(ctx)
+	if module.origins.applications == nil || !now.Before(module.origins.expiresAt) {
+		storables, err := module.store.ListApplicationsInAllOrgs(ctx)
 		if err != nil {
-			module.settings.Logger().WarnContext(ctx, "failed to list rum allowed origins", errors.Attr(err))
-			return false
+			module.settings.Logger().WarnContext(ctx, "failed to list rum applications", errors.Attr(err))
+			return nil
 		}
-		module.origins.origins = &rumtypes.Application{AllowedOrigins: origins}
+		applications, err := rumtypes.NewApplicationsFromStorables(storables)
+		if err != nil {
+			module.settings.Logger().WarnContext(ctx, "failed to decode rum applications", errors.Attr(err))
+			return nil
+		}
+		module.origins.applications = applications
 		module.origins.expiresAt = now.Add(module.config.KeyCacheTTL)
 	}
 
-	return module.origins.origins.AllowsOrigin(origin)
+	ids := []valuer.UUID{}
+	for _, application := range module.origins.applications {
+		if application.AllowsOrigin(origin) {
+			ids = append(ids, application.ID)
+		}
+	}
+	return ids
 }
 
 // changed drops everything cached from the database after a write.
@@ -183,6 +194,6 @@ func (module *module) changed() {
 	module.keys.Clear()
 
 	module.origins.mu.Lock()
-	module.origins.origins = nil
+	module.origins.applications = nil
 	module.origins.mu.Unlock()
 }

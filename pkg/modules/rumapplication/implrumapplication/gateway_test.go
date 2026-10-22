@@ -134,6 +134,48 @@ func TestGatewayAuthAndCORS(t *testing.T) {
 	assert.Equal(t, int64(1), status.Counts.Sessions)
 }
 
+func TestGatewayUnknownKeyRejections(t *testing.T) {
+	testCases := []struct {
+		name    string
+		key     string
+		origin  string
+		counted bool
+	}{
+		{name: "UnknownKey_AllowedOrigin_Counted", key: rumtypes.KeyPrefix + "nopenopenopenopenopenopenopenope", origin: "https://shop.example.com", counted: true},
+		{name: "UnknownKey_WildcardOrigin_Counted", key: rumtypes.KeyPrefix + "nopenopenopenopenopenopenopenope", origin: "https://eu.cdn.example.com", counted: true},
+		{name: "MalformedKey_AllowedOrigin_Counted", key: "not-a-key", origin: "https://shop.example.com", counted: true},
+		{name: "UnknownKey_OtherOrigin_NotCounted", key: rumtypes.KeyPrefix + "nopenopenopenopenopenopenopenope", origin: "https://evil.example.org"},
+		{name: "UnknownKey_NoOrigin_NotCounted", key: rumtypes.KeyPrefix + "nopenopenopenopenopenopenopenope"},
+		{name: "MissingKey_AllowedOrigin_NotCounted", origin: "https://shop.example.com"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			fixture := newGatewayFixture(t, nil)
+			headers := map[string]string{"Content-Type": "application/json"}
+			if testCase.key != "" {
+				headers[KeyHeader] = testCase.key
+			}
+			if testCase.origin != "" {
+				headers["Origin"] = testCase.origin
+			}
+
+			response := fixture.do(http.MethodPost, "/rum/v1/traces", strings.NewReader(testTraceJSON), headers)
+			assert.Equal(t, http.StatusUnauthorized, response.Code)
+
+			status, err := fixture.module.Status(context.Background(), fixture.orgID, fixture.app)
+			require.NoError(t, err)
+			if !testCase.counted {
+				assert.Empty(t, status.Rejections)
+				return
+			}
+			require.Len(t, status.Rejections, 1)
+			assert.Equal(t, rumtypes.RejectionReasonUnknownKey, status.Rejections[0].Reason)
+			assert.Equal(t, testCase.origin, status.Rejections[0].LastOrigin)
+		})
+	}
+}
+
 func TestGatewayPreflight(t *testing.T) {
 	fixture := newGatewayFixture(t, nil)
 
