@@ -1,5 +1,14 @@
 const DASH = '—';
 
+/** The noun for `count` of them: "application", "applications". */
+export function plural(
+	count: number,
+	singular: string,
+	pluralForm = `${singular}s`,
+): string {
+	return count === 1 ? singular : pluralForm;
+}
+
 /** "8 s ago", "3 min ago", "2 h ago", "4 d ago". */
 export function formatAgo(at: number | undefined, now = Date.now()): string {
 	if (at === undefined) {
