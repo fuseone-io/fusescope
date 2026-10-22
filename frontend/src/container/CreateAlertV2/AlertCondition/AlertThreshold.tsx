@@ -16,6 +16,7 @@ import {
 	THRESHOLD_MATCH_TYPE_OPTIONS,
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
+import { getQueryNames } from 'container/FormAlertRules/utils';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
@@ -28,7 +29,6 @@ import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
 	getMatchTypeTooltip,
-	getQueryNames,
 	RoutingPolicyBanner,
 } from './utils';
 
@@ -60,7 +60,7 @@ function AlertThreshold({
 		) {
 			setThresholdState({
 				type: 'SET_SELECTED_QUERY',
-				payload: queryNames[0].value,
+				payload: String(queryNames[0].value),
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
