@@ -46,7 +46,8 @@ function TopRoutesPanel({
 			title="Top routes by LCP"
 			subtitle={
 				<>
-					Slowest first. Routes are templates, so{' '}
+					Routes where pages were loaded, slowest first. In single-page apps, later
+					navigations don’t have their own LCP. Routes are templates, so{' '}
 					<span className="tw:font-mono">/product/1234</span> counts as{' '}
 					<span className="tw:font-mono">/product/:id</span>.
 				</>
