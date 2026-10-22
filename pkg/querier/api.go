@@ -134,13 +134,9 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 	startParam := req.URL.Query().Get("start")
 	filterParam := req.URL.Query().Get("filter")
 
-	start, err := strconv.ParseUint(startParam, 10, 64)
-	if err != nil {
-		start = 0
-	}
 	// create the v5 request param
 	queryRangeRequest := qbtypes.QueryRangeRequest{
-		Start:       start,
+		Start:       parseRawStreamStart(startParam),
 		RequestType: qbtypes.RequestTypeRawStream,
 		CompositeQuery: qbtypes.CompositeQuery{
 			Queries: []qbtypes.QueryEnvelope{
@@ -328,4 +324,14 @@ func (handler *handler) logEvent(ctx context.Context, referrer string, event *qb
 	}
 
 	handler.analytics.TrackUser(ctx, claims.OrgID, claims.IdentityID(), "Telemetry Query Returned Results", properties)
+}
+
+// parseRawStreamStart returns 0 (stream from now) for anything that is not an epoch fitting in an int64.
+func parseRawStreamStart(param string) uint64 {
+	start, err := strconv.ParseUint(param, 10, 63)
+	if err != nil {
+		return 0
+	}
+
+	return start
 }
