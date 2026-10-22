@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FuseScope demo shop</title>
+    <script src="/config.js"></script>
+    <script src="/sdk/fusescope.min.js"></script>
+    <script>
+      FuseScope.init({
+        ...window.FUSESCOPE_CONFIG,
+        service: 'demo-shop-web',
+        environment: 'demo',
+        version: '1.0.0',
+      });
+    </script>
+    <script defer src="/app.js"></script>
+  </head>
+  <body>
+    <nav>
+      <a href="/" data-nav>Home</a>
+      <a href="/products/42" data-nav>Product</a>
+      <a href="/search" data-nav>Search</a>
+      <a href="/cart" data-nav>Cart</a>
+    </nav>
+    <h1 id="title">Home</h1>
+    <button id="order">Place order</button>
+    <button id="fail">Break checkout</button>
+    <button id="reject">Payment API rejects</button>
+    <pre id="out"></pre>
+  </body>
+</html>

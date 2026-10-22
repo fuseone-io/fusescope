@@ -1,0 +1,13 @@
+[Unit]
+Description=FuseScope demo: accept the Caddy port from Cloudflare only
+Wants=network-pre.target
+After=network-pre.target
+Before=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f @NFT_FILE@
+
+[Install]
+WantedBy=multi-user.target
