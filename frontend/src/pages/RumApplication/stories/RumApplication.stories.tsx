@@ -82,3 +82,19 @@ export const Settings: Story = {
 		);
 	},
 };
+
+/** A viewer reads the overview and opens the settings read-only. */
+export const Viewer: Story = {
+	args: { access: 'viewer' },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findAllByTestId('rum-route-row', {}, WAIT),
+		).toHaveLength(7);
+		await userEvent.click(canvas.getByTestId('rum-overview-settings'));
+		await expect(
+			await screen.findByTestId('rum-app-name', {}, WAIT),
+		).toBeDisabled();
+		await expect(screen.queryByTestId('rum-app-delete')).toBeNull();
+	},
+};

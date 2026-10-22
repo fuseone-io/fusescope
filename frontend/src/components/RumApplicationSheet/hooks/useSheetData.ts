@@ -18,10 +18,14 @@ export interface SheetData {
 	status?: RumtypesGettableApplicationStatusDTO;
 }
 
-/** The application, its keys and, while `pollStatus`, its setup status every few seconds. */
+/**
+ * The application, its keys when `withKeys` and, while `pollStatus`, its setup
+ * status every few seconds.
+ */
 export function useSheetData(
 	applicationId: string | undefined,
 	pollStatus: boolean,
+	withKeys: boolean,
 ): SheetData {
 	const id = applicationId ?? '';
 	const enabled = Boolean(applicationId);
@@ -31,7 +35,7 @@ export function useSheetData(
 	);
 	const keys = useListRUMApplicationKeys(
 		{ id },
-		{ query: { enabled, refetchOnWindowFocus: false } },
+		{ query: { enabled: enabled && withKeys, refetchOnWindowFocus: false } },
 	);
 	const status = useGetRUMApplicationStatus(
 		{ id },

@@ -1,6 +1,6 @@
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, within } from 'tests/test-utils';
+import { render, screen, waitFor, within } from 'tests/test-utils';
 
 import RumApplications from '../index';
 
@@ -118,19 +118,58 @@ describe('RumApplications', () => {
 		expect(screen.queryByTestId('rum-applications-new')).not.toBeInTheDocument();
 	});
 
-	it('explains when the list is not allowed', async () => {
-		server.use(
-			rest.get(APPS_URL, (_req, res, ctx) =>
-				res(
-					ctx.status(403),
-					ctx.json({ status: 'error', error: { message: 'forbidden' } }),
-				),
-			),
-		);
+	it('shows viewers the applications read-only', async () => {
+		mockApplications([APP]);
 		render(<RumApplications />, undefined, { role: 'VIEWER' });
 
 		await expect(
+			screen.findByTestId('rum-application-row'),
+		).resolves.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('rum-applications-unavailable'),
+		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('rum-applications-new')).not.toBeInTheDocument();
+	});
+
+	it('counts one application in the singular', async () => {
+		mockApplications([APP]);
+		render(<RumApplications />);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('rum-applications-count')).toHaveTextContent(
+				/^1 application · 50 sessions in the selected range$/,
+			),
+		);
+		expect(screen.getByTestId('rum-applications-shown')).toHaveTextContent(
+			/^1 of 1 application$/,
+		);
+	});
+
+	it('counts several applications in the plural', async () => {
+		mockApplications([APP, { ...APP, id: 'app-2', name: 'checkout' }]);
+		render(<RumApplications />);
+
+		await expect(
+			screen.findByTestId('rum-applications-count'),
+		).resolves.toHaveTextContent(/^2 applications ·/);
+		expect(screen.getByTestId('rum-applications-shown')).toHaveTextContent(
+			/^2 of 2 applications$/,
+		);
+	});
+
+	it('says when the list cannot be loaded', async () => {
+		server.use(
+			rest.get(APPS_URL, (_req, res, ctx) =>
+				res(
+					ctx.status(500),
+					ctx.json({ status: 'error', error: { message: 'boom' } }),
+				),
+			),
+		);
+		render(<RumApplications />);
+
+		await expect(
 			screen.findByTestId('rum-applications-unavailable'),
-		).resolves.toHaveTextContent('managed by admins and editors');
+		).resolves.toHaveTextContent('Applications could not be loaded');
 	});
 });

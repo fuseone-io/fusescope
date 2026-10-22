@@ -54,30 +54,40 @@ function KeysTab({
 				from its allowed origins and nothing else. Keys are stored hashed, so only
 				the last characters are shown.
 			</p>
-			<section
-				aria-label="Keys"
-				className="tw:flex tw:flex-col tw:divide-y tw:divide-border tw:rounded-[10px] tw:border tw:border-border"
-			>
-				{keys.map((key) => (
-					<KeyRow
-						key={key.id}
-						applicationKey={key}
-						onRevoke={readOnly ? undefined : (): void => setRevoking(key)}
-					/>
-				))}
-				{keys.length === 0 && (
-					<div className="tw:flex tw:items-center tw:justify-between tw:gap-3 tw:px-4 tw:py-3">
-						<span className="tw:text-[13px] tw:text-muted-foreground">
-							No usable key. The SDK’s data is refused until you create one.
-						</span>
-						{!readOnly && (
-							<Button size="sm" data-testid="rum-key-create" onClick={onCreate}>
-								Create key
-							</Button>
-						)}
-					</div>
-				)}
-			</section>
+			{readOnly && (
+				<p
+					data-testid="rum-keys-managed"
+					className="tw:rounded-[10px] tw:border tw:border-border tw:px-4 tw:py-3 tw:text-[13px] tw:text-muted-foreground"
+				>
+					Keys are managed by admins and editors.
+				</p>
+			)}
+			{!readOnly && (
+				<section
+					aria-label="Keys"
+					className="tw:flex tw:flex-col tw:divide-y tw:divide-border tw:rounded-[10px] tw:border tw:border-border"
+				>
+					{keys.map((key) => (
+						<KeyRow
+							key={key.id}
+							applicationKey={key}
+							onRevoke={readOnly ? undefined : (): void => setRevoking(key)}
+						/>
+					))}
+					{keys.length === 0 && (
+						<div className="tw:flex tw:items-center tw:justify-between tw:gap-3 tw:px-4 tw:py-3">
+							<span className="tw:text-[13px] tw:text-muted-foreground">
+								No usable key. The SDK’s data is refused until you create one.
+							</span>
+							{!readOnly && (
+								<Button size="sm" data-testid="rum-key-create" onClick={onCreate}>
+									Create key
+								</Button>
+							)}
+						</div>
+					)}
+				</section>
+			)}
 			{active && !readOnly && (
 				<section
 					aria-labelledby="rum-key-rotate"

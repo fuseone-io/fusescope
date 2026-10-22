@@ -146,4 +146,32 @@ describe('RumApplicationSheet', () => {
 		expect(screen.queryByTestId('rum-app-submit')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('rum-app-delete')).not.toBeInTheDocument();
 	});
+
+	it('tells a viewer that keys are managed by admins and editors', async () => {
+		mockServer({});
+		let keysRequested = false;
+		server.use(
+			rest.get(`${APPS_URL}/app-1/keys`, (_req, res, ctx) => {
+				keysRequested = true;
+				return res(ctx.status(403));
+			}),
+		);
+		render(
+			<RumApplicationSheet
+				target={{ mode: 'edit', applicationId: 'app-1' }}
+				initialTab="key"
+				onClose={jest.fn()}
+			/>,
+			undefined,
+			{ role: 'VIEWER' },
+		);
+
+		await expect(
+			screen.findByTestId('rum-keys-managed'),
+		).resolves.toHaveTextContent('Keys are managed by admins and editors');
+		expect(screen.queryByTestId('rum-key-row')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('rum-key-rotate')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('rum-key-create')).not.toBeInTheDocument();
+		expect(keysRequested).toBe(false);
+	});
 });
