@@ -35,12 +35,7 @@ func (plugin *reqResLog) OnRequestStart(request *http.Request) {
 		string(semconv.HTTPRequestSizeKey), request.ContentLength,
 	}
 
-	// only include all the headers if we are at debug level
-	if plugin.logger.Handler().Enabled(request.Context(), slog.LevelDebug) {
-		fields = append(fields, "http.request.headers", request.Header)
-	} else {
-		fields = append(fields, "http.request.headers", redactSensitiveHeaders(request.Header))
-	}
+	fields = append(fields, "http.request.headers", redactSensitiveHeaders(request.Header))
 
 	plugin.logger.InfoContext(request.Context(), "::SENT-REQUEST::", fields...)
 }
@@ -88,7 +83,9 @@ func redactSensitiveHeaders(headers http.Header) http.Header {
 	// maintained list of headers to redact
 	sensitiveHeaders := map[string]bool{
 		"Authorization":          true,
+		"Proxy-Authorization":    true,
 		"Cookie":                 true,
+		"Signoz-Api-Key":         true,
 		"X-Signoz-Cloud-Api-Key": true,
 	}
 
