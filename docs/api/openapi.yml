@@ -10138,6 +10138,7 @@ components:
     RumtypesRejectionReason:
       enum:
       - bad_key
+      - unknown_key
       - origin_not_allowed
       - rate_limited
       - too_large
