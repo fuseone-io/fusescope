@@ -268,6 +268,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewKeepRelevantLLMPricingRulesFactory(),
 		sqlmigration.NewAddRUMApplicationsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRUMApplicationTuplesFactory(sqlstore),
+		sqlmigration.NewAddRUMApplicationViewerTuplesFactory(sqlstore),
 	)
 }
 

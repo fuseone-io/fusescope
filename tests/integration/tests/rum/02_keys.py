@@ -4,7 +4,7 @@ from http import HTTPStatus
 
 import requests
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, create_active_user
 from fixtures.rum import RUM_APPLICATIONS, RUM_KEY_HEADER, create_rum_application
 from fixtures.types import Operation, SigNoz
 
@@ -65,3 +65,32 @@ def test_key_rotation(
     response = requests.get(signoz.self.host_configs["8080"].get(f"{RUM_APPLICATIONS}/{created['id']}/status"), headers=headers, timeout=5)
     assert response.status_code == HTTPStatus.OK, response.text
     assert {"reason": "bad_key", "count": 1} == {key: value for key, value in response.json()["data"]["rejections"][0].items() if key in ("reason", "count")}
+
+
+def test_viewer_cannot_see_or_manage_keys(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    created = create_rum_application(signoz, admin_token, {"name": f"viewer-keys-{uuid.uuid4().hex[:8]}", "platform": "web", "environment": "production"})
+    email = f"rum-viewer-{uuid.uuid4().hex[:8]}@integration.test"
+    create_active_user(signoz, admin_token, email, "signoz-viewer", "password123Z$")
+    headers = {"Authorization": f"Bearer {get_token(email, 'password123Z$')}"}
+    keys_url = signoz.self.host_configs["8080"].get(f"{RUM_APPLICATIONS}/{created['id']}/keys")
+    key_url = f"{keys_url}/{created['key']['id']}"
+
+    response = requests.get(keys_url, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.FORBIDDEN, "last4 and usage are operational details"
+
+    response = requests.post(keys_url, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.post(f"{key_url}/rotate", json={"overlap": "1h"}, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.delete(key_url, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.get(keys_url, headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    assert [key["id"] for key in response.json()["data"]] == [created["key"]["id"]]

@@ -770,6 +770,14 @@
         "read",
         "list"
       ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "rum-application",
+      "verbs": [
+        "read",
+        "list"
+      ]
     }
   ],
   "signoz-anonymous": [
