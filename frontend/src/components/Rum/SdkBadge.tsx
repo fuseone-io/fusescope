@@ -7,6 +7,8 @@ import {
 	SDK_SUPPORT_TONES,
 } from './constants';
 
+const FUSESCOPE_BROWSER_SDK = '@fusescope/browser';
+
 interface SdkBadgeProps {
 	name?: string;
 	version?: string;
@@ -40,8 +42,11 @@ function SdkBadge({
 			data-testid={testId}
 			className="tw:flex tw:min-w-0 tw:flex-col tw:items-start tw:gap-1"
 		>
-			<span className="tw:truncate tw:font-mono tw:text-xs tw:text-foreground">
-				{sdk || '—'}
+			<span
+				title={sdk || undefined}
+				className="tw:font-mono tw:text-xs tw:whitespace-nowrap tw:text-foreground"
+			>
+				{(name === FUSESCOPE_BROWSER_SDK ? version : sdk) || '—'}
 			</span>
 			{sdk && (
 				<span title={SDK_SUPPORT_TITLES[support]} className="tw:inline-flex">

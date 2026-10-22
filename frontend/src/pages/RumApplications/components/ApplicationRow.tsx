@@ -93,7 +93,7 @@ function ApplicationRow({
 			<TableCell>
 				<VitalCell vital="cls" summary={metrics?.vitals.cls} />
 			</TableCell>
-			<TableCell className="tw:max-w-0">
+			<TableCell>
 				<SdkBadge
 					name={metrics?.sdk?.name}
 					version={metrics?.sdk?.version}
