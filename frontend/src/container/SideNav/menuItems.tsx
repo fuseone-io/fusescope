@@ -151,6 +151,7 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 	[ROUTES.API_MONITORING_BASE]: ROUTES.API_MONITORING,
 	[ROUTES.MESSAGING_QUEUES_BASE]: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 	[ROUTES.AI_OBSERVABILITY_BASE]: ROUTES.AI_OBSERVABILITY_OVERVIEW,
+	[ROUTES.RUM_BASE]: ROUTES.RUM_APPLICATIONS,
 	// `getActiveMenuKeyFromPath` strips the URL down to its first segment;
 	// `/ai-assistant/<id>` reduces to `/ai-assistant`, which we point back
 	// to the AI Assistant menu item's concrete key.

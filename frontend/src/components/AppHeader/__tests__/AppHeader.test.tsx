@@ -6,6 +6,7 @@ import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import ROUTES from 'constants/routes';
 import { rest, server } from 'mocks-server/server';
 import { useGetDashboardV2 } from 'api/generated/services/dashboard';
+import { useGetRUMApplication } from 'api/generated/services/rum';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import {
 	fireEvent,
@@ -86,6 +87,12 @@ function DashboardPageProbe({ id }: { id: string }): null {
 /** Loads the integration the way the integration detail page does. */
 function IntegrationPageProbe({ id }: { id: string }): null {
 	useGetIntegration({ integrationId: id });
+	return null;
+}
+
+/** Loads the RUM application the way its overview page does. */
+function RumApplicationPageProbe({ id }: { id: string }): null {
+	useGetRUMApplication({ id });
 	return null;
 }
 
@@ -186,6 +193,28 @@ describe('AppHeader', () => {
 			await expect(screen.findByText('Redis')).resolves.toBeInTheDocument();
 			expect(crumbs()).toStrictEqual(['Integrations', 'Redis']);
 			expect(currentCrumb()).not.toHaveClass('tw:font-mono');
+		});
+
+		it('shows a RUM application name under Frontend once the page has loaded it', async () => {
+			server.use(
+				rest.get('*/api/v1/rum/applications/:id', (req, res, ctx) =>
+					res(
+						ctx.json({
+							status: 'success',
+							data: { id: req.params.id, name: 'web-shop' },
+						}),
+					),
+				),
+			);
+			renderHeader(
+				'/frontend/applications/app-1',
+				<RumApplicationPageProbe id="app-1" />,
+			);
+
+			expect(crumbs()).toStrictEqual(['Frontend', 'Application']);
+			await expect(screen.findByText('web-shop')).resolves.toBeInTheDocument();
+			expect(crumbs()).toStrictEqual(['Frontend', 'web-shop']);
+			expect(currentCrumb()).toHaveClass('tw:font-mono');
 		});
 
 		it('names a cloud integration after its provider', () => {
