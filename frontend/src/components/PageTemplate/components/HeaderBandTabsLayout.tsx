@@ -48,8 +48,10 @@ function HeaderBandTabsLayout({
 						<TabsPrimitive.Trigger
 							key={tab.value}
 							value={tab.value}
+							disabled={tab.disabled}
+							title={tab.title}
 							data-testid={`page-tab-${tab.value}`}
-							className="tw:-mb-px tw:inline-flex tw:cursor-pointer tw:items-center tw:gap-1.5 tw:border-b-2 tw:border-transparent tw:py-2.5 tw:text-sm tw:font-medium tw:whitespace-nowrap tw:text-muted-foreground! tw:transition-colors tw:outline-none tw:hover:text-foreground! tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:ring-inset tw:data-[state=active]:border-primary tw:data-[state=active]:text-primary!"
+							className="tw:-mb-px tw:inline-flex tw:cursor-pointer tw:items-center tw:gap-1.5 tw:border-b-2 tw:border-transparent tw:py-2.5 tw:text-sm tw:font-medium tw:whitespace-nowrap tw:text-muted-foreground! tw:transition-colors tw:outline-none tw:hover:text-foreground! tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:ring-inset tw:data-[state=active]:border-primary tw:data-[state=active]:text-primary! tw:disabled:cursor-not-allowed tw:disabled:opacity-60"
 						>
 							{tab.label}
 							{tab.badge}
