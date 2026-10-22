@@ -64,6 +64,12 @@ func New(address string, logger *slog.Logger, opts ...Option) (*Client, error) {
 	if clientOpts.headers == nil {
 		clientOpts.headers = make(map[string]string)
 	}
+
+	for name := range clientOpts.headers {
+		if !isValidHeaderName(name) {
+			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid header name %q", name)
+		}
+	}
 	clientOpts.headers["From"] = from.String()
 
 	tls, err := newTLSConfig(clientOpts.tls, host)
@@ -92,6 +98,10 @@ func (c *Client) Do(ctx context.Context, tos []*mail.Address, subject string, co
 		err        error
 		success    = false
 	)
+
+	if strings.ContainsAny(subject, "\r\n") {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "subject must not contain line breaks")
+	}
 
 	// Dial the SMTP server.
 	conn, err = c.dial(ctx)
@@ -358,4 +368,19 @@ func newTLSConfig(config TLS, serverName string) (*tls.Config, error) {
 	}
 
 	return tlsConfig, nil
+}
+
+// isValidHeaderName follows the RFC 5322 field-name grammar: printable ASCII except ':'.
+func isValidHeaderName(name string) bool {
+	if name == "" {
+		return false
+	}
+
+	for _, r := range name {
+		if r < '!' || r > '~' || r == ':' {
+			return false
+		}
+	}
+
+	return true
 }
