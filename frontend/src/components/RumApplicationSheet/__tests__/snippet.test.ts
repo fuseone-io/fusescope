@@ -26,6 +26,7 @@ init({
   publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLw4Rt',
   endpoint: 'https://fusescope.example.com',
   service: 'web-shop',
+  version: '<your app version>', // your release, e.g. from package.json
   environment: 'production',`;
 
 describe('buildNpmSnippet', () => {
@@ -83,10 +84,17 @@ init({
   publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLw4Rt',
   endpoint: 'https://fusescope.example.com',
   service: 'o\\'brien',
+  version: '<your app version>', // your release, e.g. from package.json
 });
 `,
 		],
 	])('%s', (_name, override, expected) => {
 		expect(buildNpmSnippet({ ...BASE, ...override })).toBe(expected);
+	});
+
+	it('writes the version as a placeholder to replace, since releases come from the build', () => {
+		expect(buildNpmSnippet(BASE)).toContain(
+			"\n  version: '<your app version>', // your release, e.g. from package.json\n",
+		);
 	});
 });

@@ -4,6 +4,9 @@ export const SDK_PACKAGE = '@fusescope/browser';
 
 export const NPM_INSTALL_COMMAND = `npm install ${SDK_PACKAGE}`;
 
+const VERSION_PLACEHOLDER = "version: '<your app version>'";
+const VERSION_COMMENT = '// your release, e.g. from package.json';
+
 const literal = (value: string): string =>
 	`'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 
@@ -38,6 +41,7 @@ export function buildNpmSnippet(input: SnippetInput): string {
 		`publicKey: ${literal(input.publicKey)}`,
 		`endpoint: ${literal(input.endpoint)}`,
 		`service: ${literal(input.name)}`,
+		VERSION_PLACEHOLDER,
 	];
 	if (input.environment) {
 		lines.push(`environment: ${literal(input.environment)}`);
@@ -58,6 +62,10 @@ export function buildNpmSnippet(input: SnippetInput): string {
 		lines.push(`privacy: { ${privacy.join(', ')} }`);
 	}
 	return `import { init } from '${SDK_PACKAGE}';\n\ninit({\n${lines
-		.map((line) => `  ${line},`)
+		.map((line) =>
+			line === VERSION_PLACEHOLDER
+				? `  ${line}, ${VERSION_COMMENT}`
+				: `  ${line},`,
+		)
 		.join('\n')}\n});\n`;
 }
