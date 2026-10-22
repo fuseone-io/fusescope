@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { cn } from 'lib/utils';
 
 export interface SegmentedOption<T extends string> {
@@ -8,6 +9,11 @@ export interface SegmentedOption<T extends string> {
 	count?: number;
 	countTone?: 'neutral' | 'warning';
 	countTestId?: string;
+	/** Not selectable on its own, e.g. a platform that is coming soon. */
+	disabled?: boolean;
+	title?: string;
+	/** After the label, e.g. a "Soon" badge. */
+	badge?: ReactNode;
 }
 
 interface SegmentedControlProps<T extends string> {
@@ -48,7 +54,8 @@ function SegmentedControl<T extends string>({
 						type="button"
 						aria-pressed={pressed}
 						data-testid={option.testId}
-						disabled={disabled}
+						disabled={disabled || option.disabled}
+						title={option.title}
 						onClick={(): void => {
 							if (!pressed) {
 								onChange(option.value);
@@ -75,6 +82,7 @@ function SegmentedControl<T extends string>({
 								{option.count}
 							</span>
 						)}
+						{option.badge}
 					</button>
 				);
 			})}

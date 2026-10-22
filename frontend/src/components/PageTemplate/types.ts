@@ -10,6 +10,8 @@ export interface PageTab {
 	label: ReactNode;
 	content: ReactNode;
 	badge?: ReactNode;
+	disabled?: boolean;
+	title?: string;
 }
 
 export type StatusTone = 'neutral' | 'success' | 'warning' | 'error' | 'info';

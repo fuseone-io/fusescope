@@ -72,3 +72,23 @@ describe('PageTabs', () => {
 		expect(screen.queryByText('overview body')).not.toBeInTheDocument();
 	});
 });
+
+describe('PageTabs disabled tab', () => {
+	it('cannot be selected', () => {
+		const onValueChange = jest.fn();
+		render(
+			<PageTabs
+				label="Sections"
+				tabs={[tabs[0], { ...tabs[1], disabled: true, title: 'Coming soon' }]}
+				value="overview"
+				onValueChange={onValueChange}
+			/>,
+		);
+
+		const disabled = screen.getByRole('tab', { name: /DB Call Metrics/ });
+		expect(disabled).toBeDisabled();
+		expect(disabled).toHaveAttribute('title', 'Coming soon');
+		select(disabled);
+		expect(onValueChange).not.toHaveBeenCalled();
+	});
+});
