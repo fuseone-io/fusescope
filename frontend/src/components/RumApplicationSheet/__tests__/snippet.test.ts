@@ -1,0 +1,92 @@
+import { SnippetInput } from '../types';
+import { buildNpmSnippet } from '../utils/snippet';
+
+const BASE: SnippetInput = {
+	applicationId: '01a16115-094c-79a3-aa4c-39d2a99907d1',
+	name: 'web-shop',
+	environment: 'production',
+	publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLw4Rt',
+	endpoint: 'https://fusescope.example.com',
+	sampleRate: 1,
+	tracePropagationUrls: [],
+	piiPolicy: {
+		dropQuery: true,
+		queryAllowlist: [],
+		urlAllowlist: [],
+		geoLookup: true,
+		requireConsent: false,
+		hashUserId: true,
+	},
+};
+
+const HEAD = `import { init } from '@fusescope/browser';
+
+init({
+  applicationId: '01a16115-094c-79a3-aa4c-39d2a99907d1',
+  publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLw4Rt',
+  endpoint: 'https://fusescope.example.com',
+  service: 'web-shop',
+  environment: 'production',`;
+
+describe('buildNpmSnippet', () => {
+	it.each<[string, Partial<SnippetInput>, string]>([
+		['defaults leave every optional setting out', {}, `${HEAD}\n});\n`],
+		[
+			'a sample rate below 1 is written as a fraction',
+			{ sampleRate: 0.25 },
+			`${HEAD}\n  sessionSampleRate: 0.25,\n});\n`,
+		],
+		[
+			'trace propagation URLs are listed',
+			{
+				tracePropagationUrls: [
+					'https://api.shop.example.com',
+					'https://cart.example.com',
+				],
+			},
+			`${HEAD}\n  propagateTraceHeaderCorsUrls: ['https://api.shop.example.com', 'https://cart.example.com'],\n});\n`,
+		],
+		[
+			'consent is required only when set',
+			{ piiPolicy: { ...BASE.piiPolicy, requireConsent: true } },
+			`${HEAD}\n  requireConsent: true,\n});\n`,
+		],
+		[
+			'kept query parameters go under privacy',
+			{
+				piiPolicy: {
+					...BASE.piiPolicy,
+					queryAllowlist: ['utm_source', 'page'],
+				},
+			},
+			`${HEAD}\n  privacy: { queryAllowlist: ['utm_source', 'page'] },\n});\n`,
+		],
+		[
+			'keeping query strings and plain user ids are written out',
+			{
+				piiPolicy: {
+					...BASE.piiPolicy,
+					dropQuery: false,
+					queryAllowlist: ['ignored'],
+					hashUserId: false,
+				},
+			},
+			`${HEAD}\n  privacy: { dropQuery: false, hashUserId: false },\n});\n`,
+		],
+		[
+			'quotes in values are escaped',
+			{ name: "o'brien", environment: '' },
+			`import { init } from '@fusescope/browser';
+
+init({
+  applicationId: '01a16115-094c-79a3-aa4c-39d2a99907d1',
+  publicKey: 'rum_pub_8Fh2kQ7vXz3mN9cLw4Rt',
+  endpoint: 'https://fusescope.example.com',
+  service: 'o\\'brien',
+});
+`,
+		],
+	])('%s', (_name, override, expected) => {
+		expect(buildNpmSnippet({ ...BASE, ...override })).toBe(expected);
+	});
+});
