@@ -23,6 +23,9 @@ const LIST = 'Frontend · applications';
 const SETUP = 'Frontend · setup';
 const APPS = 'http://localhost/api/v1/rum/applications';
 
+const NEW_KEY_VALUE = 'rum_pub_8Fh2kQ7vXz3mN9cLw4R';
+const NEW_KEY = { id: 'key-new', applicationId: 'app-new', last4: 'Lw4R' };
+
 type SetupStatus = 'waiting' | 'receiving';
 
 const ok = (data: unknown): Record<string, unknown> => ({
@@ -72,21 +75,23 @@ export const rumApplicationsMocks = defineStoryMocks({
 						name: 'web-shop-next',
 						firstSeenAt: null,
 					}),
-					key: {
-						...rumApplicationKeys(false)[0],
-						id: 'key-new',
-						applicationId: 'app-new',
-						last4: 'Lw4R',
-						key: 'rum_pub_8Fh2kQ7vXz3mN9cLw4R',
-					},
+					key: { ...rumApplicationKeys(false)[0], ...NEW_KEY, key: NEW_KEY_VALUE },
 				}),
 			),
 		),
 		rest.get(`${APPS}/:id/status`, (_req, res, ctx) =>
 			res(ctx.json(ok(rumApplicationStatus(values.setupStatus === 'receiving')))),
 		),
-		rest.get(`${APPS}/:id/keys`, (_req, res, ctx) =>
-			res(ctx.json(ok(rumApplicationKeys(values.rotating)))),
+		rest.get(`${APPS}/:id/keys`, (req, res, ctx) =>
+			res(
+				ctx.json(
+					ok(
+						req.params.id === 'app-new'
+							? [{ ...rumApplicationKeys(false)[0], ...NEW_KEY }]
+							: rumApplicationKeys(values.rotating),
+					),
+				),
+			),
 		),
 		rest.post(`${APPS}/:id/keys/:keyId/rotate`, (_req, res, ctx) =>
 			res(

@@ -43,6 +43,7 @@ function KeysTab({
 		>
 			{revealed && (
 				<KeyOnceBanner
+					snippetPlace="install"
 					applicationKey={revealed.key}
 					applicationName={applicationName}
 				/>

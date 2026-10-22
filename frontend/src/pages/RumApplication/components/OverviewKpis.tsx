@@ -20,7 +20,11 @@ function OverviewKpis({ overview }: OverviewKpisProps): JSX.Element {
 
 	return (
 		<div className="fs-ui tw:flex tw:flex-col tw:gap-2 tw:font-sans">
-			<KpiStrip label="Key metrics" testId="rum-overview-kpis">
+			<KpiStrip
+				label="Key metrics"
+				testId="rum-overview-kpis"
+				className="tw:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]"
+			>
 				<Stat
 					label="Sessions"
 					value={formatCount(current.sessions)}

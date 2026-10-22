@@ -5,12 +5,15 @@ import CopyButton from './CopyButton';
 interface KeyOnceBannerProps {
 	applicationKey: string;
 	applicationName: string;
+	/** Where the snippet carrying the key is, from where the banner shows. */
+	snippetPlace?: 'below' | 'install';
 }
 
 /** The plaintext key right after it is issued; the server cannot show it again. */
 function KeyOnceBanner({
 	applicationKey,
 	applicationName,
+	snippetPlace = 'below',
 }: KeyOnceBannerProps): JSX.Element {
 	return (
 		<section
@@ -36,8 +39,12 @@ function KeyOnceBanner({
 			<span className="tw:text-xs">
 				Safe to ship in your bundle: it can only send data for{' '}
 				<span className="tw:font-mono">{applicationName}</span> from its allowed
-				origins. It is already in the snippet below. Lost it? Rotate it on the
-				Public key tab.
+				origins.{' '}
+				<span className="translate-safe">
+					{snippetPlace === 'below'
+						? 'It is already in the snippet below. Lost it? Rotate it on the Public key tab.'
+						: 'It is in the snippet on the Install tab until this sheet closes.'}
+				</span>
 			</span>
 		</section>
 	);
