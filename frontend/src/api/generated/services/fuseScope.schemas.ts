@@ -3230,6 +3230,7 @@ export enum CoretypesKindDTO {
 	'meter-metrics' = 'meter-metrics',
 	'logs-field' = 'logs-field',
 	'traces-field' = 'traces-field',
+	'rum-application' = 'rum-application',
 }
 export enum CoretypesTypeDTO {
 	user = 'user',
@@ -11095,6 +11096,408 @@ export interface RuletypesRuleDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
+export interface RumtypesPIIPolicyDTO {
+	/**
+	 * @type boolean
+	 * @description Drop query parameters that are not in queryAllowlist.
+	 */
+	dropQuery: boolean;
+	/**
+	 * @type boolean
+	 * @description Derive the country from the client IP. The IP itself is never stored.
+	 */
+	geoLookup: boolean;
+	/**
+	 * @type boolean
+	 * @description The SDK hashes the id passed to setUser().
+	 */
+	hashUserId: boolean;
+	/**
+	 * @type array,null
+	 * @description Query parameter names kept when dropQuery is true.
+	 */
+	queryAllowlist: string[] | null;
+	/**
+	 * @type boolean
+	 * @description The SDK starts only after the consent hook allows it.
+	 */
+	requireConsent: boolean;
+	/**
+	 * @type array,null
+	 * @description URL prefixes kept verbatim, query and fragment included.
+	 */
+	urlAllowlist: string[] | null;
+}
+
+export enum RumtypesPlatformDTO {
+	web = 'web',
+	android = 'android',
+	ios = 'ios',
+}
+export interface RumtypesApplicationDTO {
+	/**
+	 * @type array,null
+	 * @description Browser origins allowed to ingest, e.g. https://shop.example.com or https://*.example.com; * allows any.
+	 */
+	allowedOrigins: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy: string;
+	/**
+	 * @type string
+	 */
+	environment: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 * @description When the gateway first accepted data for the application.
+	 */
+	firstSeenAt: string | null;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	piiPolicy: RumtypesPIIPolicyDTO;
+	platform: RumtypesPlatformDTO;
+	/**
+	 * @type number
+	 * @format double
+	 * @description Fraction of sessions the SDK records, from 0 to 1.
+	 */
+	sampleRate: number;
+	/**
+	 * @type array,null
+	 * @description URL prefixes of APIs the SDK sends traceparent to.
+	 */
+	tracePropagationUrls: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export enum RumtypesKeyStatusDTO {
+	active = 'active',
+	expiring = 'expiring',
+}
+export interface RumtypesGettableApplicationKeyDTO {
+	/**
+	 * @type string
+	 */
+	applicationId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	expiresAt: string | null;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 * @description The last four characters of the key, for display.
+	 */
+	last4: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 * @description Updated in batches, about once a minute.
+	 */
+	lastUsedAt: string | null;
+	status: RumtypesKeyStatusDTO;
+}
+
+export interface RumtypesIngestCountsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Log records with event.name exception.
+	 */
+	errors: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Distinct session.id values.
+	 */
+	sessions: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Spans named view.
+	 */
+	views: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Log records with event.name browser.web_vital or rum.vital.
+	 */
+	vitals: number;
+}
+
+export enum RumtypesRejectionReasonDTO {
+	bad_key = 'bad_key',
+	origin_not_allowed = 'origin_not_allowed',
+	rate_limited = 'rate_limited',
+	too_large = 'too_large',
+	invalid_payload = 'invalid_payload',
+}
+export interface RumtypesIngestRejectionDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	count: number;
+	/**
+	 * @type string
+	 * @description Origin header of the last refused request, empty when absent.
+	 */
+	lastOrigin: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	lastSeenAt: string;
+	reason: RumtypesRejectionReasonDTO;
+}
+
+export enum RumtypesSDKSupportDTO {
+	supported = 'supported',
+	outdated = 'outdated',
+	other = 'other',
+	unknown = 'unknown',
+}
+export interface RumtypesSeenSDKDTO {
+	/**
+	 * @type string
+	 * @description telemetry.distro.name, else telemetry.sdk.name, of the last batch.
+	 */
+	name: string;
+	support: RumtypesSDKSupportDTO;
+	/**
+	 * @type string
+	 */
+	version: string;
+}
+
+export interface RumtypesSupportedSDKDTO {
+	/**
+	 * @type string
+	 * @description Exclusive.
+	 */
+	maxVersion: string;
+	/**
+	 * @type string
+	 * @description Inclusive.
+	 */
+	minVersion: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface RumtypesGettableApplicationStatusDTO {
+	counts: RumtypesIngestCountsDTO;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	firstSeenAt: string | null;
+	/**
+	 * @type array,null
+	 */
+	rejections: RumtypesIngestRejectionDTO[] | null;
+	sdk: RumtypesSeenSDKDTO;
+	/**
+	 * @type array,null
+	 */
+	supportedSdks: RumtypesSupportedSDKDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	windowSeconds: number;
+}
+
+export interface RumtypesGettableCreatedApplicationKeyDTO {
+	/**
+	 * @type string
+	 */
+	applicationId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	expiresAt: string | null;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 * @description The full key. It is not stored and cannot be read again.
+	 */
+	key: string;
+	/**
+	 * @type string
+	 * @description The last four characters of the key, for display.
+	 */
+	last4: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 * @description Updated in batches, about once a minute.
+	 */
+	lastUsedAt: string | null;
+	status: RumtypesKeyStatusDTO;
+}
+
+export interface RumtypesGettableCreatedApplicationDTO {
+	/**
+	 * @type array,null
+	 * @description Browser origins allowed to ingest, e.g. https://shop.example.com or https://*.example.com; * allows any.
+	 */
+	allowedOrigins: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy: string;
+	/**
+	 * @type string
+	 */
+	environment: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 * @description When the gateway first accepted data for the application.
+	 */
+	firstSeenAt: string | null;
+	/**
+	 * @type string
+	 */
+	id: string;
+	key: RumtypesGettableCreatedApplicationKeyDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	piiPolicy: RumtypesPIIPolicyDTO;
+	platform: RumtypesPlatformDTO;
+	/**
+	 * @type number
+	 * @format double
+	 * @description Fraction of sessions the SDK records, from 0 to 1.
+	 */
+	sampleRate: number;
+	/**
+	 * @type array,null
+	 * @description URL prefixes of APIs the SDK sends traceparent to.
+	 */
+	tracePropagationUrls: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export enum RumtypesKeyOverlapDTO {
+	'1h' = '1h',
+	'24h' = '24h',
+	'7d' = '7d',
+}
+export interface RumtypesPostableApplicationDTO {
+	/**
+	 * @type array,null
+	 */
+	allowedOrigins?: string[] | null;
+	/**
+	 * @type string
+	 */
+	environment: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	piiPolicy?: RumtypesPIIPolicyDTO;
+	platform: RumtypesPlatformDTO;
+	/**
+	 * @type number
+	 * @format double
+	 * @description Defaults to 1.
+	 */
+	sampleRate?: number;
+	/**
+	 * @type array,null
+	 */
+	tracePropagationUrls?: string[] | null;
+}
+
+export interface RumtypesPostableRotateApplicationKeyDTO {
+	overlap: RumtypesKeyOverlapDTO;
+}
+
+export interface RumtypesUpdatableApplicationDTO {
+	/**
+	 * @type array,null
+	 */
+	allowedOrigins?: string[] | null;
+	/**
+	 * @type string
+	 */
+	environment: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	piiPolicy?: RumtypesPIIPolicyDTO;
+	/**
+	 * @type number
+	 * @format double
+	 * @description Defaults to 1.
+	 */
+	sampleRate?: number;
+	/**
+	 * @type array,null
+	 */
+	tracePropagationUrls?: string[] | null;
+}
+
 export interface SavedviewtypesDisplayDTO {
 	/**
 	 * @type string
@@ -13363,6 +13766,102 @@ export type UpdateRoutePolicyPathParameters = {
 };
 export type UpdateRoutePolicy200 = {
 	data: AlertmanagertypesGettableRoutePolicyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListRUMApplications200 = {
+	/**
+	 * @type array,null
+	 */
+	data: RumtypesApplicationDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateRUMApplication201 = {
+	data: RumtypesGettableCreatedApplicationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteRUMApplicationPathParameters = {
+	id: string;
+};
+export type GetRUMApplicationPathParameters = {
+	id: string;
+};
+export type GetRUMApplication200 = {
+	data: RumtypesApplicationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateRUMApplicationPathParameters = {
+	id: string;
+};
+export type UpdateRUMApplication200 = {
+	data: RumtypesApplicationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListRUMApplicationKeysPathParameters = {
+	id: string;
+};
+export type ListRUMApplicationKeys200 = {
+	/**
+	 * @type array,null
+	 */
+	data: RumtypesGettableApplicationKeyDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateRUMApplicationKeyPathParameters = {
+	id: string;
+};
+export type CreateRUMApplicationKey201 = {
+	data: RumtypesGettableCreatedApplicationKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type RevokeRUMApplicationKeyPathParameters = {
+	id: string;
+	keyId: string;
+};
+export type RotateRUMApplicationKeyPathParameters = {
+	id: string;
+	keyId: string;
+};
+export type RotateRUMApplicationKey201 = {
+	data: RumtypesGettableCreatedApplicationKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetRUMApplicationStatusPathParameters = {
+	id: string;
+};
+export type GetRUMApplicationStatus200 = {
+	data: RumtypesGettableApplicationStatusDTO;
 	/**
 	 * @type string
 	 */
