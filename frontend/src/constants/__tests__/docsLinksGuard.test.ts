@@ -16,8 +16,6 @@ const EXCLUDED_DIRS = new Set([
 ]);
 
 const SIGNOZ_DOCS_CALL = /signozDocsUrl\(\s*(['"`])([^'"`]*)\1/g;
-/** Onboarding catalog entries resolve `link: '/docs/…'` against the SigNoz site. */
-const ONBOARDING_DOCS_LINK = /link:\s*(['"`])\/docs(\/[^'"`]*)\1/g;
 const DOCUMENTED_TOPICS = new Set([
 	'/alerts',
 	'/alerts-management/metrics-based-alerts',
@@ -107,7 +105,6 @@ const ALLOWED_SIGNOZ_LINKS = new Set([
 	'container/GeneralSettingsCloud/GeneralSettingsCloud.tsx: cloud-support@signoz.io',
 	// Ingestion keys exist only with the cloud ingestion gateway.
 	"container/IngestionSettings/MultiIngestionSettings.tsx: signozDocsUrl('/ingestion/signoz-cloud/keys/')",
-	"container/OnboardingV2Container/IngestionDetails/IngestionDetails.tsx: signozDocsUrl('/ingestion/signoz-cloud/keys/')",
 	// One-click AWS, Azure and GCP integrations.
 	'container/Integrations/constants.ts: integrations@signoz.io',
 	'container/Integrations/constants.ts: https://signoz.io',
@@ -159,7 +156,7 @@ describe('documentation links', () => {
 
 	it('point topics documented on the FuseScope docs site there', () => {
 		const offenders = sourceFiles(SRC).flatMap((file) =>
-			[SIGNOZ_DOCS_CALL, ONBOARDING_DOCS_LINK]
+			[SIGNOZ_DOCS_CALL]
 				.flatMap((pattern) => [...readFileSync(file, 'utf8').matchAll(pattern)])
 				.map(([, , path]) => path.replace(/#?\$\{.*$/, ''))
 				.filter((path) => DOCUMENTED_TOPICS.has(normalizeDocsPath(path)))
