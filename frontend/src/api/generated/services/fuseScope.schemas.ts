@@ -6818,6 +6818,17 @@ export interface FeaturetypesGettableFeatureDTO {
 	variants?: FeaturetypesGettableFeatureDTOVariants;
 }
 
+export type MultipartFileDTO = Blob;
+
+export interface FormDataRumtypesPostableSourceMapsDTO {
+	/**
+	 * @type string
+	 * @description JSON object of map URL path to debug ID; overrides the map's own debugId.
+	 */
+	debug_ids?: string;
+	file?: MultipartFileDTO;
+}
+
 export interface GatewaytypesLimitValueDTO {
 	/**
 	 * @type integer,null
@@ -11208,6 +11219,21 @@ export enum RumtypesPlatformDTO {
 	android = 'android',
 	ios = 'ios',
 }
+export enum RumtypesSourceMapRetentionDTO {
+	'30d' = '30d',
+	'90d' = '90d',
+	'1y' = '1y',
+	never = 'never',
+}
+export interface RumtypesSourceMapSettingsDTO {
+	/**
+	 * @type boolean
+	 * @description Never delete the 3 most recently uploaded releases. Defaults to true.
+	 */
+	keepNewestReleases: boolean;
+	retention: RumtypesSourceMapRetentionDTO;
+}
+
 export interface RumtypesApplicationDTO {
 	/**
 	 * @type array,null
@@ -11253,6 +11279,7 @@ export interface RumtypesApplicationDTO {
 	 * @description Fraction of sessions the SDK records, from 0 to 1.
 	 */
 	sampleRate: number;
+	sourceMaps: RumtypesSourceMapSettingsDTO;
 	/**
 	 * @type array,null
 	 * @description URL prefixes of APIs the SDK sends traceparent to.
@@ -11290,6 +11317,57 @@ export interface RumtypesClientBreakdownDTO {
 /**
  * @nullable
  */
+export type RumtypesSourceContextDTO = {
+	/**
+	 * @type array,null
+	 * @description Original source lines, each cut at 512 bytes.
+	 */
+	lines: string[] | null;
+	/**
+	 * @type integer
+	 * @description Line number of the first line.
+	 */
+	startLine: number;
+} | null;
+
+/**
+ * @nullable
+ */
+export type RumtypesOriginalFrameDTO = {
+	/**
+	 * @type integer
+	 */
+	column: number;
+	context: RumtypesSourceContextDTO | null;
+	/**
+	 * @type string
+	 * @description Source path relative to the project, as the map names it.
+	 */
+	file: string;
+	/**
+	 * @type string
+	 * @description Original name of the function, from the caller's call site; the minified name when unknown.
+	 */
+	function: string;
+	/**
+	 * @type boolean
+	 * @description False for sources under node_modules.
+	 */
+	inApp: boolean;
+	/**
+	 * @type integer
+	 */
+	line: number;
+	/**
+	 * @type string
+	 * @description Path of the map that resolved the frame.
+	 */
+	sourceMap: string;
+} | null;
+
+/**
+ * @nullable
+ */
 export type RumtypesStackFrameDTO = {
 	/**
 	 * @type integer
@@ -11309,6 +11387,18 @@ export type RumtypesStackFrameDTO = {
 	 * @description 0 when unknown.
 	 */
 	line: number;
+	original: RumtypesOriginalFrameDTO | null;
+} | null;
+
+/**
+ * @nullable
+ */
+export type RumtypesMissingSourceMapDTO = {
+	/**
+	 * @type string
+	 * @description The event's service.version, empty when it has none.
+	 */
+	release: string;
 } | null;
 
 export interface RumtypesErrorEventDTO {
@@ -11325,6 +11415,7 @@ export interface RumtypesErrorEventDTO {
 	 * @type string
 	 */
 	message: string;
+	missingSourceMap: RumtypesMissingSourceMapDTO | null;
 	/**
 	 * @type string
 	 */
@@ -11348,7 +11439,7 @@ export interface RumtypesErrorEventDTO {
 	stacktrace: string;
 	/**
 	 * @type boolean
-	 * @description Whether frames were mapped through an uploaded source map.
+	 * @description Whether frames were mapped through an uploaded source map; frames keep the minified position and carry the original one.
 	 */
 	symbolicated: boolean;
 	/**
@@ -11702,6 +11793,7 @@ export interface RumtypesGettableCreatedApplicationDTO {
 	 * @description Fraction of sessions the SDK records, from 0 to 1.
 	 */
 	sampleRate: number;
+	sourceMaps: RumtypesSourceMapSettingsDTO;
 	/**
 	 * @type array,null
 	 * @description URL prefixes of APIs the SDK sends traceparent to.
@@ -11946,6 +12038,12 @@ export interface RumtypesGettableErrorGroupsDTO {
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description Sessions with spans in the range, for shares of sessions; approximate above 65,536.
+	 */
+	sessions: number;
+	/**
+	 * @type integer
+	 * @format int64
 	 * @description Groups with events in the range.
 	 */
 	total: number;
@@ -12145,6 +12243,160 @@ export interface RumtypesGettableSessionsDTO {
 	 * @description Sessions matching the filters.
 	 */
 	total: number;
+}
+
+export interface RumtypesSourceMapFileDTO {
+	/**
+	 * @type string
+	 * @description The map's debugId, lowercase; empty when it has none.
+	 */
+	debugId: string;
+	/**
+	 * @type string
+	 * @description URL path of the bundle the map matches by convention: path without .map.
+	 */
+	generatedPath: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	lastUsedAt: string | null;
+	/**
+	 * @type string
+	 */
+	path: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	sizeBytes: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	uploadedAt: string;
+	/**
+	 * @type string
+	 */
+	uploadedBy: string;
+}
+
+export interface RumtypesSourceMapLimitsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Bytes.
+	 */
+	maxFileSize: number;
+	/**
+	 * @type integer
+	 */
+	maxFilesPerRelease: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Bytes of maps one application holds.
+	 */
+	quota: number;
+}
+
+export interface RumtypesSourceMapReleaseDTO {
+	/**
+	 * @type string,null
+	 * @format date-time
+	 * @description When retention deletes it; null when it is kept.
+	 */
+	expiresAt: string | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	files: number;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 * @description Last time a stack trace was symbolicated with one of its maps.
+	 */
+	lastUsedAt: string | null;
+	/**
+	 * @type string
+	 */
+	release: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	sizeBytes: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @description Latest upload to the release.
+	 */
+	uploadedAt: string;
+	/**
+	 * @type string
+	 * @description Email of the user or service account of the latest upload.
+	 */
+	uploadedBy: string;
+}
+
+export interface RumtypesGettableSourceMapsDTO {
+	/**
+	 * @type array,null
+	 * @description The files of the requested release, by path; empty without release.
+	 */
+	files: RumtypesSourceMapFileDTO[] | null;
+	limits: RumtypesSourceMapLimitsDTO;
+	/**
+	 * @type array,null
+	 * @description Newest upload first. With release set, only that release.
+	 */
+	releases: RumtypesSourceMapReleaseDTO[] | null;
+	settings: RumtypesSourceMapSettingsDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Bytes of maps the application holds.
+	 */
+	sizeBytes: number;
+}
+
+export interface RumtypesRejectedSourceMapDTO {
+	/**
+	 * @type string
+	 */
+	path: string;
+	/**
+	 * @type string
+	 */
+	reason: string;
+}
+
+export interface RumtypesGettableUploadedSourceMapsDTO {
+	/**
+	 * @type array,null
+	 * @description The stored files, in request order.
+	 */
+	files: RumtypesSourceMapFileDTO[] | null;
+	/**
+	 * @type array,null
+	 * @description Files not stored, in request order; the others are.
+	 */
+	rejected: RumtypesRejectedSourceMapDTO[] | null;
+	/**
+	 * @type string
+	 */
+	release: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Stored files that replaced one with the same path.
+	 */
+	replaced: number;
 }
 
 export interface RumtypesRouteSessionDTO {
@@ -12453,6 +12705,12 @@ export interface RumtypesGettableViewsDTO {
 	 * @type array,null
 	 */
 	routes: RumtypesViewRouteDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Sessions with spans in the range, for shares of sessions; approximate above 65,536.
+	 */
+	sessions: number;
 }
 
 export enum RumtypesKeyOverlapDTO {
@@ -12481,6 +12739,7 @@ export interface RumtypesPostableApplicationDTO {
 	 * @description Defaults to 1.
 	 */
 	sampleRate?: number;
+	sourceMaps?: RumtypesSourceMapSettingsDTO;
 	/**
 	 * @type array,null
 	 */
@@ -12511,6 +12770,7 @@ export interface RumtypesUpdatableApplicationDTO {
 	 * @description Defaults to 1.
 	 */
 	sampleRate?: number;
+	sourceMaps?: RumtypesSourceMapSettingsDTO;
 	/**
 	 * @type array,null
 	 */
@@ -15077,6 +15337,59 @@ export type GetRUMSession200 = {
 	status: string;
 };
 
+export type DeleteRUMSourceMapsPathParameters = {
+	id: string;
+};
+export type DeleteRUMSourceMapsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	release: string;
+};
+
+export type ListRUMSourceMapsPathParameters = {
+	id: string;
+};
+export type ListRUMSourceMapsParams = {
+	/**
+	 * @type string
+	 * @description List this release's files. Without it, the releases are listed.
+	 */
+	release?: string;
+};
+
+export type ListRUMSourceMaps200 = {
+	data: RumtypesGettableSourceMapsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UploadRUMSourceMapsPathParameters = {
+	id: string;
+};
+export type UploadRUMSourceMapsParams = {
+	/**
+	 * @type string
+	 * @description The release the maps belong to; it must equal the service.version the SDK reports.
+	 */
+	release: string;
+};
+
+export type UploadRUMSourceMaps201 = {
+	data: RumtypesGettableUploadedSourceMapsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteRUMSourceMapPathParameters = {
+	id: string;
+	fileId: string;
+};
 export type GetRUMApplicationStatusPathParameters = {
 	id: string;
 };
