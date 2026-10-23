@@ -21,7 +21,7 @@ export function HostnameCell({
 }): React.ReactElement {
 	const isEmpty = !hostName || !hostName.trim();
 	if (!isEmpty) {
-		return <TanStackTable.Text>{hostName}</TanStackTable.Text>;
+		return <TanStackTable.Text title={hostName}>{hostName}</TanStackTable.Text>;
 	}
 	return (
 		<>

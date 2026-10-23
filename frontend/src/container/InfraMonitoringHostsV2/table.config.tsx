@@ -27,6 +27,8 @@ import styles from './table.module.scss';
 import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import type { StatusTone } from 'components/PageTemplate/types';
 
+const COMPACT_BAR = 'tw:[&>span:first-child]:min-w-10';
+
 const statusMap: Record<
 	InframonitoringtypesHostStatusDTO,
 	{
@@ -86,7 +88,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		id: 'hostGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="Host Group" />,
 		accessorFn: (row): string => row.hostName ?? '',
-		width: { min: 290 },
+		width: { min: 170 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -104,7 +106,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			<EntityGroupHeader title="Hostname" icon={<Server size={14} />} />
 		),
 		accessorFn: (row): string => row.hostName ?? '',
-		width: { min: 290 },
+		width: { min: 170 },
 		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
@@ -122,7 +124,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): string => row.status,
-		width: { min: 140 },
+		width: { min: 100 },
 		enableSort: false,
 		cell: ({ value, groupMeta, row, rowId }): React.ReactNode => {
 			const status = value as InframonitoringtypesHostStatusDTO;
@@ -159,11 +161,11 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		id: 'cpu',
 		header: (): React.ReactNode => (
 			<ColumnHeader tooltip={<EntityProgressThresholds type="cpu" />}>
-				CPU Usage
+				CPU
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.cpu,
-		width: { min: 220 },
+		width: { min: 120 },
 		enableSort: true,
 		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = value as number;
@@ -175,7 +177,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 						attribute="CPU metric"
 						rowId={rowId}
 					>
-						<EntityProgressBar value={cpu} type="cpu" />
+						<EntityProgressBar value={cpu} type="cpu" className={COMPACT_BAR} />
 					</ValidateColumnValueWrapper>
 				</div>
 			);
@@ -186,14 +188,17 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		header: (): React.ReactNode => (
 			<ColumnHeader
 				tooltip={
-					<EntityProgressThresholds type="memory" note="Excluding cache memory." />
+					<EntityProgressThresholds
+						type="memory"
+						note="Working set size (WSS), excluding cache memory."
+					/>
 				}
 			>
-				Memory Usage (WSS)
+				Memory
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.memory,
-		width: { min: 200 },
+		width: { min: 146 },
 		enableSort: true,
 		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = value as number;
@@ -205,7 +210,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 						attribute="memory metric"
 						rowId={rowId}
 					>
-						<EntityProgressBar value={memory} type="memory" />
+						<EntityProgressBar value={memory} type="memory" className={COMPACT_BAR} />
 					</ValidateColumnValueWrapper>
 				</div>
 			);
@@ -215,11 +220,11 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		id: 'disk_usage',
 		header: (): React.ReactNode => (
 			<ColumnHeader tooltip={<EntityProgressThresholds type="disk" />}>
-				Disk Usage
+				Disk
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.diskUsage,
-		width: { min: 200 },
+		width: { min: 120 },
 		enableSort: true,
 		cell: ({ value, rowId }): React.ReactNode => {
 			const diskUsage = value as number;
@@ -232,7 +237,11 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 						attribute="disk usage metric"
 						rowId={rowId}
 					>
-						<EntityProgressBar value={diskUsage} type="disk" />
+						<EntityProgressBar
+							value={diskUsage}
+							type="disk"
+							className={COMPACT_BAR}
+						/>
 					</ValidateColumnValueWrapper>
 				</div>
 			);
@@ -242,7 +251,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		id: 'wait',
 		header: (): React.ReactNode => <ColumnHeader>IOWait</ColumnHeader>,
 		accessorFn: (row): number => row.wait,
-		width: { min: 120 },
+		width: { min: 108 },
 		enableSort: true,
 		cell: ({ value, rowId }): React.ReactNode => {
 			const wait = value as number;
@@ -263,9 +272,9 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	},
 	{
 		id: 'load15',
-		header: (): React.ReactNode => <ColumnHeader>Load Avg (15min)</ColumnHeader>,
+		header: (): React.ReactNode => <ColumnHeader>Load (15m)</ColumnHeader>,
 		accessorFn: (row): number => row.load15,
-		width: { min: 160 },
+		width: { min: 96 },
 		enableSort: true,
 		cell: ({ value, rowId }): React.ReactNode => {
 			const load15 = Number(value);
