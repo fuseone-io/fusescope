@@ -173,7 +173,7 @@ func newErrorGroup(fingerprint string, fingerprints *errorFingerprints, row *err
 	for bucket, count := range row.sparkline {
 		counts[int64(bucket)] = int64(count)
 	}
-	slices.Sort(row.releases)
+	slices.SortFunc(row.releases, rumtypes.CompareReleases)
 
 	return &rumtypes.ErrorGroup{
 		Fingerprint:       fingerprint,

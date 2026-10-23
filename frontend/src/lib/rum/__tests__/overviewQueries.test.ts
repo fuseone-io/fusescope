@@ -32,7 +32,8 @@ const RESPONSE: RangeResponse = {
 			]),
 			scalar('RL', ['service.version'], 1, [
 				['1.0.0', 5],
-				['1.1.0', 3],
+				['1.10.0', 3],
+				['1.9.0', 2],
 			]),
 		],
 	},
@@ -94,7 +95,7 @@ describe('applicationOverview', () => {
 	});
 
 	it('lists releases newest first', () => {
-		expect(overview.releases).toStrictEqual(['1.1.0', '1.0.0']);
+		expect(overview.releases).toStrictEqual(['1.10.0', '1.9.0', '1.0.0']);
 	});
 
 	it('is empty without a response', () => {
