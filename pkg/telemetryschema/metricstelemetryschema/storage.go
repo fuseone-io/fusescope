@@ -5,33 +5,33 @@ import (
 	"fmt"
 	"slices"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 var (
-	timeSeriesV4Columns = map[string]*schema.Column{
-		"temporality":  {Name: "temporality", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"metric_name":  {Name: "metric_name", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"type":         {Name: "type", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"is_monotonic": {Name: "is_monotonic", Type: schema.ColumnTypeBool},
-		"fingerprint":  {Name: "fingerprint", Type: schema.ColumnTypeUInt64},
-		"unix_milli":   {Name: "unix_milli", Type: schema.ColumnTypeInt64},
-		"labels":       {Name: "labels", Type: schema.ColumnTypeString},
-		"attrs": {Name: "attrs", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+	timeSeriesV4Columns = map[string]*chschema.Column{
+		"temporality":  {Name: "temporality", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"metric_name":  {Name: "metric_name", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"type":         {Name: "type", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"is_monotonic": {Name: "is_monotonic", Type: chschema.ColumnTypeBool},
+		"fingerprint":  {Name: "fingerprint", Type: chschema.ColumnTypeUInt64},
+		"unix_milli":   {Name: "unix_milli", Type: chschema.ColumnTypeInt64},
+		"labels":       {Name: "labels", Type: chschema.ColumnTypeString},
+		"attrs": {Name: "attrs", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}},
-		"scope_attrs": {Name: "scope_attrs", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+		"scope_attrs": {Name: "scope_attrs", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}},
-		"resource_attrs": {Name: "resource_attrs", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+		"resource_attrs": {Name: "resource_attrs", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}},
 	}
 )
@@ -44,25 +44,25 @@ func NewStorage() qbtypes.Storage {
 	return &storage{}
 }
 
-func (m *storage) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *storage) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*chschema.Column, error) {
 
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope, telemetrytypes.FieldContextAttribute:
-		return []*schema.Column{timeSeriesV4Columns["labels"]}, nil
+		return []*chschema.Column{timeSeriesV4Columns["labels"]}, nil
 	case telemetrytypes.FieldContextMetric:
 		col, ok := timeSeriesV4Columns[key.Name]
 		if !ok {
-			return []*schema.Column{}, qbtypes.ErrColumnNotFound
+			return []*chschema.Column{}, qbtypes.ErrColumnNotFound
 		}
-		return []*schema.Column{col}, nil
+		return []*chschema.Column{col}, nil
 	case telemetrytypes.FieldContextUnspecified:
 		col, ok := timeSeriesV4Columns[key.Name]
 		if !ok {
 			// if nothing is found, return labels column
 			// as we keep all the labels in the labels column
-			return []*schema.Column{timeSeriesV4Columns["labels"]}, nil
+			return []*chschema.Column{timeSeriesV4Columns["labels"]}, nil
 		}
-		return []*schema.Column{col}, nil
+		return []*chschema.Column{col}, nil
 	}
 
 	return nil, qbtypes.ErrColumnNotFound

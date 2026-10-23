@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -18,10 +18,10 @@ import (
 func resolveTypeCollisionForFieldName(fieldExpression string, value any) string {
 	if col, isColumn := timeSeriesV4Columns[fieldExpression]; isColumn {
 		columnType := col.Type.GetType()
-		if lowCardinality, ok := col.Type.(schema.LowCardinalityColumnType); ok {
+		if lowCardinality, ok := col.Type.(chschema.LowCardinalityColumnType); ok {
 			columnType = lowCardinality.ElementType.GetType()
 		}
-		if columnType != schema.ColumnTypeEnumString {
+		if columnType != chschema.ColumnTypeEnumString {
 			return fieldExpression
 		}
 	}

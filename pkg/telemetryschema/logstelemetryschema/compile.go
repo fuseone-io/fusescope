@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"regexp"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 
@@ -32,20 +32,20 @@ func (s *storage) conditionForSearch(
 
 	for _, col := range searchColumns(key.FieldContext, useJSONBody) {
 		switch col.Type.GetType() {
-		case schema.ColumnTypeEnumMap:
+		case chschema.ColumnTypeEnumMap:
 			keysExpr := fmt.Sprintf("mapKeys(%s)", col.Name)
 			valsExpr := fmt.Sprintf("mapValues(%s)", col.Name)
 			// match() needs a String array; cast non-string map values first.
-			if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
+			if mc, ok := col.Type.(chschema.MapColumnType); ok && mc.ValueType.GetType() != chschema.ColumnTypeEnumString {
 				valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", col.Name)
 			}
 			conditions = append(conditions, sb.Or(
 				fmt.Sprintf("arrayExists(x -> match(LOWER(x), LOWER(%s)), %s)", sb.Var(term), keysExpr),
 				fmt.Sprintf("arrayExists(x -> match(LOWER(x), LOWER(%s)), %s)", sb.Var(term), valsExpr),
 			))
-		case schema.ColumnTypeEnumJSON:
+		case chschema.ColumnTypeEnumJSON:
 			conditions = append(conditions, fmt.Sprintf("match(LOWER(toString(%s)), LOWER(%s))", col.Name, sb.Var(term)))
-		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
+		case chschema.ColumnTypeEnumString, chschema.ColumnTypeEnumLowCardinality:
 			conditions = append(conditions, fmt.Sprintf("match(LOWER(%s), LOWER(%s))", col.Name, sb.Var(term)))
 		default:
 			return nil, errors.NewInternalf(errors.CodeInternal, "search does not support the column type of %q", col.Name)
@@ -62,7 +62,7 @@ func (s *storage) conditionForSearch(
 // isBodyJSONSearch reports whether a key addresses a path within the body JSON. Only
 // an explicit Body context qualifies; a bare, context-less `body` (e.g. full-text
 // `count_distinct(body)` or `body EXISTS`) is a full-text match, not a `$.body` path.
-func isBodyJSONSearch(key *telemetrytypes.TelemetryFieldKey, columns []*schema.Column) bool {
+func isBodyJSONSearch(key *telemetrytypes.TelemetryFieldKey, columns []*chschema.Column) bool {
 	if key.FieldContext != telemetrytypes.FieldContextBody {
 		return false
 	}
@@ -81,7 +81,7 @@ func (s *storage) conditionForArrayFunction(
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
-	columns []*schema.Column,
+	columns []*chschema.Column,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
 	if !isBodyJSONSearch(key, columns) {
@@ -258,7 +258,7 @@ func (s *storage) conditionForResolvedKey(
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && q.BodyJSONOn && key.Name != messageSubField {
+		if column.Type.GetType() == chschema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && q.BodyJSONOn && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			if len(key.JSONPlan) == 0 {
 				keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
@@ -483,7 +483,7 @@ func (s *storage) conditionForKey(
 // mapBacked reports whether the key reads a map column, so a row can lack it.
 func (s *storage) mapBacked(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) bool {
 	columns, err := s.getColumn(q, key)
-	return err == nil && len(columns) == 1 && columns[0].Type.GetType() == schema.ColumnTypeEnumMap
+	return err == nil && len(columns) == 1 && columns[0].Type.GetType() == chschema.ColumnTypeEnumMap
 }
 
 // Compile keeps the body language: search over a scope, the body functions,

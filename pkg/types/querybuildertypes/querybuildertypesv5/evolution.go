@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
@@ -19,12 +19,12 @@ import (
 //   - For duplicate evolutions it considers the oldest one (first in ReleaseTime)
 //   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
 //   - Results are sorted by ReleaseTime descending (newest first)
-func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
+func SelectEvolutionsForColumns(columns []*chschema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64) ([]*chschema.Column, []*telemetrytypes.EvolutionEntry, error) {
 	if len(evolutions) == 0 {
 		return columns, nil, nil
 	}
 
-	columnLookUpMap := make(map[string]*schema.Column, len(columns))
+	columnLookUpMap := make(map[string]*chschema.Column, len(columns))
 	for _, column := range columns {
 		columnLookUpMap[column.Name] = column
 	}
@@ -83,7 +83,7 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 
 	// Collect column-evolution pairs
 	type colEvoPair struct {
-		column    *schema.Column
+		column    *chschema.Column
 		evolution *telemetrytypes.EvolutionEntry
 	}
 	pairs := []colEvoPair{}
@@ -128,7 +128,7 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 	})
 
 	// Extract results
-	newColumns := make([]*schema.Column, len(pairs))
+	newColumns := make([]*chschema.Column, len(pairs))
 	evolutionsEntries := make([]*telemetrytypes.EvolutionEntry, len(pairs))
 	for i, pair := range pairs {
 		newColumns[i] = pair.column

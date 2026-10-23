@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
@@ -69,18 +69,18 @@ func ResolveLogicalFields(field *telemetrytypes.TelemetryFieldKey, logicalFields
 // stamps it on the column key its Fallback returns. The intrinsic-column
 // step can then drop a same-named metadata key of a contradicting type. A
 // time column has no field data type and matches none.
-func ColumnDataType(column *schema.Column) telemetrytypes.FieldDataType {
+func ColumnDataType(column *chschema.Column) telemetrytypes.FieldDataType {
 	switch column.Type.GetType() {
-	case schema.ColumnTypeEnumBool:
+	case chschema.ColumnTypeEnumBool:
 		return telemetrytypes.FieldDataTypeBool
-	case schema.ColumnTypeEnumInt8, schema.ColumnTypeEnumInt16, schema.ColumnTypeEnumInt32, schema.ColumnTypeEnumInt64,
-		schema.ColumnTypeEnumUInt8, schema.ColumnTypeEnumUInt16, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt64,
-		schema.ColumnTypeEnumFloat32, schema.ColumnTypeEnumFloat64:
+	case chschema.ColumnTypeEnumInt8, chschema.ColumnTypeEnumInt16, chschema.ColumnTypeEnumInt32, chschema.ColumnTypeEnumInt64,
+		chschema.ColumnTypeEnumUInt8, chschema.ColumnTypeEnumUInt16, chschema.ColumnTypeEnumUInt32, chschema.ColumnTypeEnumUInt64,
+		chschema.ColumnTypeEnumFloat32, chschema.ColumnTypeEnumFloat64:
 		return telemetrytypes.FieldDataTypeNumber
-	case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFixedString:
+	case chschema.ColumnTypeEnumString, chschema.ColumnTypeEnumFixedString:
 		return telemetrytypes.FieldDataTypeString
-	case schema.ColumnTypeEnumLowCardinality:
-		if lc, ok := column.Type.(schema.LowCardinalityColumnType); ok && lc.ElementType.GetType() == schema.ColumnTypeEnumString {
+	case chschema.ColumnTypeEnumLowCardinality:
+		if lc, ok := column.Type.(chschema.LowCardinalityColumnType); ok && lc.ElementType.GetType() == chschema.ColumnTypeEnumString {
 			return telemetrytypes.FieldDataTypeString
 		}
 	}

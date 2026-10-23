@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
-	schemamigrator "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/logstelemetryschema"
 	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
@@ -48,7 +48,7 @@ var jsonNumberSubColumnIndexExprRe = regexp.MustCompile("^toFloat64OrNull\\(CAST
 // unfoldJSONSubColumnIndexExpr accepts the folded (lower/assumeNotNull), the
 // traces number and the bare type-cast expression forms.
 func unfoldJSONSubColumnIndexExpr(expr string) (string, string, error) {
-	if columnExpr, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(expr); err == nil {
+	if columnExpr, columnType, err := chschema.UnfoldJSONSubColumnIndexExpr(expr); err == nil {
 		return columnExpr, columnType, nil
 	}
 	if matches := jsonNumberSubColumnIndexExprRe.FindStringSubmatch(expr); matches != nil {

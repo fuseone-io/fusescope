@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	schemamigrator "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/flagger/flaggertest"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
 	"github.com/fuseone-io/fusescope/pkg/statementbuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/logstelemetryschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
@@ -1310,7 +1310,7 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 						FieldContext:    telemetrytypes.FieldContextBody,
 						FieldDataType:   fdt,
 						BaseColumn:      logstelemetryschema.LogsV2BodyV2Column,
-						IndexExpression: schemamigrator.JSONSubColumnIndexExpr(logstelemetryschema.LogsV2BodyV2Column, path, jsonType.StringValue()),
+						IndexExpression: chschema.JSONSubColumnIndexExpr(logstelemetryschema.LogsV2BodyV2Column, path, jsonType.StringValue()),
 					})
 				}
 			}

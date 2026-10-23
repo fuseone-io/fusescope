@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 var (
-	resourceColumns = map[string]*schema.Column{
-		"labels":                  {Name: "labels", Type: schema.ColumnTypeString},
-		"fingerprint":             {Name: "fingerprint", Type: schema.ColumnTypeString},
-		"seen_at_ts_bucket_start": {Name: "seen_at_ts_bucket_start", Type: schema.ColumnTypeInt64},
+	resourceColumns = map[string]*chschema.Column{
+		"labels":                  {Name: "labels", Type: chschema.ColumnTypeString},
+		"fingerprint":             {Name: "fingerprint", Type: chschema.ColumnTypeString},
+		"seen_at_ts_bucket_start": {Name: "seen_at_ts_bucket_start", Type: chschema.ColumnTypeInt64},
 	}
 )
 
@@ -30,12 +30,12 @@ func (m *storage) getColumn(
 	_ context.Context,
 	_, _ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-) ([]*schema.Column, error) {
+) ([]*chschema.Column, error) {
 	if key.FieldContext == telemetrytypes.FieldContextResource {
-		return []*schema.Column{resourceColumns["labels"]}, nil
+		return []*chschema.Column{resourceColumns["labels"]}, nil
 	}
 	if col, ok := resourceColumns[key.Name]; ok {
-		return []*schema.Column{col}, nil
+		return []*chschema.Column{col}, nil
 	}
 	return nil, qbtypes.ErrColumnNotFound
 }

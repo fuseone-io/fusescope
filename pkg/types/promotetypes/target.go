@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	schemamigrator "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/logstelemetryschema"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
@@ -31,7 +31,7 @@ func (t Target) PromotedColumnPrefix() string { return t.PromotedColumn() + "." 
 // an index matches only as that exact text.
 func (t Target) IndexExpression(column, path, jsonDataType string) string {
 	if t.Entry.Signal == telemetrytypes.SignalLogs {
-		return schemamigrator.JSONSubColumnIndexExpr(column, path, jsonDataType)
+		return chschema.JSONSubColumnIndexExpr(column, path, jsonDataType)
 	}
 	subColumn := fmt.Sprintf("%s.%s", column, clickhousesql.Identifier(path))
 	expr, _ := tracestelemetryschema.AttributeJSONValueExpr(subColumn, telemetrytypes.MappingJSONDataTypeToFieldDataType[jsonDataType])

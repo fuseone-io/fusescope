@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"strings"
 
-	schemamigrator "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/modules/promote"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
@@ -196,7 +196,7 @@ func (m *module) PromotePaths(ctx context.Context, paths ...*promotetypes.Promot
 }
 
 // createIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
-func (m *module) createIndexes(ctx context.Context, target promotetypes.Target, indexes []schemamigrator.Index) error {
+func (m *module) createIndexes(ctx context.Context, target promotetypes.Target, indexes []chschema.Index) error {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  target.Entry.Signal.StringValue(),
 		instrumentationtypes.CodeNamespace:    "promote",
@@ -207,7 +207,7 @@ func (m *module) createIndexes(ctx context.Context, target promotetypes.Target, 
 	}
 
 	for _, index := range indexes {
-		alterStmt := schemamigrator.AlterTableAddIndex{
+		alterStmt := chschema.AlterTableAddIndex{
 			Database: target.DBName,
 			Table:    target.LocalTableName,
 			Index:    index,
@@ -233,7 +233,7 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 	}
 
 	var toInsert []string
-	indexes := []schemamigrator.Index{}
+	indexes := []chschema.Index{}
 	for _, it := range paths {
 		if it.Promote {
 			if _, promoted := existingPromotedPaths[it.Path]; !promoted {
@@ -252,8 +252,8 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 				if err != nil {
 					return err
 				}
-				indexes = append(indexes, schemamigrator.Index{
-					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, strings.ToLower(index.JSONDataType.StringValue()), typeIndex),
+				indexes = append(indexes, chschema.Index{
+					Name:        chschema.JSONSubColumnIndexName(parentColumn, it.Path, strings.ToLower(index.JSONDataType.StringValue()), typeIndex),
 					Expression:  target.IndexExpression(parentColumn, it.Path, index.JSONDataType.StringValue()),
 					Type:        index.Type,
 					Granularity: index.Granularity,

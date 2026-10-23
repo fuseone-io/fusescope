@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,24 +16,24 @@ const (
 )
 
 var (
-	resources_string = &schema.Column{Name: "resources_string", Type: schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
+	resources_string = &chschema.Column{Name: "resources_string", Type: chschema.MapColumnType{
+		KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+		ValueType: chschema.ColumnTypeString,
 	}}
-	resource          = &schema.Column{Name: "resource", Type: schema.JSONColumnType{}}
-	attributes_string = &schema.Column{Name: "attributes_string", Type: schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
+	resource          = &chschema.Column{Name: "resource", Type: chschema.JSONColumnType{}}
+	attributes_string = &chschema.Column{Name: "attributes_string", Type: chschema.MapColumnType{
+		KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+		ValueType: chschema.ColumnTypeString,
 	}}
-	attributes    = &schema.Column{Name: "attributes", Type: schema.JSONColumnType{}}
-	body_v2       = &schema.Column{Name: LogsV2BodyV2Column, Type: schema.JSONColumnType{}}
-	body_promoted = &schema.Column{Name: LogsV2BodyPromotedColumn, Type: schema.JSONColumnType{}}
+	attributes    = &chschema.Column{Name: "attributes", Type: chschema.JSONColumnType{}}
+	body_v2       = &chschema.Column{Name: LogsV2BodyV2Column, Type: chschema.JSONColumnType{}}
+	body_promoted = &chschema.Column{Name: LogsV2BodyPromotedColumn, Type: chschema.JSONColumnType{}}
 )
 
 func TestSelectEvolutionsForColumns(t *testing.T) {
 	testCases := []struct {
 		name            string
-		columns         []*schema.Column
+		columns         []*chschema.Column
 		evolutions      []*telemetrytypes.EvolutionEntry
 		tsStart         uint64
 		tsEnd           uint64
@@ -44,7 +44,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 	}{
 		{
 			name: "New evolutions at tsStartTime - should include latest evolution",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				resources_string,
 				resource,
 			},
@@ -75,7 +75,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "New evolutions after tsStartTime but less than tsEndTime - should include both",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				resources_string,
 				resource,
 			},
@@ -106,7 +106,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "Columns without matching evolutions - should exclude them",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				resources_string,
 				resource,          // no evolution for this
 				attributes_string, // no evolution for this
@@ -129,7 +129,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "New evolutions at tsEndTime - should not include new evolution",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				resources_string,
 				resource,
 			},
@@ -160,7 +160,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "New evolutions after tsEndTime - should exclude new",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				resources_string,
 				resource,
 			},
@@ -191,7 +191,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name:    "Empty columns array",
-			columns: []*schema.Column{},
+			columns: []*chschema.Column{},
 			evolutions: []*telemetrytypes.EvolutionEntry{
 				{
 					Signal:       telemetrytypes.SignalLogs,
@@ -212,7 +212,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "Duplicate evolutions - should use first encountered (oldest if sorted)",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				resource,
 			},
 			evolutions: []*telemetrytypes.EvolutionEntry{
@@ -251,7 +251,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "Genuine Duplicate evolutions with new version- should consider both",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				resources_string,
 				resource,
 			},
@@ -291,7 +291,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "Evolution exactly at tsEndTime",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				resources_string,
 				resource,
 			},
@@ -320,7 +320,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "Single evolution after tsStartTime - JSON body",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				body_v2,
 				body_promoted,
 			},
@@ -349,7 +349,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "No evolution after tsStartTime - JSON body",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				body_v2,
 				body_promoted,
 			},
@@ -380,7 +380,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		// Without that synthesis a window before the JSON rollout has no base <= tsStart and errors.
 		{
 			name: "Synthesized base only - window before JSON rollout selects the Map base",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				attributes_string,
 				attributes,
 			},
@@ -401,7 +401,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "Synthesized base and JSON evolution - window straddling rollout selects both",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				attributes_string,
 				attributes,
 			},
@@ -422,7 +422,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "Synthesized base rejected - window after rollout selects only JSON",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				attributes_string,
 				attributes,
 			},
@@ -443,7 +443,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		},
 		{
 			name: "Non-candidate evolution ignored - JSON released before window keeps the map",
-			columns: []*schema.Column{
+			columns: []*chschema.Column{
 				attributes_string,
 			},
 			evolutions: []*telemetrytypes.EvolutionEntry{
@@ -524,7 +524,7 @@ func TestSelectEvolutionsForColumnsDoesNotMutateInput(t *testing.T) {
 	copy(original, evolutions)
 
 	_, _, err := SelectEvolutionsForColumns(
-		[]*schema.Column{attributes_string, attributes, resource},
+		[]*chschema.Column{attributes_string, attributes, resource},
 		evolutions,
 		uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 		uint64(time.Date(2024, 2, 20, 0, 0, 0, 0, time.UTC).UnixNano()),

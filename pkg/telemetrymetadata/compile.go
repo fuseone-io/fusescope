@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -130,9 +130,9 @@ func (s *storage) conditionForKey(
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 		switch columns[0].Type {
-		case schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+		case chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}:
 			leftOperand := fmt.Sprintf("mapContains(%s, %s)", columns[0].Name, clickhousesql.StringLiteral(key.Name))
 			if operator == qbtypes.FilterOperatorExists {

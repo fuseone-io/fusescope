@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -21,33 +21,33 @@ func NewStorage() qbtypes.Storage {
 	return &storage{}
 }
 
-func (m *storage) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *storage) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*chschema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return []*schema.Column{auditLogColumns["resource"]}, nil
+		return []*chschema.Column{auditLogColumns["resource"]}, nil
 	case telemetrytypes.FieldContextScope:
 		switch key.Name {
 		case "name", "scope.name", "scope_name":
-			return []*schema.Column{auditLogColumns["scope_name"]}, nil
+			return []*chschema.Column{auditLogColumns["scope_name"]}, nil
 		case "version", "scope.version", "scope_version":
-			return []*schema.Column{auditLogColumns["scope_version"]}, nil
+			return []*chschema.Column{auditLogColumns["scope_version"]}, nil
 		}
-		return []*schema.Column{auditLogColumns["scope_string"]}, nil
+		return []*chschema.Column{auditLogColumns["scope_string"]}, nil
 	case telemetrytypes.FieldContextAttribute:
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
-			return []*schema.Column{auditLogColumns["attributes_string"]}, nil
+			return []*chschema.Column{auditLogColumns["attributes_string"]}, nil
 		case telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeFloat64, telemetrytypes.FieldDataTypeNumber:
-			return []*schema.Column{auditLogColumns["attributes_number"]}, nil
+			return []*chschema.Column{auditLogColumns["attributes_number"]}, nil
 		case telemetrytypes.FieldDataTypeBool:
-			return []*schema.Column{auditLogColumns["attributes_bool"]}, nil
+			return []*chschema.Column{auditLogColumns["attributes_bool"]}, nil
 		}
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
 		col, ok := auditLogColumns[key.Name]
 		if !ok {
 			return nil, qbtypes.ErrColumnNotFound
 		}
-		return []*schema.Column{col}, nil
+		return []*chschema.Column{col}, nil
 	}
 
 	return nil, qbtypes.ErrColumnNotFound
@@ -64,23 +64,23 @@ func (m *storage) read(ctx context.Context, _ qbtypes.QueryInfo, key *telemetryt
 	column := columns[0]
 
 	switch column.Type.GetType() {
-	case schema.ColumnTypeEnumJSON:
+	case chschema.ColumnTypeEnumJSON:
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "only resource context fields are supported for json columns in audit, got %s", key.FieldContext.String)
 		}
 		return fmt.Sprintf("%s.%s::String", column.Name, clickhousesql.Identifier(key.Name)), nil
-	case schema.ColumnTypeEnumLowCardinality:
+	case chschema.ColumnTypeEnumLowCardinality:
 		return column.Name, nil
-	case schema.ColumnTypeEnumString, schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
+	case chschema.ColumnTypeEnumString, chschema.ColumnTypeEnumUInt64, chschema.ColumnTypeEnumUInt32, chschema.ColumnTypeEnumUInt8:
 		return column.Name, nil
-	case schema.ColumnTypeEnumMap:
-		keyType := column.Type.(schema.MapColumnType).KeyType
-		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+	case chschema.ColumnTypeEnumMap:
+		keyType := column.Type.(chschema.MapColumnType).KeyType
+		if _, ok := keyType.(chschema.LowCardinalityColumnType); !ok {
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 		}
 
-		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
-		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+		switch valueType := column.Type.(chschema.MapColumnType).ValueType; valueType.GetType() {
+		case chschema.ColumnTypeEnumString, chschema.ColumnTypeEnumBool, chschema.ColumnTypeEnumFloat64:
 			if key.Materialized {
 				return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
 			}
@@ -118,9 +118,9 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 // absentReads tells what a row without the key reads from the column. A
 // map reads its empty value. A JSON path reads the empty string, because
 // its ::String cast folds NULL. Every other column reads a real value.
-func absentReads(column *schema.Column) qbtypes.Absent {
+func absentReads(column *chschema.Column) qbtypes.Absent {
 	switch column.Type.GetType() {
-	case schema.ColumnTypeEnumMap, schema.ColumnTypeEnumJSON:
+	case chschema.ColumnTypeEnumMap, chschema.ColumnTypeEnumJSON:
 		return qbtypes.AbsentIsSentinel
 	}
 	return qbtypes.AlwaysPresent

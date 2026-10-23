@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ func TestGetColumn(t *testing.T) {
 	testCases := []struct {
 		name          string
 		key           telemetrytypes.TelemetryFieldKey
-		expectedCol   *schema.Column
+		expectedCol   *chschema.Column
 		expectedError error
 	}{
 		{
