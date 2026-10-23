@@ -38,8 +38,6 @@ export enum QueryParams {
 	selectedTimelineQuery = 'selectedTimelineQuery',
 	ruleType = 'ruleType',
 	configDetail = 'configDetail',
-	getStartedSource = 'getStartedSource',
-	getStartedSourceService = 'getStartedSourceService',
 	mqServiceView = 'mqServiceView',
 	taskName = 'taskName',
 	spanName = 'spanName',
