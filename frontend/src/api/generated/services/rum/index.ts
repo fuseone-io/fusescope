@@ -26,9 +26,27 @@ import type {
 	GetRUMApplicationPathParameters,
 	GetRUMApplicationStatus200,
 	GetRUMApplicationStatusPathParameters,
+	GetRUMErrorGroup200,
+	GetRUMErrorGroupParams,
+	GetRUMErrorGroupPathParameters,
+	GetRUMSession200,
+	GetRUMSessionParams,
+	GetRUMSessionPathParameters,
+	GetRUMView200,
+	GetRUMViewParams,
+	GetRUMViewPathParameters,
 	ListRUMApplicationKeys200,
 	ListRUMApplicationKeysPathParameters,
 	ListRUMApplications200,
+	ListRUMErrorGroups200,
+	ListRUMErrorGroupsParams,
+	ListRUMErrorGroupsPathParameters,
+	ListRUMSessions200,
+	ListRUMSessionsParams,
+	ListRUMSessionsPathParameters,
+	ListRUMViews200,
+	ListRUMViewsParams,
+	ListRUMViewsPathParameters,
 	RenderErrorResponseDTO,
 	RevokeRUMApplicationKeyPathParameters,
 	RotateRUMApplicationKey201,
@@ -514,6 +532,241 @@ export const useUpdateRUMApplication = <
 	return useMutation(getUpdateRUMApplicationMutationOptions(options));
 };
 /**
+ * Groups error events by fingerprint: exception type, message with numbers, ids and URLs replaced, and the top frame's file and function. First seen and new in release look back 30 days, or the retention if shorter, and ignore the release filter. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
+ * @summary List RUM error groups
+ */
+export const listRUMErrorGroups = (
+	{ id }: ListRUMErrorGroupsPathParameters,
+	params?: ListRUMErrorGroupsParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListRUMErrorGroups200>({
+		url: `/api/v1/rum/applications/${id}/errors`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListRUMErrorGroupsQueryKey = (
+	{ id }: ListRUMErrorGroupsPathParameters,
+	params?: ListRUMErrorGroupsParams,
+) => {
+	return [
+		`/api/v1/rum/applications/${id}/errors`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getListRUMErrorGroupsQueryOptions = <
+	TData = Awaited<ReturnType<typeof listRUMErrorGroups>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: ListRUMErrorGroupsPathParameters,
+	params?: ListRUMErrorGroupsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listRUMErrorGroups>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getListRUMErrorGroupsQueryKey({ id }, params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listRUMErrorGroups>>
+	> = ({ signal }) => listRUMErrorGroups({ id }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof listRUMErrorGroups>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListRUMErrorGroupsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listRUMErrorGroups>>
+>;
+export type ListRUMErrorGroupsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List RUM error groups
+ */
+
+export function useListRUMErrorGroups<
+	TData = Awaited<ReturnType<typeof listRUMErrorGroups>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: ListRUMErrorGroupsPathParameters,
+	params?: ListRUMErrorGroupsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listRUMErrorGroups>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListRUMErrorGroupsQueryOptions(
+		{ id },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List RUM error groups
+ */
+export const invalidateListRUMErrorGroups = async (
+	queryClient: QueryClient,
+	{ id }: ListRUMErrorGroupsPathParameters,
+	params?: ListRUMErrorGroupsParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListRUMErrorGroupsQueryKey({ id }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns an error group with its latest events and raw stack traces, the selected event's breadcrumbs and linked failed request, and the latest affected sessions. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
+ * @summary Get RUM error group
+ */
+export const getRUMErrorGroup = (
+	{ id, fingerprint }: GetRUMErrorGroupPathParameters,
+	params?: GetRUMErrorGroupParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetRUMErrorGroup200>({
+		url: `/api/v1/rum/applications/${id}/errors/${fingerprint}`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getGetRUMErrorGroupQueryKey = (
+	{ id, fingerprint }: GetRUMErrorGroupPathParameters,
+	params?: GetRUMErrorGroupParams,
+) => {
+	return [
+		`/api/v1/rum/applications/${id}/errors/${fingerprint}`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetRUMErrorGroupQueryOptions = <
+	TData = Awaited<ReturnType<typeof getRUMErrorGroup>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id, fingerprint }: GetRUMErrorGroupPathParameters,
+	params?: GetRUMErrorGroupParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getRUMErrorGroup>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetRUMErrorGroupQueryKey({ id, fingerprint }, params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getRUMErrorGroup>>> = ({
+		signal,
+	}) => getRUMErrorGroup({ id, fingerprint }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled:
+			id !== null &&
+			id !== undefined &&
+			fingerprint !== null &&
+			fingerprint !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getRUMErrorGroup>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetRUMErrorGroupQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getRUMErrorGroup>>
+>;
+export type GetRUMErrorGroupQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get RUM error group
+ */
+
+export function useGetRUMErrorGroup<
+	TData = Awaited<ReturnType<typeof getRUMErrorGroup>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id, fingerprint }: GetRUMErrorGroupPathParameters,
+	params?: GetRUMErrorGroupParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getRUMErrorGroup>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetRUMErrorGroupQueryOptions(
+		{ id, fingerprint },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get RUM error group
+ */
+export const invalidateGetRUMErrorGroup = async (
+	queryClient: QueryClient,
+	{ id, fingerprint }: GetRUMErrorGroupPathParameters,
+	params?: GetRUMErrorGroupParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetRUMErrorGroupQueryKey({ id, fingerprint }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
  * Returns the application's usable keys: the active one and, during a rotation, the expiring one.
  * @summary List RUM application keys
  */
@@ -877,6 +1130,236 @@ export const useRotateRUMApplicationKey = <
 	return useMutation(getRotateRUMApplicationKeyMutationOptions(options));
 };
 /**
+ * Returns sessions newest first, with views, actions, errors, client, release and the previous session. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
+ * @summary List RUM sessions
+ */
+export const listRUMSessions = (
+	{ id }: ListRUMSessionsPathParameters,
+	params?: ListRUMSessionsParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListRUMSessions200>({
+		url: `/api/v1/rum/applications/${id}/sessions`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListRUMSessionsQueryKey = (
+	{ id }: ListRUMSessionsPathParameters,
+	params?: ListRUMSessionsParams,
+) => {
+	return [
+		`/api/v1/rum/applications/${id}/sessions`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getListRUMSessionsQueryOptions = <
+	TData = Awaited<ReturnType<typeof listRUMSessions>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: ListRUMSessionsPathParameters,
+	params?: ListRUMSessionsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listRUMSessions>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getListRUMSessionsQueryKey({ id }, params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listRUMSessions>>> = ({
+		signal,
+	}) => listRUMSessions({ id }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof listRUMSessions>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListRUMSessionsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listRUMSessions>>
+>;
+export type ListRUMSessionsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List RUM sessions
+ */
+
+export function useListRUMSessions<
+	TData = Awaited<ReturnType<typeof listRUMSessions>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: ListRUMSessionsPathParameters,
+	params?: ListRUMSessionsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listRUMSessions>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListRUMSessionsQueryOptions({ id }, params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List RUM sessions
+ */
+export const invalidateListRUMSessions = async (
+	queryClient: QueryClient,
+	{ id }: ListRUMSessionsPathParameters,
+	params?: ListRUMSessionsParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListRUMSessionsQueryKey({ id }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns a session's timeline: its views in order, each with the requests, clicks, actions, errors and vitals that happened on it. Requests carry their trace id and whether backend spans share the trace. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
+ * @summary Get RUM session
+ */
+export const getRUMSession = (
+	{ id, sessionId }: GetRUMSessionPathParameters,
+	params?: GetRUMSessionParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetRUMSession200>({
+		url: `/api/v1/rum/applications/${id}/sessions/${sessionId}`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getGetRUMSessionQueryKey = (
+	{ id, sessionId }: GetRUMSessionPathParameters,
+	params?: GetRUMSessionParams,
+) => {
+	return [
+		`/api/v1/rum/applications/${id}/sessions/${sessionId}`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetRUMSessionQueryOptions = <
+	TData = Awaited<ReturnType<typeof getRUMSession>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id, sessionId }: GetRUMSessionPathParameters,
+	params?: GetRUMSessionParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getRUMSession>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetRUMSessionQueryKey({ id, sessionId }, params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getRUMSession>>> = ({
+		signal,
+	}) => getRUMSession({ id, sessionId }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled:
+			id !== null &&
+			id !== undefined &&
+			sessionId !== null &&
+			sessionId !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getRUMSession>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetRUMSessionQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getRUMSession>>
+>;
+export type GetRUMSessionQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get RUM session
+ */
+
+export function useGetRUMSession<
+	TData = Awaited<ReturnType<typeof getRUMSession>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id, sessionId }: GetRUMSessionPathParameters,
+	params?: GetRUMSessionParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getRUMSession>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetRUMSessionQueryOptions(
+		{ id, sessionId },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get RUM session
+ */
+export const invalidateGetRUMSession = async (
+	queryClient: QueryClient,
+	{ id, sessionId }: GetRUMSessionPathParameters,
+	params?: GetRUMSessionParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetRUMSessionQueryKey({ id, sessionId }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
  * Returns what the gateway saw for the application over the last five minutes, the SDK versions this server supports and refused requests by reason. Counts are kept in memory by the server instance that answers.
  * @summary Get RUM application setup status
  */
@@ -973,6 +1456,227 @@ export const invalidateGetRUMApplicationStatus = async (
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
 		{ queryKey: getGetRUMApplicationStatusQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns per route template the views by loading type, the median time on view, the p75 and rating split of lcp, inp and cls, the error count and the request template with the highest p75. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
+ * @summary List RUM views by route
+ */
+export const listRUMViews = (
+	{ id }: ListRUMViewsPathParameters,
+	params?: ListRUMViewsParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListRUMViews200>({
+		url: `/api/v1/rum/applications/${id}/views`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListRUMViewsQueryKey = (
+	{ id }: ListRUMViewsPathParameters,
+	params?: ListRUMViewsParams,
+) => {
+	return [
+		`/api/v1/rum/applications/${id}/views`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getListRUMViewsQueryOptions = <
+	TData = Awaited<ReturnType<typeof listRUMViews>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: ListRUMViewsPathParameters,
+	params?: ListRUMViewsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listRUMViews>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getListRUMViewsQueryKey({ id }, params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listRUMViews>>> = ({
+		signal,
+	}) => listRUMViews({ id }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof listRUMViews>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListRUMViewsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listRUMViews>>
+>;
+export type ListRUMViewsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List RUM views by route
+ */
+
+export function useListRUMViews<
+	TData = Awaited<ReturnType<typeof listRUMViews>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: ListRUMViewsPathParameters,
+	params?: ListRUMViewsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listRUMViews>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListRUMViewsQueryOptions({ id }, params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List RUM views by route
+ */
+export const invalidateListRUMViews = async (
+	queryClient: QueryClient,
+	{ id }: ListRUMViewsPathParameters,
+	params?: ListRUMViewsParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListRUMViewsQueryKey({ id }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns one route template, percent-encoded in the path (/product/:id is %2Fproduct%2F%3Aid): vitals p75 per time bucket, releases, the slowest request templates with an example trace, browser and OS breakdowns with LCP p75 and the latest sessions on the route. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
+ * @summary Get RUM view
+ */
+export const getRUMView = (
+	{ id, route }: GetRUMViewPathParameters,
+	params?: GetRUMViewParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetRUMView200>({
+		url: `/api/v1/rum/applications/${id}/views/${route}`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getGetRUMViewQueryKey = (
+	{ id, route }: GetRUMViewPathParameters,
+	params?: GetRUMViewParams,
+) => {
+	return [
+		`/api/v1/rum/applications/${id}/views/${route}`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetRUMViewQueryOptions = <
+	TData = Awaited<ReturnType<typeof getRUMView>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id, route }: GetRUMViewPathParameters,
+	params?: GetRUMViewParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getRUMView>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetRUMViewQueryKey({ id, route }, params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getRUMView>>> = ({
+		signal,
+	}) => getRUMView({ id, route }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled:
+			id !== null && id !== undefined && route !== null && route !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<Awaited<ReturnType<typeof getRUMView>>, TError, TData> & {
+		queryKey: QueryKey;
+	};
+};
+
+export type GetRUMViewQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getRUMView>>
+>;
+export type GetRUMViewQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get RUM view
+ */
+
+export function useGetRUMView<
+	TData = Awaited<ReturnType<typeof getRUMView>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id, route }: GetRUMViewPathParameters,
+	params?: GetRUMViewParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getRUMView>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetRUMViewQueryOptions({ id, route }, params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get RUM view
+ */
+export const invalidateGetRUMView = async (
+	queryClient: QueryClient,
+	{ id, route }: GetRUMViewPathParameters,
+	params?: GetRUMViewParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetRUMViewQueryKey({ id, route }, params) },
 		options,
 	);
 
