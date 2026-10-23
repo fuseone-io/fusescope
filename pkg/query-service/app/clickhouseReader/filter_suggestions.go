@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/fuseone-io/fusescope-otel-collector/utils/fingerprint"
 	errorsV2 "github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
@@ -240,6 +239,17 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 
 var attribRanker = newRankingStrategy()
 
+// interestingResourceAttrSynonyms lists, from service down to node, the resource
+// attributes that name the same entity across platforms.
+var interestingResourceAttrSynonyms = [][]string{
+	{"service.name", "cloudwatch.log.group.name", "k8s.deployment.name", "k8s.deployment.uid", "k8s.statefulset.name", "k8s.statefulset.uid", "k8s.daemonset.name", "k8s.daemonset.uid", "k8s.job.name", "k8s.job.uid", "k8s.cronjob.name", "k8s.cronjob.uid", "faas.name", "ec2.tag.service"},
+	{"deployment.environment", "ec2.tag.env-short", "ec2.tag.env", "env"},
+	{"service.namespace", "k8s.namespace.name", "ec2.tag.service-group"},
+	{"service.instance.id", "k8s.pod.name", "k8s.pod.uid", "aws.ecs.task.id", "aws.ecs.task.arn", "cloudwatch.log.stream", "cloud.resource_id", "faas.instance", "host.id", "host.name", "host.ip", "host"},
+	{"k8s.container.name", "container.name", "container_name"},
+	{"k8s.node.name", "k8s.node.uid", "host.id", "host.name", "host.ip", "host"},
+}
+
 func newRankingStrategy() attribRankingStrategy {
 	// Some special resource attributes should get ranked above all others.
 	interestingResourceAttrsInDescRank := []string{
@@ -247,18 +257,8 @@ func newRankingStrategy() attribRankingStrategy {
 	}
 
 	// Synonyms of interesting attributes should come next
-	resourceHierarchy := fingerprint.ResourceHierarchy()
-	for _, attr := range []string{
-		"service.name",
-		"deployment.environment",
-		"k8s.namespace.name",
-		"k8s.pod.name",
-		"k8s.container.name",
-		"k8s.node.name",
-	} {
-		interestingResourceAttrsInDescRank = append(
-			interestingResourceAttrsInDescRank, resourceHierarchy.Synonyms(attr)...,
-		)
+	for _, synonyms := range interestingResourceAttrSynonyms {
+		interestingResourceAttrsInDescRank = append(interestingResourceAttrsInDescRank, synonyms...)
 	}
 
 	interestingResourceAttrsInAscRank := interestingResourceAttrsInDescRank[:]
