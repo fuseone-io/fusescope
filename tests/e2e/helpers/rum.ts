@@ -139,6 +139,8 @@ export async function seedRumSession(
 			'fusescope.rum.view.route': '/cart',
 			'exception.type': 'TypeError',
 			'exception.message': 'price is undefined',
+			'exception.stacktrace':
+				'TypeError: price is undefined\n    at Ue (https://shop.example.com/assets/main.4f9c2a.js:1:48213)',
 			'fusescope.rum.error.source': 'onerror',
 		}),
 	]);
