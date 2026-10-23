@@ -9,7 +9,7 @@ import RumApplication from '../index';
 import { renderPage } from './renderPage';
 
 describe('RumApplication', () => {
-	it('opens on the overview, with Errors still to come', async () => {
+	it('opens on the overview, every tab enabled', async () => {
 		renderPage();
 
 		await expect(
@@ -19,17 +19,17 @@ describe('RumApplication', () => {
 			'aria-selected',
 			'true',
 		);
-		['views', 'sessions'].forEach((tab) => {
+		['views', 'errors', 'sessions'].forEach((tab) => {
 			expect(screen.getByTestId(`page-tab-${tab}`)).toBeEnabled();
 		});
-		expect(screen.getByTestId('page-tab-errors')).toBeDisabled();
-		expect(screen.getByTestId('page-tab-errors')).toHaveTextContent('Soon');
 	});
 
 	it.each([
 		['/frontend/applications/app-1/views', 'views'],
 		['/frontend/applications/app-1/sessions', 'sessions'],
 		['/frontend/applications/app-1/sessions/abc', 'sessions'],
+		['/frontend/applications/app-1/errors', 'errors'],
+		['/frontend/applications/app-1/errors/3fa8b015c0d1e2f3', 'errors'],
 	])('selects the tab of %s', async (path, tab) => {
 		renderPage(path);
 

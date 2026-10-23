@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { generatePath, matchPath, useLocation } from 'react-router-dom';
 import HeaderBandTabsLayout from 'components/PageTemplate/components/HeaderBandTabsLayout';
 import { PageTab } from 'components/PageTemplate/types';
-import SoonBadge from 'components/Rum/SoonBadge';
 import RumApplicationSheet from 'components/RumApplicationSheet/RumApplicationSheet';
+import { SheetTab } from 'components/RumApplicationSheet/types';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { overviewFilter } from 'lib/rum/overviewQueries';
@@ -14,15 +14,18 @@ import OverviewHeader from './components/OverviewHeader';
 import OverviewTab from './components/OverviewTab';
 import { ERRORS_TAB, OVERVIEW_TAB, SESSIONS_TAB, VIEWS_TAB } from './constants';
 import { useApplicationOverview } from './hooks/useApplicationOverview';
+import ErrorsTab from './Errors';
+import ErrorDetail from './Errors/ErrorDetail';
 import { useReleaseParam } from './hooks/useReleaseParam';
 import SessionsTab from './Sessions';
 import SessionTimeline from './SessionTimeline';
-import { applicationTab, carriedSearch } from './utils';
+import { applicationTab, carriedSearch, detailView } from './utils';
 import ViewsTab from './Views';
 
 const TAB_ROUTES: Record<string, string> = {
 	[OVERVIEW_TAB]: ROUTES.RUM_APPLICATION,
 	[VIEWS_TAB]: ROUTES.RUM_APPLICATION_VIEWS,
+	[ERRORS_TAB]: ROUTES.RUM_APPLICATION_ERRORS,
 	[SESSIONS_TAB]: ROUTES.RUM_APPLICATION_SESSIONS,
 };
 
@@ -34,10 +37,14 @@ function RumApplication(): JSX.Element {
 		pathname,
 		ROUTES.RUM_APPLICATION_SESSION,
 	)?.params.sessionId;
+	const fingerprint = matchPath<{ fingerprint: string }>(
+		pathname,
+		ROUTES.RUM_APPLICATION_ERROR,
+	)?.params.fingerprint;
 	const tab = applicationTab(pathname);
 	const { safeNavigate } = useSafeNavigate();
 	const [release, setRelease] = useReleaseParam();
-	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [settingsTab, setSettingsTab] = useState<SheetTab | null>(null);
 	const state = useApplicationOverview(id, release);
 	const filter = overviewFilter(id, release);
 
@@ -53,6 +60,18 @@ function RumApplication(): JSX.Element {
 		/>
 	) : (
 		<SessionsTab applicationId={id} release={release} window={state.window} />
+	);
+
+	const errorsContent = fingerprint ? (
+		<ErrorDetail
+			applicationId={id}
+			fingerprint={decodeURIComponent(fingerprint)}
+			release={release}
+			window={state.window}
+			onOpenSourceMaps={(): void => setSettingsTab('sourcemaps')}
+		/>
+	) : (
+		<ErrorsTab applicationId={id} release={release} window={state.window} />
 	);
 
 	const tabs: PageTab[] = [
@@ -82,10 +101,7 @@ function RumApplication(): JSX.Element {
 		{
 			value: ERRORS_TAB,
 			label: 'Errors',
-			title: 'Errors grouped by fingerprint, with source maps',
-			disabled: true,
-			badge: <SoonBadge className="tw:h-[18px] tw:text-[11px]" />,
-			content: null,
+			content: errorsContent,
 		},
 		{ value: SESSIONS_TAB, label: 'Sessions', content: sessionsContent },
 	];
@@ -102,7 +118,7 @@ function RumApplication(): JSX.Element {
 						support={state.sdkSupport}
 						filter={filter}
 						window={state.window}
-						onOpenSettings={(): void => setSettingsOpen(true)}
+						onOpenSettings={(): void => setSettingsTab('settings')}
 					/>
 				}
 				label="Application sections"
@@ -117,7 +133,7 @@ function RumApplication(): JSX.Element {
 					<ApplicationToolbar
 						applicationId={id}
 						tab={tab}
-						sessionView={Boolean(sessionId)}
+						detail={detailView(sessionId, fingerprint)}
 						releases={state.overview.releases}
 						release={release}
 						onReleaseChange={setRelease}
@@ -125,8 +141,9 @@ function RumApplication(): JSX.Element {
 				}
 			/>
 			<RumApplicationSheet
-				target={settingsOpen ? { mode: 'edit', applicationId: id } : null}
-				onClose={(): void => setSettingsOpen(false)}
+				target={settingsTab ? { mode: 'edit', applicationId: id } : null}
+				initialTab={settingsTab ?? undefined}
+				onClose={(): void => setSettingsTab(null)}
 				onDeleted={(): void => safeNavigate(ROUTES.RUM_APPLICATIONS)}
 			/>
 		</>

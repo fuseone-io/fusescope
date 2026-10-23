@@ -6,6 +6,7 @@ export const SESSIONS_TAB = 'sessions';
 export type ApplicationTab =
 	| typeof OVERVIEW_TAB
 	| typeof VIEWS_TAB
+	| typeof ERRORS_TAB
 	| typeof SESSIONS_TAB;
 
 export const RELEASE_PARAM = 'release';

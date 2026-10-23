@@ -223,6 +223,10 @@ describe('AppHeader', () => {
 				'/frontend/applications/app-1/sessions/7f3ac9d04b1e4a6f9e2b5c8d1a07c21e',
 				['Frontend', 'web-shop', '7f3ac9…c21e'],
 			],
+			[
+				'/frontend/applications/app-1/errors/3fa8b015c0d1e2f3',
+				['Frontend', 'web-shop', '3fa8b015c0d1e2f3'],
+			],
 		])('names the RUM application on %s', async (path, expected) => {
 			server.use(
 				rest.get('*/api/v1/rum/applications/:id', (req, res, ctx) =>

@@ -142,6 +142,17 @@ export const CRUMB_ROUTES: Record<string, CrumbRoute> = {
 		label: ({ params }): string => shortId(params.sessionId ?? ''),
 		mono: true,
 	},
+	[ROUTES.RUM_APPLICATION_ERRORS]: {
+		parent: ROUTES.RUM_APPLICATIONS,
+		label: ({ rumApplicationName }): string =>
+			rumApplicationName || 'Application',
+		mono: true,
+	},
+	[ROUTES.RUM_APPLICATION_ERROR]: {
+		parent: ROUTES.RUM_APPLICATION_ERRORS,
+		label: ({ params }): string => params.fingerprint ?? 'Error',
+		mono: true,
+	},
 	[ROUTES.MY_SETTINGS]: { parent: ROUTES.SETTINGS, label: 'Account' },
 	[ROUTES.ORG_SETTINGS]: { parent: ROUTES.SETTINGS, label: 'Single Sign-on' },
 	[ROUTES.INGESTION_SETTINGS]: { parent: ROUTES.SETTINGS, label: 'Ingestion' },

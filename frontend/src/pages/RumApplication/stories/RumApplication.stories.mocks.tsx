@@ -14,6 +14,11 @@ import {
 	rumQueryRangeResponse,
 } from '@/storybook/msw/__story_mockdata__/rum';
 import {
+	rumErrorGroup,
+	rumErrorGroups,
+	rumSourceMaps,
+} from '@/storybook/msw/__story_mockdata__/rumErrors';
+import {
 	rumSession,
 	rumSessions,
 	rumView,
@@ -39,6 +44,16 @@ export const rumApplicationMocks = defineStoryMocks({
 			description: 'On, routes also have views without a loading type.',
 			value: false,
 		}),
+		sourceMapMissing: toggleControl('Source map missing', {
+			group: 'Frontend · errors',
+			description: 'On, the error’s release has no uploaded source maps.',
+			value: false,
+		}),
+		noSourceMaps: toggleControl('No uploads', {
+			group: 'Frontend · errors',
+			description: 'On, the application has no uploaded source maps.',
+			value: false,
+		}),
 		truncated: toggleControl('Large session', {
 			group: 'Frontend · sessions',
 			description: 'On, the session has more events than one response carries.',
@@ -61,6 +76,32 @@ export const rumApplicationMocks = defineStoryMocks({
 		rest.get(
 			`${APPS}/:id/views`,
 			response.json(() => ok(rumViews(!values.telemetry, values.oldSdk))),
+		),
+		rest.get(
+			`${APPS}/:id/errors/:fingerprint`,
+			response.json((req) =>
+				ok(
+					rumErrorGroup(String(req.params.fingerprint), {
+						mapped: !values.sourceMapMissing,
+					}),
+				),
+			),
+		),
+		rest.get(
+			`${APPS}/:id/errors`,
+			response.json(() => ok(rumErrorGroups(!values.telemetry))),
+		),
+		rest.get(
+			`${APPS}/:id/sourcemaps`,
+			response.json((req) =>
+				ok(
+					rumSourceMaps({
+						empty: values.noSourceMaps,
+						release: req.url.searchParams.get('release') ?? undefined,
+						without: values.sourceMapMissing ? '1.8.0' : undefined,
+					}),
+				),
+			),
 		),
 		rest.get(
 			`${APPS}/:id/sessions/:sessionId`,

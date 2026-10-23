@@ -1,0 +1,153 @@
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
+import userEvent from '@testing-library/user-event';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
+import { screen, within } from 'tests/test-utils';
+
+import {
+	HTTP_ERROR,
+	rumErrorGroup,
+	rumErrorGroups,
+	rumSourceMaps,
+} from '@/storybook/msw/__story_mockdata__/rumErrors';
+
+import { ok, renderPage } from '../../__tests__/renderPage';
+
+const BASE = '*/api/v1/rum/applications/app-1';
+const PATH = `/frontend/applications/app-1/errors/${HTTP_ERROR}`;
+
+function serveGroup(mapped = true): URLSearchParams[] {
+	const requests: URLSearchParams[] = [];
+	server.use(
+		rest.get(`${BASE}/errors/:fingerprint`, (req, res, ctx) => {
+			requests.push(req.url.searchParams);
+			return res(ctx.json(ok(rumErrorGroup(HTTP_ERROR, { mapped }))));
+		}),
+		rest.get(`${BASE}/errors`, (_req, res, ctx) =>
+			res(ctx.json(ok(rumErrorGroups()))),
+		),
+		rest.get(`${BASE}/sourcemaps`, (_req, res, ctx) =>
+			res(ctx.json(ok(rumSourceMaps()))),
+		),
+		rest.get(`${BASE}/keys`, (_req, res, ctx) => res(ctx.json(ok([])))),
+	);
+	return requests;
+}
+
+describe('ErrorDetail', () => {
+	it('shows the original stack with the app’s frames and the source of the first', async () => {
+		serveGroup();
+		renderPage(PATH);
+
+		await expect(
+			screen.findByTestId('rum-error-type'),
+		).resolves.toHaveTextContent('HttpError');
+		expect(screen.getByTestId('rum-error-symbolicated')).toHaveTextContent(
+			'/assets/cart.9b1e07.js.map',
+		);
+		const frames = screen.getAllByTestId('rum-error-frame');
+		expect(frames).toHaveLength(3);
+		expect(frames[0]).toHaveTextContent('updateQuantity');
+		expect(frames[0]).toHaveTextContent('src/features/cart/api.ts:57:11');
+		expect(
+			within(frames[0]).getByTestId('rum-error-frame-context'),
+		).toHaveTextContent("throw new HttpError('POST /api/cart', res.status);");
+		expect(screen.getByTestId('rum-error-library-frames')).toHaveTextContent(
+			'Show 3 frames from node_modules/@tanstack/query-core',
+		);
+		expect(screen.queryByTestId('rum-error-missing-map')).toBeNull();
+	});
+
+	it('switches to the minified stack and shows library frames on request', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		serveGroup();
+		renderPage(PATH);
+
+		await user.click(await screen.findByText(/Show 3 frames/));
+		expect(screen.getAllByTestId('rum-error-library-frame')).toHaveLength(3);
+		await user.click(screen.getByTestId('rum-error-mode-minified'));
+		expect(screen.getByTestId('rum-error-minified')).toHaveTextContent(
+			'at ar (https://shop.example.com/assets/cart.9b1e07.js:1:3381)',
+		);
+		expect(screen.queryByTestId('rum-error-frame')).toBeNull();
+	});
+
+	it('gives the upload command when the release has no source maps', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		serveGroup(false);
+		renderPage(PATH);
+
+		const missing = await screen.findByTestId('rum-error-missing-map');
+		expect(missing).toHaveTextContent('Source map missing for release 1.8.0');
+		const command = within(missing).getByTestId('rum-error-upload-command');
+		expect(command).toHaveTextContent('FUSESCOPE_APP=app-1');
+		expect(command).toHaveTextContent(
+			'npx @fusescope/cli sourcemaps upload dist --release 1.8.0',
+		);
+		expect(screen.getByTestId('rum-error-mode-original')).toBeDisabled();
+		expect(screen.getByTestId('rum-error-minified')).toBeInTheDocument();
+
+		await user.click(screen.getByTestId('rum-error-open-sourcemaps'));
+		await expect(
+			screen.findByTestId('rum-app-sourcemaps'),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('ends the breadcrumbs with the error and links its request and sessions', async () => {
+		serveGroup();
+		renderPage(`${PATH}?release=1.8.0`);
+
+		const crumbs = await screen.findAllByTestId('rum-error-breadcrumb');
+		expect(crumbs).toHaveLength(8);
+		expect(crumbs[7]).toHaveAttribute('data-kind', 'error');
+		expect(crumbs[7]).toHaveTextContent('0:00.0');
+		expect(crumbs[6]).toHaveTextContent('−0:00.7');
+		expect(screen.getByTestId('rum-error-request-trace')).toHaveAttribute(
+			'href',
+			expect.stringMatching(/^\/trace\/4bf92f3577b34da6a3ce929d0e0e4a3d\?spanId=/),
+		);
+		expect(screen.getByTestId('rum-error-request-trace')).toHaveTextContent(
+			'View backend trace',
+		);
+		const sessions = screen.getAllByTestId('rum-error-session-open');
+		expect(sessions).toHaveLength(5);
+		expect(sessions[0]).toHaveAttribute(
+			'href',
+			'/frontend/applications/app-1/sessions/7f3ac9d04b1e4a6f9e2b5c8d1a07c21e?release=1.8.0',
+		);
+		expect(screen.getByTestId('rum-error-detail-logs')).toHaveAttribute(
+			'href',
+			expect.stringContaining('/logs/logs-explorer'),
+		);
+	});
+
+	it('steps to an older event through the URL', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const requests = serveGroup();
+		renderPage(`${PATH}?event=ev-1`);
+
+		await expect(
+			screen.findByTestId('rum-error-event-position'),
+		).resolves.toHaveTextContent('Event 1 of 5 latest');
+		expect(requests[0].get('eventId')).toBe('ev-1');
+		expect(screen.getByTestId('rum-error-event-newer')).toBeDisabled();
+		await user.click(screen.getByTestId('rum-error-event-older'));
+		expect(safeNavigateMock).toHaveBeenCalledWith(`${PATH}?event=ev-2`);
+	});
+
+	it('says so when the group is not in the range', async () => {
+		server.use(
+			rest.get(`${BASE}/errors/:fingerprint`, (_req, res, ctx) =>
+				res(
+					ctx.status(404),
+					ctx.json({ status: 'error', error: { message: 'no group' } }),
+				),
+			),
+		);
+		renderPage(PATH);
+
+		await expect(
+			screen.findByTestId('rum-error-not-found'),
+		).resolves.toHaveTextContent(HTTP_ERROR);
+	});
+});
