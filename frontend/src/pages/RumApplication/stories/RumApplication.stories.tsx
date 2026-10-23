@@ -20,7 +20,7 @@ const WAIT = { timeout: 10000 };
 /**
  * One RUM application: sessions, views and the session error rate, Web Vitals
  * p75 with their good / needs-improvement / poor split, the slowest routes,
- * recent errors with their logs, and recent sessions with the backend trace
+ * recent error groups with their detail and logs, and recent sessions with the backend trace
  * of their slowest or failing request.
  *
  * Route: `/frontend/applications/:id`.
@@ -37,7 +37,7 @@ export default meta;
 
 type Story = StoryObj<RumApplicationArgs>;
 
-/** web-shop with vitals, seven routes, four error groups and six sessions. */
+/** web-shop with vitals, seven routes, its five latest error groups and six sessions. */
 export const Default: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -46,11 +46,15 @@ export const Default: Story = {
 		).toHaveLength(7);
 		await expect(
 			await canvas.findAllByTestId('rum-error-row', {}, WAIT),
-		).toHaveLength(4);
+		).toHaveLength(5);
+		await expect(canvas.getAllByTestId('rum-error-open')[0]).toHaveAttribute(
+			'href',
+			expect.stringContaining('/errors/'),
+		);
 		await expect(
 			(await canvas.findAllByTestId('rum-session-trace', {}, WAIT))[0],
 		).toHaveAttribute('href', expect.stringContaining('/trace/'));
-		await expect(canvas.getByTestId('page-tab-errors')).toBeDisabled();
+		await expect(canvas.getByTestId('page-tab-errors')).toBeEnabled();
 		await expect(
 			(await canvas.findAllByTestId('rum-session-open', {}, WAIT))[0],
 		).toHaveAttribute('href', expect.stringContaining('/sessions/'));

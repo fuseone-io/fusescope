@@ -10,15 +10,6 @@ export interface RouteVitals {
 	errors: number;
 }
 
-export interface ErrorGroup {
-	type: string;
-	message: string;
-	route: string;
-	events: number;
-	sessions: number;
-	lastSeen?: number;
-}
-
 export interface SessionSummary {
 	id: string;
 	start?: number;
@@ -44,7 +35,6 @@ export interface ApplicationOverview {
 	vitals: VitalSummaries;
 	routes: RouteVitals[];
 	routeCount: number;
-	errors: ErrorGroup[];
 	sessions: SessionSummary[];
 	sdk?: { name: string; version: string };
 	releases: string[];

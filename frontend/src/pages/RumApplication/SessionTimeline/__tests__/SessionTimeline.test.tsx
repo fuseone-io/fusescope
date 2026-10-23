@@ -46,7 +46,15 @@ describe('SessionTimeline', () => {
 		const traces = within(cart).getAllByTestId('rum-session-event-request-link');
 		expect(traces[0]).toHaveTextContent('View backend trace');
 		expect(traces[0].getAttribute('href')).toMatch(/^\/trace\/4bf92f/);
-		const logs = within(cart).getByTestId('rum-session-event-error-link');
+		expect(
+			within(cart).getByTestId('rum-session-event-error-link'),
+		).toHaveAttribute(
+			'href',
+			expect.stringMatching(
+				/^\/frontend\/applications\/[^/]+\/errors\/ec82dea88ad412e0/,
+			),
+		);
+		const logs = within(cart).getByTestId('rum-session-event-error-logs');
 		const query = new URL(
 			logs.getAttribute('href') ?? '',
 			'http://localhost',

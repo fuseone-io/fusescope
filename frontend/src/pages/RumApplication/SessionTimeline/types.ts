@@ -53,3 +53,10 @@ export interface EventDescription {
 	detail: string;
 	tone: EventTone;
 }
+
+/** Where an event row leads: its trace, or its error group with its logs beside. */
+export interface EventLink {
+	to: string;
+	label: string;
+	secondary?: { to: string; label: string };
+}

@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import type {
 	RumtypesGettableSessionDTO,
 	RumtypesTimelineEventDTO,
 } from 'api/generated/services/fuseScope.schemas';
 import { ApmWindow } from 'lib/apm/window';
-import { logsExplorerUrl, traceDetailUrl } from 'lib/rum/links';
+import { logsExplorerUrl, rumErrorUrl, traceDetailUrl } from 'lib/rum/links';
 import { TriangleAlert } from 'lucide-react';
 
-import { EventKindFilter } from '../types';
+import { EventKindFilter, EventLink } from '../types';
 import {
 	defaultExpanded,
 	eventKey,
@@ -17,6 +18,7 @@ import {
 	timelineViews,
 	viewStrip,
 } from '../utils';
+import { carriedSearch } from '../../utils';
 import TimelineEventRow from './TimelineEventRow';
 import TimelineHeader from './TimelineHeader';
 import TimelineKpis from './TimelineKpis';
@@ -35,6 +37,7 @@ function SessionTimelineBody({
 	session,
 	window,
 }: SessionTimelineBodyProps): JSX.Element {
+	const { search } = useLocation();
 	const views = timelineViews(session);
 	const [expanded, setExpanded] = useState(() => defaultExpanded(session));
 	const [kind, setKind] = useState<EventKindFilter>('all');
@@ -64,9 +67,7 @@ function SessionTimelineBody({
 			.getElementById(`rum-view-${spanId}`)
 			?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 	};
-	const eventLink = (
-		event: RumtypesTimelineEventDTO,
-	): { to: string; label: string } | undefined => {
+	const eventLink = (event: RumtypesTimelineEventDTO): EventLink | undefined => {
 		if (event.request?.traceId) {
 			return {
 				to: traceDetailUrl(event.request.traceId, event.request.spanId),
@@ -74,13 +75,17 @@ function SessionTimelineBody({
 			};
 		}
 		if (event.error) {
-			return {
-				to: logsExplorerUrl(
-					sessionFilter(applicationId, session.sessionId, event.error),
-					window,
-				),
-				label: 'View in Logs',
-			};
+			const logs = logsExplorerUrl(
+				sessionFilter(applicationId, session.sessionId, event.error),
+				window,
+			);
+			return event.error.fingerprint
+				? {
+						to: `${rumErrorUrl(applicationId, event.error.fingerprint)}${carriedSearch(search)}`,
+						label: 'View error',
+						secondary: { to: logs, label: 'View in Logs' },
+					}
+				: { to: logs, label: 'View in Logs' };
 		}
 		return undefined;
 	};

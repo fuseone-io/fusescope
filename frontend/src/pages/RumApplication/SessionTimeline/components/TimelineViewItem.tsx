@@ -9,7 +9,7 @@ import { formatVital } from 'lib/rum/vitals';
 import { ChevronRight } from 'lucide-react';
 import { cn } from 'lib/utils';
 
-import { EventKindFilter } from '../types';
+import { EventKindFilter, EventLink } from '../types';
 import {
 	eventKey,
 	matchesKind,
@@ -27,9 +27,7 @@ interface TimelineViewItemProps {
 	kind: EventKindFilter;
 	expanded: boolean;
 	onToggle: (spanId: string) => void;
-	eventLink: (
-		event: RumtypesTimelineEventDTO,
-	) => { to: string; label: string } | undefined;
+	eventLink: (event: RumtypesTimelineEventDTO) => EventLink | undefined;
 }
 
 const LOADING_LABELS: Record<string, string> = {

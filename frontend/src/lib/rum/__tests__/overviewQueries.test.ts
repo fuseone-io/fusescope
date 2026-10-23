@@ -26,10 +26,6 @@ const RESPONSE: RangeResponse = {
 				['/search', 'cls', 0.3, 0, 0, 2],
 			]),
 			scalar('RE', [ROUTE], 1, [['/product/:id', 7]]),
-			scalar('ER', ['exception.type', 'exception.message', ROUTE], 3, [
-				['TypeError', 'x is undefined', '/product/:id', 6, 4, 1792630000000000000],
-				['RangeError', 'too deep', '/', 1, 1, 1792640000000000000],
-			]),
 			scalar('SS', ['session.id', 'user_agent.original', 'service.version'], 3, [
 				['s1', 'ua', '1.0.0', '2026-10-21T10:00:00Z', '2026-10-21T10:02:00Z', 3],
 				['s2', 'ua', '1.0.0', '2026-10-21T11:00:00Z', '2026-10-21T11:00:30Z', 1],
@@ -66,11 +62,7 @@ describe('applicationOverview', () => {
 		expect(overview.routeCount).toBe(3);
 	});
 
-	it('lists errors newest first and sessions by start', () => {
-		expect(overview.errors.map((error) => error.type)).toStrictEqual([
-			'RangeError',
-			'TypeError',
-		]);
+	it('lists sessions by start', () => {
 		expect(overview.sessions.map((session) => session.id)).toStrictEqual([
 			's2',
 			's1',
