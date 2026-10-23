@@ -14,7 +14,9 @@ import (
 const maxTimelineRows = 5000
 
 var (
-	timelineEvents = []any{rumtypes.EventNameException, rumtypes.EventNameWebVital, rumtypes.EventNameClick, rumtypes.EventNameCustomAction}
+	// SDK 0.1 sent the hashed id as user.hash.
+	sessionUserExpr = "if(" + attribute(rumtypes.AttributeUserID) + " != '', " + attribute(rumtypes.AttributeUserID) + ", " + attribute(rumtypes.AttributeUserHash) + ")"
+	timelineEvents  = []any{rumtypes.EventNameException, rumtypes.EventNameWebVital, rumtypes.EventNameClick, rumtypes.EventNameCustomAction}
 )
 
 type sessionRow struct {
@@ -207,7 +209,7 @@ func newSessionsQuery(scope telemetryScope, filter rumtypes.SessionFilter, page 
 		users := sqlbuilder.NewSelectBuilder()
 		users.Select(sqlbuilder.Escape(sessionColumn)).From(spanTable)
 		users.Where(scopeConditions(users, spanSignal, scope)...)
-		users.Where(users.E(attribute(rumtypes.AttributeUserID), filter.UserID))
+		users.Where(users.Or(users.E(attribute(rumtypes.AttributeUserID), filter.UserID), users.E(attribute(rumtypes.AttributeUserHash), filter.UserID)))
 		sb.Where(sqlbuilder.Escape(sessionColumn) + " GLOBAL IN (" + sb.Var(users) + ")")
 	}
 
@@ -272,13 +274,13 @@ func newSessionLogCountsQuery(scope telemetryScope, sessionIDs []string) *sqlbui
 }
 
 func newSessionAttributesQuery(scope telemetryScope, sessionIDs []string) *sqlbuilder.SelectBuilder {
-	previousID, userID := attribute(rumtypes.AttributeSessionPreviousID), attribute(rumtypes.AttributeUserID)
+	previousID := attribute(rumtypes.AttributeSessionPreviousID)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		sqlbuilder.Escape(sessionColumn)+" AS session",
 		"anyIf("+previousID+", "+previousID+" != '')",
-		"anyIf("+userID+", "+userID+" != '')",
+		"anyIf("+sessionUserExpr+", "+sessionUserExpr+" != '')",
 	)
 	sb.From(spanTable)
 	sb.Where(scopeConditions(sb, spanSignal, scope)...)
@@ -296,7 +298,7 @@ func newSessionSpansQuery(scope telemetryScope, sessionID string) *sqlbuilder.Se
 		attribute(rumtypes.AttributeViewLoadingType),
 		"upper(http_method)", "http_url", "toUInt16OrZero(response_status_code)", "has_error", "resource_fingerprint",
 		attribute(rumtypes.AttributeSessionPreviousID),
-		attribute(rumtypes.AttributeUserID),
+		sessionUserExpr,
 	)
 	sb.From(spanTable)
 	sb.Where(scopeConditions(sb, spanSignal, scope)...)
