@@ -3,6 +3,7 @@ import { nextSort } from 'components/PageTemplate/utils';
 import { Table, TableBody, TableHeader, TableRow } from 'components/ui/table';
 
 import EmptyRow from '../../components/EmptyRow';
+import { HIDDEN_BELOW_70REM, HIDDEN_BELOW_75REM } from '../constants';
 import { ViewRow, ViewSort, ViewSortKey } from '../types';
 import RouteRow from './RouteRow';
 
@@ -23,11 +24,21 @@ const COLUMNS: {
 }[] = [
 	{ key: 'route', label: 'Route' },
 	{ key: 'pageLoads', label: 'Page loads', right: true },
-	{ key: 'routeChanges', label: 'Route changes', right: true },
+	{
+		key: 'routeChanges',
+		label: 'Route changes',
+		right: true,
+		className: HIDDEN_BELOW_75REM,
+	},
 	{ key: 'lcp', label: 'LCP p75' },
 	{ key: 'inp', label: 'INP p75' },
 	{ key: 'cls', label: 'CLS p75' },
-	{ key: 'timeOnView', label: 'Time on view', right: true },
+	{
+		key: 'timeOnView',
+		label: 'Time on view',
+		right: true,
+		className: HIDDEN_BELOW_70REM,
+	},
 	{ key: 'errors', label: 'Errors', right: true },
 	{ key: 'slowest', label: 'Slowest request' },
 ];
@@ -41,8 +52,8 @@ function RoutesTable({
 	empty,
 }: RoutesTableProps): JSX.Element {
 	return (
-		<div className="tw:overflow-x-auto">
-			<Table className="tw:min-w-[1080px]">
+		<div className="tw:@container/routes tw:overflow-x-auto">
+			<Table className="tw:min-w-[880px] tw:[&_td]:px-3 tw:[&_th]:px-3 tw:[&_td:first-child]:pl-5 tw:[&_th:first-child]:pl-5 tw:[&_td:last-child]:pr-5 tw:[&_th:last-child]:pr-5">
 				<TableHeader>
 					<TableRow>
 						{COLUMNS.map((column) => (

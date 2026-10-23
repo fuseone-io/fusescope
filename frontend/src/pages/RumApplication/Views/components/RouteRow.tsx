@@ -4,6 +4,7 @@ import { formatMs, formatTimeOnView } from 'lib/rum/format';
 import { cn } from 'lib/utils';
 
 import { SLOW_REQUEST_MS } from '../../constants';
+import { HIDDEN_BELOW_70REM, HIDDEN_BELOW_75REM } from '../constants';
 import { ViewRow } from '../types';
 import VitalCell from './VitalCell';
 
@@ -25,9 +26,10 @@ function RouteRow({ row, selected, onOpen }: RouteRowProps): JSX.Element {
 			data-testid="rum-views-row"
 			data-state={selected ? 'selected' : undefined}
 		>
-			<TableCell className="tw:max-w-[240px]">
+			<TableCell className="tw:max-w-[200px]">
 				<button
 					type="button"
+					title={row.route}
 					onClick={(): void => onOpen(row.route)}
 					aria-label={`Open ${row.route} details`}
 					data-testid="rum-views-open"
@@ -40,7 +42,7 @@ function RouteRow({ row, selected, onOpen }: RouteRowProps): JSX.Element {
 				{formatCount(row.pageLoads)}
 				{unknown && <span className="tw:text-subtle-foreground">*</span>}
 			</TableCell>
-			<TableCell className={NUMBER} title={unknown}>
+			<TableCell className={cn(NUMBER, HIDDEN_BELOW_75REM)} title={unknown}>
 				{formatCount(row.routeChanges)}
 				{unknown && <span className="tw:text-subtle-foreground">*</span>}
 			</TableCell>
@@ -53,7 +55,7 @@ function RouteRow({ row, selected, onOpen }: RouteRowProps): JSX.Element {
 			<TableCell>
 				<VitalCell vital="cls" route={row.route} summary={row.cls} />
 			</TableCell>
-			<TableCell className={NUMBER}>
+			<TableCell className={cn(NUMBER, HIDDEN_BELOW_70REM)}>
 				{formatTimeOnView(row.timeOnViewMs)}
 			</TableCell>
 			<TableCell
@@ -64,7 +66,7 @@ function RouteRow({ row, selected, onOpen }: RouteRowProps): JSX.Element {
 			>
 				{formatCount(row.errors)}
 			</TableCell>
-			<TableCell className="tw:max-w-[220px]">
+			<TableCell className="tw:max-w-[180px]">
 				{row.slowest ? (
 					<span className="tw:flex tw:min-w-0 tw:flex-col tw:leading-snug">
 						<span
