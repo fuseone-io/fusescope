@@ -81,6 +81,61 @@ func TestUnfoldJSONSubColumnIndexExpr(t *testing.T) {
 			wantType:   "Float64",
 		},
 		{
+			name:       "LogsFoldedLower_BacktickedSegments",
+			expr:       "lower(assumeNotNull(dynamicElement(body_v2.`http-request`.`user-agent`, 'String')))",
+			wantColumn: "body_v2.`http-request`.`user-agent`",
+			wantType:   "String",
+		},
+		{
+			name:       "LogsBacktickedParentheses",
+			expr:       "assumeNotNull(dynamicElement(body_promoted.`latency(ms)`, 'Int64'))",
+			wantColumn: "body_promoted.`latency(ms)`",
+			wantType:   "Int64",
+		},
+		{
+			name:       "LogsBool",
+			expr:       "assumeNotNull(dynamicElement(body_v2.feature.enabled, 'Bool'))",
+			wantColumn: "body_v2.feature.enabled",
+			wantType:   "Bool",
+		},
+		{
+			name:       "LogsLowerOverNonString",
+			expr:       "lower(assumeNotNull(dynamicElement(body_v2.retries, 'Int64')))",
+			wantColumn: "body_v2.retries",
+			wantType:   "Int64",
+		},
+		{
+			name:       "LogsCompositeType",
+			expr:       "assumeNotNull(dynamicElement(body_v2.tags, 'Array(Nullable(String))'))",
+			wantColumn: "body_v2.tags",
+			wantType:   "Array(Nullable(String))",
+		},
+		{
+			name:    "LogsUppercaseLower_Rejected",
+			expr:    "LOWER(assumeNotNull(dynamicElement(body_v2.user.name, 'String')))",
+			wantErr: true,
+		},
+		{
+			name:    "LogsLowerWithoutAssumeNotNull_Rejected",
+			expr:    "lower(dynamicElement(body_v2.user.name, 'String'))",
+			wantErr: true,
+		},
+		{
+			name:    "LogsBareDynamicElement_Rejected",
+			expr:    "dynamicElement(body_v2.user.name, 'String')",
+			wantErr: true,
+		},
+		{
+			name:    "LogsEmptyType_Rejected",
+			expr:    "assumeNotNull(dynamicElement(body_v2.user.name, ''))",
+			wantErr: true,
+		},
+		{
+			name:    "LogsTrailingSpace_Rejected",
+			expr:    "lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) ",
+			wantErr: true,
+		},
+		{
 			name:       "TracesCastDottedKey",
 			expr:       "CAST(attributes.`http.method`, 'String')",
 			wantColumn: "attributes.`http.method`",
