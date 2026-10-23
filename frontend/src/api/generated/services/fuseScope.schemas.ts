@@ -9673,6 +9673,187 @@ export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	unit: string;
 }
 
+/**
+ * @nullable
+ */
+export type OnboardingtypesCollectorHealthDTO = {
+	/**
+	 * @type string
+	 * @description rum.collector_endpoint.
+	 */
+	endpoint: string;
+	/**
+	 * @type boolean
+	 * @description True when the OTLP/HTTP receiver answered.
+	 */
+	reachable: boolean;
+} | null;
+
+export enum OnboardingtypesIngestionSourceDTO {
+	organization = 'organization',
+	config = 'config',
+	derived = 'derived',
+}
+export interface OnboardingtypesIngestionDTO {
+	/**
+	 * @type boolean
+	 * @description Whether exporters must send an ingestion key.
+	 */
+	authRequired: boolean;
+	collector: OnboardingtypesCollectorHealthDTO | null;
+	/**
+	 * @type string,null
+	 * @description global.ingestion_url, when set.
+	 */
+	configUrl: string | null;
+	/**
+	 * @type boolean
+	 * @description True when source is derived: nothing was configured and the endpoints are a guess on the default ports.
+	 */
+	derived: boolean;
+	/**
+	 * @type string,null
+	 * @description The URL an admin set, which overrides global.ingestion_url.
+	 */
+	organizationUrl: string | null;
+	/**
+	 * @type string
+	 * @description host:port for OTLP/gRPC exporters.
+	 */
+	otlpGrpcEndpoint: string;
+	/**
+	 * @type boolean
+	 * @description True when the gRPC endpoint is plaintext (tls.insecure in a collector exporter).
+	 */
+	otlpGrpcInsecure: boolean;
+	/**
+	 * @type string
+	 * @description Base URL for OTLP/HTTP exporters (OTEL_EXPORTER_OTLP_ENDPOINT); /v1/traces, /v1/metrics and /v1/logs are appended.
+	 */
+	otlpHttpEndpoint: string;
+	source: OnboardingtypesIngestionSourceDTO;
+}
+
+/**
+ * @nullable
+ */
+export type OnboardingtypesMetricsStatusDTO = {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description Spans, metric samples or log records in the window.
+	 */
+	count: number;
+	/**
+	 * @type integer,null
+	 * @description Unix milliseconds of the earliest item in the window.
+	 */
+	firstSeen: number | null;
+	/**
+	 * @type integer,null
+	 * @description Unix milliseconds of the latest item in the window.
+	 */
+	lastSeen: number | null;
+	/**
+	 * @type boolean
+	 */
+	received: boolean;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description Distinct time series.
+	 */
+	series: number;
+} | null;
+
+/**
+ * @nullable
+ */
+export type OnboardingtypesSignalStatusDTO = {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description Spans, metric samples or log records in the window.
+	 */
+	count: number;
+	/**
+	 * @type integer,null
+	 * @description Unix milliseconds of the earliest item in the window.
+	 */
+	firstSeen: number | null;
+	/**
+	 * @type integer,null
+	 * @description Unix milliseconds of the latest item in the window.
+	 */
+	lastSeen: number | null;
+	/**
+	 * @type boolean
+	 */
+	received: boolean;
+} | null;
+
+/**
+ * @nullable
+ */
+export type OnboardingtypesTracesStatusDTO = {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description Spans, metric samples or log records in the window.
+	 */
+	count: number;
+	/**
+	 * @type integer,null
+	 * @description Unix milliseconds of the earliest item in the window.
+	 */
+	firstSeen: number | null;
+	/**
+	 * @type integer,null
+	 * @description Unix milliseconds of the latest item in the window.
+	 */
+	lastSeen: number | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description Distinct span names.
+	 */
+	operations: number;
+	/**
+	 * @type boolean
+	 */
+	received: boolean;
+} | null;
+
+export interface OnboardingtypesStatusDTO {
+	logs: OnboardingtypesSignalStatusDTO | null;
+	metrics: OnboardingtypesMetricsStatusDTO | null;
+	/**
+	 * @type string,null
+	 */
+	service: string | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds the window starts at, after defaulting and capping.
+	 */
+	since: number;
+	traces: OnboardingtypesTracesStatusDTO | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds the window ends at.
+	 */
+	until: number;
+}
+
+export interface OnboardingtypesUpdatableIngestionDTO {
+	/**
+	 * @type string
+	 * @description OTLP/HTTP base URL, e.g. https://otlp.example.com or http://collector:4318. Empty removes the override.
+	 */
+	ingestionUrl: string;
+}
+
 export interface PreferencetypesValueDTO {
 	[key: string]: unknown;
 }
@@ -14907,6 +15088,49 @@ export type GetLLMPricingRule200 = {
 
 export type ListUnmappedLLMModels200 = {
 	data: LlmpricingruletypesGettableUnmappedModelsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetOnboardingIngestion200 = {
+	data: OnboardingtypesIngestionDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateOnboardingIngestion200 = {
+	data: OnboardingtypesIngestionDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetOnboardingStatusParams = {
+	/**
+	 * @type string
+	 * @description Comma-separated subset of traces, metrics and logs. Defaults to all three.
+	 */
+	signals?: string;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose service.name equals this.
+	 */
+	service?: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to an hour ago; anything earlier than 24 hours ago is raised to it.
+	 */
+	since?: number;
+};
+
+export type GetOnboardingStatus200 = {
+	data: OnboardingtypesStatusDTO;
 	/**
 	 * @type string
 	 */
