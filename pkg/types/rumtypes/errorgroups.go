@@ -2,6 +2,8 @@ package rumtypes
 
 import (
 	"time"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type GettableErrorGroups struct {
@@ -45,6 +47,25 @@ type GettableErrorGroup struct {
 	Breadcrumbs      []*TimelineEvent   `json:"breadcrumbs" required:"true" description:"Views, clicks, actions and requests of the selected event's session in the 2 minutes before it."`
 	LinkedRequest    *TimelineEvent     `json:"linkedRequest" required:"true" nullable:"true" description:"The failed request of the same session that started last in the 5 seconds before the selected event."`
 	AffectedSessions []*AffectedSession `json:"affectedSessions" required:"true" description:"The 5 sessions with the latest events."`
+}
+
+// PrepareJSONSchema marks linkedRequest nullable: OpenAPI 3.0 drops every sibling
+// of a $ref, so the reference is wrapped in allOf. Schemas without that
+// reference, already prepared or bare references to this type, are left as is.
+func (GettableErrorGroup) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	property, ok := schema.Properties["linkedRequest"]
+	if !ok || property.TypeObject == nil || property.TypeObject.Ref == nil {
+		return nil
+	}
+
+	nullable := (&jsonschema.Schema{}).
+		WithType(jsonschema.Null.Type()).
+		WithAllOf((&jsonschema.Schema{}).WithRef(*property.TypeObject.Ref).ToSchemaOrBool())
+	if property.TypeObject.Description != nil {
+		nullable.WithDescription(*property.TypeObject.Description)
+	}
+	schema.Properties["linkedRequest"] = nullable.ToSchemaOrBool()
+	return nil
 }
 
 type ErrorEvent struct {
