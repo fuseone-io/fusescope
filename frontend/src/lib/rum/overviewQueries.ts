@@ -28,6 +28,7 @@ import {
 	SessionSummary,
 } from './overviewTypes';
 import { logQuery, numberCell, orderedBy, timestampMs } from './queryRange';
+import { newestReleasesFirst } from './releases';
 
 const SESSIONS = `count_distinct(${RUM_ATTRIBUTES.sessionId})`;
 const ROUTE = RUM_ATTRIBUTES.route;
@@ -213,10 +214,10 @@ export function applicationOverview(
 		routeCount: routes.length,
 		sessions: sessionSummaries(response),
 		sdk: latestSdk(response, applicationId),
-		releases: rawScalarRows(response, 'RL')
-			.map((release) => release.labels[RUM_ATTRIBUTES.serviceVersion])
-			.filter(Boolean)
-			.sort()
-			.reverse(),
+		releases: newestReleasesFirst(
+			rawScalarRows(response, 'RL')
+				.map((release) => release.labels[RUM_ATTRIBUTES.serviceVersion])
+				.filter(Boolean),
+		),
 	};
 }

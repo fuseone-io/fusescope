@@ -77,6 +77,9 @@ func TestNewestRelease(t *testing.T) {
 		{name: "OneRelease_None", firstSeen: map[string]time.Time{"1.8.0": at}, expected: ""},
 		{name: "EmptyReleaseIgnored_None", firstSeen: map[string]time.Time{"": at, "1.8.0": at.Add(time.Hour)}, expected: ""},
 		{name: "Tie_HighestName", firstSeen: map[string]time.Time{"a": at, "b": at}, expected: "b"},
+		{name: "Semver_HighestVersionWins_OverFirstSeen", firstSeen: map[string]time.Time{"10.0.0": at, "9.0.0": at.Add(time.Hour)}, expected: "10.0.0"},
+		{name: "Semver_ReleaseOverPrerelease", firstSeen: map[string]time.Time{"2.0.0-rc.1": at.Add(time.Hour), "2.0.0": at}, expected: "2.0.0"},
+		{name: "NotAllSemver_LatestFirstSeen", firstSeen: map[string]time.Time{"9f2c1ab": at.Add(time.Hour), "10.0.0": at}, expected: "9f2c1ab"},
 	}
 
 	for _, testCase := range testCases {

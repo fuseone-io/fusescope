@@ -29,8 +29,8 @@ type ErrorGroup struct {
 	FirstSeenRelease  string      `json:"firstSeenRelease" required:"true"`
 	LastSeenAt        time.Time   `json:"lastSeenAt" required:"true"`
 	LastSeenRelease   string      `json:"lastSeenRelease" required:"true"`
-	Releases          []string    `json:"releases" required:"true" description:"Releases with events in the range."`
-	NewInRelease      bool        `json:"newInRelease" required:"true" description:"First seen in the newest release with telemetry in the range, when an older release exists."`
+	Releases          []string    `json:"releases" required:"true" description:"Releases with events in the range, oldest first by semantic version, else by name."`
+	NewInRelease      bool        `json:"newInRelease" required:"true" description:"First seen in the newest release with telemetry in the range, when an older release exists: the highest semantic version, else the release first seen last."`
 	Sparkline         *Sparkline  `json:"sparkline" required:"true"`
 }
 
@@ -94,22 +94,36 @@ type AffectedSession struct {
 	Errors      int64     `json:"errors" required:"true" description:"Events of this group in the session."`
 }
 
-// NewestRelease returns the release first seen last, or "" when fewer than
-// two releases exist, since then nothing is new relative to anything.
+// NewestRelease returns the highest release when all are semantic versions,
+// else the release first seen last, or "" when fewer than two releases exist,
+// since then nothing is new relative to anything.
 func NewestRelease(firstSeen map[string]time.Time) string {
-	newest, count := "", 0
+	newest, count, allVersions := "", 0, true
 	var newestAt time.Time
-	for release, at := range firstSeen {
+	for release := range firstSeen {
 		if release == "" {
 			continue
 		}
 		count++
-		if newest == "" || at.After(newestAt) || (at.Equal(newestAt) && release > newest) {
-			newest, newestAt = release, at
+		if _, ok := parseReleaseVersion(release); !ok {
+			allVersions = false
 		}
 	}
 	if count < 2 {
 		return ""
+	}
+	for release, at := range firstSeen {
+		if release == "" {
+			continue
+		}
+		switch {
+		case newest == "":
+		case allVersions && CompareReleases(release, newest) <= 0:
+			continue
+		case !allVersions && (at.Before(newestAt) || (at.Equal(newestAt) && CompareReleases(release, newest) <= 0)):
+			continue
+		}
+		newest, newestAt = release, at
 	}
 	return newest
 }
