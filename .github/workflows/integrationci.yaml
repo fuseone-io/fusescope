@@ -89,6 +89,7 @@ jobs:
           - rum
           - ruler
           - savedview
+          - schemacontract
           - semconvfamilies
           - serviceaccount
           - spanmapper

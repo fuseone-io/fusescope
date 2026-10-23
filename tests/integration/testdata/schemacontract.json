@@ -1,0 +1,760 @@
+{
+  "tables": [
+    {
+      "database": "signoz_logs",
+      "name": "logs_v2",
+      "columns": [
+        {
+          "name": "attributes_bool",
+          "type": "Map(LowCardinality(String), Bool)"
+        },
+        {
+          "name": "attributes_number",
+          "type": "Map(LowCardinality(String), Float64)"
+        },
+        {
+          "name": "attributes_string",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "body",
+          "type": "String"
+        },
+        {
+          "name": "body_promoted",
+          "type": "JSON()",
+          "live_type": "JSON",
+          "note": "JSON parameters and typed paths are not modelled; the querier relies on the JSON family only."
+        },
+        {
+          "name": "body_v2",
+          "type": "JSON(max_dynamic_paths=0, max_dynamic_types=32)",
+          "live_type": "JSON(max_dynamic_paths=0, message String)",
+          "note": "max_dynamic_types=32 is the ClickHouse default; the message typed path is described as the body_v2.message sub-column."
+        },
+        {
+          "name": "body_v2.message",
+          "type": "String"
+        },
+        {
+          "name": "id",
+          "type": "String"
+        },
+        {
+          "name": "observed_timestamp",
+          "type": "UInt64"
+        },
+        {
+          "name": "resource",
+          "type": "JSON()",
+          "live_type": "JSON(max_dynamic_paths=100)",
+          "note": "JSON parameters and typed paths are not modelled; the querier relies on the JSON family only."
+        },
+        {
+          "name": "resource_fingerprint",
+          "type": "String"
+        },
+        {
+          "name": "resources_string",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "scope_name",
+          "type": "String"
+        },
+        {
+          "name": "scope_string",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "scope_version",
+          "type": "String"
+        },
+        {
+          "name": "severity_number",
+          "type": "UInt8"
+        },
+        {
+          "name": "severity_text",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "span_id",
+          "type": "String"
+        },
+        {
+          "name": "timestamp",
+          "type": "UInt64"
+        },
+        {
+          "name": "trace_flags",
+          "type": "UInt32"
+        },
+        {
+          "name": "trace_id",
+          "type": "String"
+        },
+        {
+          "name": "ts_bucket_start",
+          "type": "UInt64"
+        }
+      ],
+      "indexes": [
+        "JSONAllPaths(body_v2)"
+      ]
+    },
+    {
+      "database": "signoz_logs",
+      "name": "logs_v2_resource",
+      "columns": [
+        {
+          "name": "fingerprint",
+          "type": "String"
+        },
+        {
+          "name": "labels",
+          "type": "String"
+        },
+        {
+          "name": "seen_at_ts_bucket_start",
+          "type": "Int64"
+        }
+      ]
+    },
+    {
+      "database": "signoz_traces",
+      "name": "signoz_index_v3",
+      "columns": [
+        {
+          "name": "attribute_string_db$$system",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "attribute_string_db$$system_exists",
+          "type": "Bool"
+        },
+        {
+          "name": "attribute_string_http$$route",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "attribute_string_http$$route_exists",
+          "type": "Bool"
+        },
+        {
+          "name": "attribute_string_messaging$$operation",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "attribute_string_messaging$$operation_exists",
+          "type": "Bool"
+        },
+        {
+          "name": "attribute_string_messaging$$system",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "attribute_string_messaging$$system_exists",
+          "type": "Bool"
+        },
+        {
+          "name": "attribute_string_peer$$service",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "attribute_string_peer$$service_exists",
+          "type": "Bool"
+        },
+        {
+          "name": "attribute_string_rpc$$method",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "attribute_string_rpc$$method_exists",
+          "type": "Bool"
+        },
+        {
+          "name": "attribute_string_rpc$$service",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "attribute_string_rpc$$service_exists",
+          "type": "Bool"
+        },
+        {
+          "name": "attribute_string_rpc$$system",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "attribute_string_rpc$$system_exists",
+          "type": "Bool"
+        },
+        {
+          "name": "attributes",
+          "type": "JSON()",
+          "live_type": "JSON(max_dynamic_paths=0)",
+          "note": "JSON parameters and typed paths are not modelled; the querier relies on the JSON family only."
+        },
+        {
+          "name": "attributes_bool",
+          "type": "Map(LowCardinality(String), Bool)"
+        },
+        {
+          "name": "attributes_number",
+          "type": "Map(LowCardinality(String), Float64)"
+        },
+        {
+          "name": "attributes_promoted",
+          "type": "JSON()",
+          "live_type": "JSON",
+          "note": "JSON parameters and typed paths are not modelled; the querier relies on the JSON family only."
+        },
+        {
+          "name": "attributes_string",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "dbName",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "dbOperation",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "dbSystem",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "db_name",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "db_operation",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "durationNano",
+          "type": "UInt64"
+        },
+        {
+          "name": "duration_nano",
+          "type": "UInt64"
+        },
+        {
+          "name": "events",
+          "type": "Array(String)"
+        },
+        {
+          "name": "externalHttpMethod",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "externalHttpUrl",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "external_http_method",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "external_http_url",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "flags",
+          "type": "UInt32"
+        },
+        {
+          "name": "hasError",
+          "type": "Bool"
+        },
+        {
+          "name": "has_error",
+          "type": "Bool"
+        },
+        {
+          "name": "httpHost",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "httpMethod",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "httpRoute",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "httpUrl",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "http_host",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "http_method",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "http_url",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "isRemote",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "is_remote",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "kind",
+          "type": "Int8"
+        },
+        {
+          "name": "kind_string",
+          "type": "String"
+        },
+        {
+          "name": "links",
+          "type": "String"
+        },
+        {
+          "name": "msgOperation",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "msgSystem",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "name",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "parentSpanID",
+          "type": "String"
+        },
+        {
+          "name": "parent_span_id",
+          "type": "String"
+        },
+        {
+          "name": "peerService",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "references",
+          "type": "String"
+        },
+        {
+          "name": "resource",
+          "type": "JSON()",
+          "live_type": "JSON(max_dynamic_paths=100)",
+          "note": "JSON parameters and typed paths are not modelled; the querier relies on the JSON family only."
+        },
+        {
+          "name": "resource_fingerprint",
+          "type": "String"
+        },
+        {
+          "name": "resource_string_service$$name",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "resource_string_service$$name_exists",
+          "type": "Bool"
+        },
+        {
+          "name": "resources_string",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "responseStatusCode",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "response_status_code",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "rpcMethod",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "rpcService",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "rpcSystem",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "scope",
+          "type": "JSON()",
+          "live_type": "JSON(max_dynamic_paths=0, attributes JSON(max_dynamic_paths=0), name String, version String)",
+          "note": "JSON parameters and typed paths are not modelled; the querier relies on the JSON family only."
+        },
+        {
+          "name": "serviceName",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "spanID",
+          "type": "String"
+        },
+        {
+          "name": "spanKind",
+          "type": "String"
+        },
+        {
+          "name": "span_id",
+          "type": "String"
+        },
+        {
+          "name": "statusCode",
+          "type": "Int16"
+        },
+        {
+          "name": "statusCodeString",
+          "type": "String"
+        },
+        {
+          "name": "statusMessage",
+          "type": "String"
+        },
+        {
+          "name": "status_code",
+          "type": "Int16"
+        },
+        {
+          "name": "status_code_string",
+          "type": "String"
+        },
+        {
+          "name": "status_message",
+          "type": "String"
+        },
+        {
+          "name": "timestamp",
+          "type": "DateTime64(9, UTC)",
+          "live_type": "DateTime64(9)",
+          "note": "The querier reads only the precision; the server timezone is UTC."
+        },
+        {
+          "name": "traceID",
+          "type": "FixedString(32)"
+        },
+        {
+          "name": "trace_id",
+          "type": "FixedString(32)"
+        },
+        {
+          "name": "trace_state",
+          "type": "String"
+        },
+        {
+          "name": "ts_bucket_start",
+          "type": "UInt64"
+        }
+      ]
+    },
+    {
+      "database": "signoz_traces",
+      "name": "traces_v3_resource",
+      "columns": [
+        {
+          "name": "fingerprint",
+          "type": "String"
+        },
+        {
+          "name": "labels",
+          "type": "String"
+        },
+        {
+          "name": "seen_at_ts_bucket_start",
+          "type": "Int64"
+        }
+      ]
+    },
+    {
+      "database": "signoz_metrics",
+      "name": "time_series_v4",
+      "columns": [
+        {
+          "name": "attrs",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "fingerprint",
+          "type": "UInt64"
+        },
+        {
+          "name": "is_monotonic",
+          "type": "Bool"
+        },
+        {
+          "name": "labels",
+          "type": "String"
+        },
+        {
+          "name": "metric_name",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "resource_attrs",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "scope_attrs",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "temporality",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "type",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "unix_milli",
+          "type": "Int64"
+        }
+      ]
+    },
+    {
+      "database": "signoz_metadata",
+      "name": "attributes_metadata",
+      "columns": [
+        {
+          "name": "attributes",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "resource_attributes",
+          "type": "Map(LowCardinality(String), String)"
+        }
+      ]
+    },
+    {
+      "database": "signoz_analytics",
+      "name": "rule_state_history_v0",
+      "columns": [
+        {
+          "name": "fingerprint",
+          "type": "UInt64"
+        },
+        {
+          "name": "labels",
+          "type": "String"
+        },
+        {
+          "name": "overall_state",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "overall_state_changed",
+          "type": "Bool"
+        },
+        {
+          "name": "rule_id",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "rule_name",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "state",
+          "type": "String",
+          "live_type": "LowCardinality(String)",
+          "note": "LowCardinality is a storage encoding; the querier reads the column as String."
+        },
+        {
+          "name": "state_changed",
+          "type": "Bool"
+        },
+        {
+          "name": "unix_milli",
+          "type": "Int64"
+        },
+        {
+          "name": "value",
+          "type": "Float64"
+        }
+      ]
+    },
+    {
+      "database": "signoz_audit",
+      "name": "logs",
+      "columns": [
+        {
+          "name": "attributes_bool",
+          "type": "Map(LowCardinality(String), Bool)"
+        },
+        {
+          "name": "attributes_number",
+          "type": "Map(LowCardinality(String), Float64)"
+        },
+        {
+          "name": "attributes_string",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "body",
+          "type": "String"
+        },
+        {
+          "name": "event_name",
+          "type": "String"
+        },
+        {
+          "name": "id",
+          "type": "String"
+        },
+        {
+          "name": "observed_timestamp",
+          "type": "UInt64"
+        },
+        {
+          "name": "resource",
+          "type": "JSON()"
+        },
+        {
+          "name": "resource_fingerprint",
+          "type": "String"
+        },
+        {
+          "name": "scope_name",
+          "type": "String"
+        },
+        {
+          "name": "scope_string",
+          "type": "Map(LowCardinality(String), String)"
+        },
+        {
+          "name": "scope_version",
+          "type": "String"
+        },
+        {
+          "name": "severity_number",
+          "type": "UInt8"
+        },
+        {
+          "name": "severity_text",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "name": "span_id",
+          "type": "String"
+        },
+        {
+          "name": "timestamp",
+          "type": "UInt64"
+        },
+        {
+          "name": "trace_flags",
+          "type": "UInt32"
+        },
+        {
+          "name": "trace_id",
+          "type": "String"
+        },
+        {
+          "name": "ts_bucket_start",
+          "type": "UInt64"
+        }
+      ]
+    },
+    {
+      "database": "signoz_audit",
+      "name": "logs_resource",
+      "columns": [
+        {
+          "name": "fingerprint",
+          "type": "String"
+        },
+        {
+          "name": "labels",
+          "type": "String"
+        },
+        {
+          "name": "seen_at_ts_bucket_start",
+          "type": "Int64"
+        }
+      ]
+    }
+  ],
+  "json_sub_column_indexes": [
+    {
+      "column": "body_v2",
+      "path": "user.name",
+      "json_data_type": "String",
+      "ddl": "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster ADD INDEX IF NOT EXISTS `body_v2.user.name_string_minmax` lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) TYPE minmax GRANULARITY 1",
+      "stored": "lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String')))"
+    },
+    {
+      "column": "body_promoted",
+      "path": "request.duration",
+      "json_data_type": "Float64",
+      "ddl": "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster ADD INDEX IF NOT EXISTS `body_promoted.request.duration_float64_minmax` assumeNotNull(dynamicElement(body_promoted.request.duration, 'Float64')) TYPE minmax GRANULARITY 1",
+      "stored": "assumeNotNull(dynamicElement(body_promoted.request.duration, 'Float64'))"
+    },
+    {
+      "column": "body_v2",
+      "path": "http-request.user-agent",
+      "json_data_type": "String",
+      "ddl": "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster ADD INDEX IF NOT EXISTS `body_v2.http-request.user-agent_string_minmax` lower(assumeNotNull(dynamicElement(body_v2.`http-request`.`user-agent`, 'String'))) TYPE minmax GRANULARITY 1",
+      "stored": "lower(assumeNotNull(dynamicElement(body_v2.`http-request`.`user-agent`, 'String')))"
+    },
+    {
+      "column": "body_v2",
+      "path": "flags.enabled",
+      "json_data_type": "Bool",
+      "ddl": "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster ADD INDEX IF NOT EXISTS `body_v2.flags.enabled_bool_minmax` assumeNotNull(dynamicElement(body_v2.flags.enabled, 'Bool')) TYPE minmax GRANULARITY 1",
+      "stored": "assumeNotNull(dynamicElement(body_v2.flags.enabled, 'Bool'))"
+    },
+    {
+      "column": "body_promoted",
+      "path": "retries",
+      "json_data_type": "Int64",
+      "ddl": "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster ADD INDEX IF NOT EXISTS `body_promoted.retries_int64_minmax` assumeNotNull(dynamicElement(body_promoted.retries, 'Int64')) TYPE minmax GRANULARITY 1",
+      "stored": "assumeNotNull(dynamicElement(body_promoted.retries, 'Int64'))"
+    }
+  ]
+}
