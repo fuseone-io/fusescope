@@ -248,6 +248,10 @@ semconv-generate: ## Regenerate semantic-convention families for Go and TypeScri
 semconv-check: ## Fail if the generated semantic-convention files are stale
 	@go run ./scripts/semconv -check
 
+.PHONY: agpl-check
+agpl-check: ## Fail if the community binary links AGPL collector packages outside scripts/agplguard/allowlist.txt
+	@go run ./scripts/agplguard
+
 .PHONY: gen-mocks
 gen-mocks:
 	@echo ">> Generating mocks"
