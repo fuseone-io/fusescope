@@ -1,6 +1,11 @@
 package rumtypes
 
-import "strings"
+import (
+	"path"
+	"strings"
+)
+
+var scriptExtensions = []string{".js", ".mjs", ".cjs"}
 
 // OriginalFrame is a frame's position in the original source, read from
 // the release's source map.
@@ -12,6 +17,30 @@ type OriginalFrame struct {
 	InApp     bool           `json:"inApp" required:"true" description:"False for sources under node_modules."`
 	SourceMap string         `json:"sourceMap" required:"true" description:"Path of the map that resolved the frame."`
 	Context   *SourceContext `json:"context" required:"true" nullable:"true" description:"Lines around the position when the map embeds sourcesContent."`
+}
+
+// IsScriptFile reports whether a frame's file is a script a source map can
+// describe. Code in an inline <script> reports the page's URL instead.
+func IsScriptFile(file string) bool {
+	file, _, _ = strings.Cut(file, "#")
+	file, _, _ = strings.Cut(file, "?")
+	extension := strings.ToLower(path.Ext(file))
+	for _, script := range scriptExtensions {
+		if extension == script {
+			return true
+		}
+	}
+	return false
+}
+
+// HasScriptFrame reports whether any frame could be resolved by a source map.
+func HasScriptFrame(frames []StackFrame) bool {
+	for _, frame := range frames {
+		if IsScriptFile(frame.File) {
+			return true
+		}
+	}
+	return false
 }
 
 type MissingSourceMap struct {

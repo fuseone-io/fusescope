@@ -8,6 +8,7 @@ import {
 	frameLocation,
 	groupFrames,
 	isLibraryFile,
+	isScriptFile,
 	StackFrame,
 } from '../stackFrames';
 
@@ -52,6 +53,21 @@ describe('isLibraryFile', () => {
 		[BUNDLE, false],
 	])('%s', (file, library) => {
 		expect(isLibraryFile(file)).toBe(library);
+	});
+});
+
+describe('isScriptFile', () => {
+	it.each([
+		[BUNDLE, true],
+		['https://shop.example.com/assets/app.mjs?v=3', true],
+		['https://shop.example.com/vendor.CJS', true],
+		['https://shop.example.com/checkout', false],
+		['https://shop.example.com/index.html#top', false],
+		['https://shop.example.com/page?script=a.js', false],
+		['<anonymous>', false],
+		['', false],
+	])('%s', (file, script) => {
+		expect(isScriptFile(file)).toBe(script);
 	});
 });
 

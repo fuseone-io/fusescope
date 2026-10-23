@@ -2,7 +2,7 @@ import type {
 	ListRUMErrorGroupsParams,
 	RumtypesErrorGroupDTO,
 } from 'api/generated/services/fuseScope.schemas';
-import { frameLabel, isLibraryFile } from 'lib/rum/stackFrames';
+import { frameLabel, isLibraryFile, isScriptFile } from 'lib/rum/stackFrames';
 
 import {
 	ERROR_SOURCES,
@@ -111,7 +111,7 @@ export function releasesSummary(group: RumtypesErrorGroupDTO): {
 
 /**
  * The group's last release has no uploaded maps while its top frame points at
- * a bundle; `uploaded` is undefined until the uploads are known.
+ * a script file; `uploaded` is undefined until the uploads are known.
  */
 export function sourceMapMissing(
 	group: RumtypesErrorGroupDTO,
@@ -122,6 +122,7 @@ export function sourceMapMissing(
 		uploaded &&
 		group.lastSeenRelease &&
 		!isLibraryFile(file) &&
+		isScriptFile(file) &&
 		!uploaded.has(group.lastSeenRelease),
 	);
 }

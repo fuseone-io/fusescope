@@ -81,7 +81,7 @@ type ErrorEvent struct {
 	Stacktrace       string            `json:"stacktrace" required:"true" description:"exception.stacktrace as received."`
 	Frames           []StackFrame      `json:"frames" required:"true"`
 	Symbolicated     bool              `json:"symbolicated" required:"true" description:"Whether frames were mapped through an uploaded source map; frames keep the minified position and carry the original one."`
-	MissingSourceMap *MissingSourceMap `json:"missingSourceMap" required:"true" nullable:"true" description:"Set when the event's release has no uploaded source maps."`
+	MissingSourceMap *MissingSourceMap `json:"missingSourceMap" required:"true" nullable:"true" description:"Set when the event's release has no uploaded source maps and a frame points at a script file; inline scripts never have one."`
 }
 
 type AffectedSession struct {

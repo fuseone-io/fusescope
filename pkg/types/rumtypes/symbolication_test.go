@@ -88,3 +88,25 @@ func TestSymbolicateFrames(t *testing.T) {
 		})
 	}
 }
+
+func TestIsScriptFile(t *testing.T) {
+	testCases := []struct {
+		name     string
+		file     string
+		expected bool
+	}{
+		{name: "Bundle", file: "https://shop.example.com/assets/main.4f9c2a.js", expected: true},
+		{name: "Module_WithQuery", file: "https://shop.example.com/assets/app.mjs?v=3", expected: true},
+		{name: "CommonJS_UpperCase", file: "https://shop.example.com/vendor.CJS", expected: true},
+		{name: "PageURL_InlineScript", file: "https://shop.example.com/checkout", expected: false},
+		{name: "PageURL_HTML", file: "https://shop.example.com/index.html#top", expected: false},
+		{name: "JsInQueryOnly", file: "https://shop.example.com/page?script=a.js", expected: false},
+		{name: "Anonymous", file: "<anonymous>", expected: false},
+		{name: "Empty", file: "", expected: false},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, IsScriptFile(testCase.file))
+		})
+	}
+}
