@@ -7,6 +7,8 @@ import RecentSessionsPanel from './RecentSessionsPanel';
 import TopRoutesPanel from './TopRoutesPanel';
 
 interface OverviewTabProps {
+	applicationId: string;
+	release: string;
 	overview: ApplicationOverview;
 	loading: boolean;
 	filter: string;
@@ -16,6 +18,8 @@ interface OverviewTabProps {
 }
 
 function OverviewTab({
+	applicationId,
+	release,
 	overview,
 	loading,
 	filter,
@@ -27,6 +31,8 @@ function OverviewTab({
 		<div className="tw:flex tw:flex-col tw:gap-4" data-testid="rum-overview">
 			<OverviewKpis overview={overview} />
 			<TopRoutesPanel
+				applicationId={applicationId}
+				release={release}
 				routes={overview.routes}
 				routeCount={overview.routeCount}
 				loading={loading}
@@ -38,6 +44,8 @@ function OverviewTab({
 				loading={loading}
 			/>
 			<RecentSessionsPanel
+				applicationId={applicationId}
+				release={release}
 				sessions={overview.sessions}
 				errors={sessionErrors}
 				requests={sessionRequests}

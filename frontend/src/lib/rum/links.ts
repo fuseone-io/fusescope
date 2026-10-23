@@ -58,3 +58,58 @@ export function traceDetailUrl(traceId: string, spanId?: string): string {
 
 export const rumApplicationUrl = (applicationId: string): string =>
 	ROUTES.RUM_APPLICATION.replace(':id', applicationId);
+
+function withSearch(
+	path: string,
+	params: Record<string, string | undefined>,
+): string {
+	const search = new URLSearchParams();
+	Object.entries(params).forEach(([key, value]) => {
+		if (value) {
+			search.set(key, value);
+		}
+	});
+	const query = search.toString();
+	return query ? `${path}?${query}` : path;
+}
+
+const applicationPath = (path: string, applicationId: string): string =>
+	path.replace(':id', applicationId);
+
+export const rumViewsUrl = (applicationId: string, release?: string): string =>
+	withSearch(applicationPath(ROUTES.RUM_APPLICATION_VIEWS, applicationId), {
+		release,
+	});
+
+/** The Views tab with the route's detail sheet open. */
+export const rumRouteUrl = (
+	applicationId: string,
+	route: string,
+	release?: string,
+): string =>
+	withSearch(applicationPath(ROUTES.RUM_APPLICATION_VIEWS, applicationId), {
+		release,
+		route,
+	});
+
+export const rumSessionsUrl = (
+	applicationId: string,
+	filters: { release?: string; route?: string } = {},
+): string =>
+	withSearch(applicationPath(ROUTES.RUM_APPLICATION_SESSIONS, applicationId), {
+		release: filters.release,
+		route: filters.route,
+	});
+
+export const rumSessionUrl = (
+	applicationId: string,
+	sessionId: string,
+	release?: string,
+): string =>
+	withSearch(
+		applicationPath(ROUTES.RUM_APPLICATION_SESSION, applicationId).replace(
+			':sessionId',
+			encodeURIComponent(sessionId),
+		),
+		{ release },
+	);

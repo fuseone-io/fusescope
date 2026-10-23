@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { matchPath, useLocation } from 'react-router-dom';
+import { generatePath, matchPath, useLocation } from 'react-router-dom';
 import HeaderBandTabsLayout from 'components/PageTemplate/components/HeaderBandTabsLayout';
 import { PageTab } from 'components/PageTemplate/types';
 import SoonBadge from 'components/Rum/SoonBadge';
@@ -9,24 +9,34 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { overviewFilter } from 'lib/rum/overviewQueries';
 
 import ApplicationNotFound from './components/ApplicationNotFound';
+import ApplicationToolbar from './components/ApplicationToolbar';
 import OverviewHeader from './components/OverviewHeader';
 import OverviewTab from './components/OverviewTab';
-import ReleaseFilter from './components/ReleaseFilter';
-import { OVERVIEW_TAB } from './constants';
+import { ERRORS_TAB, OVERVIEW_TAB, SESSIONS_TAB, VIEWS_TAB } from './constants';
 import { useApplicationOverview } from './hooks/useApplicationOverview';
+import { useReleaseParam } from './hooks/useReleaseParam';
+import SessionsTab from './Sessions';
+import SessionTimeline from './SessionTimeline';
+import { applicationTab, carriedSearch } from './utils';
+import ViewsTab from './Views';
 
-const SOON_TABS = [
-	['views', 'Views', 'Per-route load time, vitals and slow resources'],
-	['errors', 'Errors', 'Errors grouped by fingerprint, with source maps'],
-	['sessions', 'Sessions', 'Session list and timeline'],
-];
+const TAB_ROUTES: Record<string, string> = {
+	[OVERVIEW_TAB]: ROUTES.RUM_APPLICATION,
+	[VIEWS_TAB]: ROUTES.RUM_APPLICATION_VIEWS,
+	[SESSIONS_TAB]: ROUTES.RUM_APPLICATION_SESSIONS,
+};
 
 function RumApplication(): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
 	const id =
 		matchPath<{ id: string }>(pathname, ROUTES.RUM_APPLICATION)?.params.id ?? '';
+	const sessionId = matchPath<{ sessionId: string }>(
+		pathname,
+		ROUTES.RUM_APPLICATION_SESSION,
+	)?.params.sessionId;
+	const tab = applicationTab(pathname);
 	const { safeNavigate } = useSafeNavigate();
-	const [release, setRelease] = useState('');
+	const [release, setRelease] = useReleaseParam();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const state = useApplicationOverview(id, release);
 	const filter = overviewFilter(id, release);
@@ -35,12 +45,24 @@ function RumApplication(): JSX.Element {
 		return <ApplicationNotFound />;
 	}
 
+	const sessionsContent = sessionId ? (
+		<SessionTimeline
+			applicationId={id}
+			sessionId={decodeURIComponent(sessionId)}
+			window={state.window}
+		/>
+	) : (
+		<SessionsTab applicationId={id} release={release} window={state.window} />
+	);
+
 	const tabs: PageTab[] = [
 		{
 			value: OVERVIEW_TAB,
 			label: 'Overview',
 			content: (
 				<OverviewTab
+					applicationId={id}
+					release={release}
 					overview={state.overview}
 					loading={state.overviewLoading}
 					filter={filter}
@@ -50,14 +72,22 @@ function RumApplication(): JSX.Element {
 				/>
 			),
 		},
-		...SOON_TABS.map(([value, label, title]) => ({
-			value,
-			label,
-			title,
+		{
+			value: VIEWS_TAB,
+			label: 'Views',
+			content: (
+				<ViewsTab applicationId={id} release={release} window={state.window} />
+			),
+		},
+		{
+			value: ERRORS_TAB,
+			label: 'Errors',
+			title: 'Errors grouped by fingerprint, with source maps',
 			disabled: true,
 			badge: <SoonBadge className="tw:h-[18px] tw:text-[11px]" />,
 			content: null,
-		})),
+		},
+		{ value: SESSIONS_TAB, label: 'Sessions', content: sessionsContent },
 	];
 
 	return (
@@ -77,13 +107,20 @@ function RumApplication(): JSX.Element {
 				}
 				label="Application sections"
 				tabs={tabs}
-				value={OVERVIEW_TAB}
-				onValueChange={(): void => undefined}
+				value={tab}
+				onValueChange={(next): void =>
+					safeNavigate(
+						`${generatePath(TAB_ROUTES[next], { id })}${carriedSearch(search)}`,
+					)
+				}
 				toolbar={
-					<ReleaseFilter
+					<ApplicationToolbar
+						applicationId={id}
+						tab={tab}
+						sessionView={Boolean(sessionId)}
 						releases={state.overview.releases}
-						value={release}
-						onChange={setRelease}
+						release={release}
+						onReleaseChange={setRelease}
 					/>
 				}
 			/>

@@ -516,6 +516,27 @@ const routes: AppRoutes[] = [
 		key: 'RUM_APPLICATION',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.RUM_APPLICATION_VIEWS,
+		exact: true,
+		component: RumApplicationPage,
+		key: 'RUM_APPLICATION_VIEWS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.RUM_APPLICATION_SESSIONS,
+		exact: true,
+		component: RumApplicationPage,
+		key: 'RUM_APPLICATION_SESSIONS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.RUM_APPLICATION_SESSION,
+		exact: true,
+		component: RumApplicationPage,
+		key: 'RUM_APPLICATION_SESSION',
+		isPrivate: true,
+	},
 ];
 
 export const SUPPORT_ROUTE: AppRoutes = {

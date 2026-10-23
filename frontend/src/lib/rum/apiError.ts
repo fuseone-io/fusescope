@@ -14,3 +14,6 @@ export function apiErrorMessage(error: unknown): string {
 	}
 	return 'Something went wrong. Try again.';
 }
+
+export const isNotFoundError = (error: unknown): boolean =>
+	isAxiosError(error) && error.response?.status === 404;
