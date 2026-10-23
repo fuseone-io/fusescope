@@ -40,7 +40,7 @@ export const zeusHostsResponse = {
 
 export const versionResponse = {
 	version: 'v0.0.0',
-	ee: 'Y',
+	ee: 'N',
 	setupCompleted: true,
 };
 
