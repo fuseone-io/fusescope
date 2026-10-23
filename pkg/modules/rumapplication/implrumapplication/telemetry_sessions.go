@@ -140,16 +140,11 @@ func (reader *telemetryReader) SessionAttributes(ctx context.Context, scope tele
 	return attributes, err
 }
 
-// SessionCount counts the sessions with spans in the scope.
+// SessionCount counts the sessions with spans or logs in the scope, so a
+// session that only reported errors still counts toward shares of sessions.
 func (reader *telemetryReader) SessionCount(ctx context.Context, scope telemetryScope) (int64, error) {
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("uniq(" + sqlbuilder.Escape(sessionColumn) + ")")
-	sb.From(spanTable)
-	sb.Where(scopeConditions(sb, spanSignal, scope)...)
-	sb.Where(sb.NE(sessionColumn, ""))
-
 	var count uint64
-	err := reader.query(ctx, "SessionCount", sb, func(scanner driver.Rows) error {
+	err := reader.query(ctx, "SessionCount", newSessionCountQuery(scope), func(scanner driver.Rows) error {
 		return scanner.Scan(&count)
 	})
 	return int64(count), err
@@ -234,6 +229,21 @@ func newSessionsQuery(scope telemetryScope, filter rumtypes.SessionFilter, page 
 	sb.OrderBy("started_at DESC", "session")
 	sb.Limit(page.Limit)
 	sb.Offset(page.Offset)
+	return sb
+}
+
+func newSessionCountQuery(scope telemetryScope) *sqlbuilder.SelectBuilder {
+	sessionIDs := func(signal telemetrySignal) *sqlbuilder.SelectBuilder {
+		sb := sqlbuilder.NewSelectBuilder()
+		sb.Select(sqlbuilder.Escape(sessionColumn) + " AS session").From(signal.table)
+		sb.Where(scopeConditions(sb, signal, scope)...)
+		sb.Where(sb.NE(sessionColumn, ""))
+		return sb
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("uniq(session)")
+	sb.From(sb.BuilderAs(sqlbuilder.UnionAll(sessionIDs(spanSignal), sessionIDs(logSignal)), "sessions"))
 	return sb
 }
 

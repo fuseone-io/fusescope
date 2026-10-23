@@ -59,6 +59,19 @@ export function applicationsRequests(
 				shift: window.seconds,
 			}),
 			logQuery({
+				name: 'L',
+				filter: apps,
+				groupBy: BY_APP,
+				aggregations: [SESSIONS],
+			}),
+			logQuery({
+				name: 'LP',
+				filter: apps,
+				groupBy: BY_APP,
+				aggregations: [SESSIONS],
+				shift: window.seconds,
+			}),
+			logQuery({
 				name: 'E',
 				filter: errors,
 				groupBy: BY_APP,
@@ -128,10 +141,16 @@ export function vitalSummaries(
 	return summaries;
 }
 
+/**
+ * Errors come from logs and page views from spans, so a session counts when
+ * either signal saw it; the larger count stands in for their union.
+ */
 export function sessionTotals(
-	sessions: number,
+	spanSessions: number,
+	logSessions: number,
 	sessionsWithErrors: number,
 ): SessionTotals {
+	const sessions = Math.max(spanSessions, logSessions);
 	return {
 		sessions,
 		sessionsWithErrors,
@@ -182,6 +201,8 @@ export function applicationsMetrics(
 ): Record<string, ApplicationMetrics> {
 	const sessions = byApp(totals, 'S');
 	const previous = byApp(totals, 'SP');
+	const logSessions = byApp(totals, 'L');
+	const previousLogSessions = byApp(totals, 'LP');
 	const errors = byApp(totals, 'E');
 	const previousErrors = byApp(totals, 'EP');
 	const vitalRows = rawScalarRows(totals, 'V');
@@ -191,10 +212,19 @@ export function applicationsMetrics(
 		applicationIds.map((id): [string, ApplicationMetrics] => [
 			id,
 			{
-				current: sessionTotals(first(sessions, id), first(errors, id)),
-				previous: previous.has(id)
-					? sessionTotals(first(previous, id), first(previousErrors, id))
-					: undefined,
+				current: sessionTotals(
+					first(sessions, id),
+					first(logSessions, id),
+					first(errors, id),
+				),
+				previous:
+					previous.has(id) || previousLogSessions.has(id)
+						? sessionTotals(
+								first(previous, id),
+								first(previousLogSessions, id),
+								first(previousErrors, id),
+							)
+						: undefined,
 				views: first(sessions, id, 1),
 				lastSeen: timestampMs(sessions.get(id)?.[0]?.[2]),
 				vitals: vitalSummaries(

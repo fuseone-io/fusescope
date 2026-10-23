@@ -61,6 +61,13 @@ export function overviewRequest(
 			aggregations: [SESSIONS],
 			shift: window.seconds,
 		}),
+		logQuery({ name: 'L', filter: app, aggregations: [SESSIONS] }),
+		logQuery({
+			name: 'LP',
+			filter: app,
+			aggregations: [SESSIONS],
+			shift: window.seconds,
+		}),
 		logQuery({ name: 'E', filter: errors, aggregations: [SESSIONS] }),
 		logQuery({
 			name: 'EP',
@@ -192,12 +199,14 @@ export function applicationOverview(
 	const row = (name: string): RawScalarRow | undefined =>
 		rawScalarRows(response, name)[0];
 	const previous = row('SP');
+	const previousLogs = row('LP');
 	const routes = routeVitals(response);
 	return {
-		current: sessionTotals(count(row('S')), count(row('E'))),
-		previous: previous
-			? sessionTotals(count(previous), count(row('EP')))
-			: undefined,
+		current: sessionTotals(count(row('S')), count(row('L')), count(row('E'))),
+		previous:
+			previous || previousLogs
+				? sessionTotals(count(previous), count(previousLogs), count(row('EP')))
+				: undefined,
 		views: count(row('S'), 1),
 		vitals: vitalSummaries(rawScalarRows(response, 'V')),
 		routes: topRoutes(routes),
