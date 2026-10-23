@@ -15,6 +15,8 @@ import {
 	Settings2,
 } from 'lucide-react';
 
+import CreateAlertMenu from './CreateAlertMenu';
+
 interface OverviewHeaderProps {
 	application?: RumtypesApplicationDTO;
 	release?: string;
@@ -64,6 +66,7 @@ function OverviewHeader({
 			}
 			actions={
 				<>
+					{application && <CreateAlertMenu application={application} />}
 					<Button asChild variant="outline">
 						<Link
 							to={tracesExplorerUrl(filter, window)}

@@ -2,6 +2,7 @@ import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import userEvent from '@testing-library/user-event';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { alertLink } from 'lib/rum/__tests__/alertLink';
 import { screen, within } from 'tests/test-utils';
 
 import {
@@ -119,6 +120,23 @@ describe('ErrorDetail', () => {
 			'href',
 			expect.stringContaining('/logs/logs-explorer'),
 		);
+	});
+
+	it('creates an alert on this error', async () => {
+		serveGroup();
+		renderPage(PATH);
+
+		expect(
+			alertLink(await screen.findByTestId('rum-error-create-alert')),
+		).toStrictEqual({
+			template: 'js_error_count',
+			applicationId: 'app-1',
+			ruleName: 'web-shop HttpError above 10',
+			filters: [
+				"fusescope.rum.application.id = 'app-1' AND attribute.event.name = 'exception' AND exception.type = 'HttpError' AND exception.message = 'POST /api/cart returned 502'",
+			],
+			groupBy: [[]],
+		});
 	});
 
 	it('steps to an older event through the URL', async () => {
