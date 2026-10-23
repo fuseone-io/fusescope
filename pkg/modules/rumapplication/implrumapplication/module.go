@@ -17,6 +17,7 @@ type module struct {
 	store        rumtypes.Store
 	telemetry    *telemetryReader
 	symbolicator rumapplication.Symbolicator
+	storage      rumapplication.SourceMapStorage
 	promoter     *fieldPromoter
 	keys         *keyCache
 	monitor      *monitor
@@ -32,14 +33,17 @@ type originCache struct {
 }
 
 func NewModule(store rumtypes.Store, telemetryStore telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings, config rumapplication.Config) rumapplication.Module {
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication")
+	storage := NewFileSourceMapStorage(config.SourceMaps.Dir)
 	return &module{
 		store:        store,
 		telemetry:    newTelemetryReader(telemetryStore),
-		symbolicator: NewNoopSymbolicator(),
+		symbolicator: NewSymbolicator(store, storage, settings.Logger(), config),
+		storage:      storage,
 		promoter:     newFieldPromoter(telemetryStore, providerSettings),
 		keys:         newKeyCache(config.KeyCacheTTL),
 		monitor:      newMonitor(),
-		settings:     factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication"),
+		settings:     settings,
 		config:       config,
 	}
 }
@@ -121,8 +125,16 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 }
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	sourceMaps, err := module.store.ListSourceMaps(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
 	if err := module.store.DeleteApplication(ctx, orgID, id); err != nil {
 		return err
+	}
+	module.deleteSourceMapContent(ctx, sourceMaps)
+	for _, file := range sourceMaps {
+		module.symbolicator.Forget(id, file.Release)
 	}
 
 	module.monitor.Forget(id)

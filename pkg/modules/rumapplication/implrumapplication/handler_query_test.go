@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
@@ -96,6 +97,9 @@ func TestHandlerListViewsMergesRouteQueries(t *testing.T) {
 		[]cmock.ColumnType{{Name: "route", Type: "String"}, {Name: "method", Type: "String"}, {Name: "host", Type: "String"}, {Name: "path", Type: "String"}, {Name: "p75", Type: "Float64"}, {Name: "calls", Type: "UInt64"}, {Name: "failed", Type: "UInt64"}, {Name: "trace", Type: "String"}},
 		[][]any{{"/product/:id", "GET", "shop.example.com", "/api/products/:id", float64(1.24e9), uint64(9), uint64(1), "4bf92f3577b34da6a3ce929d0e0e4736"}},
 	))
+	mock.ExpectQuery(`SELECT uniq\(.attribute_string_session\$\$id.\) FROM .signoz_traces.\..distributed_signoz_index_v3.`).WithArgs(anyArgs(9)...).WillReturnRows(cmock.NewRows(
+		[]cmock.ColumnType{{Name: "sessions", Type: "UInt64"}}, [][]any{{uint64(42)}},
+	))
 
 	status, data := serveQuery(t, NewHandler(module).ListViews, orgID, "/views", map[string]string{"id": created.ID.StringValue()})
 	require.Equal(t, http.StatusOK, status, string(data))
@@ -103,6 +107,7 @@ func TestHandlerListViewsMergesRouteQueries(t *testing.T) {
 	views := new(rumtypes.GettableViews)
 	require.NoError(t, json.Unmarshal(data, views))
 	require.Len(t, views.Routes, 2)
+	assert.Equal(t, int64(42), views.Sessions)
 
 	product := views.Routes[0]
 	assert.Equal(t, "/product/:id", product.Route)
@@ -144,6 +149,9 @@ func TestHandlerListErrorGroupsMergesKeysByFingerprint(t *testing.T) {
 			{uint16(2), uint64(9), uint64(9), uint64(3_000_000_000), uint64(8_000_000_000), "Invalid time value", "/checkout", "error", "", "1.8.0", []string{"1.8.0"}, map[uint64]uint64{}},
 		},
 	))
+	mock.ExpectQuery(`SELECT uniq\(.attribute_string_session\$\$id.\) FROM .signoz_traces.\..distributed_signoz_index_v3.`).WithArgs(anyArgs(9)...).WillReturnRows(cmock.NewRows(
+		[]cmock.ColumnType{{Name: "sessions", Type: "UInt64"}}, [][]any{{uint64(1300)}},
+	))
 
 	status, data := serveQuery(t, NewHandler(module).ListErrorGroups, orgID, "/errors", map[string]string{"id": created.ID.StringValue()})
 	require.Equal(t, http.StatusOK, status, string(data))
@@ -152,6 +160,7 @@ func TestHandlerListErrorGroupsMergesKeysByFingerprint(t *testing.T) {
 	require.NoError(t, json.Unmarshal(data, groups))
 	assert.Equal(t, int64(2), groups.Total)
 	assert.Equal(t, int64(14), groups.Events)
+	assert.Equal(t, int64(1300), groups.Sessions)
 	require.Len(t, groups.Groups, 2)
 
 	rangeError, typeError := groups.Groups[0], groups.Groups[1]
@@ -167,5 +176,47 @@ func TestHandlerListErrorGroupsMergesKeysByFingerprint(t *testing.T) {
 	assert.False(t, typeError.NewInRelease)
 	require.NotNil(t, typeError.TopFrame)
 	assert.Equal(t, "Ue", typeError.TopFrame.Function)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestHandlerGetViewUnknownRouteNotFound(t *testing.T) {
+	module, orgID, mock := newTestModuleWithMock(t, true)
+	created, err := module.Create(context.Background(), orgID, "admin@example.com", newTestPostable(t, `{"name":"shop","platform":"web","environment":"production"}`))
+	require.NoError(t, err)
+
+	mock.ExpectQuery(`groupUniqArrayIf\(3\)\(path, path != ''\) AS paths`).WithArgs(anyArgs(11)...).WillReturnRows(cmock.NewRows(
+		[]cmock.ColumnType{{Name: "route", Type: "String"}, {Name: "views", Type: "UInt64"}, {Name: "page_loads", Type: "UInt64"}, {Name: "route_changes", Type: "UInt64"}, {Name: "unknown_loads", Type: "UInt64"}, {Name: "median_ns", Type: "Float64"}, {Name: "paths", Type: "Array(String)"}},
+		[][]any{},
+	))
+
+	status, _ := serveQuery(t, NewHandler(module).GetView, orgID, "/views/%2Fmissing", map[string]string{"id": created.ID.StringValue(), "route": "%2Fmissing"})
+	assert.Equal(t, http.StatusNotFound, status)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestHandlerGetSessionIgnoresRelease(t *testing.T) {
+	module, orgID, mock := newTestModuleWithMock(t, true)
+	created, err := module.Create(context.Background(), orgID, "admin@example.com", newTestPostable(t, `{"name":"shop","platform":"web","environment":"production"}`))
+	require.NoError(t, err)
+
+	// No query carries a service.version argument.
+	mock.ExpectQuery(`SELECT timestamp, span_id, toString\(trace_id\)`).WithArgs(anyArgs(13)...).WillReturnRows(cmock.NewRows(
+		[]cmock.ColumnType{{Name: "timestamp", Type: "DateTime64(9)"}, {Name: "span_id", Type: "String"}, {Name: "trace_id", Type: "String"}, {Name: "name", Type: "String"}, {Name: "kind", Type: "Int8"}, {Name: "duration_nano", Type: "UInt64"}, {Name: "route", Type: "String"}, {Name: "path", Type: "String"}, {Name: "loading_type", Type: "String"}, {Name: "method", Type: "String"}, {Name: "url", Type: "String"}, {Name: "status", Type: "UInt16"}, {Name: "has_error", Type: "Bool"}, {Name: "fingerprint", Type: "String"}, {Name: "previous_id", Type: "String"}, {Name: "user_id", Type: "String"}},
+		[][]any{{time.Unix(1000, 0), "a1", "t1", rumtypes.SpanNameView, int8(1), uint64(1e9), "/", "/", "initial_load", "", "", uint16(0), false, "fp-174", "", ""}},
+	))
+	mock.ExpectQuery(`SELECT timestamp, attributes_string\['event.name'\]`).WithArgs(anyArgs(14)...).WillReturnRows(cmock.NewRows(
+		[]cmock.ColumnType{{Name: "timestamp", Type: "UInt64"}, {Name: "event", Type: "String"}, {Name: "route", Type: "String"}, {Name: "type", Type: "String"}, {Name: "message", Type: "String"}, {Name: "stack", Type: "String"}, {Name: "source", Type: "String"}, {Name: "vital", Type: "String"}, {Name: "value", Type: "Float64"}, {Name: "rating", Type: "String"}, {Name: "action_type", Type: "String"}, {Name: "action_name", Type: "String"}, {Name: "target", Type: "String"}},
+		[][]any{},
+	))
+	mock.ExpectQuery(`FROM .signoz_traces.\..distributed_traces_v3_resource. WHERE .* GROUP BY fingerprint LIMIT \?`).WithArgs(anyArgs(5)...).WillReturnRows(cmock.NewRows(
+		[]cmock.ColumnType{{Name: "fingerprint", Type: "String"}, {Name: "release", Type: "String"}, {Name: "environment", Type: "String"}, {Name: "ua", Type: "String"}, {Name: "brands", Type: "String"}, {Name: "platform", Type: "String"}, {Name: "client_key", Type: "UInt64"}, {Name: "first_seen", Type: "Int64"}},
+		[][]any{{"fp-174", "1.7.4", "production", "", "", "", uint64(1), int64(500)}},
+	))
+
+	status, data := serveQuery(t, NewHandler(module).GetSession, orgID, "/sessions/s1?release=1.8.0&start=0&end=2000000", map[string]string{"id": created.ID.StringValue(), "sessionId": "s1"})
+	require.Equal(t, http.StatusOK, status, string(data))
+	session := new(rumtypes.GettableSession)
+	require.NoError(t, json.Unmarshal(data, session))
+	assert.Equal(t, "1.7.4", session.Release)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

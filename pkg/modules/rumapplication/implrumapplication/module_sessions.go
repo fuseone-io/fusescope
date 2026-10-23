@@ -92,6 +92,9 @@ func (module *module) GetSession(ctx context.Context, orgID valuer.UUID, id valu
 	if err != nil {
 		return nil, err
 	}
+	// A session can span releases; a release filter carried over from the
+	// list would hide it.
+	scope.release = ""
 
 	spans, err := module.telemetry.SessionSpans(ctx, scope, sessionID)
 	if err != nil {

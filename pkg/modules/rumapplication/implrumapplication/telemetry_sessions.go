@@ -140,6 +140,21 @@ func (reader *telemetryReader) SessionAttributes(ctx context.Context, scope tele
 	return attributes, err
 }
 
+// SessionCount counts the sessions with spans in the scope.
+func (reader *telemetryReader) SessionCount(ctx context.Context, scope telemetryScope) (int64, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("uniq(" + sqlbuilder.Escape(sessionColumn) + ")")
+	sb.From(spanTable)
+	sb.Where(scopeConditions(sb, spanSignal, scope)...)
+	sb.Where(sb.NE(sessionColumn, ""))
+
+	var count uint64
+	err := reader.query(ctx, "SessionCount", sb, func(scanner driver.Rows) error {
+		return scanner.Scan(&count)
+	})
+	return int64(count), err
+}
+
 // SessionSpans returns the session's views and requests in time order.
 func (reader *telemetryReader) SessionSpans(ctx context.Context, scope telemetryScope, sessionID string) ([]*sessionSpanRow, error) {
 	rows := []*sessionSpanRow{}

@@ -54,8 +54,17 @@ func TestPostableApplicationUnmarshal(t *testing.T) {
 				assert.Equal(t, []string{}, postable.AllowedOrigins)
 				assert.Equal(t, []string{}, postable.TracePropagationURLs)
 				assert.Equal(t, []string{}, postable.PIIPolicy.QueryAllowlist)
+				assert.Equal(t, NewDefaultSourceMapSettings(), postable.SourceMaps)
 			},
 		},
+		{
+			name:  "SourceMaps_PartialDefaults",
+			input: `{"name":"shop","platform":"web","environment":"production","sourceMaps":{"retention":"30d"}}`,
+			check: func(t *testing.T, postable *PostableApplication) {
+				assert.Equal(t, SourceMapSettings{Retention: SourceMapRetention30Days, KeepNewestReleases: true}, postable.SourceMaps)
+			},
+		},
+		{name: "SourceMapsUnknownRetention_Rejected", input: `{"name":"a","platform":"web","environment":"p","sourceMaps":{"retention":"7d"}}`, code: ErrCodeApplicationInvalidInput},
 		{
 			name:  "Full_Kept",
 			input: `{"name":"shop","platform":"web","environment":"staging","allowedOrigins":["https://*.example.com"],"tracePropagationUrls":["https://api.example.com"],"sampleRate":0.25,"piiPolicy":{"dropQuery":false,"queryAllowlist":["page"],"urlAllowlist":[],"geoLookup":true,"requireConsent":true,"hashUserId":true}}`,
@@ -115,4 +124,45 @@ func TestStorableApplicationRoundTrip(t *testing.T) {
 	assert.Equal(t, 0.5, restored.SampleRate)
 	assert.Equal(t, []string{"page"}, restored.PIIPolicy.QueryAllowlist)
 	assert.True(t, restored.PIIPolicy.DropQuery)
+}
+
+func TestStorableApplicationSourceMaps(t *testing.T) {
+	testCases := []struct {
+		name     string
+		data     string
+		expected SourceMapSettings
+	}{
+		{name: "Stored", data: `{"sourceMaps":{"retention":"never","keepNewestReleases":false}}`, expected: SourceMapSettings{Retention: SourceMapRetentionNever}},
+		{name: "BeforeSourceMaps_Defaults", data: `{"sampleRate":1}`, expected: NewDefaultSourceMapSettings()},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			restored, err := NewApplicationFromStorable(&StorableApplication{Data: testCase.data})
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, restored.SourceMaps)
+		})
+	}
+}
+
+func TestApplicationUpdateSourceMaps(t *testing.T) {
+	never := SourceMapSettings{Retention: SourceMapRetentionNever}
+	testCases := []struct {
+		name     string
+		input    string
+		expected SourceMapSettings
+	}{
+		{name: "Omitted_Kept", input: `{"name":"shop","environment":"production"}`, expected: never},
+		{name: "Given_Replaced", input: `{"name":"shop","environment":"production","sourceMaps":{"retention":"1y"}}`, expected: SourceMapSettings{Retention: SourceMapRetentionOneYear, KeepNewestReleases: true}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			app := &Application{Name: "shop", Platform: PlatformWeb, Environment: "production", SourceMaps: never}
+			updatable := new(UpdatableApplication)
+			require.NoError(t, json.Unmarshal([]byte(testCase.input), updatable))
+			require.NoError(t, app.Update(updatable))
+			assert.Equal(t, testCase.expected, app.SourceMaps)
+		})
+	}
 }

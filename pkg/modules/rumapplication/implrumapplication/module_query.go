@@ -4,20 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
-
-type noopSymbolicator struct{}
-
-func NewNoopSymbolicator() rumapplication.Symbolicator {
-	return noopSymbolicator{}
-}
-
-func (noopSymbolicator) Symbolicate(_ context.Context, _ valuer.UUID, _ string, frames []rumtypes.StackFrame) ([]rumtypes.StackFrame, bool, error) {
-	return frames, false, nil
-}
 
 // queryScope checks the application belongs to the organization and that
 // its promoted columns exist, then scopes queries to it.

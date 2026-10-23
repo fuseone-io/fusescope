@@ -68,7 +68,7 @@ func (provider *provider) addRUMRoutes(router *mux.Router) error {
 
 func (provider *provider) rumRoutes() []rumRoute {
 	applications, application, keys := "/api/v1/rum/applications", "/api/v1/rum/applications/{id}", "/api/v1/rum/applications/{id}/keys"
-	views, errorGroups, sessions := application+"/views", application+"/errors", application+"/sessions"
+	views, errorGroups, sessions, sourceMaps := application+"/views", application+"/errors", application+"/sessions", application+"/sourcemaps"
 	query := " Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name."
 	notFound := []int{http.StatusBadRequest, http.StatusNotFound}
 	managers := []string{authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName}
@@ -128,7 +128,7 @@ func (provider *provider) rumRoutes() []rumRoute {
 			Response:     new(rumtypes.GettableViews), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
 		}},
 		{path: views + "/{route}", method: http.MethodGet, handle: provider.rumApplicationHandler.GetView, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
-			ID: "GetRUMView", Summary: "Get RUM view", Description: "Returns one route template, percent-encoded in the path (/product/:id is %2Fproduct%2F%3Aid): vitals p75 per time bucket, releases, the slowest request templates with an example trace, browser and OS breakdowns with LCP p75 and the latest sessions on the route." + query,
+			ID: "GetRUMView", Summary: "Get RUM view", Description: "Returns one route template, percent-encoded in the path (/product/:id is %2Fproduct%2F%3Aid): vitals p75 per time bucket, releases, the slowest request templates with an example trace, browser and OS breakdowns with LCP p75 and the latest sessions on the route. A route without views in the range is not found." + query,
 			RequestQuery: new(rumtypes.GetViewParams),
 			Response:     new(rumtypes.GettableView), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
 		}},
@@ -138,7 +138,7 @@ func (provider *provider) rumRoutes() []rumRoute {
 			Response:     new(rumtypes.GettableErrorGroups), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
 		}},
 		{path: errorGroups + "/{fingerprint}", method: http.MethodGet, handle: provider.rumApplicationHandler.GetErrorGroup, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
-			ID: "GetRUMErrorGroup", Summary: "Get RUM error group", Description: "Returns an error group with its latest events and raw stack traces, the selected event's breadcrumbs and linked failed request, and the latest affected sessions." + query,
+			ID: "GetRUMErrorGroup", Summary: "Get RUM error group", Description: "Returns an error group with its latest events and raw stack traces, the selected event's breadcrumbs and linked failed request, and the latest affected sessions. Event frames carry their original position when the event's release has uploaded source maps; missingSourceMap is set when it has none." + query,
 			RequestQuery: new(rumtypes.GetErrorGroupParams),
 			Response:     new(rumtypes.GettableErrorGroup), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
 		}},
@@ -148,9 +148,28 @@ func (provider *provider) rumRoutes() []rumRoute {
 			Response:     new(rumtypes.GettableSessions), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
 		}},
 		{path: sessions + "/{sessionId}", method: http.MethodGet, handle: provider.rumApplicationHandler.GetSession, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
-			ID: "GetRUMSession", Summary: "Get RUM session", Description: "Returns a session's timeline: its views in order, each with the requests, clicks, actions, errors and vitals that happened on it. Requests carry their trace id and whether backend spans share the trace." + query,
+			ID: "GetRUMSession", Summary: "Get RUM session", Description: "Returns a session's timeline: its views in order, each with the requests, clicks, actions, errors and vitals that happened on it. Requests carry their trace id and whether backend spans share the trace. Defaults to the last 24 hours; ranges are at most 31 days. release is ignored, since a session can span releases; environment filters on deployment.environment.name.",
 			RequestQuery: new(rumtypes.GetSessionParams),
 			Response:     new(rumtypes.GettableSession), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
+		}},
+		{path: sourceMaps, method: http.MethodPost, handle: provider.rumApplicationHandler.UploadSourceMaps, verb: coretypes.VerbUpdate, roles: managers, openAPIDef: handler.OpenAPIDef{
+			ID: "UploadRUMSourceMaps", Summary: "Upload RUM source maps", Description: "Stores source maps for a release, from multipart/form-data: each part named by the URL path its map is served from (e.g. /assets/index-abc.js.map) is a map; a part named file uses its filename as that path instead. The map matches the bundle at its path without .map, or a bundle served under a prefix. An optional debug_ids field maps URL paths to debug IDs. release comes from the query, or from a release field before the first map. A map replaces the release's map with the same path. A map that is not version 3 JSON, empty or larger than the file limit (50 MB by default) is returned in rejected and the others are stored. More than 1,000 maps in the release (400) or more than the application's quota, 2 GB by default (413), stores nothing. Use an API key with the Editor role in SigNoz-Api-Key; the public RUM key is not accepted.",
+			Request: new(rumtypes.PostableSourceMaps), RequestContentType: "multipart/form-data", RequestQuery: new(rumtypes.PostableSourceMapsParams),
+			Response: new(rumtypes.GettableUploadedSourceMaps), ResponseContentType: "application/json", SuccessStatusCode: http.StatusCreated,
+			ErrorStatusCodes: []int{http.StatusBadRequest, http.StatusNotFound, http.StatusRequestEntityTooLarge},
+		}},
+		{path: sourceMaps, method: http.MethodGet, handle: provider.rumApplicationHandler.ListSourceMaps, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
+			ID: "ListRUMSourceMaps", Summary: "List RUM source maps", Description: "Returns the application's releases with source maps, newest upload first, with their size, uploader, last use and expiry, plus the storage used, the limits and the retention settings. With release, returns that release and its files.",
+			RequestQuery: new(rumtypes.ListSourceMapsParams),
+			Response:     new(rumtypes.GettableSourceMaps), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
+		}},
+		{path: sourceMaps, method: http.MethodDelete, handle: provider.rumApplicationHandler.DeleteSourceMaps, verb: coretypes.VerbUpdate, roles: managers, openAPIDef: handler.OpenAPIDef{
+			ID: "DeleteRUMSourceMaps", Summary: "Delete RUM source maps of a release", Description: "Deletes every source map of the release. Its events are kept and show minified frames again.",
+			RequestQuery: new(rumtypes.DeleteSourceMapsParams), SuccessStatusCode: http.StatusNoContent, ErrorStatusCodes: notFound,
+		}},
+		{path: sourceMaps + "/{fileId}", method: http.MethodDelete, handle: provider.rumApplicationHandler.DeleteSourceMap, verb: coretypes.VerbUpdate, roles: managers, openAPIDef: handler.OpenAPIDef{
+			ID: "DeleteRUMSourceMap", Summary: "Delete RUM source map", Description: "Deletes one source map file.",
+			SuccessStatusCode: http.StatusNoContent, ErrorStatusCodes: notFound,
 		}},
 	}
 }

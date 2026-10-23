@@ -2,7 +2,9 @@ package rumapplication
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
@@ -56,6 +58,18 @@ type Module interface {
 	GetErrorGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID, fingerprint string, params *rumtypes.GetErrorGroupParams) (*rumtypes.GettableErrorGroup, error)
 	ListSessions(ctx context.Context, orgID valuer.UUID, id valuer.UUID, params *rumtypes.ListSessionsParams) (*rumtypes.GettableSessions, error)
 	GetSession(ctx context.Context, orgID valuer.UUID, id valuer.UUID, sessionID string, params *rumtypes.GetSessionParams) (*rumtypes.GettableSession, error)
+
+	// UploadSourceMaps stores the valid maps of parts, each replacing the
+	// release's map with the same path, and reports the others as rejected.
+	// Nothing is stored when the upload exceeds the release or quota limits.
+	UploadSourceMaps(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string, createdBy string, parts rumtypes.PostableSourceMapParts) (*rumtypes.GettableUploadedSourceMaps, error)
+	// ListSourceMaps lists the releases, or with release set that release and its files.
+	ListSourceMaps(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string) (*rumtypes.GettableSourceMaps, error)
+	DeleteSourceMapRelease(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string) error
+	DeleteSourceMap(ctx context.Context, orgID valuer.UUID, id valuer.UUID, fileID valuer.UUID) error
+
+	// CleanupSourceMaps deletes the releases past their application's retention.
+	CleanupSourceMaps(ctx context.Context) error
 }
 
 type Handler interface {
@@ -75,13 +89,33 @@ type Handler interface {
 	GetErrorGroup(http.ResponseWriter, *http.Request)
 	ListSessions(http.ResponseWriter, *http.Request)
 	GetSession(http.ResponseWriter, *http.Request)
+	UploadSourceMaps(http.ResponseWriter, *http.Request)
+	ListSourceMaps(http.ResponseWriter, *http.Request)
+	DeleteSourceMaps(http.ResponseWriter, *http.Request)
+	DeleteSourceMap(http.ResponseWriter, *http.Request)
 }
 
 // Symbolicator maps minified frames to source through the release's uploaded
-// source maps. It runs at read time; stored telemetry stays raw. It reports
-// false when it has no map for the frames.
+// source maps. It runs at read time; stored telemetry stays raw.
 type Symbolicator interface {
-	Symbolicate(ctx context.Context, applicationID valuer.UUID, release string, frames []rumtypes.StackFrame) ([]rumtypes.StackFrame, bool, error)
+	Symbolicate(ctx context.Context, applicationID valuer.UUID, release string, frames []rumtypes.StackFrame) (*rumtypes.Symbolication, error)
+
+	// Forget drops what is cached of the release's maps, after they change.
+	Forget(applicationID valuer.UUID, release string)
+
+	// TakeUsage returns the maps used since the last call and when.
+	TakeUsage() map[valuer.UUID]time.Time
+}
+
+// SourceMapStorage holds the content of uploaded source maps by key.
+type SourceMapStorage interface {
+	Put(ctx context.Context, key string, content io.Reader) error
+
+	// Open fails with a not found error for a missing key.
+	Open(ctx context.Context, key string) (io.ReadCloser, error)
+
+	// Delete ignores a missing key.
+	Delete(ctx context.Context, key string) error
 }
 
 // Gateway serves the public OTLP/HTTP ingestion endpoints.

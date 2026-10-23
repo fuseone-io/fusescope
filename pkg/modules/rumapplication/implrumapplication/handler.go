@@ -113,7 +113,11 @@ func (h *handler) RevokeKey(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *handler) withOrg(rw http.ResponseWriter, req *http.Request, serve func(context.Context, valuer.UUID, *authtypes.Claims) (int, any, error)) {
-	ctx, cancel := context.WithTimeout(req.Context(), handlerTimeout)
+	h.withOrgTimeout(rw, req, handlerTimeout, serve)
+}
+
+func (h *handler) withOrgTimeout(rw http.ResponseWriter, req *http.Request, timeout time.Duration, serve func(context.Context, valuer.UUID, *authtypes.Claims) (int, any, error)) {
+	ctx, cancel := context.WithTimeout(req.Context(), timeout)
 	defer cancel()
 
 	claims, err := authtypes.ClaimsFromContext(ctx)

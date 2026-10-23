@@ -29,6 +29,9 @@ def signoz_rum(  # pylint: disable=too-many-arguments,too-many-positional-argume
         env_overrides={
             "SIGNOZ_RUM_ENABLED": True,
             "SIGNOZ_RUM_COLLECTOR__ENDPOINT": otel_collector.container_configs["4318"].base(),
+            "SIGNOZ_RUM_SOURCEMAPS_MAX__FILE__SIZE": 65536,
+            "SIGNOZ_RUM_SOURCEMAPS_MAX__FILES__PER__RELEASE": 5,
+            "SIGNOZ_RUM_SOURCEMAPS_QUOTA": 262144,
         },
     )
 

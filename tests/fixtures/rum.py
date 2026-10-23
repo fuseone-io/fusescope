@@ -1,3 +1,4 @@
+import json
 import time
 import uuid
 from collections.abc import Callable
@@ -9,6 +10,7 @@ from fixtures import types
 
 RUM_APPLICATIONS = "/api/v1/rum/applications"
 RUM_KEY_HEADER = "FuseScope-RUM-Key"
+SIGNOZ_API_KEY_HEADER = "SigNoz-Api-Key"
 
 
 def create_rum_application(signoz: types.SigNoz, token: str, payload: dict) -> dict:
@@ -96,3 +98,16 @@ def wait_for_rum_query(signoz: types.SigNoz, token: str, path: str, params: dict
             return data
         time.sleep(1)
     raise AssertionError(f"{path} never became ready: {data}")
+
+
+def upload_source_maps(signoz: types.SigNoz, application_id: str, release: str, headers: dict, maps: dict[str, bytes], debug_ids: dict | None = None) -> requests.Response:
+    """Uploads as @fusescope/cli does: one part per map, named by its URL path."""
+    files = [(path, (path.rsplit("/", 1)[-1], content, "application/json")) for path, content in maps.items()]
+    data = {"debug_ids": json.dumps(debug_ids)} if debug_ids else None
+    return requests.post(signoz.self.host_configs["8080"].get(f"{RUM_APPLICATIONS}/{application_id}/sourcemaps"), params={"release": release}, files=files, data=data, headers=headers, timeout=30)
+
+
+def padded_source_map(size: int) -> bytes:
+    """A valid source map of about size bytes, padded through sourcesContent."""
+    content = "x" * max(size - 100, 0)
+    return json.dumps({"version": 3, "sources": ["a.ts"], "sourcesContent": [content], "names": [], "mappings": "AAAA"}).encode()
