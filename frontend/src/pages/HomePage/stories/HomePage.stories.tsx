@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -38,7 +38,10 @@ type Story = StoryObj<HomeArgs>;
  */
 export const Default: Story = {};
 
-/** Fresh workspace: nothing ingested yet, so the welcome checklist takes over. */
+/**
+ * Fresh workspace: nothing ingested yet, so Home offers three ways to start,
+ * the OTLP endpoints and the welcome checklist.
+ */
 export const NoIngestion: Story = {
 	args: {
 		logsIngestion: false,
@@ -48,6 +51,18 @@ export const NoIngestion: Story = {
 		dashboards: 0,
 		savedViews: 0,
 		services: 0,
+	},
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		await canvas.findByTestId('home-onboarding', undefined, { timeout: 15000 });
+		await expect(
+			await canvas.findByTestId('home-listening', undefined, { timeout: 15000 }),
+		).toHaveTextContent('Listening for OTLP on :4317 and :4318');
+		await expect(canvas.getByTestId('home-browse-sources')).toHaveAttribute(
+			'href',
+			ROUTES.GET_STARTED,
+		);
+		await canvas.findByTestId('home-welcome-checklist');
 	},
 };
 

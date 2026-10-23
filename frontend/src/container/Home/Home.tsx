@@ -29,7 +29,7 @@ import HomeHeader from './components/HomeHeader';
 import IngestionPanel from './components/IngestionPanel';
 import WelcomeChecklistPanel from './components/WelcomeChecklistPanel';
 import WelcomeChecklistPopover from './components/WelcomeChecklistPopover';
-import WorkspaceReadyPanel from './components/WorkspaceReadyPanel';
+import HomeOnboarding from './components/HomeOnboarding/HomeOnboarding';
 import { defaultChecklistItemsState } from './constants';
 import Dashboards from './Dashboards/Dashboards';
 import { ChecklistItem } from './HomeChecklist/HomeChecklist';
@@ -250,6 +250,7 @@ export default function Home(): JSX.Element {
 	const isIngestionActiveForAny =
 		isLogsIngestionActive || isTracesIngestionActive || isMetricsIngestionActive;
 	const isDetecting = isLogsLoading || isTracesLoading;
+	const isEmpty = !isDetecting && !isIngestionActiveForAny;
 	const showChecklist = !isWelcomeChecklistSkipped && !loadingUserPreferences;
 	const checklistBusy = updatingUserPreferences || loadingUserPreferences;
 	const isViewer = user?.role === USER_ROLES.VIEWER;
@@ -283,9 +284,21 @@ export default function Home(): JSX.Element {
 
 			{getIsNoAuthMode() && <NoAuthBanner />}
 
-			{!isDetecting && !isIngestionActiveForAny && <WorkspaceReadyPanel />}
+			{isEmpty && (
+				<div className="tw:flex tw:flex-wrap tw:items-start tw:gap-4">
+					<HomeOnboarding className="tw:flex-[2_1_560px]" />
+					{showChecklist && (
+						<WelcomeChecklistPanel
+							checklistItems={checklistItems}
+							onSkip={handleSkipChecklistItem}
+							onDoLater={handleWillDoThisLater}
+							isLoading={checklistBusy}
+						/>
+					)}
+				</div>
+			)}
 
-			{(isIngestionActiveForAny || showChecklist) && (
+			{!isEmpty && (isIngestionActiveForAny || showChecklist) && (
 				<div className="tw:flex tw:flex-wrap tw:items-start tw:gap-4">
 					{isIngestionActiveForAny && (
 						<IngestionPanel
@@ -307,7 +320,7 @@ export default function Home(): JSX.Element {
 				</div>
 			)}
 
-			{!isViewer && <ExplorerCards />}
+			{!isViewer && !isEmpty && <ExplorerCards />}
 
 			{isIngestionActiveForAny && (
 				<>

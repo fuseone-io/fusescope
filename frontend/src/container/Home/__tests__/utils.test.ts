@@ -66,7 +66,7 @@ describe('receivingSummary', () => {
 		],
 		[
 			{ logs: false, traces: false, metrics: false },
-			'You are not sending any data yet.',
+			'No data yet. Connect a first source and this page fills in.',
 		],
 	])('summarises %p', (signals, expected) => {
 		expect(receivingSummary(signals)).toBe(expected);
