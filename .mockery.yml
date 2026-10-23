@@ -43,6 +43,15 @@ packages:
       filename: "getter.go"
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
+  github.com/fuseone-io/fusescope/pkg/modules/retention:
+    interfaces:
+      TTLSetter:
+        config:
+          filename: "ttlsetter.go"
+    config:
+      dir: '{{.InterfaceDir}}/retentiontest'
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'
   github.com/fuseone-io/fusescope/pkg/modules/authdomain:
     interfaces:
       Module:

@@ -595,3 +595,17 @@ rum:
     context_lines: 5
     # How often the maps past their application's retention are deleted.
     cleanup_interval: 1h
+
+##################### Retention #####################
+retention:
+  # Retention, in days, set on every organization whose signal has no retention set
+  # yet, through the same path as Settings > Retention. 0 keeps the schema default.
+  # A retention set in the UI is never overridden. Like a change from the UI, the
+  # ClickHouse TTL applies to new parts only; existing parts expire as they merge.
+  default:
+    logs: 0
+    traces: 0
+    metrics: 0
+  # How often organizations are checked for an unset retention. This also picks up
+  # the organization created at first sign-up.
+  reconcile_interval: 1m

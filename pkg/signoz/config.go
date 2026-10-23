@@ -28,6 +28,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/cloudintegration"
 	"github.com/fuseone-io/fusescope/pkg/modules/inframonitoring"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer"
+	"github.com/fuseone-io/fusescope/pkg/modules/retention"
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
 	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount"
 	"github.com/fuseone-io/fusescope/pkg/modules/tracedetail"
@@ -155,6 +156,9 @@ type Config struct {
 
 	// RUM config
 	RUM rumapplication.Config `mapstructure:"rum"`
+
+	// Retention config
+	Retention retention.Config `mapstructure:"retention"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -193,6 +197,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		tracedetail.NewConfigFactory(),
 		authz.NewConfigFactory(),
 		rumapplication.NewConfigFactory(),
+		retention.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
