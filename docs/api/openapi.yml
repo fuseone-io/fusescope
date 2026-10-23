@@ -7896,6 +7896,184 @@ components:
     MultipartFile:
       format: binary
       type: string
+    OnboardingtypesCollectorHealth:
+      nullable: true
+      properties:
+        endpoint:
+          description: rum.collector_endpoint.
+          type: string
+        reachable:
+          description: True when the OTLP/HTTP receiver answered.
+          type: boolean
+      required:
+      - endpoint
+      - reachable
+      type: object
+    OnboardingtypesIngestion:
+      properties:
+        authRequired:
+          description: Whether exporters must send an ingestion key.
+          type: boolean
+        collector:
+          $ref: '#/components/schemas/OnboardingtypesCollectorHealth'
+        configUrl:
+          description: global.ingestion_url, when set.
+          nullable: true
+          type: string
+        derived:
+          description: 'True when source is derived: nothing was configured and the
+            endpoints are a guess on the default ports.'
+          type: boolean
+        organizationUrl:
+          description: The URL an admin set, which overrides global.ingestion_url.
+          nullable: true
+          type: string
+        otlpGrpcEndpoint:
+          description: host:port for OTLP/gRPC exporters.
+          type: string
+        otlpGrpcInsecure:
+          description: True when the gRPC endpoint is plaintext (tls.insecure in a
+            collector exporter).
+          type: boolean
+        otlpHttpEndpoint:
+          description: Base URL for OTLP/HTTP exporters (OTEL_EXPORTER_OTLP_ENDPOINT);
+            /v1/traces, /v1/metrics and /v1/logs are appended.
+          type: string
+        source:
+          $ref: '#/components/schemas/OnboardingtypesIngestionSource'
+      required:
+      - otlpHttpEndpoint
+      - otlpGrpcEndpoint
+      - otlpGrpcInsecure
+      - source
+      - derived
+      - authRequired
+      - organizationUrl
+      - configUrl
+      - collector
+      type: object
+    OnboardingtypesIngestionSource:
+      enum:
+      - organization
+      - config
+      - derived
+      type: string
+    OnboardingtypesMetricsStatus:
+      nullable: true
+      properties:
+        count:
+          description: Spans, metric samples or log records in the window.
+          minimum: 0
+          type: integer
+        firstSeen:
+          description: Unix milliseconds of the earliest item in the window.
+          nullable: true
+          type: integer
+        lastSeen:
+          description: Unix milliseconds of the latest item in the window.
+          nullable: true
+          type: integer
+        received:
+          type: boolean
+        series:
+          description: Distinct time series.
+          minimum: 0
+          type: integer
+      required:
+      - received
+      - count
+      - firstSeen
+      - lastSeen
+      - series
+      type: object
+    OnboardingtypesSignalStatus:
+      nullable: true
+      properties:
+        count:
+          description: Spans, metric samples or log records in the window.
+          minimum: 0
+          type: integer
+        firstSeen:
+          description: Unix milliseconds of the earliest item in the window.
+          nullable: true
+          type: integer
+        lastSeen:
+          description: Unix milliseconds of the latest item in the window.
+          nullable: true
+          type: integer
+        received:
+          type: boolean
+      required:
+      - received
+      - count
+      - firstSeen
+      - lastSeen
+      type: object
+    OnboardingtypesStatus:
+      properties:
+        logs:
+          $ref: '#/components/schemas/OnboardingtypesSignalStatus'
+        metrics:
+          $ref: '#/components/schemas/OnboardingtypesMetricsStatus'
+        service:
+          nullable: true
+          type: string
+        since:
+          description: Unix milliseconds the window starts at, after defaulting and
+            capping.
+          format: int64
+          type: integer
+        traces:
+          $ref: '#/components/schemas/OnboardingtypesTracesStatus'
+        until:
+          description: Unix milliseconds the window ends at.
+          format: int64
+          type: integer
+      required:
+      - since
+      - until
+      - service
+      - traces
+      - metrics
+      - logs
+      type: object
+    OnboardingtypesTracesStatus:
+      nullable: true
+      properties:
+        count:
+          description: Spans, metric samples or log records in the window.
+          minimum: 0
+          type: integer
+        firstSeen:
+          description: Unix milliseconds of the earliest item in the window.
+          nullable: true
+          type: integer
+        lastSeen:
+          description: Unix milliseconds of the latest item in the window.
+          nullable: true
+          type: integer
+        operations:
+          description: Distinct span names.
+          minimum: 0
+          type: integer
+        received:
+          type: boolean
+      required:
+      - received
+      - count
+      - firstSeen
+      - lastSeen
+      - operations
+      type: object
+    OnboardingtypesUpdatableIngestion:
+      properties:
+        ingestionUrl:
+          description: OTLP/HTTP base URL, e.g. https://otlp.example.com or http://collector:4318.
+            Empty removes the override.
+          type: string
+      required:
+      - ingestionUrl
+      type: object
     PreferencetypesPreference:
       properties:
         allowedScopes:
@@ -15473,6 +15651,192 @@ paths:
       summary: List unmapped models
       tags:
       - llmpricingrules
+      x-signoz-stability: alpha
+  /api/v1/onboarding/ingestion:
+    get:
+      deprecated: false
+      description: Returns the OTLP endpoints exporters send to. An admin's URL wins
+        over global.ingestion_url, which wins over endpoints derived from the external
+        URL on ports 4317 and 4318.
+      operationId: GetOnboardingIngestion
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OnboardingtypesIngestion'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get ingestion settings
+      tags:
+      - onboarding
+      x-signoz-stability: alpha
+    put:
+      deprecated: false
+      description: Sets the organization's OTLP/HTTP ingestion URL, which overrides
+        global.ingestion_url. An empty URL removes the override.
+      operationId: UpdateOnboardingIngestion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingtypesUpdatableIngestion'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OnboardingtypesIngestion'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update ingestion settings
+      tags:
+      - onboarding
+      x-signoz-stability: alpha
+  /api/v1/onboarding/status:
+    get:
+      deprecated: false
+      description: 'Reports, per signal, whether telemetry arrived in a window of
+        at most 24 hours: count, first and last seen. Filter on service.name to wait
+        for one service. Poll it while a user sets up a source.'
+      operationId: GetOnboardingStatus
+      parameters:
+      - description: Comma-separated subset of traces, metrics and logs. Defaults
+          to all three.
+        in: query
+        name: signals
+        schema:
+          description: Comma-separated subset of traces, metrics and logs. Defaults
+            to all three.
+          type: string
+      - description: Keep telemetry whose service.name equals this.
+        in: query
+        name: service
+        schema:
+          description: Keep telemetry whose service.name equals this.
+          type: string
+      - description: Unix milliseconds. Defaults to an hour ago; anything earlier
+          than 24 hours ago is raised to it.
+        in: query
+        name: since
+        schema:
+          description: Unix milliseconds. Defaults to an hour ago; anything earlier
+            than 24 hours ago is raised to it.
+          format: int64
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OnboardingtypesStatus'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get onboarding status
+      tags:
+      - onboarding
       x-signoz-stability: alpha
   /api/v1/org/preferences:
     get:
