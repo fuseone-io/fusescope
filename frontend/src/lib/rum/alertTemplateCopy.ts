@@ -66,7 +66,7 @@ export const RUM_ALERT_COPY: Record<RumAlertTemplateId, TemplateCopy> = {
 			{
 				label: 'B · denominator',
 				code: 'count_distinct(session.id)',
-				note: 'sessions that sent any event: vitals, clicks, navigations or errors',
+				note: 'sessions that sent any vital, click, action or error',
 			},
 			{
 				label: 'Formula',

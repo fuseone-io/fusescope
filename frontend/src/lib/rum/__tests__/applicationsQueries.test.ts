@@ -16,6 +16,11 @@ const TOTALS: RangeResponse = {
 				['b', 10, 12, '2026-10-21T09:00:00Z'],
 			]),
 			scalar('SP', [APP], 1, [['a', 100]]),
+			scalar('L', [APP], 1, [
+				['a', 150],
+				['b', 20],
+			]),
+			scalar('LP', [APP], 1, [['b', 8]]),
 			scalar('E', [APP], 1, [['a', 4]]),
 			scalar('EP', [APP], 1, [['a', 1]]),
 			scalar('V', [APP, 'browser.web_vital.name'], 4, [
@@ -90,9 +95,14 @@ describe('applicationsMetrics', () => {
 		expect(metrics.a.views).toBe(900);
 	});
 
+	it('counts sessions from spans or logs, whichever saw more', () => {
+		expect(metrics.b.current.sessions).toBe(20);
+		expect(metrics.b.previous?.sessions).toBe(8);
+	});
+
 	it('has no error rate or history for an application without errors or a previous period', () => {
 		expect(metrics.b.current.errorRate).toBe(0);
-		expect(metrics.b.previous).toBeUndefined();
+		expect(metrics.c.previous).toBeUndefined();
 		expect(metrics.c.current.errorRate).toBeUndefined();
 		expect(metrics.c.sdk).toBeUndefined();
 	});
@@ -111,6 +121,11 @@ describe('applicationsRequests', () => {
 		filters.forEach((filter) =>
 			expect(filter).toContain("fusescope.rum.application.id IN ['a', 'b']"),
 		);
-		expect(filters[2]).toContain("attribute.event.name = 'exception'");
+		expect(
+			totals.compositeQuery.queries.map(
+				(query) => (query.spec as { name: string }).name,
+			),
+		).toContain('L');
+		expect(filters[4]).toContain("attribute.event.name = 'exception'");
 	});
 });

@@ -97,7 +97,7 @@ func TestHandlerListViewsMergesRouteQueries(t *testing.T) {
 		[]cmock.ColumnType{{Name: "route", Type: "String"}, {Name: "method", Type: "String"}, {Name: "host", Type: "String"}, {Name: "path", Type: "String"}, {Name: "p75", Type: "Float64"}, {Name: "calls", Type: "UInt64"}, {Name: "failed", Type: "UInt64"}, {Name: "trace", Type: "String"}},
 		[][]any{{"/product/:id", "GET", "shop.example.com", "/api/products/:id", float64(1.24e9), uint64(9), uint64(1), "4bf92f3577b34da6a3ce929d0e0e4736"}},
 	))
-	mock.ExpectQuery(`SELECT uniq\(.attribute_string_session\$\$id.\) FROM .signoz_traces.\..distributed_signoz_index_v3.`).WithArgs(anyArgs(9)...).WillReturnRows(cmock.NewRows(
+	mock.ExpectQuery(`SELECT uniq\(session\) FROM \(\(SELECT .* FROM .signoz_traces.\..distributed_signoz_index_v3. .* UNION ALL .* FROM .signoz_logs.\..distributed_logs_v2. `).WithArgs(anyArgs(18)...).WillReturnRows(cmock.NewRows(
 		[]cmock.ColumnType{{Name: "sessions", Type: "UInt64"}}, [][]any{{uint64(42)}},
 	))
 
@@ -149,7 +149,7 @@ func TestHandlerListErrorGroupsMergesKeysByFingerprint(t *testing.T) {
 			{uint16(2), uint64(9), uint64(9), uint64(3_000_000_000), uint64(8_000_000_000), "Invalid time value", "/checkout", "error", "", "1.8.0", []string{"1.8.0"}, map[uint64]uint64{}},
 		},
 	))
-	mock.ExpectQuery(`SELECT uniq\(.attribute_string_session\$\$id.\) FROM .signoz_traces.\..distributed_signoz_index_v3.`).WithArgs(anyArgs(9)...).WillReturnRows(cmock.NewRows(
+	mock.ExpectQuery(`SELECT uniq\(session\) FROM \(\(SELECT .* FROM .signoz_traces.\..distributed_signoz_index_v3. .* UNION ALL .* FROM .signoz_logs.\..distributed_logs_v2. `).WithArgs(anyArgs(18)...).WillReturnRows(cmock.NewRows(
 		[]cmock.ColumnType{{Name: "sessions", Type: "UInt64"}}, [][]any{{uint64(1300)}},
 	))
 

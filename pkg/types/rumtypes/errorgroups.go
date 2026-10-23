@@ -10,7 +10,7 @@ type GettableErrorGroups struct {
 	Groups   []*ErrorGroup `json:"groups" required:"true"`
 	Total    int64         `json:"total" required:"true" description:"Groups with events in the range."`
 	Events   int64         `json:"events" required:"true" description:"Error events in the range."`
-	Sessions int64         `json:"sessions" required:"true" description:"Sessions with spans in the range, for shares of sessions; approximate above 65,536."`
+	Sessions int64         `json:"sessions" required:"true" description:"Sessions with spans or logs in the range, for shares of sessions; approximate above 65,536."`
 }
 
 // ErrorGroup aggregates the events of one fingerprint. First seen and new in

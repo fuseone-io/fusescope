@@ -62,6 +62,29 @@ describe('applicationOverview', () => {
 		expect(overview.routeCount).toBe(3);
 	});
 
+	it('counts sessions that only sent logs, so the rate stays below 100%', () => {
+		const logsOnly = applicationOverview(
+			{
+				data: {
+					results: [
+						scalar('S', [], 2, [[4, 6]]),
+						scalar('L', [], 1, [[10]]),
+						scalar('E', [], 1, [[8]]),
+						scalar('LP', [], 1, [[5]]),
+						scalar('EP', [], 1, [[1]]),
+					],
+				},
+			},
+			'a',
+		);
+		expect(logsOnly.current).toStrictEqual({
+			sessions: 10,
+			sessionsWithErrors: 8,
+			errorRate: 80,
+		});
+		expect(logsOnly.previous?.errorRate).toBe(20);
+	});
+
 	it('lists sessions by start', () => {
 		expect(overview.sessions.map((session) => session.id)).toStrictEqual([
 			's2',
