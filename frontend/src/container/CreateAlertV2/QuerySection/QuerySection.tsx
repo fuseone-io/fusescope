@@ -21,6 +21,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import { useCreateAlertState } from '../context';
+import RumTemplateMapping from '../RumTemplates/RumTemplateMapping';
 import Stepper from '../Stepper';
 import { ALERT_STEP_IDS } from '../StepsNav/constants';
 import ChartPreview from './ChartPreview';
@@ -174,6 +175,7 @@ function QuerySection(): JSX.Element {
 				ruleId=""
 				hideTitle
 			/>
+			<RumTemplateMapping />
 			<ChartPreview
 				alertDef={alertDef}
 				source={source}

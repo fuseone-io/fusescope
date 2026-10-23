@@ -52,6 +52,74 @@ export const LogsAlert: Story = {
 };
 
 /**
+ * A logs alert offers the frontend templates of the RUM applications: picking
+ * one fills the query, the condition and the name, and says how the query reads
+ * the SDK's data.
+ */
+export const RumTemplatePicker: Story = {
+	args: { alertMode: 'logs' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		const card = await canvas.findByTestId(
+			'rum-template-session_error_rate',
+			undefined,
+			{ timeout: 15_000 },
+		);
+		await expect(card).toHaveAttribute('aria-pressed', 'false');
+		await userEvent.click(card);
+
+		await waitFor(
+			() =>
+				expect(
+					canvas.getByTestId('rum-template-session_error_rate'),
+				).toHaveAttribute('aria-pressed', 'true'),
+			{ timeout: 15_000 },
+		);
+		await waitFor(() =>
+			expect(canvas.getByTestId('alert-name-input')).toHaveValue(
+				'web-shop session error rate above 5%',
+			),
+		);
+		await expect(canvas.getByTestId('rum-template-mapping')).toHaveTextContent(
+			'A / B * 100',
+		);
+	},
+};
+
+/** Without RUM applications a logs alert shows no templates. */
+export const RumTemplatePickerHidden: Story = {
+	args: { alertMode: 'logs', rumApplications: 0 },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		await canvas.findByTestId('alert-name-input', undefined, { timeout: 15_000 });
+		await expect(canvas.queryByTestId('rum-template-picker')).toBeNull();
+	},
+};
+
+/** Opened from a route of the Views tab: the LCP template on that route. */
+export const RumTemplatePrefilled: Story = {
+	args: { alertMode: 'rum-lcp-template' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		await waitFor(
+			() =>
+				expect(canvas.getByTestId('alert-name-input')).toHaveValue(
+					'web-shop LCP p75 above 2.5 s on /product/:id',
+				),
+			{ timeout: 15_000 },
+		);
+		await expect(
+			await canvas.findByTestId('rum-template-lcp_p75', undefined, {
+				timeout: 15_000,
+			}),
+		).toHaveAttribute('aria-pressed', 'true');
+		await expect(canvas.getByTestId('rum-template-mapping')).toHaveTextContent(
+			'p75(browser.web_vital.value)',
+		);
+	},
+};
+
+/**
  * Anomaly detection, which is still written in the classic form: the seasonality
  * and the deviation take the place of a fixed threshold.
  */

@@ -6,12 +6,14 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
+import { rumAlertUrl } from 'lib/rum/alertTemplates';
 import { rest } from 'msw';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { RUM_APPLICATIONS } from '@/storybook/msw/__story_mockdata__/rum';
 
 import {
 	alertFieldKeysResponse,
@@ -39,6 +41,7 @@ const ALERT_MODES = [
 	'exceptions',
 	'anomaly',
 	'classic-form',
+	'rum-lcp-template',
 ] as const;
 
 type AlertMode = (typeof ALERT_MODES)[number];
@@ -53,6 +56,14 @@ const ALERT_TYPE_BY_MODE: Partial<Record<AlertMode, AlertTypes>> = {
 };
 
 const routeFor = (mode: AlertMode): string => {
+	if (mode === 'rum-lcp-template') {
+		return `${rumAlertUrl('lcp_p75', {
+			applicationId: RUM_APPLICATIONS[0].id,
+			applicationName: RUM_APPLICATIONS[0].name,
+			route: '/product/:id',
+		})}&${QueryParams.relativeTime}=6h`;
+	}
+
 	const alertType = ALERT_TYPE_BY_MODE[mode];
 
 	if (!alertType) {
@@ -100,6 +111,13 @@ export const createAlertMocks = defineStoryMocks({
 			value: 3,
 			max: 6,
 		}),
+		rumApplications: countControl('Frontend applications', {
+			group: FORM,
+			description:
+				'RUM applications a logs alert can start from a template for. With none, the template picker stays hidden.',
+			value: RUM_APPLICATIONS.length,
+			max: RUM_APPLICATIONS.length,
+		}),
 		testNotification: choiceControl<TestNotification>('Test notification', {
 			group: 'Create alert · form',
 			description:
@@ -124,6 +142,14 @@ export const createAlertMocks = defineStoryMocks({
 					},
 				}),
 			),
+		),
+
+		rest.get(
+			'http://localhost/api/v1/rum/applications',
+			response.json(() => ({
+				status: 'success',
+				data: RUM_APPLICATIONS.slice(0, values.rumApplications),
+			})),
 		),
 
 		rest.get(
