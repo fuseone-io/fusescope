@@ -3,6 +3,7 @@ import type { RumtypesGettableErrorGroupDTO } from 'api/generated/services/fuseS
 import { ApmWindow } from 'lib/apm/window';
 import { logsExplorerUrl, rumSessionUrl } from 'lib/rum/links';
 import { overviewFilter } from 'lib/rum/overviewQueries';
+import { useRumAlertUrl } from 'lib/rum/useRumAlertUrl';
 
 import { carriedSearch, errorLogsFilter } from '../../../utils';
 import { useEventParam } from '../hooks/useEventParam';
@@ -42,6 +43,10 @@ function ErrorDetailBody({
 		errorLogsFilter(overviewFilter(applicationId, release), group),
 		window,
 	);
+	const alertUrl = useRumAlertUrl('js_error_count', {
+		applicationId,
+		error: { type: group.type, message: group.message },
+	});
 
 	return (
 		<section
@@ -54,6 +59,7 @@ function ErrorDetailBody({
 				position={position}
 				onSelectEvent={setEventId}
 				logsUrl={logsUrl}
+				alertUrl={alertUrl}
 				sessionUrl={event ? sessionUrl(event.sessionId) : undefined}
 			/>
 			<ErrorKpis group={group} totalSessions={totalSessions} />

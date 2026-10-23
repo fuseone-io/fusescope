@@ -1,7 +1,8 @@
+import { Link } from 'react-router-dom';
 import SideSheet from 'components/PageTemplate/components/SideSheet';
-import TitleTooltip from 'components/PageTemplate/components/TitleTooltip';
 import { Button } from 'components/ui/button';
 import { ApmWindow } from 'lib/apm/window';
+import { useRumAlertUrl } from 'lib/rum/useRumAlertUrl';
 import { BellPlus } from 'lucide-react';
 
 import { useRouteDetail } from '../hooks/useRouteDetail';
@@ -26,6 +27,7 @@ function RouteSheet({
 	const state = useRouteDetail(applicationId, route, window, release);
 	const examples =
 		state.status === 'ready' ? (state.detail.examplePaths ?? []) : [];
+	const alertUrl = useRumAlertUrl('lcp_p75', { applicationId, route });
 
 	return (
 		<SideSheet
@@ -46,19 +48,28 @@ function RouteSheet({
 				</span>
 			}
 			actions={
-				<TitleTooltip title="Soon: alert on this route’s vitals and errors">
-					<span className="tw:inline-flex">
-						<Button
-							variant="outline"
-							size="sm"
-							disabled
+				alertUrl ? (
+					<Button asChild variant="outline" size="sm">
+						<Link
+							to={alertUrl}
+							title="Alert when this route’s LCP p75 is above 2.5 s"
 							data-testid="rum-route-create-alert"
 						>
 							<BellPlus aria-hidden="true" />
 							Create alert
-						</Button>
-					</span>
-				</TitleTooltip>
+						</Link>
+					</Button>
+				) : (
+					<Button
+						variant="outline"
+						size="sm"
+						disabled
+						data-testid="rum-route-create-alert"
+					>
+						<BellPlus aria-hidden="true" />
+						Create alert
+					</Button>
+				)
 			}
 			bodyClassName="tw:flex tw:flex-col tw:gap-6"
 		>

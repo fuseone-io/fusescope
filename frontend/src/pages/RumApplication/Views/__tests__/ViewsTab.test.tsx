@@ -2,7 +2,8 @@ import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import userEvent from '@testing-library/user-event';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen, within } from 'tests/test-utils';
+import { alertLink } from 'lib/rum/__tests__/alertLink';
+import { screen, waitFor, within } from 'tests/test-utils';
 
 import {
 	rumView,
@@ -98,6 +99,28 @@ describe('ViewsTab', () => {
 			'href',
 			'/frontend/applications/app-1/sessions?route=%2Fproduct%2F%3Aid',
 		);
-		expect(within(sheet).getByTestId('rum-route-create-alert')).toBeDisabled();
+	});
+
+	it('creates an LCP alert on the open route', async () => {
+		serveViews();
+		renderPage('/frontend/applications/app-1/views?route=%2Fproduct%2F%3Aid');
+
+		const sheet = await screen.findByTestId('rum-route-sheet');
+		await waitFor(() =>
+			expect(within(sheet).getByTestId('rum-route-create-alert')).toHaveAttribute(
+				'href',
+			),
+		);
+		expect(
+			alertLink(within(sheet).getByTestId('rum-route-create-alert')),
+		).toStrictEqual({
+			template: 'lcp_p75',
+			applicationId: 'app-1',
+			ruleName: 'web-shop LCP p75 above 2.5 s on /product/:id',
+			filters: [
+				"attribute.event.name = 'browser.web_vital' AND browser.web_vital.name = 'lcp' AND fusescope.rum.application.id = 'app-1' AND fusescope.rum.view.route = '/product/:id'",
+			],
+			groupBy: [[]],
+		});
 	});
 });

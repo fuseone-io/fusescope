@@ -3,7 +3,7 @@ import type { RumtypesGettableErrorGroupDTO } from 'api/generated/services/fuseS
 import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import TagChip from 'components/PageTemplate/components/TagChip';
 import { Button } from 'components/ui/button';
-import { History, ScrollText } from 'lucide-react';
+import { BellPlus, History, ScrollText } from 'lucide-react';
 
 import EventSelector from './EventSelector';
 
@@ -12,6 +12,7 @@ interface ErrorDetailHeaderProps {
 	position: { index: number; newer?: string; older?: string };
 	onSelectEvent: (eventId: string) => void;
 	logsUrl: string;
+	alertUrl?: string;
 	/** The selected event's session timeline. */
 	sessionUrl?: string;
 }
@@ -21,6 +22,7 @@ function ErrorDetailHeader({
 	position,
 	onSelectEvent,
 	logsUrl,
+	alertUrl,
 	sessionUrl,
 }: ErrorDetailHeaderProps): JSX.Element {
 	const count = group.latestEvents?.length ?? 0;
@@ -71,6 +73,18 @@ function ErrorDetailHeader({
 						View in Logs
 					</Link>
 				</Button>
+				{alertUrl && (
+					<Button asChild variant="outline" size="sm">
+						<Link
+							to={alertUrl}
+							title="Alert when this error happens more than 10 times in 5 minutes"
+							data-testid="rum-error-create-alert"
+						>
+							<BellPlus aria-hidden="true" />
+							Alert on this error
+						</Link>
+					</Button>
+				)}
 				{sessionUrl && (
 					<Button asChild size="sm">
 						<Link

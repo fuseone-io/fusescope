@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
-import { expect, screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -83,7 +83,12 @@ export const RouteSheet: Story = {
 			(await body.findAllByTestId('rum-route-request-trace', {}, WAIT))[0],
 		).toHaveAttribute('href', expect.stringContaining('/trace/'));
 		await expect(body.getAllByTestId('rum-route-release-marker')).toHaveLength(1);
-		await expect(body.getByTestId('rum-route-create-alert')).toBeDisabled();
+		await waitFor(() =>
+			expect(body.getByTestId('rum-route-create-alert')).toHaveAttribute(
+				'href',
+				expect.stringContaining('rumTemplate=lcp_p75'),
+			),
+		);
 		await userEvent.click(body.getByTestId('rum-route-vital-inp'));
 		await expect(body.getByTestId('rum-route-vital-inp')).toHaveAttribute(
 			'aria-pressed',

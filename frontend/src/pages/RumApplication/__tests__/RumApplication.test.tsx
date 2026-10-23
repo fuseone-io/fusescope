@@ -3,6 +3,7 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { Route } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
+import { alertLink } from 'lib/rum/__tests__/alertLink';
 import { render, screen } from 'tests/test-utils';
 
 import RumApplication from '../index';
@@ -37,6 +38,49 @@ describe('RumApplication', () => {
 			'aria-selected',
 			'true',
 		);
+	});
+
+	it('offers the frontend alert templates for the application', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderPage();
+
+		await screen.findByRole('heading', { name: 'web-shop' });
+		await user.click(screen.getByTestId('rum-overview-create-alert'));
+
+		expect(
+			alertLink(await screen.findByTestId('rum-alert-lcp_p75')),
+		).toStrictEqual({
+			template: 'lcp_p75',
+			applicationId: 'app-1',
+			ruleName: 'web-shop LCP p75 above 2.5 s',
+			filters: [
+				"attribute.event.name = 'browser.web_vital' AND browser.web_vital.name = 'lcp' AND fusescope.rum.application.id = 'app-1'",
+			],
+			groupBy: [['fusescope.rum.view.route']],
+		});
+		expect(
+			alertLink(screen.getByTestId('rum-alert-session_error_rate')),
+		).toStrictEqual({
+			template: 'session_error_rate',
+			applicationId: 'app-1',
+			ruleName: 'web-shop session error rate above 5%',
+			filters: [
+				"fusescope.rum.application.id = 'app-1' AND attribute.event.name = 'exception'",
+				"fusescope.rum.application.id = 'app-1'",
+			],
+			groupBy: [[], []],
+		});
+		expect(
+			alertLink(screen.getByTestId('rum-alert-js_error_count')),
+		).toStrictEqual({
+			template: 'js_error_count',
+			applicationId: 'app-1',
+			ruleName: 'web-shop JS errors above 10',
+			filters: [
+				"fusescope.rum.application.id = 'app-1' AND attribute.event.name = 'exception'",
+			],
+			groupBy: [[]],
+		});
 	});
 
 	it('moves between tabs by route, keeping the release', async () => {

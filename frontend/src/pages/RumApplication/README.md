@@ -21,6 +21,11 @@ One Real User Monitoring application, in four tabs:
   ticks, and each view's request waterfall and events, linking requests to their trace and
   errors to their group, with their logs beside.
 
+The header's **Create alert** menu, a route sheet's **Create alert** and an error group's
+**Alert on this error** open the alert editor on a frontend template (`lib/rum/alertTemplates.ts`):
+LCP p75 per route or on one route, session error rate, and the JS error count of the
+application or of one error.
+
 Reached from a row of the applications list.
 
 ## Structure
