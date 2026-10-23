@@ -295,12 +295,22 @@ describe('AppSidebar', () => {
 			expect(link !== null).toBe(visible);
 		});
 
-		it('shows the new source button to cloud users who are not viewers', () => {
-			mockLicense.mockReturnValue(CLOUD);
-			const { unmount } = renderAppSidebar({ pinned: true });
-			expect(screen.getByRole('button', { name: 'New source' })).toBeVisible();
-			unmount();
+		it.each([
+			['community', COMMUNITY],
+			['cloud', CLOUD],
+		])(
+			'opens Get started from the new source button (%s)',
+			async (_, license) => {
+				mockLicense.mockReturnValue(license);
+				renderAppSidebar({ pinned: true });
 
+				await userEvent.click(screen.getByRole('button', { name: 'New source' }));
+
+				expect(mockPush).toHaveBeenCalledWith(ROUTES.GET_STARTED);
+			},
+		);
+
+		it('hides the new source button from viewers', () => {
 			renderAppSidebar({ pinned: true, role: 'VIEWER' });
 			expect(
 				screen.queryByRole('button', { name: 'New source' }),

@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import logEvent from 'api/common/logEvent';
-import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
 
@@ -30,7 +28,7 @@ function HomeChecklist({
 	onSkip: (item: ChecklistItem) => void;
 	isLoading: boolean;
 }): JSX.Element {
-	const { user, activeLicense } = useAppContext();
+	const { user } = useAppContext();
 
 	const activeId = useMemo(
 		() => checklistItems.find((item) => !item.completed && !item.isSkipped)?.id,
@@ -42,15 +40,10 @@ function HomeChecklist({
 			step: item.id,
 		});
 
-		if (item.toRoute !== ROUTES.GET_STARTED_WITH_CLOUD) {
-			history.push(item.toRoute || '');
-		} else if (
-			activeLicense &&
-			activeLicense.platform === LicensePlatform.CLOUD
-		) {
-			history.push(item.toRoute || '');
+		if (item.toRoute) {
+			history.push(item.toRoute);
 		} else {
-			openInNewTab(item.docsLink || '');
+			openInNewTab(item.docsLink ?? '');
 		}
 	};
 

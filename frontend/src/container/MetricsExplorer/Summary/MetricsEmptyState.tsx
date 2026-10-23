@@ -1,10 +1,9 @@
-import { MouseEvent } from 'react';
+import { Link } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import ROUTES from 'constants/routes';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
 import {
+	ArrowRight,
 	ArrowUpRight,
 	BookOpen,
 	ChartColumn,
@@ -42,15 +41,8 @@ const GUIDES: {
 
 /** Shown instead of the summary when nothing was received and no filter is set. */
 function MetricsEmptyState(): JSX.Element {
-	const { isCloudUser } = useGetTenantLicense();
-
-	const handleSendingClick = (event: MouseEvent<HTMLAnchorElement>): void => {
-		if (!isCloudUser) {
-			return;
-		}
-		event.preventDefault();
+	const handleSendingClick = (): void => {
 		void logEvent('Metrics Explorer: Navigate to onboarding', {});
-		history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 	};
 
 	return (
@@ -81,16 +73,14 @@ function MetricsEmptyState(): JSX.Element {
 						FuseScope to start.
 					</p>
 				</div>
-				<a
-					href={fuseScopeDocsUrl('/sending-data/otlp/')}
-					target="_blank"
-					rel="noopener noreferrer"
+				<Link
+					to={ROUTES.GET_STARTED}
 					onClick={handleSendingClick}
 					className="tw:inline-flex tw:h-9 tw:items-center tw:gap-2 tw:self-start tw:rounded-lg tw:bg-primary! tw:px-3.5 tw:text-sm tw:font-medium tw:text-primary-foreground! tw:no-underline! tw:hover:bg-primary-strong!"
 				>
 					Sending metrics to FuseScope
-					<ArrowUpRight aria-hidden="true" className="tw:size-4" />
-				</a>
+					<ArrowRight aria-hidden="true" className="tw:size-4" />
+				</Link>
 				<div className="tw:flex tw:flex-col tw:gap-2">
 					<span className="tw:text-xs tw:font-medium tw:tracking-[0.05em] tw:text-muted-foreground tw:uppercase">
 						Other guides

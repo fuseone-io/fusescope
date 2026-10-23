@@ -246,10 +246,7 @@ describe('Summary', () => {
 		expect(screen.getByText('No metrics yet')).toBeInTheDocument();
 		expect(
 			screen.getByRole('link', { name: /Sending metrics to FuseScope/ }),
-		).toHaveAttribute(
-			'href',
-			'https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/',
-		);
+		).toHaveAttribute('href', ROUTES.GET_STARTED);
 		expect(
 			screen.queryByTestId('metrics-search-expression'),
 		).not.toBeInTheDocument();

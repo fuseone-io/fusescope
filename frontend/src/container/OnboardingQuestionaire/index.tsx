@@ -93,7 +93,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 			logEvent('Org Onboarding: Redirecting to Get Started', {});
 
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+			history.push(ROUTES.GET_STARTED);
 		},
 		onError: () => {
 			setUpdatingOrgOnboardingStatus(false);

@@ -68,26 +68,17 @@ describe('Integrations list', () => {
 });
 
 describe('Integrations header', () => {
-	it('sends a self-hosted workspace to the sending data docs', async () => {
-		mockLicense.mockReturnValue(COMMUNITY);
-		render(<Integrations />);
-
-		const link = await screen.findByTestId('integrations-data-sources');
-		expect(link).toHaveAttribute(
-			'href',
-			'https://fuseone-io.github.io/fusescope-docs/sending-data/instrumentation/',
-		);
-		expect(link).toHaveAttribute('target', '_blank');
-	});
-
-	it('opens the data source onboarding in a cloud workspace', async () => {
-		mockLicense.mockReturnValue(CLOUD);
+	it.each([
+		['self-hosted', COMMUNITY],
+		['cloud', CLOUD],
+	])('opens the Get started catalog in a %s workspace', async (_, license) => {
+		mockLicense.mockReturnValue(license);
 		render(
 			<Switch>
 				<Route exact path={ROUTES.INTEGRATIONS}>
 					<Integrations />
 				</Route>
-				<Route path={ROUTES.GET_STARTED_WITH_CLOUD}>
+				<Route path={ROUTES.GET_STARTED}>
 					<div data-testid="onboarding-route" />
 				</Route>
 			</Switch>,

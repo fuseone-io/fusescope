@@ -45,7 +45,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 		completed: false,
 		isSkipped: false,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.ADD_DATA_SOURCE,
-		toRoute: ROUTES.GET_STARTED_WITH_CLOUD,
+		toRoute: ROUTES.GET_STARTED,
 		docsLink: DOCS_LINKS.ADD_DATA_SOURCE,
 		isSkippable: false,
 	},
@@ -58,7 +58,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 		isSkipped: false,
 		isSkippable: true,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_LOGS,
-		toRoute: ROUTES.GET_STARTED_WITH_CLOUD,
+		toRoute: ROUTES.GET_STARTED,
 		docsLink: DOCS_LINKS.SEND_LOGS,
 	},
 	{
@@ -70,7 +70,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 		isSkipped: false,
 		isSkippable: true,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_TRACES,
-		toRoute: ROUTES.GET_STARTED_WITH_CLOUD,
+		toRoute: ROUTES.GET_STARTED,
 		docsLink: DOCS_LINKS.SEND_TRACES,
 	},
 	{
@@ -82,7 +82,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 		isSkipped: false,
 		isSkippable: true,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_METRICS,
-		toRoute: ROUTES.GET_STARTED_WITH_CLOUD,
+		toRoute: ROUTES.GET_STARTED,
 		docsLink: DOCS_LINKS.SEND_METRICS,
 	},
 	{

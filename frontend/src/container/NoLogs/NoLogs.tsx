@@ -1,12 +1,9 @@
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { ArrowUpRight } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
-import DOCLINKS from 'utils/docLinks';
-import { openInNewTab } from 'utils/navigation';
 
 import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
 
@@ -17,30 +14,20 @@ export default function NoLogs({
 }: {
 	dataSource: DataSource;
 }): JSX.Element {
-	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
-
 	const handleLinkClick = (
 		e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
 	): void => {
 		e.preventDefault();
 		e.stopPropagation();
 
-		if (isCloudUserVal) {
-			if (dataSource === DataSource.TRACES) {
-				logEvent('Traces Explorer: Navigate to onboarding', {});
-			} else if (dataSource === DataSource.LOGS) {
-				logEvent('Logs Explorer: Navigate to onboarding', {});
-			} else if (dataSource === DataSource.METRICS) {
-				logEvent('Metrics Explorer: Navigate to onboarding', {});
-			}
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-		} else if (dataSource === 'traces') {
-			openInNewTab(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE);
+		if (dataSource === DataSource.TRACES) {
+			logEvent('Traces Explorer: Navigate to onboarding', {});
+		} else if (dataSource === DataSource.LOGS) {
+			logEvent('Logs Explorer: Navigate to onboarding', {});
 		} else if (dataSource === DataSource.METRICS) {
-			openInNewTab(DOCLINKS.METRICS_EXPLORER_EMPTY_STATE);
-		} else {
-			openInNewTab(`${DOCLINKS.USER_GUIDE}${dataSource}/`);
+			logEvent('Metrics Explorer: Navigate to onboarding', {});
 		}
+		history.push(ROUTES.GET_STARTED);
 	};
 	return (
 		<div className="no-logs-container">
