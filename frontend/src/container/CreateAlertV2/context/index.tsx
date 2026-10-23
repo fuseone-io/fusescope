@@ -213,6 +213,16 @@ export function CreateAlertProvider(
 			});
 		}
 
+		if (urlPrefill.selectedQuery) {
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action: {
+					type: 'SET_SELECTED_QUERY',
+					payload: urlPrefill.selectedQuery,
+				},
+			});
+		}
+
 		if (urlPrefill.evaluationWindowPreset === EvaluationWindowPreset.METER) {
 			setCreateAlertState({
 				slice: CreateAlertSlice.EVALUATION_WINDOW,

@@ -15,6 +15,7 @@ export interface ResolvedAlertPrefill {
 	thresholds?: Threshold[];
 	matchType?: AlertThresholdMatchType;
 	operator?: AlertThresholdOperator;
+	selectedQuery?: string;
 	evaluationWindowPreset?: EvaluationWindowPreset;
 }
 
@@ -47,6 +48,7 @@ export function resolveUrlAlertPrefill(
 		thresholds: parseThresholds(params.get(QueryParams.thresholds)),
 		matchType: normalizeMatchType(params.get(QueryParams.matchType) ?? undefined),
 		operator: normalizeOperator(params.get(QueryParams.compareOp) ?? undefined),
+		selectedQuery: params.get(QueryParams.selectedQuery) || undefined,
 		evaluationWindowPreset: parseEvaluationWindowPreset(
 			params.get(QueryParams.evaluationWindowPreset),
 		),

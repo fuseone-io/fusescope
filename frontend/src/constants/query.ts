@@ -60,4 +60,7 @@ export enum QueryParams {
 	matchType = 'matchType',
 	compareOp = 'compareOp',
 	evaluationWindowPreset = 'evaluationWindowPreset',
+	selectedQuery = 'selectedQuery',
+	rumTemplate = 'rumTemplate',
+	rumApplication = 'rumApplication',
 }

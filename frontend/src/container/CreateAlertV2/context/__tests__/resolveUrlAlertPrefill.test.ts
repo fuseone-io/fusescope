@@ -14,8 +14,14 @@ describe('resolveUrlAlertPrefill', () => {
 			thresholds: undefined,
 			matchType: undefined,
 			operator: undefined,
+			selectedQuery: undefined,
 			evaluationWindowPreset: undefined,
 		});
+	});
+
+	it('reads the selected query name', () => {
+		expect(resolve('selectedQuery=F1').selectedQuery).toBe('F1');
+		expect(resolve('selectedQuery=').selectedQuery).toBeUndefined();
 	});
 
 	it('parses a thresholds array', () => {

@@ -36,6 +36,7 @@ function Probe(): JSX.Element {
 				{thresholdState.thresholds[0]?.thresholdValue}
 			</span>
 			<span data-testid="window-type">{evaluationWindow.windowType}</span>
+			<span data-testid="selected-query">{thresholdState.selectedQuery}</span>
 		</div>
 	);
 }
@@ -108,6 +109,18 @@ describe('CreateAlertProvider — URL-declared prefill (issue #5291)', () => {
 		expect(screen.getByTestId('match-type')).toHaveTextContent('in_total');
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('500');
 		expect(screen.getByTestId('window-type')).toHaveTextContent('cumulative');
+	});
+
+	it('selects the declared query, such as a formula', () => {
+		renderWithSearch('?selectedQuery=F1');
+
+		expect(screen.getByTestId('selected-query')).toHaveTextContent('F1');
+	});
+
+	it('keeps the first query selected when none is declared', () => {
+		renderWithSearch('?matchType=in_total');
+
+		expect(screen.getByTestId('selected-query')).toHaveTextContent('A');
 	});
 });
 
