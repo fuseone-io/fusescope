@@ -269,6 +269,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRUMApplicationsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRUMApplicationTuplesFactory(sqlstore),
 		sqlmigration.NewAddRUMApplicationViewerTuplesFactory(sqlstore),
+		sqlmigration.NewAddRUMSourceMapsFactory(sqlstore, sqlschema),
 	)
 }
 

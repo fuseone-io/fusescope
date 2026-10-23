@@ -41,10 +41,11 @@ type RegexpReplacement struct {
 }
 
 type StackFrame struct {
-	Function string `json:"function" required:"true"`
-	File     string `json:"file" required:"true"`
-	Line     int    `json:"line" required:"true" description:"0 when unknown."`
-	Column   int    `json:"column" required:"true" description:"0 when unknown."`
+	Function string         `json:"function" required:"true"`
+	File     string         `json:"file" required:"true"`
+	Line     int            `json:"line" required:"true" description:"0 when unknown."`
+	Column   int            `json:"column" required:"true" description:"0 when unknown."`
+	Original *OriginalFrame `json:"original" required:"true" nullable:"true" description:"The original position, when an uploaded source map resolves the frame."`
 }
 
 // NewErrorFingerprint groups error events by exception type, normalized

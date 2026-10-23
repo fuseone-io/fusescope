@@ -17,6 +17,8 @@ const (
 	maxRouteLength    = 512
 )
 
+var ErrCodeViewNotFound = errors.MustNewCode("rum_view_not_found")
+
 func (module *module) ListViews(ctx context.Context, orgID valuer.UUID, id valuer.UUID, params *rumtypes.ListViewsParams) (*rumtypes.GettableViews, error) {
 	limit := params.Limit
 	if limit == 0 {
@@ -62,7 +64,12 @@ func (module *module) ListViews(ctx context.Context, orgID valuer.UUID, id value
 		slowest[row.route] = &rumtypes.RequestTemplateLatency{RequestTemplate: row.template, P75Ms: nanosToMillis(row.p75Ns), Calls: int64(row.calls)}
 	}
 
-	gettable := &rumtypes.GettableViews{Routes: make([]*rumtypes.ViewRoute, 0, len(routes))}
+	sessions, err := module.telemetry.SessionCount(ctx, scope)
+	if err != nil {
+		return nil, err
+	}
+
+	gettable := &rumtypes.GettableViews{Routes: make([]*rumtypes.ViewRoute, 0, len(routes)), Sessions: sessions}
 	for _, row := range routes {
 		gettable.Routes = append(gettable.Routes, &rumtypes.ViewRoute{
 			Route:              row.route,
@@ -116,9 +123,10 @@ func (module *module) addViewTotals(ctx context.Context, scope telemetryScope, g
 	if err != nil {
 		return err
 	}
-	if len(rows) > 0 {
-		gettable.ViewCounts, gettable.MedianTimeOnViewMs, gettable.ExamplePaths = rows[0].counts, nanosToMillis(rows[0].medianNs), rows[0].examplePaths
+	if len(rows) == 0 {
+		return errors.Newf(errors.TypeNotFound, ErrCodeViewNotFound, "no views of route %q in the range", gettable.Route)
 	}
+	gettable.ViewCounts, gettable.MedianTimeOnViewMs, gettable.ExamplePaths = rows[0].counts, nanosToMillis(rows[0].medianNs), rows[0].examplePaths
 	return nil
 }
 

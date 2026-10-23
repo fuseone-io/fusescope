@@ -581,3 +581,17 @@ rum:
       burst: 60
     # Use the first X-Forwarded-For address as the client IP. Enable only behind a proxy that sets it.
     trust_forwarded_for: false
+  sourcemaps:
+    # Directory the uploaded source maps are stored in; created on the first upload.
+    dir: /var/lib/signoz/sourcemaps
+    # Largest accepted map, in bytes.
+    max_file_size: 52428800
+    max_files_per_release: 1000
+    # Bytes of maps one application holds.
+    quota: 2147483648
+    # Memory, in bytes, of the decoded maps kept for symbolication.
+    cache_size: 268435456
+    # Original source lines returned on each side of a symbolicated frame.
+    context_lines: 5
+    # How often the maps past their application's retention are deleted.
+    cleanup_interval: 1h

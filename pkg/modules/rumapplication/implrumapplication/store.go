@@ -92,7 +92,7 @@ func (store *store) ListApplicationsInAllOrgs(ctx context.Context) ([]*rumtypes.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&applications).
-		Column("id", "data").
+		Column("id", "org_id", "data").
 		Scan(ctx)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list rum applications")
@@ -120,15 +120,17 @@ func (store *store) UpdateApplication(ctx context.Context, application *rumtypes
 
 func (store *store) DeleteApplication(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	return store.RunInTx(ctx, func(ctx context.Context) error {
-		_, err := store.sqlstore.
-			BunDBCtx(ctx).
-			NewDelete().
-			Model((*rumtypes.ApplicationKey)(nil)).
-			Where("org_id = ?", orgID).
-			Where("application_id = ?", id).
-			Exec(ctx)
-		if err != nil {
-			return errors.WrapInternalf(err, errors.CodeInternal, "failed to delete rum application keys")
+		for _, model := range []any{(*rumtypes.ApplicationKey)(nil), (*rumtypes.StorableSourceMap)(nil)} {
+			_, err := store.sqlstore.
+				BunDBCtx(ctx).
+				NewDelete().
+				Model(model).
+				Where("org_id = ?", orgID).
+				Where("application_id = ?", id).
+				Exec(ctx)
+			if err != nil {
+				return errors.WrapInternalf(err, errors.CodeInternal, "failed to delete rum application keys and source maps")
+			}
 		}
 
 		result, err := store.sqlstore.

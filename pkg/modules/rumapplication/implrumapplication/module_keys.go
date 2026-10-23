@@ -158,6 +158,10 @@ func (module *module) FlushUsage(ctx context.Context) error {
 		}
 	}
 
+	if err := module.flushSourceMapUsage(ctx); err != nil {
+		flushErr = err
+	}
+
 	if len(firstSeen) > 0 {
 		module.keys.Clear()
 	}

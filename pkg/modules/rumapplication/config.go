@@ -30,6 +30,30 @@ type Config struct {
 	UsageFlushInterval time.Duration `mapstructure:"usage_flush_interval"`
 
 	RateLimit RateLimitConfig `mapstructure:"ratelimit"`
+
+	SourceMaps SourceMapsConfig `mapstructure:"sourcemaps"`
+}
+
+type SourceMapsConfig struct {
+	// Directory the uploaded maps are stored in; created on the first upload.
+	Dir string `mapstructure:"dir"`
+
+	// Largest accepted map, in bytes.
+	MaxFileSize int64 `mapstructure:"max_file_size"`
+
+	MaxFilesPerRelease int `mapstructure:"max_files_per_release"`
+
+	// Bytes of maps one application holds.
+	Quota int64 `mapstructure:"quota"`
+
+	// Memory, in bytes, of the decoded maps kept for symbolication.
+	CacheSize int64 `mapstructure:"cache_size"`
+
+	// Original source lines returned on each side of a symbolicated frame.
+	ContextLines int `mapstructure:"context_lines"`
+
+	// How often the maps past their application's retention are deleted.
+	CleanupInterval time.Duration `mapstructure:"cleanup_interval"`
 }
 
 type RateLimitConfig struct {
@@ -66,6 +90,15 @@ func newConfig() factory.Config {
 			Key:    LimitConfig{Rate: 500, Burst: 1000},
 			Client: LimitConfig{Rate: 20, Burst: 60},
 		},
+		SourceMaps: SourceMapsConfig{
+			Dir:                "/var/lib/signoz/sourcemaps",
+			MaxFileSize:        50 << 20,
+			MaxFilesPerRelease: 1000,
+			Quota:              2 << 30,
+			CacheSize:          256 << 20,
+			ContextLines:       5,
+			CleanupInterval:    time.Hour,
+		},
 	}
 }
 
@@ -80,6 +113,10 @@ func (c Config) Validate() error {
 	}
 	if c.MaxBodySize <= 0 || c.ForwardTimeout <= 0 || c.KeyCacheTTL <= 0 || c.UsageFlushInterval <= 0 {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "rum.max_body_size, rum.forward_timeout, rum.key_cache_ttl and rum.usage_flush_interval must be positive")
+	}
+	maps := c.SourceMaps
+	if maps.Dir == "" || maps.MaxFileSize <= 0 || maps.MaxFilesPerRelease <= 0 || maps.Quota <= 0 || maps.CacheSize <= 0 || maps.ContextLines < 0 || maps.CleanupInterval <= 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "rum.sourcemaps.dir must be set, its sizes, max_files_per_release and cleanup_interval positive and context_lines not negative")
 	}
 	for _, limit := range []LimitConfig{c.RateLimit.Key, c.RateLimit.Client} {
 		if limit.Rate <= 0 || limit.Burst <= 0 {

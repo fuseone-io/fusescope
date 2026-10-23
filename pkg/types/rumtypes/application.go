@@ -38,16 +38,17 @@ type Platform struct{ valuer.String }
 type Application struct {
 	types.Identifiable
 	types.TimeAuditable
-	OrgID                valuer.UUID `json:"orgId" required:"true"`
-	Name                 string      `json:"name" required:"true"`
-	Platform             Platform    `json:"platform" required:"true"`
-	Environment          string      `json:"environment" required:"true"`
-	AllowedOrigins       []string    `json:"allowedOrigins" required:"true" description:"Browser origins allowed to ingest, e.g. https://shop.example.com or https://*.example.com; * allows any."`
-	TracePropagationURLs []string    `json:"tracePropagationUrls" required:"true" description:"URL prefixes of APIs the SDK sends traceparent to."`
-	SampleRate           float64     `json:"sampleRate" required:"true" description:"Fraction of sessions the SDK records, from 0 to 1."`
-	PIIPolicy            PIIPolicy   `json:"piiPolicy" required:"true"`
-	CreatedBy            string      `json:"createdBy" required:"true"`
-	FirstSeenAt          *time.Time  `json:"firstSeenAt" required:"true" nullable:"true" description:"When the gateway first accepted data for the application."`
+	OrgID                valuer.UUID       `json:"orgId" required:"true"`
+	Name                 string            `json:"name" required:"true"`
+	Platform             Platform          `json:"platform" required:"true"`
+	Environment          string            `json:"environment" required:"true"`
+	AllowedOrigins       []string          `json:"allowedOrigins" required:"true" description:"Browser origins allowed to ingest, e.g. https://shop.example.com or https://*.example.com; * allows any."`
+	TracePropagationURLs []string          `json:"tracePropagationUrls" required:"true" description:"URL prefixes of APIs the SDK sends traceparent to."`
+	SampleRate           float64           `json:"sampleRate" required:"true" description:"Fraction of sessions the SDK records, from 0 to 1."`
+	PIIPolicy            PIIPolicy         `json:"piiPolicy" required:"true"`
+	CreatedBy            string            `json:"createdBy" required:"true"`
+	FirstSeenAt          *time.Time        `json:"firstSeenAt" required:"true" nullable:"true" description:"When the gateway first accepted data for the application."`
+	SourceMaps           SourceMapSettings `json:"sourceMaps" required:"true"`
 }
 
 type StorableApplication struct {
@@ -65,24 +66,26 @@ type StorableApplication struct {
 }
 
 type PostableApplication struct {
-	Name                 string    `json:"name" required:"true"`
-	Platform             Platform  `json:"platform" required:"true"`
-	Environment          string    `json:"environment" required:"true"`
-	AllowedOrigins       []string  `json:"allowedOrigins"`
-	TracePropagationURLs []string  `json:"tracePropagationUrls"`
-	SampleRate           float64   `json:"sampleRate" description:"Defaults to 1."`
-	PIIPolicy            PIIPolicy `json:"piiPolicy" description:"dropQuery defaults to true."`
+	Name                 string            `json:"name" required:"true"`
+	Platform             Platform          `json:"platform" required:"true"`
+	Environment          string            `json:"environment" required:"true"`
+	AllowedOrigins       []string          `json:"allowedOrigins"`
+	TracePropagationURLs []string          `json:"tracePropagationUrls"`
+	SampleRate           float64           `json:"sampleRate" description:"Defaults to 1."`
+	PIIPolicy            PIIPolicy         `json:"piiPolicy" description:"dropQuery defaults to true."`
+	SourceMaps           SourceMapSettings `json:"sourceMaps"`
 }
 
 // UpdatableApplication replaces everything but the platform, which the keys
 // and the snippet depend on.
 type UpdatableApplication struct {
-	Name                 string    `json:"name" required:"true"`
-	Environment          string    `json:"environment" required:"true"`
-	AllowedOrigins       []string  `json:"allowedOrigins"`
-	TracePropagationURLs []string  `json:"tracePropagationUrls"`
-	SampleRate           float64   `json:"sampleRate" description:"Defaults to 1."`
-	PIIPolicy            PIIPolicy `json:"piiPolicy" description:"dropQuery defaults to true."`
+	Name                 string             `json:"name" required:"true"`
+	Environment          string             `json:"environment" required:"true"`
+	AllowedOrigins       []string           `json:"allowedOrigins"`
+	TracePropagationURLs []string           `json:"tracePropagationUrls"`
+	SampleRate           float64            `json:"sampleRate" description:"Defaults to 1."`
+	PIIPolicy            PIIPolicy          `json:"piiPolicy" description:"dropQuery defaults to true."`
+	SourceMaps           *SourceMapSettings `json:"sourceMaps" description:"Kept when omitted."`
 }
 
 // GettableCreatedApplication carries the first key, shown once.
@@ -109,6 +112,7 @@ func NewApplication(orgID valuer.UUID, createdBy string, postable *PostableAppli
 		SampleRate:           postable.SampleRate,
 		PIIPolicy:            postable.PIIPolicy,
 		CreatedBy:            createdBy,
+		SourceMaps:           postable.SourceMaps,
 	}
 }
 
@@ -119,6 +123,9 @@ func (app *Application) Update(updatable *UpdatableApplication) error {
 	app.TracePropagationURLs = updatable.TracePropagationURLs
 	app.SampleRate = updatable.SampleRate
 	app.PIIPolicy = updatable.PIIPolicy
+	if updatable.SourceMaps != nil {
+		app.SourceMaps = *updatable.SourceMaps
+	}
 	app.UpdatedAt = time.Now()
 	return app.Validate()
 }
@@ -127,7 +134,10 @@ func (app *Application) Validate() error {
 	if err := validatePlatform(app.Platform); err != nil {
 		return err
 	}
-	return validateSettings(app.Name, app.Environment, app.AllowedOrigins, app.TracePropagationURLs, app.SampleRate, app.PIIPolicy)
+	if err := validateSettings(app.Name, app.Environment, app.AllowedOrigins, app.TracePropagationURLs, app.SampleRate, app.PIIPolicy); err != nil {
+		return err
+	}
+	return app.SourceMaps.Validate()
 }
 
 // AllowsOrigin matches an Origin header against the allowed origins. A
@@ -169,6 +179,7 @@ func NewStorableApplication(app *Application) (*StorableApplication, error) {
 		TracePropagationURLs: app.TracePropagationURLs,
 		SampleRate:           app.SampleRate,
 		PIIPolicy:            app.PIIPolicy,
+		SourceMaps:           &app.SourceMaps,
 	})
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to encode rum application %s", app.ID.StringValue())
@@ -207,6 +218,7 @@ func NewApplicationFromStorable(storable *StorableApplication) (*Application, er
 		PIIPolicy:            data.PIIPolicy,
 		CreatedBy:            storable.CreatedBy,
 		FirstSeenAt:          storable.FirstSeenAt,
+		SourceMaps:           *data.SourceMaps,
 	}, nil
 }
 
@@ -224,7 +236,7 @@ func NewApplicationsFromStorables(storables []*StorableApplication) ([]*Applicat
 
 func (postable *PostableApplication) UnmarshalJSON(data []byte) error {
 	type alias PostableApplication
-	temp := alias{SampleRate: 1, PIIPolicy: NewDefaultPIIPolicy()}
+	temp := alias{SampleRate: 1, PIIPolicy: NewDefaultPIIPolicy(), SourceMaps: NewDefaultSourceMapSettings()}
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
@@ -258,10 +270,11 @@ func (updatable *UpdatableApplication) UnmarshalJSON(data []byte) error {
 }
 
 type storableApplicationData struct {
-	AllowedOrigins       []string  `json:"allowedOrigins"`
-	TracePropagationURLs []string  `json:"tracePropagationUrls"`
-	SampleRate           float64   `json:"sampleRate"`
-	PIIPolicy            PIIPolicy `json:"piiPolicy"`
+	AllowedOrigins       []string           `json:"allowedOrigins"`
+	TracePropagationURLs []string           `json:"tracePropagationUrls"`
+	SampleRate           float64            `json:"sampleRate"`
+	PIIPolicy            PIIPolicy          `json:"piiPolicy"`
+	SourceMaps           *SourceMapSettings `json:"sourceMaps,omitempty"`
 }
 
 func (data *storableApplicationData) normalize() {
@@ -272,6 +285,10 @@ func (data *storableApplicationData) normalize() {
 		data.TracePropagationURLs = []string{}
 	}
 	data.PIIPolicy.normalize()
+	if data.SourceMaps == nil {
+		defaults := NewDefaultSourceMapSettings()
+		data.SourceMaps = &defaults
+	}
 }
 
 func normalizeSettings(name *string, environment *string, origins *[]string, propagation *[]string, policy *PIIPolicy) {

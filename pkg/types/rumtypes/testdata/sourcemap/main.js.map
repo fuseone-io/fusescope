@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/price.ts", "src/index.ts"],
+  "sourcesContent": ["export function formatPrice(amount: number | undefined): string {\n  if (amount === undefined) {\n    throw new TypeError(\"price is undefined\");\n  }\n  return `$${amount.toFixed(2)}`;\n}\n", "import { formatPrice } from \"./price\";\n\ninterface Cart {\n  items: { price?: number }[];\n}\n\nexport function renderCart(cart: Cart): string[] {\n  return cart.items.map((item) => formatPrice(item.price));\n}\n\nrenderCart({ items: [{ price: 3 }, {}] });\n"],
+  "mappings": "MAAO,SAASA,EAAYC,EAAoC,CAC9D,GAAIA,IAAW,OACb,MAAM,IAAI,UAAU,oBAAoB,EAE1C,MAAO,IAAIA,EAAO,QAAQ,CAAC,CAAC,EAC9B,CCCO,SAASC,EAAWC,EAAsB,CAC/C,OAAOA,EAAK,MAAM,IAAKC,GAASC,EAAYD,EAAK,KAAK,CAAC,CACzD,CAEAF,EAAW,CAAE,MAAO,CAAC,CAAE,MAAO,CAAE,EAAG,CAAC,CAAC,CAAE,CAAC",
+  "names": ["formatPrice", "amount", "renderCart", "cart", "item", "formatPrice"]
+}

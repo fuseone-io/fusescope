@@ -33,6 +33,11 @@ func newTestModule(t *testing.T) (*module, valuer.UUID) {
 // promotion statements first; with matchRegexp, later expectations are regexps.
 func newTestModuleWithMock(t *testing.T, matchRegexp bool) (*module, valuer.UUID, cmock.ClickConnMockCommon) {
 	t.Helper()
+	return newTestModuleWithConfig(t, matchRegexp, func(*rumapplication.Config) {})
+}
+
+func newTestModuleWithConfig(t *testing.T, matchRegexp bool, configure func(*rumapplication.Config)) (*module, valuer.UUID, cmock.ClickConnMockCommon) {
+	t.Helper()
 	ctx := context.Background()
 	sqlStore, err := sqlitesqlstore.New(ctx, factorytest.NewSettings(), sqlstore.Config{
 		Provider:   "sqlite",
@@ -41,11 +46,13 @@ func newTestModuleWithMock(t *testing.T, matchRegexp bool) (*module, valuer.UUID
 	})
 	require.NoError(t, err)
 
-	for _, model := range []any{(*rumtypes.StorableApplication)(nil), (*rumtypes.ApplicationKey)(nil)} {
+	for _, model := range []any{(*rumtypes.StorableApplication)(nil), (*rumtypes.ApplicationKey)(nil), (*rumtypes.StorableSourceMap)(nil)} {
 		_, err := sqlStore.BunDB().NewCreateTable().Model(model).IfNotExists().Exec(ctx)
 		require.NoError(t, err)
 	}
 	_, err = sqlStore.BunDB().Exec(`CREATE UNIQUE INDEX uq_rum_application_org_id_name ON rum_application (org_id, name)`)
+	require.NoError(t, err)
+	_, err = sqlStore.BunDB().Exec(`CREATE UNIQUE INDEX uq_rum_source_map ON rum_source_map (application_id, release_name, path)`)
 	require.NoError(t, err)
 
 	matcher := sqlmock.QueryMatcherEqual
@@ -61,6 +68,8 @@ func newTestModuleWithMock(t *testing.T, matchRegexp bool) (*module, valuer.UUID
 	}
 
 	config := rumapplication.NewConfigFactory().New().(*rumapplication.Config)
+	config.SourceMaps.Dir = filepath.Join(t.TempDir(), "sourcemaps")
+	configure(config)
 	return NewModule(NewStore(sqlStore), telemetryStore, factorytest.NewSettings(), *config).(*module), valuer.GenerateUUID(), telemetryStore.Mock()
 }
 

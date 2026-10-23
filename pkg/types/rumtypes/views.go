@@ -26,7 +26,8 @@ type VitalName struct{ valuer.String }
 type VitalRating struct{ valuer.String }
 
 type GettableViews struct {
-	Routes []*ViewRoute `json:"routes" required:"true"`
+	Routes   []*ViewRoute `json:"routes" required:"true"`
+	Sessions int64        `json:"sessions" required:"true" description:"Sessions with spans in the range, for shares of sessions; approximate above 65,536."`
 }
 
 type ViewCounts struct {

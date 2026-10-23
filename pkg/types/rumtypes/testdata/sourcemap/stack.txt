@@ -1,0 +1,6 @@
+TypeError: price is undefined
+    at e (https://shop.example.com/assets/main.js:1:41)
+    at https://shop.example.com/assets/main.js:1:138
+    at Array.map (<anonymous>)
+    at t (https://shop.example.com/assets/main.js:1:131)
+    at https://shop.example.com/assets/main.js:1:150

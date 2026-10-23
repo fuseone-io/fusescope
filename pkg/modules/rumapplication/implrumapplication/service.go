@@ -19,7 +19,8 @@ type service struct {
 }
 
 // NewService promotes the RUM fields at startup when an application exists,
-// retrying until ClickHouse accepts, and flushes key and application usage.
+// retrying until ClickHouse accepts, flushes key, application and source map
+// usage and deletes source maps past retention.
 func NewService(providerSettings factory.ProviderSettings, module rumapplication.Module, config rumapplication.Config) rumapplication.Service {
 	return &service{
 		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication"),
@@ -35,21 +36,37 @@ func (service *service) Start(ctx context.Context) error {
 		return nil
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	go func() {
+		select {
+		case <-service.stopC:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
 	flush := time.NewTicker(service.config.UsageFlushInterval)
 	defer flush.Stop()
 	promote := time.NewTicker(promoteRetryInterval)
 	defer promote.Stop()
+	cleanup := time.NewTicker(service.config.SourceMaps.CleanupInterval)
+	defer cleanup.Stop()
 
 	promoted := service.promote(ctx)
 	for {
 		select {
-		case <-service.stopC:
+		case <-ctx.Done():
 			return nil
 		case <-flush.C:
 			_ = service.module.FlushUsage(ctx)
 		case <-promote.C:
 			if !promoted {
 				promoted = service.promote(ctx)
+			}
+		case <-cleanup.C:
+			if err := service.module.CleanupSourceMaps(ctx); err != nil && ctx.Err() == nil {
+				service.settings.Logger().WarnContext(ctx, "rum source map cleanup failed, retrying at the next interval", errors.Attr(err))
 			}
 		}
 	}

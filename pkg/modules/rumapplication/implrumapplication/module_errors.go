@@ -41,7 +41,12 @@ func (module *module) ListErrorGroups(ctx context.Context, orgID valuer.UUID, id
 		return nil, err
 	}
 
-	gettable := &rumtypes.GettableErrorGroups{Total: int64(len(groups)), Groups: []*rumtypes.ErrorGroup{}}
+	sessions, err := module.telemetry.SessionCount(ctx, scope)
+	if err != nil {
+		return nil, err
+	}
+
+	gettable := &rumtypes.GettableErrorGroups{Total: int64(len(groups)), Groups: []*rumtypes.ErrorGroup{}, Sessions: sessions}
 	for _, group := range groups {
 		gettable.Events += group.Events
 	}
@@ -200,13 +205,14 @@ func (module *module) addErrorEvents(ctx context.Context, applicationID valuer.U
 	var selected *rumtypes.ErrorEvent
 	for _, row := range rows {
 		info := resourceOf(resources, row.fingerprint)
-		frames, symbolicated, err := module.symbolicator.Symbolicate(ctx, applicationID, info.release, rumtypes.ParseStackFrames(row.stacktrace))
+		symbolication, err := module.symbolicator.Symbolicate(ctx, applicationID, info.release, rumtypes.ParseStackFrames(row.stacktrace))
 		if err != nil {
 			return err
 		}
 		event := &rumtypes.ErrorEvent{
 			ID: row.id, Timestamp: time.Unix(0, int64(row.timestamp)).UTC(), SessionID: row.sessionID, Route: row.route, Release: info.release, Client: info.client,
-			Type: row.errorType, Message: row.message, Source: row.source, Stacktrace: row.stacktrace, Frames: frames, Symbolicated: symbolicated,
+			Type: row.errorType, Message: row.message, Source: row.source, Stacktrace: row.stacktrace,
+			Frames: symbolication.Frames, Symbolicated: symbolication.Symbolicated, MissingSourceMap: symbolication.MissingSourceMap,
 		}
 		gettable.LatestEvents = append(gettable.LatestEvents, event)
 		if selected == nil || event.ID == eventID {

@@ -5,9 +5,10 @@ import (
 )
 
 type GettableErrorGroups struct {
-	Groups []*ErrorGroup `json:"groups" required:"true"`
-	Total  int64         `json:"total" required:"true" description:"Groups with events in the range."`
-	Events int64         `json:"events" required:"true" description:"Error events in the range."`
+	Groups   []*ErrorGroup `json:"groups" required:"true"`
+	Total    int64         `json:"total" required:"true" description:"Groups with events in the range."`
+	Events   int64         `json:"events" required:"true" description:"Error events in the range."`
+	Sessions int64         `json:"sessions" required:"true" description:"Sessions with spans in the range, for shares of sessions; approximate above 65,536."`
 }
 
 // ErrorGroup aggregates the events of one fingerprint. First seen and new in
@@ -47,18 +48,19 @@ type GettableErrorGroup struct {
 }
 
 type ErrorEvent struct {
-	ID           string       `json:"id" required:"true"`
-	Timestamp    time.Time    `json:"timestamp" required:"true"`
-	SessionID    string       `json:"sessionId" required:"true"`
-	Route        string       `json:"route" required:"true"`
-	Release      string       `json:"release" required:"true"`
-	Client       Client       `json:"client" required:"true"`
-	Type         string       `json:"type" required:"true"`
-	Message      string       `json:"message" required:"true"`
-	Source       string       `json:"source" required:"true"`
-	Stacktrace   string       `json:"stacktrace" required:"true" description:"exception.stacktrace as received."`
-	Frames       []StackFrame `json:"frames" required:"true"`
-	Symbolicated bool         `json:"symbolicated" required:"true" description:"Whether frames were mapped through an uploaded source map."`
+	ID               string            `json:"id" required:"true"`
+	Timestamp        time.Time         `json:"timestamp" required:"true"`
+	SessionID        string            `json:"sessionId" required:"true"`
+	Route            string            `json:"route" required:"true"`
+	Release          string            `json:"release" required:"true"`
+	Client           Client            `json:"client" required:"true"`
+	Type             string            `json:"type" required:"true"`
+	Message          string            `json:"message" required:"true"`
+	Source           string            `json:"source" required:"true"`
+	Stacktrace       string            `json:"stacktrace" required:"true" description:"exception.stacktrace as received."`
+	Frames           []StackFrame      `json:"frames" required:"true"`
+	Symbolicated     bool              `json:"symbolicated" required:"true" description:"Whether frames were mapped through an uploaded source map; frames keep the minified position and carry the original one."`
+	MissingSourceMap *MissingSourceMap `json:"missingSourceMap" required:"true" nullable:"true" description:"Set when the event's release has no uploaded source maps."`
 }
 
 type AffectedSession struct {
