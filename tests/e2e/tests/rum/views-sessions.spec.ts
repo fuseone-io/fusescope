@@ -70,8 +70,35 @@ test('RUM-03 open a session timeline from Sessions', async ({
 	await expect(page.getByTestId('rum-session-view')).toHaveCount(2);
 	await expect(page.getByTestId('rum-session-event-error-link')).toHaveAttribute(
 		'href',
+		new RegExp(`/applications/${app.id}/errors/[0-9a-f]{16}`),
+	);
+	await expect(page.getByTestId('rum-session-event-error-logs')).toHaveAttribute(
+		'href',
 		/logs-explorer/,
 	);
 	await page.getByTestId('rum-session-back').click();
 	await expect(page.getByTestId('rum-sessions-row')).toHaveCount(1);
+});
+
+test('RUM-04 open an error group from Errors', async ({ authedPage: page }) => {
+	const app = seeded!;
+	await page.goto(`/frontend/applications/${app.id}?relativeTime=1h`);
+	await page.getByTestId('page-tab-errors').click();
+
+	await expect(page).toHaveURL(new RegExp(`/applications/${app.id}/errors`));
+	await expect(page.getByTestId('rum-error-group')).toHaveCount(1);
+	await page.getByTestId('rum-error-group-open').click();
+
+	await expect(page).toHaveURL(/\/errors\/[0-9a-f]{16}/);
+	await expect(page.getByTestId('rum-error-type')).toHaveText('TypeError');
+	await expect(page.getByTestId('rum-error-upload-command')).toContainText(
+		'--release 1.8.0',
+	);
+	await expect(page.getByTestId('rum-error-mode-original')).toBeDisabled();
+	await expect(page.getByTestId('rum-error-session-open')).toHaveAttribute(
+		'href',
+		new RegExp(`/sessions/${app.sessionId}`),
+	);
+	await page.getByTestId('rum-error-back').click();
+	await expect(page.getByTestId('rum-error-group')).toHaveCount(1);
 });
