@@ -13,7 +13,6 @@ import {
 } from 'components/ui/sidebar';
 import ROUTES from 'constants/routes';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { PackagePlus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -43,7 +42,6 @@ import { openRoute } from './utils';
 /** FuseScope's main navigation; render inside `AppSidebarProvider`. */
 function AppSidebar(): JSX.Element {
 	const { user, trialInfo } = useAppContext();
-	const { isCloudUser } = useGetTenantLicense();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const aiConversationId = useAIAssistantStore((s) => s.activeConversationId);
 	const { activeKey, pathname, urlFor, navigate } = useSidebarNavigation();
@@ -64,7 +62,7 @@ function AppSidebar(): JSX.Element {
 	const { isOpen, setOpen } = useCollapsedNavGroups(sections, activeKey);
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
-	const showNewSource = isCloudUser && user.role !== USER_ROLES.VIEWER;
+	const showNewSource = user.role !== USER_ROLES.VIEWER;
 
 	const logClick = (item: NavItem): void => {
 		void logEvent('Sidebar V2: Menu clicked', {
@@ -121,10 +119,10 @@ function AppSidebar(): JSX.Element {
 										className={NAV_BUTTON_CLASS}
 										onClick={(event): void => {
 											void logEvent('Sidebar: Menu clicked', {
-												menuRoute: ROUTES.GET_STARTED_WITH_CLOUD,
+												menuRoute: ROUTES.GET_STARTED,
 												menuLabel: 'Get Started',
 											});
-											openRoute(ROUTES.GET_STARTED_WITH_CLOUD, event);
+											openRoute(ROUTES.GET_STARTED, event);
 										}}
 									>
 										<PackagePlus />

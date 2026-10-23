@@ -5,15 +5,12 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { ArrowRight, Server } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { ServiceRow } from 'pages/Services/components/ServicesList/serviceRows';
 import { USER_ROLES } from 'types/roles';
-import { openInNewTab } from 'utils/navigation';
 
 import HomeEmptyState from '../components/HomeEmptyState';
 import HomeWidget from '../components/HomeWidget';
 import WidgetLink from '../components/WidgetLink';
-import { DOCS_LINKS } from '../constants';
 import ServicesTable from './ServicesTable';
 import TimeIntervalMenu from './TimeIntervalMenu';
 
@@ -33,17 +30,13 @@ function ServicesWidget({
 	selectedInterval,
 	onIntervalChange,
 }: ServicesWidgetProps): JSX.Element {
-	const { user, activeLicense } = useAppContext();
+	const { user } = useAppContext();
 	const servicesExist = rows.length > 0;
 
 	const handleGetStarted = (): void => {
 		void logEvent('Homepage: Get Started clicked', { source });
 
-		if (activeLicense && activeLicense.platform === LicensePlatform.CLOUD) {
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-		} else {
-			openInNewTab(DOCS_LINKS.ADD_DATA_SOURCE);
-		}
+		history.push(ROUTES.GET_STARTED);
 	};
 
 	const isViewer = user?.role === USER_ROLES.VIEWER;
