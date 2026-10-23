@@ -13,6 +13,12 @@ import {
 	rumApplicationStatus,
 	rumQueryRangeResponse,
 } from '@/storybook/msw/__story_mockdata__/rum';
+import {
+	rumSession,
+	rumSessions,
+	rumView,
+	rumViews,
+} from '@/storybook/msw/__story_mockdata__/rumQueries';
 
 const APPS = 'http://localhost/api/v1/rum/applications';
 
@@ -28,6 +34,16 @@ export const rumApplicationMocks = defineStoryMocks({
 			description: 'Off, the application has sent nothing in the range.',
 			value: true,
 		}),
+		oldSdk: toggleControl('Views before SDK 0.2.0', {
+			group: 'Frontend · views',
+			description: 'On, routes also have views without a loading type.',
+			value: false,
+		}),
+		truncated: toggleControl('Large session', {
+			group: 'Frontend · sessions',
+			description: 'On, the session has more events than one response carries.',
+			value: false,
+		}),
 	},
 	handlers: (values, response) => [
 		rest.get(`${APPS}/:id/status`, (_req, res, ctx) =>
@@ -35,6 +51,31 @@ export const rumApplicationMocks = defineStoryMocks({
 		),
 		rest.get(`${APPS}/:id/keys`, (_req, res, ctx) =>
 			res(ctx.json(ok(rumApplicationKeys(false)))),
+		),
+		rest.get(
+			`${APPS}/:id/views/:route`,
+			response.json((req) =>
+				ok(rumView(decodeURIComponent(String(req.params.route)))),
+			),
+		),
+		rest.get(
+			`${APPS}/:id/views`,
+			response.json(() => ok(rumViews(!values.telemetry, values.oldSdk))),
+		),
+		rest.get(
+			`${APPS}/:id/sessions/:sessionId`,
+			response.json(() => ok(rumSession(values.truncated))),
+		),
+		rest.get(
+			`${APPS}/:id/sessions`,
+			response.json((req) =>
+				ok(
+					rumSessions({
+						empty: !values.telemetry,
+						hasError: req.url.searchParams.get('hasError') === 'true',
+					}),
+				),
+			),
 		),
 		rest.get(
 			`${APPS}/:id`,

@@ -50,7 +50,10 @@ export const Default: Story = {
 		await expect(
 			(await canvas.findAllByTestId('rum-session-trace', {}, WAIT))[0],
 		).toHaveAttribute('href', expect.stringContaining('/trace/'));
-		await expect(canvas.getByTestId('page-tab-sessions')).toBeDisabled();
+		await expect(canvas.getByTestId('page-tab-errors')).toBeDisabled();
+		await expect(
+			(await canvas.findAllByTestId('rum-session-open', {}, WAIT))[0],
+		).toHaveAttribute('href', expect.stringContaining('/sessions/'));
 	},
 };
 
