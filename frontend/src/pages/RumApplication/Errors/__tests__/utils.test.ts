@@ -131,6 +131,19 @@ describe('sourceMapMissing', () => {
 			}),
 			false,
 		],
+		[
+			'the frame is an inline script on the page',
+			group({
+				topFrame: {
+					function: 'onclick',
+					file: 'https://shop.example.com/checkout?step=2',
+					line: 12,
+					column: 3,
+					original: null,
+				},
+			}),
+			false,
+		],
 	])('%s', (_name, input, missing) => {
 		expect(sourceMapMissing(input, uploaded)).toBe(missing);
 	});

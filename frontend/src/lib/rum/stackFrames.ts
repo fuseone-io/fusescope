@@ -41,6 +41,13 @@ export function isLibraryFile(file: string): boolean {
 	return NATIVE_FILES.has(file) || PACKAGE.test(file);
 }
 
+const SCRIPT = /\.[mc]?js$/i;
+
+/** A script a source map can describe; inline `<script>` code reports the page's URL instead. */
+export function isScriptFile(file: string): boolean {
+	return SCRIPT.test(file.split(/[?#]/)[0]);
+}
+
 export function displayFrames(
 	frames: RumtypesErrorEventDTO['frames'],
 	mode: StackMode,

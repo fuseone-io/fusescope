@@ -228,14 +228,20 @@ func TestModuleSymbolicateUploadedSourceMap(t *testing.T) {
 		release      string
 		symbolicated bool
 		missing      *rumtypes.MissingSourceMap
+		frames       []rumtypes.StackFrame
 	}{
 		{name: "ReleaseWithMap_Symbolicated", release: "1.8.0", symbolicated: true},
 		{name: "ReleaseWithoutMap_Missing", release: "1.7.4", missing: &rumtypes.MissingSourceMap{Release: "1.7.4"}},
 		{name: "NoRelease_Missing", release: "", missing: &rumtypes.MissingSourceMap{}},
+		{name: "InlineScript_NeverMissing", release: "1.7.4", frames: []rumtypes.StackFrame{{Function: "onclick", File: "https://shop.example.com/checkout?step=2", Line: 12, Column: 3}, {Function: "", File: "<anonymous>"}}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			result, err := module.symbolicator.Symbolicate(ctx, id, testCase.release, frames)
+			stack := frames
+			if testCase.frames != nil {
+				stack = testCase.frames
+			}
+			result, err := module.symbolicator.Symbolicate(ctx, id, testCase.release, stack)
 			require.NoError(t, err)
 			assert.Equal(t, testCase.symbolicated, result.Symbolicated)
 			assert.Equal(t, testCase.missing, result.MissingSourceMap)

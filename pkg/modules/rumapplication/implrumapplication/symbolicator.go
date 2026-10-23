@@ -55,6 +55,9 @@ func NewSymbolicator(store rumtypes.Store, storage rumapplication.SourceMapStora
 // its frames minified.
 func (symbolicator *sourceMapSymbolicator) Symbolicate(ctx context.Context, applicationID valuer.UUID, release string, frames []rumtypes.StackFrame) (*rumtypes.Symbolication, error) {
 	result := &rumtypes.Symbolication{Frames: frames}
+	if !rumtypes.HasScriptFrame(frames) {
+		return result, nil
+	}
 	if release == "" {
 		result.MissingSourceMap = &rumtypes.MissingSourceMap{}
 		return result, nil
