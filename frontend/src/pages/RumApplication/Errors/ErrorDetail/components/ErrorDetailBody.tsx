@@ -74,7 +74,7 @@ function ErrorDetailBody({
 						/>
 					</div>
 					<LinkedRequest
-						linked={group.linkedRequest ?? null}
+						linked={group.linkedRequest}
 						errorAt={event.timestamp}
 						sessionUrl={sessionUrl(event.sessionId)}
 					/>
