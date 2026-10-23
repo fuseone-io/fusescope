@@ -30,6 +30,10 @@ import {
 	spanMetricsResponse,
 	topLevelOperationsResponse,
 } from './__story_mockdata__/home';
+import {
+	ingestionResponse,
+	statusResponse,
+} from '@/pages/GetStarted/stories/__story_mockdata__/onboarding';
 
 const SIGNALS = 'Home · signals';
 const ONBOARDING = 'Home · onboarding';
@@ -118,6 +122,21 @@ export const homeMocks = defineStoryMocks({
 		}),
 	},
 	handlers: (values, response) => [
+		rest.get(
+			'http://localhost/api/v1/onboarding/ingestion',
+			response.json(() => ingestionResponse('derived')),
+		),
+
+		rest.get(
+			'http://localhost/api/v1/onboarding/status',
+			response.json(() =>
+				statusResponse(
+					values.logsIngestion || values.tracesIngestion || values.metricsIngestion,
+					null,
+				),
+			),
+		),
+
 		rest.get('http://localhost/api/v2/metrics/onboarding', (_req, res, ctx) =>
 			res(
 				ctx.status(200),

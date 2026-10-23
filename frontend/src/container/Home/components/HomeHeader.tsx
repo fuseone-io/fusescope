@@ -3,6 +3,7 @@ import { House } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 
 import { homeTitle, IngestingSignals, receivingSummary } from '../utils';
+import ListeningIndicator from './HomeOnboarding/ListeningIndicator';
 import WorkspaceUrl from './WorkspaceUrl';
 
 interface HomeHeaderProps {
@@ -20,7 +21,12 @@ function HomeHeader({ signals, isLoading }: HomeHeaderProps): JSX.Element {
 			icon={<House />}
 			title={homeTitle(user?.displayName, receiving)}
 			meta={isLoading ? undefined : receivingSummary(signals)}
-			actions={<WorkspaceUrl />}
+			actions={
+				<>
+					{!isLoading && !receiving && <ListeningIndicator />}
+					<WorkspaceUrl />
+				</>
+			}
 		/>
 	);
 }

@@ -44,7 +44,7 @@ export function receivingSummary(signals: IngestingSignals): string {
 		(signal) => signals[signal],
 	);
 	if (receiving.length === 0) {
-		return 'You are not sending any data yet.';
+		return 'No data yet. Connect a first source and this page fills in.';
 	}
 	return `Your workspace is receiving ${listOf([...receiving])}.`;
 }
