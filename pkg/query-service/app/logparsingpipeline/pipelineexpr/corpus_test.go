@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/expr-lang/expr/vm"
-	signozstanzahelper "github.com/fuseone-io/fusescope-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -192,7 +191,7 @@ func TestCorpus(t *testing.T) {
 }
 
 func evaluateCorpusCase(t *testing.T, expression string, entries map[string]func() *entry.Entry) corpusCase {
-	program, refsBody, _, err := signozstanzahelper.ExprCompileBool(expression)
+	program, refsBody, err := CompileBool(expression)
 	if err != nil {
 		return corpusCase{CompileError: err.Error()}
 	}
@@ -202,12 +201,7 @@ func evaluateCorpusCase(t *testing.T, expression string, entries map[string]func
 		e := newEntry()
 		before := attributeKeys(e)
 
-		var out any
-		runErr := signozstanzahelper.RunWithExprEnv(e, refsBody, nil, func(env map[string]any) error {
-			var err error
-			out, err = vm.Run(program, env)
-			return err
-		})
+		out, runErr := vm.Run(program, Env(e, refsBody))
 
 		result := corpusResult{}
 		if runErr != nil {
