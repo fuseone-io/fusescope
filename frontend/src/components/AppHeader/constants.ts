@@ -1,4 +1,5 @@
 import ROUTES from 'constants/routes';
+import { shortId } from 'lib/rum/format';
 
 import { CrumbContext, CrumbRoute } from './types';
 
@@ -122,6 +123,23 @@ export const CRUMB_ROUTES: Record<string, CrumbRoute> = {
 		parent: ROUTES.RUM_APPLICATIONS,
 		label: ({ rumApplicationName }): string =>
 			rumApplicationName || 'Application',
+		mono: true,
+	},
+	[ROUTES.RUM_APPLICATION_VIEWS]: {
+		parent: ROUTES.RUM_APPLICATIONS,
+		label: ({ rumApplicationName }): string =>
+			rumApplicationName || 'Application',
+		mono: true,
+	},
+	[ROUTES.RUM_APPLICATION_SESSIONS]: {
+		parent: ROUTES.RUM_APPLICATIONS,
+		label: ({ rumApplicationName }): string =>
+			rumApplicationName || 'Application',
+		mono: true,
+	},
+	[ROUTES.RUM_APPLICATION_SESSION]: {
+		parent: ROUTES.RUM_APPLICATION_SESSIONS,
+		label: ({ params }): string => shortId(params.sessionId ?? ''),
 		mono: true,
 	},
 	[ROUTES.MY_SETTINGS]: { parent: ROUTES.SETTINGS, label: 'Account' },

@@ -217,6 +217,29 @@ describe('AppHeader', () => {
 			expect(currentCrumb()).toHaveClass('tw:font-mono');
 		});
 
+		it.each([
+			['/frontend/applications/app-1/views', ['Frontend', 'web-shop']],
+			[
+				'/frontend/applications/app-1/sessions/7f3ac9d04b1e4a6f9e2b5c8d1a07c21e',
+				['Frontend', 'web-shop', '7f3ac9…c21e'],
+			],
+		])('names the RUM application on %s', async (path, expected) => {
+			server.use(
+				rest.get('*/api/v1/rum/applications/:id', (req, res, ctx) =>
+					res(
+						ctx.json({
+							status: 'success',
+							data: { id: req.params.id, name: 'web-shop' },
+						}),
+					),
+				),
+			);
+			renderHeader(path, <RumApplicationPageProbe id="app-1" />);
+
+			await expect(screen.findByText('web-shop')).resolves.toBeInTheDocument();
+			expect(crumbs()).toStrictEqual(expected);
+		});
+
 		it('names a cloud integration after its provider', () => {
 			renderHeader('/integrations/aws');
 

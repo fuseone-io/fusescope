@@ -66,3 +66,26 @@ export function formatPointChange(
 	}
 	return `${delta >= 0 ? '+' : '−'}${Math.abs(delta).toFixed(1)} pp`;
 }
+
+/** "646 ms", "1.24 s". */
+export function formatMs(ms: number | undefined): string {
+	if (ms === undefined || !Number.isFinite(ms)) {
+		return DASH;
+	}
+	return ms >= 1000 ? `${(ms / 1000).toFixed(2)} s` : `${Math.round(ms)} ms`;
+}
+
+/** "852 ms", "22.4 s", then as a session duration: "1m 4s". */
+export function formatTimeOnView(ms: number | undefined): string {
+	if (ms === undefined || !Number.isFinite(ms)) {
+		return DASH;
+	}
+	if (ms < 1000) {
+		return `${Math.round(ms)} ms`;
+	}
+	return ms < 60_000 ? `${(ms / 1000).toFixed(1)} s` : formatSessionDuration(ms);
+}
+
+/** "7f3ac9…c21e" for ids longer than 12 characters. */
+export const shortId = (id: string): string =>
+	id.length > 12 ? `${id.slice(0, 6)}…${id.slice(-4)}` : id;

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { TableCell, TableRow } from 'components/ui/table';
 import dayjs from 'dayjs';
 import { formatSessionDuration } from 'lib/rum/format';
-import { traceDetailUrl } from 'lib/rum/links';
+import { rumSessionUrl, traceDetailUrl } from 'lib/rum/links';
 import { SessionRequest, SessionSummary } from 'lib/rum/overviewTypes';
 import { describeUserAgent } from 'lib/rum/userAgent';
 import { cn } from 'lib/utils';
@@ -11,6 +11,8 @@ import { ArrowUpRight } from 'lucide-react';
 import { shortSessionId } from '../utils';
 
 interface SessionRowProps {
+	applicationId: string;
+	release: string;
 	session: SessionSummary;
 	errors: number;
 	request?: SessionRequest;
@@ -19,17 +21,23 @@ interface SessionRowProps {
 const NUMBER = 'tw:text-right tw:tabular-nums';
 
 function SessionRow({
+	applicationId,
+	release,
 	session,
 	errors,
 	request,
 }: SessionRowProps): JSX.Element {
 	return (
 		<TableRow data-testid="rum-session-row">
-			<TableCell
-				title={`session.id ${session.id}`}
-				className="tw:font-mono tw:text-xs tw:text-foreground"
-			>
-				{shortSessionId(session.id)}
+			<TableCell className="tw:font-mono tw:text-xs">
+				<Link
+					to={rumSessionUrl(applicationId, session.id, release)}
+					title={`session.id ${session.id}`}
+					data-testid="rum-session-open"
+					className="tw:text-primary! tw:hover:underline"
+				>
+					{shortSessionId(session.id)}
+				</Link>
 			</TableCell>
 			<TableCell className="tw:text-muted-foreground tw:tabular-nums">
 				{session.start ? dayjs(session.start).format('HH:mm:ss') : '—'}

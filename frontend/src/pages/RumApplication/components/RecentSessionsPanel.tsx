@@ -8,7 +8,7 @@ import {
 	TableRow,
 } from 'components/ui/table';
 import { ApmWindow } from 'lib/apm/window';
-import { tracesExplorerUrl } from 'lib/rum/links';
+import { rumSessionsUrl, tracesExplorerUrl } from 'lib/rum/links';
 import { SessionRequest, SessionSummary } from 'lib/rum/overviewTypes';
 
 import { sessionsTracesFilter } from '../utils';
@@ -16,6 +16,8 @@ import EmptyRow from './EmptyRow';
 import SessionRow from './SessionRow';
 
 interface RecentSessionsPanelProps {
+	applicationId: string;
+	release: string;
 	sessions: SessionSummary[];
 	errors: Record<string, number>;
 	requests: Record<string, SessionRequest>;
@@ -25,6 +27,8 @@ interface RecentSessionsPanelProps {
 }
 
 function RecentSessionsPanel({
+	applicationId,
+	release,
 	sessions,
 	errors,
 	requests,
@@ -45,8 +49,15 @@ function RecentSessionsPanel({
 				</>
 			}
 			actions={
-				<span className="tw:text-xs tw:text-muted-foreground">
-					Latest {sessions.length} · full list and timeline come with Sessions
+				<span className="tw:flex tw:items-center tw:gap-3 tw:text-xs tw:text-muted-foreground">
+					Latest {sessions.length}
+					<Link
+						to={rumSessionsUrl(applicationId, { release })}
+						data-testid="rum-recent-sessions-all"
+						className="tw:text-[13px] tw:text-primary! tw:hover:underline"
+					>
+						All sessions
+					</Link>
 				</span>
 			}
 			footer={
@@ -85,6 +96,8 @@ function RecentSessionsPanel({
 						{sessions.map((session) => (
 							<SessionRow
 								key={session.id}
+								applicationId={applicationId}
+								release={release}
 								session={session}
 								errors={errors[session.id] ?? 0}
 								request={requests[session.id]}

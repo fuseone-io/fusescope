@@ -1,4 +1,6 @@
 import {
+	applicationTab,
+	carriedSearch,
 	errorLogsFilter,
 	sessionsTracesFilter,
 	shortSessionId,
@@ -56,5 +58,28 @@ describe('shortSessionId', () => {
 		['short-id', 'short-id'],
 	])('%s', (id, text) => {
 		expect(shortSessionId(id)).toBe(text);
+	});
+});
+
+describe('applicationTab', () => {
+	it.each([
+		['/frontend/applications/app-1', 'overview'],
+		['/frontend/applications/app-1/views', 'views'],
+		['/frontend/applications/app-1/sessions', 'sessions'],
+		['/frontend/applications/app-1/sessions/abc', 'sessions'],
+	])('%s', (pathname, tab) => {
+		expect(applicationTab(pathname)).toBe(tab);
+	});
+});
+
+describe('carriedSearch', () => {
+	it('keeps the release and time range, drops tab state', () => {
+		expect(
+			carriedSearch('?release=1.8.0&route=%2Fcart&relativeTime=1h&page=2'),
+		).toBe('?release=1.8.0&relativeTime=1h');
+	});
+
+	it('is empty without them', () => {
+		expect(carriedSearch('?browser=Chrome')).toBe('');
 	});
 });

@@ -2,8 +2,11 @@ import {
 	formatAgo,
 	formatCountChange,
 	formatPointChange,
+	formatMs,
 	formatSessionDuration,
+	formatTimeOnView,
 	plural,
+	shortId,
 } from '../format';
 
 describe('formatAgo', () => {
@@ -60,5 +63,37 @@ describe('plural', () => {
 		[3, 'applications'],
 	])('names %i of them %s', (count, noun) => {
 		expect(plural(count, 'application')).toBe(noun);
+	});
+});
+
+describe('formatMs', () => {
+	it.each([
+		[645.9, '646 ms'],
+		[1240, '1.24 s'],
+		[0, '0 ms'],
+		[undefined, '—'],
+	])('%s', (ms, text) => {
+		expect(formatMs(ms)).toBe(text);
+	});
+});
+
+describe('formatTimeOnView', () => {
+	it.each([
+		[852.1, '852 ms'],
+		[22_400, '22.4 s'],
+		[64_000, '1m 4s'],
+		[undefined, '—'],
+	])('%s', (ms, text) => {
+		expect(formatTimeOnView(ms)).toBe(text);
+	});
+});
+
+describe('shortId', () => {
+	it.each([
+		['7f3ac9d04b1e4a6f9e2b5c8d1a07c21e', '7f3ac9…c21e'],
+		['usr_9f2c88a141ab', 'usr_9f…41ab'],
+		['alice', 'alice'],
+	])('%s', (id, text) => {
+		expect(shortId(id)).toBe(text);
 	});
 });

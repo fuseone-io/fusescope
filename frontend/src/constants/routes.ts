@@ -94,6 +94,9 @@ const ROUTES = {
 	RUM_BASE: '/frontend',
 	RUM_APPLICATIONS: '/frontend/applications',
 	RUM_APPLICATION: '/frontend/applications/:id',
+	RUM_APPLICATION_VIEWS: '/frontend/applications/:id/views',
+	RUM_APPLICATION_SESSIONS: '/frontend/applications/:id/sessions',
+	RUM_APPLICATION_SESSION: '/frontend/applications/:id/sessions/:sessionId',
 } as const;
 
 export default ROUTES;

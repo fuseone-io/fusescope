@@ -12,6 +12,13 @@ import { GetIntegrationProps } from 'types/api/integrations/types';
 import { Crumb } from '../types';
 import { matchCrumbRoute, resolveCrumbs } from '../utils';
 
+const RUM_APPLICATION_ROUTES: string[] = [
+	ROUTES.RUM_APPLICATION,
+	ROUTES.RUM_APPLICATION_VIEWS,
+	ROUTES.RUM_APPLICATION_SESSIONS,
+	ROUTES.RUM_APPLICATION_SESSION,
+];
+
 /** Reads the dashboard the page already loaded; never fetches. */
 function useCachedDashboardName(dashboardId: string | undefined): string {
 	const { data } = useGetDashboardV2(
@@ -58,7 +65,9 @@ export function useBreadcrumbs(): Crumb[] {
 	const dashboardName = useCachedDashboardName(dashboardId);
 	const integrationTitle = useCachedIntegrationTitle(integrationId);
 	const rumApplicationName = useCachedRumApplicationName(
-		match?.path === ROUTES.RUM_APPLICATION ? match.params.id : undefined,
+		match && RUM_APPLICATION_ROUTES.includes(match.path)
+			? match.params.id
+			: undefined,
 	);
 
 	return useMemo(

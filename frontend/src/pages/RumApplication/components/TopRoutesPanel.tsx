@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import RatingChip from 'components/Rum/RatingChip';
 import RatingSplitBar from 'components/Rum/RatingSplitBar';
@@ -11,6 +12,7 @@ import {
 } from 'components/ui/table';
 import { formatCount } from 'lib/apm/format';
 import { plural } from 'lib/rum/format';
+import { rumRouteUrl, rumViewsUrl } from 'lib/rum/links';
 import { RouteVitals } from 'lib/rum/overviewTypes';
 import { VitalName } from 'lib/rum/types';
 import { formatVital, rateVital } from 'lib/rum/vitals';
@@ -19,6 +21,8 @@ import { cn } from 'lib/utils';
 import EmptyRow from './EmptyRow';
 
 interface TopRoutesPanelProps {
+	applicationId: string;
+	release: string;
 	routes: RouteVitals[];
 	routeCount: number;
 	loading: boolean;
@@ -36,6 +40,8 @@ function ratedClass(vital: VitalName, value: number | undefined): string {
 }
 
 function TopRoutesPanel({
+	applicationId,
+	release,
 	routes,
 	routeCount,
 	loading,
@@ -53,8 +59,15 @@ function TopRoutesPanel({
 				</>
 			}
 			actions={
-				<span className="tw:text-xs tw:text-muted-foreground tw:tabular-nums">
+				<span className="tw:flex tw:items-center tw:gap-3 tw:text-xs tw:text-muted-foreground tw:tabular-nums">
 					{routes.length} of {routeCount} {plural(routeCount, 'route')}
+					<Link
+						to={rumViewsUrl(applicationId, release)}
+						data-testid="rum-top-routes-all"
+						className="tw:text-[13px] tw:text-primary! tw:hover:underline"
+					>
+						All views
+					</Link>
 				</span>
 			}
 			divided
@@ -75,8 +88,14 @@ function TopRoutesPanel({
 					<TableBody>
 						{routes.map((route) => (
 							<TableRow key={route.route} data-testid="rum-route-row">
-								<TableCell className="tw:max-w-0 tw:truncate tw:font-mono tw:text-xs tw:text-foreground">
-									{route.route}
+								<TableCell className="tw:max-w-0 tw:truncate tw:font-mono tw:text-xs">
+									<Link
+										to={rumRouteUrl(applicationId, route.route, release)}
+										data-testid="rum-route-open"
+										className="tw:text-primary! tw:hover:underline"
+									>
+										{route.route}
+									</Link>
 								</TableCell>
 								<TableCell className={RIGHT}>{formatCount(route.loads)}</TableCell>
 								<TableCell>
