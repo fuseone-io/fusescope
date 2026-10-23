@@ -1,8 +1,10 @@
+import { withDistTag } from 'lib/rum/distTag';
+
 import { SnippetInput } from '../types';
 
 export const SDK_PACKAGE = '@fusescope/browser';
 
-export const NPM_INSTALL_COMMAND = `npm install ${SDK_PACKAGE}`;
+export const NPM_INSTALL_COMMAND = `npm install ${withDistTag(SDK_PACKAGE)}`;
 
 const VERSION_PLACEHOLDER = "version: '<your app version>'";
 const VERSION_COMMENT = '// your release, e.g. from package.json';

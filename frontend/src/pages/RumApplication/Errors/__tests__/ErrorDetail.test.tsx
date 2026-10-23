@@ -83,7 +83,7 @@ describe('ErrorDetail', () => {
 		const command = within(missing).getByTestId('rum-error-upload-command');
 		expect(command).toHaveTextContent('FUSESCOPE_APP=app-1');
 		expect(command).toHaveTextContent(
-			'npx @fusescope/cli sourcemaps upload dist --release 1.8.0',
+			'npx @fusescope/cli@next sourcemaps upload dist --release 1.8.0',
 		);
 		expect(screen.getByTestId('rum-error-mode-original')).toBeDisabled();
 		expect(screen.getByTestId('rum-error-minified')).toBeInTheDocument();

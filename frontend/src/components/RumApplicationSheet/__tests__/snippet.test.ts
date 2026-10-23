@@ -1,5 +1,5 @@
 import { SnippetInput } from '../types';
-import { buildNpmSnippet } from '../utils/snippet';
+import { buildNpmSnippet, NPM_INSTALL_COMMAND } from '../utils/snippet';
 
 const BASE: SnippetInput = {
 	applicationId: '01a16115-094c-79a3-aa4c-39d2a99907d1',
@@ -96,5 +96,11 @@ init({
 		expect(buildNpmSnippet(BASE)).toContain(
 			"\n  version: '<your app version>', // your release, e.g. from package.json\n",
 		);
+	});
+});
+
+describe('NPM_INSTALL_COMMAND', () => {
+	it('installs the prerelease dist-tag', () => {
+		expect(NPM_INSTALL_COMMAND).toBe('npm install @fusescope/browser@next');
 	});
 });

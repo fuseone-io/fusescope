@@ -137,7 +137,7 @@ describe('SourceMapsTab', () => {
 		expect(cli).toHaveTextContent('export FUSESCOPE_APP=app-web-shop');
 		await waitFor(() =>
 			expect(screen.getByTestId('rum-sourcemaps-cli')).toHaveTextContent(
-				'npx @fusescope/cli sourcemaps upload dist --release 1.8.0',
+				'npx @fusescope/cli@next sourcemaps upload dist --release 1.8.0',
 			),
 		);
 		await user.click(screen.getByTestId('rum-sourcemaps-method-npm'));
