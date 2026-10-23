@@ -20,7 +20,7 @@ export type SheetTarget =
 	| { mode: 'new' }
 	| { mode: 'edit'; applicationId: string };
 
-export type SheetTab = 'settings' | 'key' | 'install';
+export type SheetTab = 'settings' | 'key' | 'install' | 'sourcemaps';
 
 export interface SnippetInput {
 	applicationId: string;

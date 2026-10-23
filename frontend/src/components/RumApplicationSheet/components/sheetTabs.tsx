@@ -48,5 +48,6 @@ export function sheetTabs({
 			),
 		},
 		{ value: 'install', label: 'Install' },
+		{ value: 'sourcemaps', label: 'Source maps' },
 	];
 }
