@@ -1,5 +1,8 @@
 import type { RumtypesApplicationDTO } from 'api/generated/services/fuseScope.schemas';
-import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
+import {
+	RumtypesPlatformDTO,
+	RumtypesSourceMapRetentionDTO,
+} from 'api/generated/services/fuseScope.schemas';
 
 import {
 	DEFAULT_FORM_VALUES,
@@ -33,6 +36,10 @@ const APPLICATION: RumtypesApplicationDTO = {
 	sampleRate: 0.5,
 	createdBy: 'admin@fusescope.local',
 	firstSeenAt: null,
+	sourceMaps: {
+		retention: RumtypesSourceMapRetentionDTO['90d'],
+		keepNewestReleases: true,
+	},
 	piiPolicy: {
 		dropQuery: false,
 		queryAllowlist: null,

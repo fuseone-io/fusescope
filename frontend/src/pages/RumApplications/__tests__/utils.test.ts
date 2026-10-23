@@ -1,5 +1,8 @@
 import type { RumtypesApplicationDTO } from 'api/generated/services/fuseScope.schemas';
-import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
+import {
+	RumtypesPlatformDTO,
+	RumtypesSourceMapRetentionDTO,
+} from 'api/generated/services/fuseScope.schemas';
 import { ApplicationMetrics } from 'lib/rum/metricTypes';
 
 import { ApplicationRow } from '../types';
@@ -21,6 +24,10 @@ function app(
 		sampleRate: 1,
 		createdBy: 'admin',
 		firstSeenAt: null,
+		sourceMaps: {
+			retention: RumtypesSourceMapRetentionDTO['90d'],
+			keepNewestReleases: true,
+		},
 		piiPolicy: {
 			dropQuery: true,
 			queryAllowlist: [],

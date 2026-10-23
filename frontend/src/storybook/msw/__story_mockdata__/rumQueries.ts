@@ -181,6 +181,7 @@ export function rumViews(
 			: ROUTES.map((row, index) =>
 					viewRoute(row, oldSdk ? 1200 - index * 100 : 0),
 				),
+		sessions: empty ? 0 : 48_620,
 	};
 }
 
