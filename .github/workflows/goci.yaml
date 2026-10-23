@@ -106,6 +106,21 @@ jobs:
           go-version-file: go.mod
       - name: check-semconv-generated-files
         run: make semconv-check
+  agpl-guard:
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-24.04
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v7
+      - name: go-install
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: check-agpl-collector-packages
+        run: make agpl-check
   build:
     if: |
       github.event_name == 'merge_group' ||
