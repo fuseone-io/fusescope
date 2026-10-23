@@ -10278,7 +10278,11 @@ components:
           nullable: true
           type: array
         linkedRequest:
-          $ref: '#/components/schemas/RumtypesTimelineEvent'
+          allOf:
+          - $ref: '#/components/schemas/RumtypesTimelineEvent'
+          description: The failed request of the same session that started last in
+            the 5 seconds before the selected event.
+          nullable: true
         message:
           description: Message of the latest event.
           type: string
