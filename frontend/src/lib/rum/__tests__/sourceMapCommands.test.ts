@@ -14,9 +14,15 @@ const TARGET = {
 
 describe('uploadCommand', () => {
 	it.each([
-		['1.8.0', 'npx @fusescope/cli sourcemaps upload dist --release 1.8.0'],
-		['v2 beta', "npx @fusescope/cli sourcemaps upload dist --release 'v2 beta'"],
-		["it's", "npx @fusescope/cli sourcemaps upload dist --release 'it'\\''s'"],
+		['1.8.0', 'npx @fusescope/cli@next sourcemaps upload dist --release 1.8.0'],
+		[
+			'v2 beta',
+			"npx @fusescope/cli@next sourcemaps upload dist --release 'v2 beta'",
+		],
+		[
+			"it's",
+			"npx @fusescope/cli@next sourcemaps upload dist --release 'it'\\''s'",
+		],
 	])('%s', (release, command) => {
 		expect(uploadCommand(release)).toBe(command);
 	});
@@ -31,7 +37,7 @@ describe('cliSnippet', () => {
 		expect(snippet).toContain(`export FUSESCOPE_APP=${TARGET.applicationId}`);
 		expect(snippet).toContain('export FUSESCOPE_API_KEY=…');
 		expect(snippet.trim().split('\n').pop()).toBe(
-			'npx @fusescope/cli sourcemaps upload dist --release 1.8.0',
+			'npx @fusescope/cli@next sourcemaps upload dist --release 1.8.0',
 		);
 	});
 });
@@ -73,7 +79,7 @@ describe('appUploadCommand', () => {
 		expect(appUploadCommand(TARGET)).toBe(
 			[
 				`FUSESCOPE_URL=https://fusescope.example.com FUSESCOPE_APP=${TARGET.applicationId} \\`,
-				'  npx @fusescope/cli sourcemaps upload dist --release 1.8.0',
+				'  npx @fusescope/cli@next sourcemaps upload dist --release 1.8.0',
 			].join('\n'),
 		);
 	});

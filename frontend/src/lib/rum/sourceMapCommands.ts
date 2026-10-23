@@ -1,3 +1,5 @@
+import { withDistTag } from './distTag';
+
 export const CLI_PACKAGE = '@fusescope/cli';
 export const CLI_VERSION_RANGE = '^0.1.0-beta.0';
 export const BUILD_DIR = 'dist';
@@ -17,7 +19,7 @@ export function shellQuote(value: string): string {
 }
 
 export const uploadCommand = (release: string): string =>
-	`npx ${CLI_PACKAGE} sourcemaps upload ${BUILD_DIR} --release ${shellQuote(release)}`;
+	`npx ${withDistTag(CLI_PACKAGE)} sourcemaps upload ${BUILD_DIR} --release ${shellQuote(release)}`;
 
 /** One release's upload for one application; `FUSESCOPE_API_KEY` stays in the environment. */
 export function appUploadCommand(target: UploadTarget): string {
