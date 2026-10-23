@@ -1,6 +1,9 @@
 import {
 	applicationTab,
+	backSearch,
 	carriedSearch,
+	detailView,
+	recentErrorGroups,
 	errorLogsFilter,
 	sessionsTracesFilter,
 	shortSessionId,
@@ -20,9 +23,6 @@ describe('errorLogsFilter', () => {
 			errorLogsFilter(APP, {
 				type: 'TypeError',
 				message: "Cannot read properties of undefined (reading 'price')",
-				route: '/product/:id',
-				events: 1,
-				sessions: 1,
 			}),
 		).toBe(
 			`${APP} AND attribute.event.name = 'exception' AND exception.type = 'TypeError' AND exception.message = 'Cannot read properties of undefined (reading \\'price\\')'`,
@@ -34,9 +34,6 @@ describe('errorLogsFilter', () => {
 			errorLogsFilter(APP, {
 				type: 'Error',
 				message: '',
-				route: '',
-				events: 1,
-				sessions: 1,
 			}),
 		).toBe(
 			`${APP} AND attribute.event.name = 'exception' AND exception.type = 'Error'`,
@@ -67,6 +64,8 @@ describe('applicationTab', () => {
 		['/frontend/applications/app-1/views', 'views'],
 		['/frontend/applications/app-1/sessions', 'sessions'],
 		['/frontend/applications/app-1/sessions/abc', 'sessions'],
+		['/frontend/applications/app-1/errors', 'errors'],
+		['/frontend/applications/app-1/errors/3fa8b015c0d1e2f3', 'errors'],
 	])('%s', (pathname, tab) => {
 		expect(applicationTab(pathname)).toBe(tab);
 	});
@@ -81,5 +80,36 @@ describe('carriedSearch', () => {
 
 	it('is empty without them', () => {
 		expect(carriedSearch('?browser=Chrome')).toBe('');
+	});
+});
+
+describe('detailView', () => {
+	it.each([
+		['abc', undefined, 'session'],
+		[undefined, '3fa8b015c0d1e2f3', 'error'],
+		[undefined, undefined, undefined],
+	])('%s %s', (sessionId, fingerprint, view) => {
+		expect(detailView(sessionId, fingerprint)).toBe(view);
+	});
+});
+
+describe('backSearch', () => {
+	it('drops the selected event, keeps the list filters', () => {
+		expect(backSearch('?release=1.8.0&event=ev1&q=price')).toBe(
+			'?release=1.8.0&q=price',
+		);
+		expect(backSearch('?event=ev1')).toBe('');
+	});
+});
+
+describe('recentErrorGroups', () => {
+	it('keeps the five seen last, newest first', () => {
+		const groups = ['a', 'b', 'c', 'd', 'e', 'f'].map((fingerprint, index) => ({
+			fingerprint,
+			lastSeenAt: new Date(Date.UTC(2026, 9, 23, index)).toISOString(),
+		}));
+		expect(
+			recentErrorGroups(groups).map((group) => group.fingerprint),
+		).toStrictEqual(['f', 'e', 'd', 'c', 'b']);
 	});
 });

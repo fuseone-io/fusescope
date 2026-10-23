@@ -537,6 +537,20 @@ const routes: AppRoutes[] = [
 		key: 'RUM_APPLICATION_SESSION',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.RUM_APPLICATION_ERRORS,
+		exact: true,
+		component: RumApplicationPage,
+		key: 'RUM_APPLICATION_ERRORS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.RUM_APPLICATION_ERROR,
+		exact: true,
+		component: RumApplicationPage,
+		key: 'RUM_APPLICATION_ERROR',
+		isPrivate: true,
+	},
 ];
 
 export const SUPPORT_ROUTE: AppRoutes = {

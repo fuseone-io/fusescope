@@ -113,3 +113,26 @@ export const rumSessionUrl = (
 		),
 		{ release },
 	);
+
+export const rumErrorsUrl = (
+	applicationId: string,
+	filters: { release?: string; route?: string } = {},
+): string =>
+	withSearch(applicationPath(ROUTES.RUM_APPLICATION_ERRORS, applicationId), {
+		release: filters.release,
+		route: filters.route,
+	});
+
+/** One error group; `eventId` selects one of its latest events. */
+export const rumErrorUrl = (
+	applicationId: string,
+	fingerprint: string,
+	params: { release?: string; eventId?: string } = {},
+): string =>
+	withSearch(
+		applicationPath(ROUTES.RUM_APPLICATION_ERROR, applicationId).replace(
+			':fingerprint',
+			encodeURIComponent(fingerprint),
+		),
+		{ release: params.release, event: params.eventId },
+	);
