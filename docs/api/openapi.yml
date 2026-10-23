@@ -10036,13 +10036,15 @@ components:
           description: Message of the latest event.
           type: string
         newInRelease:
-          description: First seen in the newest release with telemetry in the range,
-            when an older release exists.
+          description: 'First seen in the newest release with telemetry in the range,
+            when an older release exists: the highest semantic version, else the release
+            first seen last.'
           type: boolean
         normalizedMessage:
           type: string
         releases:
-          description: Releases with events in the range.
+          description: Releases with events in the range, oldest first by semantic
+            version, else by name.
           items:
             type: string
           nullable: true
@@ -10287,13 +10289,15 @@ components:
           description: Message of the latest event.
           type: string
         newInRelease:
-          description: First seen in the newest release with telemetry in the range,
-            when an older release exists.
+          description: 'First seen in the newest release with telemetry in the range,
+            when an older release exists: the highest semantic version, else the release
+            first seen last.'
           type: boolean
         normalizedMessage:
           type: string
         releases:
-          description: Releases with events in the range.
+          description: Releases with events in the range, oldest first by semantic
+            version, else by name.
           items:
             type: string
           nullable: true
@@ -10349,8 +10353,8 @@ components:
           nullable: true
           type: array
         sessions:
-          description: Sessions with spans in the range, for shares of sessions; approximate
-            above 65,536.
+          description: Sessions with spans or logs in the range, for shares of sessions;
+            approximate above 65,536.
           format: int64
           type: integer
         total:
@@ -10610,8 +10614,8 @@ components:
           nullable: true
           type: array
         sessions:
-          description: Sessions with spans in the range, for shares of sessions; approximate
-            above 65,536.
+          description: Sessions with spans or logs in the range, for shares of sessions;
+            approximate above 65,536.
           format: int64
           type: integer
       required:
