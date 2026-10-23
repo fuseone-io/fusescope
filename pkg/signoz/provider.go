@@ -386,6 +386,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.QuickFilter,
 			handlers.RUMApplicationHandler,
 			handlers.RUMGateway,
+			handlers.Onboarding,
 		),
 	)
 }

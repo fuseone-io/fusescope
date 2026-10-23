@@ -29,6 +29,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/llmpricingrule"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricreductionrule"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer"
+	"github.com/fuseone-io/fusescope/pkg/modules/onboarding"
 	"github.com/fuseone-io/fusescope/pkg/modules/organization"
 	"github.com/fuseone-io/fusescope/pkg/modules/preference"
 	"github.com/fuseone-io/fusescope/pkg/modules/promote"
@@ -116,6 +117,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ quickfilter.Handler }{},
 		struct{ rumapplication.Handler }{},
 		struct{ rumapplication.Gateway }{},
+		struct{ onboarding.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

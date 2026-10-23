@@ -35,6 +35,8 @@ exporters:
   clickhouselogsexporter:
     dsn: {dsn}/signoz_logs
     use_new_schema: true
+  signozclickhousemetrics:
+    dsn: {dsn}/signoz_metrics
 service:
   extensions: [health_check]
   pipelines:
@@ -46,6 +48,10 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [clickhouselogsexporter]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [signozclickhousemetrics]
 """
 
 
@@ -57,7 +63,7 @@ def create_otel_collector(  # pylint: disable=too-many-arguments,too-many-positi
     pytestconfig: pytest.Config,
     cache_key: str = "otel_collector",
 ) -> types.TestContainerDocker:
-    """OTLP/HTTP collector writing traces and logs to the test ClickHouse."""
+    """OTLP/HTTP collector writing traces, metrics and logs to the test ClickHouse."""
 
     def create() -> types.TestContainerDocker:
         request.getfixturevalue("migrator")

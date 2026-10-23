@@ -199,6 +199,15 @@ func NewAvailablePreference() map[Name]Preference {
 			AllowedValues: []string{},
 			Value:         MustNewValue([]any{}, ValueTypeArray),
 		},
+		NameIngestionURL: {
+			Name:          NameIngestionURL,
+			Description:   "OTLP/HTTP base URL shown in onboarding, overriding global.ingestion_url. Set it through PUT /api/v1/onboarding/ingestion, which validates it.",
+			ValueType:     ValueTypeString,
+			DefaultValue:  MustNewValue("", ValueTypeString),
+			AllowedScopes: []Scope{ScopeOrg},
+			AllowedValues: []string{},
+			Value:         MustNewValue("", ValueTypeString),
+		},
 	}
 }
 

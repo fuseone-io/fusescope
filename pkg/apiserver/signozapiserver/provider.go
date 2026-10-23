@@ -26,6 +26,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/llmpricingrule"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricreductionrule"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer"
+	"github.com/fuseone-io/fusescope/pkg/modules/onboarding"
 	"github.com/fuseone-io/fusescope/pkg/modules/organization"
 	"github.com/fuseone-io/fusescope/pkg/modules/preference"
 	"github.com/fuseone-io/fusescope/pkg/modules/promote"
@@ -102,6 +103,7 @@ type provider struct {
 	quickFilterHandler         quickfilter.Handler
 	rumApplicationHandler      rumapplication.Handler
 	rumGateway                 rumapplication.Gateway
+	onboardingHandler          onboarding.Handler
 }
 
 func NewFactory(
@@ -154,6 +156,7 @@ func NewFactory(
 	quickFilterHandler quickfilter.Handler,
 	rumApplicationHandler rumapplication.Handler,
 	rumGateway rumapplication.Gateway,
+	onboardingHandler onboarding.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -209,6 +212,7 @@ func NewFactory(
 			quickFilterHandler,
 			rumApplicationHandler,
 			rumGateway,
+			onboardingHandler,
 		)
 	})
 }
@@ -266,6 +270,7 @@ func newProvider(
 	quickFilterHandler quickfilter.Handler,
 	rumApplicationHandler rumapplication.Handler,
 	rumGateway rumapplication.Gateway,
+	onboardingHandler onboarding.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -318,6 +323,7 @@ func newProvider(
 		quickFilterHandler:         quickFilterHandler,
 		rumApplicationHandler:      rumApplicationHandler,
 		rumGateway:                 rumGateway,
+		onboardingHandler:          onboardingHandler,
 	}
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
@@ -410,6 +416,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addGlobalRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addOnboardingRoutes(router); err != nil {
 		return err
 	}
 

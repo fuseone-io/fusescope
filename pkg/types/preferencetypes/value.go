@@ -108,6 +108,10 @@ func NewValueFromString(stringValue string, valueType ValueType) (Value, error) 
 	return NewValue(value, valueType)
 }
 
+func (value Value) GoValue() any {
+	return value.goValue
+}
+
 func (value Value) MarshalJSON() ([]byte, error) {
 	return []byte(value.stringValue), nil
 }

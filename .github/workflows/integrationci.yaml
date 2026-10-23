@@ -70,6 +70,7 @@ jobs:
           - inframonitoring
           - llmpricingrules
           - logspipelines
+          - onboarding
           - passwordauthn
           - preference
           - quickfilter
