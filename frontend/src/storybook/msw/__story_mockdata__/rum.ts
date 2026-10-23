@@ -11,6 +11,7 @@ import type {
 import {
 	RumtypesKeyStatusDTO,
 	RumtypesPlatformDTO,
+	RumtypesSourceMapRetentionDTO,
 	RumtypesRejectionReasonDTO,
 	RumtypesSDKSupportDTO,
 } from 'api/generated/services/fuseScope.schemas';
@@ -39,6 +40,10 @@ export function rumApplication(
 		createdAt: '2026-06-02T14:05:00Z',
 		updatedAt: '2026-06-02T14:05:00Z',
 		firstSeenAt: '2026-06-02T14:07:21Z',
+		sourceMaps: {
+			retention: RumtypesSourceMapRetentionDTO['90d'],
+			keepNewestReleases: true,
+		},
 		piiPolicy: {
 			dropQuery: true,
 			queryAllowlist: ['utm_source', 'utm_campaign', 'page'],
