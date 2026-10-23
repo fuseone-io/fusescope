@@ -24,7 +24,6 @@ import {
 } from './attributes';
 import {
 	ApplicationOverview,
-	ErrorGroup,
 	RouteVitals,
 	SessionSummary,
 } from './overviewTypes';
@@ -33,7 +32,6 @@ import { logQuery, numberCell, orderedBy, timestampMs } from './queryRange';
 const SESSIONS = `count_distinct(${RUM_ATTRIBUTES.sessionId})`;
 const ROUTE = RUM_ATTRIBUTES.route;
 export const TOP_ROUTES = 7;
-export const RECENT_ERRORS = 5;
 export const RECENT_SESSIONS = 6;
 
 export function overviewFilter(applicationId: string, release: string): string {
@@ -87,17 +85,6 @@ export function overviewRequest(
 			filter: errors,
 			groupBy: [ROUTE],
 			aggregations: ['count()'],
-		}),
-		logQuery({
-			name: 'ER',
-			filter: errors,
-			groupBy: [
-				RUM_ATTRIBUTES.exceptionType,
-				RUM_ATTRIBUTES.exceptionMessage,
-				ROUTE,
-			],
-			aggregations: ['count()', SESSIONS, 'max(timestamp)'],
-			limit: 50,
 		}),
 		orderedBy(
 			traceQuery({
@@ -176,20 +163,6 @@ export function topRoutes(routes: RouteVitals[]): RouteVitals[] {
 		.slice(0, TOP_ROUTES);
 }
 
-function errorGroups(response: RangeResponse | undefined): ErrorGroup[] {
-	return rawScalarRows(response, 'ER')
-		.map((row) => ({
-			type: row.labels[RUM_ATTRIBUTES.exceptionType] || 'Error',
-			message: row.labels[RUM_ATTRIBUTES.exceptionMessage] ?? '',
-			route: row.labels[ROUTE] ?? '',
-			events: count(row),
-			sessions: count(row, 1),
-			lastSeen: timestampMs(row.values[2]),
-		}))
-		.sort((a, b) => (b.lastSeen ?? 0) - (a.lastSeen ?? 0))
-		.slice(0, RECENT_ERRORS);
-}
-
 function sessionSummaries(
 	response: RangeResponse | undefined,
 ): SessionSummary[] {
@@ -229,7 +202,6 @@ export function applicationOverview(
 		vitals: vitalSummaries(rawScalarRows(response, 'V')),
 		routes: topRoutes(routes),
 		routeCount: routes.length,
-		errors: errorGroups(response),
 		sessions: sessionSummaries(response),
 		sdk: latestSdk(response, applicationId),
 		releases: rawScalarRows(response, 'RL')

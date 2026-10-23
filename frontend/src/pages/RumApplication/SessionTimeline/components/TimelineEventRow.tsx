@@ -5,15 +5,15 @@ import { formatMs } from 'lib/rum/format';
 import { cn } from 'lib/utils';
 import { ArrowUpRight } from 'lucide-react';
 
-import { EventTone } from '../types';
+import { EventLink, EventTone } from '../types';
 import { describeEvent, sessionClock } from '../utils';
 
 interface TimelineEventRowProps {
 	event: RumtypesTimelineEventDTO;
 	/** Epoch ms of the session start. */
 	sessionStart: number;
-	/** The event's page in another explorer: the trace of a request, the logs of an error. */
-	link?: { to: string; label: string };
+	/** The event's page elsewhere: the trace of a request, the group of an error. */
+	link?: EventLink;
 }
 
 const TONES: Record<EventTone, string> = {
@@ -37,7 +37,7 @@ function TimelineEventRow({
 			data-testid="rum-session-event"
 			data-kind={event.kind}
 			className={cn(
-				'tw:grid tw:grid-cols-[56px_76px_minmax(0,1fr)_auto_minmax(0,150px)] tw:items-center tw:gap-3 tw:rounded-md tw:px-2 tw:py-1.5 tw:text-xs',
+				'tw:grid tw:grid-cols-[56px_76px_minmax(0,1fr)_auto_minmax(0,200px)] tw:items-center tw:gap-3 tw:rounded-md tw:px-2 tw:py-1.5 tw:text-xs',
 				bad && 'tw:bg-error-soft/60',
 			)}
 		>
@@ -82,7 +82,16 @@ function TimelineEventRow({
 					</>
 				)}
 			</span>
-			<span className="tw:text-right">
+			<span className="tw:flex tw:items-center tw:justify-end tw:gap-2">
+				{link?.secondary && (
+					<Link
+						to={link.secondary.to}
+						data-testid={`rum-session-event-${event.kind}-logs`}
+						className="tw:whitespace-nowrap tw:text-muted-foreground! tw:hover:text-foreground! tw:hover:underline"
+					>
+						{link.secondary.label}
+					</Link>
+				)}
 				{link && (
 					<Link
 						to={link.to}

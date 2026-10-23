@@ -3,7 +3,7 @@ import type { RumtypesGettableViewDTO } from 'api/generated/services/fuseScope.s
 import { formatCount } from 'lib/apm/format';
 import { ApmWindow } from 'lib/apm/window';
 import { formatTimeOnView } from 'lib/rum/format';
-import { rumSessionsUrl } from 'lib/rum/links';
+import { rumErrorsUrl, rumSessionsUrl } from 'lib/rum/links';
 import { cn } from 'lib/utils';
 
 import ClientBreakdown from './ClientBreakdown';
@@ -34,6 +34,10 @@ function RouteDetail({
 			label: 'Errors',
 			value: formatCount(detail.errors),
 			bad: detail.errors > 0,
+			to:
+				detail.errors > 0
+					? rumErrorsUrl(applicationId, { release, route: detail.route })
+					: undefined,
 		},
 	];
 	return (
@@ -57,7 +61,18 @@ function RouteDetail({
 									kpi.bad && 'tw:text-error-ink',
 								)}
 							>
-								{kpi.value}
+								{kpi.to ? (
+									<Link
+										to={kpi.to}
+										data-testid="rum-route-errors"
+										title="This route’s error groups"
+										className="tw:text-error-ink! tw:hover:underline"
+									>
+										{kpi.value}
+									</Link>
+								) : (
+									kpi.value
+								)}
 							</dd>
 						</div>
 					))}

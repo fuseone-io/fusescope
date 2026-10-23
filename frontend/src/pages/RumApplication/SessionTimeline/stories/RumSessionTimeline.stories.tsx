@@ -48,6 +48,12 @@ export const Default: Story = {
 		).toHaveLength(6);
 		await expect(
 			canvas.getByTestId('rum-session-event-error-link'),
+		).toHaveAttribute(
+			'href',
+			expect.stringContaining('/errors/ec82dea88ad412e0'),
+		);
+		await expect(
+			canvas.getByTestId('rum-session-event-error-logs'),
 		).toHaveAttribute('href', expect.stringContaining('/logs/'));
 		await expect(
 			canvas.getAllByTestId('rum-session-event-request-link')[0],

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import {
 	Table,
@@ -11,42 +11,58 @@ import {
 import { formatCount } from 'lib/apm/format';
 import { ApmWindow } from 'lib/apm/window';
 import { formatAgo } from 'lib/rum/format';
-import { logsExplorerUrl } from 'lib/rum/links';
-import { ErrorGroup } from 'lib/rum/overviewTypes';
+import { logsExplorerUrl, rumErrorsUrl, rumErrorUrl } from 'lib/rum/links';
 
-import { errorLogsFilter } from '../utils';
+import { useErrorGroups } from '../Errors/hooks/useErrorGroups';
+import { carriedSearch, errorLogsFilter, recentErrorGroups } from '../utils';
 import EmptyRow from './EmptyRow';
 
 interface RecentErrorsPanelProps {
-	errors: ErrorGroup[];
+	applicationId: string;
+	release: string;
 	/** The application (and release) filter of the page. */
 	filter: string;
 	window: ApmWindow;
-	loading: boolean;
 }
 
 const LINK =
 	'tw:text-[13px] tw:whitespace-nowrap tw:text-primary! tw:hover:underline';
+const SECONDARY =
+	'tw:text-xs tw:whitespace-nowrap tw:text-muted-foreground! tw:hover:text-foreground! tw:hover:underline';
 
 function RecentErrorsPanel({
-	errors,
+	applicationId,
+	release,
 	filter,
 	window,
-	loading,
 }: RecentErrorsPanelProps): JSX.Element {
+	const { search } = useLocation();
+	const { state } = useErrorGroups(applicationId, window, release);
+	const errors = state.status === 'ready' ? recentErrorGroups(state.groups) : [];
+	const kept = carriedSearch(search);
+
 	return (
 		<ContentPanel
 			testId="rum-recent-errors"
 			title="Recent errors"
-			subtitle="JavaScript errors and unhandled rejections, grouped by type and message. Stack traces are not symbolicated yet."
+			subtitle="JavaScript errors and unhandled rejections grouped by fingerprint, last seen first."
 			actions={
-				<Link
-					to={logsExplorerUrl(errorLogsFilter(filter), window)}
-					className={LINK}
-					data-testid="rum-errors-open-logs"
-				>
-					Open in Logs
-				</Link>
+				<span className="tw:flex tw:items-center tw:gap-3">
+					<Link
+						to={logsExplorerUrl(errorLogsFilter(filter), window)}
+						className={SECONDARY}
+						data-testid="rum-errors-open-logs"
+					>
+						Open in Logs
+					</Link>
+					<Link
+						to={`${rumErrorsUrl(applicationId)}${kept}`}
+						className={LINK}
+						data-testid="rum-errors-all"
+					>
+						All errors
+					</Link>
+				</span>
 			}
 			divided
 		>
@@ -66,15 +82,16 @@ function RecentErrorsPanel({
 					</TableHeader>
 					<TableBody>
 						{errors.map((error) => (
-							<TableRow
-								key={`${error.type}|${error.message}|${error.route}`}
-								data-testid="rum-error-row"
-							>
+							<TableRow key={error.fingerprint} data-testid="rum-error-row">
 								<TableCell className="tw:max-w-0">
 									<span className="tw:flex tw:min-w-0 tw:flex-col tw:leading-snug">
-										<span className="tw:font-mono tw:text-xs tw:font-medium tw:text-error-ink">
+										<Link
+											to={`${rumErrorUrl(applicationId, error.fingerprint)}${kept}`}
+											data-testid="rum-error-open"
+											className="tw:w-fit tw:font-mono tw:text-xs tw:font-medium tw:text-error-ink! tw:hover:underline"
+										>
 											{error.type}
-										</span>
+										</Link>
 										<span
 											title={error.message}
 											className="tw:truncate tw:text-xs tw:text-muted-foreground"
@@ -93,12 +110,12 @@ function RecentErrorsPanel({
 									{formatCount(error.sessions)}
 								</TableCell>
 								<TableCell className="tw:text-muted-foreground tw:tabular-nums">
-									{formatAgo(error.lastSeen)}
+									{formatAgo(Date.parse(error.lastSeenAt) || undefined)}
 								</TableCell>
-								<TableCell>
+								<TableCell className="tw:text-right">
 									<Link
 										to={logsExplorerUrl(errorLogsFilter(filter, error), window)}
-										className={LINK}
+										className={SECONDARY}
 										data-testid="rum-error-logs"
 									>
 										View in Logs
@@ -106,8 +123,11 @@ function RecentErrorsPanel({
 								</TableCell>
 							</TableRow>
 						))}
-						{!loading && errors.length === 0 && (
+						{state.status === 'ready' && errors.length === 0 && (
 							<EmptyRow columns={6}>No errors in this range.</EmptyRow>
+						)}
+						{state.status === 'error' && (
+							<EmptyRow columns={6}>Errors could not be loaded.</EmptyRow>
 						)}
 					</TableBody>
 				</Table>

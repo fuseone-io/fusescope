@@ -263,41 +263,6 @@ const ROUTES: RouteFixture[] = [
 const share = (loads: number, percent: number): number =>
 	Math.round((loads * percent) / 100);
 
-const ERRORS: [string, string, string, number, number, number][] = [
-	[
-		'TypeError',
-		"Cannot read properties of undefined (reading 'price')",
-		'/product/:id',
-		388,
-		214,
-		2 * MINUTE,
-	],
-	[
-		'ChunkLoadError',
-		'Loading chunk 412 failed.',
-		'/search',
-		121,
-		117,
-		9 * MINUTE,
-	],
-	[
-		'UnhandledRejection',
-		'Failed to fetch: POST /api/cart returned 502',
-		'/cart',
-		96,
-		61,
-		14 * MINUTE,
-	],
-	[
-		'SecurityError',
-		"Failed to read the 'localStorage' property from 'Window': access is denied",
-		'/',
-		44,
-		44,
-		60 * MINUTE,
-	],
-];
-
 export const RUM_SESSIONS: [string, number, number, number, string, string][] =
 	[
 		// id, started ago, duration, views, user agent, release
@@ -394,19 +359,6 @@ function overviewResult(spec: QuerySpec, empty: boolean): unknown {
 				name,
 				[ROUTE],
 				ROUTES.map(([route, , , , , , , errors]) => [route, errors]),
-			);
-		case 'ER':
-			return scalar(
-				name,
-				['exception.type', 'exception.message', ROUTE],
-				ERRORS.map(([type, message, route, events, sessions, at]) => [
-					type,
-					message,
-					route,
-					events,
-					sessions,
-					(Date.now() - at) * 1e6,
-				]),
 			);
 		case 'SS':
 			return scalar(

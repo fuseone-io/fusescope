@@ -38,10 +38,10 @@ function OverviewTab({
 				loading={loading}
 			/>
 			<RecentErrorsPanel
-				errors={overview.errors}
+				applicationId={applicationId}
+				release={release}
 				filter={filter}
 				window={window}
-				loading={loading}
 			/>
 			<RecentSessionsPanel
 				applicationId={applicationId}
