@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	signozstanzahelper "github.com/fuseone-io/fusescope-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 	"github.com/fuseone-io/fusescope/pkg/query-service/utils"
@@ -16,6 +15,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
+	stanzahelper "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/helper"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 )
@@ -906,14 +906,14 @@ func TestProcessJSONParser_WithFlatteningAndMapping(t *testing.T) {
 	require.Nil(t, parentOp.Mapping) // Mapping should be removed
 	require.Nil(t, parent.Mapping)   // Mapping should be removed
 	require.Empty(t, parentOp.If)
-	require.Equal(t, signozstanzahelper.SendOnErrorQuiet, parentOp.OnError)
+	require.Equal(t, stanzahelper.SendOnErrorQuiet, parentOp.OnError)
 
 	require.Equal(t, 1+totalOps, len(ops))
 
 	var traceParserCount, moveCount, severityParserCount int
 	for _, op := range ops[1:] {
 		require.NotEmpty(t, op.ID)
-		require.Equal(t, op.OnError, signozstanzahelper.SendOnErrorQuiet)
+		require.Equal(t, op.OnError, stanzahelper.SendOnErrorQuiet)
 
 		switch op.Type {
 		case "move":
@@ -963,7 +963,7 @@ func TestProcessJSONParser_WithoutMapping(t *testing.T) {
 	require.True(t, op.EnablePaths)
 	require.Equal(t, "parsed", op.PathPrefix)
 	require.Empty(t, op.If)
-	require.Equal(t, signozstanzahelper.SendOnErrorQuiet, op.OnError)
+	require.Equal(t, stanzahelper.SendOnErrorQuiet, op.OnError)
 }
 
 func TestProcessJSONParser_Simple(t *testing.T) {
@@ -988,7 +988,7 @@ func TestProcessJSONParser_Simple(t *testing.T) {
 	require.False(t, op.EnablePaths)
 	require.Equal(t, "", op.PathPrefix)
 	require.Empty(t, op.If)
-	require.Equal(t, signozstanzahelper.SendOnErrorQuiet, op.OnError)
+	require.Equal(t, stanzahelper.SendOnErrorQuiet, op.OnError)
 }
 
 func TestProcessJSONParser_InvalidType(t *testing.T) {

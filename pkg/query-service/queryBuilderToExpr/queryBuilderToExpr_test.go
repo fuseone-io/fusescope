@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/expr-lang/expr/vm"
-	signozstanzahelper "github.com/fuseone-io/fusescope-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/logparsingpipeline/pipelineexpr"
 	v3 "github.com/fuseone-io/fusescope/pkg/query-service/model/v3"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	"github.com/stretchr/testify/assert"
@@ -334,7 +334,7 @@ func TestExpressionVSEntry(t *testing.T) {
 			ExpectedMatches: []int{0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
 		},
 		// body.log.message exists/nexists: expr checks "log.message" in fromJSON(body); nested key
-		// semantics depend on signoz stanza helper. Omitted here to avoid coupling to env shape.
+		// semantics depend on the pipeline expression env. Omitted here to avoid coupling to env shape.
 		{
 			Name: "body top-level key exists (body.msg)",
 			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -518,25 +518,18 @@ func TestExpressionVSEntry(t *testing.T) {
 			expression, err := Parse(tt.Query)
 			assert.NoError(t, err)
 
-			compiled, hasBodyFieldRef, _, err := signozstanzahelper.ExprCompileBool(expression)
+			compiled, hasBodyFieldRef, err := pipelineexpr.CompileBool(expression)
 			assert.NoError(t, err)
 
 			matchedIDs := []int{}
 			for _, d := range dataset {
-				err := signozstanzahelper.RunWithExprEnv(d.Entry, hasBodyFieldRef, nil, func(env map[string]any) error {
-					matches, err := vm.Run(compiled, env)
-					if err != nil {
-						// Eval error (e.g. fromJSON on non-JSON body) => treat as no match
-						return err
-					}
-					if matches != nil && matches.(bool) {
-						matchedIDs = append(matchedIDs, d.ID)
-					}
-					return nil
-				})
+				matches, err := vm.Run(compiled, pipelineexpr.Env(d.Entry, hasBodyFieldRef))
 				if err != nil {
 					// Eval error (e.g. fromJSON on non-JSON body) => treat as no match
 					continue
+				}
+				if matches != nil && matches.(bool) {
+					matchedIDs = append(matchedIDs, d.ID)
 				}
 			}
 			assert.Equal(t, tt.ExpectedMatches, matchedIDs, "query %q", tt.Name)

@@ -9,12 +9,12 @@ import (
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/ast"
 	"github.com/antonmedv/expr/parser"
-	signozstanzahelper "github.com/fuseone-io/fusescope-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/query-service/constants"
 	"github.com/fuseone-io/fusescope/pkg/query-service/queryBuilderToExpr"
 	"github.com/fuseone-io/fusescope/pkg/types/pipelinetypes"
 	"github.com/google/uuid"
+	stanzahelper "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/helper"
 )
 
 const (
@@ -241,7 +241,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 
 	// on_error: send_quiet replaces the expensive isJSON `if` check;
 	// parse failures pass the record through unchanged without noisy logs.
-	parent.OnError = signozstanzahelper.SendOnErrorQuiet
+	parent.OnError = stanzahelper.SendOnErrorQuiet
 	if parent.EnableFlattening {
 		parent.MaxFlatteningDepth = constants.MaxJSONFlatteningDepth
 	}
@@ -273,7 +273,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 			operator := pipelinetypes.PipelineOperator{
 				Type:    "move",
 				ID:      generateCustomID(),
-				OnError: signozstanzahelper.SendOnErrorQuiet,
+				OnError: stanzahelper.SendOnErrorQuiet,
 				From:    fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
 				To:      to,
 			}
@@ -307,7 +307,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		operator := pipelinetypes.PipelineOperator{
 			Type:    "trace_parser",
 			ID:      generateCustomID(),
-			OnError: signozstanzahelper.SendOnErrorQuiet,
+			OnError: stanzahelper.SendOnErrorQuiet,
 			TraceParser: &pipelinetypes.TraceParser{
 				TraceId: &pipelinetypes.ParseFrom{
 					ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
@@ -323,7 +323,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		operator := pipelinetypes.PipelineOperator{
 			Type:    "trace_parser",
 			ID:      generateCustomID(),
-			OnError: signozstanzahelper.SendOnErrorQuiet,
+			OnError: stanzahelper.SendOnErrorQuiet,
 			TraceParser: &pipelinetypes.TraceParser{
 				SpanId: &pipelinetypes.ParseFrom{
 					ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
@@ -339,7 +339,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		operator := pipelinetypes.PipelineOperator{
 			Type:    "trace_parser",
 			ID:      generateCustomID(),
-			OnError: signozstanzahelper.SendOnErrorQuiet,
+			OnError: stanzahelper.SendOnErrorQuiet,
 			TraceParser: &pipelinetypes.TraceParser{
 				TraceFlags: &pipelinetypes.ParseFrom{
 					ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
@@ -355,7 +355,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		operator := pipelinetypes.PipelineOperator{
 			Type:      "severity_parser",
 			ID:        generateCustomID(),
-			OnError:   signozstanzahelper.SendOnErrorQuiet,
+			OnError:   stanzahelper.SendOnErrorQuiet,
 			ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
 		}
 		err := processSeverityParser(&operator)
