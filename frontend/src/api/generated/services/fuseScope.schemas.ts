@@ -11525,7 +11525,7 @@ export interface RumtypesErrorGroupDTO {
 	message: string;
 	/**
 	 * @type boolean
-	 * @description First seen in the newest release with telemetry in the range, when an older release exists.
+	 * @description First seen in the newest release with telemetry in the range, when an older release exists: the highest semantic version, else the release first seen last.
 	 */
 	newInRelease: boolean;
 	/**
@@ -11534,7 +11534,7 @@ export interface RumtypesErrorGroupDTO {
 	normalizedMessage: string;
 	/**
 	 * @type array,null
-	 * @description Releases with events in the range.
+	 * @description Releases with events in the range, oldest first by semantic version, else by name.
 	 */
 	releases: string[] | null;
 	/**
@@ -11995,7 +11995,7 @@ export interface RumtypesGettableErrorGroupDTO {
 	message: string;
 	/**
 	 * @type boolean
-	 * @description First seen in the newest release with telemetry in the range, when an older release exists.
+	 * @description First seen in the newest release with telemetry in the range, when an older release exists: the highest semantic version, else the release first seen last.
 	 */
 	newInRelease: boolean;
 	/**
@@ -12004,7 +12004,7 @@ export interface RumtypesGettableErrorGroupDTO {
 	normalizedMessage: string;
 	/**
 	 * @type array,null
-	 * @description Releases with events in the range.
+	 * @description Releases with events in the range, oldest first by semantic version, else by name.
 	 */
 	releases: string[] | null;
 	/**
@@ -12047,7 +12047,7 @@ export interface RumtypesGettableErrorGroupsDTO {
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Sessions with spans in the range, for shares of sessions; approximate above 65,536.
+	 * @description Sessions with spans or logs in the range, for shares of sessions; approximate above 65,536.
 	 */
 	sessions: number;
 	/**
@@ -12717,7 +12717,7 @@ export interface RumtypesGettableViewsDTO {
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Sessions with spans in the range, for shares of sessions; approximate above 65,536.
+	 * @description Sessions with spans or logs in the range, for shares of sessions; approximate above 65,536.
 	 */
 	sessions: number;
 }
