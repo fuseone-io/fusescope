@@ -52,7 +52,17 @@ test('RUM-02 open a route from Views', async ({ authedPage: page }) => {
 	const sheet = page.getByTestId('rum-route-sheet');
 	await expect(sheet.getByTestId('rum-route-request')).toHaveCount(1);
 	await expect(sheet.getByTestId('rum-route-session-open')).toHaveCount(1);
-	await expect(sheet.getByTestId('rum-route-create-alert')).toBeDisabled();
+	await expect(sheet.getByTestId('rum-route-create-alert')).toHaveAttribute(
+		'href',
+		/rumTemplate=lcp_p75/,
+	);
+
+	await sheet.getByTestId('rum-route-create-alert').click();
+	await expect(page).toHaveURL(/\/alerts\/new\?.*rumTemplate=lcp_p75/);
+	await expect(page.getByTestId('alert-name-input')).toHaveValue(
+		/^e2e-views-\d+ LCP p75 above 2\.5 s on \/product\/:id$/,
+	);
+	await expect(page.getByTestId('rum-template-mapping')).toBeVisible();
 });
 
 test('RUM-03 open a session timeline from Sessions', async ({
