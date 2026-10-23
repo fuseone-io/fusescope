@@ -1,0 +1,3515 @@
+{
+  "\"level\" in attributes": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "\"msg\" in body": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "error": true
+      },
+      "JSONObjectNilAttributes": {
+        "error": true
+      },
+      "JSONObjectPadded": {
+        "error": true
+      },
+      "JSONObjectParsedBefore": {
+        "error": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "\"service.name\" in resource \u0026\u0026 resource[\"service.name\"] == \"checkout\"": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "\"x\"": {
+    "compileError": "expected bool, but got string"
+  },
+  "$ == body": {
+    "results": {
+      "BytesJSON": {
+        "value": true
+      },
+      "BytesText": {
+        "value": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": true
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": true
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "$.msg != nil": {
+    "results": {
+      "BytesJSON": {
+        "error": true
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "error": true
+      },
+      "JSONObjectNilAttributes": {
+        "error": true
+      },
+      "JSONObjectPadded": {
+        "error": true
+      },
+      "JSONObjectParsedBefore": {
+        "error": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "((type(body) == \"string\" \u0026\u0026 isJSON(body)) \u0026\u0026 \"missing\" not in fromJSON(body)) or (type(body) == \"map\" \u0026\u0026 (body.missing == nil))": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "((type(body) == \"string\" \u0026\u0026 isJSON(body)) \u0026\u0026 \"msg\" in fromJSON(body)) or (type(body) == \"map\" \u0026\u0026 (body.msg != nil))": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "1 +": {
+    "compileError": "unexpected token EOF (1:3)\n | 1 +\n | ..^"
+  },
+  "any(body.arr ?? [], {# == 1})": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "attributes.count == 5": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "attributes.count \u003e 3": {
+    "results": {
+      "BytesJSON": {
+        "error": true
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "error": true
+      },
+      "JSONObjectPadded": {
+        "error": true
+      },
+      "JSONObjectParsedBefore": {
+        "error": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "attributes.level == \"info\"": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "attributes.test != nil \u0026\u0026 attributes.test[\"a.b\"]?.value != nil \u0026\u0026 attributes.test[\"a.b\"].value[\"c.d\"]?.e != nil": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "attributes?.level != nil \u0026\u0026 ( type(attributes.level) == \"string\" || ( type(attributes.level) in [\"int\", \"float\"] \u0026\u0026 attributes.level == float(int(attributes.level)) ) )": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "attributes?.ts != nil \u0026\u0026 string(attributes.ts) matches \"^\\\\s*[0-9]+\\\\s*$\"": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "attributes?.tsf != nil \u0026\u0026 string(attributes.tsf) matches \"^\\\\s*[0-9]+\\\\.[0-9]+\\\\s*$\"": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "attributes[\"level\"] in [\"info\", \"error\"]": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "body != nil \u0026\u0026 body matches \"(?P\u003cip\u003e\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\.\\\\d+)\"": {
+    "results": {
+      "BytesJSON": {
+        "error": true
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": false
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "body != nil \u0026\u0026 lower(body) contains lower(\"CHECKOUT\")": {
+    "results": {
+      "BytesJSON": {
+        "error": true
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": false
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "body == \"checkout failed: 10.0.0.1 ERROR\"": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": false
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "body matches \"ERROR$\"": {
+    "results": {
+      "BytesJSON": {
+        "error": true
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": false
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "body.arr != nil \u0026\u0026 len(body.arr) \u003e 2 \u0026\u0026 body.arr[2] != nil": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "body.arr[1] == \"two\"": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "error": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "body.big \u003e 1e19": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "error": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "body.f == 1.5": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "body.missing == nil": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": true
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "body.msg": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": "bytes",
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": null
+      },
+      "EmptyString": {
+        "value": null
+      },
+      "IntBody": {
+        "value": null
+      },
+      "InvalidJSON": {
+        "value": null
+      },
+      "JSONArray": {
+        "value": null
+      },
+      "JSONNull": {
+        "value": null,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": null
+      },
+      "JSONObject": {
+        "value": "hello world",
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": "no attributes",
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": "padded",
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": "parsed before"
+      },
+      "JSONString": {
+        "value": null
+      },
+      "MapBody": {
+        "value": "from map"
+      },
+      "NilEverything": {
+        "value": null
+      },
+      "PlainText": {
+        "value": null
+      }
+    }
+  },
+  "body.msg == \"hello world\"": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "body.msg.x == nil": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "error": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "body.n + 1 == 2": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "error": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "body.n == 1": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "body.n == body[\"n\"]": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": true
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "body.o != nil \u0026\u0026 body.o[\"a.b\"]?.c != nil": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "body.o.p == \"q\"": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "error": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "body.o[\"a.b\"].c == \"d\"": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "error": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "error": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "body?.msg != nil": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "body?.msg != nil \u0026\u0026 \"__signozlogspipelineprocessor_internal__parsedBodyJson\" in attributes": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "body?.t != nil \u0026\u0026 body.t matches \"[0-9]{4}-[0-9]{2}-[0-9]{2}\"": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "body[\"msg\"] != nil": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "env(\"FUSESCOPE_PIPELINEEXPR_CORPUS\") == \"set\"": {
+    "results": {
+      "BytesJSON": {
+        "value": true
+      },
+      "BytesText": {
+        "value": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": true
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": true
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "fromJSON(body).msg == \"hello world\"": {
+    "results": {
+      "BytesJSON": {
+        "error": true
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "isJSON(body)": {
+    "results": {
+      "BytesJSON": {
+        "value": true
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": true
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "len(attributes) == 0": {
+    "results": {
+      "BytesJSON": {
+        "value": true
+      },
+      "BytesText": {
+        "value": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": false
+      },
+      "JSONObjectNilAttributes": {
+        "value": true
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": true
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "let m = body.msg; m != nil": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "now() \u003e timestamp": {
+    "results": {
+      "BytesJSON": {
+        "value": true
+      },
+      "BytesText": {
+        "value": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": true
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": true
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "resource.env == \"prod\" and attributes.level != \"debug\"": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "severity_number == 9": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "severity_text == \"ERROR\"": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": false
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "span_id == nil": {
+    "results": {
+      "BytesJSON": {
+        "value": true
+      },
+      "BytesText": {
+        "value": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": false
+      },
+      "JSONObjectNilAttributes": {
+        "value": true
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": true
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "string(attributes.count) == \"5\"": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "timestamp.Year() == 2024": {
+    "results": {
+      "BytesJSON": {
+        "value": true
+      },
+      "BytesText": {
+        "value": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": true
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": true
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "toJSON(body.o) != \"\"": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": true
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "trace_flags != nil": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "trace_id != nil": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "type(body)": {
+    "compileError": "expected bool, but got string"
+  },
+  "type(body) == \"map\"": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": false
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "type(body) == \"string\"": {
+    "results": {
+      "BytesJSON": {
+        "value": false
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": true
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "type(body.n) == \"float\"": {
+    "refsBody": true,
+    "results": {
+      "BytesJSON": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "BytesText": {
+        "value": false
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "value": false
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": true,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectNilAttributes": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectPadded": {
+        "value": false,
+        "addedAttributes": [
+          "__signozlogspipelineprocessor_internal__parsedBodyJson"
+        ]
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "value": false
+      },
+      "NilEverything": {
+        "value": false
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "undefined_var == nil": {
+    "results": {
+      "BytesJSON": {
+        "value": true
+      },
+      "BytesText": {
+        "value": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "value": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": true
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "value": true
+      },
+      "NilEverything": {
+        "value": true
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  },
+  "undefined_var.x == nil": {
+    "results": {
+      "BytesJSON": {
+        "error": true
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "error": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "error": true
+      },
+      "JSONArray": {
+        "error": true
+      },
+      "JSONNull": {
+        "error": true
+      },
+      "JSONNumber": {
+        "error": true
+      },
+      "JSONObject": {
+        "error": true
+      },
+      "JSONObjectNilAttributes": {
+        "error": true
+      },
+      "JSONObjectPadded": {
+        "error": true
+      },
+      "JSONObjectParsedBefore": {
+        "error": true
+      },
+      "JSONString": {
+        "error": true
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "error": true
+      }
+    }
+  },
+  "unquote(body) == \"quoted \\\"str\\\"\"": {
+    "results": {
+      "BytesJSON": {
+        "error": true
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "value": false
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "value": false
+      },
+      "JSONArray": {
+        "value": false
+      },
+      "JSONNull": {
+        "value": false
+      },
+      "JSONNumber": {
+        "value": false
+      },
+      "JSONObject": {
+        "value": false
+      },
+      "JSONObjectNilAttributes": {
+        "value": false
+      },
+      "JSONObjectPadded": {
+        "value": false
+      },
+      "JSONObjectParsedBefore": {
+        "value": false
+      },
+      "JSONString": {
+        "value": true
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "value": false
+      }
+    }
+  },
+  "unquote(body) == body": {
+    "results": {
+      "BytesJSON": {
+        "error": true
+      },
+      "BytesText": {
+        "error": true
+      },
+      "EmptyString": {
+        "value": true
+      },
+      "IntBody": {
+        "error": true
+      },
+      "InvalidJSON": {
+        "value": true
+      },
+      "JSONArray": {
+        "value": true
+      },
+      "JSONNull": {
+        "value": true
+      },
+      "JSONNumber": {
+        "value": true
+      },
+      "JSONObject": {
+        "value": true
+      },
+      "JSONObjectNilAttributes": {
+        "value": true
+      },
+      "JSONObjectPadded": {
+        "value": true
+      },
+      "JSONObjectParsedBefore": {
+        "value": true
+      },
+      "JSONString": {
+        "value": false
+      },
+      "MapBody": {
+        "error": true
+      },
+      "NilEverything": {
+        "error": true
+      },
+      "PlainText": {
+        "value": true
+      }
+    }
+  }
+}
