@@ -14,7 +14,7 @@ const InitialValue: InitialValueTypes = {
 	isCurrentVersionError: false,
 	isLatestVersionError: false,
 	configs: {},
-	ee: 'Y',
+	ee: 'N',
 	setupCompleted: true,
 };
 

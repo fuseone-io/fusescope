@@ -52,7 +52,7 @@ export const statusMocks = defineStoryMocks({
 
 		return [
 			rest.get('http://localhost/api/v1/version', (_req, res, ctx) =>
-				res(ctx.json({ version: CURRENT, ee: 'Y', setupCompleted: true })),
+				res(ctx.json({ version: CURRENT, ee: 'N', setupCompleted: true })),
 			),
 			rest.get(LATEST_RELEASE_URL, (_req, res, ctx) =>
 				res(

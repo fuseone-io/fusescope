@@ -1218,7 +1218,7 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	versionResponse := model.GetVersionResponse{
 		Version:        version.Info.Version(),
-		EE:             "Y",
+		EE:             "N",
 		SetupCompleted: aH.SetupCompleted,
 	}
 
