@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 
+	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/modules/retention/implretention"
 	"github.com/fuseone-io/fusescope/pkg/queryparser"
 
 	"github.com/fuseone-io/fusescope/pkg/http/middleware"
@@ -41,6 +43,11 @@ func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) 
 		signoz.Flagger,
 		nil,
 	)
+
+	retentionDefaults := implretention.NewDefaultsService(signoz.Instrumentation.ToProviderSettings(), reader, signoz.Modules.OrgGetter, config.Retention)
+	if err := signoz.Registry.Add(context.Background(), factory.NewNamedService(factory.MustNewName("retentiondefaults"), retentionDefaults)); err != nil {
+		return nil, err
+	}
 
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		signoz.SQLStore,

@@ -1303,7 +1303,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 	}
 
 	// Keep only latest 100 transactions/requests
-	r.deleteTtlTransactions(ctx, orgID, 100)
+	r.deleteTtlTransactions(ctx, orgID, keptTTLTransactions)
 
 	uuidWithHyphen := valuer.GenerateUUID()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
@@ -1761,7 +1761,7 @@ func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditi
 // Status of TTL update is tracked with ttl_status table in sqlite db.
 func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, params *retentiontypes.TTLParams) (*retentiontypes.SetTTLResponseItem, *model.ApiError) {
 	// Keep only latest 100 transactions/requests
-	r.deleteTtlTransactions(ctx, orgID, 100)
+	r.deleteTtlTransactions(ctx, orgID, keptTTLTransactions)
 
 	switch params.Type {
 	case retentiontypes.TraceTTL:
