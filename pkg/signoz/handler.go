@@ -30,6 +30,8 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/metricreductionrule/implmetricreductionrule"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer/implmetricsexplorer"
+	"github.com/fuseone-io/fusescope/pkg/modules/onboarding"
+	"github.com/fuseone-io/fusescope/pkg/modules/onboarding/implonboarding"
 	"github.com/fuseone-io/fusescope/pkg/modules/quickfilter"
 	"github.com/fuseone-io/fusescope/pkg/modules/quickfilter/implquickfilter"
 	"github.com/fuseone-io/fusescope/pkg/modules/rawdataexport"
@@ -97,6 +99,7 @@ type Handlers struct {
 	StatsHandler            statsreporter.Handler
 	RUMApplicationHandler   rumapplication.Handler
 	RUMGateway              rumapplication.Gateway
+	Onboarding              onboarding.Handler
 }
 
 func NewHandlers(
@@ -154,5 +157,6 @@ func NewHandlers(
 		StatsHandler:            statsreporter.NewHandler(statsAggregator),
 		RUMApplicationHandler:   implrumapplication.NewHandler(modules.RUMApplication),
 		RUMGateway:              implrumapplication.NewGateway(modules.RUMApplication, rumConfig, providerSettings),
+		Onboarding:              implonboarding.NewHandler(modules.Onboarding),
 	}
 }

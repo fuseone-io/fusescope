@@ -24,6 +24,8 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/metricreductionrule"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer/implmetricsexplorer"
+	"github.com/fuseone-io/fusescope/pkg/modules/onboarding"
+	"github.com/fuseone-io/fusescope/pkg/modules/onboarding/implonboarding"
 	"github.com/fuseone-io/fusescope/pkg/modules/organization"
 	"github.com/fuseone-io/fusescope/pkg/modules/organization/implorganization"
 	"github.com/fuseone-io/fusescope/pkg/modules/preference"
@@ -98,6 +100,7 @@ type Modules struct {
 	LLMPricingRule       llmpricingrule.Module
 	Tag                  tag.Module
 	RUMApplication       rumapplication.Module
+	Onboarding           onboarding.Module
 }
 
 func NewModules(
@@ -137,11 +140,17 @@ func NewModules(
 	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter, onDeleteUser)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 	authDomainModule := implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs, authz)
+	preferenceModule := implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference())
+	// The RUM gateway's forward target is the only collector address the backend knows.
+	collectorEndpoint := ""
+	if config.RUM.Enabled {
+		collectorEndpoint = config.RUM.CollectorEndpoint
+	}
 
 	return Modules{
 		OrgGetter:            orgGetter,
 		OrgSetter:            orgSetter,
-		Preference:           implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
+		Preference:           preferenceModule,
 		SavedView:            implsavedview.NewModule(implsavedview.NewStore(sqlstore)),
 		Apdex:                implapdex.NewModule(sqlstore),
 		Dashboard:            dashboard,
@@ -169,5 +178,6 @@ func NewModules(
 		LLMPricingRule:       impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), querier),
 		Tag:                  tagModule,
 		RUMApplication:       implrumapplication.NewModule(implrumapplication.NewStore(sqlstore), telemetryStore, providerSettings, config.RUM),
+		Onboarding:           implonboarding.NewModule(telemetryStore, preferenceModule, config.Global, collectorEndpoint, providerSettings),
 	}
 }

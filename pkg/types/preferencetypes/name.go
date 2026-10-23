@@ -24,6 +24,7 @@ var (
 	NameSpanDetailsColorByAttribute             = Name{valuer.NewString("span_details_color_by_attribute")}
 	NameSpanPercentileResourceAttributes        = Name{valuer.NewString("span_percentile_resource_attributes")}
 	NameLogDetailsPinnedAttributes              = Name{valuer.NewString("log_details_pinned_attributes")}
+	NameIngestionURL                            = Name{valuer.NewString("ingestion_url")}
 )
 
 type Name struct{ valuer.String }
@@ -47,6 +48,7 @@ func NewName(name string) (Name, error) {
 			NameSpanDetailsColorByAttribute.StringValue(),
 			NameSpanPercentileResourceAttributes.StringValue(),
 			NameLogDetailsPinnedAttributes.StringValue(),
+			NameIngestionURL.StringValue(),
 		},
 		name,
 	)

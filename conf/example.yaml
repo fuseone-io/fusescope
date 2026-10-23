@@ -15,6 +15,8 @@ global:
   # allowed_origins:
   #   - https://signoz.example.com
   # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
+  # onboarding shows it as the OTLP/HTTP endpoint. an admin's url set from the ui overrides it; when both are unset,
+  # onboarding derives <external_url host>:4317 (grpc) and http://<external_url host>:4318.
   ingestion_url: <unset>
   # the url of the SigNoz MCP server. when unset, the MCP settings page is hidden in the frontend.
   # mcp_url: <unset>
