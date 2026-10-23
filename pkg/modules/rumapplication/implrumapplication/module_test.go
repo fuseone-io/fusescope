@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"path/filepath"
+	"regexp"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
@@ -22,6 +24,14 @@ import (
 )
 
 func newTestModule(t *testing.T) (*module, valuer.UUID) {
+	t.Helper()
+	module, orgID, _ := newTestModuleWithMock(t, false)
+	return module, orgID
+}
+
+// newTestModuleWithMock also returns the ClickHouse mock, which expects the
+// promotion statements first; with matchRegexp, later expectations are regexps.
+func newTestModuleWithMock(t *testing.T, matchRegexp bool) (*module, valuer.UUID, cmock.ClickConnMockCommon) {
 	t.Helper()
 	ctx := context.Background()
 	sqlStore, err := sqlitesqlstore.New(ctx, factorytest.NewSettings(), sqlstore.Config{
@@ -38,13 +48,20 @@ func newTestModule(t *testing.T) (*module, valuer.UUID) {
 	_, err = sqlStore.BunDB().Exec(`CREATE UNIQUE INDEX uq_rum_application_org_id_name ON rum_application (org_id, name)`)
 	require.NoError(t, err)
 
-	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherEqual)
+	matcher := sqlmock.QueryMatcherEqual
+	if matchRegexp {
+		matcher = sqlmock.QueryMatcherRegexp
+	}
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, matcher)
 	for _, statement := range promotionStatements(telemetryStore.Cluster()) {
+		if matchRegexp {
+			statement = regexp.QuoteMeta(statement)
+		}
 		telemetryStore.Mock().ExpectExec(statement).WillReturnError(nil)
 	}
 
 	config := rumapplication.NewConfigFactory().New().(*rumapplication.Config)
-	return NewModule(NewStore(sqlStore), telemetryStore, factorytest.NewSettings(), *config).(*module), valuer.GenerateUUID()
+	return NewModule(NewStore(sqlStore), telemetryStore, factorytest.NewSettings(), *config).(*module), valuer.GenerateUUID(), telemetryStore.Mock()
 }
 
 func newTestPostable(t *testing.T, raw string) *rumtypes.PostableApplication {

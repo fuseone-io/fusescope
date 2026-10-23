@@ -68,6 +68,8 @@ func (provider *provider) addRUMRoutes(router *mux.Router) error {
 
 func (provider *provider) rumRoutes() []rumRoute {
 	applications, application, keys := "/api/v1/rum/applications", "/api/v1/rum/applications/{id}", "/api/v1/rum/applications/{id}/keys"
+	views, errorGroups, sessions := application+"/views", application+"/errors", application+"/sessions"
+	query := " Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name."
 	notFound := []int{http.StatusBadRequest, http.StatusNotFound}
 	managers := []string{authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName}
 	readers := []string{authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName}
@@ -119,6 +121,36 @@ func (provider *provider) rumRoutes() []rumRoute {
 		{path: keys + "/{keyId}", method: http.MethodDelete, handle: provider.rumApplicationHandler.RevokeKey, verb: coretypes.VerbUpdate, roles: managers, openAPIDef: handler.OpenAPIDef{
 			ID: "RevokeRUMApplicationKey", Summary: "Revoke RUM application key", Description: "Revokes a key at once, e.g. to end a rotation's overlap early.",
 			SuccessStatusCode: http.StatusNoContent, ErrorStatusCodes: notFound,
+		}},
+		{path: views, method: http.MethodGet, handle: provider.rumApplicationHandler.ListViews, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
+			ID: "ListRUMViews", Summary: "List RUM views by route", Description: "Returns per route template the views by loading type, the median time on view, the p75 and rating split of lcp, inp and cls, the error count and the request template with the highest p75." + query,
+			RequestQuery: new(rumtypes.ListViewsParams),
+			Response:     new(rumtypes.GettableViews), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
+		}},
+		{path: views + "/{route}", method: http.MethodGet, handle: provider.rumApplicationHandler.GetView, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
+			ID: "GetRUMView", Summary: "Get RUM view", Description: "Returns one route template, percent-encoded in the path (/product/:id is %2Fproduct%2F%3Aid): vitals p75 per time bucket, releases, the slowest request templates with an example trace, browser and OS breakdowns with LCP p75 and the latest sessions on the route." + query,
+			RequestQuery: new(rumtypes.GetViewParams),
+			Response:     new(rumtypes.GettableView), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
+		}},
+		{path: errorGroups, method: http.MethodGet, handle: provider.rumApplicationHandler.ListErrorGroups, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
+			ID: "ListRUMErrorGroups", Summary: "List RUM error groups", Description: "Groups error events by fingerprint: exception type, message with numbers, ids and URLs replaced, and the top frame's file and function. First seen and new in release look back 30 days, or the retention if shorter, and ignore the release filter." + query,
+			RequestQuery: new(rumtypes.ListErrorGroupsParams),
+			Response:     new(rumtypes.GettableErrorGroups), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
+		}},
+		{path: errorGroups + "/{fingerprint}", method: http.MethodGet, handle: provider.rumApplicationHandler.GetErrorGroup, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
+			ID: "GetRUMErrorGroup", Summary: "Get RUM error group", Description: "Returns an error group with its latest events and raw stack traces, the selected event's breadcrumbs and linked failed request, and the latest affected sessions." + query,
+			RequestQuery: new(rumtypes.GetErrorGroupParams),
+			Response:     new(rumtypes.GettableErrorGroup), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
+		}},
+		{path: sessions, method: http.MethodGet, handle: provider.rumApplicationHandler.ListSessions, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
+			ID: "ListRUMSessions", Summary: "List RUM sessions", Description: "Returns sessions newest first, with views, actions, errors, client, release and the previous session." + query,
+			RequestQuery: new(rumtypes.ListSessionsParams),
+			Response:     new(rumtypes.GettableSessions), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
+		}},
+		{path: sessions + "/{sessionId}", method: http.MethodGet, handle: provider.rumApplicationHandler.GetSession, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
+			ID: "GetRUMSession", Summary: "Get RUM session", Description: "Returns a session's timeline: its views in order, each with the requests, clicks, actions, errors and vitals that happened on it. Requests carry their trace id and whether backend spans share the trace." + query,
+			RequestQuery: new(rumtypes.GetSessionParams),
+			Response:     new(rumtypes.GettableSession), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
 		}},
 	}
 }

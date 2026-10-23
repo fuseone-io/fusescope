@@ -102,12 +102,12 @@ func promotionStatements(cluster string) []string {
 }
 
 func (field promotedField) statements(table promotedTable, cluster string) []string {
-	prefix, mapColumn := "attribute", "attributes_string"
+	mapColumn := "attributes_string"
 	if field.resource {
-		prefix, mapColumn = "resource", "resources_string"
+		mapColumn = "resources_string"
 	}
 
-	column := prefix + "_string_" + strings.ReplaceAll(field.name, ".", "$$")
+	column := promotedColumn(field.name, field.resource)
 	name := clickhousesql.StringLiteral(field.name)
 	onCluster := " ON CLUSTER " + clickhousesql.Identifier(cluster)
 
@@ -123,4 +123,13 @@ func (field promotedField) statements(table promotedTable, cluster string) []str
 	local := clickhousesql.Identifier(table.database) + "." + clickhousesql.Identifier(table.local)
 	statements = append(statements, fmt.Sprintf("ALTER TABLE %s%s ADD INDEX IF NOT EXISTS %s (%s) TYPE %s GRANULARITY %d", local, onCluster, clickhousesql.Identifier(column+"_idx"), clickhousesql.Identifier(column), promotedIndexType, promotedIndexGranularity))
 	return statements
+}
+
+// promotedColumn names the column the fields API creates for a string field.
+func promotedColumn(name string, resource bool) string {
+	prefix := "attribute"
+	if resource {
+		prefix = "resource"
+	}
+	return prefix + "_string_" + strings.ReplaceAll(name, ".", "$$")
 }

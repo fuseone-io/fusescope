@@ -30,6 +30,12 @@ func TestRUMRoutesAccess(t *testing.T) {
 		{name: "CreateRUMApplicationKey", verb: coretypes.VerbUpdate, roles: managers},
 		{name: "RotateRUMApplicationKey", verb: coretypes.VerbUpdate, roles: managers},
 		{name: "RevokeRUMApplicationKey", verb: coretypes.VerbUpdate, roles: managers},
+		{name: "ListRUMViews", verb: coretypes.VerbRead, roles: readers},
+		{name: "GetRUMView", verb: coretypes.VerbRead, roles: readers},
+		{name: "ListRUMErrorGroups", verb: coretypes.VerbRead, roles: readers},
+		{name: "GetRUMErrorGroup", verb: coretypes.VerbRead, roles: readers},
+		{name: "ListRUMSessions", verb: coretypes.VerbRead, roles: readers},
+		{name: "GetRUMSession", verb: coretypes.VerbRead, roles: readers},
 	}
 
 	routes := map[string]rumRoute{}

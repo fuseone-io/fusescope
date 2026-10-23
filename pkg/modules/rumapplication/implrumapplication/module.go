@@ -14,13 +14,15 @@ import (
 )
 
 type module struct {
-	store    rumtypes.Store
-	promoter *fieldPromoter
-	keys     *keyCache
-	monitor  *monitor
-	settings factory.ScopedProviderSettings
-	config   rumapplication.Config
-	origins  originCache
+	store        rumtypes.Store
+	telemetry    *telemetryReader
+	symbolicator rumapplication.Symbolicator
+	promoter     *fieldPromoter
+	keys         *keyCache
+	monitor      *monitor
+	settings     factory.ScopedProviderSettings
+	config       rumapplication.Config
+	origins      originCache
 }
 
 type originCache struct {
@@ -31,12 +33,14 @@ type originCache struct {
 
 func NewModule(store rumtypes.Store, telemetryStore telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings, config rumapplication.Config) rumapplication.Module {
 	return &module{
-		store:    store,
-		promoter: newFieldPromoter(telemetryStore, providerSettings),
-		keys:     newKeyCache(config.KeyCacheTTL),
-		monitor:  newMonitor(),
-		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication"),
-		config:   config,
+		store:        store,
+		telemetry:    newTelemetryReader(telemetryStore),
+		symbolicator: NewNoopSymbolicator(),
+		promoter:     newFieldPromoter(telemetryStore, providerSettings),
+		keys:         newKeyCache(config.KeyCacheTTL),
+		monitor:      newMonitor(),
+		settings:     factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication"),
+		config:       config,
 	}
 }
 

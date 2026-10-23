@@ -49,6 +49,13 @@ type Module interface {
 
 	// HasApplications reports whether any organization has an application.
 	HasApplications(ctx context.Context) (bool, error)
+
+	ListViews(ctx context.Context, orgID valuer.UUID, id valuer.UUID, params *rumtypes.ListViewsParams) (*rumtypes.GettableViews, error)
+	GetView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, route string, params *rumtypes.GetViewParams) (*rumtypes.GettableView, error)
+	ListErrorGroups(ctx context.Context, orgID valuer.UUID, id valuer.UUID, params *rumtypes.ListErrorGroupsParams) (*rumtypes.GettableErrorGroups, error)
+	GetErrorGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID, fingerprint string, params *rumtypes.GetErrorGroupParams) (*rumtypes.GettableErrorGroup, error)
+	ListSessions(ctx context.Context, orgID valuer.UUID, id valuer.UUID, params *rumtypes.ListSessionsParams) (*rumtypes.GettableSessions, error)
+	GetSession(ctx context.Context, orgID valuer.UUID, id valuer.UUID, sessionID string, params *rumtypes.GetSessionParams) (*rumtypes.GettableSession, error)
 }
 
 type Handler interface {
@@ -62,6 +69,19 @@ type Handler interface {
 	CreateKey(http.ResponseWriter, *http.Request)
 	RotateKey(http.ResponseWriter, *http.Request)
 	RevokeKey(http.ResponseWriter, *http.Request)
+	ListViews(http.ResponseWriter, *http.Request)
+	GetView(http.ResponseWriter, *http.Request)
+	ListErrorGroups(http.ResponseWriter, *http.Request)
+	GetErrorGroup(http.ResponseWriter, *http.Request)
+	ListSessions(http.ResponseWriter, *http.Request)
+	GetSession(http.ResponseWriter, *http.Request)
+}
+
+// Symbolicator maps minified frames to source through the release's uploaded
+// source maps. It runs at read time; stored telemetry stays raw. It reports
+// false when it has no map for the frames.
+type Symbolicator interface {
+	Symbolicate(ctx context.Context, applicationID valuer.UUID, release string, frames []rumtypes.StackFrame) ([]rumtypes.StackFrame, bool, error)
 }
 
 // Gateway serves the public OTLP/HTTP ingestion endpoints.
