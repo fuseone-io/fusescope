@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fuseone-io/fusescope-otel-collector/pkg/keycheck"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
@@ -109,8 +108,7 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must be a bare attribute name, without the `%s` prefix", prefix)
 	}
 
-	isCardinal := keycheck.IsCardinal(i.Path)
-	if isCardinal {
+	if isCardinalPath(i.Path) {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cardinal paths can not be promoted or indexed")
 	}
 
