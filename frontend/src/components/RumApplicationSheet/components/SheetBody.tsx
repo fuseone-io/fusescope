@@ -6,6 +6,7 @@ import { initialFormValues, snippetKey } from '../utils/sheetValues';
 import InstallTab from './InstallTab';
 import KeysTab from './KeysTab';
 import SettingsTab from './SettingsTab';
+import SourceMapsTab from './SourceMapsTab';
 
 interface SheetBodyProps {
 	sheet: ApplicationSheetState;
@@ -45,6 +46,15 @@ function SheetBody({
 				status={sheet.status}
 				onAddOrigin={readOnly ? undefined : actions.addOrigin}
 				onBack={(): void => sheet.setTab('settings')}
+				onDone={onClose}
+			/>
+		);
+	}
+	if (sheet.tab === 'sourcemaps' && application && !sheet.isNew) {
+		return (
+			<SourceMapsTab
+				application={application}
+				readOnly={readOnly}
 				onDone={onClose}
 			/>
 		);

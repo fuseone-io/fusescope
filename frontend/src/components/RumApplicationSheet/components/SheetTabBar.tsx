@@ -17,7 +17,7 @@ interface SheetTabBarProps {
 	onChange: (tab: SheetTab) => void;
 }
 
-const TABS: SheetTab[] = ['settings', 'key', 'install'];
+const TABS: SheetTab[] = ['settings', 'key', 'install', 'sourcemaps'];
 const isSheetTab = (value: string): value is SheetTab =>
 	TABS.includes(value as SheetTab);
 
