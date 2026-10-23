@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fuseone-io/fusescope-otel-collector/constants"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/logstelemetryschema"
 	"github.com/fuseone-io/fusescope/pkg/types/promotetypes"
@@ -29,8 +28,8 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			expectedArgs: []any{
 				logstelemetryschema.DBName,
 				logstelemetryschema.LogsV2LocalTableName,
-				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix)),
-				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(logstelemetryschema.BodyV2ColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(logstelemetryschema.BodyPromotedColumnPrefix)),
 			},
 		},
 		{
@@ -42,8 +41,8 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			expectedArgs: []any{
 				logstelemetryschema.DBName,
 				logstelemetryschema.LogsV2LocalTableName,
-				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix)),
-				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(logstelemetryschema.BodyV2ColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(logstelemetryschema.BodyPromotedColumnPrefix)),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains("foo")),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains("bar")),
 			},

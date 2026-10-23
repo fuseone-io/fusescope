@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	otelconstants "github.com/fuseone-io/fusescope-otel-collector/constants"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	bodyV2Column       = otelconstants.BodyV2Column
-	bodyPromotedColumn = otelconstants.BodyPromotedColumn
+	bodyV2Column       = "body_v2"
+	bodyPromotedColumn = "body_promoted"
 )
 
 // ============================================================================

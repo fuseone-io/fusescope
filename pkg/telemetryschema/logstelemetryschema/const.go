@@ -1,7 +1,6 @@
 package logstelemetryschema
 
 import (
-	"github.com/fuseone-io/fusescope-otel-collector/constants"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
@@ -17,8 +16,8 @@ const (
 	LogsV2TimestampColumn         = "timestamp"
 	LogsV2ObservedTimestampColumn = "observed_timestamp"
 	LogsV2BodyColumn              = "body"
-	LogsV2BodyV2Column            = constants.BodyV2Column
-	LogsV2BodyPromotedColumn      = constants.BodyPromotedColumn
+	LogsV2BodyV2Column            = "body_v2"
+	LogsV2BodyPromotedColumn      = "body_promoted"
 	LogsV2TraceIDColumn           = "trace_id"
 	LogsV2SpanIDColumn            = "span_id"
 	LogsV2TraceFlagsColumn        = "trace_flags"
@@ -34,8 +33,8 @@ const (
 	LogsV2ResourcesStringColumn  = "resources_string"
 	LogsV2ScopeStringColumn      = "scope_string"
 
-	BodyV2ColumnPrefix       = constants.BodyV2ColumnPrefix
-	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
+	BodyV2ColumnPrefix       = LogsV2BodyV2Column + "."
+	BodyPromotedColumnPrefix = LogsV2BodyPromotedColumn + "."
 
 	// messageSubColumn is the ClickHouse sub-column that body searches map to
 	// when use_json_body feature flag is true.
