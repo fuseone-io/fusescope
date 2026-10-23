@@ -22,6 +22,10 @@ import type {
 	CreateRUMApplicationKey201,
 	CreateRUMApplicationKeyPathParameters,
 	DeleteRUMApplicationPathParameters,
+	DeleteRUMSourceMapPathParameters,
+	DeleteRUMSourceMapsParams,
+	DeleteRUMSourceMapsPathParameters,
+	FormDataRumtypesPostableSourceMapsDTO,
 	GetRUMApplication200,
 	GetRUMApplicationPathParameters,
 	GetRUMApplicationStatus200,
@@ -44,6 +48,9 @@ import type {
 	ListRUMSessions200,
 	ListRUMSessionsParams,
 	ListRUMSessionsPathParameters,
+	ListRUMSourceMaps200,
+	ListRUMSourceMapsParams,
+	ListRUMSourceMapsPathParameters,
 	ListRUMViews200,
 	ListRUMViewsParams,
 	ListRUMViewsPathParameters,
@@ -56,6 +63,9 @@ import type {
 	RumtypesUpdatableApplicationDTO,
 	UpdateRUMApplication200,
 	UpdateRUMApplicationPathParameters,
+	UploadRUMSourceMaps201,
+	UploadRUMSourceMapsParams,
+	UploadRUMSourceMapsPathParameters,
 } from '../fuseScope.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
@@ -647,7 +657,7 @@ export const invalidateListRUMErrorGroups = async (
 };
 
 /**
- * Returns an error group with its latest events and raw stack traces, the selected event's breadcrumbs and linked failed request, and the latest affected sessions. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
+ * Returns an error group with its latest events and raw stack traces, the selected event's breadcrumbs and linked failed request, and the latest affected sessions. Event frames carry their original position when the event's release has uploaded source maps; missingSourceMap is set when it has none. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
  * @summary Get RUM error group
  */
 export const getRUMErrorGroup = (
@@ -1241,7 +1251,7 @@ export const invalidateListRUMSessions = async (
 };
 
 /**
- * Returns a session's timeline: its views in order, each with the requests, clicks, actions, errors and vitals that happened on it. Requests carry their trace id and whether backend spans share the trace. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
+ * Returns a session's timeline: its views in order, each with the requests, clicks, actions, errors and vitals that happened on it. Requests carry their trace id and whether backend spans share the trace. Defaults to the last 24 hours; ranges are at most 31 days. release is ignored, since a session can span releases; environment filters on deployment.environment.name.
  * @summary Get RUM session
  */
 export const getRUMSession = (
@@ -1359,6 +1369,408 @@ export const invalidateGetRUMSession = async (
 	return queryClient;
 };
 
+/**
+ * Deletes every source map of the release. Its events are kept and show minified frames again.
+ * @summary Delete RUM source maps of a release
+ */
+export const deleteRUMSourceMaps = (
+	{ id }: DeleteRUMSourceMapsPathParameters,
+	params: DeleteRUMSourceMapsParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v1/rum/applications/${id}/sourcemaps`,
+		method: 'DELETE',
+		params,
+		signal,
+	});
+};
+
+export const getDeleteRUMSourceMapsMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteRUMSourceMaps>>,
+		TError,
+		{
+			pathParams: DeleteRUMSourceMapsPathParameters;
+			params: DeleteRUMSourceMapsParams;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteRUMSourceMaps>>,
+	TError,
+	{
+		pathParams: DeleteRUMSourceMapsPathParameters;
+		params: DeleteRUMSourceMapsParams;
+	},
+	TContext
+> => {
+	const mutationKey = ['deleteRUMSourceMaps'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteRUMSourceMaps>>,
+		{
+			pathParams: DeleteRUMSourceMapsPathParameters;
+			params: DeleteRUMSourceMapsParams;
+		}
+	> = (props) => {
+		const { pathParams, params } = props ?? {};
+
+		return deleteRUMSourceMaps(pathParams, params);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteRUMSourceMapsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteRUMSourceMaps>>
+>;
+
+export type DeleteRUMSourceMapsMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete RUM source maps of a release
+ */
+export const useDeleteRUMSourceMaps = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteRUMSourceMaps>>,
+		TError,
+		{
+			pathParams: DeleteRUMSourceMapsPathParameters;
+			params: DeleteRUMSourceMapsParams;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteRUMSourceMaps>>,
+	TError,
+	{
+		pathParams: DeleteRUMSourceMapsPathParameters;
+		params: DeleteRUMSourceMapsParams;
+	},
+	TContext
+> => {
+	return useMutation(getDeleteRUMSourceMapsMutationOptions(options));
+};
+/**
+ * Returns the application's releases with source maps, newest upload first, with their size, uploader, last use and expiry, plus the storage used, the limits and the retention settings. With release, returns that release and its files.
+ * @summary List RUM source maps
+ */
+export const listRUMSourceMaps = (
+	{ id }: ListRUMSourceMapsPathParameters,
+	params?: ListRUMSourceMapsParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListRUMSourceMaps200>({
+		url: `/api/v1/rum/applications/${id}/sourcemaps`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListRUMSourceMapsQueryKey = (
+	{ id }: ListRUMSourceMapsPathParameters,
+	params?: ListRUMSourceMapsParams,
+) => {
+	return [
+		`/api/v1/rum/applications/${id}/sourcemaps`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getListRUMSourceMapsQueryOptions = <
+	TData = Awaited<ReturnType<typeof listRUMSourceMaps>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: ListRUMSourceMapsPathParameters,
+	params?: ListRUMSourceMapsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listRUMSourceMaps>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getListRUMSourceMapsQueryKey({ id }, params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listRUMSourceMaps>>
+	> = ({ signal }) => listRUMSourceMaps({ id }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof listRUMSourceMaps>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListRUMSourceMapsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listRUMSourceMaps>>
+>;
+export type ListRUMSourceMapsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List RUM source maps
+ */
+
+export function useListRUMSourceMaps<
+	TData = Awaited<ReturnType<typeof listRUMSourceMaps>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: ListRUMSourceMapsPathParameters,
+	params?: ListRUMSourceMapsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listRUMSourceMaps>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListRUMSourceMapsQueryOptions({ id }, params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List RUM source maps
+ */
+export const invalidateListRUMSourceMaps = async (
+	queryClient: QueryClient,
+	{ id }: ListRUMSourceMapsPathParameters,
+	params?: ListRUMSourceMapsParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListRUMSourceMapsQueryKey({ id }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Stores source maps for a release, from multipart/form-data: each part named by the URL path its map is served from (e.g. /assets/index-abc.js.map) is a map; a part named file uses its filename as that path instead. The map matches the bundle at its path without .map, or a bundle served under a prefix. An optional debug_ids field maps URL paths to debug IDs. release comes from the query, or from a release field before the first map. A map replaces the release's map with the same path. A map that is not version 3 JSON, empty or larger than the file limit (50 MB by default) is returned in rejected and the others are stored. More than 1,000 maps in the release (400) or more than the application's quota, 2 GB by default (413), stores nothing. Use an API key with the Editor role in SigNoz-Api-Key; the public RUM key is not accepted.
+ * @summary Upload RUM source maps
+ */
+export const uploadRUMSourceMaps = (
+	{ id }: UploadRUMSourceMapsPathParameters,
+	params: UploadRUMSourceMapsParams,
+	formDataRumtypesPostableSourceMapsDTO?: BodyType<FormDataRumtypesPostableSourceMapsDTO>,
+	signal?: AbortSignal,
+) => {
+	const formData = new FormData();
+	if (formDataRumtypesPostableSourceMapsDTO?.debug_ids !== undefined) {
+		formData.append(`debug_ids`, formDataRumtypesPostableSourceMapsDTO.debug_ids);
+	}
+	if (formDataRumtypesPostableSourceMapsDTO?.file !== undefined) {
+		formData.append(`file`, formDataRumtypesPostableSourceMapsDTO.file);
+	}
+
+	return GeneratedAPIInstance<UploadRUMSourceMaps201>({
+		url: `/api/v1/rum/applications/${id}/sourcemaps`,
+		method: 'POST',
+		headers: { 'Content-Type': 'multipart/form-data' },
+		data: formData,
+		params,
+		signal,
+	});
+};
+
+export const getUploadRUMSourceMapsMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof uploadRUMSourceMaps>>,
+		TError,
+		{
+			pathParams: UploadRUMSourceMapsPathParameters;
+			params: UploadRUMSourceMapsParams;
+			data?: BodyType<FormDataRumtypesPostableSourceMapsDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof uploadRUMSourceMaps>>,
+	TError,
+	{
+		pathParams: UploadRUMSourceMapsPathParameters;
+		params: UploadRUMSourceMapsParams;
+		data?: BodyType<FormDataRumtypesPostableSourceMapsDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['uploadRUMSourceMaps'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof uploadRUMSourceMaps>>,
+		{
+			pathParams: UploadRUMSourceMapsPathParameters;
+			params: UploadRUMSourceMapsParams;
+			data?: BodyType<FormDataRumtypesPostableSourceMapsDTO>;
+		}
+	> = (props) => {
+		const { pathParams, params, data } = props ?? {};
+
+		return uploadRUMSourceMaps(pathParams, params, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UploadRUMSourceMapsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof uploadRUMSourceMaps>>
+>;
+export type UploadRUMSourceMapsMutationBody =
+	| BodyType<FormDataRumtypesPostableSourceMapsDTO>
+	| undefined;
+export type UploadRUMSourceMapsMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Upload RUM source maps
+ */
+export const useUploadRUMSourceMaps = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof uploadRUMSourceMaps>>,
+		TError,
+		{
+			pathParams: UploadRUMSourceMapsPathParameters;
+			params: UploadRUMSourceMapsParams;
+			data?: BodyType<FormDataRumtypesPostableSourceMapsDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof uploadRUMSourceMaps>>,
+	TError,
+	{
+		pathParams: UploadRUMSourceMapsPathParameters;
+		params: UploadRUMSourceMapsParams;
+		data?: BodyType<FormDataRumtypesPostableSourceMapsDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getUploadRUMSourceMapsMutationOptions(options));
+};
+/**
+ * Deletes one source map file.
+ * @summary Delete RUM source map
+ */
+export const deleteRUMSourceMap = (
+	{ id, fileId }: DeleteRUMSourceMapPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v1/rum/applications/${id}/sourcemaps/${fileId}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteRUMSourceMapMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteRUMSourceMap>>,
+		TError,
+		{ pathParams: DeleteRUMSourceMapPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteRUMSourceMap>>,
+	TError,
+	{ pathParams: DeleteRUMSourceMapPathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteRUMSourceMap'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteRUMSourceMap>>,
+		{ pathParams: DeleteRUMSourceMapPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteRUMSourceMap(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteRUMSourceMapMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteRUMSourceMap>>
+>;
+
+export type DeleteRUMSourceMapMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete RUM source map
+ */
+export const useDeleteRUMSourceMap = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteRUMSourceMap>>,
+		TError,
+		{ pathParams: DeleteRUMSourceMapPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteRUMSourceMap>>,
+	TError,
+	{ pathParams: DeleteRUMSourceMapPathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteRUMSourceMapMutationOptions(options));
+};
 /**
  * Returns what the gateway saw for the application over the last five minutes, the SDK versions this server supports and refused requests by reason. Counts are kept in memory by the server instance that answers.
  * @summary Get RUM application setup status
@@ -1574,7 +1986,7 @@ export const invalidateListRUMViews = async (
 };
 
 /**
- * Returns one route template, percent-encoded in the path (/product/:id is %2Fproduct%2F%3Aid): vitals p75 per time bucket, releases, the slowest request templates with an example trace, browser and OS breakdowns with LCP p75 and the latest sessions on the route. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
+ * Returns one route template, percent-encoded in the path (/product/:id is %2Fproduct%2F%3Aid): vitals p75 per time bucket, releases, the slowest request templates with an example trace, browser and OS breakdowns with LCP p75 and the latest sessions on the route. A route without views in the range is not found. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
  * @summary Get RUM view
  */
 export const getRUMView = (
