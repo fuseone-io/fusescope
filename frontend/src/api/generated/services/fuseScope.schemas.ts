@@ -11935,6 +11935,12 @@ export interface RumtypesTimelineEventDTO {
 	vital?: RumtypesVitalEventDTO;
 }
 
+/**
+ * The failed request of the same session that started last in the 5 seconds before the selected event.
+ */
+export type RumtypesGettableErrorGroupDTOLinkedRequest =
+	RumtypesTimelineEventDTO | null;
+
 export interface RumtypesGettableErrorGroupDTO {
 	/**
 	 * @type array,null
@@ -11978,7 +11984,10 @@ export interface RumtypesGettableErrorGroupDTO {
 	 * @description Up to 10, newest first.
 	 */
 	latestEvents: RumtypesErrorEventDTO[] | null;
-	linkedRequest: RumtypesTimelineEventDTO;
+	/**
+	 * @description The failed request of the same session that started last in the 5 seconds before the selected event.
+	 */
+	linkedRequest: RumtypesGettableErrorGroupDTOLinkedRequest;
 	/**
 	 * @type string
 	 * @description Message of the latest event.
