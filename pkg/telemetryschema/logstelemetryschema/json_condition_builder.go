@@ -5,10 +5,10 @@ import (
 	"slices"
 	"strings"
 
-	schemamigrator "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -42,7 +42,7 @@ func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperato
 
 	// path index
 	if operator.AddDefaultExistsFilter() {
-		pathIndex := sqlbuilder.Escape(fmt.Sprintf(`has(%s, %s)`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), clickhousesql.StringLiteral(c.key.ArrayParentPaths()[0])))
+		pathIndex := sqlbuilder.Escape(fmt.Sprintf(`has(%s, %s)`, chschema.JSONPathsIndexExpr(LogsV2BodyV2Column), clickhousesql.StringLiteral(c.key.ArrayParentPaths()[0])))
 		return sb.And(baseCond, pathIndex), nil
 	}
 
@@ -173,7 +173,7 @@ func (c *jsonConditionBuilder) terminalIndexedCondition(node *telemetrytypes.JSO
 		return "", errors.NewInternalf(errors.CodeInvalidInput, "can not build index condition for non-terminal node %s", fieldPath)
 	}
 
-	indexedExpr := schemamigrator.JSONSubColumnIndexExpr(node.Parent.Name, node.Name, node.TerminalConfig.ElemType.StringValue())
+	indexedExpr := chschema.JSONSubColumnIndexExpr(node.Parent.Name, node.Name, node.TerminalConfig.ElemType.StringValue())
 	// TODO(Piyush): indexedExpr should not be formatted here instead value should be formatted
 	// else ClickHouse may not utilize index
 	indexedExpr, formattedValue := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, indexedExpr, operator)

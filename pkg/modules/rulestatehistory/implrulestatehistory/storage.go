@@ -4,25 +4,25 @@ import (
 	"context"
 	"fmt"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
 
-var ruleStateHistoryColumns = map[string]*schema.Column{
-	"rule_id":               {Name: "rule_id", Type: schema.ColumnTypeString},
-	"rule_name":             {Name: "rule_name", Type: schema.ColumnTypeString},
-	"overall_state":         {Name: "overall_state", Type: schema.ColumnTypeString},
-	"overall_state_changed": {Name: "overall_state_changed", Type: schema.ColumnTypeBool},
-	"state":                 {Name: "state", Type: schema.ColumnTypeString},
-	"state_changed":         {Name: "state_changed", Type: schema.ColumnTypeBool},
-	"unix_milli":            {Name: "unix_milli", Type: schema.ColumnTypeInt64},
-	"labels":                {Name: "labels", Type: schema.ColumnTypeString},
-	"fingerprint":           {Name: "fingerprint", Type: schema.ColumnTypeUInt64},
-	"value":                 {Name: "value", Type: schema.ColumnTypeFloat64},
+var ruleStateHistoryColumns = map[string]*chschema.Column{
+	"rule_id":               {Name: "rule_id", Type: chschema.ColumnTypeString},
+	"rule_name":             {Name: "rule_name", Type: chschema.ColumnTypeString},
+	"overall_state":         {Name: "overall_state", Type: chschema.ColumnTypeString},
+	"overall_state_changed": {Name: "overall_state_changed", Type: chschema.ColumnTypeBool},
+	"state":                 {Name: "state", Type: chschema.ColumnTypeString},
+	"state_changed":         {Name: "state_changed", Type: chschema.ColumnTypeBool},
+	"unix_milli":            {Name: "unix_milli", Type: chschema.ColumnTypeInt64},
+	"labels":                {Name: "labels", Type: chschema.ColumnTypeString},
+	"fingerprint":           {Name: "fingerprint", Type: chschema.ColumnTypeUInt64},
+	"value":                 {Name: "value", Type: chschema.ColumnTypeFloat64},
 }
 
 type storage struct{}
@@ -33,7 +33,7 @@ func newStorage() *storage {
 	return &storage{}
 }
 
-func (m *storage) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) { //nolint:unparam
+func (m *storage) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*chschema.Column, error) { //nolint:unparam
 	if col, ok := ruleStateHistoryColumns[key.Name]; ok {
 		return col, nil
 	}

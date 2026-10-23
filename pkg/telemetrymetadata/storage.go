@@ -4,22 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 var (
-	attributeMetadataColumns = map[string]*schema.Column{
-		"resource_attributes": {Name: "resource_attributes", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+	attributeMetadataColumns = map[string]*chschema.Column{
+		"resource_attributes": {Name: "resource_attributes", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}},
-		"attributes": {Name: "attributes", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+		"attributes": {Name: "attributes", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}},
 	}
 )
@@ -32,12 +32,12 @@ func NewStorage() qbtypes.Storage {
 	return &storage{}
 }
 
-func (m *storage) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *storage) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*chschema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return []*schema.Column{attributeMetadataColumns["resource_attributes"]}, nil
+		return []*chschema.Column{attributeMetadataColumns["resource_attributes"]}, nil
 	case telemetrytypes.FieldContextAttribute:
-		return []*schema.Column{attributeMetadataColumns["attributes"]}, nil
+		return []*chschema.Column{attributeMetadataColumns["attributes"]}, nil
 	}
 	return nil, qbtypes.ErrColumnNotFound
 }
@@ -49,9 +49,9 @@ func (m *storage) read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 	}
 
 	switch columns[0].Type {
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
+	case chschema.MapColumnType{
+		KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+		ValueType: chschema.ColumnTypeString,
 	}:
 		return fmt.Sprintf("%s[%s]", columns[0].Name, clickhousesql.StringLiteral(key.Name)), nil
 	}

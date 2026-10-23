@@ -5,125 +5,125 @@ import (
 	"fmt"
 	"strings"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
 
 var (
-	indexV3Columns = map[string]*schema.Column{
-		"ts_bucket_start":      {Name: "ts_bucket_start", Type: schema.ColumnTypeUInt64},
-		"resource_fingerprint": {Name: "resource_fingerprint", Type: schema.ColumnTypeString},
+	indexV3Columns = map[string]*chschema.Column{
+		"ts_bucket_start":      {Name: "ts_bucket_start", Type: chschema.ColumnTypeUInt64},
+		"resource_fingerprint": {Name: "resource_fingerprint", Type: chschema.ColumnTypeString},
 
 		// intrinsic columns
-		"timestamp":          {Name: "timestamp", Type: schema.DateTime64ColumnType{Precision: 9, Timezone: "UTC"}},
-		"trace_id":           {Name: "trace_id", Type: schema.FixedStringColumnType{Length: 32}},
-		"span_id":            {Name: "span_id", Type: schema.ColumnTypeString},
-		"trace_state":        {Name: "trace_state", Type: schema.ColumnTypeString},
-		"parent_span_id":     {Name: "parent_span_id", Type: schema.ColumnTypeString},
-		"flags":              {Name: "flags", Type: schema.ColumnTypeUInt32},
-		"name":               {Name: "name", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"kind":               {Name: "kind", Type: schema.ColumnTypeInt8},
-		"kind_string":        {Name: "kind_string", Type: schema.ColumnTypeString},
-		"duration_nano":      {Name: "duration_nano", Type: schema.ColumnTypeUInt64},
-		"status_code":        {Name: "status_code", Type: schema.ColumnTypeInt16},
-		"status_message":     {Name: "status_message", Type: schema.ColumnTypeString},
-		"status_code_string": {Name: "status_code_string", Type: schema.ColumnTypeString},
+		"timestamp":          {Name: "timestamp", Type: chschema.DateTime64ColumnType{Precision: 9, Timezone: "UTC"}},
+		"trace_id":           {Name: "trace_id", Type: chschema.FixedStringColumnType{Length: 32}},
+		"span_id":            {Name: "span_id", Type: chschema.ColumnTypeString},
+		"trace_state":        {Name: "trace_state", Type: chschema.ColumnTypeString},
+		"parent_span_id":     {Name: "parent_span_id", Type: chschema.ColumnTypeString},
+		"flags":              {Name: "flags", Type: chschema.ColumnTypeUInt32},
+		"name":               {Name: "name", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"kind":               {Name: "kind", Type: chschema.ColumnTypeInt8},
+		"kind_string":        {Name: "kind_string", Type: chschema.ColumnTypeString},
+		"duration_nano":      {Name: "duration_nano", Type: chschema.ColumnTypeUInt64},
+		"status_code":        {Name: "status_code", Type: chschema.ColumnTypeInt16},
+		"status_message":     {Name: "status_message", Type: chschema.ColumnTypeString},
+		"status_code_string": {Name: "status_code_string", Type: chschema.ColumnTypeString},
 
 		// attributes columns
-		"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+		"attributes_string": {Name: "attributes_string", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}},
-		"attributes_number": {Name: "attributes_number", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeFloat64,
+		"attributes_number": {Name: "attributes_number", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeFloat64,
 		}},
-		"attributes_bool": {Name: "attributes_bool", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeBool,
+		"attributes_bool": {Name: "attributes_bool", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeBool,
 		}},
-		"resources_string": {Name: "resources_string", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+		"resources_string": {Name: "resources_string", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}},
-		"resource":            {Name: "resource", Type: schema.JSONColumnType{}},
-		"scope":               {Name: "scope", Type: schema.JSONColumnType{}},
-		"attributes":          {Name: "attributes", Type: schema.JSONColumnType{}},
-		"attributes_promoted": {Name: "attributes_promoted", Type: schema.JSONColumnType{}},
+		"resource":            {Name: "resource", Type: chschema.JSONColumnType{}},
+		"scope":               {Name: "scope", Type: chschema.JSONColumnType{}},
+		"attributes":          {Name: "attributes", Type: chschema.JSONColumnType{}},
+		"attributes_promoted": {Name: "attributes_promoted", Type: chschema.JSONColumnType{}},
 
-		"events": {Name: "events", Type: schema.ArrayColumnType{
-			ElementType: schema.ColumnTypeString,
+		"events": {Name: "events", Type: chschema.ArrayColumnType{
+			ElementType: chschema.ColumnTypeString,
 		}},
-		"links": {Name: "links", Type: schema.ColumnTypeString},
+		"links": {Name: "links", Type: chschema.ColumnTypeString},
 		// derived columns
-		"response_status_code": {Name: "response_status_code", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"external_http_url":    {Name: "external_http_url", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"http_url":             {Name: "http_url", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"external_http_method": {Name: "external_http_method", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"http_method":          {Name: "http_method", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"http_host":            {Name: "http_host", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"db_name":              {Name: "db_name", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"db_operation":         {Name: "db_operation", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"has_error":            {Name: "has_error", Type: schema.ColumnTypeBool},
-		"is_remote":            {Name: "is_remote", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"response_status_code": {Name: "response_status_code", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"external_http_url":    {Name: "external_http_url", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"http_url":             {Name: "http_url", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"external_http_method": {Name: "external_http_method", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"http_method":          {Name: "http_method", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"http_host":            {Name: "http_host", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"db_name":              {Name: "db_name", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"db_operation":         {Name: "db_operation", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"has_error":            {Name: "has_error", Type: chschema.ColumnTypeBool},
+		"is_remote":            {Name: "is_remote", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
 		// materialized columns
-		"resource_string_service$$name":         {Name: "resource_string_service$$name", Type: schema.ColumnTypeString},
-		"attribute_string_http$$route":          {Name: "attribute_string_http$$route", Type: schema.ColumnTypeString},
-		"attribute_string_messaging$$system":    {Name: "attribute_string_messaging$$system", Type: schema.ColumnTypeString},
-		"attribute_string_messaging$$operation": {Name: "attribute_string_messaging$$operation", Type: schema.ColumnTypeString},
-		"attribute_string_db$$system":           {Name: "attribute_string_db$$system", Type: schema.ColumnTypeString},
-		"attribute_string_rpc$$system":          {Name: "attribute_string_rpc$$system", Type: schema.ColumnTypeString},
-		"attribute_string_rpc$$service":         {Name: "attribute_string_rpc$$service", Type: schema.ColumnTypeString},
-		"attribute_string_rpc$$method":          {Name: "attribute_string_rpc$$method", Type: schema.ColumnTypeString},
-		"attribute_string_peer$$service":        {Name: "attribute_string_peer$$service", Type: schema.ColumnTypeString},
+		"resource_string_service$$name":         {Name: "resource_string_service$$name", Type: chschema.ColumnTypeString},
+		"attribute_string_http$$route":          {Name: "attribute_string_http$$route", Type: chschema.ColumnTypeString},
+		"attribute_string_messaging$$system":    {Name: "attribute_string_messaging$$system", Type: chschema.ColumnTypeString},
+		"attribute_string_messaging$$operation": {Name: "attribute_string_messaging$$operation", Type: chschema.ColumnTypeString},
+		"attribute_string_db$$system":           {Name: "attribute_string_db$$system", Type: chschema.ColumnTypeString},
+		"attribute_string_rpc$$system":          {Name: "attribute_string_rpc$$system", Type: chschema.ColumnTypeString},
+		"attribute_string_rpc$$service":         {Name: "attribute_string_rpc$$service", Type: chschema.ColumnTypeString},
+		"attribute_string_rpc$$method":          {Name: "attribute_string_rpc$$method", Type: chschema.ColumnTypeString},
+		"attribute_string_peer$$service":        {Name: "attribute_string_peer$$service", Type: chschema.ColumnTypeString},
 
 		// deprecated intrinsic columns
-		"traceID":          {Name: "traceID", Type: schema.FixedStringColumnType{Length: 32}},
-		"spanID":           {Name: "spanID", Type: schema.ColumnTypeString},
-		"parentSpanID":     {Name: "parentSpanID", Type: schema.ColumnTypeString},
-		"spanKind":         {Name: "spanKind", Type: schema.ColumnTypeString},
-		"durationNano":     {Name: "durationNano", Type: schema.ColumnTypeUInt64},
-		"statusCode":       {Name: "statusCode", Type: schema.ColumnTypeInt16},
-		"statusMessage":    {Name: "statusMessage", Type: schema.ColumnTypeString},
-		"statusCodeString": {Name: "statusCodeString", Type: schema.ColumnTypeString},
+		"traceID":          {Name: "traceID", Type: chschema.FixedStringColumnType{Length: 32}},
+		"spanID":           {Name: "spanID", Type: chschema.ColumnTypeString},
+		"parentSpanID":     {Name: "parentSpanID", Type: chschema.ColumnTypeString},
+		"spanKind":         {Name: "spanKind", Type: chschema.ColumnTypeString},
+		"durationNano":     {Name: "durationNano", Type: chschema.ColumnTypeUInt64},
+		"statusCode":       {Name: "statusCode", Type: chschema.ColumnTypeInt16},
+		"statusMessage":    {Name: "statusMessage", Type: chschema.ColumnTypeString},
+		"statusCodeString": {Name: "statusCodeString", Type: chschema.ColumnTypeString},
 
 		// deprecated derived columns
-		"references":         {Name: "references", Type: schema.ColumnTypeString},
-		"responseStatusCode": {Name: "responseStatusCode", Type: schema.ColumnTypeString},
-		"externalHttpUrl":    {Name: "externalHttpUrl", Type: schema.ColumnTypeString},
-		"httpUrl":            {Name: "httpUrl", Type: schema.ColumnTypeString},
-		"externalHttpMethod": {Name: "externalHttpMethod", Type: schema.ColumnTypeString},
-		"httpMethod":         {Name: "httpMethod", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"httpHost":           {Name: "httpHost", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"dbName":             {Name: "dbName", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"dbOperation":        {Name: "dbOperation", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"hasError":           {Name: "hasError", Type: schema.ColumnTypeBool},
-		"isRemote":           {Name: "isRemote", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"serviceName":        {Name: "serviceName", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"httpRoute":          {Name: "httpRoute", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"msgSystem":          {Name: "msgSystem", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"msgOperation":       {Name: "msgOperation", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"dbSystem":           {Name: "dbSystem", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"rpcSystem":          {Name: "rpcSystem", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"rpcService":         {Name: "rpcService", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"rpcMethod":          {Name: "rpcMethod", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"peerService":        {Name: "peerService", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"references":         {Name: "references", Type: chschema.ColumnTypeString},
+		"responseStatusCode": {Name: "responseStatusCode", Type: chschema.ColumnTypeString},
+		"externalHttpUrl":    {Name: "externalHttpUrl", Type: chschema.ColumnTypeString},
+		"httpUrl":            {Name: "httpUrl", Type: chschema.ColumnTypeString},
+		"externalHttpMethod": {Name: "externalHttpMethod", Type: chschema.ColumnTypeString},
+		"httpMethod":         {Name: "httpMethod", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"httpHost":           {Name: "httpHost", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"dbName":             {Name: "dbName", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"dbOperation":        {Name: "dbOperation", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"hasError":           {Name: "hasError", Type: chschema.ColumnTypeBool},
+		"isRemote":           {Name: "isRemote", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"serviceName":        {Name: "serviceName", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"httpRoute":          {Name: "httpRoute", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"msgSystem":          {Name: "msgSystem", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"msgOperation":       {Name: "msgOperation", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"dbSystem":           {Name: "dbSystem", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"rpcSystem":          {Name: "rpcSystem", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"rpcService":         {Name: "rpcService", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"rpcMethod":          {Name: "rpcMethod", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"peerService":        {Name: "peerService", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
 
 		// materialized exists columns
-		"resource_string_service$$name_exists":         {Name: "resource_string_service$$name_exists", Type: schema.ColumnTypeBool},
-		"attribute_string_http$$route_exists":          {Name: "attribute_string_http$$route_exists", Type: schema.ColumnTypeBool},
-		"attribute_string_messaging$$system_exists":    {Name: "attribute_string_messaging$$system_exists", Type: schema.ColumnTypeBool},
-		"attribute_string_messaging$$operation_exists": {Name: "attribute_string_messaging$$operation_exists", Type: schema.ColumnTypeBool},
-		"attribute_string_db$$system_exists":           {Name: "attribute_string_db$$system_exists", Type: schema.ColumnTypeBool},
-		"attribute_string_rpc$$system_exists":          {Name: "attribute_string_rpc$$system_exists", Type: schema.ColumnTypeBool},
-		"attribute_string_rpc$$service_exists":         {Name: "attribute_string_rpc$$service_exists", Type: schema.ColumnTypeBool},
-		"attribute_string_rpc$$method_exists":          {Name: "attribute_string_rpc$$method_exists", Type: schema.ColumnTypeBool},
-		"attribute_string_peer$$service_exists":        {Name: "attribute_string_peer$$service_exists", Type: schema.ColumnTypeBool},
+		"resource_string_service$$name_exists":         {Name: "resource_string_service$$name_exists", Type: chschema.ColumnTypeBool},
+		"attribute_string_http$$route_exists":          {Name: "attribute_string_http$$route_exists", Type: chschema.ColumnTypeBool},
+		"attribute_string_messaging$$system_exists":    {Name: "attribute_string_messaging$$system_exists", Type: chschema.ColumnTypeBool},
+		"attribute_string_messaging$$operation_exists": {Name: "attribute_string_messaging$$operation_exists", Type: chschema.ColumnTypeBool},
+		"attribute_string_db$$system_exists":           {Name: "attribute_string_db$$system_exists", Type: chschema.ColumnTypeBool},
+		"attribute_string_rpc$$system_exists":          {Name: "attribute_string_rpc$$system_exists", Type: chschema.ColumnTypeBool},
+		"attribute_string_rpc$$service_exists":         {Name: "attribute_string_rpc$$service_exists", Type: chschema.ColumnTypeBool},
+		"attribute_string_rpc$$method_exists":          {Name: "attribute_string_rpc$$method_exists", Type: chschema.ColumnTypeBool},
+		"attribute_string_peer$$service_exists":        {Name: "attribute_string_peer$$service_exists", Type: chschema.ColumnTypeBool},
 	}
 
 	// TODO(srikanthccv): remove this mapping.
@@ -174,14 +174,14 @@ func (m *storage) getColumn(
 	_ context.Context,
 	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
-) ([]*schema.Column, error) {
+) ([]*chschema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return []*schema.Column{indexV3Columns["resource"], indexV3Columns["resources_string"]}, nil
+		return []*chschema.Column{indexV3Columns["resource"], indexV3Columns["resources_string"]}, nil
 	case telemetrytypes.FieldContextScope:
-		return []*schema.Column{indexV3Columns["scope"]}, nil
+		return []*chschema.Column{indexV3Columns["scope"]}, nil
 	case telemetrytypes.FieldContextAttribute:
-		var mapCol *schema.Column
+		var mapCol *chschema.Column
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
 			mapCol = indexV3Columns["attributes_string"]
@@ -196,34 +196,34 @@ func (m *storage) getColumn(
 		}
 		// The use_trace_attributes_json flag and the `attributes` evolution entry are the rollout control.
 		if q.TraceAttrsJSONOn && attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
-			cols := make([]*schema.Column, 0, 3)
+			cols := make([]*chschema.Column, 0, 3)
 			if attributeColumnEvolutionRegistered(key, SpanAttributesPromotedColumn) {
 				cols = append(cols, indexV3Columns["attributes_promoted"])
 			}
 			return append(cols, indexV3Columns["attributes"], mapCol), nil
 		}
-		return []*schema.Column{mapCol}, nil
+		return []*chschema.Column{mapCol}, nil
 	case telemetrytypes.FieldContextSpan:
 		// Check if this is a span scope field
 		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
 			// The actual SQL will be generated in the condition builder
-			return []*schema.Column{{Name: key.Name, Type: schema.ColumnTypeBool}}, nil
+			return []*chschema.Column{{Name: key.Name, Type: chschema.ColumnTypeBool}}, nil
 		}
 		if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
 			// Check if we have a mapping for the deprecated calculated field
 			if col, ok := indexV3Columns[oldToNew[key.Name]]; ok {
-				return []*schema.Column{col}, nil
+				return []*chschema.Column{col}, nil
 			}
 		}
 		if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
 			// Check if we have a mapping for the deprecated intrinsic field
 			if col, ok := indexV3Columns[oldToNew[key.Name]]; ok {
-				return []*schema.Column{col}, nil
+				return []*chschema.Column{col}, nil
 			}
 		}
 
 		if col, ok := indexV3Columns[key.Name]; ok {
-			return []*schema.Column{col}, nil
+			return []*chschema.Column{col}, nil
 		}
 	}
 	return nil, qbtypes.ErrColumnNotFound
@@ -235,7 +235,7 @@ func (m *storage) resolveColumnExprs(
 	ctx context.Context,
 	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
-) (exprs []string, existExprs []string, columns []*schema.Column, err error) {
+) (exprs []string, existExprs []string, columns []*chschema.Column, err error) {
 	columns, err = m.getColumn(ctx, q, key)
 	if err != nil {
 		return nil, nil, nil, err
@@ -254,7 +254,7 @@ func (m *storage) resolveColumnExprs(
 		}
 
 		switch column.Type.GetType() {
-		case schema.ColumnTypeEnumJSON:
+		case chschema.ColumnTypeEnumJSON:
 			// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
 			// once clickHouse dependency is updated, we need to check if we can remove it.
 			switch key.FieldContext {
@@ -279,30 +279,30 @@ func (m *storage) resolveColumnExprs(
 			default:
 				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource, scope and attribute context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
-		case schema.ColumnTypeEnumString,
-			schema.ColumnTypeEnumUInt64,
-			schema.ColumnTypeEnumUInt32,
-			schema.ColumnTypeEnumInt8,
-			schema.ColumnTypeEnumInt16,
-			schema.ColumnTypeEnumBool,
-			schema.ColumnTypeEnumDateTime64,
-			schema.ColumnTypeEnumFixedString:
+		case chschema.ColumnTypeEnumString,
+			chschema.ColumnTypeEnumUInt64,
+			chschema.ColumnTypeEnumUInt32,
+			chschema.ColumnTypeEnumInt8,
+			chschema.ColumnTypeEnumInt16,
+			chschema.ColumnTypeEnumBool,
+			chschema.ColumnTypeEnumDateTime64,
+			chschema.ColumnTypeEnumFixedString:
 			exprs = append(exprs, column.Name)
-		case schema.ColumnTypeEnumLowCardinality:
-			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
-			case schema.ColumnTypeEnumString:
+		case chschema.ColumnTypeEnumLowCardinality:
+			switch elementType := column.Type.(chschema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			case chschema.ColumnTypeEnumString:
 				exprs = append(exprs, column.Name)
 			default:
 				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for low cardinality column type %s", elementType, column.Type)
 			}
-		case schema.ColumnTypeEnumMap:
-			keyType := column.Type.(schema.MapColumnType).KeyType
-			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+		case chschema.ColumnTypeEnumMap:
+			keyType := column.Type.(chschema.MapColumnType).KeyType
+			if _, ok := keyType.(chschema.LowCardinalityColumnType); !ok {
 				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 			}
 
-			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
-			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumBool:
+			switch valueType := column.Type.(chschema.MapColumnType).ValueType; valueType.GetType() {
+			case chschema.ColumnTypeEnumString, chschema.ColumnTypeEnumFloat64, chschema.ColumnTypeEnumBool:
 				// a key could have been materialized, if so return the materialized column name
 				if key.Materialized {
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
@@ -423,7 +423,7 @@ func (m *storage) read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 // reads NULL. A map reads its empty value. A JSON path reads the empty
 // string, because its ::String cast folds NULL. Every other column reads a
 // real value.
-func absentReads(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*schema.Column) (qbtypes.Absent, error) {
+func absentReads(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*chschema.Column) (qbtypes.Absent, error) {
 	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
 	if err != nil {
 		return qbtypes.AlwaysPresent, err
@@ -435,9 +435,9 @@ func absentReads(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, col
 		return qbtypes.AlwaysPresent, nil
 	}
 	switch newColumns[0].Type.GetType() {
-	case schema.ColumnTypeEnumMap:
+	case chschema.ColumnTypeEnumMap:
 		return qbtypes.AbsentIsSentinel, nil
-	case schema.ColumnTypeEnumJSON:
+	case chschema.ColumnTypeEnumJSON:
 		// a numeric or bool attribute reads through a type-gated cast that is
 		// NULL for an absent key, and every other JSON read casts to String
 		if key.FieldContext == telemetrytypes.FieldContextAttribute {
@@ -567,7 +567,7 @@ func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *teleme
 
 // stampColumnType gives an untyped column key the data type its column reads
 // as, so the intrinsic-column step can compare it with same-named metadata.
-func stampColumnType(key *telemetrytypes.TelemetryFieldKey, columns []*schema.Column) *telemetrytypes.TelemetryFieldKey {
+func stampColumnType(key *telemetrytypes.TelemetryFieldKey, columns []*chschema.Column) *telemetrytypes.TelemetryFieldKey {
 	if key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified && len(columns) > 0 {
 		key.FieldDataType = querybuilder.ColumnDataType(columns[0])
 	}

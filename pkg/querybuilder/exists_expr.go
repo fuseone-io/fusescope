@@ -3,9 +3,9 @@ package querybuilder
 import (
 	"fmt"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
@@ -15,7 +15,7 @@ import (
 // as literals, so the expression carries no bind args and can guard column expressions
 // directly. Signal-specific presence checks (body JSON paths, label maps) are handled
 // by the field mappers before falling through to this.
-func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFieldKey, tsStart, tsEnd uint64, fieldExpression string, exists bool) (string, error) {
+func ExistsExpression(columns []*chschema.Column, key *telemetrytypes.TelemetryFieldKey, tsStart, tsEnd uint64, fieldExpression string, exists bool) (string, error) {
 	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
 	if err != nil {
 		return "", err
@@ -37,7 +37,7 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 
 	column := newColumns[0]
 	switch column.Type.GetType() {
-	case schema.ColumnTypeEnumJSON:
+	case chschema.ColumnTypeEnumJSON:
 		// the ::String cast in the value expression folds NULL to '', so the
 		// presence check must address the raw JSON path
 		columnName := column.Name
@@ -49,21 +49,21 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 			return rawPath + " IS NOT NULL", nil
 		}
 		return rawPath + " IS NULL", nil
-	case schema.ColumnTypeEnumString,
-		schema.ColumnTypeEnumFixedString:
+	case chschema.ColumnTypeEnumString,
+		chschema.ColumnTypeEnumFixedString:
 		if exists {
 			return comparison("<>", "''"), nil
 		}
 		return comparison("=", "''"), nil
-	case schema.ColumnTypeEnumDateTime64:
-		zero := fmt.Sprintf("toDateTime64(0, %d)", column.Type.(schema.DateTime64ColumnType).Precision)
+	case chschema.ColumnTypeEnumDateTime64:
+		zero := fmt.Sprintf("toDateTime64(0, %d)", column.Type.(chschema.DateTime64ColumnType).Precision)
 		if exists {
 			return comparison("<>", zero), nil
 		}
 		return comparison("=", zero), nil
-	case schema.ColumnTypeEnumLowCardinality:
-		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
-		case schema.ColumnTypeEnumString:
+	case chschema.ColumnTypeEnumLowCardinality:
+		switch elementType := column.Type.(chschema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+		case chschema.ColumnTypeEnumString:
 			if exists {
 				return comparison("<>", "''"), nil
 			}
@@ -71,29 +71,29 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 		default:
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
 		}
-	case schema.ColumnTypeEnumUInt64,
-		schema.ColumnTypeEnumUInt32,
-		schema.ColumnTypeEnumUInt8,
-		schema.ColumnTypeEnumInt8,
-		schema.ColumnTypeEnumInt16,
-		schema.ColumnTypeEnumBool:
+	case chschema.ColumnTypeEnumUInt64,
+		chschema.ColumnTypeEnumUInt32,
+		chschema.ColumnTypeEnumUInt8,
+		chschema.ColumnTypeEnumInt8,
+		chschema.ColumnTypeEnumInt16,
+		chschema.ColumnTypeEnumBool:
 		if exists {
 			return comparison("<>", "0"), nil
 		}
 		return comparison("=", "0"), nil
-	case schema.ColumnTypeEnumArray:
+	case chschema.ColumnTypeEnumArray:
 		if exists {
 			return fmt.Sprintf("notEmpty(%s)", fieldExpression), nil
 		}
 		return fmt.Sprintf("empty(%s)", fieldExpression), nil
-	case schema.ColumnTypeEnumMap:
-		keyType := column.Type.(schema.MapColumnType).KeyType
-		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+	case chschema.ColumnTypeEnumMap:
+		keyType := column.Type.(chschema.MapColumnType).KeyType
+		if _, ok := keyType.(chschema.LowCardinalityColumnType); !ok {
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 		}
 
-		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
-		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+		switch valueType := column.Type.(chschema.MapColumnType).ValueType; valueType.GetType() {
+		case chschema.ColumnTypeEnumString, chschema.ColumnTypeEnumBool, chschema.ColumnTypeEnumFloat64:
 			if key.Materialized {
 				return telemetrytypes.FieldKeyToMaterializedExistsCondition(key, exists), nil
 			}

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/flagger/flaggertest"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
@@ -20,7 +20,7 @@ func TestGetColumn(t *testing.T) {
 	testCases := []struct {
 		name          string
 		key           telemetrytypes.TelemetryFieldKey
-		expectedCol   []*schema.Column
+		expectedCol   []*chschema.Column
 		expectedError error
 	}{
 		{
@@ -29,7 +29,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]},
 			expectedError: nil,
 		},
 		{
@@ -38,7 +38,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "name",
 				FieldContext: telemetrytypes.FieldContextScope,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["scope_name"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["scope_name"]},
 			expectedError: nil,
 		},
 		{
@@ -47,7 +47,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "scope.name",
 				FieldContext: telemetrytypes.FieldContextScope,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["scope_name"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["scope_name"]},
 			expectedError: nil,
 		},
 		{
@@ -56,7 +56,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "scope_name",
 				FieldContext: telemetrytypes.FieldContextScope,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["scope_name"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["scope_name"]},
 			expectedError: nil,
 		},
 		{
@@ -65,7 +65,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "version",
 				FieldContext: telemetrytypes.FieldContextScope,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["scope_version"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["scope_version"]},
 			expectedError: nil,
 		},
 		{
@@ -74,7 +74,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "custom.scope.field",
 				FieldContext: telemetrytypes.FieldContextScope,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["scope_string"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["scope_string"]},
 			expectedError: nil,
 		},
 		{
@@ -84,7 +84,7 @@ func TestGetColumn(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["attributes_string"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["attributes_string"]},
 			expectedError: nil,
 		},
 		{
@@ -94,7 +94,7 @@ func TestGetColumn(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeNumber,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["attributes_number"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["attributes_number"]},
 			expectedError: nil,
 		},
 		{
@@ -104,7 +104,7 @@ func TestGetColumn(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeInt64,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["attributes_number"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["attributes_number"]},
 			expectedError: nil,
 		},
 		{
@@ -114,7 +114,7 @@ func TestGetColumn(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeFloat64,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["attributes_number"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["attributes_number"]},
 			expectedError: nil,
 		},
 		{
@@ -124,7 +124,7 @@ func TestGetColumn(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeBool,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["attributes_bool"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["attributes_bool"]},
 			expectedError: nil,
 		},
 		{
@@ -133,7 +133,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "timestamp",
 				FieldContext: telemetrytypes.FieldContextLog,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["timestamp"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["timestamp"]},
 			expectedError: nil,
 		},
 		{
@@ -142,7 +142,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "body",
 				FieldContext: telemetrytypes.FieldContextLog,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["body"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["body"]},
 			expectedError: nil,
 		},
 		{
@@ -162,7 +162,7 @@ func TestGetColumn(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeBool,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["attributes_bool"]},
+			expectedCol:   []*chschema.Column{logsV2Columns["attributes_bool"]},
 			expectedError: nil,
 		},
 	}

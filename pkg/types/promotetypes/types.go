@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	schemamigrator "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope-otel-collector/pkg/keycheck"
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
@@ -117,14 +117,14 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 	return i.validateAndSetIndexDefaults(target)
 }
 
-func (index WrappedIndex) SkipIndexType() (schemamigrator.IndexType, error) {
+func (index WrappedIndex) SkipIndexType() (chschema.IndexType, error) {
 	switch {
-	case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeNGramBF)):
-		return schemamigrator.IndexTypeNGramBF, nil
-	case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeTokenBF)):
-		return schemamigrator.IndexTypeTokenBF, nil
-	case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeMinMax)):
-		return schemamigrator.IndexTypeMinMax, nil
+	case strings.HasPrefix(index.Type, string(chschema.IndexTypeNGramBF)):
+		return chschema.IndexTypeNGramBF, nil
+	case strings.HasPrefix(index.Type, string(chschema.IndexTypeTokenBF)):
+		return chschema.IndexTypeTokenBF, nil
+	case strings.HasPrefix(index.Type, string(chschema.IndexTypeMinMax)):
+		return chschema.IndexTypeMinMax, nil
 	case strings.HasPrefix(index.Type, "bloom_filter"):
 		return "bloom_filter", nil
 	case strings.HasPrefix(index.Type, "set"):

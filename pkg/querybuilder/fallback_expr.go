@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -201,10 +201,10 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 }
 
 // ColumnIsTemporal reports whether a column carries a time value.
-func ColumnIsTemporal(col *schema.Column) bool {
+func ColumnIsTemporal(col *chschema.Column) bool {
 	switch col.Type.GetType() {
-	case schema.ColumnTypeEnumDateTime64, schema.ColumnTypeEnumDateTime,
-		schema.ColumnTypeEnumDate, schema.ColumnTypeEnumDate32:
+	case chschema.ColumnTypeEnumDateTime64, chschema.ColumnTypeEnumDateTime,
+		chschema.ColumnTypeEnumDate, chschema.ColumnTypeEnumDate32:
 		return true
 	}
 	return false

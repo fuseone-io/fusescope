@@ -5,58 +5,57 @@ import (
 	"fmt"
 	"strings"
 
-	schema "github.com/fuseone-io/fusescope-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/fuseone-io/fusescope-otel-collector/utils"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
+	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
 
 var (
-	logsV2Columns = map[string]*schema.Column{
-		"ts_bucket_start":      {Name: "ts_bucket_start", Type: schema.ColumnTypeUInt64},
-		"resource_fingerprint": {Name: "resource_fingerprint", Type: schema.ColumnTypeString},
+	logsV2Columns = map[string]*chschema.Column{
+		"ts_bucket_start":      {Name: "ts_bucket_start", Type: chschema.ColumnTypeUInt64},
+		"resource_fingerprint": {Name: "resource_fingerprint", Type: chschema.ColumnTypeString},
 
-		"timestamp":          {Name: "timestamp", Type: schema.ColumnTypeUInt64},
-		"observed_timestamp": {Name: "observed_timestamp", Type: schema.ColumnTypeUInt64},
-		"id":                 {Name: "id", Type: schema.ColumnTypeString},
-		"trace_id":           {Name: "trace_id", Type: schema.ColumnTypeString},
-		"span_id":            {Name: "span_id", Type: schema.ColumnTypeString},
-		"trace_flags":        {Name: "trace_flags", Type: schema.ColumnTypeUInt32},
-		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
-		"body":               {Name: "body", Type: schema.ColumnTypeString},
-		messageSubColumn:     {Name: messageSubColumn, Type: schema.ColumnTypeString},
-		LogsV2BodyV2Column: {Name: LogsV2BodyV2Column, Type: schema.JSONColumnType{
-			MaxDynamicTypes: utils.ToPointer(uint(32)),
-			MaxDynamicPaths: utils.ToPointer(uint(0)),
+		"timestamp":          {Name: "timestamp", Type: chschema.ColumnTypeUInt64},
+		"observed_timestamp": {Name: "observed_timestamp", Type: chschema.ColumnTypeUInt64},
+		"id":                 {Name: "id", Type: chschema.ColumnTypeString},
+		"trace_id":           {Name: "trace_id", Type: chschema.ColumnTypeString},
+		"span_id":            {Name: "span_id", Type: chschema.ColumnTypeString},
+		"trace_flags":        {Name: "trace_flags", Type: chschema.ColumnTypeUInt32},
+		"severity_text":      {Name: "severity_text", Type: chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString}},
+		"severity_number":    {Name: "severity_number", Type: chschema.ColumnTypeUInt8},
+		"body":               {Name: "body", Type: chschema.ColumnTypeString},
+		messageSubColumn:     {Name: messageSubColumn, Type: chschema.ColumnTypeString},
+		LogsV2BodyV2Column: {Name: LogsV2BodyV2Column, Type: chschema.JSONColumnType{
+			MaxDynamicTypes: uintPointer(32),
+			MaxDynamicPaths: uintPointer(0),
 		}},
-		LogsV2BodyPromotedColumn: {Name: LogsV2BodyPromotedColumn, Type: schema.JSONColumnType{}},
-		"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+		LogsV2BodyPromotedColumn: {Name: LogsV2BodyPromotedColumn, Type: chschema.JSONColumnType{}},
+		"attributes_string": {Name: "attributes_string", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}},
-		"attributes_number": {Name: "attributes_number", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeFloat64,
+		"attributes_number": {Name: "attributes_number", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeFloat64,
 		}},
-		"attributes_bool": {Name: "attributes_bool", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeBool,
+		"attributes_bool": {Name: "attributes_bool", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeBool,
 		}},
-		"resources_string": {Name: "resources_string", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+		"resources_string": {Name: "resources_string", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}},
-		"resource":      {Name: "resource", Type: schema.JSONColumnType{}},
-		"scope_name":    {Name: "scope_name", Type: schema.ColumnTypeString},
-		"scope_version": {Name: "scope_version", Type: schema.ColumnTypeString},
-		"scope_string": {Name: "scope_string", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
+		"resource":      {Name: "resource", Type: chschema.JSONColumnType{}},
+		"scope_name":    {Name: "scope_name", Type: chschema.ColumnTypeString},
+		"scope_version": {Name: "scope_version", Type: chschema.ColumnTypeString},
+		"scope_string": {Name: "scope_string", Type: chschema.MapColumnType{
+			KeyType:   chschema.LowCardinalityColumnType{ElementType: chschema.ColumnTypeString},
+			ValueType: chschema.ColumnTypeString,
 		}},
 	}
 )
@@ -69,47 +68,47 @@ func NewStorage() qbtypes.Storage {
 	return &storage{}
 }
 
-func (m *storage) getColumn(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *storage) getColumn(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) ([]*chschema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		columns := []*schema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]}
+		columns := []*chschema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]}
 		return columns, nil
 	case telemetrytypes.FieldContextScope:
 		switch key.Name {
 		case "name", "scope.name", "scope_name":
-			return []*schema.Column{logsV2Columns["scope_name"]}, nil
+			return []*chschema.Column{logsV2Columns["scope_name"]}, nil
 		case "version", "scope.version", "scope_version":
-			return []*schema.Column{logsV2Columns["scope_version"]}, nil
+			return []*chschema.Column{logsV2Columns["scope_version"]}, nil
 		}
-		return []*schema.Column{logsV2Columns["scope_string"]}, nil
+		return []*chschema.Column{logsV2Columns["scope_string"]}, nil
 	case telemetrytypes.FieldContextAttribute:
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
-			return []*schema.Column{logsV2Columns["attributes_string"]}, nil
+			return []*chschema.Column{logsV2Columns["attributes_string"]}, nil
 		case telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeFloat64, telemetrytypes.FieldDataTypeNumber:
-			return []*schema.Column{logsV2Columns["attributes_number"]}, nil
+			return []*chschema.Column{logsV2Columns["attributes_number"]}, nil
 		case telemetrytypes.FieldDataTypeBool:
-			return []*schema.Column{logsV2Columns["attributes_bool"]}, nil
+			return []*chschema.Column{logsV2Columns["attributes_bool"]}, nil
 		}
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields. Use body_v2 if feature flag is enabled.
 		if q.BodyJSONOn {
 			if key.Name == messageSubField {
-				return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
+				return []*chschema.Column{logsV2Columns[messageSubColumn]}, nil
 			}
-			return []*schema.Column{logsV2Columns[LogsV2BodyV2Column]}, nil
+			return []*chschema.Column{logsV2Columns[LogsV2BodyV2Column]}, nil
 		}
 		// Fall back to legacy body column
-		return []*schema.Column{logsV2Columns["body"]}, nil
+		return []*chschema.Column{logsV2Columns["body"]}, nil
 	case telemetrytypes.FieldContextLog:
 		if key.Name == LogsV2BodyColumn && q.BodyJSONOn {
-			return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
+			return []*chschema.Column{logsV2Columns[messageSubColumn]}, nil
 		}
 		col, ok := logsV2Columns[key.Name]
 		if !ok {
 			return nil, qbtypes.ErrColumnNotFound
 		}
-		return []*schema.Column{col}, nil
+		return []*chschema.Column{col}, nil
 	}
 
 	return nil, qbtypes.ErrColumnNotFound
@@ -136,7 +135,7 @@ func (m *storage) read(_ context.Context, q qbtypes.QueryInfo, key *telemetrytyp
 		}
 
 		switch column.Type.GetType() {
-		case schema.ColumnTypeEnumJSON:
+		case chschema.ColumnTypeEnumJSON:
 			switch key.FieldContext {
 			case telemetrytypes.FieldContextResource:
 				exprs = append(exprs, fmt.Sprintf("%s.%s::String", columnName, clickhousesql.Identifier(key.Name)))
@@ -161,24 +160,24 @@ func (m *storage) read(_ context.Context, q qbtypes.QueryInfo, key *telemetrytyp
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
 
-		case schema.ColumnTypeEnumLowCardinality:
-			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
-			case schema.ColumnTypeEnumString:
+		case chschema.ColumnTypeEnumLowCardinality:
+			switch elementType := column.Type.(chschema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			case chschema.ColumnTypeEnumString:
 				exprs = append(exprs, column.Name)
 			default:
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
 			}
-		case schema.ColumnTypeEnumString,
-			schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
+		case chschema.ColumnTypeEnumString,
+			chschema.ColumnTypeEnumUInt64, chschema.ColumnTypeEnumUInt32, chschema.ColumnTypeEnumUInt8:
 			exprs = append(exprs, column.Name)
-		case schema.ColumnTypeEnumMap:
-			keyType := column.Type.(schema.MapColumnType).KeyType
-			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+		case chschema.ColumnTypeEnumMap:
+			keyType := column.Type.(chschema.MapColumnType).KeyType
+			if _, ok := keyType.(chschema.LowCardinalityColumnType); !ok {
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 			}
 
-			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
-			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+			switch valueType := column.Type.(chschema.MapColumnType).ValueType; valueType.GetType() {
+			case chschema.ColumnTypeEnumString, chschema.ColumnTypeEnumBool, chschema.ColumnTypeEnumFloat64:
 				// a key could have been materialized, if so return the materialized column name
 				if key.Materialized {
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
@@ -370,27 +369,27 @@ func (m *storage) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, bran
 
 // searchColumns is the single source of truth for the columns search() fans out across,
 // by context; body is body_v2 when useJSONBody, else the legacy body string.
-func searchColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) []*schema.Column {
+func searchColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) []*chschema.Column {
 	switch fieldContext {
 	case telemetrytypes.FieldContextLog:
-		return []*schema.Column{
+		return []*chschema.Column{
 			logsV2Columns[LogsV2SeverityTextColumn],
 			logsV2Columns[LogsV2TraceIDColumn],
 			logsV2Columns[LogsV2SpanIDColumn],
 		}
 	case telemetrytypes.FieldContextBody:
 		if useJSONBody {
-			return []*schema.Column{logsV2Columns[LogsV2BodyV2Column]}
+			return []*chschema.Column{logsV2Columns[LogsV2BodyV2Column]}
 		}
-		return []*schema.Column{logsV2Columns[LogsV2BodyColumn]}
+		return []*chschema.Column{logsV2Columns[LogsV2BodyColumn]}
 	case telemetrytypes.FieldContextAttribute:
-		return []*schema.Column{
+		return []*chschema.Column{
 			logsV2Columns[LogsV2AttributesStringColumn],
 			logsV2Columns[LogsV2AttributesNumberColumn],
 			logsV2Columns[LogsV2AttributesBoolColumn],
 		}
 	case telemetrytypes.FieldContextResource:
-		return []*schema.Column{
+		return []*chschema.Column{
 			logsV2Columns[LogsV2ResourcesStringColumn],
 		}
 	default:
@@ -406,13 +405,13 @@ func searchColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) [
 // reads NULL. A map reads its empty value. A JSON path reads the empty
 // string, because its ::String cast folds NULL. Every other column reads a
 // real value.
-func absentReads(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*schema.Column) qbtypes.Absent {
+func absentReads(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*chschema.Column) qbtypes.Absent {
 	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
 	if err != nil || len(newColumns) != 1 {
 		return qbtypes.AbsentIsNull
 	}
 	switch newColumns[0].Type.GetType() {
-	case schema.ColumnTypeEnumMap, schema.ColumnTypeEnumJSON:
+	case chschema.ColumnTypeEnumMap, chschema.ColumnTypeEnumJSON:
 		return qbtypes.AbsentIsSentinel
 	}
 	return qbtypes.AlwaysPresent
@@ -440,7 +439,7 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 	read := qbtypes.Read{SQL: sql, FilterOnly: key.FieldContext == telemetrytypes.FieldContextBody && !q.BodyJSONOn}
 
 	for _, column := range columns {
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && q.BodyJSONOn && key.Name != messageSubField {
+		if column.Type.GetType() == chschema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && q.BodyJSONOn && key.Name != messageSubField {
 			valueType, value := InferDataType(nil, qbtypes.FilterOperatorExists, key)
 			if len(key.JSONPlan) == 0 {
 				keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
@@ -564,3 +563,5 @@ func (m *storage) Traits() qbtypes.Traits {
 		OwnContexts:           []telemetrytypes.FieldContext{telemetrytypes.FieldContextLog},
 	}
 }
+
+func uintPointer(value uint) *uint { return &value }
