@@ -9788,6 +9788,52 @@ components:
       enum:
       - basic
       type: string
+    RumtypesActionEvent:
+      properties:
+        name:
+          description: fusescope.rum.action.name of a custom action.
+          type: string
+        target:
+          description: fusescope.rum.action.target, else browser.css_selector.
+          type: string
+        type:
+          description: fusescope.rum.action.type, e.g. click or custom.
+          type: string
+      required:
+      - type
+      - name
+      - target
+      type: object
+    RumtypesAffectedSession:
+      properties:
+        client:
+          $ref: '#/components/schemas/RumtypesClient'
+        errors:
+          description: Events of this group in the session.
+          format: int64
+          type: integer
+        lastErrorAt:
+          format: date-time
+          type: string
+        release:
+          type: string
+        sessionId:
+          type: string
+        startedAt:
+          format: date-time
+          type: string
+        views:
+          format: int64
+          type: integer
+      required:
+      - sessionId
+      - startedAt
+      - lastErrorAt
+      - release
+      - client
+      - views
+      - errors
+      type: object
     RumtypesApplication:
       properties:
         allowedOrigins:
@@ -9844,6 +9890,175 @@ components:
       - piiPolicy
       - createdBy
       - firstSeenAt
+      type: object
+    RumtypesClient:
+      properties:
+        browser:
+          description: Empty when unknown.
+          type: string
+        browserVersion:
+          description: Major version.
+          type: string
+        os:
+          description: Empty when unknown.
+          type: string
+        osVersion:
+          description: Major version, major.minor for macOS, empty when the user agent
+            hides it.
+          type: string
+      required:
+      - browser
+      - browserVersion
+      - os
+      - osVersion
+      type: object
+    RumtypesClientBreakdown:
+      properties:
+        lcpP75Ms:
+          nullable: true
+          type: number
+        name:
+          description: Browser or OS with its major version, e.g. Chrome 130; Unknown
+            when not parsed.
+          type: string
+        pageLoads:
+          format: int64
+          type: integer
+        views:
+          format: int64
+          type: integer
+      required:
+      - name
+      - views
+      - pageLoads
+      - lcpP75Ms
+      type: object
+    RumtypesErrorEvent:
+      properties:
+        client:
+          $ref: '#/components/schemas/RumtypesClient'
+        frames:
+          items:
+            $ref: '#/components/schemas/RumtypesStackFrame'
+          nullable: true
+          type: array
+        id:
+          type: string
+        message:
+          type: string
+        release:
+          type: string
+        route:
+          type: string
+        sessionId:
+          type: string
+        source:
+          type: string
+        stacktrace:
+          description: exception.stacktrace as received.
+          type: string
+        symbolicated:
+          description: Whether frames were mapped through an uploaded source map.
+          type: boolean
+        timestamp:
+          format: date-time
+          type: string
+        type:
+          type: string
+      required:
+      - id
+      - timestamp
+      - sessionId
+      - route
+      - release
+      - client
+      - type
+      - message
+      - source
+      - stacktrace
+      - frames
+      - symbolicated
+      type: object
+    RumtypesErrorEventInfo:
+      properties:
+        fingerprint:
+          type: string
+        message:
+          type: string
+        source:
+          description: fusescope.rum.error.source, e.g. onerror or unhandledrejection.
+          type: string
+        type:
+          type: string
+      required:
+      - fingerprint
+      - type
+      - message
+      - source
+      type: object
+    RumtypesErrorGroup:
+      properties:
+        events:
+          format: int64
+          type: integer
+        fingerprint:
+          type: string
+        firstSeenAt:
+          format: date-time
+          type: string
+        firstSeenRelease:
+          type: string
+        lastSeenAt:
+          format: date-time
+          type: string
+        lastSeenRelease:
+          type: string
+        message:
+          description: Message of the latest event.
+          type: string
+        newInRelease:
+          description: First seen in the newest release with telemetry in the range,
+            when an older release exists.
+          type: boolean
+        normalizedMessage:
+          type: string
+        releases:
+          description: Releases with events in the range.
+          items:
+            type: string
+          nullable: true
+          type: array
+        route:
+          description: Route of the latest event.
+          type: string
+        sessions:
+          format: int64
+          type: integer
+        source:
+          type: string
+        sparkline:
+          $ref: '#/components/schemas/RumtypesSparkline'
+        topFrame:
+          $ref: '#/components/schemas/RumtypesStackFrame'
+        type:
+          type: string
+      required:
+      - fingerprint
+      - type
+      - message
+      - normalizedMessage
+      - topFrame
+      - source
+      - route
+      - events
+      - sessions
+      - firstSeenAt
+      - firstSeenRelease
+      - lastSeenAt
+      - lastSeenRelease
+      - releases
+      - newInRelease
+      - sparkline
       type: object
     RumtypesGettableApplicationKey:
       properties:
@@ -10004,6 +10219,311 @@ components:
       - lastUsedAt
       - key
       type: object
+    RumtypesGettableErrorGroup:
+      properties:
+        affectedSessions:
+          description: The 5 sessions with the latest events.
+          items:
+            $ref: '#/components/schemas/RumtypesAffectedSession'
+          nullable: true
+          type: array
+        breadcrumbs:
+          description: Views, clicks, actions and requests of the selected event's
+            session in the 2 minutes before it.
+          items:
+            $ref: '#/components/schemas/RumtypesTimelineEvent'
+          nullable: true
+          type: array
+        events:
+          format: int64
+          type: integer
+        fingerprint:
+          type: string
+        firstSeenAt:
+          format: date-time
+          type: string
+        firstSeenRelease:
+          type: string
+        lastSeenAt:
+          format: date-time
+          type: string
+        lastSeenRelease:
+          type: string
+        latestEvents:
+          description: Up to 10, newest first.
+          items:
+            $ref: '#/components/schemas/RumtypesErrorEvent'
+          nullable: true
+          type: array
+        linkedRequest:
+          $ref: '#/components/schemas/RumtypesTimelineEvent'
+        message:
+          description: Message of the latest event.
+          type: string
+        newInRelease:
+          description: First seen in the newest release with telemetry in the range,
+            when an older release exists.
+          type: boolean
+        normalizedMessage:
+          type: string
+        releases:
+          description: Releases with events in the range.
+          items:
+            type: string
+          nullable: true
+          type: array
+        route:
+          description: Route of the latest event.
+          type: string
+        selectedEventId:
+          type: string
+        sessions:
+          format: int64
+          type: integer
+        source:
+          type: string
+        sparkline:
+          $ref: '#/components/schemas/RumtypesSparkline'
+        topFrame:
+          $ref: '#/components/schemas/RumtypesStackFrame'
+        type:
+          type: string
+      required:
+      - fingerprint
+      - type
+      - message
+      - normalizedMessage
+      - topFrame
+      - source
+      - route
+      - events
+      - sessions
+      - firstSeenAt
+      - firstSeenRelease
+      - lastSeenAt
+      - lastSeenRelease
+      - releases
+      - newInRelease
+      - sparkline
+      - latestEvents
+      - selectedEventId
+      - breadcrumbs
+      - linkedRequest
+      - affectedSessions
+      type: object
+    RumtypesGettableErrorGroups:
+      properties:
+        events:
+          description: Error events in the range.
+          format: int64
+          type: integer
+        groups:
+          items:
+            $ref: '#/components/schemas/RumtypesErrorGroup'
+          nullable: true
+          type: array
+        total:
+          description: Groups with events in the range.
+          format: int64
+          type: integer
+      required:
+      - groups
+      - total
+      - events
+      type: object
+    RumtypesGettableSession:
+      properties:
+        actions:
+          description: Clicks and custom actions.
+          format: int64
+          type: integer
+        client:
+          $ref: '#/components/schemas/RumtypesClient'
+        durationMs:
+          format: double
+          type: number
+        endedAt:
+          description: End of the session's last span.
+          format: date-time
+          type: string
+        environment:
+          type: string
+        errors:
+          format: int64
+          type: integer
+        failedRequests:
+          format: int64
+          type: integer
+        leadingEvents:
+          description: Events before the first view.
+          items:
+            $ref: '#/components/schemas/RumtypesTimelineEvent'
+          nullable: true
+          type: array
+        pageLoads:
+          format: int64
+          type: integer
+        previousSessionId:
+          description: session.previous_id, empty for a first session.
+          type: string
+        release:
+          type: string
+        requests:
+          format: int64
+          type: integer
+        sessionId:
+          type: string
+        startedAt:
+          format: date-time
+          type: string
+        timeline:
+          description: Views in order, each with what happened while it was current.
+          items:
+            $ref: '#/components/schemas/RumtypesSessionView'
+          nullable: true
+          type: array
+        truncated:
+          description: The session has more spans or events than one response carries.
+          type: boolean
+        userId:
+          description: user.id, else user.hash; empty when the app set no user.
+          type: string
+        views:
+          format: int64
+          type: integer
+        vitals:
+          format: int64
+          type: integer
+      required:
+      - sessionId
+      - previousSessionId
+      - userId
+      - startedAt
+      - endedAt
+      - durationMs
+      - views
+      - actions
+      - errors
+      - client
+      - release
+      - environment
+      - pageLoads
+      - requests
+      - failedRequests
+      - vitals
+      - timeline
+      - leadingEvents
+      - truncated
+      type: object
+    RumtypesGettableSessions:
+      properties:
+        sessions:
+          items:
+            $ref: '#/components/schemas/RumtypesSessionSummary'
+          nullable: true
+          type: array
+        total:
+          description: Sessions matching the filters.
+          format: int64
+          type: integer
+      required:
+      - sessions
+      - total
+      type: object
+    RumtypesGettableView:
+      properties:
+        browsers:
+          items:
+            $ref: '#/components/schemas/RumtypesClientBreakdown'
+          nullable: true
+          type: array
+        errors:
+          format: int64
+          type: integer
+        examplePaths:
+          description: Up to three url.path values seen on the route.
+          items:
+            type: string
+          nullable: true
+          type: array
+        medianTimeOnViewMs:
+          format: double
+          type: number
+        operatingSystems:
+          items:
+            $ref: '#/components/schemas/RumtypesClientBreakdown'
+          nullable: true
+          type: array
+        pageLoads:
+          description: Views with loading type initial_load.
+          format: int64
+          type: integer
+        recentSessions:
+          description: The 10 sessions that entered the route last.
+          items:
+            $ref: '#/components/schemas/RumtypesRouteSession'
+          nullable: true
+          type: array
+        releases:
+          description: service.version values seen on the route, by first view.
+          items:
+            $ref: '#/components/schemas/RumtypesReleaseMarker'
+          nullable: true
+          type: array
+        route:
+          type: string
+        routeChanges:
+          description: Views with loading type route_change.
+          format: int64
+          type: integer
+        series:
+          $ref: '#/components/schemas/RumtypesVitalSeries'
+        slowRequests:
+          description: Up to 10 request templates by p75.
+          items:
+            $ref: '#/components/schemas/RumtypesRequestTemplateStats'
+          nullable: true
+          type: array
+        unknownLoads:
+          description: Views without a loading type, from SDKs before 0.2.0.
+          format: int64
+          type: integer
+        views:
+          format: int64
+          type: integer
+        vitals:
+          description: Every vital with samples, in lcp, inp, cls, fcp, ttfb order.
+          items:
+            $ref: '#/components/schemas/RumtypesVitalSummary'
+          nullable: true
+          type: array
+      required:
+      - route
+      - views
+      - pageLoads
+      - routeChanges
+      - unknownLoads
+      - medianTimeOnViewMs
+      - errors
+      - examplePaths
+      - vitals
+      - series
+      - releases
+      - slowRequests
+      - browsers
+      - operatingSystems
+      - recentSessions
+      type: object
+    RumtypesGettableViews:
+      properties:
+        routes:
+          items:
+            $ref: '#/components/schemas/RumtypesViewRoute'
+          nullable: true
+          type: array
+      required:
+      - routes
+      type: object
     RumtypesIngestCounts:
       properties:
         errors:
@@ -10057,6 +10577,12 @@ components:
       enum:
       - active
       - expiring
+      type: string
+    RumtypesLoadingType:
+      enum:
+      - initial_load
+      - route_change
+      - unknown
       type: string
     RumtypesPIIPolicy:
       properties:
@@ -10144,6 +10670,150 @@ components:
       - too_large
       - invalid_payload
       type: string
+    RumtypesReleaseMarker:
+      properties:
+        firstSeenAt:
+          format: date-time
+          type: string
+        release:
+          type: string
+      required:
+      - release
+      - firstSeenAt
+      type: object
+    RumtypesRequestEvent:
+      properties:
+        backendService:
+          description: service.name of the first backend span, empty without one.
+          type: string
+        durationMs:
+          format: double
+          type: number
+        failed:
+          description: Status 400 or more, or an error span.
+          type: boolean
+        hasBackend:
+          description: Spans from another service share the trace.
+          type: boolean
+        host:
+          description: Host without port; empty for a relative URL.
+          type: string
+        method:
+          type: string
+        path:
+          description: URL path with numeric, UUID and hash segments replaced by :id.
+          type: string
+        spanId:
+          type: string
+        statusCode:
+          description: 0 when the request got no response.
+          type: integer
+        traceId:
+          type: string
+        url:
+          description: url.full, already scrubbed by the gateway.
+          type: string
+      required:
+      - method
+      - host
+      - path
+      - spanId
+      - traceId
+      - url
+      - statusCode
+      - durationMs
+      - failed
+      - hasBackend
+      - backendService
+      type: object
+    RumtypesRequestTemplateLatency:
+      nullable: true
+      properties:
+        calls:
+          format: int64
+          type: integer
+        host:
+          description: Host without port; empty for a relative URL.
+          type: string
+        method:
+          type: string
+        p75Ms:
+          format: double
+          type: number
+        path:
+          description: URL path with numeric, UUID and hash segments replaced by :id.
+          type: string
+      required:
+      - method
+      - host
+      - path
+      - p75Ms
+      - calls
+      type: object
+    RumtypesRequestTemplateStats:
+      properties:
+        backendService:
+          description: service.name of the first backend span in the example trace,
+            empty without one.
+          type: string
+        calls:
+          format: int64
+          type: integer
+        exampleTraceId:
+          description: Trace of the slowest call.
+          type: string
+        failed:
+          format: int64
+          type: integer
+        host:
+          description: Host without port; empty for a relative URL.
+          type: string
+        method:
+          type: string
+        p75Ms:
+          format: double
+          type: number
+        path:
+          description: URL path with numeric, UUID and hash segments replaced by :id.
+          type: string
+      required:
+      - method
+      - host
+      - path
+      - p75Ms
+      - calls
+      - failed
+      - exampleTraceId
+      - backendService
+      type: object
+    RumtypesRouteSession:
+      properties:
+        client:
+          $ref: '#/components/schemas/RumtypesClient'
+        errors:
+          description: Errors on the route.
+          format: int64
+          type: integer
+        lcpMs:
+          description: LCP of a page load on the route.
+          nullable: true
+          type: number
+        loadingType:
+          $ref: '#/components/schemas/RumtypesLoadingType'
+        sessionId:
+          type: string
+        startedAt:
+          description: Start of the session's first view on the route.
+          format: date-time
+          type: string
+      required:
+      - sessionId
+      - startedAt
+      - loadingType
+      - lcpMs
+      - errors
+      - client
+      type: object
     RumtypesSDKSupport:
       enum:
       - supported
@@ -10166,6 +10836,126 @@ components:
       - version
       - support
       type: object
+    RumtypesSessionSummary:
+      properties:
+        actions:
+          description: Clicks and custom actions.
+          format: int64
+          type: integer
+        client:
+          $ref: '#/components/schemas/RumtypesClient'
+        durationMs:
+          format: double
+          type: number
+        endedAt:
+          description: End of the session's last span.
+          format: date-time
+          type: string
+        environment:
+          type: string
+        errors:
+          format: int64
+          type: integer
+        previousSessionId:
+          description: session.previous_id, empty for a first session.
+          type: string
+        release:
+          type: string
+        sessionId:
+          type: string
+        startedAt:
+          format: date-time
+          type: string
+        userId:
+          description: user.id, else user.hash; empty when the app set no user.
+          type: string
+        views:
+          format: int64
+          type: integer
+      required:
+      - sessionId
+      - previousSessionId
+      - userId
+      - startedAt
+      - endedAt
+      - durationMs
+      - views
+      - actions
+      - errors
+      - client
+      - release
+      - environment
+      type: object
+    RumtypesSessionView:
+      properties:
+        durationMs:
+          description: 'Time on view: the view span''s duration.'
+          format: double
+          type: number
+        events:
+          items:
+            $ref: '#/components/schemas/RumtypesTimelineEvent'
+          nullable: true
+          type: array
+        loadingType:
+          $ref: '#/components/schemas/RumtypesLoadingType'
+        path:
+          description: url.path.
+          type: string
+        route:
+          type: string
+        spanId:
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+      required:
+      - timestamp
+      - route
+      - spanId
+      - path
+      - loadingType
+      - durationMs
+      - events
+      type: object
+    RumtypesSparkline:
+      properties:
+        counts:
+          items:
+            format: int64
+            type: integer
+          nullable: true
+          type: array
+        start:
+          format: date-time
+          type: string
+        stepSeconds:
+          format: int64
+          type: integer
+      required:
+      - start
+      - stepSeconds
+      - counts
+      type: object
+    RumtypesStackFrame:
+      nullable: true
+      properties:
+        column:
+          description: 0 when unknown.
+          type: integer
+        file:
+          type: string
+        function:
+          type: string
+        line:
+          description: 0 when unknown.
+          type: integer
+      required:
+      - function
+      - file
+      - line
+      - column
+      type: object
     RumtypesSupportedSDK:
       properties:
         maxVersion:
@@ -10181,6 +10971,40 @@ components:
       - minVersion
       - maxVersion
       type: object
+    RumtypesTimelineEvent:
+      properties:
+        action:
+          $ref: '#/components/schemas/RumtypesActionEvent'
+        error:
+          $ref: '#/components/schemas/RumtypesErrorEventInfo'
+        kind:
+          $ref: '#/components/schemas/RumtypesTimelineEventKind'
+        request:
+          $ref: '#/components/schemas/RumtypesRequestEvent'
+        route:
+          description: fusescope.rum.view.route when the event happened.
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+        view:
+          $ref: '#/components/schemas/RumtypesViewEvent'
+        vital:
+          $ref: '#/components/schemas/RumtypesVitalEvent'
+      required:
+      - kind
+      - timestamp
+      - route
+      type: object
+    RumtypesTimelineEventKind:
+      enum:
+      - view
+      - request
+      - click
+      - action
+      - error
+      - vital
+      type: string
     RumtypesUpdatableApplication:
       properties:
         allowedOrigins:
@@ -10206,6 +11030,174 @@ components:
       required:
       - name
       - environment
+      type: object
+    RumtypesViewEvent:
+      properties:
+        durationMs:
+          description: 'Time on view: the view span''s duration.'
+          format: double
+          type: number
+        loadingType:
+          $ref: '#/components/schemas/RumtypesLoadingType'
+        path:
+          description: url.path.
+          type: string
+        spanId:
+          type: string
+      required:
+      - spanId
+      - path
+      - loadingType
+      - durationMs
+      type: object
+    RumtypesViewRoute:
+      properties:
+        cls:
+          $ref: '#/components/schemas/RumtypesVitalSummary'
+        errors:
+          format: int64
+          type: integer
+        inp:
+          $ref: '#/components/schemas/RumtypesVitalSummary'
+        lcp:
+          $ref: '#/components/schemas/RumtypesVitalSummary'
+        medianTimeOnViewMs:
+          format: double
+          type: number
+        pageLoads:
+          description: Views with loading type initial_load.
+          format: int64
+          type: integer
+        route:
+          type: string
+        routeChanges:
+          description: Views with loading type route_change.
+          format: int64
+          type: integer
+        slowestRequest:
+          $ref: '#/components/schemas/RumtypesRequestTemplateLatency'
+        unknownLoads:
+          description: Views without a loading type, from SDKs before 0.2.0.
+          format: int64
+          type: integer
+        views:
+          format: int64
+          type: integer
+      required:
+      - route
+      - views
+      - pageLoads
+      - routeChanges
+      - unknownLoads
+      - medianTimeOnViewMs
+      - errors
+      - lcp
+      - inp
+      - cls
+      - slowestRequest
+      type: object
+    RumtypesVitalEvent:
+      properties:
+        name:
+          $ref: '#/components/schemas/RumtypesVitalName'
+        rating:
+          $ref: '#/components/schemas/RumtypesVitalRating'
+        value:
+          description: Milliseconds; unitless for cls.
+          format: double
+          type: number
+      required:
+      - name
+      - value
+      - rating
+      type: object
+    RumtypesVitalName:
+      enum:
+      - lcp
+      - inp
+      - cls
+      - fcp
+      - ttfb
+      type: string
+    RumtypesVitalRating:
+      enum:
+      - good
+      - needs-improvement
+      - poor
+      type: string
+    RumtypesVitalSeries:
+      properties:
+        stepSeconds:
+          format: int64
+          type: integer
+        vitals:
+          items:
+            $ref: '#/components/schemas/RumtypesVitalSeriesLine'
+          nullable: true
+          type: array
+      required:
+      - stepSeconds
+      - vitals
+      type: object
+    RumtypesVitalSeriesLine:
+      properties:
+        name:
+          $ref: '#/components/schemas/RumtypesVitalName'
+        points:
+          description: Buckets with samples only.
+          items:
+            $ref: '#/components/schemas/RumtypesVitalSeriesPoint'
+          nullable: true
+          type: array
+      required:
+      - name
+      - points
+      type: object
+    RumtypesVitalSeriesPoint:
+      properties:
+        p75:
+          format: double
+          type: number
+        samples:
+          format: int64
+          type: integer
+        timestamp:
+          description: Bucket start.
+          format: date-time
+          type: string
+      required:
+      - timestamp
+      - p75
+      - samples
+      type: object
+    RumtypesVitalSummary:
+      nullable: true
+      properties:
+        good:
+          format: int64
+          type: integer
+        name:
+          $ref: '#/components/schemas/RumtypesVitalName'
+        needsImprovement:
+          format: int64
+          type: integer
+        p75:
+          description: Milliseconds; unitless for cls.
+          format: double
+          type: number
+        poor:
+          format: int64
+          type: integer
+        samples:
+          format: int64
+          type: integer
+      required:
+      - name
+      - samples
+      - p75
+      - good
+      - needsImprovement
+      - poor
       type: object
     SavedviewtypesDisplay:
       properties:
@@ -15470,6 +16462,218 @@ paths:
       tags:
       - rum
       x-signoz-stability: alpha
+  /api/v1/rum/applications/{id}/errors:
+    get:
+      deprecated: false
+      description: 'Groups error events by fingerprint: exception type, message with
+        numbers, ids and URLs replaced, and the top frame''s file and function. First
+        seen and new in release look back 30 days, or the retention if shorter, and
+        ignore the release filter. Defaults to the last 24 hours; ranges are at most
+        31 days. release and environment filter on service.version and deployment.environment.name.'
+      operationId: ListRUMErrorGroups
+      parameters:
+      - description: Unix milliseconds. Defaults to 24 hours before end.
+        in: query
+        name: start
+        schema:
+          description: Unix milliseconds. Defaults to 24 hours before end.
+          format: int64
+          type: integer
+      - description: Unix milliseconds. Defaults to now.
+        in: query
+        name: end
+        schema:
+          description: Unix milliseconds. Defaults to now.
+          format: int64
+          type: integer
+      - description: Keep telemetry whose service.version equals this.
+        in: query
+        name: release
+        schema:
+          description: Keep telemetry whose service.version equals this.
+          type: string
+      - description: Keep telemetry whose deployment.environment.name equals this.
+        in: query
+        name: environment
+        schema:
+          description: Keep telemetry whose deployment.environment.name equals this.
+          type: string
+      - description: Groups per page, 1 to 200, by event count. Defaults to 50.
+        in: query
+        name: limit
+        schema:
+          description: Groups per page, 1 to 200, by event count. Defaults to 50.
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RumtypesGettableErrorGroups'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - rum-application:read
+      - tokenizer:
+        - rum-application:read
+      summary: List RUM error groups
+      tags:
+      - rum
+      x-signoz-stability: alpha
+  /api/v1/rum/applications/{id}/errors/{fingerprint}:
+    get:
+      deprecated: false
+      description: Returns an error group with its latest events and raw stack traces,
+        the selected event's breadcrumbs and linked failed request, and the latest
+        affected sessions. Defaults to the last 24 hours; ranges are at most 31 days.
+        release and environment filter on service.version and deployment.environment.name.
+      operationId: GetRUMErrorGroup
+      parameters:
+      - description: Unix milliseconds. Defaults to 24 hours before end.
+        in: query
+        name: start
+        schema:
+          description: Unix milliseconds. Defaults to 24 hours before end.
+          format: int64
+          type: integer
+      - description: Unix milliseconds. Defaults to now.
+        in: query
+        name: end
+        schema:
+          description: Unix milliseconds. Defaults to now.
+          format: int64
+          type: integer
+      - description: Keep telemetry whose service.version equals this.
+        in: query
+        name: release
+        schema:
+          description: Keep telemetry whose service.version equals this.
+          type: string
+      - description: Keep telemetry whose deployment.environment.name equals this.
+        in: query
+        name: environment
+        schema:
+          description: Keep telemetry whose deployment.environment.name equals this.
+          type: string
+      - description: Event whose breadcrumbs and linked request are returned. Defaults
+          to the latest.
+        in: query
+        name: eventId
+        schema:
+          description: Event whose breadcrumbs and linked request are returned. Defaults
+            to the latest.
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: fingerprint
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RumtypesGettableErrorGroup'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - rum-application:read
+      - tokenizer:
+        - rum-application:read
+      summary: Get RUM error group
+      tags:
+      - rum
+      x-signoz-stability: alpha
   /api/v1/rum/applications/{id}/keys:
     get:
       deprecated: false
@@ -15750,6 +16954,244 @@ paths:
       tags:
       - rum
       x-signoz-stability: alpha
+  /api/v1/rum/applications/{id}/sessions:
+    get:
+      deprecated: false
+      description: Returns sessions newest first, with views, actions, errors, client,
+        release and the previous session. Defaults to the last 24 hours; ranges are
+        at most 31 days. release and environment filter on service.version and deployment.environment.name.
+      operationId: ListRUMSessions
+      parameters:
+      - description: Unix milliseconds. Defaults to 24 hours before end.
+        in: query
+        name: start
+        schema:
+          description: Unix milliseconds. Defaults to 24 hours before end.
+          format: int64
+          type: integer
+      - description: Unix milliseconds. Defaults to now.
+        in: query
+        name: end
+        schema:
+          description: Unix milliseconds. Defaults to now.
+          format: int64
+          type: integer
+      - description: Keep telemetry whose service.version equals this.
+        in: query
+        name: release
+        schema:
+          description: Keep telemetry whose service.version equals this.
+          type: string
+      - description: Keep telemetry whose deployment.environment.name equals this.
+        in: query
+        name: environment
+        schema:
+          description: Keep telemetry whose deployment.environment.name equals this.
+          type: string
+      - description: Browser name as returned in client.browser, e.g. Chrome.
+        in: query
+        name: browser
+        schema:
+          description: Browser name as returned in client.browser, e.g. Chrome.
+          type: string
+      - description: Keep sessions with a view on this route template.
+        in: query
+        name: route
+        schema:
+          description: Keep sessions with a view on this route template.
+          type: string
+      - description: Matches user.id or user.hash.
+        in: query
+        name: userId
+        schema:
+          description: Matches user.id or user.hash.
+          type: string
+      - description: true keeps sessions with an error, false those without.
+        in: query
+        name: hasError
+        schema:
+          description: true keeps sessions with an error, false those without.
+          nullable: true
+          type: boolean
+      - in: query
+        name: minDurationMs
+        schema:
+          nullable: true
+          type: integer
+      - in: query
+        name: maxDurationMs
+        schema:
+          nullable: true
+          type: integer
+      - description: Sessions per page, 1 to 200, newest first. Defaults to 50.
+        in: query
+        name: limit
+        schema:
+          description: Sessions per page, 1 to 200, newest first. Defaults to 50.
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RumtypesGettableSessions'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - rum-application:read
+      - tokenizer:
+        - rum-application:read
+      summary: List RUM sessions
+      tags:
+      - rum
+      x-signoz-stability: alpha
+  /api/v1/rum/applications/{id}/sessions/{sessionId}:
+    get:
+      deprecated: false
+      description: 'Returns a session''s timeline: its views in order, each with the
+        requests, clicks, actions, errors and vitals that happened on it. Requests
+        carry their trace id and whether backend spans share the trace. Defaults to
+        the last 24 hours; ranges are at most 31 days. release and environment filter
+        on service.version and deployment.environment.name.'
+      operationId: GetRUMSession
+      parameters:
+      - description: Unix milliseconds. Defaults to 24 hours before end.
+        in: query
+        name: start
+        schema:
+          description: Unix milliseconds. Defaults to 24 hours before end.
+          format: int64
+          type: integer
+      - description: Unix milliseconds. Defaults to now.
+        in: query
+        name: end
+        schema:
+          description: Unix milliseconds. Defaults to now.
+          format: int64
+          type: integer
+      - description: Keep telemetry whose service.version equals this.
+        in: query
+        name: release
+        schema:
+          description: Keep telemetry whose service.version equals this.
+          type: string
+      - description: Keep telemetry whose deployment.environment.name equals this.
+        in: query
+        name: environment
+        schema:
+          description: Keep telemetry whose deployment.environment.name equals this.
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: sessionId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RumtypesGettableSession'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - rum-application:read
+      - tokenizer:
+        - rum-application:read
+      summary: Get RUM session
+      tags:
+      - rum
+      x-signoz-stability: alpha
   /api/v1/rum/applications/{id}/status:
     get:
       deprecated: false
@@ -15814,6 +17256,208 @@ paths:
       - tokenizer:
         - rum-application:read
       summary: Get RUM application setup status
+      tags:
+      - rum
+      x-signoz-stability: alpha
+  /api/v1/rum/applications/{id}/views:
+    get:
+      deprecated: false
+      description: Returns per route template the views by loading type, the median
+        time on view, the p75 and rating split of lcp, inp and cls, the error count
+        and the request template with the highest p75. Defaults to the last 24 hours;
+        ranges are at most 31 days. release and environment filter on service.version
+        and deployment.environment.name.
+      operationId: ListRUMViews
+      parameters:
+      - description: Unix milliseconds. Defaults to 24 hours before end.
+        in: query
+        name: start
+        schema:
+          description: Unix milliseconds. Defaults to 24 hours before end.
+          format: int64
+          type: integer
+      - description: Unix milliseconds. Defaults to now.
+        in: query
+        name: end
+        schema:
+          description: Unix milliseconds. Defaults to now.
+          format: int64
+          type: integer
+      - description: Keep telemetry whose service.version equals this.
+        in: query
+        name: release
+        schema:
+          description: Keep telemetry whose service.version equals this.
+          type: string
+      - description: Keep telemetry whose deployment.environment.name equals this.
+        in: query
+        name: environment
+        schema:
+          description: Keep telemetry whose deployment.environment.name equals this.
+          type: string
+      - description: Routes to return, 1 to 500, by view count. Defaults to 100.
+        in: query
+        name: limit
+        schema:
+          description: Routes to return, 1 to 500, by view count. Defaults to 100.
+          type: integer
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RumtypesGettableViews'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - rum-application:read
+      - tokenizer:
+        - rum-application:read
+      summary: List RUM views by route
+      tags:
+      - rum
+      x-signoz-stability: alpha
+  /api/v1/rum/applications/{id}/views/{route}:
+    get:
+      deprecated: false
+      description: 'Returns one route template, percent-encoded in the path (/product/:id
+        is %2Fproduct%2F%3Aid): vitals p75 per time bucket, releases, the slowest
+        request templates with an example trace, browser and OS breakdowns with LCP
+        p75 and the latest sessions on the route. Defaults to the last 24 hours; ranges
+        are at most 31 days. release and environment filter on service.version and
+        deployment.environment.name.'
+      operationId: GetRUMView
+      parameters:
+      - description: Unix milliseconds. Defaults to 24 hours before end.
+        in: query
+        name: start
+        schema:
+          description: Unix milliseconds. Defaults to 24 hours before end.
+          format: int64
+          type: integer
+      - description: Unix milliseconds. Defaults to now.
+        in: query
+        name: end
+        schema:
+          description: Unix milliseconds. Defaults to now.
+          format: int64
+          type: integer
+      - description: Keep telemetry whose service.version equals this.
+        in: query
+        name: release
+        schema:
+          description: Keep telemetry whose service.version equals this.
+          type: string
+      - description: Keep telemetry whose deployment.environment.name equals this.
+        in: query
+        name: environment
+        schema:
+          description: Keep telemetry whose deployment.environment.name equals this.
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: route
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RumtypesGettableView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - rum-application:read
+      - tokenizer:
+        - rum-application:read
+      summary: Get RUM view
       tags:
       - rum
       x-signoz-stability: alpha

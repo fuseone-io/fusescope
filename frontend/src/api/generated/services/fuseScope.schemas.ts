@@ -11096,6 +11096,80 @@ export interface RuletypesRuleDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
+export interface RumtypesActionEventDTO {
+	/**
+	 * @type string
+	 * @description fusescope.rum.action.name of a custom action.
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @description fusescope.rum.action.target, else browser.css_selector.
+	 */
+	target: string;
+	/**
+	 * @type string
+	 * @description fusescope.rum.action.type, e.g. click or custom.
+	 */
+	type: string;
+}
+
+export interface RumtypesClientDTO {
+	/**
+	 * @type string
+	 * @description Empty when unknown.
+	 */
+	browser: string;
+	/**
+	 * @type string
+	 * @description Major version.
+	 */
+	browserVersion: string;
+	/**
+	 * @type string
+	 * @description Empty when unknown.
+	 */
+	os: string;
+	/**
+	 * @type string
+	 * @description Major version, major.minor for macOS, empty when the user agent hides it.
+	 */
+	osVersion: string;
+}
+
+export interface RumtypesAffectedSessionDTO {
+	client: RumtypesClientDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Events of this group in the session.
+	 */
+	errors: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	lastErrorAt: string;
+	/**
+	 * @type string
+	 */
+	release: string;
+	/**
+	 * @type string
+	 */
+	sessionId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	views: number;
+}
+
 export interface RumtypesPIIPolicyDTO {
 	/**
 	 * @type boolean
@@ -11189,6 +11263,209 @@ export interface RumtypesApplicationDTO {
 	 * @format date-time
 	 */
 	updatedAt?: string;
+}
+
+export interface RumtypesClientBreakdownDTO {
+	/**
+	 * @type number,null
+	 */
+	lcpP75Ms: number | null;
+	/**
+	 * @type string
+	 * @description Browser or OS with its major version, e.g. Chrome 130; Unknown when not parsed.
+	 */
+	name: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	pageLoads: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	views: number;
+}
+
+/**
+ * @nullable
+ */
+export type RumtypesStackFrameDTO = {
+	/**
+	 * @type integer
+	 * @description 0 when unknown.
+	 */
+	column: number;
+	/**
+	 * @type string
+	 */
+	file: string;
+	/**
+	 * @type string
+	 */
+	function: string;
+	/**
+	 * @type integer
+	 * @description 0 when unknown.
+	 */
+	line: number;
+} | null;
+
+export interface RumtypesErrorEventDTO {
+	client: RumtypesClientDTO;
+	/**
+	 * @type array,null
+	 */
+	frames: (RumtypesStackFrameDTO | null)[] | null;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+	/**
+	 * @type string
+	 */
+	release: string;
+	/**
+	 * @type string
+	 */
+	route: string;
+	/**
+	 * @type string
+	 */
+	sessionId: string;
+	/**
+	 * @type string
+	 */
+	source: string;
+	/**
+	 * @type string
+	 * @description exception.stacktrace as received.
+	 */
+	stacktrace: string;
+	/**
+	 * @type boolean
+	 * @description Whether frames were mapped through an uploaded source map.
+	 */
+	symbolicated: boolean;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	timestamp: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export interface RumtypesErrorEventInfoDTO {
+	/**
+	 * @type string
+	 */
+	fingerprint: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+	/**
+	 * @type string
+	 * @description fusescope.rum.error.source, e.g. onerror or unhandledrejection.
+	 */
+	source: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export interface RumtypesSparklineDTO {
+	/**
+	 * @type array,null
+	 */
+	counts: number[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	start: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	stepSeconds: number;
+}
+
+export interface RumtypesErrorGroupDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	events: number;
+	/**
+	 * @type string
+	 */
+	fingerprint: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	firstSeenAt: string;
+	/**
+	 * @type string
+	 */
+	firstSeenRelease: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	lastSeenAt: string;
+	/**
+	 * @type string
+	 */
+	lastSeenRelease: string;
+	/**
+	 * @type string
+	 * @description Message of the latest event.
+	 */
+	message: string;
+	/**
+	 * @type boolean
+	 * @description First seen in the newest release with telemetry in the range, when an older release exists.
+	 */
+	newInRelease: boolean;
+	/**
+	 * @type string
+	 */
+	normalizedMessage: string;
+	/**
+	 * @type array,null
+	 * @description Releases with events in the range.
+	 */
+	releases: string[] | null;
+	/**
+	 * @type string
+	 * @description Route of the latest event.
+	 */
+	route: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	sessions: number;
+	/**
+	 * @type string
+	 */
+	source: string;
+	sparkline: RumtypesSparklineDTO;
+	topFrame: RumtypesStackFrameDTO | null;
+	/**
+	 * @type string
+	 */
+	type: string;
 }
 
 export enum RumtypesKeyStatusDTO {
@@ -11435,6 +11712,747 @@ export interface RumtypesGettableCreatedApplicationDTO {
 	 * @format date-time
 	 */
 	updatedAt?: string;
+}
+
+export enum RumtypesTimelineEventKindDTO {
+	view = 'view',
+	request = 'request',
+	click = 'click',
+	action = 'action',
+	error = 'error',
+	vital = 'vital',
+}
+export interface RumtypesRequestEventDTO {
+	/**
+	 * @type string
+	 * @description service.name of the first backend span, empty without one.
+	 */
+	backendService: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	durationMs: number;
+	/**
+	 * @type boolean
+	 * @description Status 400 or more, or an error span.
+	 */
+	failed: boolean;
+	/**
+	 * @type boolean
+	 * @description Spans from another service share the trace.
+	 */
+	hasBackend: boolean;
+	/**
+	 * @type string
+	 * @description Host without port; empty for a relative URL.
+	 */
+	host: string;
+	/**
+	 * @type string
+	 */
+	method: string;
+	/**
+	 * @type string
+	 * @description URL path with numeric, UUID and hash segments replaced by :id.
+	 */
+	path: string;
+	/**
+	 * @type string
+	 */
+	spanId: string;
+	/**
+	 * @type integer
+	 * @description 0 when the request got no response.
+	 */
+	statusCode: number;
+	/**
+	 * @type string
+	 */
+	traceId: string;
+	/**
+	 * @type string
+	 * @description url.full, already scrubbed by the gateway.
+	 */
+	url: string;
+}
+
+export enum RumtypesLoadingTypeDTO {
+	initial_load = 'initial_load',
+	route_change = 'route_change',
+	unknown = 'unknown',
+}
+export interface RumtypesViewEventDTO {
+	/**
+	 * @type number
+	 * @format double
+	 * @description Time on view: the view span's duration.
+	 */
+	durationMs: number;
+	loadingType: RumtypesLoadingTypeDTO;
+	/**
+	 * @type string
+	 * @description url.path.
+	 */
+	path: string;
+	/**
+	 * @type string
+	 */
+	spanId: string;
+}
+
+export enum RumtypesVitalNameDTO {
+	lcp = 'lcp',
+	inp = 'inp',
+	cls = 'cls',
+	fcp = 'fcp',
+	ttfb = 'ttfb',
+}
+export enum RumtypesVitalRatingDTO {
+	good = 'good',
+	'needs-improvement' = 'needs-improvement',
+	poor = 'poor',
+}
+export interface RumtypesVitalEventDTO {
+	name: RumtypesVitalNameDTO;
+	rating: RumtypesVitalRatingDTO;
+	/**
+	 * @type number
+	 * @format double
+	 * @description Milliseconds; unitless for cls.
+	 */
+	value: number;
+}
+
+export interface RumtypesTimelineEventDTO {
+	action?: RumtypesActionEventDTO;
+	error?: RumtypesErrorEventInfoDTO;
+	kind: RumtypesTimelineEventKindDTO;
+	request?: RumtypesRequestEventDTO;
+	/**
+	 * @type string
+	 * @description fusescope.rum.view.route when the event happened.
+	 */
+	route: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	timestamp: string;
+	view?: RumtypesViewEventDTO;
+	vital?: RumtypesVitalEventDTO;
+}
+
+export interface RumtypesGettableErrorGroupDTO {
+	/**
+	 * @type array,null
+	 * @description The 5 sessions with the latest events.
+	 */
+	affectedSessions: RumtypesAffectedSessionDTO[] | null;
+	/**
+	 * @type array,null
+	 * @description Views, clicks, actions and requests of the selected event's session in the 2 minutes before it.
+	 */
+	breadcrumbs: RumtypesTimelineEventDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	events: number;
+	/**
+	 * @type string
+	 */
+	fingerprint: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	firstSeenAt: string;
+	/**
+	 * @type string
+	 */
+	firstSeenRelease: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	lastSeenAt: string;
+	/**
+	 * @type string
+	 */
+	lastSeenRelease: string;
+	/**
+	 * @type array,null
+	 * @description Up to 10, newest first.
+	 */
+	latestEvents: RumtypesErrorEventDTO[] | null;
+	linkedRequest: RumtypesTimelineEventDTO;
+	/**
+	 * @type string
+	 * @description Message of the latest event.
+	 */
+	message: string;
+	/**
+	 * @type boolean
+	 * @description First seen in the newest release with telemetry in the range, when an older release exists.
+	 */
+	newInRelease: boolean;
+	/**
+	 * @type string
+	 */
+	normalizedMessage: string;
+	/**
+	 * @type array,null
+	 * @description Releases with events in the range.
+	 */
+	releases: string[] | null;
+	/**
+	 * @type string
+	 * @description Route of the latest event.
+	 */
+	route: string;
+	/**
+	 * @type string
+	 */
+	selectedEventId: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	sessions: number;
+	/**
+	 * @type string
+	 */
+	source: string;
+	sparkline: RumtypesSparklineDTO;
+	topFrame: RumtypesStackFrameDTO | null;
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export interface RumtypesGettableErrorGroupsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Error events in the range.
+	 */
+	events: number;
+	/**
+	 * @type array,null
+	 */
+	groups: RumtypesErrorGroupDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Groups with events in the range.
+	 */
+	total: number;
+}
+
+export interface RumtypesSessionViewDTO {
+	/**
+	 * @type number
+	 * @format double
+	 * @description Time on view: the view span's duration.
+	 */
+	durationMs: number;
+	/**
+	 * @type array,null
+	 */
+	events: RumtypesTimelineEventDTO[] | null;
+	loadingType: RumtypesLoadingTypeDTO;
+	/**
+	 * @type string
+	 * @description url.path.
+	 */
+	path: string;
+	/**
+	 * @type string
+	 */
+	route: string;
+	/**
+	 * @type string
+	 */
+	spanId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	timestamp: string;
+}
+
+export interface RumtypesGettableSessionDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Clicks and custom actions.
+	 */
+	actions: number;
+	client: RumtypesClientDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	durationMs: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @description End of the session's last span.
+	 */
+	endedAt: string;
+	/**
+	 * @type string
+	 */
+	environment: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	errors: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	failedRequests: number;
+	/**
+	 * @type array,null
+	 * @description Events before the first view.
+	 */
+	leadingEvents: RumtypesTimelineEventDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	pageLoads: number;
+	/**
+	 * @type string
+	 * @description session.previous_id, empty for a first session.
+	 */
+	previousSessionId: string;
+	/**
+	 * @type string
+	 */
+	release: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	requests: number;
+	/**
+	 * @type string
+	 */
+	sessionId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startedAt: string;
+	/**
+	 * @type array,null
+	 * @description Views in order, each with what happened while it was current.
+	 */
+	timeline: RumtypesSessionViewDTO[] | null;
+	/**
+	 * @type boolean
+	 * @description The session has more spans or events than one response carries.
+	 */
+	truncated: boolean;
+	/**
+	 * @type string
+	 * @description user.id, else user.hash; empty when the app set no user.
+	 */
+	userId: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	views: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	vitals: number;
+}
+
+export interface RumtypesSessionSummaryDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Clicks and custom actions.
+	 */
+	actions: number;
+	client: RumtypesClientDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	durationMs: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @description End of the session's last span.
+	 */
+	endedAt: string;
+	/**
+	 * @type string
+	 */
+	environment: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	errors: number;
+	/**
+	 * @type string
+	 * @description session.previous_id, empty for a first session.
+	 */
+	previousSessionId: string;
+	/**
+	 * @type string
+	 */
+	release: string;
+	/**
+	 * @type string
+	 */
+	sessionId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startedAt: string;
+	/**
+	 * @type string
+	 * @description user.id, else user.hash; empty when the app set no user.
+	 */
+	userId: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	views: number;
+}
+
+export interface RumtypesGettableSessionsDTO {
+	/**
+	 * @type array,null
+	 */
+	sessions: RumtypesSessionSummaryDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Sessions matching the filters.
+	 */
+	total: number;
+}
+
+export interface RumtypesRouteSessionDTO {
+	client: RumtypesClientDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Errors on the route.
+	 */
+	errors: number;
+	/**
+	 * @type number,null
+	 * @description LCP of a page load on the route.
+	 */
+	lcpMs: number | null;
+	loadingType: RumtypesLoadingTypeDTO;
+	/**
+	 * @type string
+	 */
+	sessionId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @description Start of the session's first view on the route.
+	 */
+	startedAt: string;
+}
+
+export interface RumtypesReleaseMarkerDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	firstSeenAt: string;
+	/**
+	 * @type string
+	 */
+	release: string;
+}
+
+export interface RumtypesVitalSeriesPointDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	p75: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	samples: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @description Bucket start.
+	 */
+	timestamp: string;
+}
+
+export interface RumtypesVitalSeriesLineDTO {
+	name: RumtypesVitalNameDTO;
+	/**
+	 * @type array,null
+	 * @description Buckets with samples only.
+	 */
+	points: RumtypesVitalSeriesPointDTO[] | null;
+}
+
+export interface RumtypesVitalSeriesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	stepSeconds: number;
+	/**
+	 * @type array,null
+	 */
+	vitals: RumtypesVitalSeriesLineDTO[] | null;
+}
+
+export interface RumtypesRequestTemplateStatsDTO {
+	/**
+	 * @type string
+	 * @description service.name of the first backend span in the example trace, empty without one.
+	 */
+	backendService: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	calls: number;
+	/**
+	 * @type string
+	 * @description Trace of the slowest call.
+	 */
+	exampleTraceId: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	failed: number;
+	/**
+	 * @type string
+	 * @description Host without port; empty for a relative URL.
+	 */
+	host: string;
+	/**
+	 * @type string
+	 */
+	method: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	p75Ms: number;
+	/**
+	 * @type string
+	 * @description URL path with numeric, UUID and hash segments replaced by :id.
+	 */
+	path: string;
+}
+
+/**
+ * @nullable
+ */
+export type RumtypesVitalSummaryDTO = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	good: number;
+	name: RumtypesVitalNameDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	needsImprovement: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description Milliseconds; unitless for cls.
+	 */
+	p75: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	poor: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	samples: number;
+} | null;
+
+export interface RumtypesGettableViewDTO {
+	/**
+	 * @type array,null
+	 */
+	browsers: RumtypesClientBreakdownDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	errors: number;
+	/**
+	 * @type array,null
+	 * @description Up to three url.path values seen on the route.
+	 */
+	examplePaths: string[] | null;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	medianTimeOnViewMs: number;
+	/**
+	 * @type array,null
+	 */
+	operatingSystems: RumtypesClientBreakdownDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Views with loading type initial_load.
+	 */
+	pageLoads: number;
+	/**
+	 * @type array,null
+	 * @description The 10 sessions that entered the route last.
+	 */
+	recentSessions: RumtypesRouteSessionDTO[] | null;
+	/**
+	 * @type array,null
+	 * @description service.version values seen on the route, by first view.
+	 */
+	releases: RumtypesReleaseMarkerDTO[] | null;
+	/**
+	 * @type string
+	 */
+	route: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Views with loading type route_change.
+	 */
+	routeChanges: number;
+	series: RumtypesVitalSeriesDTO;
+	/**
+	 * @type array,null
+	 * @description Up to 10 request templates by p75.
+	 */
+	slowRequests: RumtypesRequestTemplateStatsDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Views without a loading type, from SDKs before 0.2.0.
+	 */
+	unknownLoads: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	views: number;
+	/**
+	 * @type array,null
+	 * @description Every vital with samples, in lcp, inp, cls, fcp, ttfb order.
+	 */
+	vitals: (RumtypesVitalSummaryDTO | null)[] | null;
+}
+
+/**
+ * @nullable
+ */
+export type RumtypesRequestTemplateLatencyDTO = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	calls: number;
+	/**
+	 * @type string
+	 * @description Host without port; empty for a relative URL.
+	 */
+	host: string;
+	/**
+	 * @type string
+	 */
+	method: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	p75Ms: number;
+	/**
+	 * @type string
+	 * @description URL path with numeric, UUID and hash segments replaced by :id.
+	 */
+	path: string;
+} | null;
+
+export interface RumtypesViewRouteDTO {
+	cls: RumtypesVitalSummaryDTO | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	errors: number;
+	inp: RumtypesVitalSummaryDTO | null;
+	lcp: RumtypesVitalSummaryDTO | null;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	medianTimeOnViewMs: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Views with loading type initial_load.
+	 */
+	pageLoads: number;
+	/**
+	 * @type string
+	 */
+	route: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Views with loading type route_change.
+	 */
+	routeChanges: number;
+	slowestRequest: RumtypesRequestTemplateLatencyDTO | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Views without a loading type, from SDKs before 0.2.0.
+	 */
+	unknownLoads: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	views: number;
+}
+
+export interface RumtypesGettableViewsDTO {
+	/**
+	 * @type array,null
+	 */
+	routes: RumtypesViewRouteDTO[] | null;
 }
 
 export enum RumtypesKeyOverlapDTO {
@@ -13817,6 +14835,94 @@ export type UpdateRUMApplication200 = {
 	status: string;
 };
 
+export type ListRUMErrorGroupsPathParameters = {
+	id: string;
+};
+export type ListRUMErrorGroupsParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to 24 hours before end.
+	 */
+	start?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to now.
+	 */
+	end?: number;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose service.version equals this.
+	 */
+	release?: string;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose deployment.environment.name equals this.
+	 */
+	environment?: string;
+	/**
+	 * @type integer
+	 * @description Groups per page, 1 to 200, by event count. Defaults to 50.
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
+export type ListRUMErrorGroups200 = {
+	data: RumtypesGettableErrorGroupsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetRUMErrorGroupPathParameters = {
+	id: string;
+	fingerprint: string;
+};
+export type GetRUMErrorGroupParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to 24 hours before end.
+	 */
+	start?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to now.
+	 */
+	end?: number;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose service.version equals this.
+	 */
+	release?: string;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose deployment.environment.name equals this.
+	 */
+	environment?: string;
+	/**
+	 * @type string
+	 * @description Event whose breadcrumbs and linked request are returned. Defaults to the latest.
+	 */
+	eventId?: string;
+};
+
+export type GetRUMErrorGroup200 = {
+	data: RumtypesGettableErrorGroupDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListRUMApplicationKeysPathParameters = {
 	id: string;
 };
@@ -13858,11 +14964,202 @@ export type RotateRUMApplicationKey201 = {
 	status: string;
 };
 
+export type ListRUMSessionsPathParameters = {
+	id: string;
+};
+export type ListRUMSessionsParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to 24 hours before end.
+	 */
+	start?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to now.
+	 */
+	end?: number;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose service.version equals this.
+	 */
+	release?: string;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose deployment.environment.name equals this.
+	 */
+	environment?: string;
+	/**
+	 * @type string
+	 * @description Browser name as returned in client.browser, e.g. Chrome.
+	 */
+	browser?: string;
+	/**
+	 * @type string
+	 * @description Keep sessions with a view on this route template.
+	 */
+	route?: string;
+	/**
+	 * @type string
+	 * @description Matches user.id or user.hash.
+	 */
+	userId?: string;
+	/**
+	 * @type boolean,null
+	 * @description true keeps sessions with an error, false those without.
+	 */
+	hasError?: boolean | null;
+	/**
+	 * @type integer,null
+	 * @description undefined
+	 */
+	minDurationMs?: number | null;
+	/**
+	 * @type integer,null
+	 * @description undefined
+	 */
+	maxDurationMs?: number | null;
+	/**
+	 * @type integer
+	 * @description Sessions per page, 1 to 200, newest first. Defaults to 50.
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
+export type ListRUMSessions200 = {
+	data: RumtypesGettableSessionsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetRUMSessionPathParameters = {
+	id: string;
+	sessionId: string;
+};
+export type GetRUMSessionParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to 24 hours before end.
+	 */
+	start?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to now.
+	 */
+	end?: number;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose service.version equals this.
+	 */
+	release?: string;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose deployment.environment.name equals this.
+	 */
+	environment?: string;
+};
+
+export type GetRUMSession200 = {
+	data: RumtypesGettableSessionDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetRUMApplicationStatusPathParameters = {
 	id: string;
 };
 export type GetRUMApplicationStatus200 = {
 	data: RumtypesGettableApplicationStatusDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListRUMViewsPathParameters = {
+	id: string;
+};
+export type ListRUMViewsParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to 24 hours before end.
+	 */
+	start?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to now.
+	 */
+	end?: number;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose service.version equals this.
+	 */
+	release?: string;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose deployment.environment.name equals this.
+	 */
+	environment?: string;
+	/**
+	 * @type integer
+	 * @description Routes to return, 1 to 500, by view count. Defaults to 100.
+	 */
+	limit?: number;
+};
+
+export type ListRUMViews200 = {
+	data: RumtypesGettableViewsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetRUMViewPathParameters = {
+	id: string;
+	route: string;
+};
+export type GetRUMViewParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to 24 hours before end.
+	 */
+	start?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Unix milliseconds. Defaults to now.
+	 */
+	end?: number;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose service.version equals this.
+	 */
+	release?: string;
+	/**
+	 * @type string
+	 * @description Keep telemetry whose deployment.environment.name equals this.
+	 */
+	environment?: string;
+};
+
+export type GetRUMView200 = {
+	data: RumtypesGettableViewDTO;
 	/**
 	 * @type string
 	 */
