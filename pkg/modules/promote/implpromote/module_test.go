@@ -546,3 +546,65 @@ func TestTracesNumberIndexExpr_MatchesQuerierFilters(t *testing.T) {
 		})
 	}
 }
+
+func TestPromotePathsIndexDDL(t *testing.T) {
+	ctx := context.Background()
+
+	testCases := []struct {
+		name    string
+		path    *promotetypes.PromotePath
+		wantDDL string
+	}{
+		{
+			name: "LogsStringPromoted_NgramOnPromotedColumn",
+			path: &promotetypes.PromotePath{
+				Signal: "logs", Context: "body", Path: "user.name", Promote: true,
+				Indexes: []promotetypes.WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String}},
+			},
+			wantDDL: "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster ADD INDEX IF NOT EXISTS `body_promoted.user.name_string_ngrambf_v1` lower(assumeNotNull(dynamicElement(body_promoted.user.name, 'String'))) TYPE ngrambf_v1(4, 1024, 2, 0) GRANULARITY 1",
+		},
+		{
+			name: "LogsNumberUnpromoted_MinmaxOnBaseColumn",
+			path: &promotetypes.PromotePath{
+				Signal: "logs", Context: "body", Path: "request.duration",
+				Indexes: []promotetypes.WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeNumber, Type: "minmax", Granularity: 4, JSONDataType: telemetrytypes.Float64}},
+			},
+			wantDDL: "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster ADD INDEX IF NOT EXISTS `body_v2.request.duration_float64_minmax` assumeNotNull(dynamicElement(body_v2.request.duration, 'Float64')) TYPE minmax GRANULARITY 4",
+		},
+		{
+			name: "LogsDashedSegment_BacktickedInExpression",
+			path: &promotetypes.PromotePath{
+				Signal: "logs", Context: "body", Path: "http-request.user-agent",
+				Indexes: []promotetypes.WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "tokenbf_v1(1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String}},
+			},
+			wantDDL: "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster ADD INDEX IF NOT EXISTS `body_v2.http-request.user-agent_string_tokenbf_v1` lower(assumeNotNull(dynamicElement(body_v2.`http-request`.`user-agent`, 'String'))) TYPE tokenbf_v1(1024, 2, 0) GRANULARITY 1",
+		},
+		{
+			name: "TracesStringPromoted_BloomFilter",
+			path: &promotetypes.PromotePath{
+				Signal: "traces", Context: "attribute", Path: "http.method", Promote: true,
+				Indexes: []promotetypes.WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(0.01)", Granularity: 1, JSONDataType: telemetrytypes.String}},
+			},
+			wantDDL: "ALTER TABLE signoz_traces.signoz_index_v3 ON CLUSTER cluster ADD INDEX IF NOT EXISTS `attributes_promoted.http.method_string_bloom_filter` attributes_promoted.`http.method`::String TYPE bloom_filter(0.01) GRANULARITY 1",
+		},
+		{
+			name: "TracesNumberUnpromoted_Set",
+			path: &promotetypes.PromotePath{
+				Signal: "traces", Context: "attribute", Path: "http.status_code",
+				Indexes: []promotetypes.WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeNumber, Type: "set(100)", Granularity: 2, JSONDataType: telemetrytypes.Float64}},
+			},
+			wantDDL: "ALTER TABLE signoz_traces.signoz_index_v3 ON CLUSTER cluster ADD INDEX IF NOT EXISTS `attributes.http.status_code_float64_set` toFloat64OrNull(attributes.`http.status_code`::String) TYPE set(100) GRANULARITY 2",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherEqual)
+			m := NewModule(telemetrytypestest.NewMockMetadataStore(), ts, factorytest.NewSettings())
+
+			ts.Mock().ExpectExec(testCase.wantDDL).WillReturnError(nil)
+			require.NoError(t, m.PromotePaths(ctx, testCase.path))
+			assert.NoError(t, ts.Mock().ExpectationsWereMet())
+		})
+	}
+}
