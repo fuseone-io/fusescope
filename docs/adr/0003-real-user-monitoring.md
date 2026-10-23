@@ -75,7 +75,7 @@ Signals map to existing OTel types, so nothing new is needed on the wire:
 | Resource / request | spans from the fetch, XHR and OkHttp instrumentations | `http.*`, `url.*`, child `traceparent` |
 | Action | span from user interaction (log event with the upstream `user-action` instrumentation) | `fusescope.rum.action.type`, target |
 | Error / crash | log record, `event.name` = `exception` | `exception.type`, `exception.message`, `exception.stacktrace`, `fusescope.rum.error.source` |
-| Web Vital | log record, `event.name` = `browser.web_vital` | `browser.web_vital.name` (`LCP`, `INP`, `CLS`, `TTFB`), `.value`, `.rating`; route of the page load |
+| Web Vital | log record, `event.name` = `browser.web_vital` | `browser.web_vital.name` (`lcp`, `inp`, `cls`, `fcp`, `ttfb`, lowercase as web-vitals reports them), `.value`, `.rating`; route of the page load |
 | App vital | log record, `event.name` = `rum.vital` | `fusescope.rum.vital.name` (`app_start`, `frozen_frame`, …), value, rating |
 | Device and runtime | resource | `browser.*`, `user_agent.original`, `device.*`, `os.*` |
 
