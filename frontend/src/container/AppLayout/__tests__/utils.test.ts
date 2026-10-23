@@ -11,13 +11,14 @@ describe('isFullScreenRoute', () => {
 		'/dashboard/abc',
 		ROUTES.SETTINGS,
 		'/ai-assistant/abc',
+		ROUTES.GET_STARTED,
+		'/get-started/nodejs',
 	])('keeps the sidebar and header on %s', (pathname) => {
 		expect(isFullScreenRoute(pathname)).toBe(false);
 	});
 
 	it.each([
 		ROUTES.ONBOARDING,
-		ROUTES.GET_STARTED_WITH_CLOUD,
 		'/public/dashboard/abc',
 		'/dashboard/abc/panel/def',
 	])('renders %s without the sidebar and header', (pathname) => {

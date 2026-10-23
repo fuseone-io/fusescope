@@ -1465,17 +1465,20 @@ describe('PrivateRoute', () => {
 			await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
 		});
 
-		it('should allow EDITOR to access /get-started-with-signoz-cloud route', () => {
-			renderPrivateRoute({
-				initialRoute: ROUTES.GET_STARTED_WITH_CLOUD,
-				appContext: {
-					isLoggedIn: true,
-					user: createMockUser({ role: USER_ROLES.EDITOR as ROLES }),
-				},
-			});
+		it.each([USER_ROLES.EDITOR, USER_ROLES.VIEWER])(
+			'should allow %s to access /get-started',
+			(role) => {
+				renderPrivateRoute({
+					initialRoute: ROUTES.GET_STARTED,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role: role as ROLES }),
+					},
+				});
 
-			assertStaysOnRoute(ROUTES.GET_STARTED_WITH_CLOUD);
-		});
+				assertStaysOnRoute(ROUTES.GET_STARTED);
+			},
+		);
 
 		it.each([...PERMITTED_ROLES, ...DENIED_ROLES])(
 			'should render the unauthorized page for a %s instead of bouncing off it',

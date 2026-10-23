@@ -139,6 +139,15 @@ describe('AppHeader', () => {
 			).toHaveAttribute('href', expect.stringContaining(ROUTES.API_MONITORING));
 		});
 
+		it('names an in-app setup guide under Get started', () => {
+			renderHeader('/get-started/nodejs');
+
+			expect(crumbs()).toStrictEqual(['Get started', 'Node.js']);
+			expect(
+				within(header()).getByRole('link', { name: 'Get started' }),
+			).toHaveAttribute('href', expect.stringContaining(ROUTES.GET_STARTED));
+		});
+
 		it('nests a page under a dynamic parent', () => {
 			renderHeader('/services/checkout-api/top-level-operations');
 
