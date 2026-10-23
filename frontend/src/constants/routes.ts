@@ -99,6 +99,8 @@ const ROUTES = {
 	RUM_APPLICATION_SESSION: '/frontend/applications/:id/sessions/:sessionId',
 	RUM_APPLICATION_ERRORS: '/frontend/applications/:id/errors',
 	RUM_APPLICATION_ERROR: '/frontend/applications/:id/errors/:fingerprint',
+	GET_STARTED: '/get-started',
+	GET_STARTED_GUIDE: '/get-started/:guideId',
 } as const;
 
 export default ROUTES;

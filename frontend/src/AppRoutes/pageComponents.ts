@@ -76,8 +76,11 @@ export const OrgOnboarding = Loadable(
 	() => import(/* webpackChunkName: "OrgOnboarding" */ 'pages/OrgOnboarding'),
 );
 
-export const OnboardingV2 = Loadable(
-	() => import(/* webpackChunkName: "Onboarding V2" */ 'pages/OnboardingPageV2'),
+export const GetStartedRedirect = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Get Started Redirect" */ 'pages/GetStarted/GetStartedRedirect'
+		),
 );
 
 export const DashboardsListPage = Loadable(
@@ -319,4 +322,13 @@ export const RumApplicationsPage = Loadable(
 export const RumApplicationPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "Rum Application Page" */ 'pages/RumApplication'),
+);
+
+export const GetStartedPage = Loadable(
+	() => import(/* webpackChunkName: "Get Started Page" */ 'pages/GetStarted'),
+);
+
+export const GetStartedGuidePage = Loadable(
+	() =>
+		import(/* webpackChunkName: "Get Started Guide" */ 'pages/GetStarted/Guide'),
 );

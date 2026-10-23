@@ -1,5 +1,6 @@
 import ROUTES from 'constants/routes';
 import { shortId } from 'lib/rum/format';
+import { guideById } from 'pages/GetStarted/guides/registry';
 
 import { CrumbContext, CrumbRoute } from './types';
 
@@ -172,6 +173,11 @@ export const CRUMB_ROUTES: Record<string, CrumbRoute> = {
 		mono: true,
 	},
 	[ROUTES.ROLE_EDIT]: { parent: ROUTES.ROLE_DETAILS, label: 'Edit' },
+	[ROUTES.GET_STARTED]: { label: 'Get started' },
+	[ROUTES.GET_STARTED_GUIDE]: {
+		parent: ROUTES.GET_STARTED,
+		label: ({ params }): string => guideById(params.guideId)?.name ?? 'Guide',
+	},
 	[ROUTES.VERSION]: { label: 'Status' },
 	[ROUTES.LIST_LICENSES]: { label: 'Licenses' },
 	[ROUTES.SUPPORT]: { label: 'Support' },
