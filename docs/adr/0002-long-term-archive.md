@@ -8,7 +8,7 @@
 
 ClickHouse keeps hot and warm data and retention deletes it afterwards. Teams need older logs, traces and metrics for audits and incident reviews without keeping them in ClickHouse. The archive must be an open format readable without FuseScope, and slices of it must be loadable back for analysis.
 
-Facts the design rests on. They were checked against the backend, migrator and exporters v0.145.0 (the schema-migrator version the integration CI runs; since ADR 0001 phase 4 the backend no longer pins the collector in `go.mod`) and ClickHouse 25.12.5. Experiments E1–E8 are reproducible from [`0002-experiments/`](0002-experiments/).
+Facts the design rests on. They were checked against the backend, migrator and exporters v0.145.0 (the schema-migrator version the integration CI runs; since ADR 0001 phase 4 the backend no longer pins the collector in `go.mod`) and ClickHouse 25.12.5. Experiments E1–E9 are reproducible from [`0002-experiments/`](0002-experiments/).
 
 - **Deletion is per part.** Bulk tables set `ttl_only_drop_parts=1`, so a part is dropped once all its rows are expired, during a TTL merge.
   - `merge_with_ttl_timeout` (4 h by default) is the *minimum* delay before repeating such a merge, not a bound on when deletion happens.
@@ -21,7 +21,7 @@ Facts the design rests on. They were checked against the backend, migrator and e
 - **Partition-level operations are unsafe on replicas.** `MOVE PARTITION` and `DROP PARTITION` on a `ReplicatedMergeTree` remove the partition's whole block range. Issued on a replica that hasn't fetched a committed part, they destroyed that part on every replica (E4).
 - **`DROP PART` by name is exact.** Issued on the same lagging replica, it removed only the named parts and left the unfetched one intact (E5). Concurrent inserts into the partition were untouched (E7a). Dropping a name a merge already replaced fails with `NO_SUCH_DATA_PART` and changes nothing (E7a2).
 - **Reads through a Distributed table pick a replica.** `_part IN (…)` through `distributed_*` returned 107 or 100 rows depending on which replica answered (E8).
-- **Rewriting TTL doesn't reach existing parts.** The backend issues `MODIFY TTL … SETTINGS materialize_ttl_after_modify = 0`. Existing parts keep their old TTL info and expire under the old rule (E6b, E6c). `MATERIALIZE TTL` with `materialize_ttl_recalculate_only = 1` recalculates the TTL info without rewriting data (E6d).
+- **Rewriting TTL doesn't reach existing parts.** The backend issues `MODIFY TTL … SETTINGS materialize_ttl_after_modify = 0`. Existing parts keep their old TTL info and expire under the old rule (E6b, E6c). `MATERIALIZE TTL` recalculates the TTL info of existing parts (E6d). On `ttl_only_drop_parts` tables it deletes no rows and rewrites only the columns its TTL expressions read, with or without `materialize_ttl_recalculate_only`, which is a table setting the live tables don't set (E9).
 - **Two code paths write the live TTL.** The settings page and API (`SetTTL` / `SetTTLV2`), and the default-retention reconciler (`retention.default.*`, #143), which calls the same functions for any signal without a `ttl_setting` row. Each issues the whole TTL clause, so a later call replaces whatever TTL was there.
 - **Logs retention can be per row.** With custom retention, `_retention_days` is part of the partition key of `logs_v2` and `logs_v2_resource`, so every partition has a single retention, which can differ from the global one. Cold-storage rules (`TO VOLUME`) move whole parts between disks without renaming them.
 - **Two exporters insert without a column list.** The traces exporter writes `traces_v3_resource` and `signoz_error_index_v2` with a bare `INSERT INTO <table>`. A new `DEFAULT` column breaks those inserts; a `MATERIALIZED` column doesn't (E6e).
@@ -54,7 +54,7 @@ Constraints: no new imports from `fusescope-otel-collector` ([ADR 0001](0001-agp
 |---|---|---|---|
 | A row is never deleted by the archive job unless it is in a published archive segment | The job deletes only with `DROP PART <name>` of parts whose block range is covered by published segments (§4) | Part names and block ranges behave as in E5; no table mutations rewrite parts in place | A mutated part (new name, same range) is treated as changed and re-exported before its drop |
 | Late, in-progress and lagging-replica rows are archived in a later cycle | They live in parts with block ranges that no published segment covers (§3) | Block numbers are unique per shard and partition | None found in this design |
-| Data past retention is kept until archived, for at least `backstop_days` after insertion | The live TTL becomes ingestion-time based: `ingestion_column + retention + backstop`, and `MATERIALIZE TTL` (recalculate only) applies it to existing parts. Every TTL writer goes through one builder that adds the backstop (§5) | The ingestion column exists and its clock is within minutes of real time | Tables without an ingestion column keep event-time TTL; late rows older than `retention + backstop` can expire before they are archived (§5, limitation) |
+| Data past retention is kept until archived, for at least `backstop_days` after insertion | The live TTL becomes ingestion-time based: `ingestion_column + retention + backstop`, and `MATERIALIZE TTL` applies it to existing parts. Every TTL writer goes through one builder that adds the backstop (§5) | The ingestion column exists and its clock is within minutes of real time | Tables without an ingestion column keep event-time TTL; late rows older than `retention + backstop` can expire before they are archived (§5, limitation) |
 | Every loss is recorded | Every cycle stores a part inventory; a part that vanishes without being archived or merged into an archived part is marked `lost`, with its row count (§6) | The job ran at least once while the part existed | Parts created and expired between two runs leave no trace; only the job's downtime window is recorded |
 | A restoration loads only what was committed | SQL state, not the bucket, says which objects to load and how; each object is checked against the size, ETag and row count recorded at commit (§9) | The metastore is not writable by whoever can write the bucket | A modified, partial or replaced object fails the restoration as `corrupt` |
 | A restoration returns each archived row exactly once | Restores read only maximal published parts per shard and partition (§3); Replacing tables are read with `FINAL`, in block order (§7) | Same as row 1 | — |
@@ -157,7 +157,7 @@ After commit, the job drops the published parts that are still active, by name, 
 
 ### 5. Retention backstop
 
-When the archive is enabled for a signal, the backend rewrites the live TTL of its tables to `<ingestion column> + retention + backstop_days`. It keeps the delete expression shape the backend already issues (`SetTTL` / `SetTTLV2`), using `greatest` with the event-time expression so nothing expires earlier than today. It then runs `MATERIALIZE TTL` with `materialize_ttl_recalculate_only = 1` on every table of the signal; without it, parts that already exist would still expire under the old TTL (E6c). Existing parts get `created_at = now` for TTL purposes, so their life is extended until the job archives and drops them.
+When the archive is enabled for a signal, the backend rewrites the live TTL of its tables to `<ingestion column> + retention + backstop_days`. It keeps the delete expression shape the backend already issues (`SetTTL` / `SetTTLV2`), using `greatest` with the event-time expression so nothing expires earlier than today. It then runs `MATERIALIZE TTL` on every table of the signal; without it, parts that already exist would still expire under the old TTL (E6c). The tables keep their settings: on `ttl_only_drop_parts` tables the mutation rewrites only the timestamp, ingestion and `_retention_days` columns the TTL reads, and no rows (E9). Existing parts get `created_at = now` for TTL purposes, so their life is extended until the job archives and drops them.
 
 The backend uses an ingestion column only after finding it in `system.columns`, as it already does for `_retention_days`.
 
@@ -177,7 +177,7 @@ How likely: logs and traces exporters drop rows older than `max_allowed_data_age
 
 **Automatic extension while archiving fails.** ClickHouse can't wait for an archive before deleting, as Elastic's `wait_for_snapshot` and Splunk's frozen step do, so the backstop emulates it.
 
-- When the *critical* alert fires (a partition past retention and unarchived for half the backstop), the backend re-applies the TTL with a larger backstop, recalculate-only as above, in steps up to 30 days.
+- When the *critical* alert fires (a partition past retention and unarchived for half the backstop), the backend re-applies the TTL with a larger backstop and `MATERIALIZE TTL` as above, in steps up to 30 days.
 - At 30 days, only `force` or more disk remain. The cap exists because self-hosted disks are finite. Splunk warns that blocking without a cap eventually fills the disk.
 - The extension is recorded and reverted to the configured backstop once the backlog is archived.
 
@@ -307,7 +307,7 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 5. **Metrics:** raw and reduced tables, Replacing semantics with `FINAL`, and table selection pinned for rehydration sources.
 6. **UI**, after the frontend freeze.
 
-**Executed.** E1–E8 in [`0002-experiments/`](0002-experiments/): single-shard experiments with no network delay; E8 uses two containers. Their limitations are listed there.
+**Executed.** E1–E9 in [`0002-experiments/`](0002-experiments/): single-shard experiments with no network delay; E8 uses two containers. Their limitations are listed there.
 
 **Planned acceptance tests** (integration, both stores, sharded and replicated ClickHouse):
 
@@ -335,7 +335,7 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 20. A bucket with Object Lock: exports succeed, and orphan cleanup failures are logged without failing the cycle.
 21. Phase 5: metrics older than `max_allowed_data_age_days` are dropped by the exporter and counted; with `0` they are accepted.
 22. Restorations against an external ClickHouse user without `CREATE TABLE` fail with an explicit error, and archiving continues.
-23. Archive enabled, then retention changed in the UI, then the reconciler and the automatic extension run: the backstop is still in `create_table_query`, and in existing parts after `MATERIALIZE TTL` (recalculate only).
+23. Archive enabled, then retention changed in the UI, then the reconciler and the automatic extension run: the backstop is still in `create_table_query`, and in existing parts after `MATERIALIZE TTL`.
 24. An archived object replaced or truncated in the bucket, or a manifest edited: the restoration fails as `corrupt` and loads nothing.
 25. Two replicas holding the same rows in differently named parts (one merged, one not): the snapshot picks a replica by range coverage and the partition is exported.
 26. Logs with custom retention: partitions are selected by their own `_retention_days`; parts moved to the cold volume are exported and dropped.
@@ -382,7 +382,7 @@ The decisions below are proposed from the market review in "Market references". 
   - MergeTree TTL and settings (`ttl_only_drop_parts`, `merge_with_ttl_timeout`).
   - `ALTER … DROP PART` and partition manipulation.
   - The `s3` table function, named collections, the Parquet format.
-  - E1–E8 (25.12.5.44).
+  - E1–E9 (25.12.5.44).
 
 ## Market references
 
