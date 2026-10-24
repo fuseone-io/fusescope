@@ -13,16 +13,22 @@ const (
 
 // TTLClause is a table's TTL: rows are deleted Delete after Time and, when Volume is set,
 // moved to it MoveAfter after Time. Time, Delete and MoveAfter are ClickHouse expressions.
+//
+// A Backstop (the archive's, ADR 0002 §5) delays deletion by that interval, counted from
+// Ingestion when the table has an ingestion-time column and from Time otherwise; with
+// Ingestion, rows never expire before Time + Delete.
 type TTLClause struct {
 	Time      string
 	Delete    string
+	Ingestion string
+	Backstop  string
 	Volume    string
 	MoveAfter string
 }
 
 // Statement replaces the TTL of table on every node of cluster.
 func (clause TTLClause) Statement(table string, cluster string) string {
-	ttl := fmt.Sprintf("%s + %s DELETE", clause.Time, clause.Delete)
+	ttl := clause.expiry() + " DELETE"
 	if clause.Volume != "" {
 		ttl += fmt.Sprintf(", %s + %s TO VOLUME %s", clause.Time, clause.MoveAfter, clickhousesql.StringLiteral(clause.Volume))
 	}
@@ -61,4 +67,16 @@ func LogsColdStorageDays(days int) string {
 
 func IntervalDaysOf(expression string) string {
 	return fmt.Sprintf("toIntervalDay(%s)", expression)
+}
+
+func (clause TTLClause) expiry() string {
+	expiry := fmt.Sprintf("%s + %s", clause.Time, clause.Delete)
+	switch {
+	case clause.Backstop == "":
+		return expiry
+	case clause.Ingestion == "":
+		return fmt.Sprintf("%s + %s", expiry, clause.Backstop)
+	default:
+		return fmt.Sprintf("greatest(%s, %s + %s + %s)", expiry, clause.Ingestion, clause.Delete, clause.Backstop)
+	}
 }

@@ -64,6 +64,20 @@ func TestTTLClauseStatement(t *testing.T) {
 			want:    "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
 		},
 		{
+			name:    "Backstop_WithIngestionAndColdStorage",
+			ttl:     TTLClause{Time: UnixNanoTime("timestamp"), Delete: IntervalDaysOf("_retention_days"), Ingestion: DateTimeOf("created_at"), Backstop: IntervalDays(7), Volume: "cold", MoveAfter: IntervalDaysOf("_retention_days_cold")},
+			table:   "signoz_logs.logs_v2",
+			cluster: "cluster",
+			want:    "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL greatest(toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days), toDateTime(created_at) + toIntervalDay(_retention_days) + toIntervalDay(7)) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
+		},
+		{
+			name:    "Backstop_NoIngestionColumn",
+			ttl:     TTLClause{Time: ResourceBucketTime, Delete: IntervalDaysOf("_retention_days"), Backstop: IntervalDays(10)},
+			table:   "signoz_logs.logs_v2_resource",
+			cluster: "cluster",
+			want:    "ALTER TABLE signoz_logs.logs_v2_resource ON CLUSTER cluster MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) + toIntervalDay(10) DELETE SETTINGS materialize_ttl_after_modify=0",
+		},
+		{
 			name:    "VolumeWithQuote_Escaped",
 			ttl:     TTLClause{Time: UnixNanoTime("timestamp"), Delete: IntervalSeconds(60), Volume: "co'ld", MoveAfter: IntervalSeconds(30)},
 			table:   "signoz_logs.logs_v2",
