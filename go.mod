@@ -143,7 +143,6 @@ require (
 	github.com/mattn/go-isatty v0.0.23 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.148.0 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.15.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/swaggest/refl v1.4.0 // indirect
@@ -305,15 +304,14 @@ require (
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/valyala/fastjson v1.6.7 // indirect
-	github.com/vjeantet/grok v1.0.1 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/collector/component v1.54.0 // indirect
+	go.opentelemetry.io/collector/component v1.54.0
 	go.opentelemetry.io/collector/component/componentstatus v0.148.0 // indirect
-	go.opentelemetry.io/collector/component/componenttest v0.148.0 // indirect
+	go.opentelemetry.io/collector/component/componenttest v0.148.0
 	go.opentelemetry.io/collector/config/configtelemetry v0.144.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/envprovider v1.50.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.50.0 // indirect
