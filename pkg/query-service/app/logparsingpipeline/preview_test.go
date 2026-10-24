@@ -3,6 +3,7 @@ package logparsingpipeline
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -305,4 +306,52 @@ func makeTestSignozLog(
 	}
 
 	return testLog
+}
+
+func TestPipelinePreview_Concurrent(t *testing.T) {
+	pipelines := []pipelinetypes.GettablePipeline{makeTestAddAttributePipeline()}
+
+	var wg sync.WaitGroup
+	results := make([][]model.SignozLog, 8)
+	errs := make([]error, len(results))
+	for i := range results {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			logs := []model.SignozLog{makeTestSignozLog(fmt.Sprintf("log %d", i), map[string]interface{}{"method": "GET"})}
+			results[i], _, errs[i] = SimulatePipelinesProcessing(context.Background(), pipelines, logs)
+		}()
+	}
+	wg.Wait()
+
+	for i := range results {
+		require.NoError(t, errs[i])
+		require.Len(t, results[i], 1)
+		assert.Equal(t, fmt.Sprintf("log %d", i), results[i][0].Body)
+		assert.Equal(t, "val", results[i][0].Attributes_string["test"])
+	}
+}
+
+func TestPipelinePreview_TimeWithoutZoneIsUTC(t *testing.T) {
+	local := time.Local
+	time.Local = time.FixedZone("UTC+5:30", 5*60*60+30*60)
+	t.Cleanup(func() { time.Local = local })
+
+	pipeline := makeTestAddAttributePipeline()
+	pipeline.Config = []pipelinetypes.PipelineOperator{{
+		OrderId:    1,
+		ID:         "time",
+		Type:       "time_parser",
+		Enabled:    true,
+		Name:       "time",
+		ParseFrom:  "attributes.ts",
+		LayoutType: "strptime",
+		Layout:     "%Y-%m-%d %H:%M:%S",
+	}}
+	logs := []model.SignozLog{makeTestSignozLog("body", map[string]interface{}{"method": "GET", "ts": "2024-01-02 03:04:05"})}
+
+	result, _, err := SimulatePipelinesProcessing(context.Background(), []pipelinetypes.GettablePipeline{pipeline}, logs)
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	assert.Equal(t, uint64(time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixNano()), result[0].Timestamp)
 }

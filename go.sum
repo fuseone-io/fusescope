@@ -809,8 +809,6 @@ github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter v0.144
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter v0.144.0/go.mod h1:iebqlu6UvpiV1hO37r1sXA9fXaCaA8sQXilG0///xss=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.144.0 h1:TMRTvQSAeeLtkKwSrqcbectxDRPiqB6yYM3IvjC75es=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.144.0/go.mod h1:1HU0qJ4hFrphDebuBs3I4DPQ6zyBFGinQ5/bXEUM7pw=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.148.0 h1:i12duJOl5VCb9mbb8FfZCaP2CjeXbNsbg82JjSe7sy8=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.148.0/go.mod h1:jyw+QvkmCrF/oYy31O2ndb5KZZK4l+iR89msnV3LN/k=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.148.0 h1:1TLg6YrS3Au6F7xw3ws2Njbwj13IMqPplvGFi+18fWs=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.148.0/go.mod h1:P8hZEDIQk4REgUWyLhSVRHwTxK6KkifKfg36BmmQ/DI=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.144.0 h1:EIAygME70IOdEwaSr6bA3Wcdp7hXEqRsGsVfrI5v8OA=
@@ -1058,8 +1056,6 @@ github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2 h1:ZjUj9BLYf9PEqBn8W/Oa
 github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2/go.mod h1:O8bHQfyinKwTXKkiKNGmLQS7vRsqRxIQTFZpYpHK3IQ=
 github.com/valyala/fastjson v1.6.7 h1:ZE4tRy0CIkh+qDc5McjatheGX2czdn8slQjomexVpBM=
 github.com/valyala/fastjson v1.6.7/go.mod h1:CLCAqky6SMuOcxStkYQvblddUtoRxhYMGLrsQns1aXY=
-github.com/vjeantet/grok v1.0.1 h1:2rhIR7J4gThTgcZ1m2JY4TrJZNgjn985U28kT2wQrJ4=
-github.com/vjeantet/grok v1.0.1/go.mod h1:ax1aAchzC6/QMXMcyzHQGZWaW1l195+uMYIkCWPCNIo=
 github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IUPn0Bjt8=
 github.com/vmihailenco/msgpack/v5 v5.4.1/go.mod h1:GaZTsDaehaPpQVyxrf5mtQlH+pc21PIudVV/E3rRQok=
 github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAhO7/IwNM9g=

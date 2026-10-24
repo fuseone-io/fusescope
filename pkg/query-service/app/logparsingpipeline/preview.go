@@ -6,15 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fuseone-io/fusescope-otel-collector/pkg/collectorsimulator"
-	_ "github.com/fuseone-io/fusescope-otel-collector/pkg/parser/grok"
-	"github.com/fuseone-io/fusescope-otel-collector/processor/signozlogspipelineprocessor"
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/logparsingpipeline/pipelinesim"
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	"github.com/fuseone-io/fusescope/pkg/types/pipelinetypes"
-	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"gopkg.in/yaml.v3"
 )
 
 func SimulatePipelinesProcessing(ctx context.Context, pipelines []pipelinetypes.GettablePipeline, logs []model.SignozLog) (
@@ -74,41 +72,36 @@ func previewInputPLogs(logs []model.SignozLog) []plog.Logs {
 }
 
 func simulatePipelinesOnPLogs(ctx context.Context, pipelines []pipelinetypes.GettablePipeline, simulatorInputPLogs []plog.Logs) ([]plog.Logs, []string, error) {
-	processorFactories, err := otelcol.MakeFactoryMap(signozlogspipelineprocessor.NewFactory())
+	processors, err := simulatorProcessors(pipelines)
 	if err != nil {
-		return nil, nil, errors.WrapInternalf(err, CodeProcessorFactoryMapFailed, "could not construct processor factory map")
+		return nil, nil, err
+	}
+	return pipelinesim.Simulate(ctx, processors, simulatorInputPLogs)
+}
+
+// simulatorProcessors returns the processors the collector would get for the
+// pipelines, in the shape its config holds them.
+func simulatorProcessors(pipelines []pipelinetypes.GettablePipeline) ([]pipelinesim.Processor, error) {
+	configs, names, err := PreparePipelineProcessor(pipelines)
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid config")
 	}
 
-	// Pipelines translate to logtransformprocessors in otel collector config.
-	// Each logtransformprocessor (stanza) does its own batching with a flush
-	// interval of 100ms. So e2e processing time for logs grows linearly with
-	// the number of logtransformprocessors involved.
-	// See defaultFlushInterval at https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/adapter/emitter.go
-	// TODO(Raj): Remove this after flushInterval is exposed in logtransformprocessor config
-	timeout := time.Millisecond * time.Duration(len(pipelines)*100+100)
-
-	configGenerator := func(baseConf []byte) ([]byte, error) {
-		updatedConf, err := GenerateCollectorConfigWithPipelines(baseConf, pipelines)
+	processors := make([]pipelinesim.Processor, 0, len(names))
+	for _, name := range names {
+		serialized, err := yaml.Marshal(configs[name])
 		if err != nil {
-			return nil, err
+			return nil, errors.WrapInternalf(err, CodeCollectorConfigMarshalFailed, "could not marshal processor config for %s", name)
 		}
-		return updatedConf, nil
-	}
-
-	outputPLogs, collectorErrs, simulationErr := collectorsimulator.SimulateLogsProcessing(
-		ctx,
-		processorFactories,
-		configGenerator,
-		simulatorInputPLogs,
-		timeout,
-	)
-	if simulationErr != nil {
-		if errors.Is(simulationErr, collectorsimulator.ErrInvalidConfig) {
-			return nil, nil, errors.WrapInvalidInputf(simulationErr, errors.CodeInvalidInput, "invalid config")
+		var config struct {
+			Operators []map[string]any `yaml:"operators"`
 		}
-		return nil, nil, errors.WrapInternalf(simulationErr, errors.CodeInternal, "could not simulate log pipelines processing")
+		if err := yaml.Unmarshal(serialized, &config); err != nil {
+			return nil, errors.WrapInternalf(err, CodeCollectorConfigUnmarshalFailed, "could not unmarshal processor config for %s", name)
+		}
+		processors = append(processors, pipelinesim.Processor{Name: name, Operators: config.Operators})
 	}
-	return outputPLogs, collectorErrs, nil
+	return processors, nil
 }
 
 // plog doesn't contain an ID field.
