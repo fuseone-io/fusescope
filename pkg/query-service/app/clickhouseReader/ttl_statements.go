@@ -53,8 +53,8 @@ func customRetentionLogsTTLStatements(tables logsTTLTables, cluster string, cold
 		return statements
 	}
 
-	deleteAfter := retentiontypes.IntervalDaysColumn("_retention_days")
-	moveAfter := retentiontypes.IntervalDaysColumn("_retention_days_cold")
+	deleteAfter := retentiontypes.IntervalDaysOf("_retention_days")
+	moveAfter := retentiontypes.IntervalDaysOf(retentiontypes.LogsColdStorageDays)
 	statements[tables.Logs] = retentiontypes.TTLClause{Time: retentiontypes.UnixNanoTime("timestamp"), Delete: deleteAfter, Volume: coldStorageVolume, MoveAfter: moveAfter}.Statement(tables.Logs, cluster)
 	statements[tables.Resource] = retentiontypes.TTLClause{Time: retentiontypes.ResourceBucketTime, Delete: deleteAfter, Volume: coldStorageVolume, MoveAfter: moveAfter}.Statement(tables.Resource, cluster)
 
