@@ -12,6 +12,8 @@ Condition: `model`, `llm.input_messages` (OpenInference sets `llm.model_name` fr
 | `llm.request.model`, `llm.response.model`, `llm.vendor`, `llm.usage.prompt_tokens`, `llm.usage.completion_tokens`, `llm.response.finish_reason`, `llm.response.stop_reason` | OpenLLMetry before the `gen_ai` rename |
 | `gen_ai.system`, `gen_ai.usage.prompt_tokens`, `gen_ai.usage.completion_tokens`, `gen_ai.usage.cache_read_input_tokens`, `gen_ai.usage.cache_creation_input_tokens`, `gen_ai.usage.reasoning_tokens`, `gen_ai.prompt`, `gen_ai.completion`, `llm.request.type`, `traceloop.span.kind` | OpenLLMetry, LiteLLM, CrewAI, Mistral, LangSmith, OpenRouter gateway |
 | `gen_ai.usage.cache_write.input_tokens` | OTel semconv draft spelling, Codex |
+| `gen_ai.response.time_to_first_chunk` | OTel GenAI semconv (seconds) |
+| `gen_ai.server.time_to_first_token` | OpenLIT (seconds) |
 | `gen_ai.response.finish_reason`, `gen_ai.usage.prompt_token_details.cached_read_tokens`, `gen_ai.usage.completion_token_details.reasoning_tokens` | Bifrost gateway |
 | `gen_ai.usage.input_tokens.cached` | OpenRouter gateway |
 | `gen_ai.response.model`, last source for the request model | vLLM, which writes only the response model |
@@ -59,4 +61,4 @@ To check a new integration, capture a trace and look for a model, usage, tool or
 
 ## Left unmapped on purpose
 
-LiteLLM `llm.openai.messages` and `llm.openai.choices` (debug echo of the parent span's messages, Python repr). Total tokens and vendor cost keys (no target; the pricing processor owns cost). `ai.response.msToFirstChunk` and `gen_ai.latency.time_to_first_token` (milliseconds and seconds under one target).
+LiteLLM `llm.openai.messages` and `llm.openai.choices` (debug echo of the parent span's messages, Python repr). Total tokens and vendor cost keys (no target; the pricing processor owns cost). `ai.response.msToFirstChunk` (milliseconds; the `gen_ai.server.ttft` target the Overview reads is in seconds and a mapper cannot convert). `gen_ai.latency.time_to_first_token` (unit not confirmed).
