@@ -50,7 +50,7 @@
 				"name": "environment",
 				"display": {
 					"name": "environment",
-					"description": "Deployment environment"
+					"description": "Deployment environment (deployment.environment.name, falling back to deployment.environment)"
 				},
 				"allowMultiple": true,
 				"allowAllValue": true,
@@ -58,7 +58,7 @@
 				"plugin": {
 					"kind": "signoz/DynamicVariable",
 					"spec": {
-						"name": "deployment.environment",
+						"name": "deployment.environment.name",
 						"signal": "traces"
 					}
 				}
@@ -431,7 +431,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -483,7 +483,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -535,7 +535,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -587,7 +587,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -639,7 +639,7 @@
 												"stepInterval": 0,
 												"disabled": true,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -656,7 +656,7 @@
 												"stepInterval": 0,
 												"disabled": true,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -686,7 +686,7 @@
 			"spec": {
 				"display": {
 					"name": "TTFT (p95)",
-					"description": "p95 time to first token, from the gen_ai.server.ttft span attribute (seconds) that streaming instrumentations such as OpenLIT emit."
+					"description": "p95 time to first token, in seconds, from gen_ai.server.ttft, which attribute mapping fills from gen_ai.response.time_to_first_chunk (GenAI semconv) and gen_ai.server.time_to_first_token (OpenLIT)."
 				},
 				"plugin": {
 					"kind": "signoz/NumberPanel",
@@ -716,7 +716,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -776,7 +776,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -844,7 +844,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -862,7 +862,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -880,7 +880,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -898,7 +898,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -955,7 +955,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -973,7 +973,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -991,7 +991,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1009,7 +1009,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1070,7 +1070,7 @@
 												"stepInterval": 0,
 												"disabled": true,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1094,7 +1094,7 @@
 												"stepInterval": 0,
 												"disabled": true,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1169,7 +1169,7 @@
 												"stepInterval": 0,
 												"disabled": true,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1186,7 +1186,7 @@
 												"stepInterval": 0,
 												"disabled": true,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1249,7 +1249,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1283,7 +1283,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1347,7 +1347,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1381,7 +1381,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1450,7 +1450,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "(gen_ai.request.model EXISTS OR gen_ai.tool.name EXISTS OR gen_ai.agent.name EXISTS) AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "(gen_ai.request.model EXISTS OR gen_ai.tool.name EXISTS OR gen_ai.agent.name EXISTS) AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1511,7 +1511,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "(deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1529,7 +1529,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "(deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1590,7 +1590,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1608,7 +1608,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1669,7 +1669,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1687,7 +1687,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1746,7 +1746,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1771,7 +1771,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1796,7 +1796,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1821,7 +1821,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1846,7 +1846,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1922,7 +1922,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -1990,7 +1990,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2008,7 +2008,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2031,7 +2031,7 @@
 			"spec": {
 				"display": {
 					"name": "Time to first token",
-					"description": "p95 time to first token by model, from the gen_ai.server.ttft span attribute (seconds) that streaming instrumentations such as OpenLIT emit."
+					"description": "p95 time to first token by model, in seconds, from gen_ai.server.ttft, which attribute mapping fills from gen_ai.response.time_to_first_chunk (GenAI semconv) and gen_ai.server.time_to_first_token (OpenLIT)."
 				},
 				"plugin": {
 					"kind": "signoz/TimeSeriesPanel",
@@ -2069,7 +2069,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2137,7 +2137,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "has_error = true AND gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "has_error = true AND gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2201,7 +2201,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2226,7 +2226,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2310,7 +2310,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2378,7 +2378,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.tool.name EXISTS AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2446,7 +2446,7 @@
 												"stepInterval": 0,
 												"disabled": true,
 												"filter": {
-													"expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.tool.name EXISTS AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2463,7 +2463,7 @@
 												"stepInterval": 0,
 												"disabled": true,
 												"filter": {
-													"expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.tool.name EXISTS AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2531,7 +2531,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.tool.name EXISTS AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2549,7 +2549,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.tool.name EXISTS AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2604,7 +2604,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.tool.name EXISTS AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2638,7 +2638,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.tool.name EXISTS AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2664,7 +2664,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "gen_ai.tool.name EXISTS AND (deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
@@ -2725,7 +2725,7 @@
 												"stepInterval": 0,
 												"disabled": false,
 												"filter": {
-													"expression": "deployment.environment IN $environment AND service.name IN $service_name"
+													"expression": "(deployment.environment.name IN $environment OR (deployment.environment.name NOT EXISTS AND deployment.environment IN $environment)) AND service.name IN $service_name"
 												},
 												"aggregations": [
 													{
