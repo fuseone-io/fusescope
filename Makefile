@@ -249,7 +249,7 @@ semconv-check: ## Fail if the generated semantic-convention files are stale
 	@go run ./scripts/semconv -check
 
 .PHONY: agpl-check
-agpl-check: ## Fail if the community binary links AGPL collector packages outside scripts/agplguard/allowlist.txt
+agpl-check: ## Fail if the community binary links any AGPL collector package
 	@go run ./scripts/agplguard
 
 .PHONY: gen-mocks
