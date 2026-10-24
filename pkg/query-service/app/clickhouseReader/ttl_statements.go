@@ -41,10 +41,17 @@ func logsTTLStatements(tables logsTTLTables, cluster string, params *retentionty
 	}
 }
 
+// logsBackstop is the archive backstop of the logs tables (ADR 0002 §5); Days 0 means none.
+// Ingestion is the logs table's ingestion-time expression, "" while it has none.
+type logsBackstop struct {
+	Days      int
+	Ingestion string
+}
+
 // customRetentionLogsTTLStatements are the TTL statements of a custom (v2) logs retention,
 // by table. The logs and resource TTLs read _retention_days, so they are rewritten only to
 // set a move rule after coldStorageDays; the keys tables keep keysRetentionDays.
-func customRetentionLogsTTLStatements(tables logsTTLTables, cluster string, coldStorageVolume string, coldStorageDays int, keysRetentionDays int) map[string]string {
+func customRetentionLogsTTLStatements(tables logsTTLTables, cluster string, coldStorageVolume string, coldStorageDays int, keysRetentionDays int, backstop logsBackstop) map[string]string {
 	statements := map[string]string{
 		tables.AttributeKeys: retentiontypes.TTLClause{Time: "timestamp", Delete: retentiontypes.IntervalDays(keysRetentionDays)}.Statement(tables.AttributeKeys, cluster),
 		tables.ResourceKeys:  retentiontypes.TTLClause{Time: "timestamp", Delete: retentiontypes.IntervalDays(keysRetentionDays)}.Statement(tables.ResourceKeys, cluster),
@@ -53,12 +60,35 @@ func customRetentionLogsTTLStatements(tables logsTTLTables, cluster string, cold
 		return statements
 	}
 
-	deleteAfter := retentiontypes.IntervalDaysOf("_retention_days")
-	moveAfter := retentiontypes.IntervalDaysOf(retentiontypes.LogsColdStorageDays(coldStorageDays))
-	statements[tables.Logs] = retentiontypes.TTLClause{Time: retentiontypes.UnixNanoTime("timestamp"), Delete: deleteAfter, Volume: coldStorageVolume, MoveAfter: moveAfter}.Statement(tables.Logs, cluster)
-	statements[tables.Resource] = retentiontypes.TTLClause{Time: retentiontypes.ResourceBucketTime, Delete: deleteAfter, Volume: coldStorageVolume, MoveAfter: moveAfter}.Statement(tables.Resource, cluster)
+	for table, clause := range customRetentionLogsTTLClauses(tables, coldStorageVolume, coldStorageDays, backstop) {
+		statements[table] = clause.Statement(table, cluster)
+	}
 
 	return statements
+}
+
+// customRetentionLogsTTLClauses are the TTLs of the custom-retention logs and resource
+// tables, with the archive backstop when backstop.Days > 0.
+func customRetentionLogsTTLClauses(tables logsTTLTables, coldStorageVolume string, coldStorageDays int, backstop logsBackstop) map[string]retentiontypes.TTLClause {
+	deleteAfter := retentiontypes.IntervalDaysOf("_retention_days")
+	moveAfter := retentiontypes.IntervalDaysOf(retentiontypes.LogsColdStorageDays(coldStorageDays))
+	clauses := map[string]retentiontypes.TTLClause{
+		tables.Logs:     {Time: retentiontypes.UnixNanoTime("timestamp"), Delete: deleteAfter, Volume: coldStorageVolume, MoveAfter: moveAfter},
+		tables.Resource: {Time: retentiontypes.ResourceBucketTime, Delete: deleteAfter, Volume: coldStorageVolume, MoveAfter: moveAfter},
+	}
+	if backstop.Days == 0 {
+		return clauses
+	}
+
+	for table, clause := range clauses {
+		clause.Backstop = retentiontypes.IntervalDays(backstop.Days)
+		if table == tables.Logs {
+			clause.Ingestion = backstop.Ingestion
+		}
+		clauses[table] = clause
+	}
+
+	return clauses
 }
 
 func tracesTTLStatements(tables tracesTTLTables, cluster string, params *retentiontypes.TTLParams) map[string]string {
