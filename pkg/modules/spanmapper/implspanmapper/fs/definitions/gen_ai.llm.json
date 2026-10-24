@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "definition": {
     "name": "gen_ai.llm",
     "condition": {
@@ -466,6 +466,26 @@
             },
             {
               "key": "ai.response.finishReason",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.server.ttft",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "gen_ai.response.time_to_first_chunk",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "gen_ai.server.time_to_first_token",
               "context": "attribute",
               "operation": "copy",
               "priority": 10
