@@ -2,6 +2,9 @@
 
 You can configure collection from system.query_log table in clickhouse by providing the required collector config to your collector.
 
+> **Requires the FuseScope collector.** The `clickhousesystemtablesreceiver` used below ships only in [fusescope-otel-collector](https://github.com/fuseone-io/fusescope-otel-collector), not in `otelcol-contrib`.
+> With `otelcol-contrib`, read `system.query_log` with the [`sqlquery` receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/sqlqueryreceiver) instead, as a user that can `SELECT` on that table.
+
 #### Create collector config file
 
 Save the following config for collecting clickhouse query logs in a file named `clickhouse-query-logs-collection-config.yaml`
