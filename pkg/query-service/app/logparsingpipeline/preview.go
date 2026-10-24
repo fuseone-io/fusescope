@@ -23,19 +23,57 @@ func SimulatePipelinesProcessing(ctx context.Context, pipelines []pipelinetypes.
 		return logs, nil, nil
 	}
 
-	// Collector simulation does not guarantee that logs will come
-	// out in the same order as in the input.
-	//
-	// Add a temp attribute for sorting logs in simulation output
-	inputOrderAttribute := "__signoz_input_idx__"
+	outputPLogs, collectorErrs, err := simulatePipelinesOnPLogs(ctx, pipelines, previewInputPLogs(logs))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	outputSignozLogs, collectorWarnAndErrorLogs := previewOutputLogs(outputPLogs, collectorErrs)
+	return outputSignozLogs, collectorWarnAndErrorLogs, nil
+}
+
+func previewOutputLogs(outputPLogs []plog.Logs, collectorErrs []string) ([]model.SignozLog, []string) {
+	outputSignozLogs := PLogsToSignozLogs(outputPLogs)
+
+	// Sort output logs by their order in the input and remove the temp ordering attribute
+	sort.Slice(outputSignozLogs, func(i, j int) bool {
+		iIdx := outputSignozLogs[i].Attributes_int64[inputOrderAttribute]
+		jIdx := outputSignozLogs[j].Attributes_int64[inputOrderAttribute]
+		return iIdx < jIdx
+	})
+	for _, sigLog := range outputSignozLogs {
+		delete(sigLog.Attributes_int64, inputOrderAttribute)
+	}
+
+	collectorWarnAndErrorLogs := []string{}
+	for _, log := range collectorErrs {
+		// if log is empty or log comes from featuregate.go, then remove it
+		if log == "" || strings.Contains(log, "featuregate.go") {
+			continue
+		}
+		collectorWarnAndErrorLogs = append(collectorWarnAndErrorLogs, log)
+	}
+
+	return outputSignozLogs, collectorWarnAndErrorLogs
+}
+
+// Collector simulation does not guarantee that logs will come
+// out in the same order as in the input.
+//
+// Add a temp attribute for sorting logs in simulation output
+const inputOrderAttribute = "__signoz_input_idx__"
+
+func previewInputPLogs(logs []model.SignozLog) []plog.Logs {
 	for i := 0; i < len(logs); i++ {
 		if logs[i].Attributes_int64 == nil {
 			logs[i].Attributes_int64 = map[string]int64{}
 		}
 		logs[i].Attributes_int64[inputOrderAttribute] = int64(i)
 	}
-	simulatorInputPLogs := SignozLogsToPLogs(logs)
+	return SignozLogsToPLogs(logs)
+}
 
+func simulatePipelinesOnPLogs(ctx context.Context, pipelines []pipelinetypes.GettablePipeline, simulatorInputPLogs []plog.Logs) ([]plog.Logs, []string, error) {
 	processorFactories, err := otelcol.MakeFactoryMap(signozlogspipelineprocessor.NewFactory())
 	if err != nil {
 		return nil, nil, errors.WrapInternalf(err, CodeProcessorFactoryMapFailed, "could not construct processor factory map")
@@ -70,29 +108,7 @@ func SimulatePipelinesProcessing(ctx context.Context, pipelines []pipelinetypes.
 		}
 		return nil, nil, errors.WrapInternalf(simulationErr, errors.CodeInternal, "could not simulate log pipelines processing")
 	}
-
-	outputSignozLogs := PLogsToSignozLogs(outputPLogs)
-
-	// Sort output logs by their order in the input and remove the temp ordering attribute
-	sort.Slice(outputSignozLogs, func(i, j int) bool {
-		iIdx := outputSignozLogs[i].Attributes_int64[inputOrderAttribute]
-		jIdx := outputSignozLogs[j].Attributes_int64[inputOrderAttribute]
-		return iIdx < jIdx
-	})
-	for _, sigLog := range outputSignozLogs {
-		delete(sigLog.Attributes_int64, inputOrderAttribute)
-	}
-
-	collectorWarnAndErrorLogs := []string{}
-	for _, log := range collectorErrs {
-		// if log is empty or log comes from featuregate.go, then remove it
-		if log == "" || strings.Contains(log, "featuregate.go") {
-			continue
-		}
-		collectorWarnAndErrorLogs = append(collectorWarnAndErrorLogs, log)
-	}
-
-	return outputSignozLogs, collectorWarnAndErrorLogs, nil
+	return outputPLogs, collectorErrs, nil
 }
 
 // plog doesn't contain an ID field.
