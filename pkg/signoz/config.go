@@ -24,6 +24,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/identn"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation"
 	"github.com/fuseone-io/fusescope/pkg/meterreporter"
+	"github.com/fuseone-io/fusescope/pkg/modules/archive"
 	"github.com/fuseone-io/fusescope/pkg/modules/authdomain"
 	"github.com/fuseone-io/fusescope/pkg/modules/cloudintegration"
 	"github.com/fuseone-io/fusescope/pkg/modules/inframonitoring"
@@ -159,6 +160,9 @@ type Config struct {
 
 	// Retention config
 	Retention retention.Config `mapstructure:"retention"`
+
+	// Archive config
+	Archive archive.Config `mapstructure:"archive"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -198,6 +202,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		authz.NewConfigFactory(),
 		rumapplication.NewConfigFactory(),
 		retention.NewConfigFactory(),
+		archive.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
