@@ -216,7 +216,11 @@ As in the earlier revision, with these precisions:
 
 - **Tables.** `rehydrated_<table>` tables have the live table's columns plus `rehydration_id` and `expires_at`, `PARTITION BY rehydration_id`, `TTL expires_at`, and the same engine family. Replacing tables stay Replacing, with the same version column.
   - **The backend creates them** (`CREATE TABLE IF NOT EXISTS … ON CLUSTER`). It derives the DDL from the live table's `system.tables.create_table_query`, so codecs, sorting key, settings and engine family carry over, then replaces partitioning and TTL and drops skip indexes and projections that don't apply. Before each restoration it adds any column the live table gained (`ADD COLUMN`, metadata only). The effective DDL is recorded in SQL per restoration.
-  - Restoration tables are a read model of the query path, like Elastic's separate `restored-*` indices, and the reader adapts to the archive's version, as Loki and Tempo do. Owning them in the backend avoids a collector (AGPL) release for every schema change. It is an exception to the CLAUDE.md rule that the migrator owns the telemetry schema, to be recorded there if accepted.
+  - Restoration tables are a read model of the query path, like Elastic's separate `restored-*` indices, and the reader adapts to the archive's version, as Loki and Tempo do. Owning them in the backend avoids a collector (AGPL) release for every schema change. It is an exception to the CLAUDE.md rule that the migrator owns the telemetry schema, recorded there if accepted, with these bounds:
+    - The backend creates and drops only `rehydrated_*` tables. It never changes the columns of live tables; its existing writes to them stay limited to TTL and the `_retention_days` defaults.
+    - Replicated restoration tables get a Keeper path unique per table, and are dropped with `DROP TABLE … SYNC` so no Keeper metadata is left behind.
+    - Projections, skip indexes and the live TTL are stripped from the derived DDL.
+  - **Privileges.** The default chart connects as `admin`, which can create tables. With an external ClickHouse, the operator must grant `CREATE TABLE` and `DROP TABLE` on the restoration tables. Without the grant, restorations are unavailable with an explicit error, and archiving still works.
 - **What is loaded.** Only maximal published parts are loaded (not superseded, and not contained in another published part's range), in block order, and only for partitions complete in every table of the signal's set.
   - `trace_summary` is rebuilt from the restored spans.
   - Metrics on a rehydration source use the raw and reduced tables for every range length, never the rollups.
@@ -237,7 +241,9 @@ As in the earlier revision, with these precisions:
 - **Migrator: `created_at` on tables without an ingestion column.** Add `created_at DateTime64(3) MATERIALIZED now64(3)` (not `DEFAULT`, because of the bare inserts, E6e) to `logs_v2_resource`, `traces_v3_resource` and `signoz_error_index_v2`. Metadata-only `ADD COLUMN` (E6a); deduplication of the Replacing resource tables is unaffected (E6f). `MATERIALIZED` columns are left out of `SELECT *`, so exports list columns explicitly (they already do, from the manifest). This closes the §5 limitation in phase 2.
 - **Rehydration tables:** created by the backend (§9). CLAUDE.md records the exception.
 - **Collector, phase 4:** `max_allowed_data_age_days` for the metrics exporter.
-  - Default 15, the same as logs and traces, so operators deal with one concept. Points older than that are dropped and counted, and points more than 10 minutes in the future are rejected.
+  - Default 30, the default metrics retention (`samples_v4` TTL `unix_milli + 2592000 s`). This follows the same rule as logs and traces, `max_allowed_data_age_days ≤ retention + backstop`; a 15-day default would drop points the store still keeps.
+  - Points older than the limit are dropped and counted in the collector's own metrics, and points more than 10 minutes in the future are rejected. `0` disables the limit, for imports of historical data.
+  - Today, points older than 30 days are already accepted and then deleted silently at the next TTL merge, so below the default nothing changes; above it the loss becomes explicit and counted.
   - Hosted metric backends accept hours (Mimir, Datadog, Chronosphere, 0–2 h by default). ClickHouse has no head block, so days are affordable.
   - The real cost of very old points is drift in computed rollups and archive churn: every late point creates a new part in an archived partition.
   - This is a collector change, not a backend import, so it is compatible with ADR 0001. The §6 metric calibrates it.
@@ -278,20 +284,21 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 18. Unit tests for the block-range coverage logic, including a part with a lower block number that appears after a higher one was published.
 19. A restoration above the Editor ceiling is refused, shows the exact size, and an Admin can override it; the global budget and the concurrency limit are enforced.
 20. A bucket with Object Lock: exports succeed, and orphan cleanup failures are logged without failing the cycle.
-21. Phase 4: metrics older than `max_allowed_data_age_days` are dropped by the exporter and counted.
+21. Phase 4: metrics older than `max_allowed_data_age_days` are dropped by the exporter and counted; with `0` they are accepted.
+22. Restorations against an external ClickHouse user without `CREATE TABLE` fail with an explicit error, and archiving continues.
 
 ## For the team to confirm
 
 The decisions below are proposed from the market review in "Market references". Each one is reflected in the sections cited.
 
-1. **The backend owns the `rehydrated_*` DDL** (§9). It is an exception to CLAUDE.md's schema rule, and needs an update to CLAUDE.md.
+1. **The backend owns the `rehydrated_*` DDL** (§9), within the bounds listed there. It is an exception to CLAUDE.md's schema rule, and needs an update to CLAUDE.md. External ClickHouse installs need a `CREATE`/`DROP TABLE` grant for restorations.
 2. **The Iceberg-v2-compatible type contract**, fixed before phase 1 (§8).
 3. **Restoration limits in archived bytes,** with an Editor ceiling, Admin override, global budget, concurrency and TTL limits (§1, §9).
 4. **`backstop_days` default 7 (2–30)**, with automatic extension up to 30 days while archiving fails (§5, §6).
 5. **The resource-table limitation accepted in phase 1** with the rebuild fallback, closed in phase 2, plus the operator rule (§5).
 6. **Services and topology out of scope** on restored traces; later, query-time derivation or longer retention for live aggregates in their own ADR (§9).
 7. **Archiving at retention;** compliance copies via the pipeline; Object Lock compatible (§1, §3).
-8. **Dropping metrics older than 15 days** in the exporter, phase 4. It is a product change for users who backfill old metrics.
+8. **Dropping metrics older than the metrics retention (default 30 days)** in the exporter, phase 4, configurable, with `0` disabling it for historical imports. It is a behaviour change for users who send old points, and needs a release note.
 
 ## Evidence
 
