@@ -30,7 +30,7 @@ const hours = (days: number): number => days * HOURS_IN_DAY;
 
 export const disksResponse = (coldStorage: boolean): DisksPayload => [
 	{ name: 'default', type: 'local' },
-	...(coldStorage ? [{ name: 's3', type: 's3' }] : []),
+	...(coldStorage ? [{ name: 's3', type: 'ObjectStorage' }] : []),
 ];
 
 export const metricsRetentionResponse = (

@@ -187,8 +187,8 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 		});
 	});
 
-	describe('Test 2: S3 Disabled - Field Hidden', () => {
-		it('should hide S3 retention field and send empty S3 values to API', async () => {
+	describe('Test 2: No object storage disk - Field Disabled', () => {
+		it('should disable the cold storage field, link the docs and send empty S3 values to API', async () => {
 			render(
 				<GeneralSettings
 					metricsTtlValuesPayload={mockMetricsRetention}
@@ -204,12 +204,22 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			const logsRow = getLogsRow();
 			expect(logsRow).toBeInTheDocument();
 
-			// Only 1 input should be visible (total retention, no S3)
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-			expect(inputs).toHaveLength(1);
+			(['metrics', 'traces', 'logs'] as const).forEach((type) => {
+				expect(screen.getByTestId(`retention-${type}-s3-input`)).toBeDisabled();
+				expect(screen.getByTestId(`retention-${type}-s3-unit`)).toBeDisabled();
+			});
 
-			// Change total retention value
-			const totalInput = inputs[0] as HTMLInputElement;
+			const hint = screen.getByTestId('retention-object-storage-hint');
+			expect(hint).toHaveTextContent('object_storage_missing');
+			expect(hint.querySelector('a')).toHaveAttribute(
+				'href',
+				expect.stringContaining('/administration/retention/#cold-storage'),
+			);
+			expect(
+				screen.queryByTestId('retention-object-storage-note'),
+			).not.toBeInTheDocument();
+
+			const totalInput = screen.getByTestId('retention-logs-total-input');
 
 			// First, change the dropdown to Days (it defaults to Months)
 			fireEvent.change(screen.getByTestId('retention-logs-total-unit'), {
@@ -244,6 +254,70 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 					ttlConditions: [],
 				});
 			});
+		});
+
+		it('should not send a cold volume for a saved logs move period once the disk is gone', async () => {
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionWithS3}
+					getAvailableDiskPayload={mockDisksWithoutS3}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			fireEvent.change(screen.getByTestId('retention-logs-total-input'), {
+				target: { value: '2' },
+			});
+
+			const saveButton = screen.getByTestId('retention-logs-save');
+			await waitFor(() => {
+				expect(saveButton).toBeEnabled();
+			});
+			fireEvent.click(saveButton);
+			fireEvent.click(await screen.findByRole('button', { name: /ok/i }));
+
+			await waitFor(() => {
+				expect(setRetentionApiV2).toHaveBeenCalledWith({
+					type: 'logs',
+					defaultTTLDays: 60,
+					coldStorageVolume: '',
+					coldStorageDurationDays: 0,
+					ttlConditions: [],
+				});
+			});
+		});
+	});
+
+	describe('Object storage wording', () => {
+		it('should label the field for object storage and explain cold data', async () => {
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionWithS3}
+					getAvailableDiskPayload={mockDisksWithObjectStorage}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			expect(screen.getAllByText('move_to_object_storage')).toHaveLength(3);
+
+			const note = screen.getByTestId('retention-object-storage-note');
+			expect(note).toHaveTextContent('object_storage_note');
+			expect(
+				screen.queryByTestId('retention-object-storage-hint'),
+			).not.toBeInTheDocument();
+
+			fireEvent.focus(screen.getByTestId('retention-logs-s3-info'));
+			await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
+				'object_storage_stores',
+			);
 		});
 	});
 

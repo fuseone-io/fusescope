@@ -8,14 +8,16 @@ import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
 import { fuseScopeDocsUrl } from 'constants/docs';
 import CustomDomainSettings from 'container/CustomDomainSettings';
-import { buildSetRetentionProps } from 'container/GeneralSettings/buildSetRetentionProps';
+import {
+	buildSetLogsRetentionProps,
+	buildSetRetentionProps,
+} from 'container/GeneralSettings/buildSetRetentionProps';
 import LicenseKeyRow from 'container/GeneralSettings/LicenseKeyRow/LicenseKeyRow';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
-import find from 'lodash-es/find';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import { buildLicenseReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
 import { useAppContext } from 'providers/App/App';
@@ -39,12 +41,14 @@ import {
 import { USER_ROLES } from 'types/roles';
 
 import LicenseRowDismissibleCallout from './LicenseKeyRow/LicenseRowDismissibleCallout/LicenseRowDismissibleCallout';
+import ObjectStorageNote from './ObjectStorageNote';
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
 import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import SettingsPageShell from 'pages/Settings/components/SettingsPageShell';
 import RetentionConfirmDialog from './RetentionConfirmDialog';
 import RetentionSaveButton from './RetentionSaveButton';
+import { hasObjectStorageDisk } from './utils';
 
 type NumberOrNull = number | null;
 
@@ -205,12 +209,7 @@ function GeneralSettings({
 	);
 
 	const s3Enabled = useMemo(
-		() =>
-			!!find(
-				availableDisks,
-				(disks: IDiskType) =>
-					disks?.type === 's3' || disks?.type === 'ObjectStorage',
-			),
+		() => hasObjectStorageDisk(availableDisks),
 		[availableDisks],
 	);
 
@@ -364,19 +363,13 @@ function GeneralSettings({
 
 			try {
 				if (type === 'logs') {
-					// Only send S3 values if user has specified a duration
-					const s3RetentionDays =
-						apiCallS3Retention && apiCallS3Retention > 0
-							? apiCallS3Retention / 24
-							: 0;
-
-					await setRetentionApiV2({
-						type,
-						defaultTTLDays: apiCallTotalRetention ? apiCallTotalRetention / 24 : -1, // convert Hours to days
-						coldStorageVolume: s3RetentionDays > 0 ? 's3' : '',
-						coldStorageDurationDays: s3RetentionDays,
-						ttlConditions: [],
-					});
+					await setRetentionApiV2(
+						buildSetLogsRetentionProps({
+							totalRetentionHours: apiCallTotalRetention,
+							s3RetentionHours: apiCallS3Retention,
+							s3Enabled,
+						}),
+					);
 				} else {
 					await setRetentionApi(
 						buildSetRetentionProps({
@@ -492,10 +485,11 @@ function GeneralSettings({
 					setValue: setMetricsTotalRetentionPeriod,
 				},
 				{
-					name: t('move_to_s3'),
+					name: t('move_to_object_storage'),
 					value: metricsS3RetentionPeriod,
 					setValue: setMetricsS3RetentionPeriod,
-					hide: !s3Enabled,
+					disabled: !s3Enabled,
+					info: t('object_storage_stores'),
 				},
 			],
 			save: {
@@ -537,10 +531,11 @@ function GeneralSettings({
 					setValue: setTracesTotalRetentionPeriod,
 				},
 				{
-					name: t('move_to_s3'),
+					name: t('move_to_object_storage'),
 					value: tracesS3RetentionPeriod,
 					setValue: setTracesS3RetentionPeriod,
-					hide: !s3Enabled,
+					disabled: !s3Enabled,
+					info: t('object_storage_stores'),
 				},
 			],
 			save: {
@@ -580,10 +575,11 @@ function GeneralSettings({
 					setValue: setLogsTotalRetentionPeriod,
 				},
 				{
-					name: t('move_to_s3'),
+					name: t('move_to_object_storage'),
 					value: logsS3RetentionPeriod,
 					setValue: setLogsS3RetentionPeriod,
-					hide: !s3Enabled,
+					disabled: !s3Enabled,
+					info: t('object_storage_stores'),
 					isS3Field: true,
 				},
 			],
@@ -638,7 +634,8 @@ function GeneralSettings({
 									text={field.name}
 									retentionValue={field.value}
 									setRetentionValue={field.setValue}
-									hide={!!field.hide}
+									disabled={'disabled' in field && !!field.disabled}
+									info={'info' in field ? field.info : undefined}
 									isS3Field={'isS3Field' in field && !!field.isS3Field}
 								/>
 							))}
@@ -729,6 +726,7 @@ function GeneralSettings({
 				testId="retention-controls"
 			>
 				{renderConfig}
+				{!isCloudUserVal && <ObjectStorageNote available={s3Enabled} />}
 			</ContentPanel>
 
 			{isCloudUserVal && <GeneralSettingsCloud />}

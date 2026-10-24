@@ -9,8 +9,15 @@ import {
 } from 'react';
 import { Input } from 'components/ui/input';
 import { NativeSelect, NativeSelectOption } from 'components/ui/native-select';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from 'components/ui/tooltip';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { find } from 'lodash-es';
+import { Info } from 'lucide-react';
 import { TTTLType } from 'types/api/settings/common';
 
 import {
@@ -25,7 +32,8 @@ function Retention({
 	retentionValue,
 	setRetentionValue,
 	text,
-	hide,
+	disabled = false,
+	info,
 	field,
 	isS3Field = false,
 }: RetentionProps): JSX.Element | null {
@@ -108,14 +116,30 @@ function Retention({
 		}
 	};
 
-	if (hide) {
-		return null;
-	}
+	const isDisabled = isCloudUserVal || disabled;
 
 	return (
 		<div className="retention-input-group tw:flex tw:flex-col tw:gap-1">
-			<span title={text} className="tw:text-xs tw:text-muted-foreground">
+			<span
+				title={text}
+				className="tw:flex tw:items-center tw:gap-1 tw:text-xs tw:text-muted-foreground"
+			>
 				{text.split('\n')[0]}
+				{info && (
+					<TooltipProvider delayDuration={200}>
+						<Tooltip>
+							<TooltipTrigger
+								type="button"
+								aria-label={info}
+								data-testid={`retention-${type}-${field}-info`}
+								className="tw:inline-flex tw:cursor-help tw:border-0 tw:bg-transparent tw:p-0 tw:text-muted-foreground tw:hover:text-foreground tw:[&_svg]:size-3.5"
+							>
+								<Info />
+							</TooltipTrigger>
+							<TooltipContent>{info}</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
+				)}
 			</span>
 			<div className="tw:flex">
 				<Input
@@ -123,8 +147,10 @@ function Retention({
 					min={0}
 					aria-label={`${type} ${text}`}
 					data-testid={`retention-${type}-${field}-input`}
-					value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
-					disabled={isCloudUserVal}
+					value={
+						!disabled && selectedValue && selectedValue >= 0 ? selectedValue : ''
+					}
+					disabled={isDisabled}
 					onChange={(e): void => onChangeHandler(e, setSelectedValue)}
 					className="tw:w-24 tw:rounded-r-none tw:tabular-nums tw:[appearance:textfield] tw:[&::-webkit-inner-spin-button]:appearance-none tw:[&::-webkit-outer-spin-button]:appearance-none"
 				/>
@@ -135,7 +161,7 @@ function Retention({
 					onChange={(e): void =>
 						currentSelectedOption(e.target.value as SettingPeriod)
 					}
-					disabled={isCloudUserVal}
+					disabled={isDisabled}
 					className="tw:w-28 tw:-ml-px tw:rounded-l-none"
 				>
 					{availableUnits.map((option) => (
@@ -154,7 +180,9 @@ interface RetentionProps {
 	retentionValue: number | null;
 	text: string;
 	setRetentionValue: Dispatch<SetStateAction<number | null>>;
-	hide: boolean;
+	disabled?: boolean;
+	/** Shown in a tooltip next to the label. */
+	info?: string;
 	/** Names the input and unit test ids. */
 	field: 'total' | 's3';
 	isS3Field?: boolean;
@@ -162,5 +190,7 @@ interface RetentionProps {
 
 Retention.defaultProps = {
 	isS3Field: false,
+	disabled: false,
+	info: undefined,
 };
 export default Retention;
