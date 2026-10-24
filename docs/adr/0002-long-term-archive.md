@@ -81,11 +81,18 @@ archive:
     named_collection: <name>
     prefix: <path>
     backstop_days: 7      # 2–30, and at least twice the cycle interval
+restore:
+  max_bytes_per_restoration: 50GiB   # Editor ceiling, in archived (Parquet) bytes
+  admin_override: true               # Admin may exceed it, with confirmation
+  max_active_restorations: 3
+  max_total_bytes: 25%               # of the measured hot store, or a fixed size
+  default_ttl: 7d
+  max_ttl: 30d
 ```
 
 The API and UI show its status. Objects, manifests and state carry no organization. In a multi-org deployment, restored data is visible to every org that can query telemetry, like live telemetry today.
 
-**Archiving happens when data leaves the hot store, at retention.** The earlier `after_days` (export before retention) is dropped. Recent partitions still merge, so part identity changes too often to archive them early.
+**Archiving happens when data leaves the hot store, at retention.** The earlier `after_days` (export before retention) is dropped. Recent partitions still merge, so part identity changes too often to archive them early. This follows the tiered model of Splunk and Elastic, the products that guarantee nothing is deleted before it is archived. Deployments that need a durable copy from ingestion on (compliance) get it from the pipeline, with a fan-out exporter in the collector, as Datadog and Honeycomb do; that is outside this ADR.
 
 ### 2. Archive unit: one part
 
@@ -103,7 +110,7 @@ Each cycle, per table, per shard, for every partition whose days are past retent
 1. **Snapshot.** Read the active parts of the partition on every replica of the shard (`clusterAllReplicas(…, system.parts)`). Pick a replica that holds every part the others report. If none does, wait for replication, retry, and skip the partition this cycle if it is still incomplete. Partitions are selected by `min_date` past retention, never by parsing `partition_id`.
 2. **Select.** Candidates are the snapshot parts whose block range is not already contained in the published ranges of that shard and partition.
 3. **Export.** The selected parts go out in one attempt, read on the chosen replica with `WHERE _part IN (<names>)`. The job connects directly to that replica (host and port from `system.clusters`) with `use_hedged_requests = 0`, and runs the `INSERT INTO FUNCTION s3(…) SELECT` there. It never reads through `distributed_*` (E8).
-   - Objects are written to `…/table/shard=<n>/partition=<id>/attempt=<id>/<part-name>.parquet`, without the truncate setting, so a collision is an error.
+   - Objects are written to `…/<table>/day=YYYY-MM-DD/shard=<n>/partition=<id>/attempt=<id>/<part-name>.parquet` (Hive-style, `day` from `min_date`), without the truncate setting, so a collision is an error. Every file also carries `_shard` and `_part` columns, so external engines don't depend on the path.
    - The rows read back from each object must equal the part's `rows`. Parts are immutable, so this compares a stable set. If a part merges away during the read, the counts differ and the attempt is abandoned.
 4. **Manifest.** A new key, never overwritten, lists for each part its name, range, rows, object key and size, plus the source columns and types and the migrator version.
 5. **Commit.** One SQL transaction, fenced by the lease epoch:
@@ -115,6 +122,7 @@ Each cycle, per table, per shard, for every partition whose days are past retent
 **Failures and leases** are handled as in the earlier revision:
 
 - An unpublished attempt leaves orphan objects, which are collected after 24 h. The bucket needs a lifecycle rule for incomplete multipart uploads.
+- Objects are never overwritten, so the archive works on buckets with S3 Object Lock (WORM), unlike Datadog's archive retries or Splunk DDSS. On such buckets, failing to delete an orphan is logged, not treated as an error.
 - A stale executor can't commit, and its queries are killed by `query_id`.
 
 ### 4. Deletion
@@ -144,6 +152,14 @@ How likely: logs and traces exporters drop rows older than `max_allowed_data_age
 
 **Clocks.** For metrics, `inserted_at_unix_milli` comes from the collector's clock. A collector clock that is days off shifts that TTL accordingly. This is a stated premise.
 
+**Automatic extension while archiving fails.** ClickHouse can't wait for an archive before deleting, as Elastic's `wait_for_snapshot` and Splunk's frozen step do, so the backstop emulates it.
+
+- When the *critical* alert fires (a partition past retention and unarchived for half the backstop), the backend re-applies the TTL with a larger backstop, recalculate-only as above, in steps up to 30 days.
+- At 30 days, only `force` or more disk remain. The cap exists because self-hosted disks are finite. Splunk warns that blocking without a cap eventually fills the disk.
+- The extension is recorded and reverted to the configured backstop once the backlog is archived.
+
+**Operator rule.** Keep `max_allowed_data_age_days` of the logs and traces exporters at most retention + backstop. The §5 limitation can only occur when that rule is broken.
+
 ### 6. Inventory, loss records and policy changes
 
 **Inventory and loss.**
@@ -152,7 +168,8 @@ How likely: logs and traces exporters drop rows older than `max_allowed_data_age
 - A part from the previous inventory that is neither published, nor superseded, nor contained in a current part's range has disappeared. It is recorded as `lost`, with the rows it had.
 - Job downtime is recorded as an interval. Loss inside that interval is reported as *possible*, never exact.
 - Alerts: *warning* when a partition has been past retention and unarchived for one day, *critical* at half the backstop, and an immediate alert for `lost` parts.
-- A metric counts rows inserted per cycle into partitions already past retention + backstop, so late metrics (which have no age limit) are visible.
+- A metric counts rows inserted per cycle into partitions already past retention + backstop, for every archived table. For the resource tables it uses the main table's timestamp.
+- The policy status shows **TTL extended** while §5's automatic extension is active, with the current backstop.
 
 **Policy changes.**
 
@@ -175,34 +192,55 @@ How likely: logs and traces exporters drop rows older than `max_allowed_data_age
 
 ### 8. Format contract
 
-Unchanged from the earlier revision:
+Exported files follow a type contract compatible with Iceberg v2, fixed before phase 1, because it can't change for files already written. No Iceberg metadata is written yet. Only Grafana Tempo publishes an open, typed Parquet schema; this follows it and the limits of ClickHouse's Iceberg writer.
 
-- `UUID` is exported as a string; `Dynamic` and `Variant` as `String`.
-- `JSON` keeps the Parquet JSON type, with the custom encoder.
-- `DateTime64(9)` stays nanosecond, plus `timestamp_unix_nano UInt64` for traces.
-- DuckDB reads every exported table in the acceptance suite.
-- Old segments are restored by explicit column mapping from their manifest. A migration that renames or retypes an archived column must ship a restore adapter, or restoring older segments fails as `incompatible`.
+| ClickHouse type | Exported as | Note |
+|---|---|---|
+| `UInt8/16/32` | `Int32` / `Int64` | lossless widening |
+| `UInt64` | `Int64` | bit reinterpretation for hashes and IDs (`fingerprint`), `toInt64` for measures (`duration_nano`); the rule is recorded per column in the manifest so restores undo it |
+| `FixedString`, `LowCardinality`, `Enum` | `String` | |
+| `Bool` | `BOOLEAN` | the restriction is in ClickHouse's Iceberg writer, not the spec |
+| `UUID` | `String` | DuckDB misreads ClickHouse's byte order |
+| `Dynamic`, `Variant` | `String` | rejected by the Parquet writer |
+| `JSON` | string with the Parquet JSON logical type | candidate for `variant` in Iceberg v3; custom encoder required |
+| `DateTime64(9)` | `TIMESTAMP(NANOS)` plus a `*_unix_nano Int64` column | the `Int64` column is the portable one in Iceberg v2 |
+| `Map(String, String)` | Parquet `MAP` | |
+
+- **Format version.** Manifests carry a `format_version`. Release N restores segments written by format versions N and N-1, as Tempo keeps reading the previous block version. Older segments need a restore adapter, or fail as `incompatible`.
+- **Old schemas.** Segments are restored by explicit column mapping from their manifest. A migration that renames or retypes an archived column must ship a restore adapter.
+- **Acceptance.** DuckDB and pyarrow (or Trino) read every exported table with the types above.
 
 ### 9. Restoration
 
 As in the earlier revision, with these precisions:
 
 - **Tables.** `rehydrated_<table>` tables have the live table's columns plus `rehydration_id` and `expires_at`, `PARTITION BY rehydration_id`, `TTL expires_at`, and the same engine family. Replacing tables stay Replacing, with the same version column.
-  - **Proposed:** the backend creates them (`CREATE TABLE IF NOT EXISTS … ON CLUSTER`), deriving the DDL from the live table in `system.columns` and `system.tables` (engine, sorting key, Keeper path). Before each restoration it adds any column the live table gained (`ADD COLUMN`, metadata only), and records the column set in SQL. This keeps restorations in step with schema changes without a collector release. It moves part of the telemetry schema out of the migrator, which CLAUDE.md names as its owner, so it needs a maintainer decision (open questions).
+  - **The backend creates them** (`CREATE TABLE IF NOT EXISTS … ON CLUSTER`). It derives the DDL from the live table's `system.tables.create_table_query`, so codecs, sorting key, settings and engine family carry over, then replaces partitioning and TTL and drops skip indexes and projections that don't apply. Before each restoration it adds any column the live table gained (`ADD COLUMN`, metadata only). The effective DDL is recorded in SQL per restoration.
+  - Restoration tables are a read model of the query path, like Elastic's separate `restored-*` indices, and the reader adapts to the archive's version, as Loki and Tempo do. Owning them in the backend avoids a collector (AGPL) release for every schema change. It is an exception to the CLAUDE.md rule that the migrator owns the telemetry schema, to be recorded there if accepted.
 - **What is loaded.** Only maximal published parts are loaded (not superseded, and not contained in another published part's range), in block order, and only for partitions complete in every table of the signal's set.
   - `trace_summary` is rebuilt from the restored spans.
   - Metrics on a rehydration source use the raw and reduced tables for every range length, never the rollups.
 - **Lifecycle.**
   - Retry, delete and expire use `DROP PARTITION <rehydration_id>`. That is safe there, because nothing else writes a restoration's partition.
   - Queries select one `rehydration_id`.
-  - Authorization uses two new kinds in the managed-role registry: `archive` (status read by every role; enable, disable and `force` Admin only) and `restoration` (create and delete for Admin and Editor, read for every role). Restorations are bounded by a configured maximum size. Custom roles (#14) can later grant them.
-  - Traces on a rehydration source don't support `isEntryPoint` or the services and topology pages, which read `top_level_operations` and `dependency_graph_minutes_v2`; such queries return an explicit error, never an empty result.
+  - **Authorization** uses two new kinds in the managed-role registry, mirroring Datadog's three log-archive permissions. Custom roles (#14) can later grant them.
+    - `archive`: every role reads the status; enable, disable and `force` are Admin only.
+    - `restoration`: Viewers read; Editors create and delete within the limits; Admins can exceed them and change the defaults.
+  - **Limits** (`restore:` in §1), checked before a restoration starts. The manifest gives the exact archived bytes, rows and partitions of the requested range, so the "estimate" Datadog and Splunk offer is exact and free here. The API and UI show it, with the remaining budget, and refuse above the ceiling. Limits are in archived bytes rather than events, because the cost is the deployment's own disk, CPU and bucket egress.
+  - Traces on a rehydration source don't support `isEntryPoint` or the services and topology pages, which read `top_level_operations` and `dependency_graph_minutes_v2`; such queries return an explicit error, never an empty result. No product regenerates derived data from restored events: Datadog, Tempo and Elastic compute it only at ingestion.
+  - **Later**, two options, both outside phases 1–4:
+    - derive RED metrics and topology at query time from `rehydrated_signoz_index_v3`, as ClickStack builds its service map from parent and child spans;
+    - give the small live aggregates (`top_level_operations`, `dependency_graph_minutes_v2`, the metrics rollups) a longer retention than raw data, as Elastic (390 days) and Datadog (15 months) do. That would be its own ADR.
 
 ## Schema and ingestion dependencies
 
 - **Migrator: `created_at` on tables without an ingestion column.** Add `created_at DateTime64(3) MATERIALIZED now64(3)` (not `DEFAULT`, because of the bare inserts, E6e) to `logs_v2_resource`, `traces_v3_resource` and `signoz_error_index_v2`. Metadata-only `ADD COLUMN` (E6a); deduplication of the Replacing resource tables is unaffected (E6f). `MATERIALIZED` columns are left out of `SELECT *`, so exports list columns explicitly (they already do, from the manifest). This closes the §5 limitation in phase 2.
-- **Rehydration tables:** created by the backend if maintainers accept the proposal in §9; otherwise by the migrator in phases 1, 3 and 4, with a release for every schema change of an archived table.
-- **Collector: none required.** No age limit for metrics is proposed; whether to drop very late metrics is a product decision, informed by the metric in §6.
+- **Rehydration tables:** created by the backend (§9). CLAUDE.md records the exception.
+- **Collector, phase 4:** `max_allowed_data_age_days` for the metrics exporter.
+  - Default 15, the same as logs and traces, so operators deal with one concept. Points older than that are dropped and counted, and points more than 10 minutes in the future are rejected.
+  - Hosted metric backends accept hours (Mimir, Datadog, Chronosphere, 0–2 h by default). ClickHouse has no head block, so days are affordable.
+  - The real cost of very old points is drift in computed rollups and archive churn: every late point creates a new part in an archived partition.
+  - This is a collector change, not a backend import, so it is compatible with ADR 0001. The §6 metric calibrates it.
 
 ## Phases and acceptance
 
@@ -222,7 +260,7 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 2. An insert in flight during the snapshot, committing later with a lower block number, is archived next cycle.
 3. A replica with stopped fetches is excluded from the snapshot, and its missing part is neither dropped nor lost.
 4. A related resource table is exported and restored together with `logs_v2`, and a restore of an incomplete set is refused.
-5. Job down for 3 days with retention 15 and backstop 7: days 16–18 are archived on return.
+5. Job down for 3 days with retention 15 and backstop 7: days 16–18 are archived on return. Job down for longer than half the backstop: the TTL is extended automatically and reverted after catching up.
 6. An arrival whose event time is older than retention + backstop:
    - kept and archived for `logs_v2`;
    - for resource tables, the documented limitation until phase 2.
@@ -231,26 +269,29 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 9. A merge between commit and drop folding in a later part: no drop, then re-export with the earlier part superseded, and a restore without duplicates.
 10. Several versions of one reduced bucket across segments, queried before merges: `FINAL` returns the latest, and ties go to the last inserted.
 11. Overlapping restorations, retry, early deletion and expiry.
-12. DuckDB reading every exported file.
+12. DuckDB and pyarrow (or Trino) reading every exported file with the §8 types.
 13. Enable with parts that already exist under the old TTL: nothing is deleted before it is archived (E6c).
 14. The live table gains a column between two restorations: the second restoration works.
 15. A `DROP PART` on a merged-away name leads to a new snapshot, not a failure.
 16. The export of a lagging-replica partition reads the chosen replica directly and matches the snapshot's row counts.
 17. A rehydrated trace query using `isEntryPoint` returns an explicit error.
 18. Unit tests for the block-range coverage logic, including a part with a lower block number that appears after a higher one was published.
+19. A restoration above the Editor ceiling is refused, shows the exact size, and an Admin can override it; the global budget and the concurrency limit are enforced.
+20. A bucket with Object Lock: exports succeed, and orphan cleanup failures are logged without failing the cycle.
+21. Phase 4: metrics older than `max_allowed_data_age_days` are dropped by the exporter and counted.
 
-## Open questions for maintainers
+## For the team to confirm
 
-Proposed answers are in the sections cited; each still needs a decision.
+The decisions below are proposed from the market review in "Market references". Each one is reflected in the sections cited.
 
-- **Schema ownership of `rehydrated_*`** (§9): backend-derived DDL, or the migrator with a release per schema change.
-- **Lake-compatible types, before phase 1.** Iceberg can't represent unsigned integers, `FixedString`, `Bool` columns ClickHouse creates, or JSON, and `timestamp_ns` needs v3. Deciding now whether exports cast to compatible types (`UInt* → Int*`, `FixedString → String`, explicit `_shard`, `_part`, `_day` columns) avoids rewriting the archive if an Iceberg catalog is wanted later. It is irreversible for files already written.
-- **Restoration cost for Editors** (§9): the maximum size per restoration.
-- **`backstop_days`** (§1): default 7, range 2–30.
-- **Resource-table limitation in phase 1** (§5): accepted with the rebuild fallback, closed in phase 2.
-- **Services and topology on restored traces** (§9): out of scope for phases 1–4; rebuilding `top_level_operations` by replaying its MV is the candidate for later.
-- **Archiving before retention:** only with a durability requirement. If adopted, eligibility needs a quiet period with no new parts, and drops still happen at retention. Merge churn can be measured from `system.part_log` first.
-- **Dropping very late metrics** at ingestion (§6 metric).
+1. **The backend owns the `rehydrated_*` DDL** (§9). It is an exception to CLAUDE.md's schema rule, and needs an update to CLAUDE.md.
+2. **The Iceberg-v2-compatible type contract**, fixed before phase 1 (§8).
+3. **Restoration limits in archived bytes,** with an Editor ceiling, Admin override, global budget, concurrency and TTL limits (§1, §9).
+4. **`backstop_days` default 7 (2–30)**, with automatic extension up to 30 days while archiving fails (§5, §6).
+5. **The resource-table limitation accepted in phase 1** with the rebuild fallback, closed in phase 2, plus the operator rule (§5).
+6. **Services and topology out of scope** on restored traces; later, query-time derivation or longer retention for live aggregates in their own ADR (§9).
+7. **Archiving at retention;** compliance copies via the pipeline; Object Lock compatible (§1, §3).
+8. **Dropping metrics older than 15 days** in the exporter, phase 4. It is a product change for users who backfill old metrics.
 
 ## Evidence
 
@@ -274,3 +315,40 @@ Proposed answers are in the sections cited; each still needs a decision.
   - `ALTER … DROP PART` and partition manipulation.
   - The `s3` table function, named collections, the Parquet format.
   - E1–E8 (25.12.5.44).
+
+## Market references
+
+Public documentation consulted on 2026-10-24 for the decisions above (marketing pages used only for context).
+
+- **Restoration and schema:**
+  - Datadog: [rehydrating from archives](https://docs.datadoghq.com/logs/log_configuration/rehydrating/), [log archives](https://docs.datadoghq.com/logs/log_configuration/archives/).
+  - Elastic: [searchable snapshots](https://www.elastic.co/docs/deploy-manage/tools/snapshot-and-restore/searchable-snapshots), [reading older indices](https://www.elastic.co/docs/deploy-manage/upgrade/deployment-or-cluster/reading-indices-from-older-elasticsearch-versions).
+  - Loki: [schema config](https://grafana.com/docs/loki/latest/operations/storage/schema/). Tempo: [Parquet blocks](https://grafana.com/docs/tempo/latest/configuration/parquet/), [Parquet schema](https://grafana.com/docs/tempo/latest/operations/schema/).
+- **Types:**
+  - ClickHouse [Iceberg engine limits](https://clickhouse.com/docs/engines/table-engines/integrations/iceberg) and [Parquet mapping](https://clickhouse.com/docs/interfaces/formats/Parquet).
+  - [Iceberg spec](https://iceberg.apache.org/spec/).
+  - Splunk [Federated Search for S3](https://help.splunk.com/en/splunk-cloud-platform/search/federated-search/10.4.2604/run-federated-searches-over-amazon-s3-datasets).
+- **Restoration limits:**
+  - Datadog [log-management permissions](https://docs.datadoghq.com/account_management/rbac/permissions/#log-management) and [maximum scan size](https://docs.datadoghq.com/logs/log_configuration/archives/#define-maximum-scan-size).
+  - Splunk [DDAA](https://help.splunk.com/en/splunk-cloud-platform/administer/admin-manual/10.1.2507/manage-your-indexes-and-data-in-splunk-cloud-platform/store-expired-splunk-cloud-platform-data-in-a-splunk-managed-archive).
+  - Loki [query limits](https://grafana.com/docs/loki/latest/configure/).
+- **No deletion before archive:**
+  - Elastic [`wait_for_snapshot`](https://www.elastic.co/docs/reference/elasticsearch/index-lifecycle-actions/ilm-wait-for-snapshot).
+  - Splunk [`coldToFrozenScript`](https://docs.splunk.com/Documentation/Splunk/latest/Admin/Indexesconf).
+  - Loki [retention delete delay](https://grafana.com/docs/loki/latest/operations/storage/retention/).
+- **Late data:**
+  - Datadog [log collection](https://docs.datadoghq.com/logs/log_collection/) (18 h).
+  - Honeycomb [retention by ingestion](https://docs.honeycomb.io/get-started/manage-costs/how-honeycomb-calculates-usage.md).
+  - Elastic [ILM](https://www.elastic.co/docs/manage-data/lifecycle/index-lifecycle-management/index-lifecycle).
+- **Derived data:**
+  - Datadog [trace metrics](https://docs.datadoghq.com/tracing/metrics/).
+  - Elastic [APM data retention](https://www.elastic.co/docs/solutions/observability/apm/index-lifecycle-management).
+  - ClickStack [service maps](https://clickhouse.com/docs/clickstack/service-maps.md).
+- **Archive point and WORM:**
+  - [S3 Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html).
+  - Loki and Tempo [architecture](https://grafana.com/docs/loki/latest/get-started/architecture/).
+- **Late metrics:**
+  - Mimir [runbooks](https://grafana.com/docs/mimir/latest/manage/mimir-runbooks/).
+  - Datadog [historical metrics](https://docs.datadoghq.com/metrics/custom_metrics/historical_metrics/).
+  - Chronosphere [metric limits](https://docs.chronosphere.io/administer/limits-licensing/limits/metric-limits).
+  - VictoriaMetrics [`-maxBackfillAge`](https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/).
