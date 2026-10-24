@@ -95,7 +95,8 @@ Run on 2026-10-24, same image.
 | | Result |
 |---|---|
 | E9a | `materialize_ttl_recalculate_only` as a query setting: `UNKNOWN_SETTING`. It is a MergeTree table setting; the migrator's tables don't set it (`system.tables` on migrator 0.145.0). |
-| E9b | `ttl_only_drop_parts` tables, a part of 1000 rows half of which are expired, `MODIFY TTL greatest(ts + 40 d, c + 47 d)` then `MATERIALIZE TTL`: with the setting off, on, and on two replicas, the same result. 1000 rows kept, `delete_ttl_info_max` recalculated, the TTL columns `ts` and `c` rewritten (link count 1), `k` and `v` kept as hardlinks (2). |
+| E9b | `ttl_only_drop_parts` tables, a part of 1000 rows half of which are 50 days old and were ingested 60 days ago (expired under the new TTL), `MODIFY TTL greatest(ts + 40 d, c + 47 d)` then `MATERIALIZE TTL`: with the setting off, on, and on two replicas, the same result. 1000 rows kept, `delete_ttl_info_max` recalculated, the TTL columns `ts` and `c` rewritten (link count 1), `k` and `v` kept as hardlinks (2). |
 | E9c | The replicated mutation ran on both replicas (`MutatePart` on `a` and `b`). |
+| E9d | A part whose 1000 rows are all expired under the new TTL: emptied by the mutation with the setting off (0 rows), kept with it on (1000 rows, until the next TTL merge). |
 
 Limitations: one server, small parts; a table without `ttl_only_drop_parts` was not part of E9 (in a side run it deleted the expired rows and rewrote every column, as documented).
