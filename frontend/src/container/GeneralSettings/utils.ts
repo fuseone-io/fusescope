@@ -1,3 +1,5 @@
+import { IDiskType } from 'types/api/disks/getDisks';
+
 export type SettingPeriod = 'hr' | 'day' | 'month';
 
 export interface ITimeUnit {
@@ -75,3 +77,6 @@ export const convertHoursValueToRelevantUnitString = (
 		convertedTimeUnit.value >= 2 ? 's' : ''
 	}`;
 };
+
+export const hasObjectStorageDisk = (disks: IDiskType[]): boolean =>
+	disks.some((disk) => disk?.type === 's3' || disk?.type === 'ObjectStorage');

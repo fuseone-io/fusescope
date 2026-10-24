@@ -31,7 +31,7 @@ export const workspaceMocks = defineStoryMocks({
 		coldStorage: toggleControl('Cold storage', {
 			group: RETENTION,
 			description:
-				'Whether the instance reports an s3 disk. Without one the "Move to S3" field is hidden on all three signals.',
+				'Whether the instance reports an object storage disk. Without one the "Move to object storage" field is disabled on all three signals, with a hint linking to the setup docs.',
 			value: true,
 		}),
 		retentionStatus: choiceControl<TStatus>('Retention change', {

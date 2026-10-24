@@ -1,4 +1,7 @@
-import { buildSetRetentionProps } from '../buildSetRetentionProps';
+import {
+	buildSetLogsRetentionProps,
+	buildSetRetentionProps,
+} from '../buildSetRetentionProps';
 
 describe('buildSetRetentionProps', () => {
 	it.each([
@@ -44,6 +47,47 @@ describe('buildSetRetentionProps', () => {
 			totalDuration: '720h',
 			coldStorage: 's3',
 			toColdDuration: '168h',
+		});
+	});
+});
+
+describe('buildSetLogsRetentionProps', () => {
+	it.each([
+		['no object storage disk', 120, false],
+		['no duration', null, true],
+		['a zero duration', 0, true],
+	] as const)(
+		'sends no cold volume with %s',
+		(_, s3RetentionHours, s3Enabled) => {
+			expect(
+				buildSetLogsRetentionProps({
+					totalRetentionHours: 720,
+					s3RetentionHours,
+					s3Enabled,
+				}),
+			).toStrictEqual({
+				type: 'logs',
+				defaultTTLDays: 30,
+				coldStorageVolume: '',
+				coldStorageDurationDays: 0,
+				ttlConditions: [],
+			});
+		},
+	);
+
+	it('sends the cold volume when an object storage disk exists', () => {
+		expect(
+			buildSetLogsRetentionProps({
+				totalRetentionHours: 720,
+				s3RetentionHours: 120,
+				s3Enabled: true,
+			}),
+		).toStrictEqual({
+			type: 'logs',
+			defaultTTLDays: 30,
+			coldStorageVolume: 's3',
+			coldStorageDurationDays: 5,
+			ttlConditions: [],
 		});
 	});
 });

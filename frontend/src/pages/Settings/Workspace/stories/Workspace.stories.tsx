@@ -51,9 +51,58 @@ export const RetentionPending: Story = {
 	args: { license: 'enterprise', retentionStatus: 'pending' },
 };
 
-/** An instance with no object storage attached: nothing can be moved to S3. */
+/**
+ * An instance with an object storage disk: each signal can move older data to
+ * the bucket, and a note says what that means for queries and backups.
+ */
+export const ColdStorage: Story = {
+	args: { license: 'enterprise', retentionStatus: 'success' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		const note = await canvas.findByTestId(
+			'retention-object-storage-note',
+			{},
+			{ timeout: 10000 },
+		);
+		await expect(note).toHaveTextContent(/stays queryable/i);
+		await expect(note).toHaveTextContent(/about a second/i);
+		await expect(note).toHaveTextContent(/backups/i);
+		await expect(canvas.getAllByText('Move to object storage')).toHaveLength(3);
+		await expect(canvas.getByTestId('retention-logs-s3-input')).toBeEnabled();
+
+		await userEvent.hover(canvas.getByTestId('retention-logs-s3-info'));
+		await expect(await screen.findByRole('tooltip')).toHaveTextContent(
+			/S3, GCS, MinIO/,
+		);
+	},
+};
+
+/**
+ * An instance with no object storage attached: the move field is disabled on
+ * every signal and a hint links to the cold storage setup.
+ */
 export const NoColdStorage: Story = {
 	args: { license: 'enterprise', coldStorage: false },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		const hint = await canvas.findByTestId(
+			'retention-object-storage-hint',
+			{},
+			{ timeout: 10000 },
+		);
+		await expect(hint).toHaveTextContent(/no object storage disk/i);
+		await expect(
+			within(hint).getByRole('link', { name: /set up cold storage/i }),
+		).toHaveAttribute(
+			'href',
+			expect.stringContaining('/administration/retention/#cold-storage'),
+		);
+		for (const type of ['metrics', 'traces', 'logs']) {
+			await expect(
+				canvas.getByTestId(`retention-${type}-s3-input`),
+			).toBeDisabled();
+		}
+	},
 };
 
 /**
