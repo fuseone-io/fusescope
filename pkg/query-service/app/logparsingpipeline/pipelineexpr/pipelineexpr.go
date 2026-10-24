@@ -31,14 +31,23 @@ const (
 // the body as a JSON object, and refsBodyFields reports whether the
 // expression does so; pass it on to Env.
 func CompileBool(input string) (program *vm.Program, refsBodyFields bool, err error) {
+	return compile(input, expr.AsBool())
+}
+
+// Compile compiles a pipeline expression of any result type, such as the
+// value of an add operator, with the same rules as CompileBool.
+func Compile(input string) (program *vm.Program, refsBodyFields bool, err error) {
+	return compile(input)
+}
+
+func compile(input string, options ...expr.Option) (*vm.Program, bool, error) {
 	bodyFields := &bodyFieldsPatcher{}
-	program, err = expr.Compile(
-		input,
+	options = append([]expr.Option{
 		expr.AllowUndefinedVariables(),
 		expr.Patch(envFunctionPatcher{}),
 		expr.Patch(bodyFields),
-		expr.AsBool(),
-	)
+	}, options...)
+	program, err := expr.Compile(input, options...)
 	if err != nil {
 		return nil, false, err
 	}
@@ -149,4 +158,10 @@ func unquote(value any) (string, error) {
 		return s, nil
 	}
 	return unquoted, nil
+}
+
+// ForgetParsedBody removes the parsed body that Env caches in the entry's
+// attributes.
+func ForgetParsedBody(e *entry.Entry) {
+	delete(e.Attributes, parsedBodyAttribute)
 }
