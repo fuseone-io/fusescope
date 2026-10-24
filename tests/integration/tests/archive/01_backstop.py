@@ -18,15 +18,29 @@ def archive_test_suite_setup(create_user_admin):  # pylint: disable=unused-argum
     pass
 
 
-def test_backstop_reaches_existing_parts(
+def test_backstop_reaches_existing_parts_and_keeps_them_hot(
     signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     request: pytest.FixtureRequest,
 ) -> None:
-    insert_logs([Logs(timestamp=datetime.datetime.now() - datetime.timedelta(days=14), body="old", resources={"service.name": "archive-backstop"})])
+    now = datetime.datetime.now()
+    insert_logs(
+        [
+            Logs(timestamp=now - datetime.timedelta(days=14), body="old", resources={"service.name": "archive-backstop"}),
+            Logs(timestamp=now - datetime.timedelta(hours=1), body="young", resources={"service.name": "archive-backstop"}),
+        ]
+    )
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
+        json={"type": "logs", "defaultTTLDays": 15, "ttlConditions": [], "coldStorageVolume": "cold", "coldStorageDurationDays": 7},
+        headers={"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"},
+        timeout=30,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
     parts = signoz.telemetrystore.conn.query("SELECT name, toUnixTimestamp(delete_ttl_info_max) FROM system.parts WHERE database = 'signoz_logs' AND table = 'logs_v2' AND active").result_rows
     assert len(parts) >= 1
-    assert all(expiry < time.time() + 2 * 86400 for _, expiry in parts), "under the default 15-day retention the 14-day-old part expires within two days"
+    assert any(expiry < time.time() + 2 * 86400 for _, expiry in parts), "under the 15-day retention the 14-day-old part expires within two days"
 
     request.getfixturevalue("signoz_archive")
 
@@ -42,6 +56,11 @@ def test_backstop_reaches_existing_parts(
 
     resource_engine_full = signoz.telemetrystore.conn.query("SELECT engine_full FROM system.tables WHERE database = 'signoz_logs' AND name = 'logs_v2_resource'").result_rows[0][0]
     assert "toIntervalDay(7)" in resource_engine_full
+    assert "TO VOLUME 'cold'" in engine_full, "the move rule is kept"
+
+    time.sleep(10)
+    disks = signoz.telemetrystore.conn.query("SELECT table, name, disk_name FROM system.parts WHERE database = 'signoz_logs' AND table IN ('logs_v2', 'logs_v2_resource') AND active").result_rows
+    assert all(disk_name != "cold" for _, _, disk_name in disks), f"rows written before cold storage was set were moved by MATERIALIZE TTL: {disks}"
 
 
 @pytest.mark.parametrize(
