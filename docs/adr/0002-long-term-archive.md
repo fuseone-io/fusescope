@@ -89,6 +89,8 @@ archive:
     named_collection: <name>
     prefix: <path>
     backstop_days: 7      # 2–30, and at least twice the cycle interval
+    late_min_rows: 1000000  # held late parts are exported from this size…
+    late_max_hold: 1d       # …or after this long, below half the backstop
 restore:
   max_bytes_per_restoration: 50GiB   # Editor ceiling, in archived (Parquet) bytes
   admin_override: true               # Admin may exceed it, with confirmation
@@ -117,12 +119,14 @@ Each cycle, per table, per shard, for every partition whose days are past its re
 
 1. **Snapshot.** Read the active parts of the partition on every replica of the shard (`clusterAllReplicas(…, system.parts)`). Pick a replica whose active parts' block ranges cover the union of the ranges reported by all replicas. Coverage is by range, not by name: during a merge one replica can hold `1_5_1` while another still has `1_3_0` and `4_5_0`. If no replica covers the union, wait for replication, retry, and skip the partition this cycle if it is still not covered. Partitions are selected by `min_date` past retention, never by parsing `partition_id`.
 2. **Select.** Candidates are the snapshot parts whose block range is not already contained in the published ranges of that shard and partition.
+   - **Late parts are held.** In a partition that already has published parts, candidates are exported only once they total `late_min_rows`, or `late_max_hold` after the inventory first saw them unexported. Meanwhile ClickHouse merges them, so a trickle of late rows becomes one object instead of one per cycle. The backstop still protects them; the first export of a partition is never held.
 3. **Export.** The selected parts go out in one attempt, read on the chosen replica with `WHERE _part IN (<names>)`. The job connects directly to that replica (host and port from `system.clusters`) with `use_hedged_requests = 0`, and runs the `INSERT INTO FUNCTION s3(…) SELECT` there. It never reads through `distributed_*` (E8). The backend therefore needs network access and credentials to every replica, on the secure port with TLS when the cluster uses it; the chart and external-ClickHouse docs say so.
    - Objects are written to `…/<table>/day=YYYY-MM-DD/shard=<n>/partition=<id>/attempt=<id>/<part-name>.parquet` (Hive-style, `day` from `min_date`), without the truncate setting, so a collision is an error. Every file also carries `_shard` and `_part` columns, so external engines don't depend on the path.
    - The rows read back from each object must equal the part's `rows`. Parts are immutable, so this compares a stable set. If a part merges away during the read, the counts differ and the attempt is abandoned.
 4. **Manifest.** A new key, never overwritten, lists for each part its name, range, rows, object key, size and ETag, plus the source columns and types, the column mapping, the `format_version` and the migrator version. It is for external readers; restores don't trust it (§9).
 5. **Commit.** One SQL transaction, fenced by the lease epoch:
-   - The parts become `published` in `archive_part (table, shard, partition_id, min_block, max_block, part_name, rows, object_key, bytes, etag, attempt_id, status)`.
+   - The objects are recorded in `archive_object (object_key, bytes, etag, rows, status)`.
+   - The parts become `published` in `archive_part (table, shard, partition_id, min_block, max_block, part_name, rows, object_key, attempt_id, status)`. A part refers to the object that holds it, so compaction (§11) can move it to another object without touching the cursor.
    - The attempt's column mapping, `format_version` and the manifest's SHA-256 are stored in `archive_attempt`.
    - Any published part whose range is contained in a newly published part becomes `superseded`. That happens when exported parts merged with later rows before being dropped.
 
@@ -184,6 +188,8 @@ How likely: logs and traces exporters drop rows older than `max_allowed_data_age
 - Job downtime is recorded as an interval. Loss inside that interval is reported as *possible*, never exact.
 - Alerts: *warning* when a partition has been past retention and unarchived for one day, *critical* at half the backstop, and an immediate alert for `lost` parts.
 - A metric counts rows inserted per cycle into partitions already past retention + backstop, for every archived table. For the resource tables it uses the main table's timestamp.
+- Metrics of active objects per partition and mean object size, per table, decide when compaction (§11) is needed.
+- The *warning* alert counts unarchived time after `late_max_hold` for held late parts.
 - The policy status shows **TTL extended** while §5's automatic extension is active, with the current backstop.
 - The policy status and the retention settings say that live queries can return data older than retention until it is archived and dropped: up to retention + backstop, longer while extended. Otherwise "I set 7 days and see 12" becomes a support question.
 
@@ -240,7 +246,7 @@ As in the earlier revision, with these precisions:
     - A guard in the one function that issues restoration DDL refuses any `CREATE` or `DROP` whose table name doesn't match `^rehydrated_`.
     - Restoration inputs (time range, `rehydration_id`) go through `pkg/clickhousesql` like every other identifier and literal.
   - **Privileges.** The default chart connects as `admin`, which can create tables. With an external ClickHouse, the operator must grant `CREATE TABLE` and `DROP TABLE` on the restoration tables. Without the grant, restorations are unavailable with an explicit error, and archiving still works.
-- **Source of truth.** Restores read `archive_part` and `archive_attempt`, not the bucket manifest. Before loading, each object's size and ETag, or its row count from the Parquet footer, are compared with the commit. Any difference, or a manifest whose hash no longer matches, fails the restoration as `corrupt` instead of loading wrong data. This covers an object or manifest edited by anyone with bucket write access, and a partial or replaced object on a bucket without Object Lock.
+- **Source of truth.** Restores read `archive_part`, `archive_object` and `archive_attempt`, not the bucket manifest. Before loading, each object's size and ETag, or its row count from the Parquet footer, are compared with the commit. Any difference, or a manifest whose hash no longer matches, fails the restoration as `corrupt` instead of loading wrong data. This covers an object or manifest edited by anyone with bucket write access, and a partial or replaced object on a bucket without Object Lock.
 - **What is loaded.** Only maximal published parts are loaded (not superseded, and not contained in another published part's range), in block order, and only for partitions complete in every table of the signal's set.
   - `trace_summary` is rebuilt from the restored spans.
   - Metrics on a rehydration source use the raw and reduced tables for every range length, never the rollups.
@@ -261,6 +267,18 @@ As in the earlier revision, with these precisions:
 - **How long archives are kept** is the bucket's lifecycle rule (or Object Lock retention), set by the operator. The job never expires archived segments.
 - **Data-subject erasure** (GDPR, LGPD) is out of scope. Erasing rows means rewriting the affected segments and their SQL state; on a bucket in Object Lock compliance mode it is impossible until the retention ends. Deployments that need it should not use compliance mode for these prefixes.
 - **Encryption at rest** is the bucket's default encryption (SSE-S3 or SSE-KMS). **In transit**, the named collection's endpoint must be `https`; the backend refuses to enable a policy on a plain `http` endpoint unless `allow_insecure_endpoint` is set.
+
+### 11. Compaction of archived objects
+
+Held late parts (§3) limit new small objects while the data is in ClickHouse. Once a part is dropped, nothing merges it, so an old partition still accumulates one object per late batch. A compactor merges those objects in the bucket. It is a later phase, enabled when the §6 metrics show it is needed.
+
+- **Scope.** Only objects whose parts are all dropped from ClickHouse, and maximal. Those parts can no longer merge or become superseded, so the compacted set is stable.
+- **Data stays inside ClickHouse.** `INSERT INTO FUNCTION s3(<new key>) SELECT … FROM s3([<old keys>])`, under `archive.limits` and the lease, with each source checked by size and ETag first and the row count checked after. New objects go to `…/partition=<id>/compaction=<id>/`.
+- **Block order is preserved.** Rows are written ordered by source block, keeping `_shard` and `_part`, so restores still load in block order and Replacing ties resolve as before (§7).
+- **Commit.** One fenced transaction records the new object, repoints its parts, and marks the old objects `superseded` in `archive_object`. They follow the superseded-object deletion of §8, and the active-object index lists the new one.
+- **Trigger.** A partition with more than `compact_min_objects` objects (default 16) or a mean object size below `compact_min_bytes` (default 64 MiB).
+- **Object Lock.** Old objects can't be deleted, so compacting doubles storage there; the compactor is off on WORM buckets unless enabled.
+- **Iceberg.** If the archive becomes an Iceberg table later, its own compaction (`rewrite_data_files`) replaces this one.
 
 ## Schema and ingestion dependencies
 
@@ -283,6 +301,7 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 3. **Traces:** the four tables, with `trace_summary` rebuilt.
 4. **Metrics:** raw and reduced tables, Replacing semantics with `FINAL`, and table selection pinned for rehydration sources.
 5. **UI**, after the frontend freeze.
+6. **Bucket compaction** (§11), when the §6 metrics call for it. `archive_object` exists from phase 1, so this phase needs no state migration.
 
 **Executed.** E1–E8 in [`0002-experiments/`](0002-experiments/): single-shard experiments with no network delay; E8 uses two containers. Their limitations are listed there.
 
@@ -317,6 +336,8 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 25. Two replicas holding the same rows in differently named parts (one merged, one not): the snapshot picks a replica by range coverage and the partition is exported.
 26. Logs with custom retention: partitions are selected by their own `_retention_days`; parts moved to the cold volume are exported and dropped.
 27. Export and restore queries carry the `archive.limits` settings (checked in `system.query_log`), and no more than `concurrency` run at once.
+28. Late rows trickling into an archived partition: they are exported as one object once `late_min_rows` is reached, or at `late_max_hold`, and never dropped before.
+29. Phase 6: compacting a partition's objects leaves restoration results identical, row for row and in block order, with the old objects superseded; a source with a mismatched ETag aborts the compaction; on an Object Lock bucket it doesn't run unless enabled.
 
 ## For the team to confirm
 
@@ -332,6 +353,7 @@ The decisions below are proposed from the market review in "Market references". 
 8. **Dropping metrics older than the metrics retention (default 30 days)** in the exporter, phase 4, configurable, with `0` disabling it for historical imports. It is a behaviour change for users who send old points, and needs a release note.
 9. **Superseded objects:** an active-object index per commit for external readers, and their deletion after 30 days except on Object Lock buckets (§8).
 10. **Archive expiry by bucket lifecycle, and erasure out of scope** (§10).
+11. **Small objects:** late parts held up to `late_max_hold` in phase 1, `archive_object` separate from `archive_part` from phase 1, and bucket compaction as phase 6 (§3, §11).
 
 ## Evidence
 
