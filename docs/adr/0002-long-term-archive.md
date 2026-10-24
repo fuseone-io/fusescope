@@ -91,6 +91,10 @@ archive:
     backstop_days: 7      # 2–30, and at least twice the cycle interval
     late_min_rows: 1000000  # held late parts are exported from this size…
     late_max_hold: 1d       # …or after this long, below half the backstop
+    compaction:             # §11
+      enabled: true         # false by default on Object Lock buckets
+      min_objects: 16
+      min_bytes: 64MiB
 restore:
   max_bytes_per_restoration: 50GiB   # Editor ceiling, in archived (Parquet) bytes
   admin_override: true               # Admin may exceed it, with confirmation
@@ -258,7 +262,7 @@ As in the earlier revision, with these precisions:
     - `restoration`: Viewers read; Editors create and delete within the limits; Admins can exceed them and change the defaults.
   - **Limits** (`restore:` in §1), checked before a restoration starts. The manifest gives the exact archived bytes, rows and partitions of the requested range, so the "estimate" Datadog and Splunk offer is exact and free here. The API and UI show it, with the remaining budget, and refuse above the ceiling. Limits are in archived bytes rather than events, because the cost is the deployment's own disk, CPU and bucket egress.
   - Traces on a rehydration source don't support `isEntryPoint` or the services and topology pages, which read `top_level_operations` and `dependency_graph_minutes_v2`; such queries return an explicit error, never an empty result. No product regenerates derived data from restored events: Datadog, Tempo and Elastic compute it only at ingestion.
-  - **Later**, two options, both outside phases 1–4:
+  - **Later**, two options, both outside phases 1–5:
     - derive RED metrics and topology at query time from `rehydrated_signoz_index_v3`, as ClickStack builds its service map from parent and child spans;
     - give the small live aggregates (`top_level_operations`, `dependency_graph_minutes_v2`, the metrics rollups) a longer retention than raw data, as Elastic (390 days) and Datadog (15 months) do. That would be its own ADR.
 
@@ -270,13 +274,13 @@ As in the earlier revision, with these precisions:
 
 ### 11. Compaction of archived objects
 
-Held late parts (§3) limit new small objects while the data is in ClickHouse. Once a part is dropped, nothing merges it, so an old partition still accumulates one object per late batch. A compactor merges those objects in the bucket. It is a later phase, enabled when the §6 metrics show it is needed.
+Held late parts (§3) limit new small objects while the data is in ClickHouse. Once a part is dropped, nothing merges it, so an old partition still accumulates one object per late batch. A compactor merges those objects in the bucket. It ships in phase 3, before traces and metrics, and runs by default; the §6 metrics show its effect.
 
 - **Scope.** Only objects whose parts are all dropped from ClickHouse, and maximal. Those parts can no longer merge or become superseded, so the compacted set is stable.
 - **Data stays inside ClickHouse.** `INSERT INTO FUNCTION s3(<new key>) SELECT … FROM s3([<old keys>])`, under `archive.limits` and the lease, with each source checked by size and ETag first and the row count checked after. New objects go to `…/partition=<id>/compaction=<id>/`.
 - **Block order is preserved.** Rows are written ordered by source block, keeping `_shard` and `_part`, so restores still load in block order and Replacing ties resolve as before (§7).
 - **Commit.** One fenced transaction records the new object, repoints its parts, and marks the old objects `superseded` in `archive_object`. They follow the superseded-object deletion of §8, and the active-object index lists the new one.
-- **Trigger.** A partition with more than `compact_min_objects` objects (default 16) or a mean object size below `compact_min_bytes` (default 64 MiB).
+- **Trigger.** A partition with more than `compaction.min_objects` objects (default 16) or a mean object size below `compaction.min_bytes` (default 64 MiB).
 - **Object Lock.** Old objects can't be deleted, so compacting doubles storage there; the compactor is off on WORM buckets unless enabled.
 - **Iceberg.** If the archive becomes an Iceberg table later, its own compaction (`rewrite_data_files`) replaces this one.
 
@@ -284,7 +288,7 @@ Held late parts (§3) limit new small objects while the data is in ClickHouse. O
 
 - **Migrator: `created_at` on tables without an ingestion column.** Add `created_at DateTime64(3) MATERIALIZED now64(3)` (not `DEFAULT`, because of the bare inserts, E6e) to `logs_v2_resource`, `traces_v3_resource` and `signoz_error_index_v2`. Metadata-only `ADD COLUMN` (E6a); deduplication of the Replacing resource tables is unaffected (E6f). `MATERIALIZED` columns are left out of `SELECT *`, so exports list columns explicitly (they already do, from the manifest). This closes the §5 limitation in phase 2.
 - **Rehydration tables:** created by the backend (§9). CLAUDE.md records the exception.
-- **Collector, phase 4:** `max_allowed_data_age_days` for the metrics exporter.
+- **Collector, phase 5:** `max_allowed_data_age_days` for the metrics exporter.
   - Default 30, the default metrics retention (`samples_v4` TTL `unix_milli + 2592000 s`). This follows the same rule as logs and traces, `max_allowed_data_age_days ≤ retention + backstop`; a 15-day default would drop points the store still keeps.
   - Points older than the limit are dropped and counted in the collector's own metrics, and points more than 10 minutes in the future are rejected. `0` disables the limit, for imports of historical data.
   - Today, points older than 30 days are already accepted and then deleted silently at the next TTL merge, so below the default nothing changes; above it the loss becomes explicit and counted.
@@ -298,10 +302,10 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 
 1. **Logs, end to end, with deletion.** State tables, inventory, the export cycle, the backstop TTL, `DROP PART`, the rehydration tables and restore, the query source, and expiry and deletion.
 2. **Resource-table hardening.** The `MATERIALIZED created_at` migrator change and closing the §5 limitation; until then, phase 1 relies on the rebuild of missing resource rows.
-3. **Traces:** the four tables, with `trace_summary` rebuilt.
-4. **Metrics:** raw and reduced tables, Replacing semantics with `FINAL`, and table selection pinned for rehydration sources.
-5. **UI**, after the frontend freeze.
-6. **Bucket compaction** (§11), when the §6 metrics call for it. `archive_object` exists from phase 1, so this phase needs no state migration.
+3. **Bucket compaction** (§11), before the signals with more late data. `archive_object` exists from phase 1, so this phase needs no state migration.
+4. **Traces:** the four tables, with `trace_summary` rebuilt.
+5. **Metrics:** raw and reduced tables, Replacing semantics with `FINAL`, and table selection pinned for rehydration sources.
+6. **UI**, after the frontend freeze.
 
 **Executed.** E1–E8 in [`0002-experiments/`](0002-experiments/): single-shard experiments with no network delay; E8 uses two containers. Their limitations are listed there.
 
@@ -329,7 +333,7 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 18. Unit tests for the block-range coverage logic, including a part with a lower block number that appears after a higher one was published.
 19. A restoration above the Editor ceiling is refused, shows the exact size, and an Admin can override it; the global budget and the concurrency limit are enforced.
 20. A bucket with Object Lock: exports succeed, and orphan cleanup failures are logged without failing the cycle.
-21. Phase 4: metrics older than `max_allowed_data_age_days` are dropped by the exporter and counted; with `0` they are accepted.
+21. Phase 5: metrics older than `max_allowed_data_age_days` are dropped by the exporter and counted; with `0` they are accepted.
 22. Restorations against an external ClickHouse user without `CREATE TABLE` fail with an explicit error, and archiving continues.
 23. Archive enabled, then retention changed in the UI, then the reconciler and the automatic extension run: the backstop is still in `create_table_query`, and in existing parts after `MATERIALIZE TTL` (recalculate only).
 24. An archived object replaced or truncated in the bucket, or a manifest edited: the restoration fails as `corrupt` and loads nothing.
@@ -337,7 +341,7 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 26. Logs with custom retention: partitions are selected by their own `_retention_days`; parts moved to the cold volume are exported and dropped.
 27. Export and restore queries carry the `archive.limits` settings (checked in `system.query_log`), and no more than `concurrency` run at once.
 28. Late rows trickling into an archived partition: they are exported as one object once `late_min_rows` is reached, or at `late_max_hold`, and never dropped before.
-29. Phase 6: compacting a partition's objects leaves restoration results identical, row for row and in block order, with the old objects superseded; a source with a mismatched ETag aborts the compaction; on an Object Lock bucket it doesn't run unless enabled.
+29. Phase 3: compacting a partition's objects leaves restoration results identical, row for row and in block order, with the old objects superseded; a source with a mismatched ETag aborts the compaction; on an Object Lock bucket it doesn't run unless enabled.
 
 ## For the team to confirm
 
@@ -350,10 +354,10 @@ The decisions below are proposed from the market review in "Market references". 
 5. **The resource-table limitation accepted in phase 1** with the rebuild fallback, closed in phase 2, plus the operator rule (§5).
 6. **Services and topology out of scope** on restored traces; later, query-time derivation or longer retention for live aggregates in their own ADR (§9).
 7. **Archiving at retention;** compliance copies via the pipeline; Object Lock compatible (§1, §3).
-8. **Dropping metrics older than the metrics retention (default 30 days)** in the exporter, phase 4, configurable, with `0` disabling it for historical imports. It is a behaviour change for users who send old points, and needs a release note.
+8. **Dropping metrics older than the metrics retention (default 30 days)** in the exporter, phase 5, configurable, with `0` disabling it for historical imports. It is a behaviour change for users who send old points, and needs a release note.
 9. **Superseded objects:** an active-object index per commit for external readers, and their deletion after 30 days except on Object Lock buckets (§8).
 10. **Archive expiry by bucket lifecycle, and erasure out of scope** (§10).
-11. **Small objects:** late parts held up to `late_max_hold` in phase 1, `archive_object` separate from `archive_part` from phase 1, and bucket compaction as phase 6 (§3, §11).
+11. **Small objects:** late parts held up to `late_max_hold` in phase 1, `archive_object` separate from `archive_part` from phase 1, and bucket compaction in phase 3, on by default except on Object Lock buckets (§3, §11).
 
 ## Evidence
 
