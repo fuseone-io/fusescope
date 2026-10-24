@@ -611,3 +611,39 @@ retention:
   # How often organizations are checked for an unset retention. This also picks up
   # the organization created at first sign-up.
   reconcile_interval: 1m
+
+##################### Archive #####################
+# Long-term archive of telemetry to object storage, as Parquet (docs/adr/0002).
+archive:
+  # How often the export cycle runs.
+  interval: 1h
+  # Applied to every export and restore query.
+  limits:
+    # Archive queries running at once, across the cycle.
+    concurrency: 1
+    # Per query, in bytes. 0 leaves the server default.
+    max_memory_usage: 2147483648
+    # Per query; also max_insert_threads on restore.
+    max_threads: 4
+    row_group_rows: 100000
+  # Superseded objects are deleted after this many days, except on Object Lock
+  # buckets. 0 keeps them.
+  gc_superseded_days: 30
+  logs:
+    enabled: false
+    # ClickHouse named collection holding the bucket endpoint and credentials.
+    named_collection: ""
+    prefix: ""
+    # Days past retention that unarchived data is kept, counted from ingestion.
+    # 2–30, and at least twice the interval.
+    backstop_days: 7
+    # Parts landing in an archived partition are exported once they total
+    # late_min_rows, or late_max_hold after first seen (below half the backstop).
+    late_min_rows: 1000000
+    late_max_hold: 24h
+    compaction:
+      enabled: true
+      # A partition is compacted when it has more objects than min_objects, or a
+      # mean object size below min_bytes.
+      min_objects: 16
+      min_bytes: 67108864
