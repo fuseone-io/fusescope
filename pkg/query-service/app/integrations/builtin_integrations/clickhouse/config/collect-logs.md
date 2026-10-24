@@ -67,26 +67,18 @@ processors:
     timeout: 10s
 
 exporters:
-  # export to FuseScope
-  otlp/clickhouse-logs:
-    endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
+  otlp/fusescope:
+    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}
     tls:
-      insecure: false
-    headers:
-      "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
-
-  # export to local collector
-  # otlp/clickhouse-logs:
-  #   endpoint: "localhost:4317"
-  #   tls:
-  #     insecure: true
+      # set to false when the FuseScope endpoint uses TLS
+      insecure: true
 
 service:
   pipelines:
     logs/clickhouse:
       receivers: [filelog/clickhouse]
       processors: [batch]
-      exporters: [otlp/clickhouse-logs]
+      exporters: [otlp/fusescope]
 ```
 
 #### Set Environment Variables
@@ -109,9 +101,6 @@ export CLICKHOUSE_TIMEZONE="Etc/UTC"
 
 # OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/
 export OTLP_DESTINATION_ENDPOINT="<fusescope-otel-collector-host>:4317"
-
-# your FuseScope ingestion key
-export SIGNOZ_INGESTION_KEY="<ingestion-key>"
 
 ```
 

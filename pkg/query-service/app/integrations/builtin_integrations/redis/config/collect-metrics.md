@@ -39,19 +39,11 @@ processors:
       hostname_sources: ["os"]
 
 exporters:
-  # export to FuseScope
-  otlp/redis:
-    endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
+  otlp/fusescope:
+    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}
     tls:
-      insecure: false
-    headers:
-      "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
-
-  # export to local collector
-  # otlp/redis:
-  #   endpoint: "localhost:4317"
-  #   tls:
-  #     insecure: true
+      # set to false when the FuseScope endpoint uses TLS
+      insecure: true
 
 service:
   pipelines:
@@ -59,7 +51,7 @@ service:
       receivers: [redis]
       # note: remove this processor if the collector host is not running on the same host as the redis instance
       processors: [resourcedetection/system]
-      exporters: [otlp/redis]
+      exporters: [otlp/fusescope]
 ```
 
 #### Set Environment Variables
@@ -78,9 +70,6 @@ export REDIS_PASSWORD=""
 
 # OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/
 export OTLP_DESTINATION_ENDPOINT="<fusescope-otel-collector-host>:4317"
-
-# your FuseScope ingestion key
-export SIGNOZ_INGESTION_KEY="<ingestion-key>"
 
 ```
 
