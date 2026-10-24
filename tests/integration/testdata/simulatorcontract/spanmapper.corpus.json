@@ -1,0 +1,2077 @@
+{
+ "spans": {
+  "llm": [
+   {
+    "attributes": {
+     "llm.model_name": "gpt-4o",
+     "llm.token_count.prompt": 12,
+     "llm.token_count.completion": 30,
+     "openinference.span.kind": "LLM",
+     "input.value": "hi",
+     "output.value": "hello",
+     "session.id": "s1",
+     "llm.finish_reason": "stop"
+    },
+    "resource": {
+     "service.name": "chat",
+     "deployment.environment": "prod"
+    }
+   },
+   {
+    "attributes": {
+     "gen_ai.request.model": "claude-sonnet",
+     "gen_ai.system": "anthropic",
+     "gen_ai.usage.prompt_tokens": 5,
+     "gen_ai.usage.completion_tokens": 7,
+     "gen_ai.prompt": "[{\"role\":\"user\",\"content\":\"hi\"}]",
+     "gen_ai.completion": "hello",
+     "llm.request.type": "chat",
+     "gen_ai.server.time_to_first_token": 0.42
+    },
+    "resource": {
+     "deployment.environment": "old",
+     "deployment.environment.name": "staging"
+    }
+   },
+   {
+    "attributes": {
+     "ai.model.id": "gpt-4o-mini",
+     "ai.model.provider": "openai.chat",
+     "ai.usage.promptTokens": 7,
+     "ai.usage.completionTokens": 9,
+     "ai.prompt.messages": "[]",
+     "ai.response.text": "ok",
+     "ai.response.toolCalls": "[]",
+     "ai.response.finishReason": "stop",
+     "ai.usage.cachedInputTokens": 2,
+     "ai.usage.reasoningTokens": 4
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "model": "llama",
+     "input_tokens": 1.5,
+     "output_tokens": "10",
+     "cache_read_tokens": 3,
+     "cache_creation_tokens": 1,
+     "gen_ai.usage.reasoning_tokens": 6,
+     "langfuse.session.id": "lf"
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "http.method": "GET",
+     "http.route": "/orders"
+    },
+    "resource": {
+     "service.name": "api"
+    }
+   },
+   {
+    "attributes": {
+     "embedding.model_name": "text-embedding-3",
+     "reranker.model_name": "rerank-v1",
+     "llm.vendor": "cohere"
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "gen_ai.request.model": "x",
+     "gen_ai.response.model": "x-2024",
+     "llm.response.model": "y",
+     "llm.provider": "p",
+     "gen_ai.provider.name": "already"
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {},
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "llm.input_messages": [
+      "a",
+      "b"
+     ],
+     "flag": true,
+     "nested": {
+      "a": 1,
+      "b": {
+       "c": "d"
+      }
+     },
+     "llm.model_name": "gpt",
+     "gen_ai.response.time_to_first_chunk": 0.18
+    },
+    "resource": {}
+   }
+  ],
+  "agent": [
+   {
+    "attributes": {
+     "crewai.agent.role": "researcher",
+     "agent.name": "r",
+     "agent_id": "a1",
+     "crewai.agent.id": "c1",
+     "final_result": "done",
+     "traceloop.span.kind": "agent"
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "agent.name": "planner",
+     "agent.description": "plans",
+     "agent.id": "p1"
+    },
+    "resource": {
+     "deployment.environment": "dev"
+    }
+   },
+   {
+    "attributes": {
+     "agent_name": "x",
+     "openinference.span.kind": "AGENT"
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "user.agent": "Mozilla/5.0"
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "service": "no match"
+    },
+    "resource": {
+     "agent.host": "h"
+    }
+   }
+  ],
+  "tool": [
+   {
+    "attributes": {
+     "tool.name": "search",
+     "tool.description": "web",
+     "tool.id": "t0",
+     "input.value": "q",
+     "output.value": "r"
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "ai.toolCall.name": "calc",
+     "ai.toolCall.id": "t1",
+     "ai.toolCall.args": "{}",
+     "ai.toolCall.result": "4"
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "gcp.vertex.agent.tool_call_args": "a",
+     "gcp.vertex.agent.tool_response": "b",
+     "tool_use_id": "u"
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "gen_ai.client.tool_name": "x",
+     "tool_name": "y",
+     "gen_ai.client.tool_use_id": "g",
+     "traceloop.entity.input": "in",
+     "traceloop.entity.output": "out"
+    },
+    "resource": {
+     "deployment.environment": "qa"
+    }
+   }
+  ],
+  "generic": [
+   {
+    "attributes": {
+     "src.a": "A",
+     "src.b": "B",
+     "other": "o",
+     "num": 5,
+     "dbl": 2.5,
+     "bool": true,
+     "arr": [
+      "x",
+      "y"
+     ],
+     "map": {
+      "k": "v"
+     }
+    },
+    "resource": {
+     "res.a": "RA",
+     "service.name": "svc"
+    }
+   },
+   {
+    "attributes": {
+     "src.b": "B only"
+    },
+    "resource": {
+     "res.a": "RA2"
+    }
+   },
+   {
+    "attributes": {
+     "target": "existing",
+     "src.a": "A2"
+    },
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "unrelated": "u"
+    },
+    "resource": {
+     "res.match": "m",
+     "res.a": "RA3"
+    }
+   },
+   {
+    "attributes": {},
+    "resource": {}
+   },
+   {
+    "attributes": {
+     "SRC.A": "upper",
+     "xsrc.a": "prefixed"
+    },
+    "resource": {
+     "target": "res-existing"
+    }
+   }
+  ]
+ },
+ "cases": [
+  {
+   "name": "Copy_SingleSource",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "target",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Move_SingleSource",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "target",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "move",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Priority_HighestWins",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "picked",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         },
+         {
+          "key": "src.b",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 20,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Priority_FallbackWhenMissing",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "picked",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.b",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 20,
+          "enabled": true
+         },
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         },
+         {
+          "key": "other",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 5,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Priority_EqualKeepsOrder",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "picked",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         },
+         {
+          "key": "src.b",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Priority_MoveOnlyWinner",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "picked",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "move",
+          "priority": 20,
+          "enabled": true
+         },
+         {
+          "key": "src.b",
+          "context": "attribute",
+          "operation": "move",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Source_FromResource",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "from_res",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "res.a",
+          "context": "resource",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Source_FromResourceMove",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "from_res",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "res.a",
+          "context": "resource",
+          "operation": "move",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Target_Resource",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "res.target",
+       "fieldContext": "resource",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Target_ResourceMoveFromAttribute",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "res.target",
+       "fieldContext": "resource",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "move",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Target_ResourceFromResource",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "res.copy",
+       "fieldContext": "resource",
+       "config": {
+        "sources": [
+         {
+          "key": "res.a",
+          "context": "resource",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Target_AlreadyPresent",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "target",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Target_AlreadyPresentResource",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "SRC",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "target",
+       "fieldContext": "resource",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Target_SameAsSource",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "src.a",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.b",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Target_SameAsSourceMove",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "src.a",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "move",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Values_Typed",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "t.num",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "num",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      },
+      {
+       "name": "t.dbl",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "dbl",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      },
+      {
+       "name": "t.bool",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "bool",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      },
+      {
+       "name": "t.arr",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "arr",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      },
+      {
+       "name": "t.map",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "map",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Values_TypedMove",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "t.arr",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "arr",
+          "context": "attribute",
+          "operation": "move",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      },
+      {
+       "name": "t.map",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "map",
+          "context": "attribute",
+          "operation": "move",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Condition_ResourceSubstring",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [],
+      "resource": [
+       {
+        "value": "res.match",
+        "enabled": true
+       }
+      ]
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "unrelated",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Condition_AttributesOrResource",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": [
+       {
+        "value": "match",
+        "enabled": true
+       }
+      ]
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         },
+         {
+          "key": "unrelated",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 5,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Condition_NoMatch",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "nothing.like.this",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Condition_CaseSensitive",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "SRC",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "SRC.A",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Condition_SubstringInsideKey",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "rc.",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "xsrc.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         },
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 5,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Condition_MatchesValueNotKey",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "B only",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Condition_DisabledKey",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": false
+       },
+       {
+        "value": "unrelated",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Condition_AllKeysDisabled",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": false
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Source_Disabled",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "picked",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.b",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 20,
+          "enabled": false
+         },
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Source_AllDisabled",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "picked",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": false
+         }
+        ]
+       },
+       "enabled": true
+      },
+      {
+       "name": "kept",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.b",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mapper_Disabled",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "off",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": false
+      },
+      {
+       "name": "on",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.b",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mapper_AllDisabled",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "off",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Group_Disabled",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": false,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Groups_None",
+   "spans": "generic",
+   "groups": []
+  },
+  {
+   "name": "Groups_Chained",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "first",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "stage1",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    },
+    {
+     "name": "second",
+     "condition": {
+      "attributes": [
+       {
+        "value": "stage",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "stage2",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "stage1",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Groups_SameTarget",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "first",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "shared",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    },
+    {
+     "name": "second",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "shared",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.b",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mappers_SameSourceCopyThenMove",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "t1",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      },
+      {
+       "name": "t2",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "move",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mappers_SameSourceMoveThenCopy",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "t1",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "move",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      },
+      {
+       "name": "t2",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mappers_SameTarget",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "shared",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      },
+      {
+       "name": "shared",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.b",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mappers_ChainedWithinGroup",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "stage1",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      },
+      {
+       "name": "stage2",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "stage1",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Group_NameWithSpecialChars",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "my group/v1.0 ünï",
+     "condition": {
+      "attributes": [
+       {
+        "value": "src",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "src.a",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mapper_DottedSourceVsNested",
+   "spans": "generic",
+   "groups": [
+    {
+     "name": "g",
+     "condition": {
+      "attributes": [
+       {
+        "value": "map",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "hit",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "map.k",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 10,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "System_LLM",
+   "spans": "llm",
+   "groups": [],
+   "systemGroups": [
+    "gen_ai.llm"
+   ]
+  },
+  {
+   "name": "System_Agent",
+   "spans": "agent",
+   "groups": [],
+   "systemGroups": [
+    "gen_ai.agent"
+   ]
+  },
+  {
+   "name": "System_Tool",
+   "spans": "tool",
+   "groups": [],
+   "systemGroups": [
+    "gen_ai.tool"
+   ]
+  },
+  {
+   "name": "System_All_LLMSpans",
+   "spans": "llm",
+   "groups": [],
+   "systemGroups": [
+    "gen_ai.agent",
+    "gen_ai.llm",
+    "gen_ai.tool"
+   ]
+  },
+  {
+   "name": "System_All_AgentSpans",
+   "spans": "agent",
+   "groups": [],
+   "systemGroups": [
+    "gen_ai.agent",
+    "gen_ai.llm",
+    "gen_ai.tool"
+   ]
+  },
+  {
+   "name": "System_All_ToolSpans",
+   "spans": "tool",
+   "groups": [],
+   "systemGroups": [
+    "gen_ai.agent",
+    "gen_ai.llm",
+    "gen_ai.tool"
+   ]
+  },
+  {
+   "name": "System_LLM_GenericSpans",
+   "spans": "generic",
+   "groups": [],
+   "systemGroups": [
+    "gen_ai.llm"
+   ]
+  },
+  {
+   "name": "System_LLMWithUserGroup",
+   "spans": "llm",
+   "groups": [
+    {
+     "name": "custom",
+     "condition": {
+      "attributes": [
+       {
+        "value": "model",
+        "enabled": true
+       }
+      ],
+      "resource": []
+     },
+     "enabled": true,
+     "mappers": [
+      {
+       "name": "gen_ai.request.model",
+       "fieldContext": "attribute",
+       "config": {
+        "sources": [
+         {
+          "key": "model",
+          "context": "attribute",
+          "operation": "copy",
+          "priority": 100,
+          "enabled": true
+         }
+        ]
+       },
+       "enabled": true
+      }
+     ]
+    }
+   ],
+   "systemGroups": [
+    "gen_ai.llm"
+   ]
+  }
+ ]
+}
