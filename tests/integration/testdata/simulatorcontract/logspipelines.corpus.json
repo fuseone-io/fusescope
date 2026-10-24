@@ -1,0 +1,4419 @@
+{
+ "logs": {
+  "text": [
+   {
+    "timestamp": 1704164645000000000,
+    "id": "text-0",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "GET /api/orders 200 1532 0.042",
+    "resources_string": {
+     "service.name": "checkout"
+    },
+    "attributes_string": {
+     "method": "GET"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "text-1",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "2024-01-02 03:04:05 ERROR checkout failed: card declined",
+    "resources_string": {
+     "service.name": "payment"
+    },
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "text-2",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "10.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] \"GET /apache_pb.gif HTTP/1.0\" 200 2326 \"http://www.example.com/start.html\" \"Mozilla/4.08\"",
+    "resources_string": {},
+    "attributes_string": {
+     "method": "POST"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "text-3",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "text-4",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "plain text ünïcødé \"quoted\" $HOME 100%",
+    "resources_string": {},
+    "attributes_string": {
+     "message": "attr message"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   }
+  ],
+  "json": [
+   {
+    "timestamp": 1704164645000000000,
+    "id": "json-0",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "{\"level\":\"info\",\"msg\":\"order placed\",\"host\":\"web-1\",\"service\":\"checkout\",\"env\":\"prod\",\"trace_id\":\"0123456789abcdef0123456789abcdef\",\"span_id\":\"0123456789abcdef\",\"flags\":\"01\",\"order\":{\"id\":42,\"total\":19.99,\"items\":[\"a\",\"b\"],\"paid\":true,\"meta\":{\"source\":\"web\"}}}",
+    "resources_string": {
+     "service.name": "orig"
+    },
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "json-1",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "{\"severity\":\"ERROR\",\"message\":\"payment failed\",\"hostname\":\"web-2\",\"appname\":\"payment\",\"service.env\":\"staging\",\"trace.id\":\"abcdefabcdefabcdefabcdefabcdefab\",\"span.id\":\"abcdefabcdefabcd\",\"code\":500,\"retry\":null}",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "json-2",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "  {\"status\":\"warn\",\"log\":\"padded json\",\"n\":12345678901234567890}\n",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "json-3",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "[1,2,3]",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "json-4",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "\"just a string\"",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "json-5",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "{\"msg\": broken",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "json-6",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "not json at all",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "json-7",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "{\"level\":\"debug\",\"msg\":\"nested\",\"a\":{\"b\":{\"c\":{\"d\":\"deep\"}}},\"a.b\":\"dotted\",\"list\":[{\"k\":1}]}",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "json-8",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "{}",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "json-9",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "{\"level\":3,\"msg\":\"numeric level\",\"ok\":false,\"ratio\":0.5}",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   }
+  ],
+  "attrs": [
+   {
+    "timestamp": 1704164645000000000,
+    "id": "attrs-0",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "attrs one",
+    "resources_string": {
+     "service.name": "checkout",
+     "deployment.environment.name": "prod",
+     "host.name": "web-1"
+    },
+    "attributes_string": {
+     "level": "warn",
+     "http.method": "POST",
+     "message": "from attr",
+     "payload": "{\"k\":\"v\",\"n\":1,\"o\":{\"p\":\"q\"}}",
+     "user": "alice"
+    },
+    "attributes_int": {
+     "status": 404,
+     "count": 3
+    },
+    "attributes_float": {
+     "latency": 0.25,
+     "ratio": 1.0
+    },
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "attrs-1",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "attrs two",
+    "resources_string": {
+     "service.name": "payment"
+    },
+    "attributes_string": {
+     "level": "ERROR",
+     "message": "second",
+     "user": "bob"
+    },
+    "attributes_int": {
+     "status": 200
+    },
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "attrs-2",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "attrs three",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "attrs-3",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "attrs four",
+    "resources_string": {
+     "service.name": "Checkout-API"
+    },
+    "attributes_string": {
+     "payload": "not json"
+    },
+    "attributes_int": {
+     "status": 503,
+     "level": 17
+    },
+    "attributes_float": {
+     "level_f": 3.0,
+     "bad": 2.5
+    },
+    "attributes_bool": {}
+   }
+  ],
+  "single": [
+   {
+    "timestamp": 1704164645000000000,
+    "id": "single-0",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "WARN",
+    "severity_number": 13,
+    "body": "single",
+    "resources_string": {
+     "service.name": "checkout"
+    },
+    "attributes_string": {
+     "level": "warn",
+     "user": "carol"
+    },
+    "attributes_int": {
+     "status": 500
+    },
+    "attributes_float": {
+     "latency": 1.5
+    },
+    "attributes_bool": {}
+   }
+  ],
+  "times": [
+   {
+    "timestamp": 1000000000000000000,
+    "id": "times-0",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "times one",
+    "resources_string": {},
+    "attributes_string": {
+     "ts_iso": "2024-01-02T03:04:05.123456+0530",
+     "ts_plain": "2024-01-02 03:04:05",
+     "ts_nginx": "10/Oct/2000:13:55:36 -0700",
+     "ts_zulu": "2024-01-02T03:04:05Z",
+     "ts_s": "1704164645",
+     "ts_ms": "1704164645123",
+     "ts_us": "1704164645123456",
+     "ts_ns": "1704164645123456789",
+     "ts_sms": "1704164645.123",
+     "ts_sus": "1704164645.123456",
+     "ts_sns": "1704164645.123456789",
+     "ts_bad": "yesterday",
+     "ts_month": "Jan 02 2024 03:04:05 PM",
+     "ts_date": "02/01/2024"
+    },
+    "attributes_int": {
+     "epoch_int": 1704164645,
+     "epoch_ms_int": 1704164645123
+    },
+    "attributes_float": {
+     "epoch_float": 1704164645.5
+    },
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1000000000000000000,
+    "id": "times-1",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "times two",
+    "resources_string": {},
+    "attributes_string": {
+     "ts_iso": "2024-13-45T99:99:99.0+0000",
+     "ts_plain": "2024-01-02T03:04:05",
+     "ts_s": " 1704164645 ",
+     "ts_ms": "17041646451234567890123",
+     "ts_sms": "1704164645",
+     "ts_zulu": "2024-01-02 03:04:05Z"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1000000000000000000,
+    "id": "times-2",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "times three",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   }
+  ],
+  "severity": [
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s0",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "INFO"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s1",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "info"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s2",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "Warning"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s3",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "err"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s4",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "FATAL"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s5",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "unknown"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s6",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": ""
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s7",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "Trace"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s8",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "dbg"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s9",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "5xx"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s10",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "CRITICAL"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-s11",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {
+     "level": "notice"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-i0",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {
+     "level": 404
+    },
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-i1",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {
+     "level": 200
+    },
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-i2",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {
+     "level": 500
+    },
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-i3",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {
+     "level": 302
+    },
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-i4",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {
+     "level": 9
+    },
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-i5",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {
+     "level": 0
+    },
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-f0",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {
+     "level": 3.0
+    },
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-f1",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {
+     "level": 2.5
+    },
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-f2",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "sev",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {
+     "level": 404.0
+    },
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "sev-none",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "WARN",
+    "severity_number": 13,
+    "body": "sev no level",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   }
+  ],
+  "trace": [
+   {
+    "timestamp": 1704164645000000000,
+    "id": "trace-0",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "trace valid",
+    "resources_string": {},
+    "attributes_string": {
+     "trace": "0123456789abcdef0123456789abcdef",
+     "span": "0123456789abcdef",
+     "flags": "01"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "trace-1",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "trace upper",
+    "resources_string": {},
+    "attributes_string": {
+     "trace": "0123456789ABCDEF0123456789ABCDEF",
+     "span": "0123456789ABCDEF",
+     "flags": "1"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "trace-2",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "trace short",
+    "resources_string": {},
+    "attributes_string": {
+     "trace": "abcd",
+     "span": "12",
+     "flags": "ff"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "trace-3",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "trace odd",
+    "resources_string": {},
+    "attributes_string": {
+     "trace": "abc",
+     "span": "123",
+     "flags": "zz"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "trace-4",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "trace bad",
+    "resources_string": {},
+    "attributes_string": {
+     "trace": "zzzz0123456789abcdef0123456789ab",
+     "span": "zzzz456789abcdef"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "trace-5",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "trace long",
+    "resources_string": {},
+    "attributes_string": {
+     "trace": "0123456789abcdef0123456789abcdef00",
+     "span": "0123456789abcdef00",
+     "flags": "0101"
+    },
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "trace-6",
+    "trace_id": "",
+    "span_id": "",
+    "trace_flags": 0,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "trace int",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {
+     "trace": 12345,
+     "span": 678,
+     "flags": 1
+    },
+    "attributes_float": {},
+    "attributes_bool": {}
+   },
+   {
+    "timestamp": 1704164645000000000,
+    "id": "trace-7",
+    "trace_id": "preset-trace-id",
+    "span_id": "presetsp",
+    "trace_flags": 1,
+    "severity_text": "",
+    "severity_number": 0,
+    "body": "trace none",
+    "resources_string": {},
+    "attributes_string": {},
+    "attributes_int": {},
+    "attributes_float": {},
+    "attributes_bool": {}
+   }
+  ]
+ },
+ "cases": [
+  {
+   "name": "Grok_WordsAndNumbers_ToAttributes",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:method} %{URIPATH:path} %{NUMBER:status} %{NUMBER:bytes} %{NUMBER:duration}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_TypeConversions",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:method} %{URIPATH:path} %{NUMBER:status:int} %{NUMBER:bytes:int} %{NUMBER:duration:float}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_CombinedApacheLog",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{COMBINEDAPACHELOG}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_CommonApacheLog",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{COMMONAPACHELOG}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_TimestampLevelMessage",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{TIMESTAMP_ISO8601:ts} %{LOGLEVEL:level} %{GREEDYDATA:message}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_DottedFieldNames",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:http.method} %{URIPATH:http.path} %{NUMBER:http.status_code:int}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_UnnamedPatterns",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD} %{URIPATH:path} %{NUMBER}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_InlineRegexCapture",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "(?<verb>[A-Z]+) (?<rest>.*)",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_GreedyWholeBody",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{GREEDYDATA:all}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_ParseFromAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:first} %{WORD:second}",
+       "parse_from": "attributes.message",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_ParseFromMissingAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:first}",
+       "parse_from": "attributes.absent",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_ParseToNestedAttribute",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:method} %{URIPATH:path}",
+       "parse_from": "body",
+       "parse_to": "attributes.http",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_ParseToResource",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:method} %{URIPATH:path}",
+       "parse_from": "body",
+       "parse_to": "resource",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_ParseToBody",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:method} %{URIPATH:path}",
+       "parse_from": "body",
+       "parse_to": "body",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_NoMatch_OnErrorSend",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "^%{IP:client} %{WORD:verb}$",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_NoMatch_OnErrorDrop",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "^%{WORD:method} %{URIPATH:path} .*$",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "drop"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_NoMatch_OnErrorSendQuiet",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "^%{WORD:method} %{URIPATH:path} .*$",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send_quiet"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_NoMatch_OnErrorDropQuiet",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "^%{WORD:method} %{URIPATH:path} .*$",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "drop_quiet"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_NoOnError",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:method} %{URIPATH:path}",
+       "parse_from": "body",
+       "parse_to": "attributes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_InvalidPattern_ConfigError",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{NOSUCHPATTERN:x}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_EmptyMatchField",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:method} %{URIPATH:path}(?: %{WORD:optional})?",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_OverwritesExistingAttribute",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:method} %{GREEDYDATA:rest}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grok_JSONBody",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "\\{\"level\":\"%{WORD:level}\"",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_NamedGroups_ToAttributes",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<method>[A-Z]+) (?P<path>\\S+) (?P<status>\\d+)",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_NoMatch_Skipped",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<ip>\\d+\\.\\d+\\.\\d+\\.\\d+) - (?P<user>\\w+)",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_OptionalGroupUnmatched",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<method>[A-Z]+) (?P<path>\\S+)(?: (?P<missing>zzz))?",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_EscapesAndQuotes",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "\"(?P<request>[^\"]*)\" (?P<status>\\d{3}) (?P<size>\\d+) \"(?P<referer>[^\"]*)\"",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_ParseFromAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<word>\\w+) (?P<rest>.*)$",
+       "parse_from": "attributes.message",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_ParseFromMissingAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<word>\\w+)",
+       "parse_from": "attributes.absent",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_ParseFromIntAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<first>\\d)(?P<rest>\\d+)$",
+       "parse_from": "attributes.status",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_ParseToNested",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<method>[A-Z]+) (?P<path>\\S+)",
+       "parse_from": "body",
+       "parse_to": "attributes.req",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_ParseToResource",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<method>[A-Z]+) (?P<path>\\S+)",
+       "parse_from": "body",
+       "parse_to": "resource",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_ParseToBody",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<method>[A-Z]+) (?P<path>\\S+)",
+       "parse_from": "body",
+       "parse_to": "body",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_InvalidRegex_ConfigError",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<x>[A-Z+",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_NoNamedGroup",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^([A-Z]+) (\\S+)",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_Unicode",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "(?P<word>ü\\S+)",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_EmptyBody",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<anything>.*)$",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Regex_OnErrorDrop_Matched",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "regex_parser",
+       "regex": "^(?P<verb>GET) ",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "drop"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_ToAttributes",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_ToBody",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "body"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_ToNestedAttribute",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes.parsed"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_ToResource",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "resource"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_FromAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "attributes.payload",
+       "parse_to": "attributes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_FromMissingAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "attributes.absent",
+       "parse_to": "attributes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_Flattening",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "enable_flattening": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_FlatteningWithPaths",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "enable_flattening": true,
+       "enable_paths": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_FlatteningWithPathPrefix",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "enable_flattening": true,
+       "enable_paths": true,
+       "path_prefix": "body"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_FlatteningToBody",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "body",
+       "enable_flattening": true,
+       "enable_paths": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_PredefinedMapping",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "enable_flattening": true,
+       "enable_paths": true,
+       "mapping": {
+        "environment": [
+         "service.env",
+         "environment",
+         "env"
+        ],
+        "host": [
+         "host",
+         "hostname",
+         "host.name"
+        ],
+        "message": [
+         "message",
+         "msg",
+         "log"
+        ],
+        "service": [
+         "service",
+         "appname"
+        ],
+        "severity": [
+         "status",
+         "severity",
+         "level"
+        ],
+        "span_id": [
+         "span_id",
+         "span.id"
+        ],
+        "trace_flags": [
+         "flags"
+        ],
+        "trace_id": [
+         "trace_id",
+         "trace.id"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_PredefinedMapping_NoFlattening",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "mapping": {
+        "environment": [
+         "service.env",
+         "environment",
+         "env"
+        ],
+        "host": [
+         "host",
+         "hostname",
+         "host.name"
+        ],
+        "message": [
+         "message",
+         "msg",
+         "log"
+        ],
+        "service": [
+         "service",
+         "appname"
+        ],
+        "severity": [
+         "status",
+         "severity",
+         "level"
+        ],
+        "span_id": [
+         "span_id",
+         "span.id"
+        ],
+        "trace_flags": [
+         "flags"
+        ],
+        "trace_id": [
+         "trace_id",
+         "trace.id"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_MappingSubset",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "mapping": {
+        "severity": [
+         "level"
+        ],
+        "message": [
+         "msg"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_MappingFromNestedParseTo",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes.j",
+       "mapping": {
+        "host": [
+         "host"
+        ],
+        "trace_id": [
+         "trace_id"
+        ],
+        "severity": [
+         "level"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_UserIfCondition",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "if": "body matches \"order\""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_ExplicitOnErrorIgnored",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "drop"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "JSON_ParseTwice",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes"
+      },
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "id": "second"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trace_AllFields",
+   "logs": "trace",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "trace_parser",
+       "trace_id": {
+        "parse_from": "attributes.trace"
+       },
+       "span_id": {
+        "parse_from": "attributes.span"
+       },
+       "trace_flags": {
+        "parse_from": "attributes.flags"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trace_TraceIDOnly",
+   "logs": "trace",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "trace_parser",
+       "trace_id": {
+        "parse_from": "attributes.trace"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trace_SpanIDOnly",
+   "logs": "trace",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "trace_parser",
+       "span_id": {
+        "parse_from": "attributes.span"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trace_FlagsOnly",
+   "logs": "trace",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "trace_parser",
+       "trace_flags": {
+        "parse_from": "attributes.flags"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trace_OnErrorDrop",
+   "logs": "trace",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "trace_parser",
+       "on_error": "drop",
+       "trace_id": {
+        "parse_from": "attributes.trace"
+       },
+       "span_id": {
+        "parse_from": "attributes.span"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trace_OnErrorSendQuiet",
+   "logs": "trace",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "trace_parser",
+       "on_error": "send_quiet",
+       "trace_id": {
+        "parse_from": "attributes.trace"
+       },
+       "span_id": {
+        "parse_from": "attributes.span"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trace_MissingFields",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "trace_parser",
+       "trace_id": {
+        "parse_from": "attributes.trace"
+       },
+       "span_id": {
+        "parse_from": "attributes.span"
+       },
+       "trace_flags": {
+        "parse_from": "attributes.flags"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trace_EmptyParseFromDropped",
+   "logs": "trace",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "trace_parser",
+       "trace_id": {
+        "parse_from": "attributes.trace"
+       },
+       "span_id": {
+        "parse_from": ""
+       },
+       "trace_flags": {
+        "parse_from": ""
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trace_FromJSONBody",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes.j"
+      },
+      {
+       "type": "trace_parser",
+       "trace_id": {
+        "parse_from": "attributes.j.trace_id"
+       },
+       "span_id": {
+        "parse_from": "attributes.j.span_id"
+       },
+       "trace_flags": {
+        "parse_from": "attributes.j.flags"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_StrptimeDefaultLayout",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_iso",
+       "layout_type": "strptime",
+       "layout": "%Y-%m-%dT%H:%M:%S.%f%z"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_StrptimePlain",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_plain",
+       "layout_type": "strptime",
+       "layout": "%Y-%m-%d %H:%M:%S"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_StrptimeNginx",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_nginx",
+       "layout_type": "strptime",
+       "layout": "%d/%b/%Y:%H:%M:%S %z"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_StrptimeZuluLiteral",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_zulu",
+       "layout_type": "strptime",
+       "layout": "%Y-%m-%dT%H:%M:%SZ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_StrptimeMonthNameAndPM",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_month",
+       "layout_type": "strptime",
+       "layout": "%b %d %Y %I:%M:%S %p"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_StrptimeDateOnly",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_date",
+       "layout_type": "strptime",
+       "layout": "%d/%m/%Y"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_StrptimeISOShortcuts",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_plain",
+       "layout_type": "strptime",
+       "layout": "%F %T"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_StrptimeNoMatch_Skipped",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_bad",
+       "layout_type": "strptime",
+       "layout": "%Y-%m-%d"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_StrptimeInvalidLayout_ConfigError",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_plain",
+       "layout_type": "strptime",
+       "layout": "%Y-%m-%d %Q"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochSeconds",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_s",
+       "layout_type": "epoch",
+       "layout": "s"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochMillis",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_ms",
+       "layout_type": "epoch",
+       "layout": "ms"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochMicros",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_us",
+       "layout_type": "epoch",
+       "layout": "us"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochNanos",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_ns",
+       "layout_type": "epoch",
+       "layout": "ns"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochSecondsMillis",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_sms",
+       "layout_type": "epoch",
+       "layout": "s.ms"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochSecondsMicros",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_sus",
+       "layout_type": "epoch",
+       "layout": "s.us"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochSecondsNanos",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_sns",
+       "layout_type": "epoch",
+       "layout": "s.ns"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochIntAttribute",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.epoch_int",
+       "layout_type": "epoch",
+       "layout": "s"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochMillisIntAttribute",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.epoch_ms_int",
+       "layout_type": "epoch",
+       "layout": "ms"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochFloatAttribute",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.epoch_float",
+       "layout_type": "epoch",
+       "layout": "s.ms"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochMissing",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.absent",
+       "layout_type": "epoch",
+       "layout": "s"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_EpochInvalidLayout_ConfigError",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_s",
+       "layout_type": "epoch",
+       "layout": "minutes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time_OnErrorDrop",
+   "logs": "times",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.ts_iso",
+       "layout_type": "strptime",
+       "layout": "%Y-%m-%dT%H:%M:%S.%f%z",
+       "on_error": "drop"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_DefaultMapping",
+   "logs": "severity",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.level",
+       "mapping": {
+        "trace": [
+         "trace"
+        ],
+        "debug": [
+         "debug"
+        ],
+        "info": [
+         "info"
+        ],
+        "warn": [
+         "warn"
+        ],
+        "error": [
+         "error"
+        ],
+        "fatal": [
+         "fatal"
+        ]
+       },
+       "overwrite_text": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_NoOverwriteText",
+   "logs": "severity",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.level",
+       "mapping": {
+        "trace": [
+         "trace"
+        ],
+        "debug": [
+         "debug"
+        ],
+        "info": [
+         "info"
+        ],
+        "warn": [
+         "warn"
+        ],
+        "error": [
+         "error"
+        ],
+        "fatal": [
+         "fatal"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_CustomMapping",
+   "logs": "severity",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.level",
+       "mapping": {
+        "trace": [
+         "Trace"
+        ],
+        "debug": [
+         "dbg"
+        ],
+        "info": [
+         "notice",
+         "INFO"
+        ],
+        "warn": [
+         "Warning",
+         "4xx"
+        ],
+        "error": [
+         "err",
+         "5xx"
+        ],
+        "fatal": [
+         "CRITICAL",
+         "FATAL"
+        ]
+       },
+       "overwrite_text": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_HTTPStatusRanges",
+   "logs": "severity",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.level",
+       "mapping": {
+        "info": [
+         "2xx",
+         "3xx"
+        ],
+        "warn": [
+         "4xx"
+        ],
+        "error": [
+         "5xx"
+        ]
+       },
+       "overwrite_text": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_NumericValues",
+   "logs": "severity",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.level",
+       "mapping": {
+        "debug": [
+         "0"
+        ],
+        "info": [
+         "9",
+         "200"
+        ],
+        "error": [
+         "500",
+         "404"
+        ],
+        "warn": [
+         "3"
+        ]
+       },
+       "overwrite_text": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_EmptyLevelLists",
+   "logs": "severity",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.level",
+       "mapping": {
+        "trace": [],
+        "debug": [],
+        "info": [
+         "info"
+        ],
+        "warn": [],
+        "error": [],
+        "fatal": []
+       },
+       "overwrite_text": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_UppercaseMappingKeys",
+   "logs": "severity",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.level",
+       "mapping": {
+        "ERROR": [
+         "err"
+        ],
+        "Info": [
+         "info"
+        ]
+       },
+       "overwrite_text": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_NoMapping",
+   "logs": "severity",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.level",
+       "mapping": {},
+       "overwrite_text": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_DefaultSeverityMappingTable",
+   "logs": "severity",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.level",
+       "mapping": {
+        "trace": [
+         "TRACE",
+         "Trace",
+         "trace",
+         "trc",
+         "Trc"
+        ],
+        "debug": [
+         "DEBUG",
+         "Debug",
+         "debug",
+         "dbg",
+         "Dbg"
+        ],
+        "info": [
+         "INFO",
+         "Info",
+         "info"
+        ],
+        "warn": [
+         "WARN",
+         "Warn",
+         "warn",
+         "warning",
+         "Warning",
+         "wrn",
+         "Wrn"
+        ],
+        "error": [
+         "ERROR",
+         "Error",
+         "error",
+         "err",
+         "Err",
+         "ERR",
+         "fail",
+         "Fail",
+         "FAIL"
+        ],
+        "fatal": [
+         "FATAL",
+         "Fatal",
+         "fatal",
+         "critical",
+         "Critical",
+         "CRITICAL",
+         "crit",
+         "Crit",
+         "CRIT",
+         "panic",
+         "Panic",
+         "PANIC"
+        ]
+       },
+       "overwrite_text": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_FromBody",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "body",
+       "mapping": {
+        "trace": [
+         "trace"
+        ],
+        "debug": [
+         "debug"
+        ],
+        "info": [
+         "info"
+        ],
+        "warn": [
+         "warn"
+        ],
+        "error": [
+         "error"
+        ],
+        "fatal": [
+         "fatal"
+        ]
+       },
+       "overwrite_text": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Severity_OnErrorDrop",
+   "logs": "severity",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.level",
+       "mapping": {
+        "info": [
+         "info"
+        ]
+       },
+       "on_error": "drop",
+       "overwrite_text": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_LiteralAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.team",
+       "value": "payments"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_LiteralResource",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "resource.team",
+       "value": "payments"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_LiteralBody",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "body",
+       "value": "replaced body"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_OverwriteExisting",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.level",
+       "value": "overwritten"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_NestedAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.a.b",
+       "value": "nested"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_BracketField",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes[\"k8s.pod.name\"]",
+       "value": "pod-1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_DollarValues",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.cost",
+       "value": "costs $5 or ${HOME} or $$"
+      },
+      {
+       "type": "add",
+       "field": "attributes.env_like",
+       "value": "$HOME",
+       "id": "op2b"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ExprConcat",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.who",
+       "value": "EXPR(attributes.user + \"@\" + resource[\"service.name\"])"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ExprNumber",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.double_status",
+       "value": "EXPR(attributes.status * 2)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ExprFloat",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.latency_ms",
+       "value": "EXPR(attributes.latency * 1000)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ExprBool",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.is_error",
+       "value": "EXPR(attributes.status >= 400)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ExprMissingField_Skipped",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.derived",
+       "value": "EXPR(attributes.absent + \"x\")"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ExprBodyField",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.level_from_body",
+       "value": "EXPR(body.level)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ExprWholeBody",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.body_upper",
+       "value": "EXPR(upper(body))"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ExprTimestampAndSeverity",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.sev",
+       "value": "EXPR(severity_text)"
+      },
+      {
+       "type": "add",
+       "field": "attributes.year",
+       "value": "EXPR(timestamp.Year())",
+       "id": "op2b"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ExprMap",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.obj",
+       "value": "EXPR({\"a\": attributes.level, \"n\": 1})"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ExprInvalid_ConfigError",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.bad",
+       "value": "EXPR(attributes.level +)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_UserIfCondition",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.flagged",
+       "value": "yes",
+       "if": "attributes.level == \"warn\""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Add_ToResourceThenFilterSeesIt",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "resource.tier",
+       "value": "gold"
+      }
+     ]
+    },
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.saw_tier",
+       "value": "true"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "tier",
+         "dataType": "string",
+         "type": "resource",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "=",
+        "value": "gold"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Remove_Attribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "remove",
+       "field": "attributes.level"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Remove_MissingAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "remove",
+       "field": "attributes.absent"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Remove_Resource",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "remove",
+       "field": "resource[\"service.name\"]"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Remove_Body",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "remove",
+       "field": "body"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Remove_BracketAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "remove",
+       "field": "attributes[\"http.method\"]"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Remove_NestedFromParsedJSON",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes.j"
+      },
+      {
+       "type": "remove",
+       "field": "attributes.j.order.meta"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Remove_AllAttributes",
+   "logs": "single",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "remove",
+       "field": "attributes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Move_AttributeToAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "move",
+       "from": "attributes.user",
+       "to": "attributes.user_name"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Move_OverwriteExisting",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "move",
+       "from": "attributes.message",
+       "to": "attributes.level"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Move_AttributeToResource",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "move",
+       "from": "attributes.user",
+       "to": "resource.user"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Move_BodyToAttribute",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "move",
+       "from": "body",
+       "to": "attributes.original"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Move_AttributeToBody",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "move",
+       "from": "attributes.message",
+       "to": "body"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Move_Missing",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "move",
+       "from": "attributes.absent",
+       "to": "attributes.dest"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Move_BracketPaths",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "move",
+       "from": "attributes[\"http.method\"]",
+       "to": "attributes[\"http.request.method\"]"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Move_IntAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "move",
+       "from": "attributes.status",
+       "to": "resource.status"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Move_NestedOutOfParsedJSON",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes.j"
+      },
+      {
+       "type": "move",
+       "from": "attributes.j.order",
+       "to": "attributes.order"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Copy_AttributeToAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "copy",
+       "from": "attributes.user",
+       "to": "attributes.user_copy"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Copy_AttributeToResource",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "copy",
+       "from": "attributes.level",
+       "to": "resource.level"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Copy_BodyToAttribute",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "copy",
+       "from": "body",
+       "to": "attributes.raw"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Copy_ResourceToAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "copy",
+       "from": "resource[\"service.name\"]",
+       "to": "attributes.service"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Copy_Missing",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "copy",
+       "from": "attributes.absent",
+       "to": "attributes.dest"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Copy_FloatAttribute",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "copy",
+       "from": "attributes.latency",
+       "to": "attributes.latency_copy"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Copy_MapAttribute",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes.j"
+      },
+      {
+       "type": "copy",
+       "from": "attributes.j.order",
+       "to": "attributes.order_copy"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Retain_Fields",
+   "logs": "single",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "retain",
+       "fields": [
+        "attributes.level"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Remove_AllResource",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "remove",
+       "field": "resource"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Normalize_JSONBody",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "normalize",
+       "if": "body != nil"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Normalize_TextBody",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "normalize",
+       "if": "body != nil"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Normalize_ThenJSONParser",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "normalize",
+       "if": "body != nil"
+      }
+     ]
+    },
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Filter_AttributeEquals",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "level",
+         "dataType": "string",
+         "type": "tag",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "=",
+        "value": "warn"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_AttributeNotEquals",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "level",
+         "dataType": "string",
+         "type": "tag",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "!=",
+        "value": "warn"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_ResourceIn",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "service.name",
+         "dataType": "string",
+         "type": "resource",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "in",
+        "value": [
+         "checkout",
+         "payment"
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_ResourceNotIn",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "service.name",
+         "dataType": "string",
+         "type": "resource",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "nin",
+        "value": [
+         "checkout"
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_ContainsCaseInsensitive",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "service.name",
+         "dataType": "string",
+         "type": "resource",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "contains",
+        "value": "CHECKOUT"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_NotContains",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "service.name",
+         "dataType": "string",
+         "type": "resource",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "ncontains",
+        "value": "checkout"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_Regex",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "body",
+         "dataType": "string",
+         "type": "",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "regex",
+        "value": "^GET"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_NotRegex",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "body",
+         "dataType": "string",
+         "type": "",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "nregex",
+        "value": "^GET"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_BodyContains",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "body",
+         "dataType": "string",
+         "type": "",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "contains",
+        "value": "FAILED"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_AttributeExists",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "user",
+         "dataType": "string",
+         "type": "tag",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "exists"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_AttributeNotExists",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "user",
+         "dataType": "string",
+         "type": "tag",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "nexists"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_NumericGreaterThan",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "status",
+         "dataType": "int64",
+         "type": "tag",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": ">",
+        "value": 400
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_NumericLessOrEqual",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "status",
+         "dataType": "int64",
+         "type": "tag",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "<=",
+        "value": 404
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_BodyJSONFieldExists",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "body.msg",
+         "dataType": "string",
+         "type": "",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "exists"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_BodyJSONFieldNotExists",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "body.msg",
+         "dataType": "string",
+         "type": "",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "nexists"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_OrOperator",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "OR",
+      "items": [
+       {
+        "key": {
+         "key": "level",
+         "dataType": "string",
+         "type": "tag",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "=",
+        "value": "warn"
+       },
+       {
+        "key": {
+         "key": "status",
+         "dataType": "int64",
+         "type": "tag",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "=",
+        "value": 200
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Filter_SeverityText",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "filter": {
+      "op": "AND",
+      "items": [
+       {
+        "key": {
+         "key": "severity_text",
+         "dataType": "string",
+         "type": "",
+         "isColumn": false,
+         "isJSON": false
+        },
+        "op": "=",
+        "value": "INFO"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "Pipeline_Disabled",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1"
+      }
+     ],
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "name": "Pipeline_AllOperatorsDisabled",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.hit",
+       "value": "1",
+       "enabled": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Pipeline_DisabledMiddleOperator",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.one",
+       "value": "1"
+      },
+      {
+       "type": "add",
+       "field": "attributes.two",
+       "value": "2",
+       "enabled": false
+      },
+      {
+       "type": "add",
+       "field": "attributes.three",
+       "value": "3"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Pipeline_DisabledLastOperator",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.one",
+       "value": "1"
+      },
+      {
+       "type": "add",
+       "field": "attributes.two",
+       "value": "2",
+       "enabled": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Pipeline_OrderMatters",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.step",
+       "value": "first"
+      }
+     ]
+    },
+    {
+     "config": [
+      {
+       "type": "copy",
+       "from": "attributes.step",
+       "to": "attributes.seen_by_second"
+      },
+      {
+       "type": "add",
+       "field": "attributes.step",
+       "value": "second",
+       "id": "op2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Pipeline_DuplicateAliases",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.a",
+       "value": "1"
+      }
+     ],
+     "alias": "same"
+    },
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.b",
+       "value": "2"
+      }
+     ],
+     "alias": "same"
+    }
+   ]
+  },
+  {
+   "name": "Pipeline_AliasWithSpecialChars",
+   "logs": "attrs",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "add",
+       "field": "attributes.a",
+       "value": "1"
+      }
+     ],
+     "alias": "my pipeline/v1.0"
+    }
+   ]
+  },
+  {
+   "name": "Pipeline_NoPipelines",
+   "logs": "attrs",
+   "pipelines": []
+  },
+  {
+   "name": "Pipeline_ManyOperatorsChain",
+   "logs": "text",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "grok_parser",
+       "pattern": "%{WORD:method} %{URIPATH:path} %{NUMBER:status:int} %{NUMBER:bytes:int} %{NUMBER:duration:float}",
+       "parse_from": "body",
+       "parse_to": "attributes",
+       "on_error": "send"
+      },
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.status",
+       "mapping": {
+        "info": [
+         "2xx"
+        ],
+        "error": [
+         "5xx"
+        ]
+       },
+       "overwrite_text": true
+      },
+      {
+       "type": "move",
+       "from": "attributes.path",
+       "to": "attributes.http.path"
+      },
+      {
+       "type": "copy",
+       "from": "attributes.method",
+       "to": "resource.method"
+      },
+      {
+       "type": "add",
+       "field": "attributes.parsed",
+       "value": "true"
+      },
+      {
+       "type": "remove",
+       "field": "attributes.bytes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Pipeline_ParseThenTimeAndSeverity",
+   "logs": "json",
+   "pipelines": [
+    {
+     "config": [
+      {
+       "type": "json_parser",
+       "parse_from": "body",
+       "parse_to": "attributes.j"
+      },
+      {
+       "type": "severity_parser",
+       "parse_from": "attributes.j.level",
+       "mapping": {
+        "trace": [
+         "trace"
+        ],
+        "debug": [
+         "debug"
+        ],
+        "info": [
+         "info"
+        ],
+        "warn": [
+         "warn"
+        ],
+        "error": [
+         "error"
+        ],
+        "fatal": [
+         "fatal"
+        ]
+       },
+       "overwrite_text": true
+      },
+      {
+       "type": "time_parser",
+       "parse_from": "attributes.j.ts",
+       "layout_type": "epoch",
+       "layout": "s"
+      },
+      {
+       "type": "move",
+       "from": "attributes.j.msg",
+       "to": "body"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
