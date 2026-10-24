@@ -18,7 +18,7 @@ Thanks for helping. This page is the short version of how we work; the engineeri
 
 - **Tests first.** A behaviour change starts with a test that fails; a bug fix starts with a regression test that fails on `main` and stays in the tree. Copy tweaks, generated code and behaviour-preserving refactors are exempt.
 - **SQLite and PostgreSQL.** Anything persisted works on both; run the affected integration suite with `--sqlstore-provider sqlite` and `postgres`.
-- **License.** The source is MIT. New dependencies are MIT, BSD, Apache-2.0 or ISC only. Never read or copy SigNoz's proprietary `ee/` code: features that only existed there are written clean-room, and the commit says so. Don't add imports of `fusescope-otel-collector` (AGPL-3.0). Docs are written from our code, never adapted from signoz.io (CC BY-NC-ND).
+- **License.** The source is MIT. New dependencies are MIT, BSD, Apache-2.0 or ISC only. Never read or copy SigNoz's proprietary `ee/` code: features that only existed there are written clean-room, and the commit says so. Don't add imports of `fusescope-otel-collector` (AGPL-3.0); `make agpl-check` fails on any. Docs are written from our code, never adapted from signoz.io (CC BY-NC-ND).
 - **Enterprise-only tests** that the community build can't pass are skipped at collection with a reason that links the roadmap issue, never deleted or left failing.
 - **Generated files** (OpenAPI spec, API client, mocks, semconv) are regenerated with the `make gen-*` targets, never hand-edited.
 - **Area guides.** Go: [`docs/contributing/go/`](docs/contributing/go/). Frontend: [`frontend/AGENTS.md`](frontend/AGENTS.md).

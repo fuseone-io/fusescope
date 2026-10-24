@@ -109,4 +109,4 @@ Issues e pull requests são bem-vindos. Leia o [CONTRIBUTING.md](CONTRIBUTING.md
 
 O FuseScope se apoia no trabalho do time e da comunidade do [SigNoz](https://signoz.io), cujo código sob licença MIT é a base deste projeto. "SigNoz" é marca da SigNoz Inc.; o FuseScope não é afiliado nem endossado pela SigNoz Inc.
 
-O código-fonte deste repositório é distribuído sob a [Licença MIT](LICENSE). O backend depende de pacotes Go do [fusescope-otel-collector](https://github.com/fuseone-io/fusescope-otel-collector), licenciado sob **AGPL-3.0**; por isso, os binários e imagens compilados do FuseScope incluem código AGPL-3.0 e devem ser distribuídos em conformidade com essa licença.
+O código-fonte deste repositório é distribuído sob a [Licença MIT](LICENSE), e o binário do backend `fusescope` é somente MIT: não inclui código AGPL. O [fusescope-otel-collector](https://github.com/fuseone-io/fusescope-otel-collector) é um programa separado, licenciado sob **AGPL-3.0**. Os avisos de terceiros estão no [NOTICE](NOTICE).

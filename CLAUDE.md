@@ -26,10 +26,11 @@ skills, hooks): [`docs/contributing/claude-code.md`](docs/contributing/claude-co
   re-implemented **clean-room**: work from our interfaces, the MIT code and public
   docs; never read, copy or translate `ee/` code from git history or upstream.
   Say so in the commit message.
-- The backend imports packages from `fusescope-otel-collector` (AGPL-3.0), so
-  compiled binaries include AGPL code. Do not add new imports of collector
-  packages; prefer moving shared code (schema constants, helpers) into this repo
-  clean-room.
+- The backend binary links no `fusescope-otel-collector` (AGPL-3.0) code
+  ([ADR 0001](docs/adr/0001-agpl-collector-dependency.md)). Do not add imports of
+  collector packages; write shared code (schema constants, helpers) in this repo
+  clean-room. `make agpl-check` (`scripts/agplguard`, the `goci` job) fails on
+  any collector package. Third-party code is attributed in `NOTICE`.
 - Keep SigNoz copyright notices intact (`LICENSE`, file headers).
 
 ## Tests first
