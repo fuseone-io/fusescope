@@ -46,6 +46,9 @@ def test_get_quick_filters_returns_defaults(
             assert "fieldDataType" in field_key
             assert "key" not in field_key
 
+    ai_filters = next(f["filters"] for f in data if f["source"] == "ai_observability")
+    assert [f["name"] for f in ai_filters[:2]] == ["deployment.environment.name", "deployment.environment"]
+
 
 def test_v1_get_serves_legacy_shape(
     signoz: types.SigNoz,
