@@ -272,6 +272,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRUMSourceMapsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddAIObservabilityEnvironmentNameQuickFilterFactory(sqlstore),
 		sqlmigration.NewAddInstalledIntegrationVersionFactory(sqlschema),
+		sqlmigration.NewAddArchiveFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRUMSourceMapKindFactory(sqlschema),
 	)
 }
