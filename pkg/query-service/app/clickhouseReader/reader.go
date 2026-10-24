@@ -957,26 +957,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 		}
 	}
 
-	deleteAfter := retentiontypes.IntervalSeconds(params.DelDuration)
-	moveAfter := retentiontypes.IntervalSeconds(params.ToColdStorageDuration)
-
-	// TTL query for logs_v2 table
-	ttlLogsV2 := retentiontypes.TTLClause{Time: retentiontypes.UnixNanoTime("timestamp"), Delete: deleteAfter, Volume: params.ColdStorageVolume, MoveAfter: moveAfter}.Statement(tableNameArray[0], r.cluster)
-
-	// TTL query for logs_v2_resource table
-	// adding 1800 as our bucket size is 1800 seconds
-	ttlLogsV2Resource := retentiontypes.TTLClause{Time: retentiontypes.ResourceBucketTime, Delete: deleteAfter, Volume: params.ColdStorageVolume, MoveAfter: moveAfter}.Statement(tableNameArray[1], r.cluster)
-
-	ttlLogsV2AttributeKeys := retentiontypes.TTLClause{Time: "timestamp", Delete: deleteAfter}.Statement(tableNameArray[2], r.cluster)
-
-	ttlLogsV2ResourceKeys := retentiontypes.TTLClause{Time: "timestamp", Delete: deleteAfter}.Statement(tableNameArray[3], r.cluster)
-
-	ttlPayload := map[string]string{
-		tableNameArray[0]: ttlLogsV2,
-		tableNameArray[1]: ttlLogsV2Resource,
-		tableNameArray[2]: ttlLogsV2AttributeKeys,
-		tableNameArray[3]: ttlLogsV2ResourceKeys,
-	}
+	ttlPayload := logsTTLStatements(logsTTLTables{Logs: tableNameArray[0], Resource: tableNameArray[1], AttributeKeys: tableNameArray[2], ResourceKeys: tableNameArray[3]}, r.cluster, params)
 
 	// set the ttl if nothing is pending/ no errors
 	go func(ttlPayload map[string]string) {
@@ -1101,15 +1082,20 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 		}
 	}
 
+	localTableNames := make([]string, len(tableNames))
+	for i, distributedTableName := range tableNames {
+		localTableNames[i] = getLocalTableName(distributedTableName)
+	}
+	statements := tracesTTLStatements(tracesTTLTables{
+		Tables:             localTableNames,
+		Resource:           getLocalTableName(r.TraceDB + "." + r.traceResourceTableV3),
+		Summary:            getLocalTableName(r.TraceDB + "." + r.traceSummaryTable),
+		SpanAttributesKeys: getLocalTableName(r.TraceDB + "." + r.spanAttributesKeysTable),
+	}, r.cluster, params)
+
 	for _, distributedTableName := range tableNames {
 		go func(distributedTableName string) {
 			tableName := getLocalTableName(distributedTableName)
-
-			// for trace summary table, we need to use end instead of timestamp
-			timestamp := "timestamp"
-			if strings.HasSuffix(distributedTableName, r.traceSummaryTable) {
-				timestamp = "end"
-			}
 
 			ttl := retentiontypes.TTLSetting{
 				Identifiable: types.Identifiable{
@@ -1137,16 +1123,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				return
 			}
 
-			clause := retentiontypes.TTLClause{Time: retentiontypes.DateTimeOf(timestamp), Delete: retentiontypes.IntervalSeconds(params.DelDuration)}
-			if strings.HasSuffix(distributedTableName, r.traceResourceTableV3) {
-				clause.Time = retentiontypes.ResourceBucketTime
-			}
-
-			if !strings.HasSuffix(distributedTableName, r.spanAttributesKeysTable) {
-				clause.Volume = params.ColdStorageVolume
-				clause.MoveAfter = retentiontypes.IntervalSeconds(params.ToColdStorageDuration)
-			}
-			req := clause.Statement(tableName, r.cluster)
+			req := statements[tableName]
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
 				r.logger.Error("Error in setting cold storage", errorsV2.Attr(err))
@@ -1317,6 +1294,15 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 	multiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, false)
 	resourceMultiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, true)
 
+	// NOTE: Since logs support custom rule based retention, that makes it difficult to identify which attributes, resource keys
+	// we need to keep, hence choosing MAX for safe side and not to create any complex solution for this.
+	maxRetentionTTL := params.DefaultTTLDays
+	for _, rule := range params.TTLConditions {
+		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
+	}
+
+	ttlStatements := customRetentionLogsTTLStatements(logsTTLTables{Logs: tableNames[0], Resource: tableNames[1], AttributeKeys: tableNames[2], ResourceKeys: tableNames[3]}, r.cluster, params.ColdStorageVolume, maxRetentionTTL)
+
 	ttlPayload := make(map[string][]string)
 
 	queries := []string{
@@ -1334,12 +1320,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
 			distributedTableNames[0], r.cluster, coldStorageDuration))
 
-		queries = append(queries, retentiontypes.TTLClause{
-			Time:      retentiontypes.UnixNanoTime("timestamp"),
-			Delete:    retentiontypes.IntervalDaysColumn("_retention_days"),
-			Volume:    params.ColdStorageVolume,
-			MoveAfter: retentiontypes.IntervalDaysColumn("_retention_days_cold"),
-		}.Statement(tableNames[0], r.cluster))
+		queries = append(queries, ttlStatements[tableNames[0]])
 	}
 
 	ttlPayload[tableNames[0]] = queries
@@ -1358,30 +1339,14 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 		// for distributed table
 		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
 			distributedTableNames[1], r.cluster, coldStorageDuration))
-		resourceQueries = append(resourceQueries, retentiontypes.TTLClause{
-			Time:      retentiontypes.ResourceBucketTime,
-			Delete:    retentiontypes.IntervalDaysColumn("_retention_days"),
-			Volume:    params.ColdStorageVolume,
-			MoveAfter: retentiontypes.IntervalDaysColumn("_retention_days_cold"),
-		}.Statement(tableNames[1], r.cluster))
+		resourceQueries = append(resourceQueries, ttlStatements[tableNames[1]])
 	}
 
 	ttlPayload[tableNames[1]] = resourceQueries
 
-	// NOTE: Since logs support custom rule based retention, that makes it difficult to identify which attributes, resource keys
-	// we need to keep, hence choosing MAX for safe side and not to create any complex solution for this.
-	maxRetentionTTL := params.DefaultTTLDays
-	for _, rule := range params.TTLConditions {
-		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
-	}
+	ttlPayload[tableNames[2]] = []string{ttlStatements[tableNames[2]]}
 
-	ttlPayload[tableNames[2]] = []string{
-		retentiontypes.TTLClause{Time: "timestamp", Delete: retentiontypes.IntervalDays(maxRetentionTTL)}.Statement(tableNames[2], r.cluster),
-	}
-
-	ttlPayload[tableNames[3]] = []string{
-		retentiontypes.TTLClause{Time: "timestamp", Delete: retentiontypes.IntervalDays(maxRetentionTTL)}.Statement(tableNames[3], r.cluster),
-	}
+	ttlPayload[tableNames[3]] = []string{ttlStatements[tableNames[3]]}
 
 	ttlConditionsJSON, err := json.Marshal(params.TTLConditions)
 	if err != nil {
@@ -1785,6 +1750,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 	}
+	statements := metricsTTLStatements(tableNames, r.cluster, params)
 	metricTTL := func(tableName string) {
 		ttl := retentiontypes.TTLSetting{
 			Identifiable: types.Identifiable{
@@ -1811,17 +1777,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			r.logger.Error("error in inserting to ttl_status table", errorsV2.Attr(dbErr))
 			return
 		}
-		timeColumn := "timestamp_ms"
-		if strings.Contains(tableName, "v4") || strings.Contains(tableName, "exp_hist") {
-			timeColumn = "unix_milli"
-		}
-
-		req := retentiontypes.TTLClause{
-			Time:      retentiontypes.UnixMilliTime(timeColumn),
-			Delete:    retentiontypes.IntervalSeconds(params.DelDuration),
-			Volume:    params.ColdStorageVolume,
-			MoveAfter: retentiontypes.IntervalSeconds(params.ToColdStorageDuration),
-		}.Statement(tableName, r.cluster)
+		req := statements[tableName]
 		err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 		if err != nil {
 			r.logger.Error("Error in setting cold storage", errorsV2.Attr(err))
