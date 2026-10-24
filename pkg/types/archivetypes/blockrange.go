@@ -1,10 +1,15 @@
 package archivetypes
 
 import (
+	"math"
 	"slices"
 	"sort"
 	"time"
+
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
+
+var ErrCodeOverlappingParts = errors.MustNewCode("archive_overlapping_parts")
 
 // BlockRange is the inclusive block-number range of a part, from system.parts.
 type BlockRange struct {
@@ -15,11 +20,14 @@ type BlockRange struct {
 // BlockRanges is a union of block ranges, sorted and with overlapping or adjacent ranges merged.
 type BlockRanges []BlockRange
 
-// Part is an active part of one partition on one shard.
+// Part is a part of one partition on one shard. DataVersion is system.parts.data_version:
+// the part's min block until a mutation, ours included, rewrites it.
 type Part struct {
-	Name  string
-	Range BlockRange
-	Rows  uint64
+	Name        string
+	Range       BlockRange
+	DataVersion int64
+	Rows        uint64
+	FirstSeen   time.Time
 }
 
 // LateHold delays exporting parts that land in a partition already archived, so ClickHouse
@@ -29,17 +37,21 @@ type LateHold struct {
 	MaxHold time.Duration
 }
 
+func (r BlockRange) Valid() bool {
+	return r.Min <= r.Max
+}
+
 func (r BlockRange) Contains(other BlockRange) bool {
-	return r.Min <= other.Min && other.Max <= r.Max
+	return r.Valid() && other.Valid() && r.Min <= other.Min && other.Max <= r.Max
 }
 
 func NewBlockRanges(ranges ...BlockRange) BlockRanges {
-	sorted := slices.Clone(ranges)
+	sorted := slices.DeleteFunc(slices.Clone(ranges), func(r BlockRange) bool { return !r.Valid() })
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Min < sorted[j].Min })
 
 	union := make(BlockRanges, 0, len(sorted))
 	for _, r := range sorted {
-		if last := len(union) - 1; last >= 0 && r.Min <= union[last].Max+1 {
+		if last := len(union) - 1; last >= 0 && (union[last].Max == math.MaxInt64 || r.Min <= union[last].Max+1) {
 			union[last].Max = max(union[last].Max, r.Max)
 			continue
 		}
@@ -98,13 +110,21 @@ func ChooseReplica(partsByReplica map[string][]Part) (string, bool) {
 	return "", false
 }
 
-func SelectForExport(snapshot []Part, published BlockRanges) []Part {
-	return filterParts(snapshot, func(part Part) bool { return !published.Covers(part.Range) })
+func SelectForExport(snapshot []Part, published []Part) []Part {
+	return filterParts(snapshot, func(part Part) bool { return !Archived(part, published) })
 }
 
 // SelectForDrop returns the parts whose rows are all in published archive segments.
-func SelectForDrop(active []Part, published BlockRanges) []Part {
-	return filterParts(active, func(part Part) bool { return published.Covers(part.Range) })
+func SelectForDrop(active []Part, published []Part) []Part {
+	return filterParts(active, func(part Part) bool { return Archived(part, published) })
+}
+
+// Archived reports whether part's rows are all in published parts: those at its data
+// version or newer must cover its range. A merge of published parts keeps the lowest
+// version and passes; a mutation after publication raises it and forces a re-export.
+func Archived(part Part, published []Part) bool {
+	current := filterParts(published, func(p Part) bool { return p.DataVersion >= part.DataVersion })
+	return RangesOf(current).Covers(part.Range)
 }
 
 // Superseded returns the published parts whose range is contained in a newly published part.
@@ -117,8 +137,9 @@ func Superseded(published []Part, newlyPublished []Part) []Part {
 }
 
 // Maximal returns the parts not contained in another part's range. Of parts with equal
-// ranges, the last one wins; callers pass parts in publication order.
-func Maximal(parts []Part) []Part {
+// ranges, the highest data version wins. Kept parts that partially overlap are an error:
+// restoring both would duplicate rows.
+func Maximal(parts []Part) ([]Part, error) {
 	var maximal []Part
 	for i, part := range parts {
 		contained := false
@@ -126,7 +147,7 @@ func Maximal(parts []Part) []Part {
 			if i == j || !other.Range.Contains(part.Range) {
 				continue
 			}
-			if other.Range != part.Range || j > i {
+			if other.Range != part.Range || other.DataVersion > part.DataVersion || (other.DataVersion == part.DataVersion && j > i) {
 				contained = true
 				break
 			}
@@ -135,7 +156,16 @@ func Maximal(parts []Part) []Part {
 			maximal = append(maximal, part)
 		}
 	}
-	return maximal
+
+	for i, part := range maximal {
+		for _, other := range maximal[i+1:] {
+			if part.Range.Min <= other.Range.Max && other.Range.Min <= part.Range.Max {
+				return nil, errors.Newf(errors.TypeInternal, ErrCodeOverlappingParts, "published parts %s and %s overlap", part.Name, other.Name)
+			}
+		}
+	}
+
+	return maximal, nil
 }
 
 // Lost returns the parts of the previous inventory that disappeared without being
@@ -147,9 +177,24 @@ func Lost(previous []Part, current []Part, archived BlockRanges) []Part {
 	})
 }
 
+// InheritFirstSeen gives each current part the earliest FirstSeen of the previous parts its
+// range contains, so merging held parts doesn't restart their hold.
+func InheritFirstSeen(previous []Part, current []Part) []Part {
+	inherited := slices.Clone(current)
+	for i := range inherited {
+		for _, part := range previous {
+			if inherited[i].Range.Contains(part.Range) && part.FirstSeen.Before(inherited[i].FirstSeen) {
+				inherited[i].FirstSeen = part.FirstSeen
+			}
+		}
+	}
+	return inherited
+}
+
 // Ready reports whether candidates should be exported this cycle. The first export of a
-// partition is never held; later ones wait for MinRows or MaxHold since firstSeen.
-func (hold LateHold) Ready(candidates []Part, partitionHasPublished bool, firstSeen time.Time, now time.Time) bool {
+// partition is never held; later ones wait for MinRows, or MaxHold since the earliest
+// candidate was first seen.
+func (hold LateHold) Ready(candidates []Part, partitionHasPublished bool, now time.Time) bool {
 	if len(candidates) == 0 {
 		return false
 	}
@@ -158,8 +203,12 @@ func (hold LateHold) Ready(candidates []Part, partitionHasPublished bool, firstS
 	}
 
 	var rows uint64
+	firstSeen := now
 	for _, part := range candidates {
 		rows += part.Rows
+		if part.FirstSeen.Before(firstSeen) {
+			firstSeen = part.FirstSeen
+		}
 	}
 	return rows >= hold.MinRows || now.Sub(firstSeen) >= hold.MaxHold
 }
