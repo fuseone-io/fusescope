@@ -88,3 +88,23 @@ func TestBuiltinIntegrationsCollectorConfigs(t *testing.T) {
 	}
 	assert.Positive(t, snippets)
 }
+
+func TestBuiltinIntegrationsClickHouseQueryLogsNamesItsCollector(t *testing.T) {
+	repo := BuiltInIntegrations{}
+	integrations, apiErr := repo.get(context.Background(), []string{"builtin-clickhouse"})
+	require.Nil(t, apiErr)
+	clickhouse, ok := integrations["builtin-clickhouse"]
+	require.True(t, ok)
+
+	var instructions string
+	for _, step := range clickhouse.Configuration {
+		if step.Title == "Collect Query Logs" {
+			instructions = step.Instructions
+		}
+	}
+	require.NotEmpty(t, instructions)
+
+	for _, expected := range []string{"clickhousesystemtablesreceiver", "fusescope-otel-collector", "otelcol-contrib", "sqlqueryreceiver"} {
+		assert.Containsf(t, instructions, expected, "query logs step must mention %q", expected)
+	}
+}
