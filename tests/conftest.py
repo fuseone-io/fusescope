@@ -39,6 +39,7 @@ pytest_plugins = [
     "fixtures.savedview",
     "fixtures.seed_golden_dataset",
     "fixtures.otelcollector",
+    "fixtures.simulatorcontract",
 ]
 
 

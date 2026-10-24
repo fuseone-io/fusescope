@@ -93,6 +93,7 @@ jobs:
           - schemacontract
           - semconvfamilies
           - serviceaccount
+          - simulatorcontract
           - spanmapper
           - tracedetail
           - thirdpartyapi
