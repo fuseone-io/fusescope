@@ -10,7 +10,7 @@ const LABELS: Record<string, string> = {
 	'gen_ai.agent.name': 'Agent',
 	'gen_ai.tool.name': 'Tool',
 	'service.name': 'Service',
-	'deployment.environment': 'Environment',
+	'deployment.environment': 'Environment (legacy)',
 	'deployment.environment.name': 'Environment',
 };
 

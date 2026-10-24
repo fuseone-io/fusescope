@@ -73,7 +73,7 @@ describe('quickFilterLabel', () => {
 		['gen_ai.agent.name', 'Gen Ai Agent Name', 'Agent'],
 		['gen_ai.tool.name', 'Gen Ai Tool Name', 'Tool'],
 		['service.name', 'Service Name', 'Service'],
-		['deployment.environment', 'Deployment Environment', 'Environment'],
+		['deployment.environment', 'Deployment Environment', 'Environment (legacy)'],
 		['deployment.environment.name', 'Deployment Environment Name', 'Environment'],
 		['http.method', 'Http Method', 'Http Method'],
 	])('labels %s', (key, title, expected) => {
