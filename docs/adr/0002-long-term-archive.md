@@ -22,6 +22,8 @@ Facts the design rests on. They were checked against the backend, migrator and e
 - **`DROP PART` by name is exact.** Issued on the same lagging replica, it removed only the named parts and left the unfetched one intact (E5). Concurrent inserts into the partition were untouched (E7a). Dropping a name a merge already replaced fails with `NO_SUCH_DATA_PART` and changes nothing (E7a2).
 - **Reads through a Distributed table pick a replica.** `_part IN (…)` through `distributed_*` returned 107 or 100 rows depending on which replica answered (E8).
 - **Rewriting TTL doesn't reach existing parts.** The backend issues `MODIFY TTL … SETTINGS materialize_ttl_after_modify = 0`. Existing parts keep their old TTL info and expire under the old rule (E6b, E6c). `MATERIALIZE TTL` with `materialize_ttl_recalculate_only = 1` recalculates the TTL info without rewriting data (E6d).
+- **Two code paths write the live TTL.** The settings page and API (`SetTTL` / `SetTTLV2`), and the default-retention reconciler (`retention.default.*`, #143), which calls the same functions for any signal without a `ttl_setting` row. Each issues the whole TTL clause, so a later call replaces whatever TTL was there.
+- **Logs retention can be per row.** With custom retention, `_retention_days` is part of the partition key of `logs_v2` and `logs_v2_resource`, so every partition has a single retention, which can differ from the global one. Cold-storage rules (`TO VOLUME`) move whole parts between disks without renaming them.
 - **Two exporters insert without a column list.** The traces exporter writes `traces_v3_resource` and `signoz_error_index_v2` with a bare `INSERT INTO <table>`. A new `DEFAULT` column breaks those inserts; a `MATERIALIZED` column doesn't (E6e).
 - **Late data is normal.**
   - Logs and traces exporters accept rows up to `maxAllowedDataAgeDays` old, 15 days by default, which equals the default retention.
@@ -52,8 +54,9 @@ Constraints: no new imports from `fusescope-otel-collector` ([ADR 0001](0001-agp
 |---|---|---|---|
 | A row is never deleted by the archive job unless it is in a published archive segment | The job deletes only with `DROP PART <name>` of parts whose block range is covered by published segments (§4) | Part names and block ranges behave as in E5; no table mutations rewrite parts in place | A mutated part (new name, same range) is treated as changed and re-exported before its drop |
 | Late, in-progress and lagging-replica rows are archived in a later cycle | They live in parts with block ranges that no published segment covers (§3) | Block numbers are unique per shard and partition | None found in this design |
-| Data past retention is kept until archived, for at least `backstop_days` after insertion | The live TTL becomes ingestion-time based: `ingestion_column + retention + backstop`, and `MATERIALIZE TTL` (recalculate only) applies it to existing parts (§5) | The ingestion column exists and its clock is within minutes of real time | Tables without an ingestion column keep event-time TTL; late rows older than `retention + backstop` can expire before they are archived (§5, limitation) |
+| Data past retention is kept until archived, for at least `backstop_days` after insertion | The live TTL becomes ingestion-time based: `ingestion_column + retention + backstop`, and `MATERIALIZE TTL` (recalculate only) applies it to existing parts. Every TTL writer goes through one builder that adds the backstop (§5) | The ingestion column exists and its clock is within minutes of real time | Tables without an ingestion column keep event-time TTL; late rows older than `retention + backstop` can expire before they are archived (§5, limitation) |
 | Every loss is recorded | Every cycle stores a part inventory; a part that vanishes without being archived or merged into an archived part is marked `lost`, with its row count (§6) | The job ran at least once while the part existed | Parts created and expired between two runs leave no trace; only the job's downtime window is recorded |
+| A restoration loads only what was committed | SQL state, not the bucket, says which objects to load and how; each object is checked against the size, ETag and row count recorded at commit (§9) | The metastore is not writable by whoever can write the bucket | A modified, partial or replaced object fails the restoration as `corrupt` |
 | A restoration returns each archived row exactly once | Restores read only maximal published parts per shard and partition (§3); Replacing tables are read with `FINAL`, in block order (§7) | Same as row 1 | — |
 
 No time margin is used as proof of completeness anywhere.
@@ -76,6 +79,11 @@ One policy per deployment, declared in the configuration file:
 
 ```yaml
 archive:
+  limits:                # every export and restore query
+    concurrency: 1       # queries at once, cycle-wide
+    max_memory_usage: 2GiB
+    max_threads: 4       # also max_insert_threads on restore
+    row_group_rows: 100000
   <signal>:
     enabled: true
     named_collection: <name>
@@ -105,17 +113,20 @@ The API and UI show its status. Objects, manifests and state carry no organizati
 
 ### 3. Export cycle
 
-Each cycle, per table, per shard, for every partition whose days are past retention, at any age:
+Each cycle, per table, per shard, for every partition whose days are past its retention, at any age. For logs with custom retention, a partition's retention is its own `_retention_days`, read from its rows by `_partition_id`, not the global one.
 
-1. **Snapshot.** Read the active parts of the partition on every replica of the shard (`clusterAllReplicas(…, system.parts)`). Pick a replica that holds every part the others report. If none does, wait for replication, retry, and skip the partition this cycle if it is still incomplete. Partitions are selected by `min_date` past retention, never by parsing `partition_id`.
+1. **Snapshot.** Read the active parts of the partition on every replica of the shard (`clusterAllReplicas(…, system.parts)`). Pick a replica whose active parts' block ranges cover the union of the ranges reported by all replicas. Coverage is by range, not by name: during a merge one replica can hold `1_5_1` while another still has `1_3_0` and `4_5_0`. If no replica covers the union, wait for replication, retry, and skip the partition this cycle if it is still not covered. Partitions are selected by `min_date` past retention, never by parsing `partition_id`.
 2. **Select.** Candidates are the snapshot parts whose block range is not already contained in the published ranges of that shard and partition.
-3. **Export.** The selected parts go out in one attempt, read on the chosen replica with `WHERE _part IN (<names>)`. The job connects directly to that replica (host and port from `system.clusters`) with `use_hedged_requests = 0`, and runs the `INSERT INTO FUNCTION s3(…) SELECT` there. It never reads through `distributed_*` (E8).
+3. **Export.** The selected parts go out in one attempt, read on the chosen replica with `WHERE _part IN (<names>)`. The job connects directly to that replica (host and port from `system.clusters`) with `use_hedged_requests = 0`, and runs the `INSERT INTO FUNCTION s3(…) SELECT` there. It never reads through `distributed_*` (E8). The backend therefore needs network access and credentials to every replica, on the secure port with TLS when the cluster uses it; the chart and external-ClickHouse docs say so.
    - Objects are written to `…/<table>/day=YYYY-MM-DD/shard=<n>/partition=<id>/attempt=<id>/<part-name>.parquet` (Hive-style, `day` from `min_date`), without the truncate setting, so a collision is an error. Every file also carries `_shard` and `_part` columns, so external engines don't depend on the path.
    - The rows read back from each object must equal the part's `rows`. Parts are immutable, so this compares a stable set. If a part merges away during the read, the counts differ and the attempt is abandoned.
-4. **Manifest.** A new key, never overwritten, lists for each part its name, range, rows, object key and size, plus the source columns and types and the migrator version.
+4. **Manifest.** A new key, never overwritten, lists for each part its name, range, rows, object key, size and ETag, plus the source columns and types, the column mapping, the `format_version` and the migrator version. It is for external readers; restores don't trust it (§9).
 5. **Commit.** One SQL transaction, fenced by the lease epoch:
-   - The parts become `published` in `archive_part (table, shard, partition_id, min_block, max_block, part_name, rows, attempt_id, status)`.
+   - The parts become `published` in `archive_part (table, shard, partition_id, min_block, max_block, part_name, rows, object_key, bytes, etag, attempt_id, status)`.
+   - The attempt's column mapping, `format_version` and the manifest's SHA-256 are stored in `archive_attempt`.
    - Any published part whose range is contained in a newly published part becomes `superseded`. That happens when exported parts merged with later rows before being dropped.
+
+**Load on ClickHouse.** Small installs have run out of memory before, so every export runs with the `archive.limits` settings (`max_memory_usage`, `max_threads`, `output_format_parquet_row_group_size`), one partition per query, and at most `concurrency` archive queries at a time across the cycle. Restores insert under the same limits.
 
 **Related tables.** `logs_v2` with `logs_v2_resource`, and the trace tables, are exported in the same cycle but committed per table. Restores take only partitions that are complete in every table of the set (§7).
 
@@ -141,6 +152,10 @@ After commit, the job drops the published parts that are still active, by name, 
 When the archive is enabled for a signal, the backend rewrites the live TTL of its tables to `<ingestion column> + retention + backstop_days`. It keeps the delete expression shape the backend already issues (`SetTTL` / `SetTTLV2`), using `greatest` with the event-time expression so nothing expires earlier than today. It then runs `MATERIALIZE TTL` with `materialize_ttl_recalculate_only = 1` on every table of the signal; without it, parts that already exist would still expire under the old TTL (E6c). Existing parts get `created_at = now` for TTL purposes, so their life is extended until the job archives and drops them.
 
 The backend uses an ingestion column only after finding it in `system.columns`, as it already does for `_retention_days`.
+
+**One TTL builder.** The retention module has a single function that builds a table's TTL clause. While the archive is enabled for the signal, it always includes `ingestion column + retention + backstop`, with any active automatic extension, plus the existing cold-storage (`TO VOLUME`) rules. Every writer goes through it: the settings page and API, the default-retention reconciler, archive enable and disable, and the automatic extension. Without that, a retention change made after enabling would reissue the plain event-time TTL and remove the backstop. Enabling also records a `ttl_setting` row, so the reconciler sees the signal as configured.
+
+**`MATERIALIZE TTL` load.** It is one background mutation per part, on every table of the signal. On enable, the backend runs it one table at a time, waits for the mutation in `system.mutations` before the next, and on large stores the operator can schedule the enable.
 
 **Example:** retention 15 d, backstop 7 d, job down for 3 days. When it comes back, it exports and drops every partition past retention that is still present, including the days that are now 16–18 days old. They are covered because the TTL for them is ingestion time + 22 d.
 
@@ -170,6 +185,7 @@ How likely: logs and traces exporters drop rows older than `max_allowed_data_age
 - Alerts: *warning* when a partition has been past retention and unarchived for one day, *critical* at half the backstop, and an immediate alert for `lost` parts.
 - A metric counts rows inserted per cycle into partitions already past retention + backstop, for every archived table. For the resource tables it uses the main table's timestamp.
 - The policy status shows **TTL extended** while §5's automatic extension is active, with the current backstop.
+- The policy status and the retention settings say that live queries can return data older than retention until it is archived and dropped: up to retention + backstop, longer while extended. Otherwise "I set 7 days and see 12" becomes a support question.
 
 **Policy changes.**
 
@@ -207,7 +223,8 @@ Exported files follow a type contract compatible with Iceberg v2, fixed before p
 | `Map(String, String)` | Parquet `MAP` | |
 
 - **Format version.** Manifests carry a `format_version`. Release N restores segments written by format versions N and N-1, as Tempo keeps reading the previous block version. Older segments need a restore adapter, or fail as `incompatible`.
-- **Old schemas.** Segments are restored by explicit column mapping from their manifest. A migration that renames or retypes an archived column must ship a restore adapter.
+- **Old schemas.** Segments are restored by the explicit column mapping stored in SQL at commit (§3), not by the manifest's copy. A migration that renames or retypes an archived column must ship a restore adapter.
+- **External readers** read through manifests, never by listing raw prefixes, because superseded objects (§3) stay in the bucket and duplicate rows. Each commit writes a new immutable index key per table listing the active objects, which the reader takes from the highest commit; a later Iceberg table can replace it. Superseded objects are deleted after `gc_superseded_days` (default 30) on buckets without Object Lock, and kept on WORM buckets.
 - **Acceptance.** DuckDB and pyarrow (or Trino) read every exported table with the types above.
 
 ### 9. Restoration
@@ -219,8 +236,11 @@ As in the earlier revision, with these precisions:
   - Restoration tables are a read model of the query path, like Elastic's separate `restored-*` indices, and the reader adapts to the archive's version, as Loki and Tempo do. Owning them in the backend avoids a collector (AGPL) release for every schema change. It is an exception to the CLAUDE.md rule that the migrator owns the telemetry schema, recorded there if accepted, with these bounds:
     - The backend creates and drops only `rehydrated_*` tables. It never changes the columns of live tables; its existing writes to them stay limited to TTL and the `_retention_days` defaults.
     - Replicated restoration tables get a Keeper path unique per table, and are dropped with `DROP TABLE … SYNC` so no Keeper metadata is left behind.
-    - Projections, skip indexes and the live TTL are stripped from the derived DDL.
+    - The derivation keeps an explicit allowlist of clauses (columns with codecs, engine, `ORDER BY`, `PRIMARY KEY`, settings) and rebuilds the rest, rather than editing the DDL string. Projections, skip indexes and the live TTL are thus left out. Golden tests pin the result for every live table.
+    - A guard in the one function that issues restoration DDL refuses any `CREATE` or `DROP` whose table name doesn't match `^rehydrated_`.
+    - Restoration inputs (time range, `rehydration_id`) go through `pkg/clickhousesql` like every other identifier and literal.
   - **Privileges.** The default chart connects as `admin`, which can create tables. With an external ClickHouse, the operator must grant `CREATE TABLE` and `DROP TABLE` on the restoration tables. Without the grant, restorations are unavailable with an explicit error, and archiving still works.
+- **Source of truth.** Restores read `archive_part` and `archive_attempt`, not the bucket manifest. Before loading, each object's size and ETag, or its row count from the Parquet footer, are compared with the commit. Any difference, or a manifest whose hash no longer matches, fails the restoration as `corrupt` instead of loading wrong data. This covers an object or manifest edited by anyone with bucket write access, and a partial or replaced object on a bucket without Object Lock.
 - **What is loaded.** Only maximal published parts are loaded (not superseded, and not contained in another published part's range), in block order, and only for partitions complete in every table of the signal's set.
   - `trace_summary` is rebuilt from the restored spans.
   - Metrics on a rehydration source use the raw and reduced tables for every range length, never the rollups.
@@ -235,6 +255,12 @@ As in the earlier revision, with these precisions:
   - **Later**, two options, both outside phases 1–4:
     - derive RED metrics and topology at query time from `rehydrated_signoz_index_v3`, as ClickStack builds its service map from parent and child spans;
     - give the small live aggregates (`top_level_operations`, `dependency_graph_minutes_v2`, the metrics rollups) a longer retention than raw data, as Elastic (390 days) and Datadog (15 months) do. That would be its own ADR.
+
+### 10. Archive lifecycle, erasure and transport
+
+- **How long archives are kept** is the bucket's lifecycle rule (or Object Lock retention), set by the operator. The job never expires archived segments.
+- **Data-subject erasure** (GDPR, LGPD) is out of scope. Erasing rows means rewriting the affected segments and their SQL state; on a bucket in Object Lock compliance mode it is impossible until the retention ends. Deployments that need it should not use compliance mode for these prefixes.
+- **Encryption at rest** is the bucket's default encryption (SSE-S3 or SSE-KMS). **In transit**, the named collection's endpoint must be `https`; the backend refuses to enable a policy on a plain `http` endpoint unless `allow_insecure_endpoint` is set.
 
 ## Schema and ingestion dependencies
 
@@ -286,6 +312,11 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 20. A bucket with Object Lock: exports succeed, and orphan cleanup failures are logged without failing the cycle.
 21. Phase 4: metrics older than `max_allowed_data_age_days` are dropped by the exporter and counted; with `0` they are accepted.
 22. Restorations against an external ClickHouse user without `CREATE TABLE` fail with an explicit error, and archiving continues.
+23. Archive enabled, then retention changed in the UI, then the reconciler and the automatic extension run: the backstop is still in `create_table_query`, and in existing parts after `MATERIALIZE TTL` (recalculate only).
+24. An archived object replaced or truncated in the bucket, or a manifest edited: the restoration fails as `corrupt` and loads nothing.
+25. Two replicas holding the same rows in differently named parts (one merged, one not): the snapshot picks a replica by range coverage and the partition is exported.
+26. Logs with custom retention: partitions are selected by their own `_retention_days`; parts moved to the cold volume are exported and dropped.
+27. Export and restore queries carry the `archive.limits` settings (checked in `system.query_log`), and no more than `concurrency` run at once.
 
 ## For the team to confirm
 
@@ -299,6 +330,8 @@ The decisions below are proposed from the market review in "Market references". 
 6. **Services and topology out of scope** on restored traces; later, query-time derivation or longer retention for live aggregates in their own ADR (§9).
 7. **Archiving at retention;** compliance copies via the pipeline; Object Lock compatible (§1, §3).
 8. **Dropping metrics older than the metrics retention (default 30 days)** in the exporter, phase 4, configurable, with `0` disabling it for historical imports. It is a behaviour change for users who send old points, and needs a release note.
+9. **Superseded objects:** an active-object index per commit for external readers, and their deletion after 30 days except on Object Lock buckets (§8).
+10. **Archive expiry by bucket lifecycle, and erasure out of scope** (§10).
 
 ## Evidence
 
@@ -316,6 +349,8 @@ The decisions below are proposed from the market review in "Market references". 
   - `WhichSamplesTableToUse` and `WhichTSTableToUse`.
   - `tracedetail` `GetTraceBounds` on `trace_summary`.
   - `SetTTL` / `SetTTLV2`, issuing `MODIFY TTL … materialize_ttl_after_modify = 0` in `clickhouseReader/reader.go`.
+  - `implretention/defaults.go` and `clickhouseReader/retention_defaults.go`: the reconciler calls `SetTTL` / `SetTTLV2` when `HasTTLSetting` is false.
+  - `SetTTLV2`: `_retention_days` in the logs TTL and `TO VOLUME` cold-storage rules.
   - `pkg/authz` and the managed-role registry for the new kinds.
 - **ClickHouse:**
   - MergeTree TTL and settings (`ttl_only_drop_parts`, `merge_with_ttl_timeout`).
