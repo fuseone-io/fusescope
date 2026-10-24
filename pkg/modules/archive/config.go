@@ -1,13 +1,20 @@
 package archive
 
 import (
+	"regexp"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory"
 )
 
-var ErrCodeInvalidConfig = errors.MustNewCode("archive_invalid_config")
+var (
+	ErrCodeInvalidConfig = errors.MustNewCode("archive_invalid_config")
+
+	namedCollectionRegexp = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+)
 
 const (
 	minBackstopDays = 2
@@ -121,6 +128,12 @@ func (c SignalConfig) validate(key string, interval time.Duration) error {
 	}
 	if c.NamedCollection == "" || c.Prefix == "" {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidConfig, "%s.named_collection and %s.prefix are required", key, key)
+	}
+	if !namedCollectionRegexp.MatchString(c.NamedCollection) {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidConfig, "%s.named_collection must be a ClickHouse identifier", key)
+	}
+	if strings.HasPrefix(c.Prefix, "/") || slices.Contains(strings.Split(c.Prefix, "/"), "..") {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidConfig, "%s.prefix must not start with / or contain a .. segment", key)
 	}
 
 	backstop := time.Duration(c.BackstopDays) * 24 * time.Hour
