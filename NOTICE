@@ -1,0 +1,13 @@
+FuseScope
+Copyright (c) 2026-present FuseOne
+
+This repository is MIT licensed (see LICENSE). It includes third-party code
+under other licenses, listed below with its location.
+
+-------------------------------------------------------------------------------
+
+pkg/grok
+  Grok parsing library imported from github.com/vjeantet/grok v1.0.1.
+  Copyright The vjeantet/grok Authors.
+  Licensed under the Apache License, Version 2.0 (pkg/grok/LICENSE).
+  Files changed by FuseOne say so in their header.

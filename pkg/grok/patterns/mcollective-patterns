@@ -1,0 +1,7 @@
+# Copyright The vjeantet/grok Authors
+# SPDX-License-Identifier: Apache-2.0
+# Imported from github.com/vjeantet/grok v1.0.1.
+# Remember, these can be multi-line events.
+MCOLLECTIVE ., \[%{TIMESTAMP_ISO8601:timestamp} #%{POSINT:pid}\]%{SPACE}%{LOGLEVEL:event_level}
+
+MCOLLECTIVEAUDIT %{TIMESTAMP_ISO8601:timestamp}:

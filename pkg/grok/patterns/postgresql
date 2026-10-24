@@ -1,0 +1,6 @@
+# Copyright The vjeantet/grok Authors
+# SPDX-License-Identifier: Apache-2.0
+# Imported from github.com/vjeantet/grok v1.0.1.
+# Default postgresql pg_log format pattern
+POSTGRESQL %{DATESTAMP:timestamp} %{TZ} %{DATA:user_id} %{GREEDYDATA:connection_id} %{POSINT:pid}
+

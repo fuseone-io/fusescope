@@ -1,0 +1,5 @@
+# Copyright The vjeantet/grok Authors
+# SPDX-License-Identifier: Apache-2.0
+# Imported from github.com/vjeantet/grok v1.0.1.
+RUBY_LOGLEVEL (?:DEBUG|FATAL|ERROR|WARN|INFO)
+RUBY_LOGGER [DFEWI], \[%{TIMESTAMP_ISO8601:timestamp} #%{POSINT:pid}\] *%{RUBY_LOGLEVEL:loglevel} -- +%{DATA:progname}: %{GREEDYDATA:message}
