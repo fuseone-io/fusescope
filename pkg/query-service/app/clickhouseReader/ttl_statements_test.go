@@ -93,8 +93,8 @@ func TestCustomRetentionLogsTTLStatements(t *testing.T) {
 			name:   "ColdStorage_MoveRuleFromColumn",
 			volume: "cold",
 			want: map[string]string{
-				"signoz_logs.logs_v2":             "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
-				"signoz_logs.logs_v2_resource":    "ALTER TABLE signoz_logs.logs_v2_resource ON CLUSTER cluster MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days_cold) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
+				"signoz_logs.logs_v2":             "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(if(_retention_days_cold = 0, _retention_days, _retention_days_cold)) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
+				"signoz_logs.logs_v2_resource":    "ALTER TABLE signoz_logs.logs_v2_resource ON CLUSTER cluster MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(if(_retention_days_cold = 0, _retention_days, _retention_days_cold)) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
 				"signoz_logs.logs_attribute_keys": "ALTER TABLE signoz_logs.logs_attribute_keys ON CLUSTER cluster MODIFY TTL timestamp + toIntervalDay(30) DELETE SETTINGS materialize_ttl_after_modify=0",
 				"signoz_logs.logs_resource_keys":  "ALTER TABLE signoz_logs.logs_resource_keys ON CLUSTER cluster MODIFY TTL timestamp + toIntervalDay(30) DELETE SETTINGS materialize_ttl_after_modify=0",
 			},

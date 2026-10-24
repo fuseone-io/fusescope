@@ -58,7 +58,7 @@ func TestTTLClauseStatement(t *testing.T) {
 		},
 		{
 			name:    "DaysColumn_WithColdStorage",
-			ttl:     TTLClause{Time: UnixNanoTime("timestamp"), Delete: IntervalDaysColumn("_retention_days"), Volume: "cold", MoveAfter: IntervalDaysColumn("_retention_days_cold")},
+			ttl:     TTLClause{Time: UnixNanoTime("timestamp"), Delete: IntervalDaysOf("_retention_days"), Volume: "cold", MoveAfter: IntervalDaysOf("_retention_days_cold")},
 			table:   "signoz_logs.logs_v2",
 			cluster: "cluster",
 			want:    "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
