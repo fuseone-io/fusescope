@@ -62,26 +62,18 @@ processors:
     timeout: 10s
 
 exporters:
-  # export to FuseScope
-  otlp/postgres-logs:
-    endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
+  otlp/fusescope:
+    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}
     tls:
-      insecure: false
-    headers:
-      "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
-
-  # export to local collector
-  # otlp/postgres-logs:
-  #   endpoint: "localhost:4317"
-  #   tls:
-  #     insecure: true
+      # set to false when the FuseScope endpoint uses TLS
+      insecure: true
 
 service:
   pipelines:
     logs/postgresql:
       receivers: [filelog/postgresql]
       processors: [batch]
-      exporters: [otlp/postgresql-logs]
+      exporters: [otlp/fusescope]
 ```
 
 #### Set Environment Variables
@@ -97,9 +89,6 @@ export POSTGRESQL_LOG_FILE=/var/log/postgresql/postgresql.log
 
 # OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/
 export OTLP_DESTINATION_ENDPOINT="<fusescope-otel-collector-host>:4317"
-
-# your FuseScope ingestion key
-export SIGNOZ_INGESTION_KEY="<ingestion-key>"
 
 ```
 

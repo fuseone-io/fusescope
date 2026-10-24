@@ -272,25 +272,18 @@ receivers:
             - targets: ['0.0.0.0:9106']
 
 exporters:
-  # export to local collector
-  otlp/local:
-    endpoint: "localhost:4317"
+  otlp/fusescope:
+    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}
     tls:
+      # set to false when the FuseScope endpoint uses TLS
       insecure: true
-  # export to FuseScope
-  otlp/signoz:
-    endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
-    tls:
-      insecure: false
-    headers:
-      "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
 
 service:
   pipelines:
     metrics/mysql:
       receivers: [mysql, prometheus]
       processors: []
-      exporters: [otlp/signoz]
+      exporters: [otlp/fusescope]
 ```
 
 #### Set Environment Variables
@@ -309,9 +302,6 @@ export MYSQL_PASSWORD="<PASSWORD>"
 
 # OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/
 export OTLP_DESTINATION_ENDPOINT="<fusescope-otel-collector-host>:4317"
-
-# your FuseScope ingestion key
-export SIGNOZ_INGESTION_KEY="<ingestion-key>"
 
 ```
 

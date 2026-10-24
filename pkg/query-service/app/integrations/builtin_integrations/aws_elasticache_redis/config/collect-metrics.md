@@ -96,11 +96,6 @@ metrics:
    aws_statistics: [Maximum]
 
  - aws_namespace: AWS/ElastiCache
-   aws_metric_name: ReplicationLag
-   aws_dimensions: [CacheClusterId, CacheNodeId]
-   aws_statistics: [Maximum]
-
- - aws_namespace: AWS/ElastiCache
    aws_metric_name: SaveInProgress
    aws_dimensions: [CacheClusterId, CacheNodeId]
 
@@ -136,12 +131,7 @@ metrics:
  - aws_namespace: AWS/ElastiCache
    aws_metric_name: MemoryFragmentationRatio
    aws_dimensions: [CacheClusterId, CacheNodeId]
-   aws_statistics: [Average, Maximum]
-
- - aws_namespace: AWS/ElastiCache
-   aws_metric_name: MemoryFragmentationRatio
-   aws_dimensions: [CacheClusterId, CacheNodeId]
-   aws_statistics: [Sum, Average]
+   aws_statistics: [Average, Maximum, Sum]
 ```
 
 3. Run the following command
@@ -186,25 +176,18 @@ receivers:
             - targets: ['0.0.0.0:9106']
 
 exporters:
-  # export to local collector
-  otlp/local:
-    endpoint: "localhost:4317"
+  otlp/fusescope:
+    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}
     tls:
+      # set to false when the FuseScope endpoint uses TLS
       insecure: true
-  # export to FuseScope
-  otlp/signoz:
-    endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
-    tls:
-      insecure: false
-    headers:
-      "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
 
 service:
   pipelines:
     metrics/redis:
       receivers: [redis, prometheus]
       processors: []
-      exporters: [otlp/signoz]
+      exporters: [otlp/fusescope]
 ```
 
 #### Set Environment Variables
@@ -222,9 +205,6 @@ export REDIS_PASSWORD="<PASSWORD>"
 
 # OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/
 export OTLP_DESTINATION_ENDPOINT="<fusescope-otel-collector-host>:4317"
-
-# your FuseScope ingestion key
-export SIGNOZ_INGESTION_KEY="<ingestion-key>"
 
 ```
 

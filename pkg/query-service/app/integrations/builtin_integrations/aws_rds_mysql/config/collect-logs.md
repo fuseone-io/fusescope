@@ -31,18 +31,10 @@ processors:
     timeout: 10s
 
 exporters:
-  # export to FuseScope
-  otlp/mysql_logs:
-    endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
+  otlp/fusescope:
+    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}
     tls:
-      insecure: false
-    headers:
-      "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
-
-  # export to local collector
-  otlp/local:
-    endpoint: "localhost:4317"
-    tls:
+      # set to false when the FuseScope endpoint uses TLS
       insecure: true
 
 service:
@@ -50,7 +42,7 @@ service:
     logs/mysql:
       receivers: [awscloudwatch/rds_mysql_logs]
       processors: [attributes/add_source_mysql, batch]
-      exporters: [otlp/mysql_logs]
+      exporters: [otlp/fusescope]
 ```
 
 #### Update log group names
@@ -65,9 +57,6 @@ Set the following environment variables in your otel-collector environment:
 
 # OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/
 export OTLP_DESTINATION_ENDPOINT="<fusescope-otel-collector-host>:4317"
-
-# your FuseScope ingestion key
-export SIGNOZ_INGESTION_KEY="<ingestion-key>"
 
 ```
 
