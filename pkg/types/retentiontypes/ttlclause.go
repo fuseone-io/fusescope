@@ -20,13 +20,13 @@ type TTLClause struct {
 
 // Statement replaces the TTL of table on every node of cluster.
 func (clause TTLClause) Statement(table string, cluster string) string {
-	// https://github.com/fuseone-io/fusescope/issues/5470
-	// we will change ttl for only the new parts and not the old ones
 	ttl := fmt.Sprintf("%s + %s DELETE", clause.Time, clause.Delete)
 	if clause.Volume != "" {
 		ttl += fmt.Sprintf(", %s + %s TO VOLUME %s", clause.Time, clause.MoveAfter, clickhousesql.StringLiteral(clause.Volume))
 	}
 
+	// https://github.com/SigNoz/signoz/issues/5470
+	// we will change ttl for only the new parts and not the old ones
 	return fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL %s SETTINGS materialize_ttl_after_modify=0", table, cluster, ttl)
 }
 
