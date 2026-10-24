@@ -1,0 +1,4 @@
+cold-default: 2443 ms, rows 3000000, S3 GET 88, from S3 213.21 MiB, written 253.95 MiB; cache after: 213.21 MiB
+cold-bypass: 2450 ms, rows 3000000, S3 GET 2490, from S3 222.58 MiB, written 254.72 MiB; cache after: 0.00 B
+cold-nocache: 2740 ms, rows 3000000, S3 GET 2486, from S3 216.03 MiB, written 254.71 MiB; cache after: 0.00 B
+local: 2219 ms, rows 3000000, S3 GET 0, from S3 0.00 B, written 255.06 MiB; cache after: 0.00 B

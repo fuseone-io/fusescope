@@ -1,0 +1,70 @@
+# Throwaway benchmark stack: docker compose -p csbench up -d ; docker compose -p csbench down -v
+name: csbench
+services:
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: bench
+      MINIO_ROOT_PASSWORD: bench-secret
+      MINIO_PROMETHEUS_AUTH_TYPE: public
+    ports:
+      - "127.0.0.1:19090:9000"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      retries: 30
+  minio-init:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["mc alias set m http://minio:9000 bench bench-secret && mc mb -p m/cold m/archive"]
+    depends_on:
+      minio:
+        condition: service_healthy
+  # Adds per-request latency on the ClickHouse -> MinIO path to approximate S3 first-byte latency.
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    command: ["-host=0.0.0.0", "-config=/config.json"]
+    volumes:
+      - ./config/toxiproxy.json:/config.json
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.12.5
+    hostname: clickhouse
+    environment:
+      CLICKHOUSE_SKIP_USER_SETUP: "1"
+    ulimits:
+      nofile: { soft: 262144, hard: 262144 }
+    mem_limit: 12g
+    volumes:
+      - ./config/cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
+      - ./config/storage.xml:/etc/clickhouse-server/config.d/storage.xml
+      - ./config/users.xml:/etc/clickhouse-server/users.d/bench.xml
+      - ch-data:/var/lib/clickhouse
+      - ./:/w
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+      toxiproxy:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "127.0.0.1:8123/ping"]
+      interval: 2s
+      retries: 60
+  migrator:
+    image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
+    environment:
+      SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN: tcp://clickhouse:9000
+      SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER: cluster
+      SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION: "true"
+      SIGNOZ_OTEL_COLLECTOR_TIMEOUT: 10m
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["/fusescope-otel-collector migrate bootstrap && /fusescope-otel-collector migrate sync up && /fusescope-otel-collector migrate async up"]
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: on-failure
+volumes:
+  minio-data:
+  ch-data:

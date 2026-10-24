@@ -1,0 +1,75 @@
+== T1: MODIFY TTL ... TO VOLUME with materialize_ttl_after_modify = 0 on existing parts (backend's SetTTL form)
+after MODIFY TTL + 15 s (20-day-old part should be cold):
+2026-10-04	20261004_0_0_0	default	1000
+2026-10-23	20261023_0_0_0	default	1000
+after MATERIALIZE TTL:
+2026-10-04	20261004_0_0_0_1	s3	1000
+2026-10-23	20261023_0_0_0_1	default	1000
+== T2: v2 logs form, rows written before cold storage was enabled carry _retention_days_cold = 0
+before merge (1-hour-old rows; first part has cold=0):
+(\'2026-10-24\',15,0)	20261024-15-0_0_0_0	default	100
+(\'2026-10-24\',15,7)	20261024-15-7_0_0_0	default	100
+(\'2026-10-24\',15,7)	20261024-15-7_1_1_0	default	100
+after merge:
+(\'2026-10-24\',15,0)	20261024-15-0_0_0_1	s3	100
+(\'2026-10-24\',15,7)	20261024-15-7_0_1_1	default	200
+== T2b: same, but MATERIALIZE TTL instead of a merge (ADR 0002 backstop path)
+after MATERIALIZE TTL:
+(\'2026-10-24\',15,0)	20261024-15-0_0_0_0_1	s3	100
+(\'2026-10-24\',15,7)	20261024-15-7_0_0_0_1	default	100
+== T3: delete TTL on a cold part removes its objects
+part:
+2026-10-21	20261021_0_0_0	s3	86400
+2026-10-22	20261022_0_0_0	s3	13600
+objects before insert: 7096, after move: 7122
+after the part expired: parts=[] objects=7106
+NewPart	20261021_0_0_0	default
+NewPart	20261022_0_0_0	default
+MovePart	20261021_0_0_0	s3
+MovePart	20261022_0_0_0	s3
+MutatePartStart	20261021_0_0_0_1	
+MutatePartStart	20261022_0_0_0_1	
+MutatePart	20261022_0_0_0_1	s3
+MutatePart	20261021_0_0_0_1	s3
+RemovePart	20261021_0_0_0	
+RemovePart	20261021_0_0_0_1	
+RemovePart	20261022_0_0_0	
+NewPart	20261021_0_0_0	default
+NewPart	20261022_0_0_0	default
+MovePart	20261021_0_0_0	s3
+MovePart	20261022_0_0_0	s3
+MutatePartStart	20261021_0_0_0_1	
+MutatePartStart	20261022_0_0_0_1	
+MutatePart	20261022_0_0_0_1	s3
+MutatePart	20261021_0_0_0_1	s3
+== T4: several parts of one partition on the cold volume (prefer_not_to_merge = 1)
+after inserts of late (5-day-old) data:
+2026-10-19	20261019_0_0_0	s3	1000
+2026-10-19	20261019_1_1_0	s3	1000
+2026-10-19	20261019_2_2_0	s3	1000
+2026-10-19	20261019_3_3_0	s3	1000
+20 s later (no background merge expected):
+2026-10-19	20261019_0_0_0	s3	1000
+2026-10-19	20261019_1_1_0	s3	1000
+2026-10-19	20261019_2_2_0	s3	1000
+2026-10-19	20261019_3_3_0	s3	1000
+after OPTIMIZE FINAL:
+2026-10-19	20261019_0_0_0	s3	1000
+2026-10-19	20261019_1_1_0	s3	1000
+2026-10-19	20261019_2_2_0	s3	1000
+2026-10-19	20261019_3_3_0	s3	1000
+MovePart	20261019_0_0_0	s3	NotAMerge
+MovePart	20261019_1_1_0	s3	NotAMerge
+MovePart	20261019_2_2_0	s3	NotAMerge
+MovePart	20261019_3_3_0	s3	NotAMerge
+MovePart	20261019_0_0_0	s3	NotAMerge
+MovePart	20261019_1_1_0	s3	NotAMerge
+MovePart	20261019_2_2_0	s3	NotAMerge
+MovePart	20261019_3_3_0	s3	NotAMerge
+== T5: settings that matter
+remote_fs_execute_merges_on_single_replica_time_threshold	10800
+merge_with_ttl_timeout	14400
+ttl_only_drop_parts	0
+allow_remote_fs_zero_copy_replication	0
+max_server_memory_usage	8589934592
+background_move_pool_size	8

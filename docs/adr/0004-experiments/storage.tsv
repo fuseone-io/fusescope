@@ -1,0 +1,6 @@
+table	disk_name	parts	rows	compressed_mib	on_disk_mib
+logs_v2	s3	11	30000000	2132	2288
+logs_v2_resource	s3	11	115440	0	0
+signoz_index_v3	s3	11	15000000	675	712
+trace_summary	s3	11	1500000	45	45
+traces_v3_resource	s3	11	115440	0	0
