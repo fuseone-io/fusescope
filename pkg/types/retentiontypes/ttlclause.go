@@ -2,6 +2,8 @@ package retentiontypes
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 )
@@ -9,6 +11,11 @@ import (
 const (
 	// ResourceBucketTime is the end of a resource row's 30-minute bucket.
 	ResourceBucketTime = "toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800)"
+)
+
+var (
+	coldStorageVolumeRegexp   = regexp.MustCompile(`TO VOLUME '((?:[^'\\]|\\.)*)'`)
+	stringLiteralUnescapeRule = strings.NewReplacer(`\'`, `'`, `\\`, `\`)
 )
 
 // TTLClause is a table's TTL: rows are deleted Delete after Time and, when Volume is set,
@@ -36,6 +43,16 @@ func (clause TTLClause) Statement(table string, cluster string) string {
 	// https://github.com/SigNoz/signoz/issues/5470
 	// we will change ttl for only the new parts and not the old ones
 	return fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL %s SETTINGS materialize_ttl_after_modify=0", table, cluster, ttl)
+}
+
+// ColdStorageVolume returns the volume of the move rule in a table's create_table_query,
+// or "" when its TTL has none.
+func ColdStorageVolume(createTableQuery string) string {
+	match := coldStorageVolumeRegexp.FindStringSubmatch(createTableQuery)
+	if match == nil {
+		return ""
+	}
+	return stringLiteralUnescapeRule.Replace(match[1])
 }
 
 func UnixNanoTime(column string) string {

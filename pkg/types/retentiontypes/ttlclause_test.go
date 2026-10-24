@@ -92,3 +92,21 @@ func TestTTLClauseStatement(t *testing.T) {
 		})
 	}
 }
+
+func TestColdStorageVolume(t *testing.T) {
+	testCases := []struct {
+		name  string
+		query string
+		want  string
+	}{
+		{name: "NoMoveRule_Empty", query: "CREATE TABLE signoz_logs.logs_v2 (`ts` UInt64) ENGINE = MergeTree TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) SETTINGS index_granularity = 8192", want: ""},
+		{name: "MoveRule_Volume", query: "CREATE TABLE signoz_logs.logs_v2 (`ts` UInt64) ENGINE = MergeTree TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days), toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME 'cold' SETTINGS storage_policy = 'tiered'", want: "cold"},
+		{name: "EscapedQuote_Unescaped", query: `CREATE TABLE t (a UInt8) ENGINE = MergeTree TTL a + toIntervalDay(1) TO VOLUME 'co\'ld' SETTINGS index_granularity = 8192`, want: "co'ld"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, ColdStorageVolume(testCase.query))
+		})
+	}
+}
