@@ -106,3 +106,20 @@ Matching the collector's operators means knowing how they behave, not how they a
 - The collector repo is unchanged; it remains AGPL-3.0 and the owner of the telemetry schema.
 - Two contract tests (schema descriptors, simulator output) join the integration suite and catch drift when the collector is upgraded.
 - The binary ships Apache-2.0 code from contrib, which needs attribution but no source disclosure.
+
+## Implementation
+
+Phases 1 and 2 brought the binary from 29 linked collector packages to 26, phase 3b to 4, and phase 3c to 0.
+
+| Phase | PRs |
+|---|---|
+| 1. Vocabulary | #140, #141 |
+| 2. Expression helpers, and the allowlist guard | #142 |
+| 3a. Golden corpus and `simulatorcontract` suite | #147 |
+| 3b. In-process log pipeline simulator; `pkg/grok` vendored with `NOTICE` | #148 |
+| 3c. In-process span mapper simulator | #149 |
+| 4. Guard forbids every collector package; module dropped from `go.mod`; README notice replaced | #149 |
+
+Check with `go list -deps ./cmd/community | grep fusescope-otel-collector` (prints nothing) or `make agpl-check`. Release SBOMs (`fusescope-linux-*.spdx.json` on the GitHub release) list no `fusescope-otel-collector` module from the first release after phase 3c. The `simulatorcontract` integration suite replays the corpus through the collector image and keeps both previews matched to it.
+
+Open before this ADR is accepted: legal review before 1.0.
