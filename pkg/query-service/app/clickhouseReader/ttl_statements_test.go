@@ -113,7 +113,7 @@ func TestCustomRetentionLogsTTLStatements(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.want, customRetentionLogsTTLStatements(testLogsTTLTables, "cluster", testCase.volume, testCase.days, 30))
+			assert.Equal(t, testCase.want, customRetentionLogsTTLStatements(testLogsTTLTables, "cluster", testCase.volume, testCase.days, 30, logsBackstop{}))
 		})
 	}
 }
@@ -174,4 +174,37 @@ func TestMetricsTTLStatements(t *testing.T) {
 	}, statements)
 	assert.Equal(t, "ALTER TABLE signoz_metrics.samples_v4 ON CLUSTER cluster MODIFY TTL toDateTime(toUInt32(unix_milli / 1000), 'UTC') + INTERVAL 60 SECOND DELETE SETTINGS materialize_ttl_after_modify=0", metricsTTLStatements([]string{"signoz_metrics.samples_v4"}, "cluster", &retentiontypes.TTLParams{DelDuration: 60})["signoz_metrics.samples_v4"])
 	assert.Equal(t, "ALTER TABLE signoz_metrics.legacy_samples ON CLUSTER cluster MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + INTERVAL 60 SECOND DELETE SETTINGS materialize_ttl_after_modify=0", metricsTTLStatements([]string{"signoz_metrics.legacy_samples"}, "cluster", &retentiontypes.TTLParams{DelDuration: 60})["signoz_metrics.legacy_samples"])
+}
+
+func TestCustomRetentionLogsTTLClausesWithBackstop(t *testing.T) {
+	testCases := []struct {
+		name     string
+		backstop logsBackstop
+		want     map[string]string
+	}{
+		{
+			name:     "IngestionColumn_GreatestOnLogs",
+			backstop: logsBackstop{Days: 7, Ingestion: retentiontypes.DateTimeOf("created_at")},
+			want: map[string]string{
+				"signoz_logs.logs_v2":          "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL greatest(toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days), toDateTime(created_at) + toIntervalDay(_retention_days) + toIntervalDay(7)) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(if(_retention_days_cold = 0, 7, _retention_days_cold)) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
+				"signoz_logs.logs_v2_resource": "ALTER TABLE signoz_logs.logs_v2_resource ON CLUSTER cluster MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) + toIntervalDay(7) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(if(_retention_days_cold = 0, 7, _retention_days_cold)) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
+			},
+		},
+		{
+			name:     "NoIngestionColumn_EventTimePlusBackstop",
+			backstop: logsBackstop{Days: 10},
+			want: map[string]string{
+				"signoz_logs.logs_v2":          "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) + toIntervalDay(10) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(if(_retention_days_cold = 0, 7, _retention_days_cold)) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
+				"signoz_logs.logs_v2_resource": "ALTER TABLE signoz_logs.logs_v2_resource ON CLUSTER cluster MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) + toIntervalDay(10) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(if(_retention_days_cold = 0, 7, _retention_days_cold)) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			statements := customRetentionLogsTTLStatements(testLogsTTLTables, "cluster", "cold", 7, 30, testCase.backstop)
+			assert.Equal(t, testCase.want["signoz_logs.logs_v2"], statements["signoz_logs.logs_v2"])
+			assert.Equal(t, testCase.want["signoz_logs.logs_v2_resource"], statements["signoz_logs.logs_v2_resource"])
+		})
+	}
 }
