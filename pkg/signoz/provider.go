@@ -271,6 +271,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRUMApplicationViewerTuplesFactory(sqlstore),
 		sqlmigration.NewAddRUMSourceMapsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddAIObservabilityEnvironmentNameQuickFilterFactory(sqlstore),
+		sqlmigration.NewAddArchiveFactory(sqlstore, sqlschema),
 	)
 }
 
