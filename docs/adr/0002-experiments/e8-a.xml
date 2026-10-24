@@ -1,0 +1,12 @@
+<clickhouse>
+    <macros><shard>1</shard><replica>a</replica></macros>
+    <remote_servers>
+        <c>
+            <shard>
+                <internal_replication>true</internal_replication>
+                <replica><host>ch-e8a</host><port>9000</port><user>default</user><password>e8</password></replica>
+                <replica><host>ch-e8b</host><port>9000</port><user>default</user><password>e8</password></replica>
+            </shard>
+        </c>
+    </remote_servers>
+</clickhouse>
