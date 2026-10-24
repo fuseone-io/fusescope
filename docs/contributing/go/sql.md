@@ -74,6 +74,8 @@ erDiagram
 
 > 💡 **Note**: There are rare exceptions to the above star schema design. Consult with the maintainers before deviating from the above design.
 
+State that belongs to the deployment rather than to an organization has no `org_id`. The archive tables (`archive_*`, [ADR 0002](/docs/adr/0002-long-term-archive.md)) are the current case: telemetry has no organization column, so neither does its archive.
+
 All tables follow a consistent primary key pattern using a `id` column (referenced by the `types.Identifiable` struct) and include `created_at` and `updated_at` columns (referenced by the `types.TimeAuditable` struct) for audit purposes.
 
 ## How to write migrations?
