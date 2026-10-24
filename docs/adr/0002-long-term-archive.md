@@ -13,7 +13,7 @@ Facts the design rests on. They were checked against the backend, migrator and e
 - **Deletion is per part.** Bulk tables set `ttl_only_drop_parts=1`, so a part is dropped once all its rows are expired, during a TTL merge.
   - `merge_with_ttl_timeout` (4 h by default) is the *minimum* delay before repeating such a merge, not a bound on when deletion happens.
   - Expired rows stay queryable until their part is dropped.
-- **Parts carry an ingestion order.** A part name is `<partition>_<min_block>_<max_block>_<level>`. Block numbers are allocated per partition, increasing, per shard (in Keeper for replicated tables). Parts are immutable.
+- **Parts carry an ingestion order.** A part name is `<partition>_<min_block>_<max_block>_<level>`. Block numbers increase and are unique per shard: allocated per partition in Keeper for replicated tables, and per table for plain `MergeTree`, where a partition's numbers therefore have gaps. Parts are immutable; a mutation rewrites a part under a new name with a higher `data_version`.
   - **Merges** widen the block range of the part they produce (E5b).
   - **Late inserts** get new block numbers.
   - **In-progress inserts** commit later as their own parts. E7b and E7c did not observe one committing with a lower block number than parts already committed, but the window isn't proven absent, so correctness rests only on block-range arithmetic (§3), not on that order.
@@ -81,7 +81,7 @@ One policy per deployment, declared in the configuration file:
 archive:
   limits:                # every export and restore query
     concurrency: 1       # queries at once, cycle-wide
-    max_memory_usage: 2GiB
+    max_memory_usage: 2147483648   # bytes
     max_threads: 4       # also max_insert_threads on restore
     row_group_rows: 100000
   <signal>:
@@ -90,11 +90,11 @@ archive:
     prefix: <path>
     backstop_days: 7      # 2–30, and at least twice the cycle interval
     late_min_rows: 1000000  # held late parts are exported from this size…
-    late_max_hold: 1d       # …or after this long, below half the backstop
+    late_max_hold: 24h      # …or after this long, below half the backstop
     compaction:             # §11
       enabled: true         # false by default on Object Lock buckets
       min_objects: 16
-      min_bytes: 64MiB
+      min_bytes: 67108864   # bytes
 restore:
   max_bytes_per_restoration: 50GiB   # Editor ceiling, in archived (Parquet) bytes
   admin_override: true               # Admin may exceed it, with confirmation
@@ -157,13 +157,13 @@ After commit, the job drops the published parts that are still active, by name, 
 
 ### 5. Retention backstop
 
-When the archive is enabled for a signal, the backend rewrites the live TTL of its tables to `<ingestion column> + retention + backstop_days`. It keeps the delete expression shape the backend already issues (`SetTTL` / `SetTTLV2`), using `greatest` with the event-time expression so nothing expires earlier than today. It then runs `MATERIALIZE TTL` on every table of the signal; without it, parts that already exist would still expire under the old TTL (E6c). The tables keep their settings: on `ttl_only_drop_parts` tables the mutation rewrites only the timestamp, ingestion and `_retention_days` columns the TTL reads, and no rows (E9). Existing parts get `created_at = now` for TTL purposes, so their life is extended until the job archives and drops them.
+When the archive is enabled for a signal, the backend rewrites the live TTL of its tables to `<ingestion column> + retention + backstop_days`. It keeps the delete expression shape the backend already issues (`SetTTL` / `SetTTLV2`), using `greatest` with the event-time expression so nothing expires earlier than today. It then runs `MATERIALIZE TTL` on every table of the signal; without it, parts that already exist would still expire under the old TTL (E6c). The tables keep their settings: on `ttl_only_drop_parts` tables the mutation rewrites only the timestamp, ingestion and `_retention_days` columns the TTL reads, and deletes no rows from a part that still has unexpired ones (E9b). A part whose rows are all expired under the new TTL is emptied at once, where the table setting `materialize_ttl_recalculate_only` would have kept it until the next TTL merge (E9d). No guarantee changes, because `greatest` never shortens the TTL: such a part was already expired and would go at that merge. Rows in parts written before an ingestion column existed get `created_at = now` for TTL purposes (E6a, E6d), so their life is extended until the job archives and drops them.
 
 The backend uses an ingestion column only after finding it in `system.columns`, as it already does for `_retention_days`.
 
 **One TTL builder.** The retention module has a single function that builds a table's TTL clause. While the archive is enabled for the signal, it always includes `ingestion column + retention + backstop`, with any active automatic extension, plus the existing cold-storage (`TO VOLUME`) rules. Every writer goes through it: the settings page and API, the default-retention reconciler, archive enable and disable, and the automatic extension. Without that, a retention change made after enabling would reissue the plain event-time TTL and remove the backstop. Enabling also records a `ttl_setting` row, so the reconciler sees the signal as configured.
 
-**`MATERIALIZE TTL` load.** It is one background mutation per part, on every table of the signal. On enable, the backend runs it one table at a time, waits for the mutation in `system.mutations` before the next, and on large stores the operator can schedule the enable.
+**`MATERIALIZE TTL` load.** It is one background mutation per part, on every table of the signal, on every replica, cold-volume parts included. It rewrites the TTL columns of each part and needs disk headroom for them until the old parts are removed (`old_parts_lifetime`). On enable, the backend runs it one table at a time, waits for the mutation in `system.mutations` before the next, and on large stores the operator can schedule the enable. The alternative considered was the migrator setting `materialize_ttl_recalculate_only` on archived tables; E9 shows it changes nothing for partly expired parts, so it was not adopted.
 
 **Example:** retention 15 d, backstop 7 d, job down for 3 days. When it comes back, it exports and drops every partition past retention that is still present, including the days that are now 16–18 days old. They are covered because the TTL for them is ingestion time + 22 d.
 
@@ -200,7 +200,7 @@ How likely: logs and traces exporters drop rows older than `max_allowed_data_age
 **Policy changes.**
 
 - **Enable:** apply the backstop TTL before the first cycle.
-- **Lower retention:** more partitions become eligible for archiving, but nothing is deleted without being archived.
+- **Lower retention:** while the archive is on, the lower retention reaches the TTL only once every partition past it is archived; until then the TTL keeps the previous retention and the setting shows as pending. Applied at once, unarchived parts older than the new retention + backstop would be dropped at the next TTL merge, or immediately by `MATERIALIZE TTL`, before a cycle could archive them.
 - **Raise retention:** nothing changes.
 - **Disable:** refused while partitions past retention are unarchived, unless `force` is set. `force` restores the event-time TTL and records those partitions' inventoried parts as `lost`.
 - **Change destination:** new segments go to the new destination. Existing manifests keep their own collection and prefix.
@@ -342,6 +342,7 @@ Each phase is its own PR, tests first, with SQL state on SQLite and PostgreSQL.
 27. Export and restore queries carry the `archive.limits` settings (checked in `system.query_log`), and no more than `concurrency` run at once.
 28. Late rows trickling into an archived partition: they are exported as one object once `late_min_rows` is reached, or at `late_max_hold`, and never dropped before.
 29. Phase 3: compacting a partition's objects leaves restoration results identical, row for row and in block order, with the old objects superseded; a source with a mismatched ETag aborts the compaction; on an Object Lock bucket it doesn't run unless enabled.
+30. Lowering retention with the archive on: partitions past the new retention are archived before the TTL changes, and none is lost.
 
 ## For the team to confirm
 
