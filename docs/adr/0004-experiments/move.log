@@ -1,0 +1,13 @@
+local before	3.00 GiB
+S3 PUT requests: 7082
+s3	55	2.97 GiB
+default	20	29.38 KiB
+logs_v2	11	2.23 GiB	3.7
+logs_v2_resource	11	145.59 KiB	0.7
+trace_summary	11	45.19 MiB	0.3
+signoz_index_v3	11	712.41 MiB	2.2
+traces_v3_resource	11	150.60 KiB	0.1
+32M	/var/lib/clickhouse/disks/s3
+194M	/var/lib/clickhouse/store
+3.2M	/var/lib/clickhouse/disks/s3_cache
+3.0GiB	7143 objects	cold
