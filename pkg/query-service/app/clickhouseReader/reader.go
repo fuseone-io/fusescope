@@ -957,34 +957,19 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 		}
 	}
 
+	deleteAfter := retentiontypes.IntervalSeconds(params.DelDuration)
+	moveAfter := retentiontypes.IntervalSeconds(params.ToColdStorageDuration)
+
 	// TTL query for logs_v2 table
-	ttlLogsV2 := fmt.Sprintf(
-		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + "+
-			"INTERVAL %v SECOND DELETE", tableNameArray[0], r.cluster, params.DelDuration)
-	if len(params.ColdStorageVolume) > 0 {
-		ttlLogsV2 += fmt.Sprintf(", toDateTime(timestamp / 1000000000)"+
-			" + INTERVAL %v SECOND TO VOLUME '%s'",
-			params.ToColdStorageDuration, params.ColdStorageVolume)
-	}
+	ttlLogsV2 := retentiontypes.TTLClause{Time: retentiontypes.UnixNanoTime("timestamp"), Delete: deleteAfter, Volume: params.ColdStorageVolume, MoveAfter: moveAfter}.Statement(tableNameArray[0], r.cluster)
 
 	// TTL query for logs_v2_resource table
 	// adding 1800 as our bucket size is 1800 seconds
-	ttlLogsV2Resource := fmt.Sprintf(
-		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + "+
-			"INTERVAL %v SECOND DELETE", tableNameArray[1], r.cluster, params.DelDuration)
-	if len(params.ColdStorageVolume) > 0 {
-		ttlLogsV2Resource += fmt.Sprintf(", toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + "+
-			"INTERVAL %v SECOND TO VOLUME '%s'",
-			params.ToColdStorageDuration, params.ColdStorageVolume)
-	}
+	ttlLogsV2Resource := retentiontypes.TTLClause{Time: retentiontypes.ResourceBucketTime, Delete: deleteAfter, Volume: params.ColdStorageVolume, MoveAfter: moveAfter}.Statement(tableNameArray[1], r.cluster)
 
-	ttlLogsV2AttributeKeys := fmt.Sprintf(
-		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp + "+
-			"INTERVAL %v SECOND DELETE", tableNameArray[2], r.cluster, params.DelDuration)
+	ttlLogsV2AttributeKeys := retentiontypes.TTLClause{Time: "timestamp", Delete: deleteAfter}.Statement(tableNameArray[2], r.cluster)
 
-	ttlLogsV2ResourceKeys := fmt.Sprintf(
-		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL timestamp + "+
-			"INTERVAL %v SECOND DELETE", tableNameArray[3], r.cluster, params.DelDuration)
+	ttlLogsV2ResourceKeys := retentiontypes.TTLClause{Time: "timestamp", Delete: deleteAfter}.Statement(tableNameArray[3], r.cluster)
 
 	ttlPayload := map[string]string{
 		tableNameArray[0]: ttlLogsV2,
@@ -996,10 +981,6 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 	// set the ttl if nothing is pending/ no errors
 	go func(ttlPayload map[string]string) {
 		for tableName, query := range ttlPayload {
-			// https://github.com/fuseone-io/fusescope/issues/5470
-			// we will change ttl for only the new parts and not the old ones
-			query += " SETTINGS materialize_ttl_after_modify=0"
-
 			ttl := retentiontypes.TTLSetting{
 				Identifiable: types.Identifiable{
 					ID: valuer.GenerateUUID(),
@@ -1120,14 +1101,6 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 		}
 	}
 
-	// TTL query
-	ttlV2 := "ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(%s) + INTERVAL %v SECOND DELETE"
-	ttlV2ColdStorage := ", toDateTime(%s) + INTERVAL %v SECOND TO VOLUME '%s'"
-
-	// TTL query for resource table
-	ttlV2Resource := "ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + INTERVAL %v SECOND DELETE"
-	ttlTracesV2ResourceColdStorage := ", toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + INTERVAL %v SECOND TO VOLUME '%s'"
-
 	for _, distributedTableName := range tableNames {
 		go func(distributedTableName string) {
 			tableName := getLocalTableName(distributedTableName)
@@ -1164,18 +1137,16 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				return
 			}
 
-			req := fmt.Sprintf(ttlV2, tableName, r.cluster, timestamp, params.DelDuration)
+			clause := retentiontypes.TTLClause{Time: retentiontypes.DateTimeOf(timestamp), Delete: retentiontypes.IntervalSeconds(params.DelDuration)}
 			if strings.HasSuffix(distributedTableName, r.traceResourceTableV3) {
-				req = fmt.Sprintf(ttlV2Resource, tableName, r.cluster, params.DelDuration)
+				clause.Time = retentiontypes.ResourceBucketTime
 			}
 
-			if len(params.ColdStorageVolume) > 0 && !strings.HasSuffix(distributedTableName, r.spanAttributesKeysTable) {
-				if strings.HasSuffix(distributedTableName, r.traceResourceTableV3) {
-					req += fmt.Sprintf(ttlTracesV2ResourceColdStorage, params.ToColdStorageDuration, params.ColdStorageVolume)
-				} else {
-					req += fmt.Sprintf(ttlV2ColdStorage, timestamp, params.ToColdStorageDuration, params.ColdStorageVolume)
-				}
+			if !strings.HasSuffix(distributedTableName, r.spanAttributesKeysTable) {
+				clause.Volume = params.ColdStorageVolume
+				clause.MoveAfter = retentiontypes.IntervalSeconds(params.ToColdStorageDuration)
 			}
+			req := clause.Statement(tableName, r.cluster)
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
 				r.logger.Error("Error in setting cold storage", errorsV2.Attr(err))
@@ -1197,7 +1168,6 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				}
 				return
 			}
-			req += " SETTINGS materialize_ttl_after_modify=0;"
 			r.logger.Error(" ExecutingTTL request: ", "request", req)
 			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
@@ -1364,8 +1334,12 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
 			distributedTableNames[0], r.cluster, coldStorageDuration))
 
-		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
-			tableNames[0], r.cluster, params.ColdStorageVolume))
+		queries = append(queries, retentiontypes.TTLClause{
+			Time:      retentiontypes.UnixNanoTime("timestamp"),
+			Delete:    retentiontypes.IntervalDaysColumn("_retention_days"),
+			Volume:    params.ColdStorageVolume,
+			MoveAfter: retentiontypes.IntervalDaysColumn("_retention_days_cold"),
+		}.Statement(tableNames[0], r.cluster))
 	}
 
 	ttlPayload[tableNames[0]] = queries
@@ -1384,8 +1358,12 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 		// for distributed table
 		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
 			distributedTableNames[1], r.cluster, coldStorageDuration))
-		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
-			tableNames[1], r.cluster, params.ColdStorageVolume))
+		resourceQueries = append(resourceQueries, retentiontypes.TTLClause{
+			Time:      retentiontypes.ResourceBucketTime,
+			Delete:    retentiontypes.IntervalDaysColumn("_retention_days"),
+			Volume:    params.ColdStorageVolume,
+			MoveAfter: retentiontypes.IntervalDaysColumn("_retention_days_cold"),
+		}.Statement(tableNames[1], r.cluster))
 	}
 
 	ttlPayload[tableNames[1]] = resourceQueries
@@ -1398,13 +1376,11 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 	}
 
 	ttlPayload[tableNames[2]] = []string{
-		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
-			tableNames[2], r.cluster, maxRetentionTTL),
+		retentiontypes.TTLClause{Time: "timestamp", Delete: retentiontypes.IntervalDays(maxRetentionTTL)}.Statement(tableNames[2], r.cluster),
 	}
 
 	ttlPayload[tableNames[3]] = []string{
-		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
-			tableNames[3], r.cluster, maxRetentionTTL),
+		retentiontypes.TTLClause{Time: "timestamp", Delete: retentiontypes.IntervalDays(maxRetentionTTL)}.Statement(tableNames[3], r.cluster),
 	}
 
 	ttlConditionsJSON, err := json.Marshal(params.TTLConditions)
@@ -1840,14 +1816,12 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			timeColumn = "unix_milli"
 		}
 
-		req := fmt.Sprintf(
-			"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(%s / 1000), 'UTC') + "+
-				"INTERVAL %v SECOND DELETE", tableName, r.cluster, timeColumn, params.DelDuration)
-		if len(params.ColdStorageVolume) > 0 {
-			req += fmt.Sprintf(", toDateTime(toUInt32(%s / 1000), 'UTC')"+
-				" + INTERVAL %v SECOND TO VOLUME '%s'",
-				timeColumn, params.ToColdStorageDuration, params.ColdStorageVolume)
-		}
+		req := retentiontypes.TTLClause{
+			Time:      retentiontypes.UnixMilliTime(timeColumn),
+			Delete:    retentiontypes.IntervalSeconds(params.DelDuration),
+			Volume:    params.ColdStorageVolume,
+			MoveAfter: retentiontypes.IntervalSeconds(params.ToColdStorageDuration),
+		}.Statement(tableName, r.cluster)
 		err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 		if err != nil {
 			r.logger.Error("Error in setting cold storage", errorsV2.Attr(err))
@@ -1869,7 +1843,6 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			}
 			return
 		}
-		req += " SETTINGS materialize_ttl_after_modify=0"
 		r.logger.Info("Executing TTL request: ", "request", req)
 		statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
 		if err := r.db.Exec(ctx, req); err != nil {
