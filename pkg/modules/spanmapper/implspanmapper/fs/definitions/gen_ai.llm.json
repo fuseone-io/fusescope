@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "definition": {
     "name": "gen_ai.llm",
     "condition": {
@@ -487,6 +487,20 @@
             {
               "key": "gen_ai.server.time_to_first_token",
               "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "deployment.environment.name",
+        "fieldContext": "resource",
+        "config": {
+          "sources": [
+            {
+              "key": "deployment.environment",
+              "context": "resource",
               "operation": "copy",
               "priority": 10
             }

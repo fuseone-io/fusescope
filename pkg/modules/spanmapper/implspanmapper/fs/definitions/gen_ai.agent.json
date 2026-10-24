@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "definition": {
     "name": "gen_ai.agent",
     "condition": {
@@ -112,6 +112,20 @@
             {
               "key": "traceloop.span.kind",
               "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "deployment.environment.name",
+        "fieldContext": "resource",
+        "config": {
+          "sources": [
+            {
+              "key": "deployment.environment",
+              "context": "resource",
               "operation": "copy",
               "priority": 10
             }

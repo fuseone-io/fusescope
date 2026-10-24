@@ -11,20 +11,7 @@ import (
 )
 
 func TestSystemGroupRegistry_LLMTimeToFirstToken(t *testing.T) {
-	registry, err := NewSystemGroupRegistry()
-	require.NoError(t, err)
-
-	var llm []spantypes.PostableSpanMapperTestGroup
-	for _, definition := range registry.List() {
-		if definition.Name() == "gen_ai.llm" {
-			llm = append(llm, definition.Definition)
-		}
-	}
-	require.Len(t, llm, 1)
-	groups := spantypes.NewSpanMapperGroupsWithMappersFromPostable(valuer.GenerateUUID(), llm)
-	for _, mapper := range groups[0].Mappers {
-		mapper.Enabled = true
-	}
+	groups := newEnabledSystemGroup(t, "gen_ai.llm")
 
 	testCases := []struct {
 		name       string
@@ -44,4 +31,51 @@ func TestSystemGroupRegistry_LLMTimeToFirstToken(t *testing.T) {
 			assert.Equal(t, testCase.expected, out[0].Attributes["gen_ai.server.ttft"])
 		})
 	}
+}
+
+func TestSystemGroupRegistry_DeploymentEnvironmentName(t *testing.T) {
+	testCases := []struct {
+		name       string
+		group      string
+		attributes map[string]any
+		resource   map[string]any
+		expected   string
+	}{
+		{name: "LLM_LegacyOnly_Copied", group: "gen_ai.llm", attributes: map[string]any{"gen_ai.request.model": "gpt-4o"}, resource: map[string]any{"deployment.environment": "prod"}, expected: "prod"},
+		{name: "LLM_BothPresent_CurrentKept", group: "gen_ai.llm", attributes: map[string]any{"gen_ai.request.model": "gpt-4o"}, resource: map[string]any{"deployment.environment": "old", "deployment.environment.name": "staging"}, expected: "staging"},
+		{name: "Tool_LegacyOnly_Copied", group: "gen_ai.tool", attributes: map[string]any{"tool.name": "search"}, resource: map[string]any{"deployment.environment": "qa"}, expected: "qa"},
+		{name: "Agent_LegacyOnly_Copied", group: "gen_ai.agent", attributes: map[string]any{"agent.name": "planner"}, resource: map[string]any{"deployment.environment": "dev"}, expected: "dev"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			out, _, err := spantypes.SimulateSpanMappersProcessing(context.Background(), newEnabledSystemGroup(t, testCase.group), []spantypes.SpanMapperTestSpan{{Attributes: testCase.attributes, Resource: testCase.resource}})
+			require.NoError(t, err)
+			require.Len(t, out, 1)
+			assert.Equal(t, testCase.expected, out[0].Resource["deployment.environment.name"])
+		})
+	}
+}
+
+// newEnabledSystemGroup returns the shipped group with every mapper on, as
+// the reconciler provisions it.
+func newEnabledSystemGroup(t *testing.T, name string) []*spantypes.SpanMapperGroupWithMappers {
+	t.Helper()
+
+	registry, err := NewSystemGroupRegistry()
+	require.NoError(t, err)
+
+	var definitions []spantypes.PostableSpanMapperTestGroup
+	for _, definition := range registry.List() {
+		if definition.Name() == name {
+			definitions = append(definitions, definition.Definition)
+		}
+	}
+	require.Len(t, definitions, 1)
+
+	groups := spantypes.NewSpanMapperGroupsWithMappersFromPostable(valuer.GenerateUUID(), definitions)
+	for _, mapper := range groups[0].Mappers {
+		mapper.Enabled = true
+	}
+	return groups
 }

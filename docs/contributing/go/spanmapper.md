@@ -2,6 +2,8 @@
 
 Where each source key in the shipped definitions under `pkg/modules/spanmapper/implspanmapper/fs/definitions/` comes from. A group runs on spans with an attribute key containing one of its condition substrings; sources are tried by priority and the first present wins; an existing target is never overwritten. Bump `version` on every change.
 
+Every group also copies the resource key `deployment.environment` (OTel semconv before 1.27) onto `deployment.environment.name`, so the AI Observability environment variable lists services on either spelling.
+
 ## gen_ai.llm
 
 Condition: `model`, `llm.input_messages` (OpenInference sets `llm.model_name` from the response, so a failed call has no model key).
