@@ -1,6 +1,0 @@
-# Collector (AGPL-3.0) packages the community binary may still link.
-# Each ADR 0001 phase removes entries; agplguard fails on new or stale ones.
-github.com/fuseone-io/fusescope-otel-collector/pkg/collectorsimulator
-github.com/fuseone-io/fusescope-otel-collector/pkg/collectorsimulator/inmemoryexporter
-github.com/fuseone-io/fusescope-otel-collector/pkg/collectorsimulator/inmemoryreceiver
-github.com/fuseone-io/fusescope-otel-collector/processor/signozspanmapperprocessor

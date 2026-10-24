@@ -127,7 +127,7 @@ func runSpanMapperCorpusCase(t *testing.T, c spanMapperCorpusCase, spans []SpanM
 		return result
 	}
 
-	outTraces, _, err := simulateSpanMappersOnPTraces(context.Background(), enabled, spanMapperInputPTraces(cloneSpans(t, spans)))
+	outTraces, err := simulateSpanMappersOnPTraces(context.Background(), enabled, spanMapperInputPTraces(cloneSpans(t, spans)))
 	if err != nil {
 		typ, _, _, _, _, _ := errors.Unwrapb(err)
 		result.Error = typ.String()

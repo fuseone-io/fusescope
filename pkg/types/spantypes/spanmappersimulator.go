@@ -4,19 +4,14 @@ import (
 	"context"
 	"maps"
 	"sort"
-	"time"
 
-	"github.com/fuseone-io/fusescope-otel-collector/pkg/collectorsimulator"
-	"github.com/fuseone-io/fusescope-otel-collector/processor/signozspanmapperprocessor"
 	"github.com/fuseone-io/fusescope/pkg/errors"
-	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/pdata/ptrace"
-	"gopkg.in/yaml.v3"
 )
 
 var (
-	ErrCodeProcessorFactoryMapFailed  = errors.MustNewCode("processor_factory_map_failed")
-	ErrCodeSpanMapperSimulationFailed = errors.MustNewCode("span_mapper_simulation_failed")
+	ErrCodeSpanMapperSimulationFailed  = errors.MustNewCode("span_mapper_simulation_failed")
+	ErrCodeSpanMapperSimulationStopped = errors.MustNewCode("span_mapper_simulation_stopped")
 )
 
 const spanInputOrderAttr = "__signoz_input_idx__"
@@ -27,7 +22,7 @@ func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGrou
 		return spans, nil, nil
 	}
 
-	outputTraces, collectorErrs, err := simulateSpanMappersOnPTraces(ctx, enabled, spanMapperInputPTraces(spans))
+	outputTraces, err := simulateSpanMappersOnPTraces(ctx, enabled, spanMapperInputPTraces(spans))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -36,7 +31,7 @@ func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGrou
 	if err != nil {
 		return nil, nil, err
 	}
-	return outputSpans, collectorErrs, nil
+	return outputSpans, nil, nil
 }
 
 // spanMapperInputPTraces tags each span with its request position so the
@@ -53,44 +48,24 @@ func spanMapperInputPTraces(spans []SpanMapperTestSpan) []ptrace.Traces {
 	return SpansToPTraces(inputSpans)
 }
 
-func simulateSpanMappersOnPTraces(ctx context.Context, enabled []*SpanMapperGroupWithMappers, simulatorInput []ptrace.Traces) ([]ptrace.Traces, []string, error) {
-	processorFactories, err := otelcol.MakeFactoryMap(signozspanmapperprocessor.NewFactory())
-	if err != nil {
-		return nil, nil, errors.WrapInternalf(err, ErrCodeProcessorFactoryMapFailed, "could not construct processor factory map")
-	}
-
-	configGenerator := func(baseConf []byte) ([]byte, error) {
-		withProcessor, err := GenerateCollectorConfigWithSpanMapperProcessor(baseConf, enabled)
-		if err != nil {
-			return nil, err
+func simulateSpanMappersOnPTraces(ctx context.Context, enabled []*SpanMapperGroupWithMappers, simulatorInput []ptrace.Traces) ([]ptrace.Traces, error) {
+	config := buildProcessorConfig(enabled)
+	out := make([]ptrace.Traces, 0, len(simulatorInput))
+	for _, in := range simulatorInput {
+		if err := ctx.Err(); err != nil {
+			return nil, errors.WrapCanceledf(err, ErrCodeSpanMapperSimulationStopped, "span mapper simulation stopped")
 		}
-		return wireSpanMapperIntoTracesPipeline(withProcessor)
+		td := ptrace.NewTraces()
+		in.CopyTo(td)
+		applySpanMapperProcessor(config, td)
+		out = append(out, td)
 	}
-
-	// signozspanmapperprocessor does no batching; spans flow through immediately.
-	timeout := 200 * time.Millisecond
-
-	outputTraces, collectorErrs, simErr := collectorsimulator.SimulateTracesProcessing(
-		ctx,
-		processorFactories,
-		configGenerator,
-		simulatorInput,
-		timeout,
-	)
-	if simErr != nil {
-		if errors.Is(simErr, collectorsimulator.ErrInvalidConfig) {
-			return nil, nil, errors.WrapInvalidInputf(simErr, errors.CodeInvalidInput, "invalid config")
-		}
-		return nil, nil, errors.WrapInternalf(simErr, ErrCodeSpanMapperSimulationFailed, "could not simulate span mapper processing")
-	}
-	return outputTraces, collectorErrs, nil
+	return out, nil
 }
 
 func spanMapperOutputSpans(outputTraces []ptrace.Traces, inputCount int) ([]SpanMapperTestSpan, error) {
 	outputSpans := PTracesToSpans(outputTraces)
 
-	// The simulator returns whatever has been exported when its timeout
-	// elapses, without error; surface that instead of silently dropping spans.
 	if len(outputSpans) != inputCount {
 		return nil, errors.Newf(errors.TypeInternal, ErrCodeSpanMapperSimulationFailed, "simulation returned %d spans for %d input spans", len(outputSpans), inputCount)
 	}
@@ -144,41 +119,6 @@ func PTracesToSpans(traces []ptrace.Traces) []SpanMapperTestSpan {
 		}
 	}
 	return result
-}
-
-// wireSpanMapperIntoTracesPipeline appends "signozspanmapper" to
-// service.pipelines.traces.processors so the processor defined by
-// GenerateCollectorConfigWithSpanMapperProcessor actually runs against the
-// traces flowing through the simulator. Idempotent: skips appending if the
-// processor name is already present. Errors if the config has no traces
-// pipeline, since the simulation would otherwise silently pass spans through.
-func wireSpanMapperIntoTracesPipeline(confYaml []byte) ([]byte, error) {
-	var conf map[string]any
-	if err := yaml.Unmarshal(confYaml, &conf); err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeInvalidCollectorConfig, "failed to unmarshal collector config for pipeline wiring")
-	}
-	// Failed assertions yield nil, and indexing a nil map is safe,
-	// so any missing/mistyped level surfaces as traces == nil below.
-	service, _ := conf["service"].(map[string]any)
-	pipelines, _ := service["pipelines"].(map[string]any)
-	traces, _ := pipelines["traces"].(map[string]any)
-	if traces == nil {
-		return nil, errors.Newf(errors.TypeInternal, ErrCodeBuildMappingProcessorConfig, "collector config has no service.pipelines.traces pipeline to wire %q into", ProcessorName)
-	}
-
-	procs, _ := traces["processors"].([]any)
-	for _, p := range procs {
-		if name, ok := p.(string); ok && name == ProcessorName {
-			return confYaml, nil
-		}
-	}
-	traces["processors"] = append(procs, ProcessorName)
-
-	out, err := yaml.Marshal(conf)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeBuildMappingProcessorConfig, "failed to marshal collector config after pipeline wiring")
-	}
-	return out, nil
 }
 
 func filterEnabledGroupsWithMappers(groups []*SpanMapperGroupWithMappers) []*SpanMapperGroupWithMappers {

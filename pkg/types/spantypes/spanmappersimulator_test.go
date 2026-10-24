@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestSimulateSpanMappersProcessing_EndToEnd is an integration test: it spins
-// up an actual in-memory otel-collector pipeline with signozspanmapperprocessor
-// and verifies the produced span has the expected target attribute.
+// TestSimulateSpanMappersProcessing_EndToEnd runs the preview from stored
+// groups to response spans and verifies the produced span has the expected
+// target attribute.
 func TestSimulateSpanMappersProcessing_EndToEnd(t *testing.T) {
 	groups := []*SpanMapperGroupWithMappers{{
 		Group: &SpanMapperGroup{
@@ -34,7 +34,7 @@ func TestSimulateSpanMappersProcessing_EndToEnd(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, out, 1)
-	assert.Equal(t, "gpt-4", out[0].Attributes["gen_ai.request.model"], "target attribute must be populated by the spanmapper processor")
+	assert.Equal(t, "gpt-4", out[0].Attributes["gen_ai.request.model"], "target attribute must be populated by the span mapper")
 	// Source attribute is preserved (copy, not move).
 	assert.Equal(t, "gpt-4", out[0].Attributes["llm.model"])
 	// Order-tracking attribute is stripped from the output.
