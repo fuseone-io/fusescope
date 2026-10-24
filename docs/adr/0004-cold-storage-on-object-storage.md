@@ -1,6 +1,6 @@
 # 0004 · Cold storage on object storage for warm data
 
-- Status: proposed
+- Status: accepted (2026-10-25)
 - Deciders: FuseOne maintainers. Chart defaults, backend TTL rules and docs span several PRs and repos.
 - Related: [ADR 0002](0002-long-term-archive.md) (Parquet archive, step 2 of the storage-cost plan). This ADR is step 1.
 
@@ -84,11 +84,20 @@ Not included: EBS snapshots of the local volume (cold parts are not in them), NA
 - **Disk sizing.** The local volume shrinks to hot data + cache + metadata; `move_factor = 0` means a full local disk still blocks inserts instead of moving parts early.
 - **ADR 0002.** The archive reads cold parts from S3 at about the speed of local reads, one read per byte, and drops them with `DROP PART`, which deletes their objects (T3). The ingestion-time backstop must keep the cold rule; #156/#160 already preserve `TO VOLUME`, and decision 5 keeps #160's `MATERIALIZE TTL` from moving pre-existing logs early.
 
-## For the team to confirm
+## Supported object stores
 
-- The 7-day hot window and the `50Gi` cache default.
-- Whether metrics should also go cold by default.
-- Whether decision 5's logs fix lands in #160 or before it.
+| Store | How | Auth |
+|---|---|---|
+| AWS S3 | `type: s3` | Keys from a Secret, or an IAM role (IRSA) with `role.enabled` |
+| GCS | `type: gcs`, S3-compatible XML API, `support_batch_delete = false` | HMAC keys of a service account (Cloud Storage → Settings → Interoperability). Workload identity is not supported by ClickHouse's S3 client |
+| MinIO, Cloudflare R2, Backblaze B2, Wasabi, Ceph RGW | `type: s3` with the provider endpoint | Keys from a Secret |
+| Azure Blob Storage | ClickHouse's native `azure_blob_storage` disk | Not in the chart yet; added on demand |
+
+## Resolved
+
+- The 7-day hot window and the `50Gi` cache default are confirmed.
+- Metrics stay local by default; installs can opt in.
+- Decision 5's logs fix lands in #156, the TTL builder, before #160. Its fallback follows decision 5 (the configured cold days) unless #156's review settles otherwise, in which case this ADR is amended.
 
 ## Evidence
 
