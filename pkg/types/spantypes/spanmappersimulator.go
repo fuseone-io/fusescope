@@ -27,8 +27,22 @@ func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGrou
 		return spans, nil, nil
 	}
 
-	// Tag each span with its request position so the output can be returned in
-	// input order; work on copies so the caller's attribute maps stay untouched.
+	outputTraces, collectorErrs, err := simulateSpanMappersOnPTraces(ctx, enabled, spanMapperInputPTraces(spans))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	outputSpans, err := spanMapperOutputSpans(outputTraces, len(spans))
+	if err != nil {
+		return nil, nil, err
+	}
+	return outputSpans, collectorErrs, nil
+}
+
+// spanMapperInputPTraces tags each span with its request position so the
+// output can be returned in input order; it works on copies so the caller's
+// attribute maps stay untouched.
+func spanMapperInputPTraces(spans []SpanMapperTestSpan) []ptrace.Traces {
 	inputSpans := make([]SpanMapperTestSpan, len(spans))
 	for i, s := range spans {
 		attrs := make(map[string]any, len(s.Attributes)+1)
@@ -36,8 +50,10 @@ func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGrou
 		attrs[spanInputOrderAttr] = int64(i)
 		inputSpans[i] = SpanMapperTestSpan{Attributes: attrs, Resource: s.Resource}
 	}
-	simulatorInput := SpansToPTraces(inputSpans)
+	return SpansToPTraces(inputSpans)
+}
 
+func simulateSpanMappersOnPTraces(ctx context.Context, enabled []*SpanMapperGroupWithMappers, simulatorInput []ptrace.Traces) ([]ptrace.Traces, []string, error) {
 	processorFactories, err := otelcol.MakeFactoryMap(signozspanmapperprocessor.NewFactory())
 	if err != nil {
 		return nil, nil, errors.WrapInternalf(err, ErrCodeProcessorFactoryMapFailed, "could not construct processor factory map")
@@ -67,13 +83,16 @@ func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGrou
 		}
 		return nil, nil, errors.WrapInternalf(simErr, ErrCodeSpanMapperSimulationFailed, "could not simulate span mapper processing")
 	}
+	return outputTraces, collectorErrs, nil
+}
 
+func spanMapperOutputSpans(outputTraces []ptrace.Traces, inputCount int) ([]SpanMapperTestSpan, error) {
 	outputSpans := PTracesToSpans(outputTraces)
 
 	// The simulator returns whatever has been exported when its timeout
 	// elapses, without error; surface that instead of silently dropping spans.
-	if len(outputSpans) != len(spans) {
-		return nil, nil, errors.Newf(errors.TypeInternal, ErrCodeSpanMapperSimulationFailed, "simulation returned %d spans for %d input spans", len(outputSpans), len(spans))
+	if len(outputSpans) != inputCount {
+		return nil, errors.Newf(errors.TypeInternal, ErrCodeSpanMapperSimulationFailed, "simulation returned %d spans for %d input spans", len(outputSpans), inputCount)
 	}
 
 	sort.Slice(outputSpans, func(i, j int) bool {
@@ -84,8 +103,7 @@ func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGrou
 	for _, s := range outputSpans {
 		delete(s.Attributes, spanInputOrderAttr)
 	}
-
-	return outputSpans, collectorErrs, nil
+	return outputSpans, nil
 }
 
 func SpansToPTraces(spans []SpanMapperTestSpan) []ptrace.Traces {
