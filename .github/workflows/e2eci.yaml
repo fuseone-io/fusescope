@@ -195,8 +195,12 @@ jobs:
           retention-days: 5
   # Required status check. Fails when e2e was needed but did not pass,
   # including fork and dependabot PRs still waiting on safe-to-test.
+  # Skipped on runs superseded or ignored by the concurrency group, so they
+  # don't shadow the run that decides.
   e2e:
-    if: always()
+    if: |
+      !cancelled() &&
+      !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-e2e' && github.event.label.name != 'safe-to-test')
     needs: [changes, fmtlint, test]
     runs-on: ubuntu-24.04
     steps:
