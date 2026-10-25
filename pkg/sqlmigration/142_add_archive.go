@@ -135,6 +135,11 @@ func archiveTables() []archiveTable {
 			unique: [][]sqlschema.ColumnName{partKey},
 		},
 		{
+			// Shard numbers are positions in remote_servers; the replica path pins each to its data.
+			table:  newTable("archive_shard", []*sqlschema.Column{text("table_name"), integer("shard"), text("replica_path")}),
+			unique: [][]sqlschema.ColumnName{{"table_name", "shard"}, {"table_name", "replica_path"}},
+		},
+		{
 			table: newTable("archive_loss", append(partColumns(), text("kind"), timestamp("detected_at", false))),
 		},
 	}
