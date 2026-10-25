@@ -5,6 +5,7 @@ import TagChip from 'components/PageTemplate/components/TagChip';
 import { Button } from 'components/ui/button';
 import { BellPlus, History, ScrollText } from 'lucide-react';
 
+import ErrorKindBadge from '../../components/ErrorKindBadge';
 import EventSelector from './EventSelector';
 
 interface ErrorDetailHeaderProps {
@@ -36,6 +37,7 @@ function ErrorDetailHeader({
 					>
 						{group.type}
 					</h2>
+					<ErrorKindBadge group={group} testId="rum-error-kind" />
 					<TagChip title="fusescope.rum.error.source">{group.source}</TagChip>
 					{group.route && (
 						<TagChip title="fusescope.rum.view.route">{group.route}</TagChip>

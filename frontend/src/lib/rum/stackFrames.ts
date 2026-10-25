@@ -17,8 +17,10 @@ export interface DisplayFrame {
 	line: number;
 	column: number;
 	inApp: boolean;
-	/** Resolved through an uploaded source map. */
+	/** Resolved through an uploaded source map or R8 mapping. */
 	symbolicated: boolean;
+	/** A JVM frame R8 inlined into the frame after it. */
+	inlined: boolean;
 	context?: SourceContext;
 }
 
@@ -41,6 +43,34 @@ export function isLibraryFile(file: string): boolean {
 	return NATIVE_FILES.has(file) || PACKAGE.test(file);
 }
 
+const JVM_LIBRARY_PREFIXES = [
+	'java.',
+	'javax.',
+	'jdk.',
+	'sun.',
+	'com.sun.',
+	'dalvik.',
+	'libcore.',
+	'android.',
+	'androidx.',
+	'com.android.',
+	'com.google.android.',
+	'kotlin.',
+	'kotlinx.',
+	'org.jetbrains.',
+	'org.json.',
+	'okhttp3.',
+	'okio.',
+	'retrofit2.',
+	'io.opentelemetry.',
+	'io.fusescope.',
+];
+
+/** The platform's and common libraries' classes, as the server tells them from the app's. */
+export function isJvmLibraryClass(fn: string): boolean {
+	return JVM_LIBRARY_PREFIXES.some((prefix) => fn.startsWith(prefix));
+}
+
 const SCRIPT = /\.[mc]?js$/i;
 
 /** A script a source map can describe; inline `<script>` code reports the page's URL instead. */
@@ -51,6 +81,7 @@ export function isScriptFile(file: string): boolean {
 export function displayFrames(
 	frames: RumtypesErrorEventDTO['frames'],
 	mode: StackMode,
+	jvm = false,
 ): DisplayFrame[] {
 	return (frames ?? []).flatMap((frame): DisplayFrame[] => {
 		if (!frame) {
@@ -66,6 +97,7 @@ export function displayFrames(
 					column: original.column,
 					inApp: original.inApp,
 					symbolicated: true,
+					inlined: original.inlined,
 					context: original.context ?? undefined,
 				},
 			];
@@ -76,8 +108,11 @@ export function displayFrames(
 				file: frame.file,
 				line: frame.line,
 				column: frame.column,
-				inApp: !isLibraryFile(frame.file),
+				inApp: jvm
+					? !isJvmLibraryClass(frame.function)
+					: !isLibraryFile(frame.file),
 				symbolicated: false,
+				inlined: false,
 			},
 		];
 	});

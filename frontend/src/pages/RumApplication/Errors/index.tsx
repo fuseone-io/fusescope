@@ -20,6 +20,8 @@ interface ErrorsTabProps {
 	applicationId: string;
 	release: string;
 	window: ApmWindow;
+	/** An Android application: JVM traces, R8 mappings. */
+	jvm?: boolean;
 }
 
 const RIGHT = 'tw:text-right';
@@ -29,6 +31,7 @@ function ErrorsTab({
 	applicationId,
 	release,
 	window,
+	jvm = false,
 }: ErrorsTabProps): JSX.Element {
 	const [filters] = useErrorFilters();
 	const { state, uploadedReleases } = useErrorGroups(
@@ -44,7 +47,11 @@ function ErrorsTab({
 		<ContentPanel
 			testId="rum-errors"
 			title="Error groups"
-			subtitle="Grouped by fingerprint: exception type, normalized message and the top frame’s file and function, so one bug lands in one group across browsers."
+			subtitle={
+				jvm
+					? 'Grouped by fingerprint: exception type and the top three in-app frames, retraced, so one bug lands in one group across builds and devices.'
+					: 'Grouped by fingerprint: exception type, normalized message and the top frame’s file and function, so one bug lands in one group across browsers.'
+			}
 			actions={
 				state.status === 'ready' && (
 					<span
@@ -88,7 +95,8 @@ function ErrorsTab({
 									applicationId={applicationId}
 									group={group}
 									totalSessions={state.sessions}
-									sourceMapMissing={sourceMapMissing(group, uploadedReleases)}
+									sourceMapMissing={sourceMapMissing(group, uploadedReleases, jvm)}
+									jvm={jvm}
 								/>
 							))}
 						{state.status === 'loading' && (

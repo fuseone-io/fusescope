@@ -21,6 +21,7 @@ interface ErrorDetailBodyProps {
 	group: RumtypesGettableErrorGroupDTO;
 	release: string;
 	window: ApmWindow;
+	jvm: boolean;
 	onOpenSourceMaps: () => void;
 }
 
@@ -29,6 +30,7 @@ function ErrorDetailBody({
 	group,
 	release,
 	window,
+	jvm,
 	onOpenSourceMaps,
 }: ErrorDetailBodyProps): JSX.Element {
 	const { search } = useLocation();
@@ -70,6 +72,7 @@ function ErrorDetailBody({
 							key={event.id}
 							applicationId={applicationId}
 							event={event}
+							jvm={jvm}
 							onOpenSourceMaps={onOpenSourceMaps}
 						/>
 						<Breadcrumbs
