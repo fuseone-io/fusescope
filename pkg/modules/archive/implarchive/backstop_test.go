@@ -2,52 +2,20 @@ package implarchive
 
 import (
 	"context"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun/migrate"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
-	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
 	"github.com/fuseone-io/fusescope/pkg/modules/archive"
 	"github.com/fuseone-io/fusescope/pkg/modules/retention/retentiontest"
-	"github.com/fuseone-io/fusescope/pkg/sqlmigration"
-	"github.com/fuseone-io/fusescope/pkg/sqlschema"
-	"github.com/fuseone-io/fusescope/pkg/sqlschema/sqlitesqlschema"
-	"github.com/fuseone-io/fusescope/pkg/sqlstore"
-	"github.com/fuseone-io/fusescope/pkg/sqlstore/sqlitesqlstore"
 	"github.com/fuseone-io/fusescope/pkg/types/archivetypes"
 	"github.com/fuseone-io/fusescope/pkg/types/retentiontypes"
 )
-
-func newTestStore(t *testing.T) archivetypes.Store {
-	t.Helper()
-	ctx := context.Background()
-
-	store, err := sqlitesqlstore.New(ctx, factorytest.NewSettings(), sqlstore.Config{
-		Provider:   "sqlite",
-		Connection: sqlstore.ConnectionConfig{MaxOpenConns: 1},
-		Sqlite:     sqlstore.SqliteConfig{Path: filepath.Join(t.TempDir(), "test.db"), Mode: "wal", BusyTimeout: 5 * time.Second, TransactionMode: "deferred"},
-	})
-	require.NoError(t, err)
-	schema, err := sqlitesqlschema.New(ctx, factorytest.NewSettings(), sqlschema.Config{}, store)
-	require.NoError(t, err)
-
-	migration, err := sqlmigration.NewAddArchiveFactory(store, schema).New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
-	require.NoError(t, err)
-	migrations := migrate.NewMigrations()
-	require.NoError(t, migration.Register(migrations))
-	for _, m := range migrations.Sorted() {
-		require.NoError(t, m.Up(ctx, store.BunDB()))
-	}
-
-	return NewStore(store)
-}
 
 func newTestBackstopService(t *testing.T, store archivetypes.Store, backstopDays int) (*backstopService, *retentiontest.MockBackstopSetter) {
 	t.Helper()
