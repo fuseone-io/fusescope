@@ -63,8 +63,13 @@ type IndexObject struct {
 	ETag  string `json:"etag"`
 }
 
+// Dir holds the attempt's objects and nothing else.
+func (location ObjectLocation) Dir() string {
+	return fmt.Sprintf("%s/%s/day=%s/shard=%d/partition=%s/attempt=%s", strings.TrimSuffix(location.Prefix, "/"), location.Table, location.Day.Format(time.DateOnly), location.Shard, location.PartitionID, location.AttemptID)
+}
+
 func (location ObjectLocation) ObjectKey(partName string) string {
-	return fmt.Sprintf("%s/%s/day=%s/shard=%d/partition=%s/attempt=%s/%s.parquet", strings.TrimSuffix(location.Prefix, "/"), location.Table, location.Day.Format(time.DateOnly), location.Shard, location.PartitionID, location.AttemptID, partName)
+	return location.Dir() + "/" + partName + ".parquet"
 }
 
 func (location ObjectLocation) ManifestKey() string {
