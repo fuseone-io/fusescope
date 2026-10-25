@@ -1,0 +1,7 @@
+com.example.legacy.Main -> a:
+    java.lang.String name -> a
+    3:5:void main(java.lang.String[]) -> main
+    void helper() -> a
+    int helper(int) -> a
+com.example.legacy.Util -> b:
+    10:12:int parse(java.lang.String):100:102 -> a
