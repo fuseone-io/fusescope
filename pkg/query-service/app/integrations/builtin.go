@@ -5,7 +5,6 @@ import (
 	"context"
 	"embed"
 	"strings"
-	"unicode"
 
 	"encoding/base64"
 	"encoding/json"
@@ -149,24 +148,6 @@ func readBuiltInIntegration(dirpath string) (
 	return &integration, nil
 }
 
-func validateIntegration(i IntegrationDetails) error {
-	// Validate dashboard data
-	seenDashboardIds := map[string]struct{}{}
-	for _, dd := range i.Assets.Dashboards {
-		if dd.ID == "" {
-			return fmt.Errorf("id is required for dashboard %q in integration %s", dd.Definition.Spec.Display.Name, i.Id)
-		}
-		if _, seen := seenDashboardIds[dd.ID]; seen {
-			return fmt.Errorf("multiple dashboards found with id %s", dd.ID)
-		}
-		seenDashboardIds[dd.ID] = struct{}{}
-	}
-
-	// TODO(Raj): Validate all parts of plugged in integrations
-
-	return nil
-}
-
 func HydrateFileUris(spec interface{}, fs embed.FS, basedir string) (interface{}, error) {
 	if specMap, ok := spec.(map[string]interface{}); ok {
 		result := map[string]interface{}{}
@@ -238,35 +219,4 @@ func readFileIfUri(fs embed.FS, maybeFileUri string, basedir string) (interface{
 	}
 
 	return nil, fmt.Errorf("unsupported file type %s", maybeFileUri)
-}
-
-// copied from signoz clickhouse exporter's `sanitize` which
-// in turn is copied from prometheus-go-metric-exporter
-//
-// replaces non-alphanumeric characters with underscores in s.
-func toPromMetricName(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-
-	// Note: No length limit for label keys because Prometheus doesn't
-	// define a length limit, thus we should NOT be truncating label keys.
-	// See https://github.com/orijtech/prometheus-go-metrics-exporter/issues/4.
-
-	s = strings.Map(func(r rune) rune {
-		// sanitizeRune converts anything that is not a letter or digit to an underscore
-		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			return r
-		}
-		// Everything else turns into an underscore
-		return '_'
-	}, s)
-
-	if unicode.IsDigit(rune(s[0])) {
-		s = "key" + "_" + s
-	}
-	if s[0] == '_' {
-		s = "key" + s
-	}
-	return s
 }

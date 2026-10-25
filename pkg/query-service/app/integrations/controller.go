@@ -3,21 +3,33 @@ package integrations
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
 	"github.com/fuseone-io/fusescope/pkg/query-service/agentConf"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations/catalog"
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
 	"github.com/fuseone-io/fusescope/pkg/types/pipelinetypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
+	"github.com/fuseone-io/fusescope/pkg/version"
 )
 
 type Controller struct {
 	mgr *Manager
 }
 
-func NewController(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module) (*Controller, error) {
-	mgr, err := NewManager(sqlStore, dashboardModule)
+func NewController(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module, logger *slog.Logger) (*Controller, error) {
+	embedded, err := catalog.LoadEmbedded(logger, version.Info.Version())
+	if err != nil {
+		return nil, fmt.Errorf("couldn't load the integration catalog: %w", err)
+	}
+	available, err := NewCatalogIntegrations(embedded)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't load the integration catalog: %w", err)
+	}
+
+	mgr, err := NewManager(sqlStore, dashboardModule, available)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations manager: %w", err)
 	}
