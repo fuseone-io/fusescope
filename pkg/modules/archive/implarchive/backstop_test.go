@@ -83,6 +83,28 @@ func TestBackstopServiceReconcile(t *testing.T) {
 		require.NoError(t, service.reconcile(ctx))
 	})
 
+	t.Run("LeaseHeldByAnotherBackend_NothingIssued", func(t *testing.T) {
+		store := newTestStore(t)
+		service, _ := newTestBackstopService(t, store, 7)
+		_, err := store.AcquireLease(ctx, archivetypes.BackstopLease(retentiontypes.LogsTTL), "other", time.Now().Add(time.Minute))
+		require.NoError(t, err)
+
+		require.NoError(t, service.reconcile(ctx))
+
+		_, err = store.GetSignal(ctx, retentiontypes.LogsTTL)
+		assert.True(t, errors.Ast(err, errors.TypeNotFound))
+	})
+
+	t.Run("ExportLeaseHeld_Applied", func(t *testing.T) {
+		store := newTestStore(t)
+		service, setter := newTestBackstopService(t, store, 7)
+		_, err := store.AcquireLease(ctx, retentiontypes.LogsTTL, "exporter", time.Now().Add(time.Minute))
+		require.NoError(t, err)
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7).Return(nil).Once()
+
+		require.NoError(t, service.reconcile(ctx))
+	})
+
 	t.Run("Disabled_NothingIssued", func(t *testing.T) {
 		store := newTestStore(t)
 		service, _ := newTestBackstopService(t, store, 7)
@@ -93,4 +115,26 @@ func TestBackstopServiceReconcile(t *testing.T) {
 		_, err := store.GetSignal(ctx, retentiontypes.LogsTTL)
 		assert.True(t, errors.Ast(err, errors.TypeNotFound))
 	})
+}
+
+func TestBackstopServiceStopCancelsApply(t *testing.T) {
+	service, setter := newTestBackstopService(t, newTestStore(t), 7)
+	applying := make(chan struct{})
+	setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7).RunAndReturn(func(ctx context.Context, _ string, _ int) error {
+		close(applying)
+		<-ctx.Done()
+		return ctx.Err()
+	}).Once()
+
+	started := make(chan error, 1)
+	go func() { started <- service.Start(context.Background()) }()
+	<-applying
+	require.NoError(t, service.Stop(context.Background()))
+
+	select {
+	case err := <-started:
+		assert.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("Start did not return after Stop")
+	}
 }
