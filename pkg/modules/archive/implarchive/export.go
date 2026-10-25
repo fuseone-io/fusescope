@@ -115,6 +115,9 @@ func (service *exportService) Stop(_ context.Context) error {
 }
 
 func (service *exportService) cycle(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, service.config.Logs.CycleTimeout())
+	defer cancel()
+
 	return runUnderLease(ctx, service.store, service.settings.Logger(), retentiontypes.LogsTTL, service.holder, leaseDuration, service.exportTables)
 }
 
@@ -124,16 +127,17 @@ func (service *exportService) exportTables(ctx context.Context, lease *archivety
 		return err
 	}
 
+	indexConns := make(map[archivetypes.Table]clickhouse.Conn)
 	group := new(errgroup.Group)
 	group.SetLimit(service.config.Limits.Concurrency)
 	for _, table := range archivetypes.LogsTables() {
-		service.retryIndex(ctx, replicas[firstShard(replicas)][0].conn, lease, table)
-
-		jobs, err := service.jobs(ctx, table, replicas)
+		jobs, conn, err := service.jobs(ctx, table, replicas)
 		if err != nil {
 			service.settings.Logger().WarnContext(ctx, "archive export skipped a table", slog.String("table", table.Name), errors.Attr(err))
 			continue
 		}
+		indexConns[table] = conn
+
 		for _, job := range jobs {
 			group.Go(func() error {
 				if err := service.export(ctx, lease, job); err != nil && ctx.Err() == nil {
@@ -143,63 +147,109 @@ func (service *exportService) exportTables(ctx context.Context, lease *archivety
 			})
 		}
 	}
+	if err := group.Wait(); err != nil {
+		return err
+	}
 
-	return group.Wait()
+	for table, conn := range indexConns {
+		service.writeStaleIndex(ctx, conn, lease, table)
+	}
+	return nil
 }
 
-// jobs returns the table's partitions past retention, on every shard.
-func (service *exportService) jobs(ctx context.Context, table archivetypes.Table, replicas map[int][]replica) ([]exportJob, error) {
-	conn := replicas[firstShard(replicas)][0].conn
+// jobs returns the table's partitions past retention on every shard that a replica answers
+// for, and a connection to one of them.
+func (service *exportService) jobs(ctx context.Context, table archivetypes.Table, replicas map[int][]replica) ([]exportJob, clickhouse.Conn, error) {
+	shards := make([]shardSnapshot, 0, len(replicas))
+	for _, shard := range sortedShards(replicas) {
+		snapshot, err := service.snapshotShard(ctx, table, shard, replicas[shard])
+		if err != nil {
+			service.settings.Logger().WarnContext(ctx, "archive export skipped a shard", slog.String("table", table.Name), slog.Int("shard", shard), errors.Attr(err))
+			continue
+		}
+		shards = append(shards, snapshot)
+	}
+	if len(shards) == 0 {
+		return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no shard of %s can be archived", table.Name)
+	}
+
+	conn := shards[0].replicas[shards[0].firstAddr].conn
 	columns, err := exportedColumns(ctx, conn, table)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	mappings, err := archivetypes.NewColumnMappings(columns)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	version, err := schemaVersion(ctx, conn, table.Database)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var jobs []exportJob
 	now := time.Now()
-	for shard, shardReplicas := range replicas {
-		snapshots := make(map[string]map[string][]archivetypes.Part, len(shardReplicas))
-		byAddr := make(map[string]replica, len(shardReplicas))
-		partitionIDs := make(map[string]string)
-		for _, replica := range shardReplicas {
-			parts, err := activeParts(ctx, replica.conn, table)
+	for _, shard := range shards {
+		for id, addr := range shard.partitionIDs {
+			partition, err := service.partition(ctx, shard.replicas[addr].conn, table, id)
 			if err != nil {
-				return nil, err
-			}
-			snapshots[replica.addr], byAddr[replica.addr] = parts, replica
-			for id := range parts {
-				partitionIDs[id] = replica.addr
-			}
-		}
-
-		for id, addr := range partitionIDs {
-			partition, err := service.partition(ctx, byAddr[addr].conn, table, id)
-			if err != nil {
-				service.settings.Logger().WarnContext(ctx, "archive export skipped a partition", slog.String("table", table.Name), slog.Int("shard", shard), slog.String("partition_id", id), errors.Attr(err))
+				service.settings.Logger().WarnContext(ctx, "archive export skipped a partition", slog.String("table", table.Name), slog.Int("shard", shard.shard), slog.String("partition_id", id), errors.Attr(err))
 				continue
 			}
 			if !partition.PastRetention(now) {
 				continue
 			}
 
-			snapshot := make(map[string][]archivetypes.Part, len(snapshots))
-			for addr, parts := range snapshots {
+			snapshot := make(map[string][]archivetypes.Part, len(shard.parts))
+			for addr, parts := range shard.parts {
 				snapshot[addr] = parts[id]
 			}
-			jobs = append(jobs, exportJob{table: table, mappings: mappings, version: version, partition: partition, shard: shard, replicas: byAddr, snapshot: snapshot})
+			jobs = append(jobs, exportJob{table: table, mappings: mappings, version: version, partition: partition, shard: shard.shard, replicas: shard.replicas, snapshot: snapshot})
 		}
 	}
 
 	sort.Slice(jobs, func(i, j int) bool { return jobs[i].partition.ID < jobs[j].partition.ID })
-	return jobs, nil
+	return jobs, conn, nil
+}
+
+// shardSnapshot is the active parts of a table on the replicas of a shard that answered.
+type shardSnapshot struct {
+	shard        int
+	firstAddr    string
+	replicas     map[string]replica
+	parts        map[string]map[string][]archivetypes.Part
+	partitionIDs map[string]string
+}
+
+// snapshotShard reads the parts on every replica of shard it can reach. A replica that
+// doesn't answer is left out: ranges only it holds stay uncovered and are exported later. The
+// shard's replica path must be the one pinned to its number.
+func (service *exportService) snapshotShard(ctx context.Context, table archivetypes.Table, shard int, shardReplicas []replica) (shardSnapshot, error) {
+	snapshot := shardSnapshot{shard: shard, replicas: make(map[string]replica), parts: make(map[string]map[string][]archivetypes.Part), partitionIDs: make(map[string]string)}
+	path := ""
+	for _, replica := range shardReplicas {
+		parts, err := activeParts(ctx, replica.conn, table)
+		if err == nil {
+			path, err = replicaPath(ctx, replica.conn, table)
+		}
+		if err != nil {
+			service.settings.Logger().WarnContext(ctx, "archive export skipped a replica", slog.String("table", table.Name), slog.Int("shard", shard), slog.String("replica", replica.addr), errors.Attr(err))
+			continue
+		}
+
+		if snapshot.firstAddr == "" {
+			snapshot.firstAddr = replica.addr
+		}
+		snapshot.replicas[replica.addr], snapshot.parts[replica.addr] = replica, parts
+		for id := range parts {
+			snapshot.partitionIDs[id] = replica.addr
+		}
+	}
+	if snapshot.firstAddr == "" {
+		return snapshot, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no replica of shard %d answered", shard)
+	}
+
+	return snapshot, service.store.PinShard(ctx, table.Name, shard, path)
 }
 
 // partition caches day and retention, which never change for a partition ID.
@@ -223,13 +273,13 @@ func (service *exportService) partition(ctx context.Context, conn clickhouse.Con
 	return partition, nil
 }
 
-func firstShard(replicas map[int][]replica) int {
+func sortedShards(replicas map[int][]replica) []int {
 	shards := make([]int, 0, len(replicas))
 	for shard := range replicas {
 		shards = append(shards, shard)
 	}
 	sort.Ints(shards)
-	return shards[0]
+	return shards
 }
 
 func jobKey(job exportJob) string {

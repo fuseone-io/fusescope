@@ -41,42 +41,81 @@ func newReplicaDialer(dsn string, maxConns int) (*replicaDialer, error) {
 	return &replicaDialer{options: options, conns: make(map[string]clickhouse.Conn)}, nil
 }
 
-// replicas returns every replica of cluster by shard. A replica on a loopback address is the
-// server the DSN names, as in a single-node cluster definition.
+type clusterReplica struct {
+	shard   int
+	host    string
+	port    uint16
+	isLocal bool
+}
+
+// replicas returns every replica of cluster by shard.
 func (dialer *replicaDialer) replicas(ctx context.Context, conn clickhouse.Conn, cluster string) (map[int][]replica, error) {
-	rows, err := conn.Query(ctx, "SELECT shard_num, host_name, host_address, port FROM system.clusters WHERE cluster = ? ORDER BY shard_num, replica_num", cluster)
+	rows, err := conn.Query(ctx, "SELECT shard_num, host_name, port, is_local FROM system.clusters WHERE cluster = ? ORDER BY shard_num, replica_num", cluster)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the replicas of cluster %s", cluster)
 	}
 	defer rows.Close()
 
-	byShard := make(map[int][]replica)
+	var listed []clusterReplica
 	for rows.Next() {
 		var shard uint32
-		var host, address string
+		var host string
 		var port uint16
-		if err := rows.Scan(&shard, &host, &address, &port); err != nil {
+		var isLocal uint8
+		if err := rows.Scan(&shard, &host, &port, &isLocal); err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the replicas of cluster %s", cluster)
 		}
-
-		addrs := []string{net.JoinHostPort(host, strconv.Itoa(int(port)))}
-		if ip := net.ParseIP(address); host == "localhost" || (ip != nil && ip.IsLoopback()) {
-			addrs = dialer.options.Addr
-		}
-		replicaConn, err := dialer.dial(addrs)
-		if err != nil {
-			return nil, err
-		}
-		byShard[int(shard)] = append(byShard[int(shard)], replica{shard: int(shard), addr: addrs[0], conn: replicaConn})
+		listed = append(listed, clusterReplica{shard: int(shard), host: host, port: port, isLocal: isLocal == 1})
 	}
 	if err := rows.Err(); err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the replicas of cluster %s", cluster)
 	}
-	if len(byShard) == 0 {
-		return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "cluster %s has no replicas", cluster)
+
+	resolved, err := resolveReplicas(listed, dialer.options.Addr)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "couldn't resolve the replicas of cluster %s", cluster)
+	}
+
+	byShard := make(map[int][]replica, len(resolved))
+	for shard, shardAddrs := range resolved {
+		for _, addrs := range shardAddrs {
+			replicaConn, err := dialer.dial(addrs)
+			if err != nil {
+				return nil, err
+			}
+			byShard[shard] = append(byShard[shard], replica{shard: shard, addr: addrs[0], conn: replicaConn})
+		}
 	}
 
 	return byShard, nil
+}
+
+// resolveReplicas returns the addresses to dial for each replica, by shard. The server the
+// DSN names lists itself as local, under whatever host the cluster definition gives it. A
+// server in two shards would export the same parts once per shard.
+func resolveReplicas(listed []clusterReplica, dsnAddrs []string) (map[int][][]string, error) {
+	resolved := make(map[int][][]string)
+	shardOf := make(map[string]int)
+	for _, listedReplica := range listed {
+		addrs := []string{net.JoinHostPort(listedReplica.host, strconv.Itoa(int(listedReplica.port)))}
+		if listedReplica.isLocal {
+			addrs = dsnAddrs
+		}
+
+		if shard, ok := shardOf[addrs[0]]; ok {
+			if shard != listedReplica.shard {
+				return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "replica %s is in shards %d and %d", addrs[0], shard, listedReplica.shard)
+			}
+			continue
+		}
+		shardOf[addrs[0]] = listedReplica.shard
+		resolved[listedReplica.shard] = append(resolved[listedReplica.shard], addrs)
+	}
+	if len(resolved) == 0 {
+		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "the cluster has no replicas")
+	}
+
+	return resolved, nil
 }
 
 func (dialer *replicaDialer) close() {

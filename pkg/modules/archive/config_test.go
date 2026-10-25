@@ -18,6 +18,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 	t.Setenv("SIGNOZ_ARCHIVE_LOGS_PREFIX", "fusescope/prod")
 	t.Setenv("SIGNOZ_ARCHIVE_LOGS_BACKSTOP__DAYS", "10")
 	t.Setenv("SIGNOZ_ARCHIVE_LIMITS_CONCURRENCY", "2")
+	t.Setenv("SIGNOZ_ARCHIVE_LIMITS_QUERY__TIMEOUT", "30m")
 
 	conf, err := config.New(
 		context.Background(),
@@ -37,6 +38,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 	assert.Equal(t, "fusescope/prod", actual.Logs.Prefix)
 	assert.Equal(t, 10, actual.Logs.BackstopDays)
 	assert.Equal(t, 2, actual.Limits.Concurrency)
+	assert.Equal(t, 30*time.Minute, actual.Limits.QueryTimeout)
 	assert.Equal(t, uint64(1_000_000), actual.Logs.LateMinRows)
 	assert.True(t, actual.Logs.Compaction.Enabled)
 	assert.NoError(t, actual.Validate())
@@ -96,6 +98,8 @@ func TestConfigValidate(t *testing.T) {
 		{name: "Limits_ZeroConcurrency", mutate: func(c *Config) { c.Limits.Concurrency = 0 }, wantErr: true},
 		{name: "Limits_ZeroThreads", mutate: func(c *Config) { c.Limits.MaxThreads = 0 }, wantErr: true},
 		{name: "Limits_ZeroRowGroup", mutate: func(c *Config) { c.Limits.RowGroupRows = 0 }, wantErr: true},
+		{name: "Limits_ZeroQueryTimeout", mutate: func(c *Config) { c.Limits.QueryTimeout = 0 }, wantErr: true},
+		{name: "Limits_QueryTimeoutNotBelowBackstop", mutate: func(c *Config) { c.Limits.QueryTimeout = 7 * 24 * time.Hour }, wantErr: true},
 		{name: "Limits_NegativeMemory", mutate: func(c *Config) { c.Limits.MaxMemoryUsage = -1 }, wantErr: true},
 		{name: "Compaction_OneObject", mutate: func(c *Config) { c.Logs.Compaction.MinObjects = 1 }, wantErr: true},
 		{name: "GCSuperseded_Negative", mutate: func(c *Config) { c.GCSupersededDays = -1 }, wantErr: true},
