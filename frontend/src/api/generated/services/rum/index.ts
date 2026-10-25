@@ -25,6 +25,7 @@ import type {
 	DeleteRUMSourceMapPathParameters,
 	DeleteRUMSourceMapsParams,
 	DeleteRUMSourceMapsPathParameters,
+	FormDataRumtypesPostableR8MappingDTO,
 	FormDataRumtypesPostableSourceMapsDTO,
 	GetRUMApplication200,
 	GetRUMApplicationPathParameters,
@@ -63,6 +64,9 @@ import type {
 	RumtypesUpdatableApplicationDTO,
 	UpdateRUMApplication200,
 	UpdateRUMApplicationPathParameters,
+	UploadRUMR8Mapping201,
+	UploadRUMR8MappingParams,
+	UploadRUMR8MappingPathParameters,
 	UploadRUMSourceMaps201,
 	UploadRUMSourceMapsParams,
 	UploadRUMSourceMapsPathParameters,
@@ -1140,6 +1144,120 @@ export const useRotateRUMApplicationKey = <
 	return useMutation(getRotateRUMApplicationKeyMutationOptions(options));
 };
 /**
+ * Stores the R8 or ProGuard mapping.txt of an Android application's release, replacing the release's mapping if it has one. JVM stack traces of events whose service.version equals the release are retraced with it when read. The body is the mapping itself (any content type but multipart, optionally with Content-Encoding: gzip), or multipart/form-data with the mapping in a part named file and the release in a release field. release comes from the query, or from that field. A body that is not a mapping, empty or larger than the file limit (50 MB by default, after decompression) is refused with 400; more than the application's quota, 2 GB by default, with 413. Uploads share the source map store, limits and retention, and are listed and deleted with the sourcemaps endpoints. Use an API key with the Editor role in SigNoz-Api-Key; the public RUM key is not accepted.
+ * @summary Upload RUM R8 mapping
+ */
+export const uploadRUMR8Mapping = (
+	{ id }: UploadRUMR8MappingPathParameters,
+	formDataRumtypesPostableR8MappingDTO?: BodyType<FormDataRumtypesPostableR8MappingDTO>,
+	params?: UploadRUMR8MappingParams,
+	signal?: AbortSignal,
+) => {
+	const formData = new FormData();
+	if (formDataRumtypesPostableR8MappingDTO?.file !== undefined) {
+		formData.append(`file`, formDataRumtypesPostableR8MappingDTO.file);
+	}
+	if (formDataRumtypesPostableR8MappingDTO?.release !== undefined) {
+		formData.append(`release`, formDataRumtypesPostableR8MappingDTO.release);
+	}
+
+	return GeneratedAPIInstance<UploadRUMR8Mapping201>({
+		url: `/api/v1/rum/applications/${id}/mappings`,
+		method: 'POST',
+		headers: { 'Content-Type': 'multipart/form-data' },
+		data: formData,
+		params,
+		signal,
+	});
+};
+
+export const getUploadRUMR8MappingMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof uploadRUMR8Mapping>>,
+		TError,
+		{
+			pathParams: UploadRUMR8MappingPathParameters;
+			data?: BodyType<FormDataRumtypesPostableR8MappingDTO>;
+			params?: UploadRUMR8MappingParams;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof uploadRUMR8Mapping>>,
+	TError,
+	{
+		pathParams: UploadRUMR8MappingPathParameters;
+		data?: BodyType<FormDataRumtypesPostableR8MappingDTO>;
+		params?: UploadRUMR8MappingParams;
+	},
+	TContext
+> => {
+	const mutationKey = ['uploadRUMR8Mapping'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof uploadRUMR8Mapping>>,
+		{
+			pathParams: UploadRUMR8MappingPathParameters;
+			data?: BodyType<FormDataRumtypesPostableR8MappingDTO>;
+			params?: UploadRUMR8MappingParams;
+		}
+	> = (props) => {
+		const { pathParams, data, params } = props ?? {};
+
+		return uploadRUMR8Mapping(pathParams, data, params);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UploadRUMR8MappingMutationResult = NonNullable<
+	Awaited<ReturnType<typeof uploadRUMR8Mapping>>
+>;
+export type UploadRUMR8MappingMutationBody =
+	| BodyType<FormDataRumtypesPostableR8MappingDTO>
+	| undefined;
+export type UploadRUMR8MappingMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Upload RUM R8 mapping
+ */
+export const useUploadRUMR8Mapping = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof uploadRUMR8Mapping>>,
+		TError,
+		{
+			pathParams: UploadRUMR8MappingPathParameters;
+			data?: BodyType<FormDataRumtypesPostableR8MappingDTO>;
+			params?: UploadRUMR8MappingParams;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof uploadRUMR8Mapping>>,
+	TError,
+	{
+		pathParams: UploadRUMR8MappingPathParameters;
+		data?: BodyType<FormDataRumtypesPostableR8MappingDTO>;
+		params?: UploadRUMR8MappingParams;
+	},
+	TContext
+> => {
+	return useMutation(getUploadRUMR8MappingMutationOptions(options));
+};
+/**
  * Returns sessions newest first, with views, actions, errors, client, release and the previous session. Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name.
  * @summary List RUM sessions
  */
@@ -1467,7 +1585,7 @@ export const useDeleteRUMSourceMaps = <
 	return useMutation(getDeleteRUMSourceMapsMutationOptions(options));
 };
 /**
- * Returns the application's releases with source maps, newest upload first, with their size, uploader, last use and expiry, plus the storage used, the limits and the retention settings. With release, returns that release and its files.
+ * Returns the application's releases with source maps or R8 mappings, newest upload first, with their size, uploader, last use and expiry, plus the storage used, the limits and the retention settings. With release, returns that release and its files.
  * @summary List RUM source maps
  */
 export const listRUMSourceMaps = (

@@ -6820,6 +6820,15 @@ export interface FeaturetypesGettableFeatureDTO {
 
 export type MultipartFileDTO = Blob;
 
+export interface FormDataRumtypesPostableR8MappingDTO {
+	file?: MultipartFileDTO;
+	/**
+	 * @type string
+	 * @description The release, when the query has none.
+	 */
+	release?: string;
+}
+
 export interface FormDataRumtypesPostableSourceMapsDTO {
 	/**
 	 * @type string
@@ -11418,9 +11427,14 @@ export interface RumtypesSourceMapSettingsDTO {
 export interface RumtypesApplicationDTO {
 	/**
 	 * @type array,null
-	 * @description Browser origins allowed to ingest, e.g. https://shop.example.com or https://*.example.com; * allows any.
+	 * @description Browser origins allowed to ingest, e.g. https://shop.example.com or https://*.example.com; * allows any. Web only.
 	 */
 	allowedOrigins: string[] | null;
+	/**
+	 * @type array,null
+	 * @description Android package names allowed to ingest, matched against the app.package.name resource attribute, e.g. com.example.shop or com.example.*; * allows any. Android only.
+	 */
+	allowedPackageNames: string[] | null;
 	/**
 	 * @type string
 	 * @format date-time
@@ -11473,6 +11487,10 @@ export interface RumtypesApplicationDTO {
 	updatedAt?: string;
 }
 
+export enum RumtypesArtifactKindDTO {
+	'source-map' = 'source-map',
+	'r8-mapping' = 'r8-mapping',
+}
 export interface RumtypesClientBreakdownDTO {
 	/**
 	 * @type number,null
@@ -11536,6 +11554,11 @@ export type RumtypesOriginalFrameDTO = {
 	 */
 	inApp: boolean;
 	/**
+	 * @type boolean
+	 * @description True for a JVM frame R8 inlined into the frame after it; both come from one obfuscated frame.
+	 */
+	inlined: boolean;
+	/**
 	 * @type integer
 	 */
 	line: number;
@@ -11571,10 +11594,37 @@ export type RumtypesStackFrameDTO = {
 	original: RumtypesOriginalFrameDTO | null;
 } | null;
 
+export enum RumtypesErrorCauseRelationDTO {
+	caused_by = 'caused_by',
+	suppressed = 'suppressed',
+}
+export interface RumtypesErrorCauseDTO {
+	/**
+	 * @type array,null
+	 */
+	frames: (RumtypesStackFrameDTO | null)[] | null;
+	/**
+	 * @type string
+	 */
+	message: string;
+	/**
+	 * @type integer
+	 * @description Frames the JVM printed as "... N more": the last N of the enclosing exception's.
+	 */
+	omittedFrames: number;
+	relation: RumtypesErrorCauseRelationDTO;
+	/**
+	 * @type string
+	 * @description Deobfuscated when a mapping resolves it.
+	 */
+	type: string;
+}
+
 /**
  * @nullable
  */
 export type RumtypesMissingSourceMapDTO = {
+	kind: RumtypesArtifactKindDTO;
 	/**
 	 * @type string
 	 * @description The event's service.version, empty when it has none.
@@ -11583,9 +11633,15 @@ export type RumtypesMissingSourceMapDTO = {
 } | null;
 
 export interface RumtypesErrorEventDTO {
+	/**
+	 * @type array,null
+	 * @description The causes and suppressed exceptions of a JVM trace, in print order; empty otherwise.
+	 */
+	causes: RumtypesErrorCauseDTO[] | null;
 	client: RumtypesClientDTO;
 	/**
 	 * @type array,null
+	 * @description For a JVM trace, the thrown exception's.
 	 */
 	frames: (RumtypesStackFrameDTO | null)[] | null;
 	/**
@@ -11620,7 +11676,7 @@ export interface RumtypesErrorEventDTO {
 	stacktrace: string;
 	/**
 	 * @type boolean
-	 * @description Whether frames were mapped through an uploaded source map; frames keep the minified position and carry the original one.
+	 * @description Whether frames were mapped through an uploaded source map or R8 mapping; frames keep the minified position and carry the original one.
 	 */
 	symbolicated: boolean;
 	/**
@@ -11730,12 +11786,14 @@ export interface RumtypesErrorGroupDTO {
 	sessions: number;
 	/**
 	 * @type string
+	 * @description fusescope.rum.error.source of the latest event; crash or anr on Android.
 	 */
 	source: string;
 	sparkline: RumtypesSparklineDTO;
 	topFrame: RumtypesStackFrameDTO | null;
 	/**
 	 * @type string
+	 * @description Deobfuscated for Android when the release's R8 mapping resolves it.
 	 */
 	type: string;
 }
@@ -11808,6 +11866,7 @@ export enum RumtypesRejectionReasonDTO {
 	bad_key = 'bad_key',
 	unknown_key = 'unknown_key',
 	origin_not_allowed = 'origin_not_allowed',
+	package_not_allowed = 'package_not_allowed',
 	rate_limited = 'rate_limited',
 	too_large = 'too_large',
 	invalid_payload = 'invalid_payload',
@@ -11820,7 +11879,7 @@ export interface RumtypesIngestRejectionDTO {
 	count: number;
 	/**
 	 * @type string
-	 * @description Origin header of the last refused request, empty when absent.
+	 * @description Origin header of the last refused request, or its app.package.name when refused for it; empty when absent.
 	 */
 	lastOrigin: string;
 	/**
@@ -11931,9 +11990,14 @@ export interface RumtypesGettableCreatedApplicationKeyDTO {
 export interface RumtypesGettableCreatedApplicationDTO {
 	/**
 	 * @type array,null
-	 * @description Browser origins allowed to ingest, e.g. https://shop.example.com or https://*.example.com; * allows any.
+	 * @description Browser origins allowed to ingest, e.g. https://shop.example.com or https://*.example.com; * allows any. Web only.
 	 */
 	allowedOrigins: string[] | null;
+	/**
+	 * @type array,null
+	 * @description Android package names allowed to ingest, matched against the app.package.name resource attribute, e.g. com.example.shop or com.example.*; * allows any. Android only.
+	 */
+	allowedPackageNames: string[] | null;
 	/**
 	 * @type string
 	 * @format date-time
@@ -12204,12 +12268,14 @@ export interface RumtypesGettableErrorGroupDTO {
 	sessions: number;
 	/**
 	 * @type string
+	 * @description fusescope.rum.error.source of the latest event; crash or anr on Android.
 	 */
 	source: string;
 	sparkline: RumtypesSparklineDTO;
 	topFrame: RumtypesStackFrameDTO | null;
 	/**
 	 * @type string
+	 * @description Deobfuscated for Android when the release's R8 mapping resolves it.
 	 */
 	type: string;
 }
@@ -12443,13 +12509,14 @@ export interface RumtypesSourceMapFileDTO {
 	debugId: string;
 	/**
 	 * @type string
-	 * @description URL path of the bundle the map matches by convention: path without .map.
+	 * @description URL path of the bundle the map matches by convention: path without .map; empty for an R8 mapping.
 	 */
 	generatedPath: string;
 	/**
 	 * @type string
 	 */
 	id: string;
+	kind: RumtypesArtifactKindDTO;
 	/**
 	 * @type string,null
 	 * @format date-time
@@ -12914,6 +12981,10 @@ export interface RumtypesPostableApplicationDTO {
 	 */
 	allowedOrigins?: string[] | null;
 	/**
+	 * @type array,null
+	 */
+	allowedPackageNames?: string[] | null;
+	/**
 	 * @type string
 	 */
 	environment: string;
@@ -12945,6 +13016,10 @@ export interface RumtypesUpdatableApplicationDTO {
 	 * @type array,null
 	 */
 	allowedOrigins?: string[] | null;
+	/**
+	 * @type array,null
+	 */
+	allowedPackageNames?: string[] | null;
 	/**
 	 * @type string
 	 */
@@ -15451,6 +15526,25 @@ export type RotateRUMApplicationKeyPathParameters = {
 };
 export type RotateRUMApplicationKey201 = {
 	data: RumtypesGettableCreatedApplicationKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UploadRUMR8MappingPathParameters = {
+	id: string;
+};
+export type UploadRUMR8MappingParams = {
+	/**
+	 * @type string
+	 * @description The release the mapping belongs to; it must equal the service.version the SDK reports, the app's versionName.
+	 */
+	release?: string;
+};
+
+export type UploadRUMR8Mapping201 = {
+	data: RumtypesGettableUploadedSourceMapsDTO;
 	/**
 	 * @type string
 	 */
