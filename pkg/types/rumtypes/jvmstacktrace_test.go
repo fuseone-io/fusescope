@@ -2,6 +2,7 @@ package rumtypes
 
 import (
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -115,6 +116,100 @@ func TestRetraceJVMStackTrace(t *testing.T) {
 			retraced, ok := RetraceJVMStackTrace(trace, mapping, "/mapping.txt")
 			assert.True(t, ok)
 			assert.Equal(t, testCase.expected, retraced.String())
+		})
+	}
+}
+
+// The expected traces are R8 retrace 9.x output for the same mapping.
+func TestRetraceJVMStackTraceMatchesR8(t *testing.T) {
+	sample, err := ParseR8Mapping([]byte(readR8Fixture(t, "sample/mapping.txt")))
+	require.NoError(t, err)
+	ranges, err := ParseR8Mapping([]byte("# {\"id\":\"com.android.tools.r8.mapping\",\"version\":\"2.2\"}\n" +
+		"com.example.Foo -> a:\n" +
+		"# {\"id\":\"sourceFile\",\"fileName\":\"Foo.kt\"}\n" +
+		"    int $r8$clinit -> H\n" +
+		"      # {\"id\":\"com.android.tools.r8.synthesized\"}\n" +
+		"    1:3:void com.example.Bar.baz():10:10 -> a\n" +
+		"    1:3:void syn():0 -> a\n" +
+		"      # {\"id\":\"com.android.tools.r8.synthesized\"}\n" +
+		"    7:9:void hidden():5:7 -> a\n" +
+		"    1:2:int range(int):20:21 -> b\n" +
+		"    3:3:int range(int):30 -> b\n" +
+		"    4:6:int noOriginal(int) -> b\n" +
+		"    1:4:void com.example.Bar.one():40:40 -> c\n" +
+		"    1:4:void com.example.Baz.two():50 -> c\n" +
+		"    1:4:void outer():12 -> c\n" +
+		"    5:5:java.lang.Object get(long):70:70 -> g\n" +
+		"    6:6:java.lang.Object get(long):0 -> g\n" +
+		"      # {\"id\":\"com.android.tools.r8.synthesized\"}\n" +
+		"    5:5:void com.example.Bar.next():143:143 -> g\n" +
+		"    5:5:java.lang.Object get():481 -> g\n"))
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name       string
+		mapping    *R8Mapping
+		stacktrace string
+		expected   string
+	}{
+		{name: "SampleCrash_InlinedIntoSyntheticLambda", mapping: sample, stacktrace: readR8Fixture(t, "sample/crash.txt"), expected: readR8Fixture(t, "sample/crash.retraced.txt")},
+		{name: "SampleHandled_InlinedIntoSyntheticLambda", mapping: sample, stacktrace: readR8Fixture(t, "sample/handled.txt"), expected: readR8Fixture(t, "sample/handled.retraced.txt")},
+		{name: "SampleANR_BelowLibraryFrames", mapping: sample, stacktrace: readR8Fixture(t, "sample/anr.txt"), expected: readR8Fixture(t, "sample/anr.retraced.txt")},
+		{
+			name:    "RangeForms_SynthesizedResidualSignatureHidden",
+			mapping: ranges,
+			stacktrace: "java.lang.RuntimeException: boom\n\tat a.a(SourceFile:2)\n\tat a.a(SourceFile:8)\n\tat a.b(SourceFile:2)\n\tat a.b(SourceFile:3)\n" +
+				"\tat a.b(SourceFile:5)\n\tat a.c(SourceFile:3)\n\tat a.g(SourceFile:5)\n\tat a.g(SourceFile:6)\n\tat java.lang.Thread.run(Thread.java:1012)\n",
+			expected: "java.lang.RuntimeException: boom\n" +
+				"\tat com.example.Bar.baz(Bar.java:10)\n" +
+				"\tat com.example.Foo.range(Foo.kt:21)\n" +
+				"\tat com.example.Foo.range(Foo.kt:30)\n" +
+				"\tat com.example.Foo.noOriginal(Foo.kt:5)\n" +
+				"\tat com.example.Bar.one(Bar.java:40)\n" +
+				"\tat com.example.Baz.two(Baz.java:50)\n" +
+				"\tat com.example.Foo.outer(Foo.kt:12)\n" +
+				"\tat com.example.Bar.next(Bar.java:143)\n" +
+				"\tat com.example.Foo.get(Foo.kt:481)\n" +
+				"\tat java.lang.Thread.run(Thread.java:1012)\n",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			retraced, ok := RetraceJVMStackTrace(ParseJVMStackTrace(testCase.stacktrace, "", ""), testCase.mapping, "/mapping.txt")
+			assert.True(t, ok)
+			assert.Equal(t, testCase.expected, retraced.String())
+		})
+	}
+}
+
+func TestRetraceJVMStackTraceSampleFrames(t *testing.T) {
+	mapping, err := ParseR8Mapping([]byte(readR8Fixture(t, "sample/mapping.txt")))
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{name: "Crash", fixture: "sample/crash.txt", expected: []string{"io.fusescope.sample.Checkout.pay:103:true", "io.fusescope.sample.MainActivity.onCreate$lambda$1:32:true", "io.fusescope.sample.MainActivity.onNewIntent:60:true"}},
+		{name: "Handled", fixture: "sample/handled.txt", expected: []string{"io.fusescope.sample.MainActivity.onCreate$lambda$0:31:true", "io.fusescope.sample.MainActivity.onNewIntent:60:true", "android.app.Activity.onNewIntent:2418:false"}},
+		{name: "ANR", fixture: "sample/anr.txt", expected: []string{"io.fusescope.sample.MainActivity.onCreate$lambda$2:33:true", "io.fusescope.sample.MainActivity.onNewIntent:60:true", "android.app.Activity.onNewIntent:2418:false"}},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			retraced, _ := RetraceJVMStackTrace(ParseJVMStackTrace(readR8Fixture(t, testCase.fixture), "", ""), mapping, "/mapping.txt")
+			frames := []string{}
+			for _, frame := range retraced.Exceptions[0].Frames {
+				if frame.Original != nil || len(frames) > 0 {
+					inApp, line := false, frame.Line
+					if frame.Original != nil {
+						inApp, line = frame.Original.InApp, frame.Original.Line
+					}
+					frames = append(frames, frame.OriginalFunction()+":"+strconv.Itoa(line)+":"+strconv.FormatBool(inApp))
+				}
+			}
+			require.GreaterOrEqual(t, len(frames), len(testCase.expected))
+			assert.Equal(t, testCase.expected, frames[:len(testCase.expected)])
 		})
 	}
 }

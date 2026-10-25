@@ -73,6 +73,9 @@ type r8Class struct {
 	synthesized bool
 	fields      map[string]string
 	methods     map[string][]*r8Chain
+	// synthesizedMethods holds the signatures R8 marked synthesized; the
+	// mark hides every range whose outer method has that signature.
+	synthesizedMethods map[r8Signature]bool
 }
 
 // r8Chain is the method lines sharing one obfuscated range: the inlined
@@ -85,14 +88,23 @@ type r8Chain struct {
 }
 
 type r8Method struct {
-	class       string
-	name        string
-	obfStart    int
-	obfEnd      int
-	origStart   int
-	origEnd     int
-	synthesized bool
-	outline     bool
+	class      string
+	name       string
+	returnType string
+	arguments  string
+	obfStart   int
+	obfEnd     int
+	origStart  int
+	origEnd    int
+	outline    bool
+}
+
+// r8Signature identifies a residual method by its obfuscated name and its
+// original types, which map one to one to the residual types.
+type r8Signature struct {
+	name       string
+	returnType string
+	arguments  string
 }
 
 type r8Metadata struct {
@@ -104,11 +116,23 @@ type r8Metadata struct {
 	Actions    []string       `json:"actions"`
 }
 
+// r8Scope is the kind of the last mapping line, which a metadata comment
+// applies to.
+type r8Scope int
+
+const (
+	r8ScopeNone r8Scope = iota
+	r8ScopeClass
+	r8ScopeField
+	r8ScopeMethod
+)
+
 type r8Parser struct {
 	mapping    *R8Mapping
 	class      *r8Class
 	member     *r8Method
 	chain      *r8Chain
+	scope      r8Scope
 	lastObf    string
 	metadataOK bool
 	hasClasses bool
@@ -187,14 +211,15 @@ func (mapping *R8Mapping) LookupFrame(class string, method string, line int) []R
 		return []R8Frame{{Class: mapped.original, Method: method, File: mapping.sourceFile(mapped.original), Line: line}}
 	}
 
-	if chain := findChain(chains, line, true); chain != nil {
-		return mapping.expand(mapped, chain, line)
+	if chain := mapped.findChain(method, line, true); chain != nil {
+		return mapping.expand(mapped, method, chain, line)
 	}
-	if chain := findChain(chains, line, false); chain != nil {
-		return mapping.expand(mapped, chain, line)
+	if chain := mapped.findChain(method, line, false); chain != nil {
+		return mapping.expand(mapped, method, chain, line)
 	}
-	outer := chains[0].entries[len(chains[0].entries)-1]
-	return []R8Frame{mapping.frame(mapped, outer, 0)}
+	outer := mapping.frame(mapped, chains[0].entries[len(chains[0].entries)-1], 0)
+	outer.Synthesized = outer.Synthesized || mapped.isSynthesized(method, chains[0])
+	return []R8Frame{outer}
 }
 
 // OutlineCallsiteLine maps the position an outline frame reported to the
@@ -204,7 +229,7 @@ func (mapping *R8Mapping) OutlineCallsiteLine(class string, method string, line 
 	if !ok {
 		return 0, false
 	}
-	chain := findChain(mapped.methods[method], line, true)
+	chain := mapped.findChain(method, line, true)
 	if chain == nil || chain.outlineCallsite == nil {
 		return 0, false
 	}
@@ -213,21 +238,27 @@ func (mapping *R8Mapping) OutlineCallsiteLine(class string, method string, line 
 }
 
 // findChain returns the first chain whose range holds line, or with ranged
-// false the first chain without a range.
-func findChain(chains []*r8Chain, line int, ranged bool) *r8Chain {
-	for _, chain := range chains {
+// false the first chain without a range. Of overloads sharing the range, a
+// chain whose outer method is not synthesized wins.
+func (class *r8Class) findChain(obfuscated string, line int, ranged bool) *r8Chain {
+	var found *r8Chain
+	for _, chain := range class.methods[obfuscated] {
 		entry := chain.entries[0]
-		if ranged && entry.obfStart >= 0 && line >= entry.obfStart && line <= entry.obfEnd {
+		holds := entry.obfStart >= 0 && line >= entry.obfStart && line <= entry.obfEnd
+		if (ranged && !holds) || (!ranged && entry.obfStart >= 0) {
+			continue
+		}
+		if !class.isSynthesized(obfuscated, chain) {
 			return chain
 		}
-		if !ranged && entry.obfStart < 0 {
-			return chain
+		if found == nil {
+			found = chain
 		}
 	}
-	return nil
+	return found
 }
 
-func (mapping *R8Mapping) expand(mapped *r8Class, chain *r8Chain, line int) []R8Frame {
+func (mapping *R8Mapping) expand(mapped *r8Class, obfuscated string, chain *r8Chain, line int) []R8Frame {
 	frames := make([]R8Frame, 0, len(chain.entries))
 	for i, entry := range chain.entries {
 		frame := mapping.frame(mapped, entry, entry.originalLine(line))
@@ -236,6 +267,7 @@ func (mapping *R8Mapping) expand(mapped *r8Class, chain *r8Chain, line int) []R8
 	}
 	last := &frames[len(frames)-1]
 	last.RewriteThrows, last.RewriteRemove = chain.rewriteThrows, chain.rewriteRemove
+	last.Synthesized = last.Synthesized || mapped.isSynthesized(obfuscated, chain)
 	return frames
 }
 
@@ -247,7 +279,16 @@ func (mapping *R8Mapping) frame(mapped *r8Class, entry *r8Method, line int) R8Fr
 			synthesized = other.synthesized
 		}
 	}
-	return R8Frame{Class: class, Method: entry.name, File: mapping.sourceFile(class), Line: line, Synthesized: synthesized || entry.synthesized, Outline: entry.outline}
+	return R8Frame{Class: class, Method: entry.name, File: mapping.sourceFile(class), Line: line, Synthesized: synthesized, Outline: entry.outline}
+}
+
+func (class *r8Class) isSynthesized(obfuscated string, chain *r8Chain) bool {
+	return class.synthesizedMethods[chain.signature(obfuscated)]
+}
+
+func (chain *r8Chain) signature(obfuscated string) r8Signature {
+	outer := chain.entries[len(chain.entries)-1]
+	return r8Signature{name: obfuscated, returnType: outer.returnType, arguments: outer.arguments}
 }
 
 // sourceFile is the class's sourceFile metadata, else its outer class's,
@@ -304,7 +345,7 @@ func (parser *r8Parser) classLine(text string) error {
 	parser.mapping.classes[match[2]] = class
 	parser.mapping.byOriginal[match[1]] = class
 	parser.mapping.size += int64(len(text)) + r8EntryBytes
-	parser.class, parser.member, parser.chain, parser.hasClasses = class, nil, nil, true
+	parser.class, parser.member, parser.chain, parser.scope, parser.hasClasses = class, nil, nil, r8ScopeClass, true
 	return nil
 }
 
@@ -317,14 +358,14 @@ func (parser *r8Parser) memberLine(text string) error {
 		if _, ok := parser.class.fields[match[3]]; !ok {
 			parser.class.fields[match[3]] = match[2]
 		}
-		parser.member, parser.chain = nil, nil
+		parser.member, parser.chain, parser.scope = nil, nil, r8ScopeField
 		return nil
 	}
 	return errors.NewInvalidInputf(ErrCodeR8MappingInvalid, "expected a field or method mapping")
 }
 
 func (parser *r8Parser) method(match []string) error {
-	entry := &r8Method{obfStart: atoiOr(match[1]), obfEnd: atoiOr(match[2]), origStart: atoiOr(match[6]), origEnd: atoiOr(match[7])}
+	entry := &r8Method{returnType: match[3], arguments: match[5], obfStart: atoiOr(match[1]), obfEnd: atoiOr(match[2]), origStart: atoiOr(match[6]), origEnd: atoiOr(match[7])}
 	if entry.obfStart > entry.obfEnd {
 		return errors.NewInvalidInputf(ErrCodeR8MappingInvalid, "the obfuscated range %d:%d is inverted", entry.obfStart, entry.obfEnd)
 	}
@@ -342,7 +383,7 @@ func (parser *r8Parser) method(match []string) error {
 		parser.chain = &r8Chain{entries: []*r8Method{entry}}
 		parser.class.methods[obfuscated] = append(chains, parser.chain)
 	}
-	parser.member, parser.lastObf = entry, obfuscated
+	parser.member, parser.scope, parser.lastObf = entry, r8ScopeMethod, obfuscated
 	return nil
 }
 
@@ -367,7 +408,7 @@ func (parser *r8Parser) comment(text string) error {
 		parser.mapping.version = metadata.Version
 		parser.metadataOK = supportsR8Version(metadata.Version)
 	case r8MetadataSourceFile:
-		if parser.class != nil && parser.member == nil {
+		if parser.scope == r8ScopeClass {
 			parser.class.sourceFile = metadata.FileName
 		}
 	}
@@ -377,13 +418,17 @@ func (parser *r8Parser) comment(text string) error {
 
 	switch metadata.ID {
 	case r8MetadataSynthesized:
-		if parser.member != nil {
-			parser.member.synthesized = true
-		} else if parser.class != nil {
+		switch parser.scope {
+		case r8ScopeMethod:
+			if parser.class.synthesizedMethods == nil {
+				parser.class.synthesizedMethods = map[r8Signature]bool{}
+			}
+			parser.class.synthesizedMethods[r8Signature{name: parser.lastObf, returnType: parser.member.returnType, arguments: parser.member.arguments}] = true
+		case r8ScopeClass:
 			parser.class.synthesized = true
 		}
 	case r8MetadataOutline:
-		if parser.member != nil {
+		if parser.scope == r8ScopeMethod {
 			parser.member.outline = true
 		}
 	case r8MetadataOutlineCallsite:

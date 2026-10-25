@@ -40,7 +40,7 @@ var (
 	jvmLibraryPrefixes = []string{
 		"java.", "javax.", "jdk.", "sun.", "com.sun.", "dalvik.", "libcore.", "android.", "androidx.", "com.android.",
 		"com.google.android.", "kotlin.", "kotlinx.", "org.jetbrains.", "org.json.", "okhttp3.", "okio.", "retrofit2.",
-		"io.opentelemetry.", "io.fusescope.",
+		"io.opentelemetry.", "io.fusescope.android.",
 	}
 )
 
