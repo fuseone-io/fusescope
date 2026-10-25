@@ -1,0 +1,1229 @@
+{
+  "id": "builtin-redis",
+  "title": "Redis",
+  "description": "Monitor redis with metrics and logs",
+  "author": {
+    "name": "FuseScope",
+    "email": "",
+    "homepage": "https://github.com/fuseone-io/fusescope"
+  },
+  "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIzLjA1OTcgMTcuNTI1OUMyMS43Nzg5IDE4LjE5MzUgMTUuMTQ0IDIwLjkyMTUgMTMuNzMxNSAyMS42NTc5QzEyLjMxODkgMjIuMzk0NCAxMS41MzQzIDIyLjM4NzMgMTAuNDE4MyAyMS44NTM5QzkuMzAyNTMgMjEuMzIwNCAyLjI0MTg0IDE4LjQ2ODQgMC45Njk5MzcgMTcuODYwNEMwLjMzNDMxMiAxNy41NTY3IDAgMTcuMzAwMiAwIDE3LjA1NzlWMTQuNjMyQzAgMTQuNjMyIDkuMTkyMTkgMTIuNjMwOSAxMC42NzYyIDEyLjA5ODVDMTIuMTYgMTEuNTY2MSAxMi42NzQ5IDExLjU0NjkgMTMuOTM3NyAxMi4wMDk1QzE1LjIwMDcgMTIuNDcyMiAyMi43NTE5IDEzLjgzNDYgMjQgMTQuMjkxN0wyMy45OTk0IDE2LjY4MzNDMjMuOTk5NiAxNi45MjMxIDIzLjcxMTYgMTcuMTg2MiAyMy4wNTk3IDE3LjUyNTlaIiBmaWxsPSIjOTEyNjI2Ii8+CjxwYXRoIGQ9Ik0yMy4wNTkyIDE1LjExNDRDMjEuNzc4NSAxNS43ODE3IDE1LjE0MzggMTguNTA5OCAxMy43MzEzIDE5LjI0NjFDMTIuMzE4OCAxOS45ODI3IDExLjUzNDIgMTkuOTc1NSAxMC40MTgzIDE5LjQ0MjFDOS4zMDI0NCAxOC45MDkgMi4yNDIwMyAxNi4wNTY1IDAuOTcwMjE5IDE1LjQ0ODlDLTAuMzAxNTk0IDE0Ljg0MDkgLTAuMzI4MjE5IDE0LjQyMjUgMC45MjEwOTQgMTMuOTMzM0MyLjE3MDQxIDEzLjQ0MzkgOS4xOTIwOSAxMC42ODkxIDEwLjY3NjMgMTAuMTU2N0MxMi4xNjAxIDkuNjI0NDcgMTIuNjc0OSA5LjYwNTA2IDEzLjkzNzcgMTAuMDY3OEMxNS4yMDA2IDEwLjUzMDQgMjEuNzk1OCAxMy4xNTU1IDIzLjA0MzcgMTMuNjEyNUMyNC4yOTIgMTQuMDcwMSAyNC4zMzk5IDE0LjQ0NjkgMjMuMDU5MiAxNS4xMTQ0WiIgZmlsbD0iI0M2MzAyQiIvPgo8cGF0aCBkPSJNMjMuMDU5NyAxMy42MDA3QzIxLjc3ODkgMTQuMjY4NCAxNS4xNDQgMTYuOTk2MyAxMy43MzE1IDE3LjczM0MxMi4zMTg5IDE4LjQ2OTIgMTEuNTM0MyAxOC40NjIxIDEwLjQxODMgMTcuOTI4N0M5LjMwMjQ0IDE3LjM5NTUgMi4yNDE4NCAxNC41NDMyIDAuOTY5OTM3IDEzLjkzNTJDMC4zMzQzMTIgMTMuNjMxNCAwIDEzLjM3NTMgMCAxMy4xMzNWMTAuNzA2OEMwIDEwLjcwNjggOS4xOTIxOSA4LjcwNTgxIDEwLjY3NjIgOC4xNzM0QzEyLjE2IDcuNjQxIDEyLjY3NDkgNy42MjE2OCAxMy45Mzc3IDguMDg0MzRDMTUuMjAwOCA4LjU0NyAyMi43NTIgOS45MDkwOSAyNCAxMC4zNjYzTDIzLjk5OTQgMTIuNzU4MkMyMy45OTk2IDEyLjk5NzkgMjMuNzExNiAxMy4yNjA5IDIzLjA1OTcgMTMuNjAwN1oiIGZpbGw9IiM5MTI2MjYiLz4KPHBhdGggZD0iTTIzLjA1OTIgMTEuMTg5MkMyMS43Nzg1IDExLjg1NjcgMTUuMTQzOCAxNC41ODQ2IDEzLjczMTMgMTUuMzIxMkMxMi4zMTg4IDE2LjA1NzUgMTEuNTM0MiAxNi4wNTAzIDEwLjQxODMgMTUuNTE2OEM5LjMwMjQ0IDE0Ljk4MzggMi4yNDIwMyAxMi4xMzEzIDAuOTcwMjE5IDExLjUyMzdDLTAuMzAxNTk0IDEwLjkxNTkgLTAuMzI4MjE5IDEwLjQ5NzQgMC45MjEwOTQgMTAuMDA4QzIuMTcwNDEgOS41MTg5MSA5LjE5MjE5IDYuNzYzODcgMTAuNjc2MyA2LjIzMTU2QzEyLjE2MDEgNS42OTkyNSAxMi42NzQ5IDUuNjc5OTQgMTMuOTM3NyA2LjE0MjU5QzE1LjIwMDYgNi42MDUxNiAyMS43OTU4IDkuMjMwMDYgMjMuMDQzNyA5LjY4NzI4QzI0LjI5MiAxMC4xNDQ4IDI0LjMzOTkgMTAuNTIxNyAyMy4wNTkyIDExLjE4OTJaIiBmaWxsPSIjQzYzMDJCIi8+CjxwYXRoIGQ9Ik0yMy4wNTk3IDkuNTI5OTdDMjEuNzc4OSAxMC4xOTc1IDE1LjE0NCAxMi45MjU2IDEzLjczMTUgMTMuNjYyM0MxMi4zMTg5IDE0LjM5ODYgMTEuNTM0MyAxNC4zOTE0IDEwLjQxODMgMTMuODU3OUM5LjMwMjQ0IDEzLjMyNDggMi4yNDE4NCAxMC40NzIzIDAuOTY5OTM3IDkuODY0NjVDMC4zMzQzMTIgOS41NjA2MiAwIDkuMzA0NCAwIDkuMDYyMzRWNi42MzYwOUMwIDYuNjM2MDkgOS4xOTIxOSA0LjYzNTE5IDEwLjY3NjIgNC4xMDI4N0MxMi4xNiAzLjU3MDM3IDEyLjY3NDkgMy41NTEyNSAxMy45Mzc3IDQuMDEzODFDMTUuMjAwOCA0LjQ3NjQ3IDIyLjc1MiA1LjgzODU2IDI0IDYuMjk1NzhMMjMuOTk5NCA4LjY4NzUzQzIzLjk5OTYgOC45MjcwNiAyMy43MTE2IDkuMTkwMTIgMjMuMDU5NyA5LjUyOTk3WiIgZmlsbD0iIzkxMjYyNiIvPgo8cGF0aCBkPSJNMjMuMDU5MiA3LjExODQzQzIxLjc3ODUgNy43ODU5MyAxNS4xNDM4IDEwLjUxNDEgMTMuNzMxMyAxMS4yNTA0QzEyLjMxODggMTEuOTg2NyAxMS41MzQyIDExLjk3OTUgMTAuNDE4MyAxMS40NDYzQzkuMzAyNTMgMTAuOTEyOSAyLjI0MjAzIDguMDYwNjIgMC45NzAzMTIgNy40NTI4NEMtMC4zMDE1OTQgNi44NDUxNSAtMC4zMjgxMjUgNi40MjY1NiAwLjkyMTA5NCA1LjkzNzI4QzIuMTcwNDEgNS40NDgwOSA5LjE5MjE5IDIuNjkzNDMgMTAuNjc2MyAyLjE2MDkzQzEyLjE2MDEgMS42Mjg1MyAxMi42NzQ5IDEuNjA5NCAxMy45Mzc3IDIuMDcyMDZDMTUuMjAwNiAyLjUzNDcyIDIxLjc5NTggNS4xNTk2MiAyMy4wNDM3IDUuNjE2ODRDMjQuMjkyIDYuMDczOTYgMjQuMzM5OSA2LjQ1MDkzIDIzLjA1OTIgNy4xMTg0M1oiIGZpbGw9IiNDNjMwMkIiLz4KPHBhdGggZD0iTTE0LjkzMjggNC43NTg0N0wxMi44NjkzIDQuOTcyNjlMMTIuNDA3NCA2LjA4NDE5TDExLjY2MTQgNC44NDM4OEw5LjI3ODcyIDQuNjI5NzVMMTEuMDU2NiAzLjk4ODZMMTAuNTIzMiAzLjAwNDQxTDEyLjE4NzcgMy42NTU0MUwxMy43NTY5IDMuMTQxNjZMMTMuMzMyOCA0LjE1OTMyTDE0LjkzMjggNC43NTg0N1pNMTIuMjg0MyAxMC4xNTA4TDguNDMzMjggOC41NTM1N0wxMy45NTE0IDcuNzA2NTNMMTIuMjg0MyAxMC4xNTA4Wk02Ljk0NTE5IDUuMzc2MjhDOC41NzQwOSA1LjM3NjI4IDkuODk0NTYgNS44ODgxNiA5Ljg5NDU2IDYuNTE5NDdDOS44OTQ1NiA3LjE1MDk3IDguNTc0MDkgNy42NjI3NSA2Ljk0NTE5IDcuNjYyNzVDNS4zMTYyOCA3LjY2Mjc1IDMuOTk1ODEgNy4xNTA4OCAzLjk5NTgxIDYuNTE5NDdDMy45OTU4MSA1Ljg4ODE2IDUuMzE2MjggNS4zNzYyOCA2Ljk0NTE5IDUuMzc2MjhaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTcuMzcxNCA1LjA2MjMxTDIwLjYzNzMgNi4zNTI4N0wxNy4zNzQyIDcuNjQyMjJMMTcuMzcxNCA1LjA2MjMxWiIgZmlsbD0iIzYyMUIxQyIvPgo8cGF0aCBkPSJNMTMuNzU4MyA2LjQ5MTUzTDE3LjM3MTQgNS4wNjIzMUwxNy4zNzQyIDcuNjQyMjJMMTcuMDE5OSA3Ljc4MDc4TDEzLjc1ODMgNi40OTE1M1oiIGZpbGw9IiM5QTI5MjgiLz4KPC9zdmc+Cg==",
+  "categories": [
+    "Database"
+  ],
+  "overview": "### Monitor Redis with FuseScope\n\nCollect key Redis metrics and view them with an out of the box dashboard.\n\nCollect and parse Redis logs to populate timestamp, severity, and other log attributes for better querying and aggregation.\n",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "## Before You Begin  \n\nTo configure metrics and logs collection for a Redis server, you need the following.\n\n### Ensure Redis server is running a supported version\n\nRedis server versions newer than 3.0 are supported.\n\n### Ensure OTEL Collector is running with access to the Redis server\n\n#### Ensure that an OTEL collector is running in your deployment environment\nIf needed, please [install an OTEL Collector](https://opentelemetry.io/docs/collector/installation/)  \nIf already installed, ensure that the collector version is v0.88.0 or newer.  \n\nAlso ensure that you can provide config files to the collector and that you can set environment variables and command line flags used for running it.  \n\n#### Ensure that the OTEL collector can access the Redis server\nIn order to collect metrics, the collector must be able to access the Redis server as a client.\n\nIn order to collect logs, the collector must be able to read the Redis server log file.\n"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "### Collect Redis Metrics\n\nYou can configure Redis metrics collection by providing the required collector config to your collector.\n\n#### Create collector config file\n\nSave the following config for collecting Redis metrics in a file named `redis-metrics-collection-config.yaml`\n\n\n```yaml\nreceivers:\n  redis:\n    # The hostname and port of the Redis instance, separated by a colon.\n    endpoint: ${env:REDIS_ENDPOINT}\n    # The frequency at which to collect metrics from the Redis instance.\n    collection_interval: 60s\n    # # The password used to access the Redis instance; must match the password specified in the requirepass server configuration option.\n    password: ${env:REDIS_PASSWORD}\n    # # Defines the network to use for connecting to the server. Valid Values are `tcp` or `Unix`\n    # transport: tcp\n    # tls:\n    #   insecure: false\n    #   ca_file: /etc/ssl/certs/ca-certificates.crt\n    #   cert_file: /etc/ssl/certs/redis.crt\n    #   key_file: /etc/ssl/certs/redis.key\n    metrics:\n      redis.maxmemory:\n        enabled: true\n      redis.cmd.latency:\n        enabled: true\n\nprocessors:\n  # enriches the data with additional host information\n  # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/resourcedetectionprocessor#resource-detection-processor\n  resourcedetection/system:\n    # add additional detectors if needed\n    detectors: [\"system\"]\n    system:\n      hostname_sources: [\"os\"]\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    metrics/redis:\n      receivers: [redis]\n      # note: remove this processor if the collector host is not running on the same host as the redis instance\n      processors: [resourcedetection/system]\n      exporters: [otlp/fusescope]\n```\n\n#### Set Environment Variables\n\nSet the following environment variables in your otel-collector environment:\n\n```bash\n\n# redis endpoint reachable from the otel collector\"\nexport REDIS_ENDPOINT=\"localhost:6379\"\n\n# password used to access the Redis instance.\n# must match the password specified in the requirepass server configuration option.\n# can be left empty if the redis server is not configured to require a password.\nexport REDIS_PASSWORD=\"\"\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nMake the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  \n```bash\n--config redis-metrics-collection-config.yaml\n```  \nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "### Collect Redis Logs\n\nYou can configure Redis logs collection by providing the required collector config to your collector.\n\n#### Create collector config file\n\nSave the following config for collecting redis logs in a file named `redis-logs-collection-config.yaml`\n\n```yaml\nreceivers:\n  filelog/redis:\n    include: [\"${env:REDIS_LOG_FILE}\"]\n    operators:\n      # Parse default redis log format\n      # pid:role timestamp log_level message\n      - type: regex_parser\n        if: body matches '^(?P\u003cpid\u003e\\\\d+):(?P\u003crole\u003e\\\\w+) (?P\u003cts\u003e\\\\d{2} \\\\w+ \\\\d{4} \\\\d{2}:\\\\d{2}:\\\\d{2}\\\\.\\\\d+) (?P\u003clog_level\u003e[.\\\\-*#]) (?P\u003cmessage\u003e.*)$'\n        parse_from: body\n        regex: '^(?P\u003cpid\u003e\\d+):(?P\u003crole\u003e\\w+) (?P\u003cts\u003e\\d{2} \\w+ \\d{4} \\d{2}:\\d{2}:\\d{2}\\.\\d+) (?P\u003clog_level\u003e[.\\-*#]) (?P\u003cmessage\u003e.*)$'\n        timestamp:\n          parse_from: attributes.ts\n          layout: '02 Jan 2006 15:04:05.000'\n          layout_type: gotime\n        severity:\n          parse_from: attributes.log_level\n          overwrite_text: true\n          mapping:\n            debug: '.'\n            info:\n              - '-'\n              - '*'\n            warn: '#'\n        on_error: send\n      - type: move\n        if: attributes.message != nil\n        from: attributes.message\n        to: body\n      - type: remove\n        if: attributes.log_level != nil\n        field: attributes.log_level\n      - type: remove\n        if: attributes.ts != nil\n        field: attributes.ts\n      - type: add\n        field: attributes.source\n        value: redis\n\nprocessors:\n  batch:\n    send_batch_size: 10000\n    send_batch_max_size: 11000\n    timeout: 10s\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    logs/redis:\n      receivers: [filelog/redis]\n      processors: [batch]\n      exporters: [otlp/fusescope]\n```\n\n#### Set Environment Variables\n\nSet the following environment variables in your otel-collector environment:\n\n```bash\n\n# path of Redis server log file. must be accessible by the otel collector\n# typically found in /usr/local/var/log/redis on macOS\n# log file location can also be found in the output of `redis-cli CONFIG GET : *`\nexport REDIS_LOG_FILE=/var/log/redis/redis-server.log\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nMake the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  \n```bash\n--config redis-logs-collection-config.yaml\n```  \nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n\n"
+    }
+  ],
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Process ID",
+        "path": "attributes.pid",
+        "type": "string"
+      },
+      {
+        "name": "Process Role",
+        "path": "attributes.role",
+        "type": "string"
+      },
+      {
+        "name": "Timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      },
+      {
+        "name": "Severity Text",
+        "path": "severity_text",
+        "type": "string"
+      },
+      {
+        "name": "Severity Number",
+        "path": "severity_number",
+        "type": "number"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "redis_commands_processed",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of commands processed by the server"
+      },
+      {
+        "name": "redis_cpu_time",
+        "type": "Sum",
+        "unit": "s",
+        "description": "System CPU consumed by the Redis server in seconds since server start"
+      },
+      {
+        "name": "redis_keys_expired",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of key expiration events"
+      },
+      {
+        "name": "redis_db_expires",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Number of keyspace keys with an expiration"
+      },
+      {
+        "name": "redis_commands",
+        "type": "Gauge",
+        "unit": "ops/s",
+        "description": "Number of commands processed per second"
+      },
+      {
+        "name": "redis_replication_offset",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The server's current replication offset"
+      },
+      {
+        "name": "redis_net_input",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total number of bytes read from the network"
+      },
+      {
+        "name": "redis_clients_connected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of client connections (excluding connections from replicas)"
+      },
+      {
+        "name": "redis_keys_evicted",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of evicted keys due to maxmemory limit"
+      },
+      {
+        "name": "redis_maxmemory",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The value of the maxmemory configuration directive"
+      },
+      {
+        "name": "redis_clients_max_input_buffer",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Biggest input buffer among current client connections"
+      },
+      {
+        "name": "redis_cmd_latency",
+        "type": "Gauge",
+        "unit": "s",
+        "description": "Command execution latency"
+      },
+      {
+        "name": "redis_memory_lua",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Number of bytes used by the Lua engine"
+      },
+      {
+        "name": "redis_replication_backlog_first_byte_offset",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The master offset of the replication backlog buffer"
+      },
+      {
+        "name": "redis_keyspace_hits",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of successful lookup of keys in the main dictionary"
+      },
+      {
+        "name": "redis_clients_blocked",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of clients pending on a blocking call"
+      },
+      {
+        "name": "redis_connections_rejected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of connections rejected because of maxclients limit"
+      },
+      {
+        "name": "redis_latest_fork",
+        "type": "Gauge",
+        "unit": "us",
+        "description": "Duration of the latest fork operation in microseconds"
+      },
+      {
+        "name": "redis_clients_max_output_buffer",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Longest output list among current client connections"
+      },
+      {
+        "name": "redis_slaves_connected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of connected replicas"
+      },
+      {
+        "name": "redis_db_keys",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Number of keyspace keys"
+      },
+      {
+        "name": "redis_keyspace_misses",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of failed lookup of keys in the main dictionary"
+      },
+      {
+        "name": "redis_uptime",
+        "type": "Sum",
+        "unit": "s",
+        "description": "Number of seconds since Redis server start"
+      },
+      {
+        "name": "redis_memory_used",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Total number of bytes allocated by Redis using its allocator"
+      },
+      {
+        "name": "redis_net_output",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total number of bytes written to the network"
+      },
+      {
+        "name": "redis_connections_received",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of connections accepted by the server"
+      },
+      {
+        "name": "redis_rdb_changes_since_last_save",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of changes since the last dump"
+      },
+      {
+        "name": "redis_memory_rss",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Number of bytes that Redis allocated as seen by the operating system"
+      },
+      {
+        "name": "redis_db_avg_ttl",
+        "type": "Gauge",
+        "unit": "ms",
+        "description": "Average keyspace keys TTL"
+      },
+      {
+        "name": "redis_memory_peak",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Peak memory consumed by Redis (in bytes)"
+      },
+      {
+        "name": "redis_memory_fragmentation_ratio",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Ratio between used_memory_rss and used_memory"
+      }
+    ]
+  },
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      {
+        "id": "overview",
+        "definition": {
+          "schemaVersion": "v6",
+          "image": "",
+          "name": "",
+          "generateName": true,
+          "tags": [
+            {
+              "key": "tag",
+              "value": "redis"
+            },
+            {
+              "key": "tag",
+              "value": "database"
+            }
+          ],
+          "spec": {
+            "display": {
+              "name": "Redis overview",
+              "description": "This dashboard shows the Redis instance overview. It includes latency, hit/miss rate, connections, and memory information.\n"
+            },
+            "variables": [
+              {
+                "kind": "ListVariable",
+                "spec": {
+                  "display": {
+                    "name": "host.name",
+                    "description": "List of hosts sending Redis metrics"
+                  },
+                  "allowAllValue": true,
+                  "allowMultiple": true,
+                  "customAllValue": "",
+                  "capturingRegexp": "",
+                  "sort": "alphabetical-asc",
+                  "plugin": {
+                    "kind": "signoz/QueryVariable",
+                    "spec": {
+                      "queryValue": "SELECT JSONExtractString(labels, 'host.name') AS  `host.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'redis.cpu.time'\nGROUP BY `host.name`"
+                    }
+                  },
+                  "name": "host.name"
+                }
+              }
+            ],
+            "panels": {
+              "2fbaef0d-3cdb-4ce3-aa3c-9bbbb41786d9": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Command/s",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "ops",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "redis.commands",
+                                "temporality": "",
+                                "timeAggregation": "sum",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "host.name IN $host.name"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "ops/s"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "3e80a918-69af-4c9a-bc57-a94e1d41b05c": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Eviction rate",
+                    "description": "Number of evicted keys due to maxmemory limit"
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "redis.keys.evicted",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "host.name IN $host.name"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "host.name",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "Rss::{{host.name}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "64a5f303-d7db-44ff-9a0e-948e5c653320": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Fragmentation ratio",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "redis.memory.fragmentation_ratio",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "host.name IN $host.name"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "host.name",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "Rss::{{host.name}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "9698cee2-b1f3-4c0b-8c9f-3da4f0e05f17": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "RSS Memory",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "bytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "redis.memory.rss",
+                                "temporality": "",
+                                "timeAggregation": "sum",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "host.name IN $host.name"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "host.name",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "Rss::{{host.name}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "a77227c7-16f5-4353-952e-b183c715a61c": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Hits/s",
+                    "description": "Rate successful lookup of keys in the main dictionary"
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "redis.keyspace.hits",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "host.name IN $host.name"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "Hit/s across all hosts"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "b19c7058-b806-4ea2-974a-ca555b168991": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Keyspace Keys",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "redis.db.keys",
+                                "temporality": "",
+                                "timeAggregation": "sum",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": ""
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "bf0deeeb-e926-4234-944c-82bacd96af47": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Clients blocked",
+                    "description": "Number of clients pending on a blocking call"
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "redis.clients.blocked",
+                                "temporality": "",
+                                "timeAggregation": "sum",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "host.name IN $host.name"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "Blocked clients across all hosts"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "d4c164bc-8fc2-4dbc-aadd-8d17479ca649": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Memory usage",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "bytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "builder_query",
+                                "spec": {
+                                  "name": "A",
+                                  "stepInterval": 60,
+                                  "signal": "metrics",
+                                  "source": "",
+                                  "aggregations": [
+                                    {
+                                      "metricName": "redis.memory.used",
+                                      "temporality": "",
+                                      "timeAggregation": "sum",
+                                      "spaceAggregation": "sum",
+                                      "reduceTo": "sum"
+                                    }
+                                  ],
+                                  "disabled": false,
+                                  "filter": {
+                                    "expression": "host.name IN $host.name"
+                                  },
+                                  "groupBy": [
+                                    {
+                                      "name": "host.name",
+                                      "signal": "",
+                                      "fieldContext": "attribute",
+                                      "fieldDataType": "string"
+                                    }
+                                  ],
+                                  "order": [],
+                                  "selectFields": null,
+                                  "having": {
+                                    "expression": ""
+                                  },
+                                  "secondaryAggregations": null,
+                                  "functions": null,
+                                  "legend": "Used::{{host.name}}"
+                                }
+                              },
+                              {
+                                "type": "builder_query",
+                                "spec": {
+                                  "name": "B",
+                                  "stepInterval": 60,
+                                  "signal": "metrics",
+                                  "source": "",
+                                  "aggregations": [
+                                    {
+                                      "metricName": "redis.maxmemory",
+                                      "temporality": "",
+                                      "timeAggregation": "max",
+                                      "spaceAggregation": "max",
+                                      "reduceTo": "sum"
+                                    }
+                                  ],
+                                  "disabled": false,
+                                  "filter": {
+                                    "expression": "host.name IN $host.name"
+                                  },
+                                  "groupBy": [
+                                    {
+                                      "name": "host.name",
+                                      "signal": "",
+                                      "fieldContext": "attribute",
+                                      "fieldDataType": "string"
+                                    }
+                                  ],
+                                  "order": [],
+                                  "selectFields": null,
+                                  "having": {
+                                    "expression": ""
+                                  },
+                                  "secondaryAggregations": null,
+                                  "functions": null,
+                                  "legend": "Max::{{host.name}}"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "f5ee1511-0d2b-4404-9ce0-e991837decc2": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Unsaved changes",
+                    "description": "Number of changes since the last dump"
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "redis.rdb.changes_since_last_save",
+                                "temporality": "",
+                                "timeAggregation": "sum",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "host.name IN $host.name"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "Number of unsaved changes"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              }
+            },
+            "layouts": [
+              {
+                "kind": "Grid",
+                "spec": {
+                  "items": [
+                    {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/a77227c7-16f5-4353-952e-b183c715a61c"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/bf0deeeb-e926-4234-944c-82bacd96af47"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 3,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/b19c7058-b806-4ea2-974a-ca555b168991"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 3,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/f5ee1511-0d2b-4404-9ce0-e991837decc2"
+                      }
+                    },
+                    {
+                      "x": 3,
+                      "y": 6,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/2fbaef0d-3cdb-4ce3-aa3c-9bbbb41786d9"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 9,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/d4c164bc-8fc2-4dbc-aadd-8d17479ca649"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 9,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/9698cee2-b1f3-4c0b-8c9f-3da4f0e05f17"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 12,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/64a5f303-d7db-44ff-9a0e-948e5c653320"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 12,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/3e80a918-69af-4c9a-bc57-a94e1d41b05c"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "duration": "",
+            "refreshInterval": "",
+            "links": []
+          }
+        }
+      }
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "redis"
+    },
+    "metrics": [
+      "redis_commands_processed",
+      "redis_cpu_time",
+      "redis_keys_expired",
+      "redis_db_expires",
+      "redis_commands",
+      "redis_replication_offset",
+      "redis_net_input",
+      "redis_clients_connected",
+      "redis_keys_evicted",
+      "redis_maxmemory",
+      "redis_clients_max_input_buffer",
+      "redis_cmd_latency",
+      "redis_memory_lua",
+      "redis_replication_backlog_first_byte_offset",
+      "redis_keyspace_hits",
+      "redis_clients_blocked",
+      "redis_connections_rejected",
+      "redis_latest_fork",
+      "redis_clients_max_output_buffer",
+      "redis_slaves_connected",
+      "redis_db_keys",
+      "redis_keyspace_misses",
+      "redis_uptime",
+      "redis_memory_used",
+      "redis_net_output",
+      "redis_connections_received",
+      "redis_rdb_changes_since_last_save",
+      "redis_memory_rss",
+      "redis_db_avg_ttl",
+      "redis_memory_peak",
+      "redis_memory_fragmentation_ratio"
+    ]
+  },
+  "installation": null
+}

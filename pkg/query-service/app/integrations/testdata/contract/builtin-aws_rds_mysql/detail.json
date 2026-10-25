@@ -1,0 +1,4065 @@
+{
+  "id": "builtin-aws_rds_mysql",
+  "title": "AWS RDS (MySQL)",
+  "description": "Monitor AWS RDS (MySQL) with metrics and logs",
+  "author": {
+    "name": "FuseScope",
+    "email": "",
+    "homepage": "https://github.com/fuseone-io/fusescope"
+  },
+  "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDY0ICg5MzUzNykgLSBodHRwczovL3NrZXRjaC5jb20gLS0+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tUkRTXzY0PC90aXRsZT4KICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPgogICAgPGRlZnM+CiAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSIwJSIgeTE9IjEwMCUiIHgyPSIxMDAlIiB5Mj0iMCUiIGlkPSJsaW5lYXJHcmFkaWVudC0xIj4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iIzJFMjdBRCIgb2Zmc2V0PSIwJSI+PC9zdG9wPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjNTI3RkZGIiBvZmZzZXQ9IjEwMCUiPjwvc3RvcD4KICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPC9kZWZzPgogICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLzY0L0FyY2hfQW1hem9uLVJEU182NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L0RhdGFiYXNlIiBmaWxsPSJ1cmwoI2xpbmVhckdyYWRpZW50LTEpIj4KICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj48L3JlY3Q+CiAgICAgICAgPC9nPgogICAgICAgIDxwYXRoIGQ9Ik0xNS40MTQsMTQgTDI0LjcwNywyMy4yOTMgTDIzLjI5MywyNC43MDcgTDE0LDE1LjQxNCBMMTQsMjMgTDEyLDIzIEwxMiwxMyBDMTIsMTIuNDQ4IDEyLjQ0NywxMiAxMywxMiBMMjMsMTIgTDIzLDE0IEwxNS40MTQsMTQgWiBNNjgsMTMgTDY4LDIzIEw2NiwyMyBMNjYsMTUuNDE0IEw1Ni43MDcsMjQuNzA3IEw1NS4yOTMsMjMuMjkzIEw2NC41ODYsMTQgTDU3LDE0IEw1NywxMiBMNjcsMTIgQzY3LjU1MywxMiA2OCwxMi40NDggNjgsMTMgTDY4LDEzIFogTTY2LDU3IEw2OCw1NyBMNjgsNjcgQzY4LDY3LjU1MiA2Ny41NTMsNjggNjcsNjggTDU3LDY4IEw1Nyw2NiBMNjQuNTg2LDY2IEw1NS4yOTMsNTYuNzA3IEw1Ni43MDcsNTUuMjkzIEw2Niw2NC41ODYgTDY2LDU3IFogTTY1LjUsMzkuMjEzIEM2NS41LDM1Ljg5NCA2MS42NjgsMzIuNjE1IDU1LjI1LDMwLjQ0MiBMNTUuODkxLDI4LjU0OCBDNjMuMjY4LDMxLjA0NSA2Ny41LDM0LjkzMiA2Ny41LDM5LjIxMyBDNjcuNSw0My40OTUgNjMuMjY4LDQ3LjM4MyA1NS44OSw0OS44NzkgTDU1LjI0OSw0Ny45ODQgQzYxLjY2OCw0NS44MTIgNjUuNSw0Mi41MzQgNjUuNSwzOS4yMTMgTDY1LjUsMzkuMjEzIFogTTE0LjU1NiwzOS4yMTMgQzE0LjU1Niw0Mi4zOTMgMTguMTQzLDQ1LjU4NSAyNC4xNTIsNDcuNzUzIEwyMy40NzMsNDkuNjM0IEMxNi41MzUsNDcuMTMxIDEyLjU1Niw0My4zMzMgMTIuNTU2LDM5LjIxMyBDMTIuNTU2LDM1LjA5NCAxNi41MzUsMzEuMjk2IDIzLjQ3MywyOC43OTIgTDI0LjE1MiwzMC42NzMgQzE4LjE0MywzMi44NDIgMTQuNTU2LDM2LjAzNCAxNC41NTYsMzkuMjEzIEwxNC41NTYsMzkuMjEzIFogTTI0LjcwNyw1Ni43MDcgTDE1LjQxNCw2NiBMMjMsNjYgTDIzLDY4IEwxMyw2OCBDMTIuNDQ3LDY4IDEyLDY3LjU1MiAxMiw2NyBMMTIsNTcgTDE0LDU3IEwxNCw2NC41ODYgTDIzLjI5Myw1NS4yOTMgTDI0LjcwNyw1Ni43MDcgWiBNNDAsMzEuMjg2IEMzMi44NTQsMzEuMjg2IDI5LDI5LjQ0IDI5LDI4LjY4NiBDMjksMjcuOTMxIDMyLjg1NCwyNi4wODYgNDAsMjYuMDg2IEM0Ny4xNDUsMjYuMDg2IDUxLDI3LjkzMSA1MSwyOC42ODYgQzUxLDI5LjQ0IDQ3LjE0NSwzMS4yODYgNDAsMzEuMjg2IEw0MCwzMS4yODYgWiBNNDAuMDI5LDM5LjAzMSBDMzMuMTg3LDM5LjAzMSAyOSwzNy4xNjIgMjksMzYuMTQ1IEwyOSwzMS4yODQgQzMxLjQ2MywzMi42NDMgMzUuODMyLDMzLjI4NiA0MCwzMy4yODYgQzQ0LjE2OCwzMy4yODYgNDguNTM3LDMyLjY0MyA1MSwzMS4yODQgTDUxLDM2LjE0NSBDNTEsMzcuMTYzIDQ2LjgzNSwzOS4wMzEgNDAuMDI5LDM5LjAzMSBMNDAuMDI5LDM5LjAzMSBaIE00MC4wMjksNDYuNjY3IEMzMy4xODcsNDYuNjY3IDI5LDQ0Ljc5OCAyOSw0My43ODEgTDI5LDM4Ljg2MiBDMzEuNDMxLDQwLjI5MSAzNS43NDIsNDEuMDMxIDQwLjAyOSw0MS4wMzEgQzQ0LjI5Miw0MS4wMzEgNDguNTc4LDQwLjI5MiA1MSwzOC44NjcgTDUxLDQzLjc4MSBDNTEsNDQuNzk5IDQ2LjgzNSw0Ni42NjcgNDAuMDI5LDQ2LjY2NyBMNDAuMDI5LDQ2LjY2NyBaIE00MCw1My41MTggQzMyLjg4Myw1My41MTggMjksNTEuNjA1IDI5LDUwLjYyMiBMMjksNDYuNDk4IEMzMS40MzEsNDcuOTI3IDM1Ljc0Miw0OC42NjcgNDAuMDI5LDQ4LjY2NyBDNDQuMjkyLDQ4LjY2NyA0OC41NzgsNDcuOTI5IDUxLDQ2LjUwMyBMNTEsNTAuNjIyIEM1MSw1MS42MDUgNDcuMTE3LDUzLjUxOCA0MCw1My41MTggTDQwLDUzLjUxOCBaIE00MCwyNC4wODYgQzMzLjczOSwyNC4wODYgMjcsMjUuNTI1IDI3LDI4LjY4NiBMMjcsNTAuNjIyIEMyNyw1My44MzYgMzMuNTQsNTUuNTE4IDQwLDU1LjUxOCBDNDYuNDYsNTUuNTE4IDUzLDUzLjgzNiA1Myw1MC42MjIgTDUzLDI4LjY4NiBDNTMsMjUuNTI1IDQ2LjI2MSwyNC4wODYgNDAsMjQuMDg2IEw0MCwyNC4wODYgWiIgaWQ9IkFtYXpvbi1SRFNfSWNvbl82NF9TcXVpZCIgZmlsbD0iI0ZGRkZGRiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4=",
+  "categories": [
+    "Database"
+  ],
+  "overview": "### Monitor AWS RDS for MySQL with FuseScope\n\nCollect key AWS RDS for MySQL metrics and view them with an out of the box dashboard.  \n\nCollect and parse AWS RDS for MySQL logs to populate timestamp, severity, and other log attributes for better querying and aggregation.\n",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "## Before You Begin  \n\nTo configure metrics and logs collection for an AWS RDS for MySQL, you need the following.\n    \n\n- **Ensure Credentials and permissions are set correctly**  \n The components used for this integration relies on AWS SDKs, which offer a variety of ways to provide credentials, including the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.  \n The following IAM permissions are required:\n    - `cloudwatch:ListMetrics`\n    - `cloudwatch:GetMetricStatistics`\n    - `cloudwatch:GetMetricData`\n    - `tag:GetResources` (if aws_tag_select feature is used)\n    - `logs:DescribeLogGroups`\n    - `logs:FilterLogEvents`\n\n- **Ensure Java Runtime Environment (JRE), version 11 or newer**  \n The CloudWatch Exporter used to collect the metrics requires a Java runtime environment version 11 or newer. This is not required if you can run the docker container.\n\n- **Ensure that an OTEL collector is running in your deployment environment**  \n If needed, please [install an OTEL Collector](https://opentelemetry.io/docs/collector/installation/) If already installed, ensure that the collector version is v0.88.0 or newer. Also, ensure that you can provide config files to the collector and that you can set environment variables and command line flags used for running it.\n\n\n- **Ensure that the OTEL collector can access the MySQL server**\n To collect MySQL engine metrics, the collector must be able to access the MySQL server as a client. This step is optional.\n"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "### Collect RDS Metrics\n\nThe RDS (for MySQL) metrics collection is a two-step process.\n\n#### Set up the Prometheus CloudWatch exporter\n\nThe [CloudWatch Exporter](https://github.com/prometheus/cloudwatch_exporter) is A Prometheus exporter for collecting CloudWatch metrics. This section describes the steps for downloading and configuring the Prometheus CloudWatch exporter.\n\n1. Download the Prometheus CloudWatch exporter JAR file, and run the following command:\n\n```sh\ncurl -sLSO https://github.com/prometheus/cloudwatch_exporter/releases/download/v0.15.5/cloudwatch_exporter-0.15.5-jar-with-dependencies.jar\n```\n\n2. Configure the Prometheus exporter\n\nSave the following config for collecting AWS RDS metrics in a file named `aws-rds-mysql-metrics.yaml`. Update the `region` with relevant value.\n\n```yaml\n---\nregion: us-east-1\nmetrics:\n - aws_namespace: AWS/RDS\n   aws_metric_name: BinLogDiskUsage\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: BurstBalance\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: CheckpointLag\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ConnectionAttempts\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: CPUUtilization\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: DatabaseConnections\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: DiskQueueDepth\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: DiskQueueDepthLogVolume\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: EBSByteBalance%\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: EBSIOBalance%\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: FreeableMemory\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: FreeLocalStorage\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: FreeStorageSpace\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: FreeStorageSpaceLogVolume\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: MaximumUsedTransactionIDs\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: NetworkReceiveThroughput\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: NetworkTransmitThroughput\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: OldestReplicationSlotLag\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReadIOPS\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReadIOPSLocalStorage\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReadIOPSLogVolume\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReadLatency\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReadLatencyLocalStorage\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReadLatencyLogVolume\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReadThroughput\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReadThroughputLogVolume\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReplicaLag\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReplicationChannelLag\n   aws_dimensions: [DBInstanceIdentifier]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: ReplicationSlotDiskUsage\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: TransactionLogsDiskUsage\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: TransactionLogsGeneration\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: WriteIOPS\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: WriteLatency\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: WriteThroughput\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: SwapUsage\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: DBLoad\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: DBLoadCPU\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/RDS\n   aws_metric_name: DBLoadNonCPU\n   aws_dimensions: [DBInstanceIdentifier]\n   aws_statistics: [Average, Maximum]\n```\n\n3. Run the following command\n\n```sh\njava -jar cloudwatch_exporter-0.15.5-jar-with-dependencies.jar 9106 aws-rds-mysql-metrics.yaml\n```\n\n#### Set up the OTEL Collector\n\nSave the following config for collecting MySQL metrics in a file named `mysql-metrics-collection-config.yaml`\n\n```yaml\nreceivers:\n  mysql:\n    # The hostname and port of the MySQL instance, separated by a colon.\n    endpoint: ${env:MYSQL_ENDPOINT}\n    # The username used to access the MySQL instance.\n    username: ${env:MYSQL_USERNAME}\n    # The password used to access the MySQL instance.\n    password: ${env:MYSQL_PASSWORD}\n    # The frequency at which to collect metrics from the Redis instance.\n    collection_interval: 60s\n    # Additional configuration for query to build mysql.statement_events.count and mysql.statement_events.wait.time metrics\n    statement_events:\n      digest_text_limit: 120\n      time_limit: 24h\n      limit: 250\n    # tls:\n    #   insecure: false\n    #   ca_file: /etc/ssl/certs/ca-certificates.crt\n    #   cert_file: /etc/ssl/certs/redis.crt\n    #   key_file: /etc/ssl/certs/redis.key\n    metrics:\n      mysql.client.network.io:\n        enabled: true\n      mysql.commands:\n        enabled: true\n      mysql.connection.count:\n        enabled: true\n      mysql.connection.errors:\n        enabled: true\n      mysql.joins:\n        enabled: true\n      mysql.query.count:\n        enabled: true\n      mysql.query.slow.count:\n        enabled: true\n      mysql.replica.sql_delay:\n        enabled: true\n      mysql.replica.time_behind_source:\n        enabled: true\n\n  # Collecting cloudwatch metrics\n  prometheus:\n    config:\n      scrape_configs:\n        - job_name: 'aws-cloudwatch-metrics'\n          scrape_timeout: 120s\n          scrape_interval: 300s\n          static_configs:\n            - targets: ['0.0.0.0:9106']\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    metrics/mysql:\n      receivers: [mysql, prometheus]\n      processors: []\n      exporters: [otlp/fusescope]\n```\n\n#### Set Environment Variables\n\nSet the following environment variables in your otel-collector environment:\n\n```bash\n\n# The accessible endpoint where MySQL server is running\nexport MYSQL_ENDPOINT=\"\u003cmysql-server-endpoint\u003e\"\n\nexport MYSQL_USERNAME=\"\u003cusername\u003e\"\n\n# The password to use for accessing mysql instance\nexport MYSQL_PASSWORD=\"\u003cPASSWORD\u003e\"\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nMake the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  \n```bash\n--config mysql-metrics-collection-config.yaml\n```  \nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "### Collect RDS Logs\n\n#### Find the list of log group names for RDS instance\n\nThe log collection of RDS instance requires specifying the list of log group names. From the AWS CloudWatch console, please find the log group(s) relevant to the integration.\n\n#### Create collector config file\n\nSave the following config for collecting RDS logs in a file named `mysql-logs-collection-config.yaml` and set the `region` key with relevant value.\n\n```yaml\nreceivers:\n  awscloudwatch/rds_mysql_logs:\n    region: us-east-1\n    logs:\n      poll_interval: 1m\n      groups:\n        named:\n          # replace the following name with your log group for RDS logs\n          /aws/rds/:\n\nprocessors:\n  attributes/add_source_mysql:\n    actions:\n      - key: source\n        value: \"rds_mysql\"\n        action: insert\n  batch:\n    send_batch_size: 10000\n    send_batch_max_size: 11000\n    timeout: 10s\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    logs/mysql:\n      receivers: [awscloudwatch/rds_mysql_logs]\n      processors: [attributes/add_source_mysql, batch]\n      exporters: [otlp/fusescope]\n```\n\n#### Update log group names\n\nAdd the one or more log group names for the RDS under the `named` section of the awscloudwatch receiver.\n\n#### Set Environment Variables\n\nSet the following environment variables in your otel-collector environment:\n\n```bash\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nMake the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  \n```bash\n--config mysql_logs-collection-config.yaml\n```  \nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n\n#### Parse the logs\n\nUse the log pipelines feature to parse and structure the logs https://fuseone-io.github.io/fusescope-docs/sending-data/log-pipelines/\n"
+    }
+  ],
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      },
+      {
+        "name": "Body",
+        "path": "body",
+        "type": "string"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "aws_rds_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: null Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: null Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: null Statistic: Minimum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: null Statistic: SampleCount Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: null Statistic: Sum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_checkpoint_lag_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CheckpointLag Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_checkpoint_lag_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CheckpointLag Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_database_connections_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DatabaseConnections Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_rds_database_connections_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DatabaseConnections Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_rds_dbload_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoad Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: None"
+      },
+      {
+        "name": "aws_rds_dbload_cpu_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoadCPU Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: None"
+      },
+      {
+        "name": "aws_rds_dbload_cpu_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoadCPU Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: None"
+      },
+      {
+        "name": "aws_rds_dbload_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoad Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: None"
+      },
+      {
+        "name": "aws_rds_dbload_non_cpu_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoadNonCPU Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: None"
+      },
+      {
+        "name": "aws_rds_dbload_non_cpu_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoadNonCPU Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: None"
+      },
+      {
+        "name": "aws_rds_disk_queue_depth_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DiskQueueDepth Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_rds_ebsbyte_balance__average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSByteBalance% Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsiobalance__average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSIOBalance% Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_rds_free_local_storage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeLocalStorage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_free_storage_space_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeStorageSpace Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_freeable_memory_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeableMemory Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_freeable_memory_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeableMemory Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_maximum_used_transaction_ids_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS MaximumUsedTransactionIDs Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_rds_network_receive_throughput_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkReceiveThroughput Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_receive_throughput_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkReceiveThroughput Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_transmit_throughput_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkTransmitThroughput Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_transmit_throughput_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkTransmitThroughput Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_oldest_replication_slot_lag_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS OldestReplicationSlotLag Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_oldest_replication_slot_lag_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS OldestReplicationSlotLag Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_read_iops_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPS Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_iops_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPS Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_iopslocal_storage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPSLocalStorage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_iopslocal_storage_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPSLocalStorage Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_latency_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatency Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_latency_local_storage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatencyLocalStorage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_latency_local_storage_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatencyLocalStorage Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_latency_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatency Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_throughput_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadThroughput Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_read_throughput_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadThroughput Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_replica_lag_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReplicaLag Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_replica_lag_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReplicaLag Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_replication_slot_disk_usage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReplicationSlotDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_swap_usage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS SwapUsage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_swap_usage_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS SwapUsage Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_transaction_logs_disk_usage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS TransactionLogsDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_transaction_logs_generation_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS TransactionLogsGeneration Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_write_iops_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteIOPS Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_write_iops_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteIOPS Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_write_latency_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteLatency Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_write_latency_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteLatency Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_write_throughput_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteThroughput Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_write_throughput_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteThroughput Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: null Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: null Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: null Statistic: Minimum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: null Statistic: SampleCount Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: null Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_cpuutilization_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_database_connections_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DatabaseConnections Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Count"
+      },
+      {
+        "name": "aws_rds_database_connections_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DatabaseConnections Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Count"
+      },
+      {
+        "name": "aws_rds_database_connections_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DatabaseConnections Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_rds_disk_queue_depth_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DiskQueueDepth Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_rds_disk_queue_depth_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DiskQueueDepth Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Count"
+      },
+      {
+        "name": "aws_rds_disk_queue_depth_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DiskQueueDepth Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Count"
+      },
+      {
+        "name": "aws_rds_disk_queue_depth_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DiskQueueDepth Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_rds_ebsbyte_balance__maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSByteBalance% Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsbyte_balance__minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSByteBalance% Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsbyte_balance__sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSByteBalance% Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsbyte_balance__sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSByteBalance% Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsiobalance__maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSIOBalance% Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsiobalance__minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSIOBalance% Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsiobalance__sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSIOBalance% Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsiobalance__sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSIOBalance% Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_free_storage_space_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeStorageSpace Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_free_storage_space_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeStorageSpace Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_free_storage_space_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeStorageSpace Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_free_storage_space_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeStorageSpace Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_freeable_memory_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeableMemory Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_freeable_memory_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeableMemory Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_freeable_memory_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeableMemory Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_network_receive_throughput_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkReceiveThroughput Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_receive_throughput_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkReceiveThroughput Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_receive_throughput_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkReceiveThroughput Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_transmit_throughput_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkTransmitThroughput Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_transmit_throughput_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkTransmitThroughput Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_transmit_throughput_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkTransmitThroughput Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_read_iops_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPS Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_iops_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPS Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_iops_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPS Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_latency_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatency Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_latency_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatency Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_latency_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatency Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_throughput_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadThroughput Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_read_throughput_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadThroughput Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_read_throughput_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadThroughput Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_swap_usage_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS SwapUsage Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_swap_usage_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS SwapUsage Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_swap_usage_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS SwapUsage Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_write_iops_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteIOPS Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_write_iops_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteIOPS Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_write_iops_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteIOPS Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_write_latency_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteLatency Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_write_latency_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteLatency Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_write_latency_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteLatency Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_write_throughput_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteThroughput Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_write_throughput_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteThroughput Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_write_throughput_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteThroughput Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes/Second"
+      }
+    ]
+  },
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      {
+        "id": "overview",
+        "definition": {
+          "schemaVersion": "v6",
+          "image": "",
+          "name": "",
+          "generateName": true,
+          "tags": [
+            {
+              "key": "tag",
+              "value": "aws"
+            },
+            {
+              "key": "tag",
+              "value": "rds"
+            },
+            {
+              "key": "tag",
+              "value": "mysql"
+            }
+          ],
+          "spec": {
+            "display": {
+              "name": "AWS RDS MySQL",
+              "description": ""
+            },
+            "variables": [
+              {
+                "kind": "ListVariable",
+                "spec": {
+                  "display": {
+                    "name": "dbinstance_identifier",
+                    "description": "This is the unique key that identifies a DB instance"
+                  },
+                  "allowAllValue": true,
+                  "allowMultiple": true,
+                  "customAllValue": "",
+                  "capturingRegexp": "",
+                  "sort": "alphabetical-asc",
+                  "plugin": {
+                    "kind": "signoz/QueryVariable",
+                    "spec": {
+                      "queryValue": "SELECT JSONExtractString(labels, 'dbinstance_identifier') as dbinstance_identifier\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name like 'aws_rds_database_connections_average'\nGROUP BY dbinstance_identifier"
+                    }
+                  },
+                  "name": "dbinstance_identifier"
+                }
+              }
+            ],
+            "panels": {
+              "03c1f0bd-6713-4355-b8e3-6ef781af32c2": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "ReadThroughput",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "decbytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_read_throughput_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "31c78945-ea1e-4ae1-b0fb-6f1c9de2c016": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "EBSIOBalance%",
+                    "description": "The percentage of I/O credits remaining in the burst bucket of your RDS database."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_ebsiobalance__average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "37aabb43-fd8b-47c5-9444-0cd77f9ac435": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "ReadIOPS",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_read_iops_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "3d0a6717-1fd0-4810-b0e9-fe5190d5809f": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "WriteLatency",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_write_latency_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "6807e631-4894-4de8-8a55-686c8fa08d4b": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "FreeStorageSpace",
+                    "description": "The amount of available storage space."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "decbytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_free_storage_space_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "7854afc7-0cd5-4792-a760-be98a2e2f96b": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "WriteThroughput",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "decbytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_write_throughput_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "8126584b-eaa9-4b79-ba8e-a00c394544d8": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "WriteIOPS",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_write_iops_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "845ee717-bbd1-424c-8293-f49e76aa43b3": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "DiskQueueDepth",
+                    "description": "The number of outstanding I/Os (read/write requests) waiting to access the disk."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_disk_queue_depth_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "8d22c6a7-b22e-4ad2-b242-e15de32ddc0f": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "CPUUtilization",
+                    "description": "The percentage of CPU utilization."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "percent",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_cpuutilization_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "94fe032e-3ffc-4cdc-aae6-f851fa47d957": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "DatabaseConnections",
+                    "description": "The number of client network connections to the database instance."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_database_connections_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "ae099f6e-5d6c-4127-ac70-2da9741837d7": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "EBSByteBalance%",
+                    "description": "The percentage of throughput credits remaining in the burst bucket of your RDS database. "
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_ebsiobalance__average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "c5189b72-1055-4d6a-b18d-fa23bd9c28d6": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "SwapUsage",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "decbytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_swap_usage_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "c6939628-3c4c-48fb-a2cf-46f6cb358359": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "ReadLatency",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_read_latency_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "d16d8683-8c69-4526-a9cd-cc21ae5c60af": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "BinLogDiskUsage",
+                    "description": "The amount of disk space occupied by binary logs. If automatic backups are enabled for MySQL and MariaDB instances, including read replicas, binary logs are created."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "decbytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_bin_log_disk_usage_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "dbinstance_identifier"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "d599a942-4dbf-4e29-a3ac-a3142399b557": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "FreeableMemory",
+                    "description": "The amount of available random access memory. This metric reports the value of the MemAvailable field of /proc/meminfo"
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "decbytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_rds_freeable_memory_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "dbinstance_identifier",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{dbinstance_identifier}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "ffc39591-288f-4b28-87ee-43456d5d0667": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Network transmit/receive",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TablePanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time"
+                      },
+                      "formatting": {
+                        "columnUnits": null,
+                        "decimalPrecision": "2"
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "scalar",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "builder_query",
+                                "spec": {
+                                  "name": "A",
+                                  "stepInterval": 60,
+                                  "signal": "metrics",
+                                  "source": "",
+                                  "aggregations": [
+                                    {
+                                      "metricName": "aws_rds_network_transmit_throughput_average",
+                                      "temporality": "",
+                                      "timeAggregation": "sum",
+                                      "spaceAggregation": "sum",
+                                      "reduceTo": "sum"
+                                    }
+                                  ],
+                                  "disabled": false,
+                                  "filter": {
+                                    "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                                  },
+                                  "groupBy": [
+                                    {
+                                      "name": "dbinstance_identifier",
+                                      "signal": "",
+                                      "fieldContext": "attribute",
+                                      "fieldDataType": "string"
+                                    }
+                                  ],
+                                  "order": [],
+                                  "selectFields": null,
+                                  "having": {
+                                    "expression": ""
+                                  },
+                                  "secondaryAggregations": null,
+                                  "functions": [],
+                                  "legend": "n/w transmit"
+                                }
+                              },
+                              {
+                                "type": "builder_query",
+                                "spec": {
+                                  "name": "B",
+                                  "stepInterval": 60,
+                                  "signal": "metrics",
+                                  "source": "",
+                                  "aggregations": [
+                                    {
+                                      "metricName": "aws_rds_network_receive_throughput_average",
+                                      "temporality": "",
+                                      "timeAggregation": "sum",
+                                      "spaceAggregation": "sum",
+                                      "reduceTo": "sum"
+                                    }
+                                  ],
+                                  "disabled": false,
+                                  "filter": {
+                                    "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                                  },
+                                  "groupBy": [
+                                    {
+                                      "name": "dbinstance_identifier",
+                                      "signal": "",
+                                      "fieldContext": "attribute",
+                                      "fieldDataType": "string"
+                                    }
+                                  ],
+                                  "order": [],
+                                  "selectFields": null,
+                                  "having": {
+                                    "expression": ""
+                                  },
+                                  "secondaryAggregations": null,
+                                  "functions": [],
+                                  "legend": "n/w receive"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              }
+            },
+            "layouts": [
+              {
+                "kind": "Grid",
+                "spec": {
+                  "items": [
+                    {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/8d22c6a7-b22e-4ad2-b242-e15de32ddc0f"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/94fe032e-3ffc-4cdc-aae6-f851fa47d957"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 5,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/6807e631-4894-4de8-8a55-686c8fa08d4b"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 5,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/d599a942-4dbf-4e29-a3ac-a3142399b557"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 10,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/d16d8683-8c69-4526-a9cd-cc21ae5c60af"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 10,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/845ee717-bbd1-424c-8293-f49e76aa43b3"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 15,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/31c78945-ea1e-4ae1-b0fb-6f1c9de2c016"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 15,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/ae099f6e-5d6c-4127-ac70-2da9741837d7"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 20,
+                      "width": 4,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/03c1f0bd-6713-4355-b8e3-6ef781af32c2"
+                      }
+                    },
+                    {
+                      "x": 4,
+                      "y": 20,
+                      "width": 4,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/37aabb43-fd8b-47c5-9444-0cd77f9ac435"
+                      }
+                    },
+                    {
+                      "x": 8,
+                      "y": 20,
+                      "width": 4,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/c6939628-3c4c-48fb-a2cf-46f6cb358359"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 25,
+                      "width": 4,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/7854afc7-0cd5-4792-a760-be98a2e2f96b"
+                      }
+                    },
+                    {
+                      "x": 4,
+                      "y": 25,
+                      "width": 4,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/8126584b-eaa9-4b79-ba8e-a00c394544d8"
+                      }
+                    },
+                    {
+                      "x": 8,
+                      "y": 25,
+                      "width": 4,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/3d0a6717-1fd0-4810-b0e9-fe5190d5809f"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 30,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/ffc39591-288f-4b28-87ee-43456d5d0667"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 30,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/c5189b72-1055-4d6a-b18d-fa23bd9c28d6"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "duration": "",
+            "refreshInterval": "",
+            "links": []
+          }
+        }
+      },
+      {
+        "id": "db_metrics_overview",
+        "definition": {
+          "schemaVersion": "v6",
+          "image": "",
+          "name": "",
+          "generateName": true,
+          "tags": [
+            {
+              "key": "tag",
+              "value": "mysql"
+            }
+          ],
+          "spec": {
+            "display": {
+              "name": "MySQL",
+              "description": ""
+            },
+            "variables": [
+              {
+                "kind": "ListVariable",
+                "spec": {
+                  "display": {
+                    "name": "mysql.instance.endpoint",
+                    "description": ""
+                  },
+                  "allowAllValue": false,
+                  "allowMultiple": false,
+                  "customAllValue": "",
+                  "capturingRegexp": "",
+                  "sort": "alphabetical-asc",
+                  "plugin": {
+                    "kind": "signoz/QueryVariable",
+                    "spec": {
+                      "queryValue": "SELECT JSONExtractString(labels, 'mysql.instance.endpoint') as `mysql.instance.endpoint`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'mysql.uptime'\nGROUP BY `mysql.instance.endpoint`"
+                    }
+                  },
+                  "name": "mysql.instance.endpoint"
+                }
+              }
+            ],
+            "panels": {
+              "0dc8699d-35d7-4c73-b25e-ce2c05e1574b": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Row locks",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.row_locks",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{kind}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "11d5c39c-d780-4752-a868-a88d95e2a264": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Count by handlers",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.handlers",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": "sum(mysql.handlers) \u003e 0"
+                            },
+                            "functions": [],
+                            "legend": "{{kind}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "121f2894-dd86-423a-8bb8-93f853aad93e": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Connection/Errors",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "builder_query",
+                                "spec": {
+                                  "name": "A",
+                                  "stepInterval": 60,
+                                  "signal": "metrics",
+                                  "source": "",
+                                  "aggregations": [
+                                    {
+                                      "metricName": "mysql.connection.count",
+                                      "temporality": "",
+                                      "timeAggregation": "increase",
+                                      "spaceAggregation": "sum",
+                                      "reduceTo": "avg"
+                                    }
+                                  ],
+                                  "disabled": false,
+                                  "filter": {
+                                    "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                                  },
+                                  "groupBy": [],
+                                  "order": [],
+                                  "selectFields": null,
+                                  "having": {
+                                    "expression": ""
+                                  },
+                                  "secondaryAggregations": null,
+                                  "functions": [],
+                                  "legend": "Connection count"
+                                }
+                              },
+                              {
+                                "type": "builder_query",
+                                "spec": {
+                                  "name": "B",
+                                  "stepInterval": 60,
+                                  "signal": "metrics",
+                                  "source": "",
+                                  "aggregations": [
+                                    {
+                                      "metricName": "mysql.connection.errors",
+                                      "temporality": "",
+                                      "timeAggregation": "increase",
+                                      "spaceAggregation": "sum",
+                                      "reduceTo": "avg"
+                                    }
+                                  ],
+                                  "disabled": false,
+                                  "filter": {
+                                    "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                                  },
+                                  "groupBy": [
+                                    {
+                                      "name": "error",
+                                      "signal": "",
+                                      "fieldContext": "attribute",
+                                      "fieldDataType": "string"
+                                    }
+                                  ],
+                                  "order": [],
+                                  "selectFields": null,
+                                  "having": {
+                                    "expression": "sum(mysql.connection.errors) \u003e 0"
+                                  },
+                                  "secondaryAggregations": null,
+                                  "functions": [],
+                                  "legend": "Error count: {{error}}"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "18f8b51f-074c-45e3-8f25-6e70cb8ad222": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Total buffer pool page flushes",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.buffer_pool.page_flushes",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "Count"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "19da4480-77f3-4999-9cd5-f76c02cb4e8d": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Row operations",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.row_operations",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "operation",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{operation}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "26d0b9f5-9dee-49ff-a8b5-baad92bd85ee": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "count of table I/O wait events",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TablePanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time"
+                      },
+                      "formatting": {
+                        "columnUnits": null,
+                        "decimalPrecision": "2"
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "scalar",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.table.io.wait.count",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "table",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "count"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "2c1421c3-6d09-43d3-b5fc-bea817595786": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "count of table I/O wait events",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TablePanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time"
+                      },
+                      "formatting": {
+                        "columnUnits": null,
+                        "decimalPrecision": "2"
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "scalar",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.table.io.wait.count",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "table",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "count"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "864ac52b-87aa-423a-aafb-975207baa3af": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "MySQL locks",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.locks",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{kind}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "942b5e3c-733a-454a-b7f7-b4256696483a": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Prepared statement count",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TablePanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time"
+                      },
+                      "formatting": {
+                        "columnUnits": null,
+                        "decimalPrecision": "2"
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "scalar",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.prepared_statements",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "command",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "count"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "9f188ac9-7b6c-4f23-85df-442c90fb1e98": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Buffer pool usage by status",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "bytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.buffer_pool.pages",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "status",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{status}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "b0ccb2fd-865a-422c-821f-4c8e4058e575": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Thread type count",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TablePanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time"
+                      },
+                      "formatting": {
+                        "columnUnits": null,
+                        "decimalPrecision": "2"
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "scalar",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.threads",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "count"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "b1e49f1a-8f97-4174-9cc7-0e4e4d2309f6": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "InnoDB log operations",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TablePanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time"
+                      },
+                      "formatting": {
+                        "columnUnits": null,
+                        "decimalPrecision": "2"
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "scalar",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.log_operations",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "operation",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "count"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "b99182d7-efd4-43a5-bd61-3a35d9f88a0e": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Buffer pool pages by kind",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.buffer_pool.pages",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{kind}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "bc6a7150-bb0b-4fb5-b132-217f20b4cd06": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Data pages by status",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.buffer_pool.data_pages",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "status",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{status}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "c65eccc5-568b-4da3-8dee-90cf46cfbdcb": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Open resources count",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.opened_resources",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": "sum(mysql.opened_resources) \u003e 0"
+                            },
+                            "functions": [],
+                            "legend": "{{kind}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "ee89777a-111f-4c4e-bef5-3348b6a07b45": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Count of operations",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TablePanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time"
+                      },
+                      "formatting": {
+                        "columnUnits": null,
+                        "decimalPrecision": "2"
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "scalar",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.operations",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "operation",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": ""
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              }
+            },
+            "layouts": [
+              {
+                "kind": "Grid",
+                "spec": {
+                  "display": {
+                    "title": "Resources",
+                    "collapse": {
+                      "open": true
+                    }
+                  },
+                  "items": [
+                    {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/121f2894-dd86-423a-8bb8-93f853aad93e"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/0dc8699d-35d7-4c73-b25e-ce2c05e1574b"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 6,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/19da4480-77f3-4999-9cd5-f76c02cb4e8d"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 6,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/864ac52b-87aa-423a-aafb-975207baa3af"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 12,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/11d5c39c-d780-4752-a868-a88d95e2a264"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 12,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/c65eccc5-568b-4da3-8dee-90cf46cfbdcb"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 18,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/b0ccb2fd-865a-422c-821f-4c8e4058e575"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 18,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/942b5e3c-733a-454a-b7f7-b4256696483a"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 24,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/ee89777a-111f-4c4e-bef5-3348b6a07b45"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 24,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/b1e49f1a-8f97-4174-9cc7-0e4e4d2309f6"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "Grid",
+                "spec": {
+                  "display": {
+                    "title": "Table",
+                    "collapse": {
+                      "open": true
+                    }
+                  },
+                  "items": [
+                    {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/26d0b9f5-9dee-49ff-a8b5-baad92bd85ee"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 6,
+                      "content": {
+                        "$ref": "#/spec/panels/2c1421c3-6d09-43d3-b5fc-bea817595786"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "Grid",
+                "spec": {
+                  "display": {
+                    "title": "Buffer pool",
+                    "collapse": {
+                      "open": true
+                    }
+                  },
+                  "items": [
+                    {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/9f188ac9-7b6c-4f23-85df-442c90fb1e98"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/bc6a7150-bb0b-4fb5-b132-217f20b4cd06"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 5,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/b99182d7-efd4-43a5-bd61-3a35d9f88a0e"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 5,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/18f8b51f-074c-45e3-8f25-6e70cb8ad222"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "duration": "",
+            "refreshInterval": "",
+            "links": []
+          }
+        }
+      }
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "rds_mysql"
+    },
+    "metrics": [
+      "aws_rds_cpuutilization_average",
+      "aws_rds_cpuutilization_maximum",
+      "aws_rds_cpuutilization_minimum",
+      "aws_rds_cpuutilization_sample_count",
+      "aws_rds_cpuutilization_sum",
+      "aws_rds_bin_log_disk_usage_average",
+      "aws_rds_checkpoint_lag_average",
+      "aws_rds_checkpoint_lag_maximum",
+      "aws_rds_cpuutilization_average",
+      "aws_rds_cpuutilization_maximum",
+      "aws_rds_database_connections_average",
+      "aws_rds_database_connections_maximum",
+      "aws_rds_dbload_average",
+      "aws_rds_dbload_cpu_average",
+      "aws_rds_dbload_cpu_maximum",
+      "aws_rds_dbload_maximum",
+      "aws_rds_dbload_non_cpu_average",
+      "aws_rds_dbload_non_cpu_maximum",
+      "aws_rds_disk_queue_depth_average",
+      "aws_rds_ebsbyte_balance__average",
+      "aws_rds_ebsiobalance__average",
+      "aws_rds_free_local_storage_average",
+      "aws_rds_free_storage_space_average",
+      "aws_rds_freeable_memory_average",
+      "aws_rds_freeable_memory_maximum",
+      "aws_rds_maximum_used_transaction_ids_average",
+      "aws_rds_network_receive_throughput_average",
+      "aws_rds_network_receive_throughput_maximum",
+      "aws_rds_network_transmit_throughput_average",
+      "aws_rds_network_transmit_throughput_maximum",
+      "aws_rds_oldest_replication_slot_lag_average",
+      "aws_rds_oldest_replication_slot_lag_maximum",
+      "aws_rds_read_iops_average",
+      "aws_rds_read_iops_maximum",
+      "aws_rds_read_iopslocal_storage_average",
+      "aws_rds_read_iopslocal_storage_maximum",
+      "aws_rds_read_latency_average",
+      "aws_rds_read_latency_local_storage_average",
+      "aws_rds_read_latency_local_storage_maximum",
+      "aws_rds_read_latency_maximum",
+      "aws_rds_read_throughput_average",
+      "aws_rds_read_throughput_maximum",
+      "aws_rds_replica_lag_average",
+      "aws_rds_replica_lag_maximum",
+      "aws_rds_replication_slot_disk_usage_average",
+      "aws_rds_swap_usage_average",
+      "aws_rds_swap_usage_maximum",
+      "aws_rds_transaction_logs_disk_usage_average",
+      "aws_rds_transaction_logs_generation_average",
+      "aws_rds_write_iops_average",
+      "aws_rds_write_iops_maximum",
+      "aws_rds_write_latency_average",
+      "aws_rds_write_latency_maximum",
+      "aws_rds_write_throughput_average",
+      "aws_rds_write_throughput_maximum",
+      "aws_rds_bin_log_disk_usage_average",
+      "aws_rds_bin_log_disk_usage_maximum",
+      "aws_rds_bin_log_disk_usage_maximum",
+      "aws_rds_bin_log_disk_usage_minimum",
+      "aws_rds_bin_log_disk_usage_minimum",
+      "aws_rds_bin_log_disk_usage_sample_count",
+      "aws_rds_bin_log_disk_usage_sample_count",
+      "aws_rds_bin_log_disk_usage_sum",
+      "aws_rds_bin_log_disk_usage_sum",
+      "aws_rds_cpuutilization_minimum",
+      "aws_rds_cpuutilization_sample_count",
+      "aws_rds_cpuutilization_sum",
+      "aws_rds_database_connections_minimum",
+      "aws_rds_database_connections_sample_count",
+      "aws_rds_database_connections_sum",
+      "aws_rds_disk_queue_depth_maximum",
+      "aws_rds_disk_queue_depth_minimum",
+      "aws_rds_disk_queue_depth_sample_count",
+      "aws_rds_disk_queue_depth_sum",
+      "aws_rds_ebsbyte_balance__maximum",
+      "aws_rds_ebsbyte_balance__minimum",
+      "aws_rds_ebsbyte_balance__sample_count",
+      "aws_rds_ebsbyte_balance__sum",
+      "aws_rds_ebsiobalance__maximum",
+      "aws_rds_ebsiobalance__minimum",
+      "aws_rds_ebsiobalance__sample_count",
+      "aws_rds_ebsiobalance__sum",
+      "aws_rds_free_storage_space_maximum",
+      "aws_rds_free_storage_space_minimum",
+      "aws_rds_free_storage_space_sample_count",
+      "aws_rds_free_storage_space_sum",
+      "aws_rds_freeable_memory_minimum",
+      "aws_rds_freeable_memory_sample_count",
+      "aws_rds_freeable_memory_sum",
+      "aws_rds_network_receive_throughput_minimum",
+      "aws_rds_network_receive_throughput_sample_count",
+      "aws_rds_network_receive_throughput_sum",
+      "aws_rds_network_transmit_throughput_minimum",
+      "aws_rds_network_transmit_throughput_sample_count",
+      "aws_rds_network_transmit_throughput_sum",
+      "aws_rds_read_iops_minimum",
+      "aws_rds_read_iops_sample_count",
+      "aws_rds_read_iops_sum",
+      "aws_rds_read_latency_minimum",
+      "aws_rds_read_latency_sample_count",
+      "aws_rds_read_latency_sum",
+      "aws_rds_read_throughput_minimum",
+      "aws_rds_read_throughput_sample_count",
+      "aws_rds_read_throughput_sum",
+      "aws_rds_swap_usage_minimum",
+      "aws_rds_swap_usage_sample_count",
+      "aws_rds_swap_usage_sum",
+      "aws_rds_write_iops_minimum",
+      "aws_rds_write_iops_sample_count",
+      "aws_rds_write_iops_sum",
+      "aws_rds_write_latency_minimum",
+      "aws_rds_write_latency_sample_count",
+      "aws_rds_write_latency_sum",
+      "aws_rds_write_throughput_minimum",
+      "aws_rds_write_throughput_sample_count",
+      "aws_rds_write_throughput_sum"
+    ]
+  },
+  "installation": null
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "slug": "aws_rds_postgresql-overview",
+    "source": "integration",
+    "definition_sha256": "b6171f2431b620c96cd5d5002fe60cacdd98365fd692bcff338c68224cd92f4e"
+  },
+  {
+    "slug": "aws_rds_postgresql-db_metrics_overview",
+    "source": "integration",
+    "definition_sha256": "86f48bdcc4a6c0bad1f43bf1e49922ffb458df9d38df87b1afec6d00d2308309"
+  }
+]

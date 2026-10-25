@@ -1,0 +1,12 @@
+[
+  {
+    "slug": "aws_rds_mysql-overview",
+    "source": "integration",
+    "definition_sha256": "5615f7e6f72c7271ceb28e93536a8520afe0064b86cebf45511c370fe7f7c152"
+  },
+  {
+    "slug": "aws_rds_mysql-db_metrics_overview",
+    "source": "integration",
+    "definition_sha256": "9e3675b04f979864580686d62a180b070e5fce23119a4e2ea82f611cc655788e"
+  }
+]
