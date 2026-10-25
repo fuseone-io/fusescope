@@ -4,9 +4,11 @@ type user
 
 type serviceaccount 
 
+type anonymous
+
 type role 
   relations
-    define assignee: [user, serviceaccount]
+    define assignee: [user, serviceaccount, anonymous]
 
 type organization 
   relations
@@ -14,3 +16,7 @@ type organization
     define read: [role#assignee]
     define update: [role#assignee]
     define delete: [role#assignee]
+
+type metaresource
+  relations
+    define read: [role#assignee]

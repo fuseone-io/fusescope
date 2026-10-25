@@ -11,6 +11,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/apiserver"
 	"github.com/fuseone-io/fusescope/pkg/apiserver/signozapiserver"
 	"github.com/fuseone-io/fusescope/pkg/auditor"
+	"github.com/fuseone-io/fusescope/pkg/auditor/logauditor"
 	"github.com/fuseone-io/fusescope/pkg/auditor/noopauditor"
 	"github.com/fuseone-io/fusescope/pkg/authz"
 	"github.com/fuseone-io/fusescope/pkg/cache"
@@ -273,6 +274,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAIObservabilityEnvironmentNameQuickFilterFactory(sqlstore),
 		sqlmigration.NewAddInstalledIntegrationVersionFactory(sqlschema),
 		sqlmigration.NewAddArchiveFactory(sqlstore, sqlschema),
+		sqlmigration.NewEnablePublicDashboardAccessFactory(),
 		sqlmigration.NewAddRUMSourceMapKindFactory(sqlschema),
 	)
 }
@@ -420,6 +422,7 @@ func NewGlobalProviderFactories(identNConfig identn.Config) factory.NamedMap[fac
 func NewAuditorProviderFactories() factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]] {
 	return factory.MustNewNamedMap(
 		noopauditor.NewFactory(),
+		logauditor.NewFactory(),
 	)
 }
 

@@ -174,6 +174,11 @@ func (provider *provider) CreateManagedRoles(ctx context.Context, _ valuer.UUID,
 }
 
 func (provider *provider) CreateManagedUserRoleTransactions(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
+	// OpenFGA writes must precede the SQL transaction creating the organization:
+	// SQLite cannot take a second write lock while that transaction is open.
+	if err := provider.createAnonymousAccess(ctx, orgID); err != nil {
+		return err
+	}
 	return provider.Grant(ctx, orgID, []string{authtypes.SigNozAdminRoleName}, authtypes.MustNewSubject(coretypes.NewResourceUser(), userID.String(), orgID, nil))
 }
 

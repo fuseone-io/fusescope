@@ -1,24 +1,13 @@
 from collections.abc import Callable
 from http import HTTPStatus
+from uuid import uuid4
 
 import pytest
 import requests
 from sqlalchemy import sql
-from wiremock.resources.mappings import Mapping
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
-from fixtures.types import Operation, SigNoz, TestContainerDocker
-
-pytestmark = pytest.mark.skip(reason="public dashboards are not implemented in FuseScope yet (fuseone-io/fusescope#15)")
-
-
-def test_apply_license(
-    signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[TestContainerDocker, list[Mapping]], None],
-    get_token: Callable[[str, str], str],
-) -> None:
-    add_license(signoz, make_http_mocks, get_token)
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.types import Operation, SigNoz
 
 
 def test_create_and_get_public_dashboard(
@@ -32,7 +21,7 @@ def test_create_and_get_public_dashboard(
         signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         json={
             "schemaVersion": "v6",
-            "name": "sample-title",
+            "name": f"sample-title-{uuid4().hex}",
             "spec": {"variables": [], "panels": {}, "layouts": [], "display": {"name": "Sample Title"}, "links": []},
             "tags": [],
         },
@@ -68,6 +57,13 @@ def test_create_and_get_public_dashboard(
     assert response.json()["status"] == "success"
     assert response.json()["data"]["timeRangeEnabled"] is True
     assert response.json()["data"]["defaultTimeRange"] == "10s"
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/dashboards/{dashboard_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
 def test_anonymous_role_has_public_dashboard_permission(

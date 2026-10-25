@@ -338,7 +338,6 @@ def test_apply_license(
     add_license(signoz, make_http_mocks, get_token)
 
 
-@pytest.mark.skip(reason="public dashboards are not implemented in FuseScope yet (fuseone-io/fusescope#15)")
 def test_editor_allowed_on_public_config(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument

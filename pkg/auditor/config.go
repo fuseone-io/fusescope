@@ -71,7 +71,7 @@ type RetryConfig struct {
 
 func newConfig() factory.Config {
 	return Config{
-		Provider:      "noop",
+		Provider:      "log",
 		BufferSize:    1000,
 		BatchSize:     100,
 		FlushInterval: time.Second,

@@ -119,6 +119,9 @@ func (typ *PublicDashboard) ResolveTimeRange(startTimeRaw, endTimeRaw string) (u
 		if err != nil {
 			return 0, 0, errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "invalid endTime")
 		}
+		if endTime <= startTime || endTime > uint64(1<<63-1) {
+			return 0, 0, errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "endTime must be greater than startTime and fit epoch milliseconds")
+		}
 		return startTime, endTime, nil
 	}
 
@@ -138,11 +141,14 @@ func (typ *PostablePublicDashboard) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	_, err := time.ParseDuration(temp.DefaultTimeRange)
+	duration, err := time.ParseDuration(temp.DefaultTimeRange)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "unable to parse defaultTimeRange %s", temp.DefaultTimeRange)
 	}
 
+	if duration <= 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "defaultTimeRange must be positive")
+	}
 	*typ = PostablePublicDashboard(temp)
 	return nil
 }
@@ -155,11 +161,14 @@ func (typ *UpdatablePublicDashboard) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	_, err := time.ParseDuration(temp.DefaultTimeRange)
+	duration, err := time.ParseDuration(temp.DefaultTimeRange)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "unable to parse defaultTimeRange %s", temp.DefaultTimeRange)
 	}
 
+	if duration <= 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "defaultTimeRange must be positive")
+	}
 	*typ = UpdatablePublicDashboard(temp)
 	return nil
 }

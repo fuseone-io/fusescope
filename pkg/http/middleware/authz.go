@@ -269,6 +269,9 @@ func (middleware *AuthZ) checkResource(
 func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, typeable coretypes.Resource, cb selectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
+		if claims, ok := ctx.Value(anonymousAuditClaimsKey{}).(*authtypes.Claims); ok {
+			*claims = authtypes.Claims{Principal: authtypes.Principal{String: valuer.NewString("anonymous")}, IdentNProvider: authtypes.IdentNProviderAnonymous}
+		}
 		orgs, err := middleware.orgGetter.ListByOwnedKeyRange(ctx)
 		if err != nil {
 			render.Error(rw, err)
@@ -279,6 +282,10 @@ func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation auth
 		if err != nil {
 			render.Error(rw, err)
 			return
+		}
+
+		if claims, ok := ctx.Value(anonymousAuditClaimsKey{}).(*authtypes.Claims); ok {
+			*claims = authtypes.Claims{OrgID: orgId.StringValue(), Principal: authtypes.Principal{String: valuer.NewString("anonymous")}, IdentNProvider: authtypes.IdentNProviderAnonymous}
 		}
 
 		roleSelectors := []coretypes.Selector{}

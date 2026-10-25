@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"log/slog"
 	"net"
 	"net/http"
@@ -17,6 +18,8 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
 )
+
+type anonymousAuditClaimsKey struct{}
 
 const (
 	logMessage = "::RECEIVED-REQUEST::"
@@ -44,6 +47,7 @@ func NewAudit(logger *slog.Logger, excludedRoutes []string, auditor auditor.Audi
 func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		start := time.Now()
+		req = req.WithContext(context.WithValue(req.Context(), anonymousAuditClaimsKey{}, new(authtypes.Claims)))
 		host, port, _ := net.SplitHostPort(req.Host)
 		path, err := mux.CurrentRoute(req).GetPathTemplate()
 		if err != nil {
@@ -106,6 +110,9 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	}
 
 	claims, _ := authtypes.ClaimsFromContext(req.Context())
+	if anonymous, ok := req.Context().Value(anonymousAuditClaimsKey{}).(*authtypes.Claims); ok && anonymous.Principal.StringValue() != "" {
+		claims = *anonymous
+	}
 	statusCode := writer.StatusCode()
 	span := trace.SpanFromContext(req.Context())
 

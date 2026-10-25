@@ -1,31 +1,16 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+from uuid import uuid4
 
-import pytest
 import requests
-from wiremock.resources.mappings import Mapping
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
-from fixtures.types import Operation, SigNoz, TestContainerDocker
-
-pytestmark = pytest.mark.skip(reason="public dashboards are not implemented in FuseScope yet (fuseone-io/fusescope#15)")
+from fixtures.types import Operation, SigNoz
 
 V2_BASE_URL = "/api/v2/dashboards"
 PANEL_KEY = "24e2697b"
-
-
-def test_apply_license(
-    signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[TestContainerDocker, list[Mapping]], None],
-    get_token: Callable[[str, str], str],
-) -> None:
-    """
-    Public dashboards are a licensed feature, so a license must be present.
-    """
-    add_license(signoz, make_http_mocks, get_token)
 
 
 def test_public_dashboard_v2(
@@ -57,13 +42,14 @@ def test_public_dashboard_v2(
         signoz.self.host_configs["8080"].get(V2_BASE_URL),
         json={
             "schemaVersion": "v6",
-            "name": "v2-public-sample",
+            "name": f"v2-public-sample-{uuid4().hex}",
             "tags": [{"key": "team", "value": "pulse"}],
             "spec": {
                 "display": {"name": "Sample Dashboard", "description": "Used for integration tests"},
                 "duration": "1h",
                 "links": [],
                 "variables": [
+                    {"kind": "TextVariable", "spec": {"name": "published_service", "display": {"name": "Published service"}, "value": "sampleapp", "constant": True}},
                     {
                         "kind": "ListVariable",
                         "spec": {
@@ -74,7 +60,7 @@ def test_public_dashboard_v2(
                                 "spec": {"queryValue": "SELECT JSONExtractString(labels, 'host.name') AS `host.name` FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'system.cpu.time' GROUP BY `host.name`"},
                             },
                         },
-                    }
+                    },
                 ],
                 "panels": {
                     PANEL_KEY: {
@@ -100,7 +86,7 @@ def test_public_dashboard_v2(
                                                         "timeAggregation": "rate",
                                                     }
                                                 ],
-                                                "filter": {"expression": "service.name = 'sampleapp'"},
+                                                "filter": {"expression": "service.name = $published_service"},
                                                 "groupBy": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "tag"}],
                                             },
                                         }
@@ -181,7 +167,7 @@ def test_public_dashboard_v2(
     assert builder["groupBy"][0]["name"] == "service.name"
 
     # The query variable's query is redacted; its identity remains.
-    variable = dashboard["spec"]["variables"][0]["spec"]
+    variable = dashboard["spec"]["variables"][1]["spec"]
     assert variable["name"] == "host.name"
     assert variable["plugin"]["kind"] == "signoz/QueryVariable"
     assert variable["plugin"]["spec"]["queryValue"] == ""
@@ -209,6 +195,15 @@ def test_public_dashboard_v2(
     assert len(series) >= 1, result_a
     assert len(series[0]["values"]) >= 1, series[0]
 
+    override = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/public/dashboards/{public_id}/panels/{PANEL_KEY}/query_range"),
+        params={"startTime": start_time, "endTime": end_time, "variables": '{"published_service":{"type":"text","value":"other-service"}}'},
+        timeout=10,
+    )
+    assert override.status_code == HTTPStatus.OK, override.text
+    assert override.json()["data"]["data"]["results"] == result["data"]["results"]
+    assert override.headers["Cache-Control"] == "no-store"
+
     # With timeRangeEnabled, the bounds are required.
     missing_range = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v2/public/dashboards/{public_id}/panels/{PANEL_KEY}/query_range"),
@@ -231,6 +226,42 @@ def test_public_dashboard_v2(
         timeout=5,
     )
     assert bogus.status_code >= HTTPStatus.BAD_REQUEST
+
+    # The server enforces the author's fixed relative window, even with malformed client bounds.
+    update = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
+        json={"timeRangeEnabled": False, "defaultTimeRange": "10m"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert update.status_code == HTTPStatus.NO_CONTENT, update.text
+    fixed = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/public/dashboards/{public_id}/panels/{PANEL_KEY}/query_range"),
+        params={"startTime": "invalid", "endTime": "invalid"},
+        timeout=10,
+    )
+    assert fixed.status_code == HTTPStatus.OK, fixed.text
+
+    unpublish = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert unpublish.status_code == HTTPStatus.NO_CONTENT, unpublish.text
+    revoked = requests.get(signoz.self.host_configs["8080"].get(f"/api/v2/public/dashboards/{public_id}"), timeout=5)
+    assert revoked.status_code == HTTPStatus.NOT_FOUND, revoked.text
+    republish = requests.post(
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
+        json={"timeRangeEnabled": True, "defaultTimeRange": "10m"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert republish.status_code == HTTPStatus.CREATED, republish.text
+    new_public_id = republish.json()["data"]["id"]
+    assert new_public_id != public_id
+    revoked = requests.get(signoz.self.host_configs["8080"].get(f"/api/v2/public/dashboards/{public_id}"), timeout=5)
+    assert revoked.status_code == HTTPStatus.NOT_FOUND, revoked.text
+    public_id = new_public_id
 
     # ── deleting the dashboard removes public access ─────────────────────────
     # DeleteV2 drops the public-config row in the same transaction, so the public

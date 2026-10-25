@@ -215,6 +215,7 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 
 	return &qb.QueryRangeRequest{
 		SchemaVersion:  "v1",
+		Variables:      d.publicVariables(),
 		Start:          startTime,
 		End:            endTime,
 		RequestType:    query.Kind,
