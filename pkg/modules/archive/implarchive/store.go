@@ -68,3 +68,40 @@ func (store *store) MarkBackstopApplied(ctx context.Context, signal string, appl
 
 	return nil
 }
+
+func (store *store) AcquireLease(ctx context.Context, signal string, holder string, expiresAt time.Time) (*archivetypes.Lease, error) {
+	now := time.Now().UTC()
+
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(archivetypes.NewLease(signal, holder, expiresAt)).
+		On("CONFLICT (signal) DO UPDATE").
+		Set("epoch = CASE WHEN archive_lease.holder = EXCLUDED.holder AND archive_lease.expires_at > ? THEN archive_lease.epoch ELSE archive_lease.epoch + 1 END", now).
+		Set("holder = EXCLUDED.holder").
+		Set("expires_at = EXCLUDED.expires_at").
+		Set("updated_at = EXCLUDED.updated_at").
+		Where("archive_lease.holder = EXCLUDED.holder OR archive_lease.expires_at <= ?", now).
+		Exec(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't acquire the archive lease of %s", signal)
+	}
+
+	lease := new(archivetypes.Lease)
+	err = store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(lease).
+		Where("signal = ?", signal).
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the archive lease of %s", signal)
+	}
+	if lease.Holder != holder {
+		return nil, errors.Newf(errors.TypeAlreadyExists, archivetypes.ErrCodeLeaseHeld, "the archive lease of %s is held by %s until %s", signal, lease.Holder, lease.ExpiresAt.Format(time.RFC3339))
+	}
+
+	return lease, nil
+}
