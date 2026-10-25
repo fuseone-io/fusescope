@@ -2,17 +2,28 @@ package integrations
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"testing"
 
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations/catalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestBuiltinIntegrations(t *testing.T) {
+func embeddedIntegrations(t *testing.T) *CatalogIntegrations {
+	t.Helper()
+	embedded, err := catalog.LoadEmbedded(slog.Default(), "v0.154.0")
+	require.NoError(t, err)
+	integrations, err := NewCatalogIntegrations(embedded)
+	require.NoError(t, err)
+	return integrations
+}
+
+func TestEmbeddedIntegrations(t *testing.T) {
 	require := require.New(t)
 
-	repo := BuiltInIntegrations{}
+	repo := embeddedIntegrations(t)
 
 	builtins, apiErr := repo.list(context.Background())
 	require.Nil(apiErr)
@@ -32,8 +43,8 @@ func TestBuiltinIntegrations(t *testing.T) {
 	require.False(strings.HasPrefix(nginxIntegration.Overview, "file://"))
 }
 
-func TestBuiltinIntegrationsUserFacingTextIsFuseScope(t *testing.T) {
-	repo := BuiltInIntegrations{}
+func TestEmbeddedIntegrationsUserFacingTextIsFuseScope(t *testing.T) {
+	repo := embeddedIntegrations(t)
 	builtins, apiErr := repo.list(context.Background())
 	require.Nil(t, apiErr)
 	require.NotEmpty(t, builtins)

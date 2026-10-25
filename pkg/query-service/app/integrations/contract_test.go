@@ -15,7 +15,6 @@ import (
 
 	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 	"github.com/fuseone-io/fusescope/pkg/modules/dashboard/dashboardtest"
-	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations/catalog"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore/sqlitesqlstore"
 	"github.com/fuseone-io/fusescope/pkg/types"
@@ -110,12 +109,8 @@ func newTestManager(t *testing.T, store sqlstore.SQLStore, dashboards *dashboard
 	t.Helper()
 	repo, err := NewInstalledIntegrationsSqliteRepo(store)
 	require.NoError(t, err)
-	embedded, err := catalog.LoadEmbedded(slog.Default(), "v0.154.0")
-	require.NoError(t, err)
-	available, err := NewCatalogIntegrations(embedded)
-	require.NoError(t, err)
 	return &Manager{
-		availableIntegrationsRepo: available,
+		availableIntegrationsRepo: embeddedIntegrations(t),
 		installedIntegrationsRepo: repo,
 		dashboardModule:           dashboards,
 		logger:                    slog.Default(),
