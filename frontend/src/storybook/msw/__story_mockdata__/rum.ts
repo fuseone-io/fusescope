@@ -34,6 +34,7 @@ export function rumApplication(
 		platform: RumtypesPlatformDTO.web,
 		environment: 'production',
 		allowedOrigins: ['https://shop.example.com', 'https://www.shop.example.com'],
+		allowedPackageNames: [],
 		tracePropagationUrls: ['https://api.shop.example.com'],
 		sampleRate: 1,
 		createdBy: 'admin@fusescope.local',

@@ -20,6 +20,7 @@ function app(
 		environment,
 		platform: RumtypesPlatformDTO.web,
 		allowedOrigins: [],
+		allowedPackageNames: [],
 		tracePropagationUrls: [],
 		sampleRate: 1,
 		createdBy: 'admin',
