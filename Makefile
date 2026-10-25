@@ -248,6 +248,10 @@ semconv-generate: ## Regenerate semantic-convention families for Go and TypeScri
 semconv-check: ## Fail if the generated semantic-convention files are stale
 	@go run ./scripts/semconv -check
 
+.PHONY: integrations-catalog
+integrations-catalog: ## Fetch and verify the pinned integration catalog release (CATALOG_VERSION=vX.Y.Z moves the pin, COSIGN=path uses a local cosign)
+	@go run ./scripts/integrationscatalog $(if $(CATALOG_VERSION),-version $(CATALOG_VERSION)) $(if $(COSIGN),-cosign $(COSIGN))
+
 .PHONY: agpl-check
 agpl-check: ## Fail if the community binary links any AGPL collector package
 	@go run ./scripts/agplguard
