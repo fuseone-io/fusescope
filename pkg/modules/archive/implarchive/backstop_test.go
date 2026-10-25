@@ -1,7 +1,9 @@
 package implarchive
 
 import (
+	"bytes"
 	"context"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -33,7 +35,7 @@ func TestBackstopServiceReconcile(t *testing.T) {
 	t.Run("FirstEnable_AppliedAndRecorded", func(t *testing.T) {
 		store := newTestStore(t)
 		service, setter := newTestBackstopService(t, store, 7)
-		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7).Return(nil).Once()
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(nil).Once()
 
 		require.NoError(t, service.reconcile(ctx))
 
@@ -47,7 +49,7 @@ func TestBackstopServiceReconcile(t *testing.T) {
 	t.Run("AlreadyApplied_NothingIssued", func(t *testing.T) {
 		store := newTestStore(t)
 		service, setter := newTestBackstopService(t, store, 7)
-		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7).Return(nil).Once()
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(nil).Once()
 
 		require.NoError(t, service.reconcile(ctx))
 		require.NoError(t, service.reconcile(ctx))
@@ -56,11 +58,11 @@ func TestBackstopServiceReconcile(t *testing.T) {
 	t.Run("BackstopChanged_AppliedAgain", func(t *testing.T) {
 		store := newTestStore(t)
 		first, firstSetter := newTestBackstopService(t, store, 7)
-		firstSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7).Return(nil).Once()
+		firstSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(nil).Once()
 		require.NoError(t, first.reconcile(ctx))
 
 		second, secondSetter := newTestBackstopService(t, store, 10)
-		secondSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 10).Return(nil).Once()
+		secondSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 10, false).Return(nil).Once()
 		require.NoError(t, second.reconcile(ctx))
 
 		state, err := store.GetSignal(ctx, retentiontypes.LogsTTL)
@@ -71,7 +73,7 @@ func TestBackstopServiceReconcile(t *testing.T) {
 	t.Run("ApplyFails_RecordedAsPendingAndRetried", func(t *testing.T) {
 		store := newTestStore(t)
 		service, setter := newTestBackstopService(t, store, 7)
-		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7).Return(errors.New(errors.TypeInternal, errors.CodeInternal, "clickhouse down")).Once()
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(errors.New(errors.TypeInternal, errors.CodeInternal, "clickhouse down")).Once()
 
 		assert.Error(t, service.reconcile(ctx))
 
@@ -79,8 +81,19 @@ func TestBackstopServiceReconcile(t *testing.T) {
 		require.NoError(t, err, "the backstop is recorded before it is applied, so every TTL writer carries it meanwhile")
 		assert.Nil(t, state.AppliedAt)
 
-		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7).Return(nil).Once()
-		require.NoError(t, service.reconcile(ctx))
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, true).Return(nil).Once()
+		require.NoError(t, service.reconcile(ctx), "the retry resumes the interrupted apply instead of starting another")
+	})
+
+	t.Run("ApplyFails_BackstopChanged_NotResumed", func(t *testing.T) {
+		store := newTestStore(t)
+		first, firstSetter := newTestBackstopService(t, store, 7)
+		firstSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(errors.New(errors.TypeInternal, errors.CodeInternal, "clickhouse down")).Once()
+		assert.Error(t, first.reconcile(ctx))
+
+		second, secondSetter := newTestBackstopService(t, store, 10)
+		secondSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 10, false).Return(nil).Once()
+		require.NoError(t, second.reconcile(ctx))
 	})
 
 	t.Run("LeaseHeldByAnotherBackend_NothingIssued", func(t *testing.T) {
@@ -100,7 +113,7 @@ func TestBackstopServiceReconcile(t *testing.T) {
 		service, setter := newTestBackstopService(t, store, 7)
 		_, err := store.AcquireLease(ctx, retentiontypes.LogsTTL, "exporter", time.Now().Add(time.Minute))
 		require.NoError(t, err)
-		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7).Return(nil).Once()
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(nil).Once()
 
 		require.NoError(t, service.reconcile(ctx))
 	})
@@ -120,7 +133,7 @@ func TestBackstopServiceReconcile(t *testing.T) {
 func TestBackstopServiceStopCancelsApply(t *testing.T) {
 	service, setter := newTestBackstopService(t, newTestStore(t), 7)
 	applying := make(chan struct{})
-	setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7).RunAndReturn(func(ctx context.Context, _ string, _ int) error {
+	setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).RunAndReturn(func(ctx context.Context, _ string, _ int, _ bool) error {
 		close(applying)
 		<-ctx.Done()
 		return ctx.Err()
@@ -136,5 +149,45 @@ func TestBackstopServiceStopCancelsApply(t *testing.T) {
 		assert.NoError(t, err)
 	case <-time.After(5 * time.Second):
 		t.Fatal("Start did not return after Stop")
+	}
+}
+
+func TestBackstopServiceDisabledWarnsAboutKeptBackstop(t *testing.T) {
+	testCases := []struct {
+		name     string
+		applied  bool
+		wantWarn bool
+	}{
+		{name: "NeverEnabled_Silent"},
+		{name: "BackstopKept_Warns", applied: true, wantWarn: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctx := context.Background()
+			store := newTestStore(t)
+			if testCase.applied {
+				require.NoError(t, store.SetBackstop(ctx, retentiontypes.LogsTTL, 7))
+				require.NoError(t, store.MarkBackstopApplied(ctx, retentiontypes.LogsTTL, time.Now()))
+			}
+
+			logs := new(bytes.Buffer)
+			settings := instrumentationtest.New().ToProviderSettings()
+			settings.Logger = slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelWarn}))
+			service := NewBackstopService(settings, retentiontest.NewMockBackstopSetter(t), store, archive.Config{Interval: time.Hour})
+
+			started := make(chan error, 1)
+			go func() { started <- service.Start(ctx) }()
+			<-service.Healthy()
+			require.NoError(t, service.Stop(ctx))
+			require.NoError(t, <-started)
+
+			if testCase.wantWarn {
+				assert.Contains(t, logs.String(), "keeps its archive backstop")
+				assert.Contains(t, logs.String(), "backstop_days=7")
+				return
+			}
+			assert.Empty(t, logs.String())
+		})
 	}
 }
