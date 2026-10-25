@@ -1,0 +1,47 @@
+# compiler: R8
+# compiler_version: 9.4.14
+# min_api: 26
+# common_typos_disable
+# {"id":"com.android.tools.r8.mapping","version":"2.2"}
+# pg_map_id: c59d293368f5368f15725247cd1bd25c5bae954114c0766168175964590a08e9
+# pg_map_hash: SHA-256 a42cd8414163e71538e74c1d5db83d1ad9685ffddf5da4c900c9f5ffd88751a9
+androidx.compose.ui.platform.CompositionLocalsKt$$ExternalSyntheticLambda5 -> bi:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    byte CompositionLocalsKt$$ExternalSyntheticLambda5.$r8$classId -> i
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:6:void CompositionLocalsKt$$ExternalSyntheticLambda5.<init>(byte):0:0 -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+    7:7:void CompositionLocalsKt$$ExternalSyntheticLambda5.<init>(java.lang.Object,byte):0:0 -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+    7:9:androidx.compose.ui.text.TextStyle androidx.compose.material3.tokens.TypographyTokensKt.getDefaultTextStyle():272:272 -> a
+    7:9:androidx.compose.ui.text.TextStyle androidx.compose.material3.TextKt.LocalTextStyle$lambda$19():449 -> a
+    7:9:java.lang.Object CompositionLocalsKt$$ExternalSyntheticLambda5.invoke():0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    135:138:java.lang.Object CompositionLocalsKt$$ExternalSyntheticLambda5.invoke():0:0 -> a
+    139:144:kotlin.Unit io.fusescope.sample.MainActivity.onCreate$lambda$2():33:33 -> a
+    139:144:java.lang.Object CompositionLocalsKt$$ExternalSyntheticLambda5.invoke():0 -> a
+    145:146:java.lang.Object CompositionLocalsKt$$ExternalSyntheticLambda5.invoke():0:0 -> a
+    147:154:java.lang.Void io.fusescope.sample.Checkout.pay():103:103 -> a
+    147:154:kotlin.Unit io.fusescope.sample.MainActivity.onCreate$lambda$1():32 -> a
+    147:154:java.lang.Object CompositionLocalsKt$$ExternalSyntheticLambda5.invoke():0 -> a
+    155:156:java.lang.Object CompositionLocalsKt$$ExternalSyntheticLambda5.invoke():0:0 -> a
+    157:163:kotlin.Unit io.fusescope.sample.MainActivity.onCreate$lambda$0():31:31 -> a
+    157:163:java.lang.Object CompositionLocalsKt$$ExternalSyntheticLambda5.invoke():0 -> a
+io.fusescope.sample.Checkout -> R8$$REMOVED$$CLASS$$285:
+# {"id":"sourceFile","fileName":"MainActivity.kt"}
+io.fusescope.sample.MainActivity -> io.fusescope.sample.MainActivity:
+# {"id":"sourceFile","fileName":"MainActivity.kt"}
+    kotlin.Lazy http$delegate -> F
+      # {"id":"com.android.tools.r8.residualsignature","signature":"Lf81;"}
+    java.util.Map actions -> G
+    int $r8$clinit -> H
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:3:void <init>():23:23 -> <init>
+    4:10:void <init>():24:24 -> <init>
+    11:15:kotlin.Lazy kotlin.LazyKt__LazyJVMKt.lazy(kotlin.jvm.functions.Function0):26:26 -> <init>
+    11:15:void <init>():24 -> <init>
+    16:17:void <init>():24:24 -> <init>
+    18:22:void <init>():56:56 -> <init>
+    4:6:void onNewIntent(android.content.Intent):59:59 -> onNewIntent
+    7:28:void onNewIntent(android.content.Intent):60:60 -> onNewIntent
