@@ -18,13 +18,13 @@ def archive_test_suite_setup(create_user_admin):  # pylint: disable=unused-argum
     pass
 
 
-def test_backstop_reaches_existing_parts_and_keeps_them_hot(
+def test_backstop_reaches_existing_parts_and_keeps_the_cold_storage_delay(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     request: pytest.FixtureRequest,
 ) -> None:
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.UTC)
     insert_logs(
         [
             Logs(timestamp=now - datetime.timedelta(days=14), body="old", resources={"service.name": "archive-backstop"}),
@@ -56,11 +56,14 @@ def test_backstop_reaches_existing_parts_and_keeps_them_hot(
 
     resource_engine_full = signoz.telemetrystore.conn.query("SELECT engine_full FROM system.tables WHERE database = 'signoz_logs' AND name = 'logs_v2_resource'").result_rows[0][0]
     assert "toIntervalDay(7)" in resource_engine_full
-    assert "TO VOLUME 'cold'" in engine_full, "the move rule is kept"
+    assert "toIntervalDay(if(_retention_days_cold = 0, 7, _retention_days_cold)) TO VOLUME 'cold'" in engine_full, "the move rule is kept"
 
     time.sleep(10)
-    disks = signoz.telemetrystore.conn.query("SELECT table, name, disk_name FROM system.parts WHERE database = 'signoz_logs' AND table IN ('logs_v2', 'logs_v2_resource') AND active").result_rows
-    assert all(disk_name != "cold" for _, _, disk_name in disks), f"rows written before cold storage was set were moved by MATERIALIZE TTL: {disks}"
+    # Partitions are ('<date>', _retention_days, _retention_days_cold).
+    parts = signoz.telemetrystore.conn.query("SELECT partition, disk_name FROM system.parts WHERE database = 'signoz_logs' AND table = 'logs_v2' AND active").result_rows
+    disks = {partition.split("'")[1]: disk_name for partition, disk_name in parts}
+    assert disks.get(str((now - datetime.timedelta(hours=1)).date())) != "cold", f"a recent row written before cold storage was set was moved by MATERIALIZE TTL: {disks}"
+    assert disks.get(str((now - datetime.timedelta(days=14)).date())) == "cold", f"a row older than the cold-storage delay stayed hot: {disks}"
 
 
 @pytest.mark.parametrize(
