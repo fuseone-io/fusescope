@@ -19,16 +19,17 @@ const (
 )
 
 var (
-	androidKeyColumns   = []cmock.ColumnType{{Name: "key", Type: "UInt64"}, {Name: "type", Type: "String"}, {Name: "normalized_message", Type: "String"}, {Name: "frame_line", Type: "String"}, {Name: "first_seen", Type: "UInt64"}, {Name: "first_fingerprint", Type: "String"}, {Name: "release", Type: "String"}}
+	androidKeyColumns   = []cmock.ColumnType{{Name: "key", Type: "UInt64"}, {Name: "type", Type: "String"}, {Name: "normalized_message", Type: "String"}, {Name: "frame_line", Type: "String"}, {Name: "first_seen", Type: "UInt64"}, {Name: "first_fingerprint", Type: "String"}, {Name: "release", Type: "String"}, {Name: "error_source", Type: "String"}}
 	androidResourceCols = []cmock.ColumnType{{Name: "fingerprint", Type: "String"}, {Name: "release", Type: "String"}, {Name: "environment", Type: "String"}, {Name: "ua", Type: "String"}, {Name: "brands", Type: "String"}, {Name: "platform", Type: "String"}, {Name: "client_key", Type: "UInt64"}, {Name: "first_seen", Type: "Int64"}}
 	androidGroupColumns = []cmock.ColumnType{{Name: "group_index", Type: "UInt16"}, {Name: "events", Type: "UInt64"}, {Name: "sessions", Type: "UInt64"}, {Name: "first", Type: "UInt64"}, {Name: "last", Type: "UInt64"}, {Name: "message", Type: "String"}, {Name: "route", Type: "String"}, {Name: "source", Type: "String"}, {Name: "frame_line", Type: "String"}, {Name: "last_release", Type: "String"}, {Name: "releases", Type: "Array(String)"}, {Name: "sparkline", Type: "Map(UInt64, UInt64)"}}
 )
 
 func expectAndroidErrorKeys(mock cmock.ClickConnMockCommon) {
-	mock.ExpectQuery(`SELECT cityHash64\(type, normalized_message, frame_line, release\) AS key, .* resources_string\['service.version'\] AS release`).WithArgs(anyArgs(10)...).WillReturnRows(cmock.NewRows(androidKeyColumns, [][]any{
-		{uint64(21), "a.a", "Cart is empty", androidKeyFrames, uint64(2_000_000_000), "fp-mapped", "2.1.0"},
-		{uint64(22), "com.example.shop.CartException", "Cart <n> is empty", androidUnmappedFrames, uint64(1_000_000_000), "fp-debug", "2.1.0-debug"},
-		{uint64(23), rumtypes.ExceptionTypeANR, "Application Not Responding", "java.lang.Thread.sleep(Native Method)\ncom.example.shop.CheckoutActivity.onPay(CheckoutActivity.kt:40)", uint64(3_000_000_000), "fp-mapped", "2.1.0"},
+	mock.ExpectQuery(`SELECT cityHash64\(type, normalized_message, frame_line, release, error_source\) AS key, .* resources_string\['service.version'\] AS release, attributes_string\['fusescope.rum.error.source'\] AS error_source`).WithArgs(anyArgs(10)...).WillReturnRows(cmock.NewRows(androidKeyColumns, [][]any{
+		{uint64(21), "a.a", "Cart is empty", androidKeyFrames, uint64(2_000_000_000), "fp-mapped", "2.1.0", rumtypes.ErrorSourceCrash},
+		{uint64(22), "com.example.shop.CartException", "Cart <n> is empty", androidUnmappedFrames, uint64(1_000_000_000), "fp-debug", "2.1.0-debug", rumtypes.ErrorSourceCrash},
+		{uint64(23), rumtypes.ExceptionTypeANR, "Application Not Responding", "java.lang.Thread.sleep(Native Method)\ncom.example.shop.CheckoutActivity.onPay(CheckoutActivity.kt:40)", uint64(3_000_000_000), "fp-mapped", "2.1.0", rumtypes.ErrorSourceANR},
+		{uint64(24), "a.a", "Cart is empty", androidKeyFrames, uint64(4_000_000_000), "fp-mapped", "2.1.0", "manual"},
 	}))
 	mock.ExpectQuery(`FROM .signoz_logs.\..distributed_logs_v2_resource. WHERE .* GROUP BY fingerprint LIMIT \?`).WithArgs(anyArgs(5)...).WillReturnRows(cmock.NewRows(androidResourceCols, [][]any{
 		{"fp-mapped", "2.1.0", "production", "", "", "", uint64(1), int64(1500)}, {"fp-debug", "2.1.0-debug", "production", "", "", "", uint64(2), int64(500)},
@@ -42,9 +43,10 @@ func TestHandlerListErrorGroupsAndroidGroupsRetracedFrames(t *testing.T) {
 	require.NoError(t, err)
 
 	expectAndroidErrorKeys(mock)
-	mock.ExpectQuery(`transform\(cityHash64\(type, normalized_message, frame_line, release\), \?, \?, toUInt16\(0\)\) AS group_index`).WithArgs(anyArgs(15)...).WillReturnRows(cmock.NewRows(androidGroupColumns, [][]any{
+	mock.ExpectQuery(`transform\(cityHash64\(type, normalized_message, frame_line, release, error_source\), \?, \?, toUInt16\(0\)\) AS group_index`).WithArgs(anyArgs(15)...).WillReturnRows(cmock.NewRows(androidGroupColumns, [][]any{
 		{uint16(1), uint64(7), uint64(4), uint64(1_000_000_000), uint64(9_000_000_000), "Cart is empty", "CheckoutScreen", rumtypes.ErrorSourceCrash, androidKeyFrames, "2.1.0", []string{"2.1.0", "2.1.0-debug"}, map[uint64]uint64{}},
 		{uint16(2), uint64(2), uint64(2), uint64(3_000_000_000), uint64(3_000_000_000), "Application Not Responding", "CheckoutScreen", rumtypes.ErrorSourceANR, "java.lang.Thread.sleep(Native Method)", "2.1.0", []string{"2.1.0"}, map[uint64]uint64{}},
+		{uint16(3), uint64(1), uint64(1), uint64(4_000_000_000), uint64(4_000_000_000), "Cart is empty", "CheckoutScreen", "manual", androidKeyFrames, "2.1.0", []string{"2.1.0"}, map[uint64]uint64{}},
 	}))
 	mock.ExpectQuery(`SELECT uniq\(session\) FROM`).WithArgs(anyArgs(18)...).WillReturnRows(cmock.NewRows([]cmock.ColumnType{{Name: "sessions", Type: "UInt64"}}, [][]any{{uint64(40)}}))
 
@@ -53,9 +55,9 @@ func TestHandlerListErrorGroupsAndroidGroupsRetracedFrames(t *testing.T) {
 
 	groups := new(rumtypes.GettableErrorGroups)
 	require.NoError(t, json.Unmarshal(data, groups))
-	require.Len(t, groups.Groups, 2, "the obfuscated crash and the one of a build without minification group together")
+	require.Len(t, groups.Groups, 3, "the obfuscated crash and the one of a build without minification group together, the handled one apart")
 
-	crash, anr := groups.Groups[0], groups.Groups[1]
+	crash, anr, handled := groups.Groups[0], groups.Groups[1], groups.Groups[2]
 	assert.Equal(t, "com.example.shop.CartException", crash.Type)
 	assert.Equal(t, rumtypes.ErrorSourceCrash, crash.Source)
 	require.NotNil(t, crash.TopFrame)
@@ -69,6 +71,10 @@ func TestHandlerListErrorGroupsAndroidGroupsRetracedFrames(t *testing.T) {
 	assert.Equal(t, rumtypes.ErrorSourceANR, anr.Source)
 	require.NotNil(t, anr.TopFrame)
 	assert.Equal(t, "com.example.shop.CheckoutActivity.onPay", anr.TopFrame.OriginalFunction())
+
+	assert.Equal(t, "com.example.shop.CartException", handled.Type)
+	assert.Equal(t, "manual", handled.Source)
+	assert.NotEqual(t, crash.Fingerprint, handled.Fingerprint, "a handled error keeps out of the crash group of the same trace")
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 

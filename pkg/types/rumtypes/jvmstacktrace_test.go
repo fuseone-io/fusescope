@@ -239,24 +239,55 @@ func TestNewJVMErrorFingerprint(t *testing.T) {
 	mapping, err := ParseR8Mapping([]byte(readR8Fixture(t, "mapping.txt")))
 	require.NoError(t, err)
 	retraced, _ := RetraceJVMStackTrace(ParseJVMStackTrace(readR8Fixture(t, "crash.txt"), "", ""), mapping, "/mapping.txt")
-	base := NewJVMErrorFingerprint(retraced)
+	base := NewJVMErrorFingerprint(retraced, ErrorSourceCrash)
 
 	testCases := []struct {
 		name       string
 		stacktrace string
+		source     string
 		same       bool
 	}{
-		{name: "OtherLinesAndMessage_Same", stacktrace: "com.example.shop.CartException: Cart 42 is empty\n\tat com.example.shop.Item.price(Item.kt:99)\n\tat com.example.shop.Cart.subtotal(Cart.kt:1)\n\tat android.os.Handler.run(Handler.java:1)\n\tat com.example.shop.Cart.checkout(Cart.kt:7)\n", same: true},
-		{name: "OtherInAppFrame_Differs", stacktrace: "com.example.shop.CartException: Cart is empty\n\tat com.example.shop.Item.price(Item.kt:15)\n\tat com.example.shop.Cart.add(Cart.kt:44)\n\tat com.example.shop.Cart.checkout(Cart.kt:51)\n", same: false},
-		{name: "OtherType_Differs", stacktrace: "java.lang.IllegalStateException: Cart is empty\n\tat com.example.shop.Item.price(Item.kt:15)\n\tat com.example.shop.Cart.subtotal(Cart.kt:44)\n\tat com.example.shop.Cart.checkout(Cart.kt:51)\n", same: false},
+		{name: "OtherLinesAndMessage_Same", stacktrace: "com.example.shop.CartException: Cart 42 is empty\n\tat com.example.shop.Item.price(Item.kt:99)\n\tat com.example.shop.Cart.subtotal(Cart.kt:1)\n\tat android.os.Handler.run(Handler.java:1)\n\tat com.example.shop.Cart.checkout(Cart.kt:7)\n", source: ErrorSourceCrash, same: true},
+		{name: "OtherInAppFrame_Differs", stacktrace: "com.example.shop.CartException: Cart is empty\n\tat com.example.shop.Item.price(Item.kt:15)\n\tat com.example.shop.Cart.add(Cart.kt:44)\n\tat com.example.shop.Cart.checkout(Cart.kt:51)\n", source: ErrorSourceCrash, same: false},
+		{name: "OtherType_Differs", stacktrace: "java.lang.IllegalStateException: Cart is empty\n\tat com.example.shop.Item.price(Item.kt:15)\n\tat com.example.shop.Cart.subtotal(Cart.kt:44)\n\tat com.example.shop.Cart.checkout(Cart.kt:51)\n", source: ErrorSourceCrash, same: false},
+		{name: "HandledSameTrace_Differs", stacktrace: "com.example.shop.CartException: Cart is empty\n\tat com.example.shop.Item.price(Item.kt:15)\n\tat com.example.shop.Cart.subtotal(Cart.kt:44)\n\tat com.example.shop.Cart.checkout(Cart.kt:51)\n", source: "manual", same: false},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fingerprint := NewJVMErrorFingerprint(ParseJVMStackTrace(testCase.stacktrace, "", ""))
+			fingerprint := NewJVMErrorFingerprint(ParseJVMStackTrace(testCase.stacktrace, "", ""), testCase.source)
 			assert.True(t, IsErrorFingerprint(fingerprint))
 			assert.Equal(t, testCase.same, fingerprint == base)
 		})
 	}
+}
+
+func TestNewJVMErrorFingerprintSample(t *testing.T) {
+	mapping, err := ParseR8Mapping([]byte(readR8Fixture(t, "sample/mapping.txt")))
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name     string
+		fixture  string
+		source   string
+		expected []string
+	}{
+		{name: "Crash", fixture: "sample/crash.txt", source: ErrorSourceCrash, expected: []string{"io.fusescope.sample.Checkout.pay", "io.fusescope.sample.MainActivity.onCreate$lambda$1", "io.fusescope.sample.MainActivity.onNewIntent"}},
+		{name: "Handled", fixture: "sample/handled.txt", source: "manual", expected: []string{"io.fusescope.sample.MainActivity.onCreate$lambda$0", "io.fusescope.sample.MainActivity.onNewIntent"}},
+		{name: "ANR", fixture: "sample/anr.txt", source: ErrorSourceANR, expected: []string{"io.fusescope.sample.MainActivity.onCreate$lambda$2", "io.fusescope.sample.MainActivity.onNewIntent"}},
+	}
+	fingerprints := map[string]string{}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			retraced, _ := RetraceJVMStackTrace(ParseJVMStackTrace(readR8Fixture(t, testCase.fixture), "", ""), mapping, "/mapping.txt")
+			functions := []string{}
+			for _, frame := range JVMTopInAppFrames(retraced, 3) {
+				functions = append(functions, frame.OriginalFunction())
+			}
+			assert.Equal(t, testCase.expected, functions, "synthesized and library frames stay out of the fingerprint")
+			fingerprints[NewJVMErrorFingerprint(retraced, testCase.source)] = testCase.name
+		})
+	}
+	assert.Len(t, fingerprints, len(testCases), "crash, handled error and ANR group apart")
 }
 
 func TestJVMTopInAppFrames(t *testing.T) {

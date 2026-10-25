@@ -25,12 +25,13 @@ var (
 	errorTypeExpr   = attribute(rumtypes.AttributeExceptionType)
 	errorMessageRaw = "if(" + attribute(rumtypes.AttributeExceptionMessage) + " = '', body, " + attribute(rumtypes.AttributeExceptionMessage) + ")"
 	errorStackExpr  = attribute(rumtypes.AttributeExceptionStack)
-	// A JVM key keeps the release, since a mapping retraces its frames, and
-	// the frames below the top, since the top in-app ones group it.
+	// A JVM key keeps the release, since a mapping retraces its frames, the
+	// frames below the top, since the top in-app ones group it, and the
+	// source, which groups it too.
 	errorKeyColumns    = []string{errorTypeExpr + " AS type", errorMessageExpr(errorMessageRaw) + " AS normalized_message", stackFrameLineExpr(errorStackExpr) + " AS frame_line"}
-	jvmErrorKeyColumns = []string{errorTypeExpr + " AS type", errorMessageExpr(errorMessageRaw) + " AS normalized_message", jvmStackKeyExpr(errorStackExpr) + " AS frame_line", "resources_string[" + literal(rumtypes.AttributeServiceVersion) + "] AS release"}
+	jvmErrorKeyColumns = []string{errorTypeExpr + " AS type", errorMessageExpr(errorMessageRaw) + " AS normalized_message", jvmStackKeyExpr(errorStackExpr) + " AS frame_line", "resources_string[" + literal(rumtypes.AttributeServiceVersion) + "] AS release", attribute(rumtypes.AttributeErrorSource) + " AS error_source"}
 	errorKeyHash       = "cityHash64(type, normalized_message, frame_line)"
-	jvmErrorKeyHash    = "cityHash64(type, normalized_message, frame_line, release)"
+	jvmErrorKeyHash    = "cityHash64(type, normalized_message, frame_line, release, error_source)"
 )
 
 type errorKeyRow struct {
@@ -41,6 +42,7 @@ type errorKeyRow struct {
 	firstSeen         uint64
 	firstFingerprint  string
 	release           string
+	source            string
 }
 
 type errorGroupRow struct {
@@ -85,7 +87,7 @@ func (reader *telemetryReader) ErrorKeys(ctx context.Context, scope telemetrySco
 		row := &errorKeyRow{}
 		destinations := []any{&row.key, &row.exceptionType, &row.normalizedMessage, &row.frameLine, &row.firstSeen, &row.firstFingerprint}
 		if isJVM(scope) {
-			destinations = append(destinations, &row.release)
+			destinations = append(destinations, &row.release, &row.source)
 		}
 		if err := scanner.Scan(destinations...); err != nil {
 			return err
@@ -145,7 +147,7 @@ func newErrorKeysQuery(scope telemetryScope) *sqlbuilder.SelectBuilder {
 
 	columns, groupBy := []string{errorKeyExpr(scope) + " AS key", "type", "normalized_message", "frame_line", "min(timestamp) AS first_seen", "argMin(resource_fingerprint, timestamp)"}, []string{"type", "normalized_message", "frame_line"}
 	if isJVM(scope) {
-		columns, groupBy = append(columns, "release"), append(groupBy, "release")
+		columns, groupBy = append(columns, "release", "error_source"), append(groupBy, "release", "error_source")
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
