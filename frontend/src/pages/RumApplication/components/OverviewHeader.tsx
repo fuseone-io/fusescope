@@ -8,11 +8,13 @@ import { ApmWindow } from 'lib/apm/window';
 import { logsExplorerUrl, tracesExplorerUrl } from 'lib/rum/links';
 import { PLATFORM_LABELS } from 'lib/rum/platform';
 import { SdkSupport } from 'lib/rum/types';
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import {
 	AppWindow,
 	DraftingCompass,
 	ScrollText,
 	Settings2,
+	Smartphone,
 } from 'lucide-react';
 
 import CreateAlertMenu from './CreateAlertMenu';
@@ -38,7 +40,13 @@ function OverviewHeader({
 }: OverviewHeaderProps): JSX.Element {
 	return (
 		<CompactPageHeader
-			icon={<AppWindow />}
+			icon={
+				application?.platform === RumtypesPlatformDTO.android ? (
+					<Smartphone />
+				) : (
+					<AppWindow />
+				)
+			}
 			title={application?.name ?? 'Application'}
 			titleMono
 			testId="rum-overview-header"

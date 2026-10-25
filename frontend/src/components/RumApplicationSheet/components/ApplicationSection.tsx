@@ -10,7 +10,8 @@ import Field from './Field';
 interface ApplicationSectionProps {
 	values: ApplicationFormValues;
 	onChange: (patch: Partial<ApplicationFormValues>) => void;
-	platform: RumtypesPlatformDTO;
+	/** The platform is chosen once, at creation. */
+	creating: boolean;
 	errors: Partial<Record<'name' | 'environment', string>>;
 	readOnly: boolean;
 }
@@ -19,18 +20,23 @@ const INPUT =
 	'tw:h-9 tw:bg-surface-raised tw:font-mono tw:text-xs tw:dark:bg-surface-raised';
 const ENVIRONMENTS = ['production', 'staging', 'development'];
 const PLATFORMS = [
-	{ value: RumtypesPlatformDTO.web, note: 'Browser SDK' },
-	{ value: RumtypesPlatformDTO.android, note: 'Coming soon' },
-	{ value: RumtypesPlatformDTO.ios, note: 'Coming soon' },
+	{ value: RumtypesPlatformDTO.web, note: 'Browser SDK', available: true },
+	{
+		value: RumtypesPlatformDTO.android,
+		note: 'Android SDK · Java and Kotlin',
+		available: true,
+	},
+	{ value: RumtypesPlatformDTO.ios, note: 'Coming soon', available: false },
 ];
 
 function ApplicationSection({
 	values,
 	onChange,
-	platform,
+	creating,
 	errors,
 	readOnly,
 }: ApplicationSectionProps): JSX.Element {
+	const { platform } = values;
 	return (
 		<section aria-label="Application" className="tw:flex tw:flex-col tw:gap-4">
 			<div className="tw:grid tw:grid-cols-[repeat(auto-fit,minmax(260px,1fr))] tw:gap-4">
@@ -91,7 +97,8 @@ function ApplicationSection({
 				<div className="tw:grid tw:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] tw:gap-2">
 					{PLATFORMS.map((option) => {
 						const selected = option.value === platform;
-						const available = option.value === RumtypesPlatformDTO.web;
+						const { available } = option;
+						const selectable = available && creating && !readOnly;
 						return (
 							<label
 								key={option.value}
@@ -100,19 +107,24 @@ function ApplicationSection({
 									selected
 										? 'tw:border-primary tw:bg-primary-soft/40'
 										: 'tw:border-border tw:text-muted-foreground',
-									!available && 'tw:cursor-not-allowed',
+									selectable ? 'tw:cursor-pointer' : 'tw:cursor-not-allowed',
 								)}
 							>
 								<input
 									type="radio"
 									name="rum-app-platform"
 									aria-label={PLATFORM_LABELS[option.value]}
+									data-testid={`rum-app-platform-${option.value}`}
 									checked={selected}
-									disabled={!available || readOnly}
-									readOnly
+									disabled={!selectable && !selected}
+									onChange={(): void => {
+										if (selectable) {
+											onChange({ platform: option.value });
+										}
+									}}
 									className="tw:accent-primary"
 								/>
-								{available ? (
+								{option.value === RumtypesPlatformDTO.web ? (
 									<AppWindow aria-hidden="true" className="tw:size-4" />
 								) : (
 									<Smartphone aria-hidden="true" className="tw:size-4" />

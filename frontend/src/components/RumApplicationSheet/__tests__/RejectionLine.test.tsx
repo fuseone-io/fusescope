@@ -30,6 +30,16 @@ describe('RejectionLine', () => {
 			'1 request with an unknown key from https://shop.example.com.',
 		],
 		[
+			'a refused package names it',
+			rejection(RumtypesRejectionReasonDTO.package_not_allowed, 2, 'com.evil.app'),
+			'2 requests rejected: package com.evil.app is not allowed.',
+		],
+		[
+			'a missing package says so',
+			rejection(RumtypesRejectionReasonDTO.package_not_allowed, 1, ''),
+			'1 request rejected: no app.package.name in the resource.',
+		],
+		[
 			'other reasons keep their short label',
 			rejection(RumtypesRejectionReasonDTO.too_large, 2, ''),
 			'2 requests rejected: payload too large.',

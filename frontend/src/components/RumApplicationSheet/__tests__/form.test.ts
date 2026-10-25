@@ -8,6 +8,7 @@ import {
 	DEFAULT_FORM_VALUES,
 	formFromApplication,
 	invalidOrigin,
+	invalidPackageName,
 	invalidUrlPrefix,
 	toPostableApplication,
 	toUpdatableApplication,
@@ -69,6 +70,7 @@ describe('application form payloads', () => {
 			platform: RumtypesPlatformDTO.web,
 			environment: 'production',
 			allowedOrigins: ['https://shop.example.com'],
+			allowedPackageNames: [],
 			tracePropagationUrls: ['https://api.shop.example.com'],
 			sampleRate: 0.25,
 			piiPolicy: {
@@ -91,8 +93,10 @@ describe('application form payloads', () => {
 	it('reads an application back into the form, nulls as empty lists', () => {
 		expect(formFromApplication(APPLICATION)).toStrictEqual({
 			name: 'checkout',
+			platform: RumtypesPlatformDTO.web,
 			environment: 'staging',
 			allowedOrigins: [],
+			allowedPackageNames: [],
 			tracePropagationUrls: ['https://api.example.com'],
 			samplePercent: 50,
 			dropQuery: false,
@@ -101,6 +105,30 @@ describe('application form payloads', () => {
 			geoLookup: false,
 			requireConsent: false,
 			hashUserId: true,
+		});
+	});
+
+	it('creates an android application with package names and no origins', () => {
+		const postable = toPostableApplication({
+			...VALUES,
+			platform: RumtypesPlatformDTO.android,
+			allowedPackageNames: ['com.example.shop'],
+		});
+		expect(postable.platform).toBe(RumtypesPlatformDTO.android);
+		expect(postable.allowedPackageNames).toStrictEqual(['com.example.shop']);
+		expect(postable.allowedOrigins).toStrictEqual([]);
+	});
+
+	it('reads an android application back with its package names', () => {
+		expect(
+			formFromApplication({
+				...APPLICATION,
+				platform: RumtypesPlatformDTO.android,
+				allowedPackageNames: ['com.example.*'],
+			}),
+		).toMatchObject({
+			platform: RumtypesPlatformDTO.android,
+			allowedPackageNames: ['com.example.*'],
 		});
 	});
 
@@ -137,5 +165,20 @@ describe('invalidUrlPrefix', () => {
 		['api.example.com', true],
 	])('%s → %s', (prefix, invalid) => {
 		expect(Boolean(invalidUrlPrefix(prefix))).toBe(invalid);
+	});
+});
+
+describe('invalidPackageName', () => {
+	it.each([
+		['com.example.shop', false],
+		['com.example.*', false],
+		['*', false],
+		['com.example_app.v2', false],
+		['shop', true],
+		['com.1shop', true],
+		['com.*.shop', true],
+		['https://shop.example.com', true],
+	])('%s invalid: %s', (packageName, invalid) => {
+		expect(Boolean(invalidPackageName(packageName))).toBe(invalid);
 	});
 });

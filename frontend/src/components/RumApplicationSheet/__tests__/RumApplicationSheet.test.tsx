@@ -57,7 +57,7 @@ const STATUS = {
 
 const ok = (data: unknown) => ({ status: 'success', data });
 
-function mockServer(created: { body?: unknown }): void {
+function mockServer(created: { body?: unknown }, app: object = APP): void {
 	server.use(
 		rest.post(APPS_URL, async (req, res, ctx) => {
 			created.body = await req.json();
@@ -65,13 +65,13 @@ function mockServer(created: { body?: unknown }): void {
 				ctx.status(201),
 				ctx.json(
 					ok({
-						...APP,
+						...app,
 						key: { ...KEY, key: 'rum_pub_h3vq7zk2mx5cn4lw6rtp2jdy5beart4w' },
 					}),
 				),
 			);
 		}),
-		rest.get(`${APPS_URL}/app-1`, (_req, res, ctx) => res(ctx.json(ok(APP)))),
+		rest.get(`${APPS_URL}/app-1`, (_req, res, ctx) => res(ctx.json(ok(app)))),
 		rest.get(`${APPS_URL}/app-1/keys`, (_req, res, ctx) =>
 			res(ctx.json(ok([KEY]))),
 		),
@@ -115,6 +115,56 @@ describe('RumApplicationSheet', () => {
 		expect(screen.getByTestId('rum-setup-status')).toHaveAttribute(
 			'data-state',
 			'waiting',
+		);
+	});
+
+	it('creates an Android application with package names, then shows the Gradle setup', async () => {
+		const created: { body?: unknown } = {};
+		mockServer(created, {
+			...APP,
+			name: 'shop-android',
+			platform: 'android',
+			allowedOrigins: [],
+			allowedPackageNames: ['com.example.shop'],
+		});
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<RumApplicationSheet target={{ mode: 'new' }} onClose={jest.fn()} />);
+
+		await user.click(screen.getByTestId('rum-app-platform-android'));
+		expect(screen.queryByTestId('rum-app-origins-input')).not.toBeInTheDocument();
+		await user.type(screen.getByTestId('rum-app-name'), 'shop-android');
+		await user.type(
+			screen.getByTestId('rum-app-packages-input'),
+			'com.example.shop{Enter}',
+		);
+		await user.click(screen.getByTestId('rum-app-submit'));
+
+		await expect(
+			screen.findByTestId('rum-install-gradle'),
+		).resolves.toHaveTextContent('implementation("io.fusescope:android:');
+		expect(created.body).toMatchObject({
+			name: 'shop-android',
+			platform: 'android',
+			allowedOrigins: [],
+			allowedPackageNames: ['com.example.shop'],
+		});
+		expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
+			'key = "rum_pub_h3vq7zk2mx5cn4lw6rtp2jdy5beart4w"',
+		);
+		expect(screen.getByTestId('rum-install-mapping')).toHaveTextContent(
+			'applicationId.set("app-1")',
+		);
+	});
+
+	it('refuses a package name that is not an applicationId', async () => {
+		mockServer({});
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<RumApplicationSheet target={{ mode: 'new' }} onClose={jest.fn()} />);
+
+		await user.click(screen.getByTestId('rum-app-platform-android'));
+		await user.type(screen.getByTestId('rum-app-packages-input'), 'shop{Enter}');
+		expect(screen.getByRole('alert')).toHaveTextContent(
+			'Use the applicationId, e.g. com.example.shop or com.example.*',
 		);
 	});
 

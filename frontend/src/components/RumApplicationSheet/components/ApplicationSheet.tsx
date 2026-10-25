@@ -58,6 +58,7 @@ function ApplicationSheet({
 						isNew,
 						created: Boolean(sheet.applicationId),
 						rotating: isRotating(sheet.keys),
+						platform: application?.platform,
 					})}
 					value={sheet.tab}
 					onChange={sheet.setTab}

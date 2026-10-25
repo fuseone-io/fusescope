@@ -3,6 +3,7 @@ import type {
 	RumtypesApplicationDTO,
 	RumtypesGettableApplicationStatusDTO,
 } from 'api/generated/services/fuseScope.schemas';
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 import SoonBadge from 'components/Rum/SoonBadge';
 import { Button } from 'components/ui/button';
@@ -15,6 +16,7 @@ import {
 	buildNpmSnippet,
 } from '../utils/snippet';
 import { sdkEndpoint } from '../utils/endpoint';
+import AndroidInstall from './AndroidInstall';
 import KeyOnceBanner from './KeyOnceBanner';
 import SectionHeading from './SectionHeading';
 import SetupStatus from './SetupStatus';
@@ -88,58 +90,66 @@ function InstallTab({
 						applicationName={application.name}
 					/>
 				)}
-				<section
-					aria-labelledby="rum-install"
-					className="tw:flex tw:flex-col tw:gap-3"
-				>
-					<div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
-						<SectionHeading id="rum-install">Install the SDK</SectionHeading>
-						<span className="tw:font-mono tw:text-xs tw:text-subtle-foreground">
-							{SDK_PACKAGE}
-						</span>
-					</div>
-					<SegmentedControl<Method>
-						label="Install method"
-						options={METHODS}
-						value="npm"
-						onChange={(): void => undefined}
-						className="tw:self-start"
+				{application.platform === RumtypesPlatformDTO.android ? (
+					<AndroidInstall
+						application={application}
+						publicKey={publicKey}
+						keyKnown={Boolean(revealed)}
 					/>
-					<SnippetBlock
-						code={`$ ${NPM_INSTALL_COMMAND}`}
-						label="Copy install command"
-						testId="rum-install-command"
-					/>
-					<span className="tw:text-xs tw:text-subtle-foreground">
-						Then, as early as possible in your app entry point:
-					</span>
-					<SnippetBlock
-						code={snippet}
-						label="Copy snippet"
-						testId="rum-install-snippet"
-					/>
-					{!revealed && (
+				) : (
+					<section
+						aria-labelledby="rum-install"
+						className="tw:flex tw:flex-col tw:gap-3"
+					>
+						<div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
+							<SectionHeading id="rum-install">Install the SDK</SectionHeading>
+							<span className="tw:font-mono tw:text-xs tw:text-subtle-foreground">
+								{SDK_PACKAGE}
+							</span>
+						</div>
+						<SegmentedControl<Method>
+							label="Install method"
+							options={METHODS}
+							value="npm"
+							onChange={(): void => undefined}
+							className="tw:self-start"
+						/>
+						<SnippetBlock
+							code={`$ ${NPM_INSTALL_COMMAND}`}
+							label="Copy install command"
+							testId="rum-install-command"
+						/>
 						<span className="tw:text-xs tw:text-subtle-foreground">
-							Keys are stored hashed: replace{' '}
-							<span className="tw:font-mono">{publicKey}</span> with your key, or
-							rotate it to get a new one.
+							Then, as early as possible in your app entry point:
 						</span>
-					)}
-					<span className="tw:text-xs tw:text-subtle-foreground">
-						Already using the OpenTelemetry web SDK? Export OTLP to{' '}
-						<span className="tw:font-mono">/rum/v1/traces</span> and{' '}
-						<span className="tw:font-mono">/rum/v1/logs</span> with header{' '}
-						<span className="tw:font-mono">FuseScope-RUM-Key</span>.{' '}
-						<a
-							href={SDK_ATTRIBUTES_URL}
-							target="_blank"
-							rel="noreferrer"
-							className="tw:text-primary! tw:underline! tw:underline-offset-2"
-						>
-							Attributes
-						</a>
-					</span>
-				</section>
+						<SnippetBlock
+							code={snippet}
+							label="Copy snippet"
+							testId="rum-install-snippet"
+						/>
+						{!revealed && (
+							<span className="tw:text-xs tw:text-subtle-foreground">
+								Keys are stored hashed: replace{' '}
+								<span className="tw:font-mono">{publicKey}</span> with your key, or
+								rotate it to get a new one.
+							</span>
+						)}
+						<span className="tw:text-xs tw:text-subtle-foreground">
+							Already using the OpenTelemetry web SDK? Export OTLP to{' '}
+							<span className="tw:font-mono">/rum/v1/traces</span> and{' '}
+							<span className="tw:font-mono">/rum/v1/logs</span> with header{' '}
+							<span className="tw:font-mono">FuseScope-RUM-Key</span>.{' '}
+							<a
+								href={SDK_ATTRIBUTES_URL}
+								target="_blank"
+								rel="noreferrer"
+								className="tw:text-primary! tw:underline! tw:underline-offset-2"
+							>
+								Attributes
+							</a>
+						</span>
+					</section>
+				)}
 				<SetupStatus
 					applicationId={application.id}
 					applicationName={application.name}
