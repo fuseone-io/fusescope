@@ -14,6 +14,7 @@ const REASONS: Record<RumtypesRejectionReasonDTO, string> = {
 		'the key is not valid for this application',
 	[RumtypesRejectionReasonDTO.unknown_key]: 'unknown key',
 	[RumtypesRejectionReasonDTO.origin_not_allowed]: 'origin not allowed',
+	[RumtypesRejectionReasonDTO.package_not_allowed]: 'package not allowed',
 	[RumtypesRejectionReasonDTO.rate_limited]: 'rate limited',
 	[RumtypesRejectionReasonDTO.too_large]: 'payload too large',
 	[RumtypesRejectionReasonDTO.invalid_payload]: 'not valid OTLP',

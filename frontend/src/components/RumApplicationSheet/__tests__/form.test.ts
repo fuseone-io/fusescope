@@ -32,6 +32,7 @@ const APPLICATION: RumtypesApplicationDTO = {
 	platform: RumtypesPlatformDTO.web,
 	environment: 'staging',
 	allowedOrigins: null,
+	allowedPackageNames: null,
 	tracePropagationUrls: ['https://api.example.com'],
 	sampleRate: 0.5,
 	createdBy: 'admin@fusescope.local',

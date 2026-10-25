@@ -37,6 +37,7 @@ const event = (
 	source: 'unhandledrejection',
 	stacktrace: '',
 	frames: [],
+	causes: [],
 	symbolicated: false,
 	missingSourceMap: null,
 	...patch,

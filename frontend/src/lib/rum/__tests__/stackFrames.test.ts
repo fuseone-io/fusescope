@@ -39,6 +39,7 @@ const symbolicated = (
 		inApp,
 		sourceMap: '/assets/app.4f9c2a.js.map',
 		context: { startLine: line - 1, lines: ['a', 'b', 'c'] },
+		inlined: false,
 	},
 });
 

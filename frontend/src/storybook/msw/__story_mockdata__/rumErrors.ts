@@ -15,6 +15,7 @@ import type {
 	RumtypesTimelineEventDTO,
 } from 'api/generated/services/fuseScope.schemas';
 import {
+	RumtypesArtifactKindDTO,
 	RumtypesLoadingTypeDTO,
 	RumtypesSourceMapRetentionDTO,
 	RumtypesTimelineEventKindDTO,
@@ -244,6 +245,7 @@ const symbolicated = (
 			inApp: !file.startsWith('node_modules/'),
 			sourceMap: `${minified.file.replace(ORIGIN, '')}.map`,
 			context: context ? { startLine: line - 3, lines: context } : null,
+			inlined: false,
 		},
 	};
 
@@ -359,10 +361,14 @@ function events(mapped: boolean, release: string): RumtypesErrorEventDTO[] {
 				source: 'unhandledrejection',
 				stacktrace: stacktrace(httpFrames(false)),
 				frames,
+				causes: [],
 				symbolicated: mapped,
 				missingSourceMap: mapped
 					? null
-					: { release: index === 0 ? release : eventRelease },
+					: {
+							release: index === 0 ? release : eventRelease,
+							kind: RumtypesArtifactKindDTO['source-map'],
+						},
 			};
 		},
 	);
@@ -493,6 +499,7 @@ export function rumSourceMapFiles(release: string): RumtypesSourceMapFileDTO[] {
 		RELEASES.find((candidate) => candidate[0] === release) ?? RELEASES[0];
 	return FILES.map(([name, megabytes], index) => ({
 		id: `${release}-file-${index + 1}`,
+		kind: RumtypesArtifactKindDTO['source-map'],
 		path: `/assets/${name}.js.map`,
 		generatedPath: `/assets/${name}.js`,
 		debugId: '',
