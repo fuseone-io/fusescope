@@ -18,6 +18,7 @@ type InstalledIntegrationsRepo interface {
 		ctx context.Context,
 		orgId string,
 		integrationType string,
+		version string,
 		config cloudintegrationtypes.InstalledIntegrationConfig,
 	) (*cloudintegrationtypes.InstalledIntegration, *model.ApiError)
 
@@ -40,6 +41,10 @@ type AvailableIntegrationsRepo interface {
 	get(
 		ctx context.Context, integrationTypes []string,
 	) (map[string]IntegrationDetails, *model.ApiError)
+
+	// getVersion returns one version of an integration, which installations
+	// pinned to it are served.
+	getVersion(ctx context.Context, integrationType string, version string) (*IntegrationDetails, bool)
 
 	// AvailableIntegrationsRepo implementations are expected to cache
 	// details of installed integrations for quick retrieval.

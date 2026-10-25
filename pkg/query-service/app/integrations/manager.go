@@ -3,7 +3,7 @@ package integrations
 import (
 	"context"
 	"fmt"
-	"slices"
+	"log/slog"
 	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
@@ -109,25 +109,35 @@ type IntegrationDetails struct {
 	Assets        IntegrationAssets           `json:"assets"`
 
 	ConnectionTests *IntegrationConnectionTests `json:"connection_tests"`
+
+	// version is the catalog package version these details were rendered from.
+	version string
 }
 
+// Version is the version an org is served: the installation's pin, or the
+// latest for an integration the org has not installed.
 type IntegrationsListItem struct {
 	IntegrationSummary
-	IsInstalled bool `json:"is_installed"`
+	IsInstalled   bool   `json:"is_installed"`
+	Version       string `json:"version"`
+	LatestVersion string `json:"latest_version"`
 }
 
 type Integration struct {
 	IntegrationDetails
-	Installation *cloudintegrationtypes.InstalledIntegration `json:"installation"`
+	Version       string                                      `json:"version"`
+	LatestVersion string                                      `json:"latest_version"`
+	Installation  *cloudintegrationtypes.InstalledIntegration `json:"installation"`
 }
 
 type Manager struct {
 	availableIntegrationsRepo AvailableIntegrationsRepo
 	installedIntegrationsRepo InstalledIntegrationsRepo
 	dashboardModule           dashboard.Module
+	logger                    *slog.Logger
 }
 
-func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module, availableIntegrations AvailableIntegrationsRepo) (*Manager, error) {
+func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module, availableIntegrations AvailableIntegrationsRepo, logger *slog.Logger) (*Manager, error) {
 	iiRepo, err := NewInstalledIntegrationsSqliteRepo(store)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -139,6 +149,7 @@ func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module, avail
 		availableIntegrationsRepo: availableIntegrations,
 		installedIntegrationsRepo: iiRepo,
 		dashboardModule:           dashboardModule,
+		logger:                    logger,
 	}, nil
 }
 
@@ -165,17 +176,21 @@ func (m *Manager) ListIntegrations(
 			apiErr, "could not fetch installed integrations",
 		)
 	}
-	installedTypes := []string{}
+	pins := map[string]string{}
 	for _, ii := range installed {
-		installedTypes = append(installedTypes, ii.Type)
+		pins[ii.Type] = ii.Version
 	}
 
 	result := []IntegrationsListItem{}
 	for _, ai := range available {
-		result = append(result, IntegrationsListItem{
-			IntegrationSummary: ai.IntegrationSummary,
-			IsInstalled:        slices.Contains(installedTypes, ai.Id),
-		})
+		item := IntegrationsListItem{IntegrationSummary: ai.IntegrationSummary, Version: ai.version, LatestVersion: ai.version}
+		if pin, isInstalled := pins[ai.Id]; isInstalled {
+			served := m.servedDetails(ctx, ai, pin)
+			item.IntegrationSummary = served.IntegrationSummary
+			item.IsInstalled = true
+			item.Version = served.version
+		}
+		result = append(result, item)
 	}
 
 	if filter != nil {
@@ -212,8 +227,14 @@ func (m *Manager) GetIntegration(
 		return nil, apiErr
 	}
 
+	served := *integrationDetails
+	if installation != nil {
+		served = m.servedDetails(ctx, *integrationDetails, installation.Version)
+	}
 	return &Integration{
-		IntegrationDetails: *integrationDetails,
+		IntegrationDetails: served,
+		Version:            served.version,
+		LatestVersion:      integrationDetails.version,
 		Installation:       installation,
 	}, nil
 }
@@ -223,13 +244,11 @@ func (m *Manager) GetIntegrationConnectionTests(
 	orgId string,
 	integrationId string,
 ) (*IntegrationConnectionTests, *model.ApiError) {
-	integrationDetails, apiErr := m.getIntegrationDetails(
-		ctx, integrationId,
-	)
+	integration, apiErr := m.GetIntegration(ctx, orgId, integrationId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
-	return integrationDetails.ConnectionTests, nil
+	return integration.ConnectionTests, nil
 }
 
 func (m *Manager) InstallIntegration(
@@ -250,21 +269,26 @@ func (m *Manager) InstallIntegration(
 		return nil, model.BadRequest(fmt.Errorf("invalid org id: %w", err))
 	}
 
+	// A new installation pins the latest version; reinstalling keeps the pin.
+	var served IntegrationDetails
 	err = m.installedIntegrationsRepo.runInTx(ctx, func(ctx context.Context) error {
-		_, apiErr = m.installedIntegrationsRepo.upsert(ctx, orgId, integrationId, config)
+		installation, apiErr := m.installedIntegrationsRepo.upsert(ctx, orgId, integrationId, integrationDetails.version, config)
 		if apiErr != nil {
 			return model.WrapApiError(apiErr, "could not insert installed integration")
 		}
 
-		return m.provisionDashboards(ctx, orgUUID, createdBy, creator, integrationId, integrationDetails)
+		served = m.servedDetails(ctx, *integrationDetails, installation.Version)
+		return m.provisionDashboards(ctx, orgUUID, createdBy, creator, integrationId, &served)
 	})
 	if err != nil {
 		return nil, model.WrapApiError(model.InternalError(err), "could not install integration")
 	}
 
 	return &IntegrationsListItem{
-		IntegrationSummary: integrationDetails.IntegrationSummary,
+		IntegrationSummary: served.IntegrationSummary,
 		IsInstalled:        true,
+		Version:            served.version,
+		LatestVersion:      integrationDetails.version,
 	}, nil
 }
 
@@ -408,12 +432,28 @@ func (m *Manager) getInstalledIntegrations(
 			))
 		}
 
+		served := m.servedDetails(ctx, iDetails, ii.Version)
 		result[ii.Type] = Integration{
 			Installation:       &ii,
-			IntegrationDetails: iDetails,
+			IntegrationDetails: served,
+			Version:            served.version,
+			LatestVersion:      iDetails.version,
 		}
 	}
 	return result, nil
+}
+
+// servedDetails returns the details pinned by an installation. A pin the
+// catalog no longer holds is served the latest version.
+func (m *Manager) servedDetails(ctx context.Context, latest IntegrationDetails, pin string) IntegrationDetails {
+	if pin == "" || pin == latest.version {
+		return latest
+	}
+	if pinned, ok := m.availableIntegrationsRepo.getVersion(ctx, latest.Id, pin); ok {
+		return *pinned
+	}
+	m.logger.WarnContext(ctx, "pinned integration version is not in the catalog, serving the latest", slog.String("integration", latest.Id), slog.String("pinned_version", pin), slog.String("latest_version", latest.version))
+	return latest
 }
 
 func (m *Manager) provisionDashboards(

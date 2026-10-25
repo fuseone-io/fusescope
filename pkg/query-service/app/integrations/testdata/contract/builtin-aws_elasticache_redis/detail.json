@@ -1924,5 +1924,7 @@
       "redis_memory_fragmentation_ratio"
     ]
   },
+  "version": "1.0.0",
+  "latest_version": "1.0.0",
   "installation": null
 }

@@ -76,6 +76,7 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 	ctx context.Context,
 	orgId string,
 	integrationType string,
+	version string,
 	config cloudintegrationtypes.InstalledIntegrationConfig,
 ) (*cloudintegrationtypes.InstalledIntegration, *model.ApiError) {
 
@@ -83,9 +84,10 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
-		OrgID:  orgId,
-		Type:   integrationType,
-		Config: config,
+		OrgID:   orgId,
+		Type:    integrationType,
+		Version: version,
+		Config:  config,
 	}
 
 	_, dbErr := r.store.BunDBCtx(ctx).NewInsert().

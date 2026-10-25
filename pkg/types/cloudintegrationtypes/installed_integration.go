@@ -20,6 +20,7 @@ type InstalledIntegration struct {
 	types.Identifiable
 	Type        string                     `json:"type" bun:"type,type:text,unique:org_id_type"`
 	Config      InstalledIntegrationConfig `json:"config" bun:"config,type:text"`
+	Version     string                     `json:"version" bun:"version,type:text"`
 	InstalledAt time.Time                  `json:"installed_at" bun:"installed_at,default:current_timestamp"`
 	OrgID       string                     `json:"org_id" bun:"org_id,type:text,unique:org_id_type,references:organizations(id),on_delete:cascade"`
 }
