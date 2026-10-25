@@ -436,8 +436,8 @@ def test_set_custom_retention_ttl_basic_with_cold_storage(
     verify_table_retention_expression(
         signoz,
         {
-            "logs_v2": "toIntervalDay(if(_retention_days_cold = 0, _retention_days, _retention_days_cold)) TO VOLUME 'cold'",
-            "logs_v2_resource": "toIntervalDay(if(_retention_days_cold = 0, _retention_days, _retention_days_cold)) TO VOLUME 'cold'",
+            "logs_v2": f"toIntervalDay(if(_retention_days_cold = 0, {test_retention_days_cold}, _retention_days_cold)) TO VOLUME 'cold'",
+            "logs_v2_resource": f"toIntervalDay(if(_retention_days_cold = 0, {test_retention_days_cold}, _retention_days_cold)) TO VOLUME 'cold'",
             # Cold storage retention is not applicable for attribute keys table
             "logs_attribute_keys": f"toIntervalDay({test_retention_days})",
             # Cold storage retention is not applicable for resource keys table
@@ -446,7 +446,7 @@ def test_set_custom_retention_ttl_basic_with_cold_storage(
     )
 
 
-def test_set_custom_retention_cold_storage_keeps_older_rows_hot(
+def test_set_custom_retention_cold_storage_moves_older_rows_by_age(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
     insert_logs,
@@ -458,19 +458,26 @@ def test_set_custom_retention_cold_storage_keeps_older_rows_hot(
     response = requests.post(url, json={"type": "logs", "defaultTTLDays": 30, "ttlConditions": []}, headers=headers, timeout=30)
     assert response.status_code == HTTPStatus.OK
 
-    insert_logs([Logs(timestamp=datetime.datetime.now() - datetime.timedelta(hours=1), body="before cold storage", resources={"service.name": "cold-zero"})])
+    now = datetime.datetime.now(datetime.UTC)
+    insert_logs(
+        [
+            Logs(timestamp=now - datetime.timedelta(hours=1), body="recent", resources={"service.name": "cold-zero"}),
+            Logs(timestamp=now - datetime.timedelta(days=10), body="old", resources={"service.name": "cold-zero"}),
+        ]
+    )
 
     response = requests.post(url, json={"type": "logs", "defaultTTLDays": 30, "ttlConditions": [], "coldStorageVolume": "cold", "coldStorageDurationDays": 7}, headers=headers, timeout=30)
     assert response.status_code == HTTPStatus.OK
 
     cluster = signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
-    for table in ["logs_v2", "logs_v2_resource"]:
-        signoz.telemetrystore.conn.query(f"OPTIMIZE TABLE signoz_logs.{table} ON CLUSTER '{cluster}' FINAL")
+    signoz.telemetrystore.conn.query(f"OPTIMIZE TABLE signoz_logs.logs_v2 ON CLUSTER '{cluster}' FINAL")
 
     time.sleep(10)
-    parts = signoz.telemetrystore.conn.query("SELECT table, partition, disk_name FROM system.parts WHERE database = 'signoz_logs' AND table IN ('logs_v2', 'logs_v2_resource') AND active").result_rows
-    assert len(parts) >= 2
-    assert all(disk_name != "cold" for _, _, disk_name in parts), f"an hour-old row written with _retention_days_cold = 0 was moved to cold storage: {parts}"
+    # Partitions are ('<date>', _retention_days, _retention_days_cold).
+    parts = signoz.telemetrystore.conn.query("SELECT partition, disk_name FROM system.parts WHERE database = 'signoz_logs' AND table = 'logs_v2' AND active").result_rows
+    disks = {partition.split("'")[1]: disk_name for partition, disk_name in parts}
+    assert disks.get(str((now - datetime.timedelta(hours=1)).date())) != "cold", f"a recent row written with _retention_days_cold = 0 was moved to cold storage: {disks}"
+    assert disks.get(str((now - datetime.timedelta(days=10)).date())) == "cold", f"a row older than the cold-storage delay stayed hot: {disks}"
 
 
 def test_set_custom_retention_ttl_basic_fallback(
@@ -672,8 +679,8 @@ def test_set_custom_retention_ttl_with_conditions(
     verify_table_retention_expression(
         signoz,
         {
-            "logs_v2": "toIntervalDay(if(_retention_days_cold = 0, _retention_days, _retention_days_cold)) TO VOLUME 'cold'",
-            "logs_v2_resource": "toIntervalDay(if(_retention_days_cold = 0, _retention_days, _retention_days_cold)) TO VOLUME 'cold'",
+            "logs_v2": f"toIntervalDay(if(_retention_days_cold = 0, {test_retention_days_cold}, _retention_days_cold)) TO VOLUME 'cold'",
+            "logs_v2_resource": f"toIntervalDay(if(_retention_days_cold = 0, {test_retention_days_cold}, _retention_days_cold)) TO VOLUME 'cold'",
             # Cold storage retention is not applicable for attribute keys table
             "logs_attribute_keys": f"toIntervalDay({max(test_retention_days, test_retention_days_condition)})",
             # Cold storage retention is not applicable for resource keys table
