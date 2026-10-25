@@ -48,5 +48,5 @@ func (c *InstalledIntegrationConfig) Value() (driver.Value, error) {
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "could not serialize integration config to JSON")
 	}
-	return filterSetJson, nil
+	return string(filterSetJson), nil
 }
