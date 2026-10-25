@@ -152,3 +152,54 @@ def test_android_crash_grouped_and_retraced(
     assert unmapped["symbolicated"] is False
     assert unmapped["missingSourceMap"] == {"release": "2.0.0", "kind": "r8-mapping"}
     assert unmapped["frames"][0]["original"] is None
+
+
+def test_android_crash_anr_and_handled_grouped_apart(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    package = "io.fusescope.sample"
+    created = create_rum_application(signoz, token, {"name": f"android-{uuid.uuid4().hex[:8]}", "platform": "android", "environment": "production", "allowedPackageNames": [package]})
+    base = f"{RUM_APPLICATIONS}/{created['id']}"
+    _, api_key = create_service_account_with_key(signoz, token, f"gradle-{uuid.uuid4().hex[:8]}", role="signoz-editor")
+    response = upload_r8_mapping(signoz, created["id"], "0.1.0", {SIGNOZ_API_KEY_HEADER: api_key}, (FIXTURES / "sample" / "mapping.txt").read_bytes())
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
+    crash, handled, anr = [(FIXTURES / "sample" / f"{name}.txt").read_text() for name in ("crash", "handled", "anr")]
+    second = 1_000_000_000
+    t0 = time.time_ns() - 300 * second
+    events = [
+        ("java.lang.IllegalStateException", "Payment provider unavailable", crash, "crash"),
+        ("java.lang.IllegalStateException", "Checkout failed for https://shop.example/cart", handled, "manual"),
+        ("ApplicationNotResponding", "Application Not Responding: the main thread was blocked for at least 5 s", anr, "anr"),
+        ("java.lang.IllegalStateException", "Payment provider unavailable", crash, "manual"),
+    ]
+    send_rum(
+        signoz,
+        created["key"]["key"],
+        {"service.name": "android-sample", "service.version": "0.1.0", "app.package.name": package},
+        events=[rum_event("exception", t0 + i * second, {"exception.type": exception_type, "exception.message": message, "exception.stacktrace": stacktrace, "fusescope.rum.error.source": source, "session.id": f"sample-{uuid.uuid4().hex}"}) for i, (exception_type, message, stacktrace, source) in enumerate(events)],
+        origin=None,
+    )
+
+    params = {"start": t0 // 1_000_000 - 60_000, "end": t0 // 1_000_000 + 60_000}
+    listed = wait_for_rum_query(signoz, token, f"{base}/errors", params, lambda data: data["events"] == 4)
+    groups = {(group["source"], group["topFrame"]["original"]["function"]): group for group in listed["groups"]}
+    assert set(groups) == {
+        ("crash", "io.fusescope.sample.Checkout.pay"),
+        ("manual", "io.fusescope.sample.MainActivity.onCreate$lambda$0"),
+        ("anr", "io.fusescope.sample.MainActivity.onCreate$lambda$2"),
+        ("manual", "io.fusescope.sample.Checkout.pay"),
+    }, "each source groups apart, on real in-app frames rather than the synthetic lambda"
+    assert all(group["events"] == 1 for group in groups.values())
+
+    fingerprint = groups[("crash", "io.fusescope.sample.Checkout.pay")]["fingerprint"]
+    detail = wait_for_rum_query(signoz, token, f"{base}/errors/{fingerprint}", params, lambda data: len(data["latestEvents"]) == 1)
+    frames = [(frame["original"]["function"], frame["original"]["line"], frame["original"]["inApp"], frame["original"]["inlined"]) for frame in detail["latestEvents"][0]["frames"][:3]]
+    assert frames == [
+        ("io.fusescope.sample.Checkout.pay", 103, True, True),
+        ("io.fusescope.sample.MainActivity.onCreate$lambda$1", 32, True, True),
+        ("io.fusescope.sample.MainActivity.onNewIntent", 60, True, False),
+    ]

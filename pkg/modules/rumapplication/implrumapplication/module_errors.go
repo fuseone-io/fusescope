@@ -142,7 +142,7 @@ func (module *module) jvmFingerprint(ctx context.Context, id valuer.UUID, row *e
 	if err != nil {
 		return "", err
 	}
-	fingerprint := rumtypes.NewJVMErrorFingerprint(retrace.Trace)
+	fingerprint := rumtypes.NewJVMErrorFingerprint(retrace.Trace, row.source)
 	if group, ok := groups[fingerprint]; ok && (group.retraced || !retrace.Retraced) {
 		return fingerprint, nil
 	}

@@ -204,12 +204,13 @@ func JVMTopInAppFrames(trace *JVMStackTrace, limit int) []StackFrame {
 	return all
 }
 
-// NewJVMErrorFingerprint groups JVM errors by the thrown type and the
-// functions of the top in-app frames, which survive new builds and line
-// changes; without frames, by the normalized message.
-func NewJVMErrorFingerprint(trace *JVMStackTrace) string {
+// NewJVMErrorFingerprint groups JVM errors by source, the thrown type and
+// the functions of the top in-app frames, which survive new builds and line
+// changes; without frames, by the normalized message. The source keeps a
+// crash apart from the same exception caught and reported.
+func NewJVMErrorFingerprint(trace *JVMStackTrace, source string) string {
 	thrown := trace.Exceptions[0]
-	parts := []string{thrown.Type}
+	parts := []string{source, thrown.Type}
 	frames := JVMTopInAppFrames(trace, jvmFingerprintDepth)
 	for _, frame := range frames {
 		parts = append(parts, frame.OriginalFunction())
