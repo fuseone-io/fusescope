@@ -55,7 +55,7 @@ def test_android_application_package_names(
     status = requests.get(f"{url}/{created['id']}/status", headers={"Authorization": f"Bearer {token}"}, timeout=10).json()["data"]
     reasons = {rejection["reason"]: rejection["lastOrigin"] for rejection in status["rejections"]}
     assert reasons == {"package_not_allowed": "", "origin_not_allowed": RUM_ORIGIN}
-    assert "io.fusescope:android" in [sdk["name"] for sdk in status["supportedSdks"]]
+    assert "io.fuseone.fusescope:android" in [sdk["name"] for sdk in status["supportedSdks"]]
 
 
 def test_android_r8_mapping_upload(
