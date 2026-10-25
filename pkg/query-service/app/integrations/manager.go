@@ -127,7 +127,7 @@ type Manager struct {
 	dashboardModule           dashboard.Module
 }
 
-func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module) (*Manager, error) {
+func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module, availableIntegrations AvailableIntegrationsRepo) (*Manager, error) {
 	iiRepo, err := NewInstalledIntegrationsSqliteRepo(store)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -136,7 +136,7 @@ func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module) (*Man
 	}
 
 	return &Manager{
-		availableIntegrationsRepo: &BuiltInIntegrations{},
+		availableIntegrationsRepo: availableIntegrations,
 		installedIntegrationsRepo: iiRepo,
 		dashboardModule:           dashboardModule,
 	}, nil
