@@ -80,6 +80,7 @@ func TestCustomRetentionLogsTTLStatements(t *testing.T) {
 	testCases := []struct {
 		name   string
 		volume string
+		days   int
 		want   map[string]string
 	}{
 		{
@@ -90,11 +91,20 @@ func TestCustomRetentionLogsTTLStatements(t *testing.T) {
 			},
 		},
 		{
-			name:   "ColdStorage_MoveRuleFromColumn",
+			name:   "ColdStorageWithoutDays_KeysTablesOnly",
 			volume: "cold",
 			want: map[string]string{
-				"signoz_logs.logs_v2":             "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(if(_retention_days_cold = 0, _retention_days, _retention_days_cold)) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
-				"signoz_logs.logs_v2_resource":    "ALTER TABLE signoz_logs.logs_v2_resource ON CLUSTER cluster MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(if(_retention_days_cold = 0, _retention_days, _retention_days_cold)) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
+				"signoz_logs.logs_attribute_keys": "ALTER TABLE signoz_logs.logs_attribute_keys ON CLUSTER cluster MODIFY TTL timestamp + toIntervalDay(30) DELETE SETTINGS materialize_ttl_after_modify=0",
+				"signoz_logs.logs_resource_keys":  "ALTER TABLE signoz_logs.logs_resource_keys ON CLUSTER cluster MODIFY TTL timestamp + toIntervalDay(30) DELETE SETTINGS materialize_ttl_after_modify=0",
+			},
+		},
+		{
+			name:   "ColdStorage_MoveRuleFromColumn",
+			volume: "cold",
+			days:   7,
+			want: map[string]string{
+				"signoz_logs.logs_v2":             "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(if(_retention_days_cold = 0, 7, _retention_days_cold)) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
+				"signoz_logs.logs_v2_resource":    "ALTER TABLE signoz_logs.logs_v2_resource ON CLUSTER cluster MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(if(_retention_days_cold = 0, 7, _retention_days_cold)) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
 				"signoz_logs.logs_attribute_keys": "ALTER TABLE signoz_logs.logs_attribute_keys ON CLUSTER cluster MODIFY TTL timestamp + toIntervalDay(30) DELETE SETTINGS materialize_ttl_after_modify=0",
 				"signoz_logs.logs_resource_keys":  "ALTER TABLE signoz_logs.logs_resource_keys ON CLUSTER cluster MODIFY TTL timestamp + toIntervalDay(30) DELETE SETTINGS materialize_ttl_after_modify=0",
 			},
@@ -103,7 +113,7 @@ func TestCustomRetentionLogsTTLStatements(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.want, customRetentionLogsTTLStatements(testLogsTTLTables, "cluster", testCase.volume, 30))
+			assert.Equal(t, testCase.want, customRetentionLogsTTLStatements(testLogsTTLTables, "cluster", testCase.volume, testCase.days, 30))
 		})
 	}
 }
@@ -162,5 +172,6 @@ func TestMetricsTTLStatements(t *testing.T) {
 		"signoz_metrics.time_series_v4_1day":  "ALTER TABLE signoz_metrics.time_series_v4_1day ON CLUSTER cluster MODIFY TTL toDateTime(toUInt32(unix_milli / 1000), 'UTC') + INTERVAL 2592000 SECOND DELETE, toDateTime(toUInt32(unix_milli / 1000), 'UTC') + INTERVAL 86400 SECOND TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
 		"signoz_metrics.time_series_v4_1week": "ALTER TABLE signoz_metrics.time_series_v4_1week ON CLUSTER cluster MODIFY TTL toDateTime(toUInt32(unix_milli / 1000), 'UTC') + INTERVAL 2592000 SECOND DELETE, toDateTime(toUInt32(unix_milli / 1000), 'UTC') + INTERVAL 86400 SECOND TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
 	}, statements)
+	assert.Equal(t, "ALTER TABLE signoz_metrics.samples_v4 ON CLUSTER cluster MODIFY TTL toDateTime(toUInt32(unix_milli / 1000), 'UTC') + INTERVAL 60 SECOND DELETE SETTINGS materialize_ttl_after_modify=0", metricsTTLStatements([]string{"signoz_metrics.samples_v4"}, "cluster", &retentiontypes.TTLParams{DelDuration: 60})["signoz_metrics.samples_v4"])
 	assert.Equal(t, "ALTER TABLE signoz_metrics.legacy_samples ON CLUSTER cluster MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + INTERVAL 60 SECOND DELETE SETTINGS materialize_ttl_after_modify=0", metricsTTLStatements([]string{"signoz_metrics.legacy_samples"}, "cluster", &retentiontypes.TTLParams{DelDuration: 60})["signoz_metrics.legacy_samples"])
 }
