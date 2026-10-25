@@ -88,8 +88,8 @@ func TestLoadEmbedded(t *testing.T) {
 		assert.True(t, json.Valid(pkg.Document), pkg.ID)
 	}
 	assert.ElementsMatch(t, []string{
-		"builtin-aws_elasticache_redis@1.0.0", "builtin-aws_rds_mysql@1.0.0", "builtin-aws_rds_postgresql@1.0.0", "builtin-clickhouse@1.0.0",
-		"builtin-mongo@1.0.0", "builtin-nginx@1.0.0", "builtin-postgres@1.0.0", "builtin-redis@1.0.0",
+		"builtin-aws_elasticache_redis@1.0.0", "builtin-aws_rds_mysql@1.0.0", "builtin-aws_rds_postgresql@1.0.0", "builtin-clickhouse@1.0.0", "builtin-gcp_cloudsql@1.0.1",
+		"builtin-mongo@1.0.0", "builtin-mysql@1.0.1", "builtin-nginx@1.0.0", "builtin-postgres@1.0.0", "builtin-redis@1.0.0",
 	}, ids)
 	assert.Equal(t, "fuseone-io/fusescope-integrations", catalog.Source.Repository)
 }

@@ -2,8 +2,8 @@
   "catalog_version": 1,
   "source": {
     "repository": "fuseone-io/fusescope-integrations",
-    "ref": "v1.0.0",
-    "commit": "198c853d5634b88d67bbd725505926dafabf4283"
+    "ref": "v1.1.1",
+    "commit": "43938f1beafb70fe48893f5bf6427b239e9ef345"
   },
   "integrations": [
     {
@@ -79,6 +79,24 @@
       "size": 44864
     },
     {
+      "id": "builtin-gcp_cloudsql",
+      "version": "1.0.1",
+      "manifest_version": 1,
+      "fusescope": ">=0.154.0",
+      "title": "Google Cloud SQL",
+      "description": "Monitor Google Cloud SQL with metrics and logs",
+      "categories": [
+        "Database"
+      ],
+      "signals": [
+        "logs",
+        "metrics"
+      ],
+      "package": "builtin-gcp_cloudsql-1.0.1.tar.gz",
+      "sha256": "57b241af0e85ffa5665ba20bed848c16d65afa20babe71c4e6f58e899be0c579",
+      "size": 7897
+    },
+    {
       "id": "builtin-mongo",
       "version": "1.0.0",
       "manifest_version": 1,
@@ -95,6 +113,24 @@
       "package": "builtin-mongo-1.0.0.tar.gz",
       "sha256": "a70305301d9ea3aed8e409a7a257ff7287e48f80edb5f7200355aacd1bbbe526",
       "size": 6812
+    },
+    {
+      "id": "builtin-mysql",
+      "version": "1.0.1",
+      "manifest_version": 1,
+      "fusescope": ">=0.154.0",
+      "title": "MySQL",
+      "description": "Monitor MySQL with metrics and logs",
+      "categories": [
+        "Database"
+      ],
+      "signals": [
+        "logs",
+        "metrics"
+      ],
+      "package": "builtin-mysql-1.0.1.tar.gz",
+      "sha256": "04051fa46a38616f86fb6be3f3b0ea7a57db9985eb978ae154e0e9da98a3e7f6",
+      "size": 9975
     },
     {
       "id": "builtin-nginx",
