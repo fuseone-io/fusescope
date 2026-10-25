@@ -1,0 +1,53 @@
+# compiler: R8
+# compiler_version: 8.5.35
+# min_api: 24
+# common_typos_disable
+# {"id":"com.android.tools.r8.mapping","version":"2.2"}
+# pg_map_id: 7e4c1a9
+# pg_map_hash: SHA-256 7e4c1a9f0b2d6e8a4c3b5d7f9e1a2c4b6d8f0e2a4c6b8d0f2e4a6c8b0d2f4e6a
+androidx.core.app.ComponentActivity -> androidx.core.app.ComponentActivity:
+# {"id":"sourceFile","fileName":"ComponentActivity.java"}
+    1:1:void <init>():40:40 -> <init>
+com.example.shop.CartException -> a.a:
+# {"id":"sourceFile","fileName":"CartException.kt"}
+    1:1:void <init>(java.lang.String):12:12 -> <init>
+com.example.shop.Cart -> a.b:
+# {"id":"sourceFile","fileName":"Cart.kt"}
+    java.util.List items -> a
+    int total -> b
+    1:4:void <init>():8:11 -> <init>
+    1:1:void com.example.shop.Money.check(long):21:21 -> a
+    1:1:void add(com.example.shop.Item):34 -> a
+    2:5:void add(com.example.shop.Item):35:38 -> a
+    6:6:long com.example.shop.Item.price():15:15 -> a
+    6:6:long subtotal():44 -> a
+    # {"id":"com.android.tools.r8.rewriteFrame","conditions":["throws(Ljava/lang/NullPointerException;)"],"actions":["removeInnerFrames(1)"]}
+    7:7:void sync(android.content.Context):90:90 -> a
+    1:3:void checkout(android.content.Context):50:52 -> b
+    # {"id":"com.android.tools.r8.residualsignature","signature":"(Landroid/content/Context;)V"}
+    void clear() -> c
+    0:65535:java.lang.String describe():60:60 -> d
+    1:1:int access$000(com.example.shop.Cart):0:0 -> e
+    # {"id":"com.android.tools.r8.synthesized"}
+com.example.shop.Item -> a.d:
+# {"id":"sourceFile","fileName":"Item.kt"}
+    long price -> a
+    1:1:long price():15:15 -> a
+com.example.shop.Money -> a.c:
+# {"id":"sourceFile","fileName":"Money.kt"}
+    1:2:void check(long):20:21 -> a
+com.example.shop.CheckoutActivity -> com.example.shop.CheckoutActivity:
+# {"id":"sourceFile","fileName":"CheckoutActivity.kt"}
+    1:6:void onCreate(android.os.Bundle):25:30 -> onCreate
+    7:7:void onPay(android.view.View):40:40 -> a
+    8:8:void onPay(android.view.View):41:41 -> a
+    9:9:void onPay(android.view.View):0:0 -> a
+    # {"id":"com.android.tools.r8.outlineCallsite","positions":{"1":7,"2":8},"outline":"Lb/a;a(I)I"}
+com.example.shop.Outlines -> b.a:
+# {"id":"com.android.tools.r8.synthesized"}
+    1:2:int outline0(int):0:0 -> a
+    # {"id":"com.android.tools.r8.outline"}
+com.example.shop.CheckoutActivity$$ExternalSyntheticLambda0 -> c.a:
+# {"id":"com.android.tools.r8.synthesized"}
+    1:1:void com.example.shop.CheckoutActivity.lambda$onCreate$0(android.view.View):33:33 -> onClick
+    1:1:void onClick(android.view.View):0 -> onClick
