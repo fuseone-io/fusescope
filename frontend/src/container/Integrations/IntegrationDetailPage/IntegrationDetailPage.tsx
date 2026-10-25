@@ -9,6 +9,7 @@ import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationSta
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
+import { USER_ROLES } from 'types/roles';
 
 import CloudIntegration from '../CloudIntegration/CloudIntegration';
 import IntegrationsError from '../components/IntegrationsError';
@@ -38,7 +39,7 @@ function IntegrationDetailPage(): JSX.Element {
 
 	const { isCloudUser: isCloudUserVal, isEnterpriseSelfHostedUser } =
 		useGetTenantLicense();
-	const { isFetchingActiveLicense } = useAppContext();
+	const { isFetchingActiveLicense, user } = useAppContext();
 
 	const { data: integrationStatus, isLoading: isStatusLoading } =
 		useGetIntegrationStatus({ integrationId });
@@ -115,14 +116,15 @@ function IntegrationDetailPage(): JSX.Element {
 				className="tw:h-80 tw:w-full tw:rounded-xl tw:bg-muted"
 			/>
 		),
-		footer: connectionStatus !== ConnectionStates.NotInstalled && (
-			<IntergrationsUninstallBar
-				integrationTitle={title}
-				integrationId={integrationId}
-				onUnInstallSuccess={refetch}
-				connectionStatus={connectionStatus}
-			/>
-		),
+		footer: connectionStatus !== ConnectionStates.NotInstalled &&
+			user.role !== USER_ROLES.VIEWER && (
+				<IntergrationsUninstallBar
+					integrationTitle={title}
+					integrationId={integrationId}
+					onUnInstallSuccess={refetch}
+					connectionStatus={connectionStatus}
+				/>
+			),
 	});
 
 	return (
