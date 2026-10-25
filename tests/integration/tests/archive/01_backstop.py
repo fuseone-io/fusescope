@@ -58,12 +58,17 @@ def test_backstop_reaches_existing_parts_and_keeps_the_cold_storage_delay(
     assert "toIntervalDay(7)" in resource_engine_full
     assert "toIntervalDay(if(_retention_days_cold = 0, 7, _retention_days_cold)) TO VOLUME 'cold'" in engine_full, "the move rule is kept"
 
-    time.sleep(10)
-    # Partitions are ('<date>', _retention_days, _retention_days_cold).
-    parts = signoz.telemetrystore.conn.query("SELECT partition, disk_name FROM system.parts WHERE database = 'signoz_logs' AND table = 'logs_v2' AND active").result_rows
-    disks = {partition.split("'")[1]: disk_name for partition, disk_name in parts}
+    old_partition = str((now - datetime.timedelta(days=14)).date())
+    deadline = time.time() + 120
+    while time.time() < deadline:
+        # Partitions are ('<date>', _retention_days, _retention_days_cold).
+        parts = signoz.telemetrystore.conn.query("SELECT partition, disk_name FROM system.parts WHERE database = 'signoz_logs' AND table = 'logs_v2' AND active").result_rows
+        disks = {partition.split("'")[1]: disk_name for partition, disk_name in parts}
+        if disks.get(old_partition) == "cold":
+            break
+        time.sleep(2)
     assert disks.get(str((now - datetime.timedelta(hours=1)).date())) != "cold", f"a recent row written before cold storage was set was moved by MATERIALIZE TTL: {disks}"
-    assert disks.get(str((now - datetime.timedelta(days=14)).date())) == "cold", f"a row older than the cold-storage delay stayed hot: {disks}"
+    assert disks.get(old_partition) == "cold", f"a row older than the cold-storage delay stayed hot: {disks}"
 
 
 @pytest.mark.parametrize(
