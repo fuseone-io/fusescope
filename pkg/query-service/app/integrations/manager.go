@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
@@ -329,7 +331,8 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 	}
 
 	gettablePipelines := []pipelinetypes.GettablePipeline{}
-	for _, ii := range installedIntegrations {
+	for _, id := range slices.Sorted(maps.Keys(installedIntegrations)) {
+		ii := installedIntegrations[id]
 		for _, p := range ii.Assets.Logs.Pipelines {
 			gettablePipelines = append(gettablePipelines, pipelinetypes.GettablePipeline{
 				// Alias is used for identifying integration pipelines. Id can't be used for this
