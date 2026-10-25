@@ -129,3 +129,115 @@ def test_rows_without_a_version_read_as_1_0_0(
         timeout=10,
     )
     assert uninstall.status_code == HTTPStatus.OK, uninstall.text
+
+
+def test_upgrade_on_the_latest_version_is_a_noop(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    install = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/integrations/install"),
+        json={"integration_id": "builtin-redis", "config": {}},
+        headers=headers,
+        timeout=10,
+    )
+    assert install.status_code == HTTPStatus.OK, install.text
+
+    with signoz.sqlstore.conn.connect() as conn:
+        dashboard_id = conn.execute(sql.text("SELECT dashboard_id FROM integration_dashboard WHERE slug = 'redis-overview'")).scalar()
+
+    upgrade = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/integrations/upgrade"),
+        json={"integration_id": "builtin-redis"},
+        headers=headers,
+        timeout=10,
+    )
+    assert upgrade.status_code == HTTPStatus.OK, upgrade.text
+    assert upgrade.json()["data"]["is_installed"] is True
+    assert upgrade.json()["data"]["version"] == "1.0.0"
+    assert upgrade.json()["data"]["latest_version"] == "1.0.0"
+
+    with signoz.sqlstore.conn.connect() as conn:
+        assert conn.execute(sql.text("SELECT dashboard_id FROM integration_dashboard WHERE slug = 'redis-overview'")).scalar() == dashboard_id
+
+    uninstall = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/integrations/uninstall"),
+        json={"integration_id": "builtin-redis"},
+        headers=headers,
+        timeout=10,
+    )
+    assert uninstall.status_code == HTTPStatus.OK, uninstall.text
+
+
+def test_upgrade_moves_a_dropped_pin_and_updates_dashboards_in_place(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    install = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/integrations/install"),
+        json={"integration_id": "builtin-mysql", "config": {}},
+        headers=headers,
+        timeout=10,
+    )
+    assert install.status_code == HTTPStatus.OK, install.text
+    assert install.json()["data"]["version"] == BUILTIN_VERSIONS["builtin-mysql"]
+
+    with signoz.sqlstore.conn.begin() as conn:
+        conn.execute(sql.text("UPDATE installed_integration SET version = '1.0.0' WHERE type = 'builtin-mysql'"))
+        dashboard_id = conn.execute(sql.text("SELECT dashboard_id FROM integration_dashboard WHERE slug = 'mysql-overview'")).scalar()
+
+    upgrade = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/integrations/upgrade"),
+        json={"integration_id": "builtin-mysql"},
+        headers=headers,
+        timeout=10,
+    )
+    assert upgrade.status_code == HTTPStatus.OK, upgrade.text
+    assert upgrade.json()["data"]["version"] == BUILTIN_VERSIONS["builtin-mysql"]
+
+    detail = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/integrations/builtin-mysql"),
+        headers=headers,
+        timeout=10,
+    )
+    assert detail.status_code == HTTPStatus.OK, detail.text
+    assert detail.json()["data"]["installation"]["version"] == BUILTIN_VERSIONS["builtin-mysql"]
+
+    with signoz.sqlstore.conn.connect() as conn:
+        assert conn.execute(sql.text("SELECT dashboard_id FROM integration_dashboard WHERE slug = 'mysql-overview'")).scalar() == dashboard_id
+        dashboard = conn.execute(sql.text("SELECT locked, updated_by FROM dashboard WHERE id = :id"), {"id": dashboard_id}).mappings().one()
+    assert bool(dashboard["locked"]) is True
+    assert dashboard["updated_by"] == USER_ADMIN_EMAIL
+
+    uninstall = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/integrations/uninstall"),
+        json={"integration_id": "builtin-mysql"},
+        headers=headers,
+        timeout=10,
+    )
+    assert uninstall.status_code == HTTPStatus.OK, uninstall.text
+
+
+def test_upgrade_of_an_integration_not_installed_is_not_found(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    upgrade = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/integrations/upgrade"),
+        json={"integration_id": "builtin-postgres"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=10,
+    )
+    assert upgrade.status_code == HTTPStatus.NOT_FOUND, upgrade.text
+    assert upgrade.json()["error"]["code"] == "integration_not_installed"

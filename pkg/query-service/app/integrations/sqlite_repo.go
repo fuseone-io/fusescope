@@ -133,6 +133,19 @@ func (r *InstalledIntegrationsSqliteRepo) delete(
 	return nil
 }
 
+func (r *InstalledIntegrationsSqliteRepo) updateVersion(ctx context.Context, orgID string, integrationType string, version string) error {
+	_, err := r.store.BunDBCtx(ctx).NewUpdate().
+		Model(new(cloudintegrationtypes.InstalledIntegration)).
+		Set("version = ?", version).
+		Where("type = ?", integrationType).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not update the version of installed integration %s", integrationType)
+	}
+	return nil
+}
+
 func (r *InstalledIntegrationsSqliteRepo) runInTx(ctx context.Context, fn func(ctx context.Context) error) error {
 	return r.store.RunInTxCtx(ctx, nil, fn)
 }

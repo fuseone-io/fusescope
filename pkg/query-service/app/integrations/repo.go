@@ -24,6 +24,8 @@ type InstalledIntegrationsRepo interface {
 
 	delete(ctx context.Context, orgId string, integrationType string) *model.ApiError
 
+	updateVersion(ctx context.Context, orgID string, integrationType string, version string) error
+
 	createIntegrationDashboard(ctx context.Context, row *cloudintegrationtypes.StorableIntegrationDashboard) error
 
 	getIntegrationDashboardBySlug(ctx context.Context, orgID string, slug string) (*cloudintegrationtypes.StorableIntegrationDashboard, error)

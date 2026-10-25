@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
 	"github.com/fuseone-io/fusescope/pkg/query-service/agentConf"
 	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations/catalog"
@@ -116,6 +117,25 @@ func (c *Controller) Uninstall(ctx context.Context, orgId string, req *Uninstall
 	}
 	agentConf.NotifyConfigUpdate(ctx)
 	return nil
+}
+
+type UpgradeIntegrationRequest struct {
+	IntegrationId string `json:"integration_id"`
+}
+
+func (c *Controller) Upgrade(ctx context.Context, orgId string, req *UpgradeIntegrationRequest, updatedBy string, updater valuer.UUID) (*IntegrationsListItem, error) {
+	if len(req.IntegrationId) < 1 {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration_id is required")
+	}
+
+	item, upgraded, err := c.mgr.UpgradeIntegration(ctx, orgId, req.IntegrationId, updatedBy, updater)
+	if err != nil {
+		return nil, err
+	}
+	if upgraded {
+		agentConf.NotifyConfigUpdate(ctx)
+	}
+	return item, nil
 }
 
 func (c *Controller) GetPipelinesForInstalledIntegrations(ctx context.Context, orgId string) ([]pipelinetypes.GettablePipeline, error) {
