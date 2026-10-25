@@ -1,5 +1,11 @@
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
+
 import { ApplicationFormValues } from '../types';
-import { invalidOrigin, invalidUrlPrefix } from '../utils/form';
+import {
+	invalidOrigin,
+	invalidPackageName,
+	invalidUrlPrefix,
+} from '../utils/form';
 import ChipsInput from './ChipsInput';
 import Field from './Field';
 import SectionHeading from './SectionHeading';
@@ -16,38 +22,73 @@ function OriginsSection({
 	onChange,
 	readOnly,
 }: OriginsSectionProps): JSX.Element {
+	const android = values.platform === RumtypesPlatformDTO.android;
 	return (
 		<section
 			aria-labelledby="rum-app-network"
 			className="tw:flex tw:flex-col tw:gap-4 tw:border-t tw:border-border tw:pt-5"
 		>
-			<SectionHeading id="rum-app-network">Origins and tracing</SectionHeading>
-			<Field
-				label={
-					<>
-						Allowed origins <WhereTag where="Server" />
-					</>
-				}
-				htmlFor="rum-app-origins"
-				description={
-					<>
-						Data from any other origin is rejected. Use{' '}
-						<span className="tw:font-mono">https://*.example.com</span> for
-						subdomains.
-					</>
-				}
-			>
-				<ChipsInput
-					id="rum-app-origins"
-					label="Allowed origins"
-					testId="rum-app-origins"
-					values={values.allowedOrigins}
-					onChange={(allowedOrigins): void => onChange({ allowedOrigins })}
-					validate={invalidOrigin}
-					placeholder="https://… then Enter"
-					disabled={readOnly}
-				/>
-			</Field>
+			<SectionHeading id="rum-app-network">
+				{android ? 'Package names and tracing' : 'Origins and tracing'}
+			</SectionHeading>
+			{android ? (
+				<Field
+					label={
+						<>
+							Allowed package names <WhereTag where="Server" />
+						</>
+					}
+					htmlFor="rum-app-packages"
+					description={
+						<>
+							Matched against <span className="tw:font-mono">app.package.name</span>,
+							the app’s applicationId; other apps are rejected. Use{' '}
+							<span className="tw:font-mono">com.example.*</span> for variants such as{' '}
+							<span className="tw:font-mono">.debug</span>.
+						</>
+					}
+				>
+					<ChipsInput
+						id="rum-app-packages"
+						label="Allowed package names"
+						testId="rum-app-packages"
+						values={values.allowedPackageNames}
+						onChange={(allowedPackageNames): void =>
+							onChange({ allowedPackageNames })
+						}
+						validate={invalidPackageName}
+						placeholder="com.example.shop then Enter"
+						disabled={readOnly}
+					/>
+				</Field>
+			) : (
+				<Field
+					label={
+						<>
+							Allowed origins <WhereTag where="Server" />
+						</>
+					}
+					htmlFor="rum-app-origins"
+					description={
+						<>
+							Data from any other origin is rejected. Use{' '}
+							<span className="tw:font-mono">https://*.example.com</span> for
+							subdomains.
+						</>
+					}
+				>
+					<ChipsInput
+						id="rum-app-origins"
+						label="Allowed origins"
+						testId="rum-app-origins"
+						values={values.allowedOrigins}
+						onChange={(allowedOrigins): void => onChange({ allowedOrigins })}
+						validate={invalidOrigin}
+						placeholder="https://… then Enter"
+						disabled={readOnly}
+					/>
+				</Field>
+			)}
 			<Field
 				label={
 					<>
@@ -56,11 +97,19 @@ function OriginsSection({
 				}
 				htmlFor="rum-app-propagation"
 				description={
-					<>
-						The SDK sends <span className="tw:font-mono">traceparent</span> to these
-						URLs. Their CORS must allow that header. Same-origin requests are always
-						linked.
-					</>
+					android ? (
+						<>
+							OkHttp requests to these URLs carry{' '}
+							<span className="tw:font-mono">traceparent</span>, linking them to the
+							backend trace.
+						</>
+					) : (
+						<>
+							The SDK sends <span className="tw:font-mono">traceparent</span> to these
+							URLs. Their CORS must allow that header. Same-origin requests are always
+							linked.
+						</>
+					)
 				}
 			>
 				<ChipsInput

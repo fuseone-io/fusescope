@@ -10,8 +10,10 @@ import { ApplicationFormValues } from '../types';
 
 export const DEFAULT_FORM_VALUES: ApplicationFormValues = {
 	name: '',
+	platform: RumtypesPlatformDTO.web,
 	environment: 'production',
 	allowedOrigins: [],
+	allowedPackageNames: [],
 	tracePropagationUrls: [],
 	samplePercent: 100,
 	dropQuery: true,
@@ -36,10 +38,12 @@ function piiPolicy(values: ApplicationFormValues): RumtypesPIIPolicyDTO {
 export function toUpdatableApplication(
 	values: ApplicationFormValues,
 ): RumtypesUpdatableApplicationDTO {
+	const android = values.platform === RumtypesPlatformDTO.android;
 	return {
 		name: values.name.trim(),
 		environment: values.environment.trim(),
-		allowedOrigins: values.allowedOrigins,
+		allowedOrigins: android ? [] : values.allowedOrigins,
+		allowedPackageNames: android ? values.allowedPackageNames : [],
 		tracePropagationUrls: values.tracePropagationUrls,
 		sampleRate: Math.round(values.samplePercent) / 100,
 		piiPolicy: piiPolicy(values),
@@ -51,7 +55,7 @@ export function toPostableApplication(
 ): RumtypesPostableApplicationDTO {
 	return {
 		...toUpdatableApplication(values),
-		platform: RumtypesPlatformDTO.web,
+		platform: values.platform,
 	};
 }
 
@@ -61,8 +65,10 @@ export function formFromApplication(
 	const policy = application.piiPolicy;
 	return {
 		name: application.name,
+		platform: application.platform,
 		environment: application.environment,
 		allowedOrigins: application.allowedOrigins ?? [],
+		allowedPackageNames: application.allowedPackageNames ?? [],
 		tracePropagationUrls: application.tracePropagationUrls ?? [],
 		samplePercent: Math.round(application.sampleRate * 100),
 		dropQuery: policy.dropQuery,
@@ -96,6 +102,19 @@ export function invalidOrigin(origin: string): string | undefined {
 		return 'Use scheme://host[:port], e.g. https://shop.example.com';
 	}
 	return undefined;
+}
+
+const PACKAGE_NAME = /^[A-Za-z]\w*(\.[A-Za-z]\w*)+$/;
+
+/** The server's rule: `*`, or a package name with an optional trailing `.*`. */
+export function invalidPackageName(packageName: string): string | undefined {
+	if (
+		packageName === '*' ||
+		PACKAGE_NAME.test(packageName.replace(/\.\*$/, ''))
+	) {
+		return undefined;
+	}
+	return 'Use the applicationId, e.g. com.example.shop or com.example.*';
 }
 
 export function invalidUrlPrefix(prefix: string): string | undefined {

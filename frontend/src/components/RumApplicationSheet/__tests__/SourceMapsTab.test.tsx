@@ -1,3 +1,5 @@
+import type { RumtypesApplicationDTO } from 'api/generated/services/fuseScope.schemas';
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
@@ -28,14 +30,17 @@ interface Calls {
 	updated: unknown[];
 }
 
-function serve(empty = false): Calls {
+function serve(
+	empty = false,
+	app: Partial<RumtypesApplicationDTO> = {},
+): Calls {
 	const calls: Calls = {
 		deleted: [],
 		deletedFiles: [],
 		updated: [],
 	};
 	server.use(
-		rest.get(APP_URL, (_req, res, ctx) => res(ctx.json(ok(rumApplication({}))))),
+		rest.get(APP_URL, (_req, res, ctx) => res(ctx.json(ok(rumApplication(app))))),
 		rest.get(`${APP_URL}/keys`, (_req, res, ctx) => res(ctx.json(ok([])))),
 		rest.get(`${APP_URL}/sourcemaps`, (req, res, ctx) =>
 			res(
@@ -78,6 +83,34 @@ function renderTab(role?: 'VIEWER'): void {
 }
 
 describe('SourceMapsTab', () => {
+	it('shows an Android application how to upload its R8 mapping', async () => {
+		serve(false, {
+			platform: RumtypesPlatformDTO.android,
+			allowedOrigins: [],
+			allowedPackageNames: ['com.example.shop'],
+		});
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderTab();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('rum-sheet-tab-sourcemaps')).toHaveTextContent(
+				'R8 mappings',
+			),
+		);
+		await expect(
+			screen.findByTestId('rum-mappings-gradle'),
+		).resolves.toHaveTextContent('applicationId.set("app-web-shop")');
+		expect(screen.queryByTestId('rum-sourcemaps-cli')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('rum-sourcemaps-drop')).not.toBeInTheDocument();
+
+		await user.click(screen.getByTestId('rum-mappings-method-api'));
+		await waitFor(() =>
+			expect(screen.getByTestId('rum-mappings-api')).toHaveTextContent(
+				'/api/v1/rum/applications/app-web-shop/mappings?release=1.8.0',
+			),
+		);
+	});
+
 	it('lists the uploaded releases and expands one to its files', async () => {
 		serve();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });

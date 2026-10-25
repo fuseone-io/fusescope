@@ -4,6 +4,8 @@ import { Button } from 'components/ui/button';
 import { formatCount } from 'lib/apm/format';
 import { TriangleAlert } from 'lucide-react';
 
+import PackageRejection from './PackageRejection';
+
 interface RejectionLineProps {
 	rejection: RumtypesIngestRejectionDTO;
 	onAddOrigin?: (origin: string) => void;
@@ -28,6 +30,8 @@ function RejectionLine({
 	const origin = rejection.lastOrigin;
 	const isOrigin =
 		rejection.reason === RumtypesRejectionReasonDTO.origin_not_allowed && origin;
+	const isPackage =
+		rejection.reason === RumtypesRejectionReasonDTO.package_not_allowed;
 	const isUnknownKey =
 		rejection.reason === RumtypesRejectionReasonDTO.unknown_key && origin;
 
@@ -56,6 +60,8 @@ function RejectionLine({
 							</Button>
 						)}
 					</>
+				) : isPackage ? (
+					<PackageRejection requests={requests} packageName={origin} />
 				) : isUnknownKey ? (
 					<>
 						{formatCount(rejection.count)}{' '}

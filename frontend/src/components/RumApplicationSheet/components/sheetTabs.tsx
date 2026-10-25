@@ -1,3 +1,4 @@
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 
 import { SheetTabItem } from './SheetTabBar';
@@ -7,12 +8,14 @@ interface SheetTabsInput {
 	isNew: boolean;
 	created: boolean;
 	rotating: boolean;
+	platform?: RumtypesPlatformDTO;
 }
 
 export function sheetTabs({
 	isNew,
 	created,
 	rotating,
+	platform,
 }: SheetTabsInput): SheetTabItem[] {
 	if (isNew) {
 		return [
@@ -48,6 +51,10 @@ export function sheetTabs({
 			),
 		},
 		{ value: 'install', label: 'Install' },
-		{ value: 'sourcemaps', label: 'Source maps' },
+		{
+			value: 'sourcemaps',
+			label:
+				platform === RumtypesPlatformDTO.android ? 'R8 mappings' : 'Source maps',
+		},
 	];
 }

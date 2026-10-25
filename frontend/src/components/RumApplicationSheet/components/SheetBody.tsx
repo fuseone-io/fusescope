@@ -1,5 +1,3 @@
-import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
-
 import { ApplicationSheetState } from '../hooks/useApplicationSheet';
 import { SheetActions } from '../hooks/useSheetActions';
 import { initialFormValues, snippetKey } from '../utils/sheetValues';
@@ -64,7 +62,6 @@ function SheetBody({
 			<SettingsTab
 				key={`${application?.updatedAt ?? 'new'}-${sheet.pendingOrigin ?? ''}`}
 				initial={initialFormValues(application, sheet.pendingOrigin)}
-				platform={application?.platform ?? RumtypesPlatformDTO.web}
 				creating={!applicationId}
 				readOnly={readOnly}
 				saving={sheet.mutations.saving}

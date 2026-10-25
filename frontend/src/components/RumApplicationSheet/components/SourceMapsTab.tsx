@@ -1,6 +1,9 @@
 import { useListRUMSourceMaps } from 'api/generated/services/rum';
 import type { RumtypesApplicationDTO } from 'api/generated/services/fuseScope.schemas';
-import { RumtypesSourceMapRetentionDTO } from 'api/generated/services/fuseScope.schemas';
+import {
+	RumtypesPlatformDTO,
+	RumtypesSourceMapRetentionDTO,
+} from 'api/generated/services/fuseScope.schemas';
 import { Button } from 'components/ui/button';
 
 import { useSourceMapActions } from '../hooks/useSourceMapActions';
@@ -9,6 +12,7 @@ import { latestRelease } from '../utils/sourceMaps';
 import SectionHeading from './SectionHeading';
 import SheetFooter from './SheetFooter';
 import DropUpload from './sourceMaps/DropUpload';
+import MappingUploadInstructions from './sourceMaps/MappingUploadInstructions';
 import ReleasesSection from './sourceMaps/ReleasesSection';
 import RetentionSection from './sourceMaps/RetentionSection';
 import UploadInstructions from './sourceMaps/UploadInstructions';
@@ -35,6 +39,8 @@ function SourceMapsTab({
 	const actions = useSourceMapActions(application);
 	const release = latestRelease(data?.releases ?? []) ?? EXAMPLE_RELEASE;
 	const settings = application.sourceMaps ?? DEFAULT_SETTINGS;
+	const android = application.platform === RumtypesPlatformDTO.android;
+	const target = { url: sdkEndpoint(), applicationId: application.id, release };
 
 	return (
 		<div
@@ -42,13 +48,22 @@ function SourceMapsTab({
 			data-testid="rum-app-sourcemaps"
 		>
 			<div className="tw:flex tw:min-h-0 tw:flex-1 tw:flex-col tw:gap-6 tw:overflow-y-auto tw:px-6 tw:pt-5 tw:pb-6">
-				<p className="tw:m-0 tw:text-[13px] tw:text-muted-foreground">
-					Stack traces are symbolicated when you read them, with the maps uploaded
-					for the event’s release (
-					<span className="tw:font-mono tw:text-foreground">service.version</span>).
-					Uploading later fixes past events too. Maps stay on the server and are
-					never sent to browsers.
-				</p>
+				{android ? (
+					<p className="tw:m-0 tw:text-[13px] tw:text-muted-foreground">
+						Stack traces are retraced when you read them, with the R8 mapping uploaded
+						for the event’s release (
+						<span className="tw:font-mono tw:text-foreground">service.version</span>
+						). Uploading later fixes past events too. Mappings stay on the server.
+					</p>
+				) : (
+					<p className="tw:m-0 tw:text-[13px] tw:text-muted-foreground">
+						Stack traces are symbolicated when you read them, with the maps uploaded
+						for the event’s release (
+						<span className="tw:font-mono tw:text-foreground">service.version</span>
+						). Uploading later fixes past events too. Maps stay on the server and are
+						never sent to browsers.
+					</p>
+				)}
 				<ReleasesSection
 					applicationId={application.id}
 					data={data}
@@ -66,9 +81,11 @@ function SourceMapsTab({
 							Needs a service account API key with the Editor role, not the public key
 						</span>
 					</div>
-					<UploadInstructions
-						target={{ url: sdkEndpoint(), applicationId: application.id, release }}
-					/>
+					{android ? (
+						<MappingUploadInstructions target={target} />
+					) : (
+						<UploadInstructions target={target} />
+					)}
 					{readOnly ? (
 						<span
 							data-testid="rum-sourcemaps-readonly"
@@ -77,7 +94,8 @@ function SourceMapsTab({
 							Viewers can see the uploads; admins and editors upload and delete them.
 						</span>
 					) : (
-						data && (
+						data &&
+						!android && (
 							<DropUpload
 								defaultRelease={data.releases?.length ? release : ''}
 								onUpload={actions.upload}

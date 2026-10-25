@@ -1,9 +1,17 @@
-import type { RumtypesPIIPolicyDTO } from 'api/generated/services/fuseScope.schemas';
+import type {
+	RumtypesPIIPolicyDTO,
+	RumtypesPlatformDTO,
+} from 'api/generated/services/fuseScope.schemas';
 
 export interface ApplicationFormValues {
 	name: string;
+	/** Chosen once, when the application is created. */
+	platform: RumtypesPlatformDTO;
 	environment: string;
+	/** Web only. */
 	allowedOrigins: string[];
+	/** Android only. */
+	allowedPackageNames: string[];
 	tracePropagationUrls: string[];
 	/** 0–100; the API takes a fraction. */
 	samplePercent: number;

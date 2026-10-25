@@ -1,5 +1,4 @@
 import { FormEvent, useState } from 'react';
-import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import { Button } from 'components/ui/button';
 import { apiErrorMessage } from 'lib/rum/apiError';
 
@@ -13,7 +12,6 @@ import WhereTag from './WhereTag';
 
 interface SettingsTabProps {
 	initial: ApplicationFormValues;
-	platform: RumtypesPlatformDTO;
 	/** Not created yet: the submit button creates it. */
 	creating: boolean;
 	readOnly: boolean;
@@ -38,7 +36,6 @@ function validate(values: ApplicationFormValues): FieldErrors {
 
 function SettingsTab({
 	initial,
-	platform,
 	creating,
 	readOnly,
 	saving,
@@ -113,7 +110,7 @@ function SettingsTab({
 				<ApplicationSection
 					values={values}
 					onChange={onChange}
-					platform={platform}
+					creating={creating}
 					errors={errors}
 					readOnly={readOnly}
 				/>

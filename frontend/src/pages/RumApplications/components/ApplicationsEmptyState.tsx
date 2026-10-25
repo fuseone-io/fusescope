@@ -18,7 +18,7 @@ const STEPS = [
 
 const PLATFORMS = [
 	{ name: 'Web', note: 'React, Vue, plain JS', available: true },
-	{ name: 'Android', note: 'Crashes, ANRs, app start', available: false },
+	{ name: 'Android', note: 'Crashes, ANRs, app start', available: true },
 	{ name: 'iOS', note: 'Crashes, app start', available: false },
 ];
 
@@ -90,7 +90,7 @@ function ApplicationsEmptyState({
 										: 'tw:flex tw:items-center tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:px-3 tw:py-2.5 tw:text-muted-foreground'
 								}
 							>
-								{platform.available ? (
+								{platform.name === 'Web' ? (
 									<AppWindow aria-hidden="true" className="tw:size-4" />
 								) : (
 									<Smartphone aria-hidden="true" className="tw:size-4" />
