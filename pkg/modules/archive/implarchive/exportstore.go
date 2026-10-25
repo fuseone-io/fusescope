@@ -283,3 +283,38 @@ func oneRowAffected(result sql.Result, err error) (bool, error) {
 	}
 	return rows == 1, nil
 }
+
+func (store *store) PinShard(ctx context.Context, table string, shard int, replicaPath string) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(archivetypes.NewShard(table, shard, replicaPath)).
+		On("CONFLICT DO NOTHING").
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't pin shard %d of %s", shard, table)
+	}
+
+	var pinned []*archivetypes.Shard
+	err = store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&pinned).
+		Where("table_name = ?", table).
+		WhereGroup(" AND ", func(query *bun.SelectQuery) *bun.SelectQuery {
+			return query.Where("shard = ?", shard).WhereOr("replica_path = ?", replicaPath)
+		}).
+		Scan(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the pinned shards of %s", table)
+	}
+	for _, other := range pinned {
+		if other.Shard != shard || other.ReplicaPath != replicaPath {
+			return errors.Newf(errors.TypeInvalidInput, archivetypes.ErrCodeShardMismatch, "shard %d of %s holds %s, but shard %d was pinned to %s; remote_servers was reordered", shard, table, replicaPath, other.Shard, other.ReplicaPath)
+		}
+	}
+
+	return nil
+}

@@ -2,6 +2,7 @@ package implarchive
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -11,9 +12,10 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/types/archivetypes"
 )
 
-// activeParts returns the replica's active parts of table that hold rows, by partition ID.
+// activeParts returns the replica's active parts of table that hold rows, by partition ID. A
+// part is first seen when it was written, so a hold survives restarts and handovers.
 func activeParts(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table) (map[string][]archivetypes.Part, error) {
-	rows, err := conn.Query(ctx, "SELECT partition_id, name, min_block_number, max_block_number, toInt64(data_version), rows FROM system.parts WHERE database = ? AND table = ? AND active AND rows > 0 ORDER BY partition_id, min_block_number", table.Database, table.Name)
+	rows, err := conn.Query(ctx, "SELECT partition_id, name, min_block_number, max_block_number, toInt64(data_version), rows, modification_time FROM system.parts WHERE database = ? AND table = ? AND active AND rows > 0 ORDER BY partition_id, min_block_number", table.Database, table.Name)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the parts of %s.%s", table.Database, table.Name)
 	}
@@ -23,7 +25,7 @@ func activeParts(ctx context.Context, conn clickhouse.Conn, table archivetypes.T
 	for rows.Next() {
 		var partitionID string
 		var part archivetypes.Part
-		if err := rows.Scan(&partitionID, &part.Name, &part.Range.Min, &part.Range.Max, &part.DataVersion, &part.Rows); err != nil {
+		if err := rows.Scan(&partitionID, &part.Name, &part.Range.Min, &part.Range.Max, &part.DataVersion, &part.Rows, &part.FirstSeen); err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the parts of %s.%s", table.Database, table.Name)
 		}
 		parts[partitionID] = append(parts[partitionID], part)
@@ -87,7 +89,7 @@ func statObjects(ctx context.Context, conn clickhouse.Conn, namedCollection stri
 	for rows.Next() {
 		var stat archivetypes.ObjectStat
 		var size, count uint64
-		if err := rows.Scan(&stat.File, &size, &stat.ETag, &count); err != nil {
+		if err := rows.Scan(&stat.File, &size, &stat.ETag, &count, &stat.Parts); err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read back the objects under %s", dir)
 		}
 		stat.Bytes, stat.Rows = int64(size), int64(count)
@@ -97,12 +99,45 @@ func statObjects(ctx context.Context, conn clickhouse.Conn, namedCollection stri
 	return stats, rows.Err()
 }
 
-func withQuerySettings(ctx context.Context, settings clickhouse.Settings, queryID string) context.Context {
-	return clickhouse.Context(ctx, clickhouse.WithSettings(settings), clickhouse.WithQueryID(queryID))
+// replicaPath is the replica path of table on the server, "" when it isn't replicated.
+func replicaPath(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table) (string, error) {
+	var path string
+	err := conn.QueryRow(ctx, "SELECT zookeeper_path FROM system.replicas WHERE database = ? AND table = ?", table.Database, table.Name).Scan(&path)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the replica path of %s.%s", table.Database, table.Name)
+	}
+
+	return path, nil
 }
 
-func querySettings(maxMemoryUsage int64, maxThreads int, rowGroupRows int) clickhouse.Settings {
+func writeBlob(ctx context.Context, conn clickhouse.Conn, namedCollection string, key string, content []byte) error {
+	batch, err := conn.PrepareBatch(ctx, archivetypes.WriteBlobStatement(namedCollection, key))
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't write %s", key)
+	}
+	if err := batch.Append(string(content)); err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't write %s", key)
+	}
+	if err := batch.Send(); err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't write %s", key)
+	}
+
+	return nil
+}
+
+// withQuerySettings bounds the query by timeout on the client too, so a stuck one can't hold
+// the cycle while its lease is renewed.
+func withQuerySettings(ctx context.Context, settings clickhouse.Settings, timeout time.Duration, queryID string) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	return clickhouse.Context(ctx, clickhouse.WithSettings(settings), clickhouse.WithQueryID(queryID)), cancel
+}
+
+func querySettings(maxMemoryUsage int64, maxThreads int, rowGroupRows int, timeout time.Duration) clickhouse.Settings {
 	settings := clickhouse.Settings{
+		"max_execution_time":                   int(timeout.Seconds()),
 		"max_threads":                          maxThreads,
 		"output_format_parquet_row_group_size": rowGroupRows,
 		"s3_truncate_on_insert":                0,

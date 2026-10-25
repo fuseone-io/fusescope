@@ -44,10 +44,10 @@ func TestExportStatement(t *testing.T) {
 }
 
 func TestObjectStatements(t *testing.T) {
-	assert.Equal(t, "SELECT _file, toUInt64(ifNull(_size, 0)), toString(ifNull(_etag, '')), count() FROM s3(`archive`, filename = 'fusescope/logs_v2/attempt/*.parquet', format = 'Parquet', structure = '_part String') GROUP BY ALL",
+	assert.Equal(t, "SELECT _file, toUInt64(ifNull(_size, 0)), toString(ifNull(_etag, '')), count(), groupUniqArray(_part) FROM s3(`archive`, filename = 'fusescope/logs_v2/attempt/*.parquet', format = 'Parquet', structure = '_part String') GROUP BY ALL",
 		StatObjectsStatement("archive", "fusescope/logs_v2/attempt"))
-	assert.Equal(t, "INSERT INTO FUNCTION s3(`archive`, filename = 'm.json', format = 'RawBLOB', structure = 'raw String') SELECT '{\"a\":\\'1\\'}'",
-		WriteBlobStatement("archive", "m.json", []byte(`{"a":'1'}`)))
+	assert.Equal(t, "INSERT INTO FUNCTION s3(`archive`, filename = 'm\\'s.json', format='RawBLOB', structure = 'raw String')",
+		WriteBlobStatement("archive", "m's.json"))
 }
 
 func TestNewPublication(t *testing.T) {
@@ -64,10 +64,12 @@ func TestNewPublication(t *testing.T) {
 		stats []ObjectStat
 		err   bool
 	}{
-		{name: "EveryPartWithItsRows", stats: []ObjectStat{{File: "20260903-15-0_6_6_0.parquet", Bytes: 100, ETag: `"b"`, Rows: 2}, {File: "20260903-15-0_1_5_1.parquet", Bytes: 200, ETag: `"a"`, Rows: 10}}},
-		{name: "PartMergedAwayDuringTheRead", stats: []ObjectStat{{File: "20260903-15-0_1_5_1.parquet", Bytes: 200, ETag: `"a"`, Rows: 10}}, err: true},
-		{name: "RowCountDiffers", stats: []ObjectStat{{File: "20260903-15-0_1_5_1.parquet", Rows: 9}, {File: "20260903-15-0_6_6_0.parquet", Rows: 2}}, err: true},
-		{name: "UnexpectedObject", stats: []ObjectStat{{File: "20260903-15-0_1_5_1.parquet", Rows: 10}, {File: "20260903-15-0_6_6_0.parquet", Rows: 2}, {File: "other.parquet", Rows: 1}}, err: true},
+		{name: "EveryPartWithItsRows", stats: []ObjectStat{{File: "20260903-15-0_6_6_0.parquet", Bytes: 100, ETag: `"b"`, Rows: 2, Parts: []string{"20260903-15-0_6_6_0"}}, {File: "20260903-15-0_1_5_1.parquet", Bytes: 200, ETag: `"a"`, Rows: 10, Parts: []string{"20260903-15-0_1_5_1"}}}},
+		{name: "PartMergedAwayDuringTheRead", stats: []ObjectStat{{File: "20260903-15-0_1_5_1.parquet", Bytes: 200, ETag: `"a"`, Rows: 10, Parts: []string{"20260903-15-0_1_5_1"}}}, err: true},
+		{name: "RowCountDiffers", stats: []ObjectStat{{File: "20260903-15-0_1_5_1.parquet", Rows: 9, Parts: []string{"20260903-15-0_1_5_1"}}, {File: "20260903-15-0_6_6_0.parquet", Rows: 2, Parts: []string{"20260903-15-0_6_6_0"}}}, err: true},
+		{name: "ObjectHoldsAnotherPart", stats: []ObjectStat{{File: "20260903-15-0_1_5_1.parquet", Rows: 10, Parts: []string{"20260903-15-0_1_4_1"}}, {File: "20260903-15-0_6_6_0.parquet", Rows: 2, Parts: []string{"20260903-15-0_6_6_0"}}}, err: true},
+		{name: "ObjectHoldsTwoParts", stats: []ObjectStat{{File: "20260903-15-0_1_5_1.parquet", Rows: 10, Parts: []string{"20260903-15-0_1_5_1", "20260903-15-0_6_6_0"}}, {File: "20260903-15-0_6_6_0.parquet", Rows: 2, Parts: []string{"20260903-15-0_6_6_0"}}}, err: true},
+		{name: "UnexpectedObject", stats: []ObjectStat{{File: "20260903-15-0_1_5_1.parquet", Rows: 10, Parts: []string{"20260903-15-0_1_5_1"}}, {File: "20260903-15-0_6_6_0.parquet", Rows: 2, Parts: []string{"20260903-15-0_6_6_0"}}, {File: "other.parquet", Rows: 1, Parts: []string{"other"}}}, err: true},
 	}
 
 	for _, testCase := range testCases {
@@ -95,7 +97,7 @@ func TestPublicationManifest(t *testing.T) {
 	attempt.ID = valuer.GenerateUUID()
 	location := ObjectLocation{Prefix: "fusescope", Table: "logs_v2", Day: time.Date(2026, 9, 3, 0, 0, 0, 0, time.UTC), Shard: 1, PartitionID: "20260903-15-0", AttemptID: attempt.ID.StringValue()}
 	parts := []Part{{Name: "20260903-15-0_1_5_1", Range: BlockRange{Min: 1, Max: 5}, DataVersion: 1, Rows: 10}}
-	publication, err := NewPublication(attempt, location, parts, []ObjectStat{{File: "20260903-15-0_1_5_1.parquet", Bytes: 200, ETag: "a", Rows: 10}})
+	publication, err := NewPublication(attempt, location, parts, []ObjectStat{{File: "20260903-15-0_1_5_1.parquet", Bytes: 200, ETag: "a", Rows: 10, Parts: []string{"20260903-15-0_1_5_1"}}})
 	require.NoError(t, err)
 	mappings := []ColumnMapping{{Name: "timestamp", SourceType: "UInt64", ExportType: "Int64"}}
 

@@ -485,3 +485,19 @@ func partNames(parts []*archivetypes.ArchivedPart) []string {
 	}
 	return names
 }
+
+func TestPinShard(t *testing.T) {
+	ctx := context.Background()
+
+	forEachStore(t, func(t *testing.T, store archivetypes.Store) {
+		require.NoError(t, store.PinShard(ctx, "logs_v2", 1, "/clickhouse/tables/u/01"))
+		require.NoError(t, store.PinShard(ctx, "logs_v2", 1, "/clickhouse/tables/u/01"), "a pinned shard keeps its path")
+		require.NoError(t, store.PinShard(ctx, "logs_v2_resource", 1, "/clickhouse/tables/r/01"), "shards are pinned per table")
+
+		err := store.PinShard(ctx, "logs_v2", 1, "/clickhouse/tables/u/02")
+		assert.True(t, errors.Asc(err, archivetypes.ErrCodeShardMismatch), "the shard number now names other data: %v", err)
+
+		err = store.PinShard(ctx, "logs_v2", 2, "/clickhouse/tables/u/01")
+		assert.True(t, errors.Asc(err, archivetypes.ErrCodeShardMismatch), "the data moved to another shard number: %v", err)
+	})
+}

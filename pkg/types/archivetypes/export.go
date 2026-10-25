@@ -34,6 +34,7 @@ type ObjectStat struct {
 	Bytes int64
 	ETag  string
 	Rows  int64
+	Parts []string
 }
 
 func LogsTables() []Table {
@@ -56,16 +57,19 @@ func ExportStatement(table Table, mappings []ColumnMapping, namedCollection stri
 		clickhousesql.Identifier(table.Database), clickhousesql.Identifier(table.Name), clickhousesql.StringLiteral(part))
 }
 
-// StatObjectsStatement reads the size, ETag and row count of every object under dir. The
-// structure lets an empty dir return no rows instead of failing.
+// StatObjectsStatement reads the size, ETag, row count and _part values of every object under
+// dir. The structure lets an empty dir return no rows instead of failing.
 func StatObjectsStatement(namedCollection string, dir string) string {
-	return fmt.Sprintf("SELECT _file, toUInt64(ifNull(_size, 0)), toString(ifNull(_etag, '')), count() FROM s3(%s, filename = %s, format = 'Parquet', structure = '_part String') GROUP BY ALL",
+	return fmt.Sprintf("SELECT _file, toUInt64(ifNull(_size, 0)), toString(ifNull(_etag, '')), count(), groupUniqArray(_part) FROM s3(%s, filename = %s, format = 'Parquet', structure = '_part String') GROUP BY ALL",
 		clickhousesql.Identifier(namedCollection), clickhousesql.StringLiteral(strings.TrimSuffix(dir, "/")+"/*.parquet"))
 }
 
-func WriteBlobStatement(namedCollection string, key string, content []byte) string {
-	return fmt.Sprintf("INSERT INTO FUNCTION s3(%s, filename = %s, format = 'RawBLOB', structure = 'raw String') SELECT %s",
-		clickhousesql.Identifier(namedCollection), clickhousesql.StringLiteral(key), clickhousesql.StringLiteral(string(content)))
+// WriteBlobStatement inserts one raw String row as the object at key. The content goes in
+// the data stream: as a literal it would be bound by max_query_size. format has no space
+// before '=', as clickhouse-go strips " FORMAT <word>" from batch inserts.
+func WriteBlobStatement(namedCollection string, key string) string {
+	return fmt.Sprintf("INSERT INTO FUNCTION s3(%s, filename = %s, format='RawBLOB', structure = 'raw String')",
+		clickhousesql.Identifier(namedCollection), clickhousesql.StringLiteral(key))
 }
 
 // NewPublication pairs each exported part with its object. Every part must have an object
@@ -82,6 +86,9 @@ func NewPublication(attempt *Attempt, location ObjectLocation, parts []Part, sta
 		stat, ok := byFile[part.Name+".parquet"]
 		if !ok || stat.Rows != int64(part.Rows) {
 			return nil, errors.Newf(errors.TypeInternal, ErrCodeObjectMismatch, "archive attempt %s read back %d rows of part %s, which has %d", attempt.ID, stat.Rows, part.Name, part.Rows)
+		}
+		if !slices.Equal(stat.Parts, []string{part.Name}) {
+			return nil, errors.Newf(errors.TypeInternal, ErrCodeObjectMismatch, "archive attempt %s read back rows of parts %v in the object of part %s", attempt.ID, stat.Parts, part.Name)
 		}
 		delete(byFile, part.Name+".parquet")
 
