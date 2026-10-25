@@ -14,6 +14,8 @@ var (
 	ErrCodeInvalidConfig = errors.MustNewCode("archive_invalid_config")
 
 	namedCollectionRegexp = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+	// s3() reads *, ? and {…} in a path as globs.
+	prefixRegexp = regexp.MustCompile(`^[A-Za-z0-9._=-]+(/[A-Za-z0-9._=-]+)*$`)
 )
 
 const (
@@ -132,8 +134,8 @@ func (c SignalConfig) validate(key string, interval time.Duration) error {
 	if !namedCollectionRegexp.MatchString(c.NamedCollection) {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidConfig, "%s.named_collection must be a ClickHouse identifier", key)
 	}
-	if strings.HasPrefix(c.Prefix, "/") || slices.Contains(strings.Split(c.Prefix, "/"), "..") {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidConfig, "%s.prefix must not start with / or contain a .. segment", key)
+	if !prefixRegexp.MatchString(c.Prefix) || slices.Contains(strings.Split(c.Prefix, "/"), "..") {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidConfig, "%s.prefix must be /-separated segments of A-Z, a-z, 0-9, '.', '_', '=' and '-', with no .. segment", key)
 	}
 
 	backstop := time.Duration(c.BackstopDays) * 24 * time.Hour

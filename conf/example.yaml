@@ -633,6 +633,7 @@ archive:
     enabled: false
     # ClickHouse named collection holding the bucket endpoint and credentials.
     named_collection: ""
+    # Object key prefix: /-separated segments of A-Z, a-z, 0-9, '.', '_', '=' and '-'.
     prefix: ""
     # Days past retention that unarchived data is kept, counted from ingestion.
     # 2–30, and at least twice the interval.
