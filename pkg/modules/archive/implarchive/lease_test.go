@@ -16,21 +16,28 @@ import (
 
 const testLeaseDuration = 400 * time.Millisecond
 
-// renewalFailingStore fails every renewal after the first acquisition with renewErr.
+// renewalFailingStore fails every renewal after the first acquisition with renewErr, and
+// moves renewed leases to a new epoch with newEpoch.
 type renewalFailingStore struct {
 	archivetypes.Store
 	renewErr func(renewal int64) error
+	newEpoch bool
 	calls    atomic.Int64
 }
 
 func (store *renewalFailingStore) AcquireLease(ctx context.Context, signal string, holder string, expiresAt time.Time) (*archivetypes.Lease, error) {
 	call := store.calls.Add(1)
-	if call > 1 && expiresAt.After(time.Now()) {
+	renewal := call > 1 && expiresAt.After(time.Now())
+	if renewal {
 		if err := store.renewErr(call - 1); err != nil {
 			return nil, err
 		}
 	}
-	return store.Store.AcquireLease(ctx, signal, holder, expiresAt)
+	lease, err := store.Store.AcquireLease(ctx, signal, holder, expiresAt)
+	if err == nil && renewal && store.newEpoch {
+		lease.Epoch++
+	}
+	return lease, err
 }
 
 func TestRunUnderLease(t *testing.T) {
@@ -66,8 +73,10 @@ func TestRunUnderLeaseRenewal(t *testing.T) {
 	testCases := []struct {
 		name       string
 		renewErr   func(renewal int64) error
+		newEpoch   bool
 		wantCancel bool
 	}{
+		{name: "RenewedAtANewEpoch_Cancels", renewErr: func(int64) error { return nil }, newEpoch: true, wantCancel: true},
 		{name: "Renewed_KeepsRunning", renewErr: func(int64) error { return nil }},
 		{name: "TakenOver_Cancels", renewErr: func(int64) error {
 			return errors.New(errors.TypeAlreadyExists, archivetypes.ErrCodeLeaseHeld, "held by b")
@@ -83,7 +92,7 @@ func TestRunUnderLeaseRenewal(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			store := &renewalFailingStore{Store: newTestStore(t), renewErr: testCase.renewErr}
+			store := &renewalFailingStore{Store: newTestStore(t), renewErr: testCase.renewErr, newEpoch: testCase.newEpoch}
 			started := time.Now()
 
 			err := runUnderLease(context.Background(), store, logger, "logs", "a", testLeaseDuration, func(ctx context.Context, _ *archivetypes.Lease) error {

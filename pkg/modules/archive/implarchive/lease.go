@@ -38,7 +38,7 @@ func runUnderLease(ctx context.Context, store archivetypes.Store, logger *slog.L
 	renewed := make(chan struct{})
 	go func() {
 		defer close(renewed)
-		renewLease(leaseCtx, cancel, store, logger, name, holder, duration, lease.ExpiresAt)
+		renewLease(leaseCtx, cancel, store, logger, name, holder, duration, lease)
 	}()
 
 	err = fn(leaseCtx, lease)
@@ -51,10 +51,12 @@ func runUnderLease(ctx context.Context, store archivetypes.Store, logger *slog.L
 	return err
 }
 
-// renewLease gives the lease up once another holder has it, or once it would expire before
-// the next renewal. A renewal failing in between is retried.
-func renewLease(ctx context.Context, cancel context.CancelFunc, store archivetypes.Store, logger *slog.Logger, name string, holder string, duration time.Duration, expiresAt time.Time) {
+// renewLease gives the lease up once another holder has it, once it would expire before the
+// next renewal, or once a late renewal moved it to a new epoch, which fences fn's commits. A
+// renewal failing in between is retried.
+func renewLease(ctx context.Context, cancel context.CancelFunc, store archivetypes.Store, logger *slog.Logger, name string, holder string, duration time.Duration, lease *archivetypes.Lease) {
 	interval := duration / 4
+	expiresAt := lease.ExpiresAt
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -66,10 +68,15 @@ func renewLease(ctx context.Context, cancel context.CancelFunc, store archivetyp
 		}
 
 		renewedUntil := time.Now().Add(duration)
-		_, err := store.AcquireLease(ctx, name, holder, renewedUntil)
-		if err == nil {
+		renewed, err := store.AcquireLease(ctx, name, holder, renewedUntil)
+		if err == nil && renewed.Epoch == lease.Epoch {
 			expiresAt = renewedUntil
 			continue
+		}
+		if err == nil {
+			logger.WarnContext(ctx, "archive lease expired before its renewal, stopping", slog.String("lease", name), slog.Int64("epoch", lease.Epoch), slog.Int64("renewed_epoch", renewed.Epoch))
+			cancel()
+			return
 		}
 		if ctx.Err() != nil {
 			return
