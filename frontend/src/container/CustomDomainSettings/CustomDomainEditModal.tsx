@@ -7,6 +7,7 @@ import { Input } from '@signozhq/ui/input';
 import { RenderErrorResponseDTO } from 'api/generated/services/fuseScope.schemas';
 import { AxiosError } from 'axios';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { FUSESCOPE_ISSUES_URL } from 'constants/product';
 
 interface CustomDomainEditModalProps {
 	isOpen: boolean;
@@ -123,7 +124,7 @@ export default function CustomDomainEditModal({
 					Enter your preferred subdomain to create a unique URL for your team. Need
 					help?{' '}
 					<a
-						href="https://signoz.io/support"
+						href={FUSESCOPE_ISSUES_URL}
 						target="_blank"
 						rel="noreferrer"
 						className="edit-modal-link"

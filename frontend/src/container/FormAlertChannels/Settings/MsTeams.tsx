@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import { MsTeamsChannel } from '../../CreateAlertChannels/config';
 
@@ -17,7 +18,11 @@ function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 					title: (
 						<MarkdownRenderer
 							markdownContent={t('tooltip_ms_teams_url')}
-							variables={{}}
+							variables={{
+								docsUrl: fuseScopeDocsUrl(
+									'/alerts/notification-channels/#channel-types',
+								),
+							}}
 						/>
 					),
 					overlayInnerStyle: { maxWidth: 400 },

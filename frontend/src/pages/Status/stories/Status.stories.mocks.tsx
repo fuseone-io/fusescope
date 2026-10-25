@@ -19,7 +19,7 @@ type VersionState = (typeof VERSION_STATES)[number];
 const CURRENT = 'v0.104.2';
 
 const LATEST_RELEASE_URL =
-	'https://api.github.com/repos/signoz/signoz/releases/latest';
+	'https://api.github.com/repos/fuseone-io/fusescope/releases/latest';
 
 /**
  * The page reads both versions off redux, which the app layout fills from these
@@ -59,7 +59,7 @@ export const statusMocks = defineStoryMocks({
 					ctx.json({
 						tag_name: latest,
 						name: latest,
-						html_url: `https://github.com/SigNoz/signoz/releases/tag/${latest}`,
+						html_url: `https://github.com/fuseone-io/fusescope/releases/tag/${latest}`,
 					}),
 				),
 			),

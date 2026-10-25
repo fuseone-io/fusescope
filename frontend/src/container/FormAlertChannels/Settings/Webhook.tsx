@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Input } from '@signozhq/ui/input';
 import { Form } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import { WebhookChannel } from '../../CreateAlertChannels/config';
 
@@ -18,7 +19,11 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 					title: (
 						<MarkdownRenderer
 							markdownContent={t('tooltip_webhook_url')}
-							variables={{}}
+							variables={{
+								docsUrl: fuseScopeDocsUrl(
+									'/alerts/notification-channels/#channel-types',
+								),
+							}}
 						/>
 					),
 					overlayInnerStyle: { maxWidth: 400 },

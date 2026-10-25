@@ -47,7 +47,7 @@ export const versionResponse = {
 export const latestGithubReleaseResponse = {
 	tag_name: 'v0.0.0',
 	name: 'v0.0.0',
-	html_url: 'https://github.com/SigNoz/signoz/releases/tag/v0.0.0',
+	html_url: 'https://github.com/fuseone-io/fusescope/releases/tag/v0.0.0',
 };
 
 /**

@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import { SlackChannel } from '../../CreateAlertChannels/config';
 
@@ -19,7 +20,11 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 					title: (
 						<MarkdownRenderer
 							markdownContent={t('tooltip_slack_url')}
-							variables={{}}
+							variables={{
+								docsUrl: fuseScopeDocsUrl(
+									'/alerts/notification-channels/#channel-types',
+								),
+							}}
 						/>
 					),
 					overlayInnerStyle: { maxWidth: 400 },
