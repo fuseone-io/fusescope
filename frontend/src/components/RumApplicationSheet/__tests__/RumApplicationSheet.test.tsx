@@ -156,6 +156,24 @@ describe('RumApplicationSheet', () => {
 		);
 	});
 
+	it('offers no origin to add for an Android application', async () => {
+		mockServer({}, { ...APP, platform: 'android', allowedOrigins: [] });
+		render(
+			<RumApplicationSheet
+				target={{ mode: 'edit', applicationId: 'app-1' }}
+				initialTab="install"
+				onClose={jest.fn()}
+			/>,
+		);
+
+		await expect(screen.findByTestId('rum-rejection')).resolves.toHaveTextContent(
+			'origin http://localhost:3360 is not allowed',
+		);
+		expect(
+			screen.queryByTestId('rum-rejection-add-origin'),
+		).not.toBeInTheDocument();
+	});
+
 	it('refuses a package name that is not an applicationId', async () => {
 		mockServer({});
 		const user = userEvent.setup({ pointerEventsCheck: 0 });

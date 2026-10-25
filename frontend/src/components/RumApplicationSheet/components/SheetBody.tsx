@@ -1,3 +1,5 @@
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
+
 import { ApplicationSheetState } from '../hooks/useApplicationSheet';
 import { SheetActions } from '../hooks/useSheetActions';
 import { initialFormValues, snippetKey } from '../utils/sheetValues';
@@ -42,7 +44,11 @@ function SheetBody({
 				publicKey={snippetKey(keys, revealed)}
 				revealed={sheet.isNew ? revealed : undefined}
 				status={sheet.status}
-				onAddOrigin={readOnly ? undefined : actions.addOrigin}
+				onAddOrigin={
+					readOnly || application.platform === RumtypesPlatformDTO.android
+						? undefined
+						: actions.addOrigin
+				}
 				onBack={(): void => sheet.setTab('settings')}
 				onDone={onClose}
 			/>
