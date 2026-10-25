@@ -52,7 +52,7 @@ function IntegrationDetailHeader(
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const { user } = useAppContext();
-	const canUpdate = user.role !== USER_ROLES.VIEWER;
+	const canManage = user.role !== USER_ROLES.VIEWER;
 
 	const { notifications } = useNotifications();
 
@@ -123,7 +123,7 @@ function IntegrationDetailHeader(
 				}
 				actions={
 					<span className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-						{update && canUpdate && !isLoading && (
+						{update && canManage && !isLoading && (
 							<IntegrationUpdateButton
 								integrationId={id}
 								title={title}
@@ -131,17 +131,21 @@ function IntegrationDetailHeader(
 								onUpdated={onUnInstallSuccess}
 							/>
 						)}
-						<Button
-							variant={isConnectionStateNotInstalled ? 'default' : 'outline'}
-							data-testid="integration-connect-button"
-							disabled={isInstallLoading || isLoading}
-							onClick={handleConnectClick}
-						>
-							<ArrowLeftRight aria-hidden="true" />
-							<span className="translate-safe">
-								{isConnectionStateNotInstalled ? `Connect ${title}` : `Test Connection`}
-							</span>
-						</Button>
+						{(canManage || !isConnectionStateNotInstalled) && (
+							<Button
+								variant={isConnectionStateNotInstalled ? 'default' : 'outline'}
+								data-testid="integration-connect-button"
+								disabled={isInstallLoading || isLoading}
+								onClick={handleConnectClick}
+							>
+								<ArrowLeftRight aria-hidden="true" />
+								<span className="translate-safe">
+									{isConnectionStateNotInstalled
+										? `Connect ${title}`
+										: `Test Connection`}
+								</span>
+							</Button>
+						)}
 					</span>
 				}
 			/>

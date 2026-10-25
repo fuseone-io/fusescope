@@ -189,4 +189,35 @@ describe('Integration detail', () => {
 		).resolves.toBeInTheDocument();
 		expect(screen.queryByTestId('integration-update-button')).toBeNull();
 	});
+
+	it('does not offer the install to viewers', async () => {
+		serveDetail(() => ({ ...detail('1.0.0', '1.0.0'), installation: null }));
+		renderDetail(USER_ROLES.VIEWER);
+
+		await expect(
+			screen.findByText(SUMMARY.description),
+		).resolves.toBeInTheDocument();
+		expect(screen.queryByTestId('integration-connect-button')).toBeNull();
+	});
+
+	it('offers the install to editors', async () => {
+		serveDetail(() => ({ ...detail('1.0.0', '1.0.0'), installation: null }));
+		renderDetail(USER_ROLES.EDITOR);
+
+		await expect(screen.findByText('Connect Redis')).resolves.toBeInTheDocument();
+		expect(screen.getByTestId('integration-connect-button')).toBeEnabled();
+	});
+
+	it('does not offer the removal to viewers', async () => {
+		serveDetail(() => detail('1.0.0', '1.0.0'));
+		renderDetail(USER_ROLES.VIEWER);
+
+		await expect(
+			screen.findByTestId('integration-installed-version'),
+		).resolves.toBeInTheDocument();
+		expect(screen.getByTestId('integration-connect-button')).toHaveTextContent(
+			'Test Connection',
+		);
+		expect(screen.queryByTestId('uninstall-integration-bar')).toBeNull();
+	});
 });
