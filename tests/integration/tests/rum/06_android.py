@@ -154,6 +154,30 @@ def test_android_crash_grouped_and_retraced(
     assert unmapped["frames"][0]["original"] is None
 
 
+def test_android_r8_mapping_multipart_field_order(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    android = create_rum_application(signoz, token, {"name": f"android-{uuid.uuid4().hex[:8]}", "platform": "android", "environment": "production", "allowedPackageNames": [PACKAGE]})
+    _, editor_key = create_service_account_with_key(signoz, token, f"gradle-{uuid.uuid4().hex[:8]}", role="signoz-editor")
+    url = signoz.self.host_configs["8080"].get(f"{RUM_APPLICATIONS}/{android['id']}/mappings")
+    mapping = ("file", ("mapping.txt", MAPPING, "text/plain"))
+
+    for release, parts in [
+        ("3.0.0", [("release", (None, "3.0.0")), ("version_code", (None, "300")), ("map_id", (None, "7e4c1a9")), mapping]),
+        ("3.0.1", [("build_type", (None, "release")), mapping, ("variant", (None, "prodRelease")), ("release", (None, "3.0.1"))]),
+    ]:
+        response = requests.post(url, files=parts, headers={SIGNOZ_API_KEY_HEADER: editor_key}, timeout=30)
+        assert response.status_code == HTTPStatus.CREATED, response.text
+        uploaded = response.json()["data"]
+        assert (uploaded["release"], [(file["path"], file["sizeBytes"]) for file in uploaded["files"]]) == (release, [("/mapping.txt", len(MAPPING))]), "only the part named file is the mapping"
+
+    response = requests.post(url, params={"release": "3.0.2"}, files=[("mapping", ("mapping.txt", MAPPING, "text/plain"))], headers={SIGNOZ_API_KEY_HEADER: editor_key}, timeout=30)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, "a body without a file part has no mapping"
+
+
 def test_android_crash_anr_and_handled_grouped_apart(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
