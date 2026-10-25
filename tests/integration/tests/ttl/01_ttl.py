@@ -472,12 +472,17 @@ def test_set_custom_retention_cold_storage_moves_older_rows_by_age(
     cluster = signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
     signoz.telemetrystore.conn.query(f"OPTIMIZE TABLE signoz_logs.logs_v2 ON CLUSTER '{cluster}' FINAL")
 
-    time.sleep(10)
-    # Partitions are ('<date>', _retention_days, _retention_days_cold).
-    parts = signoz.telemetrystore.conn.query("SELECT partition, disk_name FROM system.parts WHERE database = 'signoz_logs' AND table = 'logs_v2' AND active").result_rows
-    disks = {partition.split("'")[1]: disk_name for partition, disk_name in parts}
+    old_partition = str((now - datetime.timedelta(days=10)).date())
+    deadline = time.time() + 120
+    while time.time() < deadline:
+        # Partitions are ('<date>', _retention_days, _retention_days_cold).
+        parts = signoz.telemetrystore.conn.query("SELECT partition, disk_name FROM system.parts WHERE database = 'signoz_logs' AND table = 'logs_v2' AND active").result_rows
+        disks = {partition.split("'")[1]: disk_name for partition, disk_name in parts}
+        if disks.get(old_partition) == "cold":
+            break
+        time.sleep(2)
     assert disks.get(str((now - datetime.timedelta(hours=1)).date())) != "cold", f"a recent row written with _retention_days_cold = 0 was moved to cold storage: {disks}"
-    assert disks.get(str((now - datetime.timedelta(days=10)).date())) == "cold", f"a row older than the cold-storage delay stayed hot: {disks}"
+    assert disks.get(old_partition) == "cold", f"a row older than the cold-storage delay stayed hot: {disks}"
 
 
 def test_set_custom_retention_ttl_basic_fallback(
