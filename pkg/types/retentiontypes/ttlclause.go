@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 const (
@@ -53,6 +54,15 @@ func ColdStorageVolume(createTableQuery string) string {
 		return ""
 	}
 	return stringLiteralUnescapeRule.Replace(match[1])
+}
+
+// ValidateColdStorage refuses a move rule without cold-storage days: rows would move as soon
+// as the TTL is materialized.
+func ValidateColdStorage(volume string, days int) error {
+	if volume != "" && days == 0 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the TTL moves rows to volume %s without cold-storage days; set them in the retention settings", volume)
+	}
+	return nil
 }
 
 func UnixNanoTime(column string) string {

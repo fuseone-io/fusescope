@@ -38,3 +38,8 @@ func NewSignal(signal string, backstopDays int) *Signal {
 func (signal *Signal) BackstopPending(days int) bool {
 	return signal == nil || signal.AppliedAt == nil || signal.BackstopDays != days
 }
+
+// BackstopInterrupted reports whether an apply of days started and never finished.
+func (signal *Signal) BackstopInterrupted(days int) bool {
+	return signal != nil && signal.AppliedAt == nil && signal.BackstopDays == days
+}
