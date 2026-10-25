@@ -218,7 +218,7 @@ func TestModuleSymbolicateUploadedSourceMap(t *testing.T) {
 	missing, err := module.symbolicator.Symbolicate(ctx, id, "1.8.0", frames)
 	require.NoError(t, err)
 	assert.False(t, missing.Symbolicated)
-	assert.Equal(t, &rumtypes.MissingSourceMap{Release: "1.8.0"}, missing.MissingSourceMap)
+	assert.Equal(t, &rumtypes.MissingSourceMap{Release: "1.8.0", Kind: rumtypes.ArtifactKindSourceMap}, missing.MissingSourceMap)
 
 	_, err = module.UploadSourceMaps(ctx, orgID, id, "1.8.0", "ci@example.com", newTestParts(nil, "/assets/main.js.map", readFixture(t, "main.js.map")))
 	require.NoError(t, err)
@@ -231,8 +231,8 @@ func TestModuleSymbolicateUploadedSourceMap(t *testing.T) {
 		frames       []rumtypes.StackFrame
 	}{
 		{name: "ReleaseWithMap_Symbolicated", release: "1.8.0", symbolicated: true},
-		{name: "ReleaseWithoutMap_Missing", release: "1.7.4", missing: &rumtypes.MissingSourceMap{Release: "1.7.4"}},
-		{name: "NoRelease_Missing", release: "", missing: &rumtypes.MissingSourceMap{}},
+		{name: "ReleaseWithoutMap_Missing", release: "1.7.4", missing: &rumtypes.MissingSourceMap{Release: "1.7.4", Kind: rumtypes.ArtifactKindSourceMap}},
+		{name: "NoRelease_Missing", release: "", missing: &rumtypes.MissingSourceMap{Kind: rumtypes.ArtifactKindSourceMap}},
 		{name: "InlineScript_NeverMissing", release: "1.7.4", frames: []rumtypes.StackFrame{{Function: "onclick", File: "https://shop.example.com/checkout?step=2", Line: 12, Column: 3}, {Function: "", File: "<anonymous>"}}},
 	}
 	for _, testCase := range testCases {
@@ -276,7 +276,7 @@ func TestModuleCleanupSourceMaps(t *testing.T) {
 
 	for _, id := range []valuer.UUID{expiring, kept} {
 		for _, release := range []string{"1.0.0", "2.0.0"} {
-			file := rumtypes.NewStorableSourceMap(orgID, id, release, "/a.js.map", "", 2, "ci@example.com", old)
+			file := rumtypes.NewStorableSourceMap(orgID, id, rumtypes.ArtifactKindSourceMap, release, "/a.js.map", "", 2, "ci@example.com", old)
 			if release == "2.0.0" {
 				file.TimeAuditable = types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()}
 			}

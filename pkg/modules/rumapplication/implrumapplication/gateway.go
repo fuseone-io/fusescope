@@ -28,12 +28,13 @@ const (
 )
 
 var (
-	ErrCodeGatewayDisabled  = errors.MustNewCode("rum_gateway_disabled")
-	ErrCodeOriginNotAllowed = errors.MustNewCode("rum_origin_not_allowed")
-	ErrCodeRateLimited      = errors.MustNewCode("rum_rate_limited")
-	ErrCodePayloadTooLarge  = errors.MustNewCode("rum_payload_too_large")
-	ErrCodePayloadInvalid   = errors.MustNewCode("rum_payload_invalid")
-	ErrCodeCollector        = errors.MustNewCode("rum_collector_unavailable")
+	ErrCodeGatewayDisabled   = errors.MustNewCode("rum_gateway_disabled")
+	ErrCodeOriginNotAllowed  = errors.MustNewCode("rum_origin_not_allowed")
+	ErrCodePackageNotAllowed = errors.MustNewCode("rum_package_not_allowed")
+	ErrCodeRateLimited       = errors.MustNewCode("rum_rate_limited")
+	ErrCodePayloadTooLarge   = errors.MustNewCode("rum_payload_too_large")
+	ErrCodePayloadInvalid    = errors.MustNewCode("rum_payload_invalid")
+	ErrCodeCollector         = errors.MustNewCode("rum_collector_unavailable")
 )
 
 type gateway struct {
@@ -45,10 +46,12 @@ type gateway struct {
 	settings      factory.ScopedProviderSettings
 }
 
-// rejection is a refused request the setup screen reports.
+// rejection is a refused request the setup screen reports, with the value
+// it was refused for when not the origin.
 type rejection struct {
-	err    error
-	reason rumtypes.RejectionReason
+	err      error
+	reason   rumtypes.RejectionReason
+	observed string
 }
 
 func NewGateway(module rumapplication.Module, config rumapplication.Config, providerSettings factory.ProviderSettings) rumapplication.Gateway {
@@ -103,7 +106,11 @@ func (gateway *gateway) serve(rw http.ResponseWriter, req *http.Request, signal 
 	response, encoding, refused := gateway.accept(req, application, keyID, signal)
 	if refused != nil {
 		if refused.reason != (rumtypes.RejectionReason{}) {
-			gateway.module.ObserveRejection(application.ID, refused.reason, origin)
+			observed := origin
+			if refused.reason == rumtypes.RejectionReasonPackageNotAllowed {
+				observed = refused.observed
+			}
+			gateway.module.ObserveRejection(application.ID, refused.reason, observed)
 		}
 		writeError(rw, refused.err)
 		return
@@ -152,9 +159,9 @@ func (gateway *gateway) accept(req *http.Request, application *rumtypes.Applicat
 		return nil, encoding, &rejection{err: err, reason: reason}
 	}
 
-	payload, batch, err := signal.process(application, body, encoding)
-	if err != nil {
-		return nil, encoding, &rejection{err: err, reason: rumtypes.RejectionReasonInvalidPayload}
+	payload, batch, refused := signal.process(application, body, encoding)
+	if refused != nil {
+		return nil, encoding, refused
 	}
 
 	if err := gateway.forward(req.Context(), signal.path, payload); err != nil {

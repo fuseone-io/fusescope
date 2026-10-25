@@ -37,6 +37,7 @@ func TestRUMRoutesAccess(t *testing.T) {
 		{name: "ListRUMSessions", verb: coretypes.VerbRead, roles: readers},
 		{name: "GetRUMSession", verb: coretypes.VerbRead, roles: readers},
 		{name: "UploadRUMSourceMaps", verb: coretypes.VerbUpdate, roles: managers},
+		{name: "UploadRUMR8Mapping", verb: coretypes.VerbUpdate, roles: managers},
 		{name: "ListRUMSourceMaps", verb: coretypes.VerbRead, roles: readers},
 		{name: "DeleteRUMSourceMaps", verb: coretypes.VerbUpdate, roles: managers},
 		{name: "DeleteRUMSourceMap", verb: coretypes.VerbUpdate, roles: managers},

@@ -68,7 +68,7 @@ func (provider *provider) addRUMRoutes(router *mux.Router) error {
 
 func (provider *provider) rumRoutes() []rumRoute {
 	applications, application, keys := "/api/v1/rum/applications", "/api/v1/rum/applications/{id}", "/api/v1/rum/applications/{id}/keys"
-	views, errorGroups, sessions, sourceMaps := application+"/views", application+"/errors", application+"/sessions", application+"/sourcemaps"
+	views, errorGroups, sessions, sourceMaps, mappings := application+"/views", application+"/errors", application+"/sessions", application+"/sourcemaps", application+"/mappings"
 	query := " Defaults to the last 24 hours; ranges are at most 31 days. release and environment filter on service.version and deployment.environment.name."
 	notFound := []int{http.StatusBadRequest, http.StatusNotFound}
 	managers := []string{authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName}
@@ -158,8 +158,14 @@ func (provider *provider) rumRoutes() []rumRoute {
 			Response: new(rumtypes.GettableUploadedSourceMaps), ResponseContentType: "application/json", SuccessStatusCode: http.StatusCreated,
 			ErrorStatusCodes: []int{http.StatusBadRequest, http.StatusNotFound, http.StatusRequestEntityTooLarge},
 		}},
+		{path: mappings, method: http.MethodPost, handle: provider.rumApplicationHandler.UploadR8Mapping, verb: coretypes.VerbUpdate, roles: managers, openAPIDef: handler.OpenAPIDef{
+			ID: "UploadRUMR8Mapping", Summary: "Upload RUM R8 mapping", Description: "Stores the R8 or ProGuard mapping.txt of an Android application's release, replacing the release's mapping if it has one. JVM stack traces of events whose service.version equals the release are retraced with it when read. The body is the mapping itself (any content type but multipart, optionally with Content-Encoding: gzip), or multipart/form-data with the mapping in a part named file and the release in a release field. release comes from the query, or from that field. A body that is not a mapping, empty or larger than the file limit (50 MB by default, after decompression) is refused with 400; more than the application's quota, 2 GB by default, with 413. Uploads share the source map store, limits and retention, and are listed and deleted with the sourcemaps endpoints. Use an API key with the Editor role in SigNoz-Api-Key; the public RUM key is not accepted.",
+			Request: new(rumtypes.PostableR8Mapping), RequestContentType: "multipart/form-data", RequestQuery: new(rumtypes.PostableR8MappingParams),
+			Response: new(rumtypes.GettableUploadedSourceMaps), ResponseContentType: "application/json", SuccessStatusCode: http.StatusCreated,
+			ErrorStatusCodes: []int{http.StatusBadRequest, http.StatusNotFound, http.StatusRequestEntityTooLarge},
+		}},
 		{path: sourceMaps, method: http.MethodGet, handle: provider.rumApplicationHandler.ListSourceMaps, verb: coretypes.VerbRead, roles: readers, openAPIDef: handler.OpenAPIDef{
-			ID: "ListRUMSourceMaps", Summary: "List RUM source maps", Description: "Returns the application's releases with source maps, newest upload first, with their size, uploader, last use and expiry, plus the storage used, the limits and the retention settings. With release, returns that release and its files.",
+			ID: "ListRUMSourceMaps", Summary: "List RUM source maps", Description: "Returns the application's releases with source maps or R8 mappings, newest upload first, with their size, uploader, last use and expiry, plus the storage used, the limits and the retention settings. With release, returns that release and its files.",
 			RequestQuery: new(rumtypes.ListSourceMapsParams),
 			Response:     new(rumtypes.GettableSourceMaps), ResponseContentType: "application/json", SuccessStatusCode: http.StatusOK, ErrorStatusCodes: notFound,
 		}},

@@ -3,11 +3,14 @@ package implrumapplication
 import (
 	"container/list"
 	"sync"
-
-	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
 )
 
-// sourceMapCache keeps decoded maps by file id, least recently used out
+// cachedArtifact is a parsed source map or R8 mapping.
+type cachedArtifact interface {
+	Size() int64
+}
+
+// sourceMapCache keeps parsed artifacts by file id, least recently used out
 // first, within capacity bytes of their estimated memory.
 type sourceMapCache struct {
 	mu       sync.Mutex
@@ -18,15 +21,15 @@ type sourceMapCache struct {
 }
 
 type sourceMapCacheEntry struct {
-	key       string
-	sourceMap *rumtypes.SourceMap
+	key      string
+	artifact cachedArtifact
 }
 
 func newSourceMapCache(capacity int64) *sourceMapCache {
 	return &sourceMapCache{capacity: capacity, order: list.New(), entries: map[string]*list.Element{}}
 }
 
-func (cache *sourceMapCache) Get(key string) (*rumtypes.SourceMap, bool) {
+func (cache *sourceMapCache) Get(key string) (cachedArtifact, bool) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
@@ -35,19 +38,19 @@ func (cache *sourceMapCache) Get(key string) (*rumtypes.SourceMap, bool) {
 		return nil, false
 	}
 	cache.order.MoveToFront(element)
-	return element.Value.(*sourceMapCacheEntry).sourceMap, true
+	return element.Value.(*sourceMapCacheEntry).artifact, true
 }
 
-func (cache *sourceMapCache) Add(key string, sourceMap *rumtypes.SourceMap) {
+func (cache *sourceMapCache) Add(key string, artifact cachedArtifact) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
-	if sourceMap.Size() > cache.capacity {
+	if artifact.Size() > cache.capacity {
 		return
 	}
 	cache.remove(key)
-	cache.entries[key] = cache.order.PushFront(&sourceMapCacheEntry{key: key, sourceMap: sourceMap})
-	cache.size += sourceMap.Size()
+	cache.entries[key] = cache.order.PushFront(&sourceMapCacheEntry{key: key, artifact: artifact})
+	cache.size += artifact.Size()
 	for cache.size > cache.capacity {
 		cache.remove(cache.order.Back().Value.(*sourceMapCacheEntry).key)
 	}
@@ -74,5 +77,5 @@ func (cache *sourceMapCache) remove(key string) {
 	}
 	cache.order.Remove(element)
 	delete(cache.entries, key)
-	cache.size -= element.Value.(*sourceMapCacheEntry).sourceMap.Size()
+	cache.size -= element.Value.(*sourceMapCacheEntry).artifact.Size()
 }

@@ -3,6 +3,7 @@ package rumtypes
 import (
 	"encoding/json"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ const (
 	maxEnvironmentLength = 64
 	maxListLength        = 50
 	anyOrigin            = "*"
+	packageWildcard      = ".*"
 )
 
 var (
@@ -31,8 +33,10 @@ var (
 	PlatformIOS     = Platform{valuer.NewString("ios")}
 )
 
-// Platform is the kind of client an application ingests from. Only web is
-// accepted today; android and ios are reserved.
+var packageNamePattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$`)
+
+// Platform is the kind of client an application ingests from. ios is
+// reserved.
 type Platform struct{ valuer.String }
 
 type Application struct {
@@ -42,7 +46,8 @@ type Application struct {
 	Name                 string            `json:"name" required:"true"`
 	Platform             Platform          `json:"platform" required:"true"`
 	Environment          string            `json:"environment" required:"true"`
-	AllowedOrigins       []string          `json:"allowedOrigins" required:"true" description:"Browser origins allowed to ingest, e.g. https://shop.example.com or https://*.example.com; * allows any."`
+	AllowedOrigins       []string          `json:"allowedOrigins" required:"true" description:"Browser origins allowed to ingest, e.g. https://shop.example.com or https://*.example.com; * allows any. Web only."`
+	AllowedPackageNames  []string          `json:"allowedPackageNames" required:"true" description:"Android package names allowed to ingest, matched against the app.package.name resource attribute, e.g. com.example.shop or com.example.*; * allows any. Android only."`
 	TracePropagationURLs []string          `json:"tracePropagationUrls" required:"true" description:"URL prefixes of APIs the SDK sends traceparent to."`
 	SampleRate           float64           `json:"sampleRate" required:"true" description:"Fraction of sessions the SDK records, from 0 to 1."`
 	PIIPolicy            PIIPolicy         `json:"piiPolicy" required:"true"`
@@ -70,6 +75,7 @@ type PostableApplication struct {
 	Platform             Platform          `json:"platform" required:"true"`
 	Environment          string            `json:"environment" required:"true"`
 	AllowedOrigins       []string          `json:"allowedOrigins"`
+	AllowedPackageNames  []string          `json:"allowedPackageNames"`
 	TracePropagationURLs []string          `json:"tracePropagationUrls"`
 	SampleRate           float64           `json:"sampleRate" description:"Defaults to 1."`
 	PIIPolicy            PIIPolicy         `json:"piiPolicy" description:"dropQuery defaults to true."`
@@ -82,6 +88,7 @@ type UpdatableApplication struct {
 	Name                 string             `json:"name" required:"true"`
 	Environment          string             `json:"environment" required:"true"`
 	AllowedOrigins       []string           `json:"allowedOrigins"`
+	AllowedPackageNames  []string           `json:"allowedPackageNames"`
 	TracePropagationURLs []string           `json:"tracePropagationUrls"`
 	SampleRate           float64            `json:"sampleRate" description:"Defaults to 1."`
 	PIIPolicy            PIIPolicy          `json:"piiPolicy" description:"dropQuery defaults to true."`
@@ -108,6 +115,7 @@ func NewApplication(orgID valuer.UUID, createdBy string, postable *PostableAppli
 		Platform:             postable.Platform,
 		Environment:          postable.Environment,
 		AllowedOrigins:       postable.AllowedOrigins,
+		AllowedPackageNames:  postable.AllowedPackageNames,
 		TracePropagationURLs: postable.TracePropagationURLs,
 		SampleRate:           postable.SampleRate,
 		PIIPolicy:            postable.PIIPolicy,
@@ -120,6 +128,7 @@ func (app *Application) Update(updatable *UpdatableApplication) error {
 	app.Name = updatable.Name
 	app.Environment = updatable.Environment
 	app.AllowedOrigins = updatable.AllowedOrigins
+	app.AllowedPackageNames = updatable.AllowedPackageNames
 	app.TracePropagationURLs = updatable.TracePropagationURLs
 	app.SampleRate = updatable.SampleRate
 	app.PIIPolicy = updatable.PIIPolicy
@@ -137,7 +146,27 @@ func (app *Application) Validate() error {
 	if err := validateSettings(app.Name, app.Environment, app.AllowedOrigins, app.TracePropagationURLs, app.SampleRate, app.PIIPolicy); err != nil {
 		return err
 	}
+	if err := validatePackageNames(app.Platform, app.AllowedOrigins, app.AllowedPackageNames); err != nil {
+		return err
+	}
 	return app.SourceMaps.Validate()
+}
+
+// AllowsPackageName matches an app.package.name against the allowed package
+// names. A trailing .* matches sub-packages only, never the prefix itself.
+func (app *Application) AllowsPackageName(packageName string) bool {
+	if packageName == "" {
+		return false
+	}
+	for _, entry := range app.AllowedPackageNames {
+		if entry == anyOrigin || entry == packageName {
+			return true
+		}
+		if prefix, ok := strings.CutSuffix(entry, "*"); ok && strings.HasPrefix(packageName, prefix) && len(packageName) > len(prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // AllowsOrigin matches an Origin header against the allowed origins. A
@@ -176,6 +205,7 @@ func (app *Application) AllowsOrigin(origin string) bool {
 func NewStorableApplication(app *Application) (*StorableApplication, error) {
 	data, err := json.Marshal(storableApplicationData{
 		AllowedOrigins:       app.AllowedOrigins,
+		AllowedPackageNames:  app.AllowedPackageNames,
 		TracePropagationURLs: app.TracePropagationURLs,
 		SampleRate:           app.SampleRate,
 		PIIPolicy:            app.PIIPolicy,
@@ -213,6 +243,7 @@ func NewApplicationFromStorable(storable *StorableApplication) (*Application, er
 		Platform:             storable.Platform,
 		Environment:          storable.Environment,
 		AllowedOrigins:       data.AllowedOrigins,
+		AllowedPackageNames:  data.AllowedPackageNames,
 		TracePropagationURLs: data.TracePropagationURLs,
 		SampleRate:           data.SampleRate,
 		PIIPolicy:            data.PIIPolicy,
@@ -242,10 +273,14 @@ func (postable *PostableApplication) UnmarshalJSON(data []byte) error {
 	}
 
 	normalizeSettings(&temp.Name, &temp.Environment, &temp.AllowedOrigins, &temp.TracePropagationURLs, &temp.PIIPolicy)
+	temp.AllowedPackageNames = normalizePackageNames(temp.AllowedPackageNames)
 	if err := validatePlatform(temp.Platform); err != nil {
 		return err
 	}
 	if err := validateSettings(temp.Name, temp.Environment, temp.AllowedOrigins, temp.TracePropagationURLs, temp.SampleRate, temp.PIIPolicy); err != nil {
+		return err
+	}
+	if err := validatePackageNames(temp.Platform, temp.AllowedOrigins, temp.AllowedPackageNames); err != nil {
 		return err
 	}
 
@@ -261,6 +296,7 @@ func (updatable *UpdatableApplication) UnmarshalJSON(data []byte) error {
 	}
 
 	normalizeSettings(&temp.Name, &temp.Environment, &temp.AllowedOrigins, &temp.TracePropagationURLs, &temp.PIIPolicy)
+	temp.AllowedPackageNames = normalizePackageNames(temp.AllowedPackageNames)
 	if err := validateSettings(temp.Name, temp.Environment, temp.AllowedOrigins, temp.TracePropagationURLs, temp.SampleRate, temp.PIIPolicy); err != nil {
 		return err
 	}
@@ -271,6 +307,7 @@ func (updatable *UpdatableApplication) UnmarshalJSON(data []byte) error {
 
 type storableApplicationData struct {
 	AllowedOrigins       []string           `json:"allowedOrigins"`
+	AllowedPackageNames  []string           `json:"allowedPackageNames,omitempty"`
 	TracePropagationURLs []string           `json:"tracePropagationUrls"`
 	SampleRate           float64            `json:"sampleRate"`
 	PIIPolicy            PIIPolicy          `json:"piiPolicy"`
@@ -284,6 +321,7 @@ func (data *storableApplicationData) normalize() {
 	if data.TracePropagationURLs == nil {
 		data.TracePropagationURLs = []string{}
 	}
+	data.AllowedPackageNames = normalizePackageNames(data.AllowedPackageNames)
 	data.PIIPolicy.normalize()
 	if data.SourceMaps == nil {
 		defaults := NewDefaultSourceMapSettings()
@@ -305,12 +343,43 @@ func normalizeSettings(name *string, environment *string, origins *[]string, pro
 
 func validatePlatform(platform Platform) error {
 	switch platform {
-	case PlatformWeb:
+	case PlatformWeb, PlatformAndroid:
 		return nil
-	case PlatformAndroid, PlatformIOS:
+	case PlatformIOS:
 		return errors.NewInvalidInputf(ErrCodeApplicationInvalidInput, "platform %q is reserved and not supported yet", platform.StringValue())
 	}
-	return errors.NewInvalidInputf(ErrCodeApplicationInvalidInput, "platform must be web, got %q", platform.StringValue())
+	return errors.NewInvalidInputf(ErrCodeApplicationInvalidInput, "platform must be web or android, got %q", platform.StringValue())
+}
+
+func normalizePackageNames(packageNames []string) []string {
+	normalized := make([]string, 0, len(packageNames))
+	for _, packageName := range packageNames {
+		normalized = append(normalized, strings.TrimSpace(packageName))
+	}
+	return normalized
+}
+
+// validatePackageNames keeps origins to web and package names to android.
+func validatePackageNames(platform Platform, origins []string, packageNames []string) error {
+	if platform != PlatformAndroid {
+		if len(packageNames) > 0 {
+			return errors.NewInvalidInputf(ErrCodeApplicationInvalidInput, "allowedPackageNames apply to android applications only")
+		}
+		return nil
+	}
+	if len(origins) > 0 {
+		return errors.NewInvalidInputf(ErrCodeApplicationInvalidInput, "android applications allow package names, not origins; use allowedPackageNames")
+	}
+	if len(packageNames) > maxListLength {
+		return errors.NewInvalidInputf(ErrCodeApplicationInvalidInput, "lists hold at most %d entries", maxListLength)
+	}
+	for _, packageName := range packageNames {
+		if packageName == anyOrigin || packageNamePattern.MatchString(strings.TrimSuffix(packageName, packageWildcard)) {
+			continue
+		}
+		return errors.NewInvalidInputf(ErrCodeApplicationInvalidInput, "allowed package name %q must be * or an Android package name such as com.example.shop, with an optional trailing .*", packageName)
+	}
+	return nil
 }
 
 func validateSettings(name string, environment string, origins []string, propagation []string, sampleRate float64, policy PIIPolicy) error {

@@ -12,6 +12,10 @@ const (
 	AttributeDistroVersion         = "telemetry.distro.version"
 	AttributeSDKName               = "telemetry.sdk.name"
 	AttributeSDKVersion            = "telemetry.sdk.version"
+	// AttributePackageName is the Android applicationId; upstream semantic
+	// conventions name none.
+	AttributePackageName = "app.package.name"
+	AttributeScreenName  = "app.screen.name"
 )
 
 const (
@@ -19,4 +23,14 @@ const (
 	EventNameException   = "exception"
 	EventNameWebVital    = "browser.web_vital"
 	EventNameLegacyVital = "rum.vital"
+	// The crash and ANR events of opentelemetry-android, stored as exception.
+	EventNameAppCrash  = "app.crash"
+	EventNameDeviceANR = "device.anr"
+)
+
+// Error sources of Android events, in fusescope.rum.error.source.
+const (
+	ErrorSourceCrash = "crash"
+	ErrorSourceANR   = "anr"
+	ANRMessage       = "Application Not Responding"
 )

@@ -15,6 +15,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/http/render"
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 	"go.opentelemetry.io/collector/pdata/ptrace/ptraceotlp"
 )
@@ -28,14 +29,20 @@ var (
 
 var tracesSignal = otlpSignal{
 	path: "/v1/traces",
-	process: func(application *rumtypes.Application, body []byte, encoding otlpEncoding) ([]byte, *rumtypes.IngestBatch, error) {
+	process: func(application *rumtypes.Application, body []byte, encoding otlpEncoding) ([]byte, *rumtypes.IngestBatch, *rejection) {
 		request := ptraceotlp.NewExportRequest()
 		if err := encoding.unmarshal(body, request.UnmarshalJSON, request.UnmarshalProto); err != nil {
-			return nil, nil, err
+			return nil, nil, &rejection{err: err, reason: rumtypes.RejectionReasonInvalidPayload}
+		}
+		resources := make([]pcommon.Resource, 0, request.Traces().ResourceSpans().Len())
+		for i := 0; i < request.Traces().ResourceSpans().Len(); i++ {
+			resources = append(resources, request.Traces().ResourceSpans().At(i).Resource())
+		}
+		if refused := refusePackageNames(application, resources); refused != nil {
+			return nil, nil, refused
 		}
 		batch := processTraces(application, request.Traces())
-		payload, err := request.MarshalProto()
-		return payload, batch, err
+		return marshalProcessed(request.MarshalProto, batch)
 	},
 	response: func(encoding otlpEncoding) ([]byte, error) {
 		response := ptraceotlp.NewExportResponse()
@@ -48,14 +55,20 @@ var tracesSignal = otlpSignal{
 
 var logsSignal = otlpSignal{
 	path: "/v1/logs",
-	process: func(application *rumtypes.Application, body []byte, encoding otlpEncoding) ([]byte, *rumtypes.IngestBatch, error) {
+	process: func(application *rumtypes.Application, body []byte, encoding otlpEncoding) ([]byte, *rumtypes.IngestBatch, *rejection) {
 		request := plogotlp.NewExportRequest()
 		if err := encoding.unmarshal(body, request.UnmarshalJSON, request.UnmarshalProto); err != nil {
-			return nil, nil, err
+			return nil, nil, &rejection{err: err, reason: rumtypes.RejectionReasonInvalidPayload}
+		}
+		resources := make([]pcommon.Resource, 0, request.Logs().ResourceLogs().Len())
+		for i := 0; i < request.Logs().ResourceLogs().Len(); i++ {
+			resources = append(resources, request.Logs().ResourceLogs().At(i).Resource())
+		}
+		if refused := refusePackageNames(application, resources); refused != nil {
+			return nil, nil, refused
 		}
 		batch := processLogs(application, request.Logs())
-		payload, err := request.MarshalProto()
-		return payload, batch, err
+		return marshalProcessed(request.MarshalProto, batch)
 	},
 	response: func(encoding otlpEncoding) ([]byte, error) {
 		response := plogotlp.NewExportResponse()
@@ -74,7 +87,7 @@ type otlpEncoding struct {
 // for the collector.
 type otlpSignal struct {
 	path     string
-	process  func(*rumtypes.Application, []byte, otlpEncoding) ([]byte, *rumtypes.IngestBatch, error)
+	process  func(*rumtypes.Application, []byte, otlpEncoding) ([]byte, *rumtypes.IngestBatch, *rejection)
 	response func(otlpEncoding) ([]byte, error)
 }
 
@@ -91,6 +104,23 @@ func (err *collectorError) Error() string {
 
 func (err *collectorError) Unwrap() error {
 	return err.err
+}
+
+func refusePackageNames(application *rumtypes.Application, resources []pcommon.Resource) *rejection {
+	packageName, ok := allowedPackageNames(application, resources)
+	if ok {
+		return nil
+	}
+	err := errors.NewForbiddenf(ErrCodePackageNotAllowed, "app.package.name %q is not allowed for this application", packageName)
+	return &rejection{err: err, reason: rumtypes.RejectionReasonPackageNotAllowed, observed: packageName}
+}
+
+func marshalProcessed(marshal func() ([]byte, error), batch *rumtypes.IngestBatch) ([]byte, *rumtypes.IngestBatch, *rejection) {
+	payload, err := marshal()
+	if err != nil {
+		return nil, nil, &rejection{err: err}
+	}
+	return payload, batch, nil
 }
 
 // encodingOf maps the Content-Type to an encoding. text/plain is read as JSON

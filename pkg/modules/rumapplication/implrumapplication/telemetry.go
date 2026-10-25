@@ -67,6 +67,7 @@ var (
 // telemetryScope restricts a query to one application's telemetry in a range.
 type telemetryScope struct {
 	applicationID string
+	platform      rumtypes.Platform
 	start         time.Time
 	end           time.Time
 	release       string
@@ -281,6 +282,14 @@ func errorMessageExpr(message string) string {
 		expr = fmt.Sprintf("replaceRegexpAll(%s, %s, %s)", expr, literal(replacement.Pattern), literal(replacement.Replacement))
 	}
 	return "trimBoth(" + expr + ")"
+}
+
+// jvmStackKeyExpr keeps the frame and cause lines of a JVM stack trace,
+// causes without their message, up to maxJVMKeyLines.
+func jvmStackKeyExpr(stacktrace string) string {
+	lines := fmt.Sprintf("arrayFilter(line -> match(line, %s), splitByChar(%s, %s))", literal(rumtypes.JVMStackFrameLinePattern), literal("\n"), stacktrace)
+	causes := fmt.Sprintf("arrayMap(line -> replaceRegexpOne(line, %s, %s), %s)", literal(rumtypes.JVMCauseTypePattern), literal(`\1`), lines)
+	return fmt.Sprintf("arrayStringConcat(arraySlice(%s, 1, %d), %s)", causes, maxJVMKeyLines, literal("\n"))
 }
 
 // stackFrameLineExpr is rumtypes.FirstStackFrameLine in SQL.

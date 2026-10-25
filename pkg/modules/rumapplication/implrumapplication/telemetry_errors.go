@@ -17,14 +17,20 @@ const (
 	maxLatestErrors  = 10
 	maxAffected      = 5
 	maxErrorReleases = 50
+	// maxJVMKeyLines bounds the frame and cause lines a JVM error key keeps.
+	maxJVMKeyLines = 64
 )
 
 var (
 	errorTypeExpr   = attribute(rumtypes.AttributeExceptionType)
 	errorMessageRaw = "if(" + attribute(rumtypes.AttributeExceptionMessage) + " = '', body, " + attribute(rumtypes.AttributeExceptionMessage) + ")"
 	errorStackExpr  = attribute(rumtypes.AttributeExceptionStack)
-	errorKeyColumns = []string{errorTypeExpr + " AS type", errorMessageExpr(errorMessageRaw) + " AS normalized_message", stackFrameLineExpr(errorStackExpr) + " AS frame_line"}
-	errorKeyExpr    = "cityHash64(type, normalized_message, frame_line)"
+	// A JVM key keeps the release, since a mapping retraces its frames, and
+	// the frames below the top, since the top in-app ones group it.
+	errorKeyColumns    = []string{errorTypeExpr + " AS type", errorMessageExpr(errorMessageRaw) + " AS normalized_message", stackFrameLineExpr(errorStackExpr) + " AS frame_line"}
+	jvmErrorKeyColumns = []string{errorTypeExpr + " AS type", errorMessageExpr(errorMessageRaw) + " AS normalized_message", jvmStackKeyExpr(errorStackExpr) + " AS frame_line", "resources_string[" + literal(rumtypes.AttributeServiceVersion) + "] AS release"}
+	errorKeyHash       = "cityHash64(type, normalized_message, frame_line)"
+	jvmErrorKeyHash    = "cityHash64(type, normalized_message, frame_line, release)"
 )
 
 type errorKeyRow struct {
@@ -34,6 +40,7 @@ type errorKeyRow struct {
 	frameLine         string
 	firstSeen         uint64
 	firstFingerprint  string
+	release           string
 }
 
 type errorGroupRow struct {
@@ -76,7 +83,11 @@ func (reader *telemetryReader) ErrorKeys(ctx context.Context, scope telemetrySco
 	rows := []*errorKeyRow{}
 	err := reader.query(ctx, "ErrorKeys", newErrorKeysQuery(scope), func(scanner driver.Rows) error {
 		row := &errorKeyRow{}
-		if err := scanner.Scan(&row.key, &row.exceptionType, &row.normalizedMessage, &row.frameLine, &row.firstSeen, &row.firstFingerprint); err != nil {
+		destinations := []any{&row.key, &row.exceptionType, &row.normalizedMessage, &row.frameLine, &row.firstSeen, &row.firstFingerprint}
+		if isJVM(scope) {
+			destinations = append(destinations, &row.release)
+		}
+		if err := scanner.Scan(destinations...); err != nil {
 			return err
 		}
 		rows = append(rows, row)
@@ -132,10 +143,15 @@ func (reader *telemetryReader) AffectedSessions(ctx context.Context, scope telem
 func newErrorKeysQuery(scope telemetryScope) *sqlbuilder.SelectBuilder {
 	events := newErrorRowsQuery(scope)
 
+	columns, groupBy := []string{errorKeyExpr(scope) + " AS key", "type", "normalized_message", "frame_line", "min(timestamp) AS first_seen", "argMin(resource_fingerprint, timestamp)"}, []string{"type", "normalized_message", "frame_line"}
+	if isJVM(scope) {
+		columns, groupBy = append(columns, "release"), append(groupBy, "release")
+	}
+
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(errorKeyExpr+" AS key", "type", "normalized_message", "frame_line", "min(timestamp) AS first_seen", "argMin(resource_fingerprint, timestamp)")
+	sb.Select(columns...)
 	sb.From(sb.BuilderAs(events, "events"))
-	sb.GroupBy("type", "normalized_message", "frame_line")
+	sb.GroupBy(groupBy...)
 	sb.OrderBy("max(timestamp) DESC")
 	sb.Limit(maxErrorKeys)
 	return sb
@@ -152,7 +168,7 @@ func newErrorGroupsQuery(scope telemetryScope, keys []uint64, indexes []uint16, 
 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
-		"transform("+errorKeyExpr+", "+sb.Var(keys)+", "+sb.Var(indexes)+", toUInt16(0)) AS group_index",
+		"transform("+errorKeyExpr(scope)+", "+sb.Var(keys)+", "+sb.Var(indexes)+", toUInt16(0)) AS group_index",
 		"count()",
 		"uniqIf(e.session, e.session != '')",
 		"min(e.timestamp)",
@@ -185,9 +201,9 @@ func newErrorEventsQuery(scope telemetryScope, keys []uint64) *sqlbuilder.Select
 	)
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("id", "timestamp", "session", "route", "resource_fingerprint", errorKeyExpr+" AS key", "type", "message", "source", "stacktrace")
+	sb.Select("id", "timestamp", "session", "route", "resource_fingerprint", errorKeyExpr(scope)+" AS key", "type", "message", "source", "stacktrace")
 	sb.From(sb.BuilderAs(events, "events"))
-	sb.Where(sb.In(errorKeyExpr, anySlice(keys)...))
+	sb.Where(sb.In(errorKeyExpr(scope), anySlice(keys)...))
 	sb.OrderBy("timestamp DESC")
 	sb.Limit(maxLatestErrors)
 	return sb
@@ -200,7 +216,7 @@ func newAffectedSessionsQuery(scope telemetryScope, keys []uint64) *sqlbuilder.S
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("session", "max(timestamp) AS last_error", "count()", "argMax(resource_fingerprint, timestamp)")
 	sb.From(sb.BuilderAs(events, "events"))
-	sb.Where(sb.In(errorKeyExpr, anySlice(keys)...), sb.NE("session", ""))
+	sb.Where(sb.In(errorKeyExpr(scope), anySlice(keys)...), sb.NE("session", ""))
 	sb.GroupBy("session")
 	sb.OrderBy("last_error DESC")
 	sb.Limit(maxAffected)
@@ -210,8 +226,11 @@ func newAffectedSessionsQuery(scope telemetryScope, keys []uint64) *sqlbuilder.S
 // newErrorRowsQuery selects the scope's error events with their key columns.
 func newErrorRowsQuery(scope telemetryScope) *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
-	columns := []string{"timestamp", "resource_fingerprint"}
-	for _, column := range errorKeyColumns {
+	columns, keyColumns := []string{"timestamp", "resource_fingerprint"}, errorKeyColumns
+	if isJVM(scope) {
+		keyColumns = jvmErrorKeyColumns
+	}
+	for _, column := range keyColumns {
 		columns = append(columns, sqlbuilder.Escape(column))
 	}
 	sb.Select(columns...)
@@ -219,4 +238,15 @@ func newErrorRowsQuery(scope telemetryScope) *sqlbuilder.SelectBuilder {
 	sb.Where(scopeConditions(sb, logSignal, scope)...)
 	sb.Where(sb.E(eventNameExpr, rumtypes.EventNameException))
 	return sb
+}
+
+func errorKeyExpr(scope telemetryScope) string {
+	if isJVM(scope) {
+		return jvmErrorKeyHash
+	}
+	return errorKeyHash
+}
+
+func isJVM(scope telemetryScope) bool {
+	return scope.platform == rumtypes.PlatformAndroid
 }

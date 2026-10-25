@@ -13,12 +13,37 @@ import (
 )
 
 func (module *module) UploadSourceMaps(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string, createdBy string, parts rumtypes.PostableSourceMapParts) (*rumtypes.GettableUploadedSourceMaps, error) {
+	return module.uploadArtifacts(ctx, orgID, id, rumtypes.ArtifactKindSourceMap, release, createdBy, parts)
+}
+
+func (module *module) UploadR8Mapping(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string, createdBy string, content io.Reader) (*rumtypes.GettableUploadedSourceMaps, error) {
+	parts := &singleArtifactPart{part: &rumtypes.PostableSourceMap{Path: rumtypes.R8MappingPath, Content: content}}
+	uploaded, err := module.uploadArtifacts(ctx, orgID, id, rumtypes.ArtifactKindR8Mapping, release, createdBy, parts)
+	if err != nil {
+		return nil, err
+	}
+	if len(uploaded.Rejected) > 0 {
+		return nil, errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "the R8 mapping was rejected: %s", uploaded.Rejected[0].Reason)
+	}
+	return uploaded, nil
+}
+
+// uploadArtifacts stores the artifacts of parts for a release of an
+// application whose platform takes that kind.
+func (module *module) uploadArtifacts(ctx context.Context, orgID valuer.UUID, id valuer.UUID, kind rumtypes.ArtifactKind, release string, createdBy string, parts rumtypes.PostableSourceMapParts) (*rumtypes.GettableUploadedSourceMaps, error) {
 	release, err := rumtypes.NewSourceMapRelease(release)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := module.Get(ctx, orgID, id); err != nil {
+	application, err := module.Get(ctx, orgID, id)
+	if err != nil {
 		return nil, err
+	}
+	if rumtypes.ArtifactKindFor(application.Platform) != kind {
+		if kind == rumtypes.ArtifactKindR8Mapping {
+			return nil, errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "R8 mappings are for android applications, this one is %s", application.Platform.StringValue())
+		}
+		return nil, errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "%s applications take an R8 mapping per release, not source maps", application.Platform.StringValue())
 	}
 	existing, err := module.store.ListSourceMaps(ctx, orgID, id)
 	if err != nil {
@@ -44,7 +69,7 @@ func (module *module) UploadSourceMaps(ctx context.Context, orgID valuer.UUID, i
 			return fail(err)
 		}
 
-		file, rejection, err := module.storeSourceMap(ctx, plan, part, limits, orgID, id, release, createdBy, now)
+		file, rejection, err := module.storeSourceMap(ctx, plan, part, limits, orgID, id, kind, release, createdBy, now)
 		if err != nil {
 			return fail(err)
 		}
@@ -165,7 +190,7 @@ func (module *module) CleanupSourceMaps(ctx context.Context) error {
 
 // storeSourceMap validates one part and writes its content. It returns a
 // rejection for a part that is refused alone.
-func (module *module) storeSourceMap(ctx context.Context, plan *rumtypes.SourceMapUploadPlan, part *rumtypes.PostableSourceMap, limits rumtypes.SourceMapLimits, orgID valuer.UUID, id valuer.UUID, release string, createdBy string, now time.Time) (*rumtypes.StorableSourceMap, *rumtypes.RejectedSourceMap, error) {
+func (module *module) storeSourceMap(ctx context.Context, plan *rumtypes.SourceMapUploadPlan, part *rumtypes.PostableSourceMap, limits rumtypes.SourceMapLimits, orgID valuer.UUID, id valuer.UUID, kind rumtypes.ArtifactKind, release string, createdBy string, now time.Time) (*rumtypes.StorableSourceMap, *rumtypes.RejectedSourceMap, error) {
 	path, err := rumtypes.NewSourceMapPath(part.Path)
 	if err != nil {
 		return nil, &rumtypes.RejectedSourceMap{Path: part.Path, Reason: errorMessage(err)}, nil
@@ -177,11 +202,10 @@ func (module *module) storeSourceMap(ctx context.Context, plan *rumtypes.SourceM
 
 	debugID := ""
 	if size := int64(len(data)); size > 0 && size <= limits.MaxFileSize {
-		sourceMap, err := rumtypes.ParseSourceMap(data)
+		debugID, err = artifactDebugID(kind, data)
 		if err != nil {
 			return nil, &rumtypes.RejectedSourceMap{Path: path, Reason: errorMessage(err)}, nil
 		}
-		debugID = sourceMap.DebugID()
 	}
 	rejection, err := plan.Add(path, int64(len(data)))
 	if err != nil {
@@ -191,7 +215,7 @@ func (module *module) storeSourceMap(ctx context.Context, plan *rumtypes.SourceM
 		return nil, &rumtypes.RejectedSourceMap{Path: path, Reason: rejection}, nil
 	}
 
-	file := rumtypes.NewStorableSourceMap(orgID, id, release, path, debugID, int64(len(data)), createdBy, now)
+	file := rumtypes.NewStorableSourceMap(orgID, id, kind, release, path, debugID, int64(len(data)), createdBy, now)
 	if err := module.storage.Put(ctx, file.StorageKey(), bytes.NewReader(data)); err != nil {
 		return nil, nil, err
 	}
@@ -290,6 +314,41 @@ func applyDebugIDs(files []*rumtypes.StorableSourceMap, debugIDs map[string]stri
 			file.DebugID = debugID
 		}
 	}
+}
+
+// artifactDebugID validates an artifact and returns its identifier: a
+// source map's debugId, an R8 mapping's pg_map_id.
+func artifactDebugID(kind rumtypes.ArtifactKind, data []byte) (string, error) {
+	if kind == rumtypes.ArtifactKindR8Mapping {
+		mapping, err := rumtypes.ParseR8Mapping(data)
+		if err != nil {
+			return "", err
+		}
+		return mapping.MapID(), nil
+	}
+	sourceMap, err := rumtypes.ParseSourceMap(data)
+	if err != nil {
+		return "", err
+	}
+	return sourceMap.DebugID(), nil
+}
+
+// singleArtifactPart yields one artifact.
+type singleArtifactPart struct {
+	part *rumtypes.PostableSourceMap
+}
+
+func (parts *singleArtifactPart) Next() (*rumtypes.PostableSourceMap, error) {
+	part := parts.part
+	if part == nil {
+		return nil, io.EOF
+	}
+	parts.part = nil
+	return part, nil
+}
+
+func (parts *singleArtifactPart) DebugIDs() map[string]string {
+	return nil
 }
 
 func filterRelease(files []*rumtypes.StorableSourceMap, release string) []*rumtypes.StorableSourceMap {

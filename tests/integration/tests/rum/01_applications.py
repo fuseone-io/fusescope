@@ -78,7 +78,7 @@ def test_application_validation(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     payloads = [
-        {"name": "reserved", "platform": "android", "environment": "production"},
+        {"name": "reserved", "platform": "ios", "environment": "production"},
         {"name": "bad-origin", "platform": "web", "environment": "production", "allowedOrigins": ["shop.example.com"]},
         {"name": "bad-rate", "platform": "web", "environment": "production", "sampleRate": 2},
     ]

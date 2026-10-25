@@ -63,6 +63,9 @@ type Module interface {
 	// release's map with the same path, and reports the others as rejected.
 	// Nothing is stored when the upload exceeds the release or quota limits.
 	UploadSourceMaps(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string, createdBy string, parts rumtypes.PostableSourceMapParts) (*rumtypes.GettableUploadedSourceMaps, error)
+	// UploadR8Mapping stores the release's R8 mapping, replacing any it
+	// holds. A mapping that does not parse fails the upload.
+	UploadR8Mapping(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string, createdBy string, content io.Reader) (*rumtypes.GettableUploadedSourceMaps, error)
 	// ListSourceMaps lists the releases, or with release set that release and its files.
 	ListSourceMaps(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string) (*rumtypes.GettableSourceMaps, error)
 	DeleteSourceMapRelease(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string) error
@@ -90,6 +93,7 @@ type Handler interface {
 	ListSessions(http.ResponseWriter, *http.Request)
 	GetSession(http.ResponseWriter, *http.Request)
 	UploadSourceMaps(http.ResponseWriter, *http.Request)
+	UploadR8Mapping(http.ResponseWriter, *http.Request)
 	ListSourceMaps(http.ResponseWriter, *http.Request)
 	DeleteSourceMaps(http.ResponseWriter, *http.Request)
 	DeleteSourceMap(http.ResponseWriter, *http.Request)
@@ -99,6 +103,9 @@ type Handler interface {
 // source maps. It runs at read time; stored telemetry stays raw.
 type Symbolicator interface {
 	Symbolicate(ctx context.Context, applicationID valuer.UUID, release string, frames []rumtypes.StackFrame) (*rumtypes.Symbolication, error)
+
+	// Retrace maps a JVM stack trace back through the release's R8 mapping.
+	Retrace(ctx context.Context, applicationID valuer.UUID, release string, trace *rumtypes.JVMStackTrace) (*rumtypes.JVMRetrace, error)
 
 	// Forget drops what is cached of the release's maps, after they change.
 	Forget(applicationID valuer.UUID, release string)

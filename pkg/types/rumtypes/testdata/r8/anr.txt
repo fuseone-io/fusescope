@@ -1,0 +1,8 @@
+java.lang.Thread.sleep(Native Method)
+java.lang.Thread.sleep(Thread.java:450)
+b.a.a(SourceFile:1)
+com.example.shop.CheckoutActivity.a(SourceFile:9)
+c.a.onClick(SourceFile:1)
+android.view.View.performClick(View.java:7659)
+android.os.Looper.loop(Looper.java:317)
+android.app.ActivityThread.main(ActivityThread.java:8177)
