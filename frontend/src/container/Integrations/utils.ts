@@ -20,3 +20,19 @@ export function integrationRequestIssueUrl(integrationName: string): string {
 	);
 	return `${FUSESCOPE_REPO_URL}/issues/new?template=request_integration.md&title=${title}`;
 }
+
+export interface IntegrationUpdate {
+	from: string;
+	to: string;
+}
+
+export function availableUpdate(
+	isInstalled: boolean,
+	version: string | undefined,
+	latestVersion: string | undefined,
+): IntegrationUpdate | null {
+	if (!isInstalled || !version || !latestVersion || version === latestVersion) {
+		return null;
+	}
+	return { from: version, to: latestVersion };
+}
