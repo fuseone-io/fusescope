@@ -107,3 +107,32 @@ func TestInstallPinsTheCatalogVersion(t *testing.T) {
 		assert.Equal(t, "1.0.0", integration.Installation.Version)
 	})
 }
+
+func TestInstalledPipelinesAreOrderedByIntegrationID(t *testing.T) {
+	ctx := context.Background()
+	orgID := valuer.GenerateUUID().StringValue()
+	ids := []string{"builtin-a", "builtin-b", "builtin-c", "builtin-d", "builtin-e"}
+	packages := []catalog.Package{}
+	for _, id := range ids {
+		packages = append(packages, testPackage(id, "1.0.0", id, "parse "+id))
+	}
+	manager := newCatalogManager(t, newTestSQLStore(t), packages...)
+	for _, id := range ids {
+		_, apiErr := manager.InstallIntegration(ctx, orgID, id, cloudintegrationtypes.InstalledIntegrationConfig{}, "admin@example.com", valuer.GenerateUUID())
+		require.Nil(t, apiErr)
+	}
+
+	want := []string{}
+	for _, id := range ids {
+		want = append(want, AliasForIntegrationPipeline(id, "parse"))
+	}
+	for range 20 {
+		pipelines, err := manager.GetPipelinesForInstalledIntegrations(ctx, orgID)
+		require.NoError(t, err)
+		got := []string{}
+		for _, pipeline := range pipelines {
+			got = append(got, pipeline.Alias)
+		}
+		require.Equal(t, want, got)
+	}
+}
