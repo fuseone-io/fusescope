@@ -1,0 +1,2156 @@
+{
+  "id": "builtin-mysql",
+  "title": "MySQL",
+  "description": "Monitor MySQL with metrics and logs",
+  "author": {
+    "name": "FuseScope",
+    "email": "",
+    "homepage": "https://github.com/fuseone-io/fusescope"
+  },
+  "icon": "data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjNDQ3OUExIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+TXlTUUw8L3RpdGxlPjxwYXRoIGQ9Ik0xNi40MDUgNS41MDFjLS4xMTUgMC0uMTkzLjAxNC0uMjc0LjAzM3YuMDEzaC4wMTRjLjA1NC4xMDQuMTQ2LjE4LjIxNC4yNzMuMDU0LjEwNy4xLjIxNC4xNTQuMzJsLjAxNC0uMDE1Yy4wOTQtLjA2Ni4xNC0uMTcyLjE0LS4zMzMtLjA0LS4wNDctLjA0Ni0uMDk0LS4wOC0uMTQtLjA0LS4wNjctLjEyNi0uMS0uMTgtLjE1M3pNNS43NyAxOC42OTVoLS45MjdhNTAuODU0IDUwLjg1NCAwIDAwLS4yNy00LjQxaC0uMDA4bC0xLjQxIDQuNDFIMi40NWwtMS40LTQuNDFoLS4wMWE3Mi44OTIgNzIuODkyIDAgMDAtLjE5NSA0LjQxSDBjLjA1NS0xLjk2Ni4xOTItMy44MS40MS01LjUzaDEuMTVsMS4zMzUgNC4wNjRoLjAwOGwxLjM0Ny00LjA2NGgxLjA5NWMuMjQyIDIuMDE1LjM4NCAzLjg2LjQyOCA1LjUzem00LjAxNy00LjA4Yy0uMzc4IDIuMDQ1LS44NzYgMy41MzMtMS40OTIgNC40Ni0uNDgyLjcxNi0xLjAxIDEuMDczLTEuNTgzIDEuMDczLS4xNTMgMC0uMzQtLjA0Ni0uNTY2LS4xMzh2LS40OTRjLjExLjAxNy4yNC4wMjYuMzg2LjAyNi4yNjggMCAuNDgzLS4wNzUuNjQ3LS4yMjIuMTk3LS4xOC4yOTUtLjM4Mi4yOTUtLjYwNSAwLS4xNTUtLjA3Ny0uNDctLjIzLS45NDRMNi4yMyAxNC42MTVoLjkxbC43MjcgMi4zNmMuMTY0LjUzNi4yMzMuOTEuMjA1IDEuMTIzLjQtMS4wNjQuNjc4LTIuMjI3LjgzNS0zLjQ4M3ptMTIuMzI1IDQuMDhoLTIuNjN2LTUuNTNoLjg4NXY0Ljg1aDEuNzQ1em0tMy4zMi4xMzVsLTEuMDE2LS41Yy4wOS0uMDc2LjE3Ny0uMTU4LjI1NS0uMjUuNDMzLS41MDYuNjQ4LTEuMjU4LjY0OC0yLjI1MyAwLTEuODMtLjcxOC0yLjc0Ni0yLjE1NS0yLjc0Ni0uNzA0IDAtMS4yNTQuMjMyLTEuNjUuNjk3LS40My41MDgtLjY0NiAxLjI1Ni0uNjQ2IDIuMjQ1IDAgLjk3Mi4xOSAxLjY4Ni41NzQgMi4xNC4zNS40MS44NzcuNjE1IDEuNTgzLjYxNS4yNjQgMCAuNTA2LS4wMzMuNzI1LS4wOThsMS4zMjUuNzcyLjM2LS42MjJ6TTE1LjUgMTcuNTg4Yy0uMjI1LS4zNi0uMzM3LS45NC0uMzM3LTEuNzM2IDAtMS4zOTMuNDI0LTIuMDkgMS4yNy0yLjA5LjQ0MyAwIC43Ny4xNjcuOTc3LjUuMjI0LjM2Mi4zMzYuOTM2LjMzNiAxLjcyMyAwIDEuNDA0LS40MjQgMi4xMDgtMS4yNyAyLjEwOC0uNDQ1IDAtLjc3LS4xNjctLjk3OC0uNXptLTEuNjU4LS40MjVjMCAuNDctLjE3Mi44NTYtLjUxNiAxLjE1Ni0uMzQ0LjMtLjgwMy40NS0xLjM4NC40NS0uNTQzIDAtMS4wNjQtLjE3Mi0xLjU3My0uNTE1bC4yMzctLjQ3NmMuNDM4LjIyLjgzMy4zMjggMS4xOS4zMjguMzMyIDAgLjU5My0uMDczLjc4My0uMjJhLjc1NC43NTQgMCAwMC4zLS42MTVjMC0uMzMtLjIzLS42MS0uNjQ4LS44NDUtLjM4OC0uMjEzLTEuMTYzLS42NTctMS4xNjMtLjY1Ny0uNDIyLS4zMDctLjYzMi0uNjM2LS42MzItMS4xNzcgMC0uNDUuMTU3LS44MS40Ny0xLjA4NS4zMTUtLjI3OC43Mi0uNDE1IDEuMjItLjQxNS41MTIgMCAuOTguMTM2IDEuNC40MWwtLjIxMy40NzZhMi43MjYgMi43MjYgMCAwMC0xLjA2NC0uMjNjLS4yODMgMC0uNTAyLjA2OC0uNjU0LjIwNmEuNjg1LjY4NSAwIDAwLS4yNDguNTI0YzAgLjMyOC4yMzQuNjEuNjY2Ljg1LjM5My4yMTUgMS4xODcuNjcgMS4xODcuNjcuNDMzLjMwNS42NDguNjMuNjQ4IDEuMTY4em05LjM4Mi01Ljg1MmMtLjUzNS0uMDE0LS45NS4wNC0xLjI5Ny4xODgtLjEuMDQtLjI2LjA0LS4yNzQuMTY3LjA1NS4wNTMuMDYzLjE0LjExLjIxNC4wOC4xMzQuMjE4LjMxMy4zNDYuNDA3LjE0LjExLjI4LjIxNi40MjcuMzEuMjYuMTYuNTU1LjI1NS44MS40MTYuMTQ1LjA5NC4yOTMuMjEzLjQ0LjMxMy4wNzMuMDUuMTIuMTQuMjE0LjE3MnYtLjAyYy0uMDQ2LS4wNi0uMDYtLjE0Ny0uMTA1LS4yMTQtLjA2Ny0uMDY3LS4xMzQtLjEyNy0uMi0uMTkzYTMuMjIzIDMuMjIzIDAgMDAtLjY5NS0uNjc1Yy0uMjE0LS4xNDYtLjY4Mi0uMzUtLjc3LS41OTVsLS4wMTMtLjAxNGMuMTQ2LS4wMTMuMzItLjA2Ni40Ni0uMTA2LjIyNy0uMDYuNDM1LS4wNDcuNjctLjEwNi4xMDYtLjAyNy4yMTMtLjA2LjMyLS4wOTR2LS4wNmMtLjEyLS4xMi0uMjEtLjI4My0uMzM0LS4zOTVhOC44NjcgOC44NjcgMCAwMC0xLjEwNC0uODIzYy0uMjEtLjEzNC0uNDc2LS4yMi0uNjk3LS4zMzQtLjA4LS4wNC0uMjE0LS4wNi0uMjYtLjEyNy0uMTItLjE0Ni0uMTktLjM0LS4yNzUtLjUxNGExNy42OSAxNy42OSAwIDAxLS41NDctMS4xNjNjLS4xMi0uMjYyLS4xOTMtLjUyMy0uMzQtLjc2My0uNjktMS4xMzctMS40MzctMS44MjYtMi41ODYtMi41LS4yNDctLjE0LS41NDMtLjItLjg1Ni0uMjc0LS4xNjctLjAwOC0uMzM0LS4wMi0uNS0uMDI3LS4xMS0uMDQ3LS4yMTYtLjE3NC0uMzEtLjIzNS0uMzgtLjI0LTEuMzY0LS43Ni0xLjY0NC0uMDcyLS4xOC40MzQuMjY3Ljg2Mi40MjIgMS4wODIuMTE1LjE1My4yNi4zMjguMzQuNS4wNDcuMTE2LjA2LjIzNS4xMDcuMzU2LjEwNi4yOTQuMjA3LjYyMi4zNDcuODk3LjA3My4xNC4xNTMuMjg3LjI0Ny40MTMuMDU0LjA3My4xNDYuMTA3LjE2Ny4yMjctLjA5NC4xMzYtLjEuMzM0LS4xNTQuNS0uMjQuNzU3LS4xNDYgMS42OTMuMTk0IDIuMjUuMTA3LjE2Ni4zNjIuNTM0LjcwMy4zOTMuMy0uMTIuMjM0LS41LjMyLS44MzUuMDItLjA4LjAwNy0uMTMzLjA0OC0uMTg3di4wMTVjLjA5NC4xODguMTg4LjM2Ny4yNzQuNTU1LjIwNi4zMjguNTY2LjY2OC44NjcuODk1LjE2LjEyLjI4Ny4zMjguNDg3LjQwMnYtLjAyaC0uMDE1Yy0uMDQzLS4wNTgtLjEtLjA4Ni0uMTU0LS4xMzNhMy40NDUgMy40NDUgMCAwMS0uMzUtLjQgOC43NiA4Ljc2IDAgMDEtLjc0Ny0xLjIxOGMtLjExLS4yMS0uMjAyLS40MzYtLjI5LS42NDMtLjA0LS4wOC0uMDQtLjItLjEwNy0uMjQtLjEuMTQ2LS4yNDcuMjczLS4zMi40NTMtLjEyNy4yODgtLjE0LjY0Mi0uMTg4IDEuMDEtLjAyNy4wMDctLjAxNCAwLS4wMjcuMDE0LS4yMTQtLjA1Mi0uMjg3LS4yNzQtLjM2Ny0uNDYtLjItLjQ3NS0uMjMzLTEuMjM4LS4wNi0xLjc4NS4wNDctLjE0LjI0Ny0uNTgyLjE2Ny0uNzE2LS4wNDItLjEyNy0uMTc0LS4yLS4yNDctLjMwM2EyLjQ3OCAyLjQ3OCAwIDAxLS4yNC0uNDI3Yy0uMTYtLjM3NC0uMjQtLjc4OC0uNDE0LTEuMTYyLS4wOC0uMTczLS4yMi0uMzU0LS4zMzQtLjUxMy0uMTI3LS4xOC0uMjY3LS4zMDctLjM2OC0uNTItLjAzMy0uMDczLS4wOC0uMTk0LS4wMjctLjI3NC4wMTQtLjA1NC4wNDItLjA3NS4wOTQtLjA5LjA4OC0uMDcyLjMzNS4wMjIuNDIyLjA2Mi4yNDcuMS40NTUuMTk0LjY2Mi4zMzQuMDk0LjA2Ni4xOTUuMTkzLjMxNS4yMjZoLjE0Yy4yMTQuMDQ3LjQ1NS4wMTQuNjU1LjA3My4zNTUuMTE0LjY3NS4yOC45NjIuNDZhNS45NTMgNS45NTMgMCAwMTIuMDg1IDIuMjg2Yy4wOC4xNTQuMTE1LjI5NS4xODguNDU1LjE0LjMzLjMxMy42NjMuNDU1Ljk4Mi4xNC4zMTUuMjc1LjYzNi40NzYuODk3LjEuMTQuNTAyLjIxMy42ODIuMjg2LjEzMy4wNi4zNC4xMTUuNDYuMTg4LjIzLjE0LjQ1NC4zLjY3LjQ1NC4xMS4wNzYuNDQzLjI0My40NjMuMzc4eiIvPjwvc3ZnPg==",
+  "categories": [
+    "Database"
+  ],
+  "overview": "### Monitor MySQL with FuseScope\n\nCollect MySQL server metrics with the OpenTelemetry `mysql` receiver and view throughput, connections, InnoDB buffer pool, locks and replication lag on an out of the box dashboard.\n\nCollect the MySQL error log and slow query log. Installed log pipelines parse them into timestamp, severity, error code, query time, rows examined and other attributes for querying and aggregation.\n\nWorks with MySQL 5.7, 8.x and 9.x, and with MariaDB.\n",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "## Before You Begin\n\nTo collect metrics and logs from a MySQL server, you need the following.\n\n### Prepare the MySQL server\n\n- **Create a monitoring user**\n  The `mysql` receiver runs `SHOW GLOBAL STATUS` and reads `performance_schema`. Create a dedicated user for it:\n  ```SQL\n  CREATE USER 'fusescope'@'%' IDENTIFIED BY '\u003cPASSWORD\u003e';\n  GRANT PROCESS, REPLICATION CLIENT ON *.* TO 'fusescope'@'%';\n  GRANT SELECT ON performance_schema.* TO 'fusescope'@'%';\n  ```\n  Restrict the host part (`'%'`) to the address of your collector where possible.\n\n- **Enable the slow query log** (optional, for slow query logs)\n  ```SQL\n  SET GLOBAL slow_query_log = 'ON';\n  SET GLOBAL long_query_time = 1;\n  SHOW VARIABLES LIKE 'slow_query_log_file';\n  ```\n  Add the same settings to `my.cnf` to keep them across restarts.\n\n- **Find the error log**\n  ```SQL\n  SHOW VARIABLES LIKE 'log_error';\n  ```\n  The pipelines expect the default text format of the error log (`log_error_services` with `log_sink_internal`), with `log_timestamps` set to `UTC` (the default) or `SYSTEM`.\n\n### Prepare the OpenTelemetry Collector\n\n- **Run an OpenTelemetry Collector**\n  If needed, [install the OpenTelemetry Collector Contrib distribution](https://opentelemetry.io/docs/collector/installation/). The configs below are validated with `otelcol-contrib` v0.163.\n\n  Make sure you can pass config files, environment variables and command line flags to it.\n\n- **Give the collector access to MySQL**\n  To collect metrics, the collector must reach the MySQL server as a client with the monitoring user.\n\n  To collect logs, the collector must run on the MySQL host (or see its log directory) and be able to read the error log and the slow query log.\n"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "### Collect MySQL Metrics\n\n#### Create collector config file\n\nSave the following config in a file named `mysql-metrics-collection-config.yaml`.\n\n```yaml\nreceivers:\n  mysql:\n    # host:port of the MySQL server\n    endpoint: ${env:MYSQL_ENDPOINT}\n    username: ${env:MYSQL_USERNAME}\n    password: ${env:MYSQL_PASSWORD}\n    collection_interval: 60s\n    # tls:\n    #   insecure: false\n    #   ca_file: /etc/ssl/certs/mysql-ca.pem\n    metrics:\n      mysql.client.network.io:\n        enabled: true\n      mysql.commands:\n        enabled: true\n      mysql.connection.count:\n        enabled: true\n      mysql.connection.errors:\n        enabled: true\n      mysql.joins:\n        enabled: true\n      mysql.max_used_connections:\n        enabled: true\n      mysql.query.count:\n        enabled: true\n      mysql.query.slow.count:\n        enabled: true\n      mysql.replica.sql_delay:\n        enabled: true\n      mysql.replica.time_behind_source:\n        enabled: true\n\nprocessors:\n  # adds host.name; remove it when the collector does not run on the MySQL host\n  resourcedetection/system:\n    detectors: [\"system\"]\n    system:\n      hostname_sources: [\"os\"]\n  batch:\n    send_batch_size: 10000\n    timeout: 10s\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    metrics/mysql:\n      receivers: [mysql]\n      processors: [resourcedetection/system, batch]\n      exporters: [otlp/fusescope]\n```\n\n#### Set Environment Variables\n\nSet the following environment variables in your collector environment:\n\n```bash\n\n# MySQL server reachable from the collector, as host:port\nexport MYSQL_ENDPOINT=\"localhost:3306\"\n\n# monitoring user created in the prerequisites\nexport MYSQL_USERNAME=\"fusescope\"\n\n# password of the monitoring user\nexport MYSQL_PASSWORD=\"\u003cPASSWORD\u003e\"\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nPass the config file to your collector with the following flag:\n```bash\n--config mysql-metrics-collection-config.yaml\n```\nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "### Collect MySQL Logs\n\nThe collector reads the error log and the slow query log and tags each record with `source: mysql` and `log_type: error` or `log_type: slow`. The log pipelines installed with this integration parse them in FuseScope.\n\n#### Create collector config file\n\nSave the following config in a file named `mysql-logs-collection-config.yaml`.\n\n```yaml\nreceivers:\n  filelog/mysql_error:\n    include: [\"${env:MYSQL_ERROR_LOG_FILE}\"]\n    # a record starts with its timestamp; following lines belong to it\n    multiline:\n      line_start_pattern: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}'\n    operators:\n      - type: add\n        field: attributes.source\n        value: mysql\n      - type: add\n        field: attributes.log_type\n        value: error\n\n  filelog/mysql_slow:\n    include: [\"${env:MYSQL_SLOW_QUERY_LOG_FILE}\"]\n    # an entry starts with its \"# Time:\" header and holds the statement\n    multiline:\n      line_start_pattern: '^# Time: '\n    operators:\n      - type: add\n        field: attributes.source\n        value: mysql\n      - type: add\n        field: attributes.log_type\n        value: slow\n\nprocessors:\n  batch:\n    send_batch_size: 10000\n    send_batch_max_size: 11000\n    timeout: 10s\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    logs/mysql:\n      receivers: [filelog/mysql_error, filelog/mysql_slow]\n      processors: [batch]\n      exporters: [otlp/fusescope]\n```\n\n#### Set Environment Variables\n\nSet the following environment variables in your collector environment:\n\n```bash\n\n# MySQL error log, the value of the log_error variable\nexport MYSQL_ERROR_LOG_FILE=/var/log/mysql/error.log\n\n# MySQL slow query log, the value of the slow_query_log_file variable\nexport MYSQL_SLOW_QUERY_LOG_FILE=/var/log/mysql/mysql-slow.log\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nPass the config file to your collector with the following flag:\n```bash\n--config mysql-logs-collection-config.yaml\n```\nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n\n#### Parsed attributes\n\n| Log | Attributes |\n|---|---|\n| Error log | timestamp, severity, `thread_id`, `error_code` (MySQL 8.0+), `subsystem` (MySQL 8.0+) |\n| Slow query log | timestamp, `db_user`, `client_host`, `client_ip`, `thread_id`, `query_time`, `lock_time`, `rows_sent`, `rows_examined`; the statement becomes the body |\n"
+    }
+  ],
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      },
+      {
+        "name": "Severity Text",
+        "path": "severity_text",
+        "type": "string"
+      },
+      {
+        "name": "Severity Number",
+        "path": "severity_number",
+        "type": "number"
+      },
+      {
+        "name": "Log Type",
+        "path": "attributes.log_type",
+        "type": "string"
+      },
+      {
+        "name": "Thread ID",
+        "path": "attributes.thread_id",
+        "type": "string"
+      },
+      {
+        "name": "Error Code",
+        "path": "attributes.error_code",
+        "type": "string"
+      },
+      {
+        "name": "Subsystem",
+        "path": "attributes.subsystem",
+        "type": "string"
+      },
+      {
+        "name": "User",
+        "path": "attributes.db_user",
+        "type": "string"
+      },
+      {
+        "name": "Client Host",
+        "path": "attributes.client_host",
+        "type": "string"
+      },
+      {
+        "name": "Client IP",
+        "path": "attributes.client_ip",
+        "type": "string"
+      },
+      {
+        "name": "Query Time",
+        "path": "attributes.query_time",
+        "type": "string"
+      },
+      {
+        "name": "Lock Time",
+        "path": "attributes.lock_time",
+        "type": "string"
+      },
+      {
+        "name": "Rows Sent",
+        "path": "attributes.rows_sent",
+        "type": "string"
+      },
+      {
+        "name": "Rows Examined",
+        "path": "attributes.rows_examined",
+        "type": "string"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "mysql_buffer_pool_data_pages",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of data pages in the InnoDB buffer pool."
+      },
+      {
+        "name": "mysql_buffer_pool_limit",
+        "type": "sum",
+        "unit": "Bytes",
+        "description": "The configured size of the InnoDB buffer pool."
+      },
+      {
+        "name": "mysql_buffer_pool_operations",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of operations on the InnoDB buffer pool."
+      },
+      {
+        "name": "mysql_buffer_pool_page_flushes",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of requests to flush pages from the InnoDB buffer pool."
+      },
+      {
+        "name": "mysql_buffer_pool_pages",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of pages in the InnoDB buffer pool."
+      },
+      {
+        "name": "mysql_buffer_pool_usage",
+        "type": "sum",
+        "unit": "Bytes",
+        "description": "The number of bytes in the InnoDB buffer pool."
+      },
+      {
+        "name": "mysql_client_network_io",
+        "type": "sum",
+        "unit": "Bytes",
+        "description": "The number of transmitted bytes between server and clients."
+      },
+      {
+        "name": "mysql_commands",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of times each type of command has been executed."
+      },
+      {
+        "name": "mysql_connection_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of connection attempts (successful or not) to the MySQL server."
+      },
+      {
+        "name": "mysql_connection_errors",
+        "type": "sum",
+        "unit": "number",
+        "description": "Errors that occur during the client connection process."
+      },
+      {
+        "name": "mysql_double_writes",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of writes to the InnoDB doublewrite buffer."
+      },
+      {
+        "name": "mysql_handlers",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of requests to various MySQL handlers."
+      },
+      {
+        "name": "mysql_index_io_wait_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "The total count of I/O wait events for an index."
+      },
+      {
+        "name": "mysql_index_io_wait_time",
+        "type": "sum",
+        "unit": "nanoseconds",
+        "description": "The total time of I/O wait events for an index."
+      },
+      {
+        "name": "mysql_joins",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of joins that perform table scans."
+      },
+      {
+        "name": "mysql_locks",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of MySQL locks."
+      },
+      {
+        "name": "mysql_log_operations",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of InnoDB log operations."
+      },
+      {
+        "name": "mysql_max_used_connections",
+        "type": "sum",
+        "unit": "number",
+        "description": "Maximum number of connections used simultaneously since the server started."
+      },
+      {
+        "name": "mysql_mysqlx_connections",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of mysqlx connections."
+      },
+      {
+        "name": "mysql_opened_resources",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of opened resources."
+      },
+      {
+        "name": "mysql_operations",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of InnoDB operations."
+      },
+      {
+        "name": "mysql_page_operations",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of InnoDB page operations."
+      },
+      {
+        "name": "mysql_prepared_statements",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of times each type of prepared statement command has been issued."
+      },
+      {
+        "name": "mysql_query_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of statements executed by the server."
+      },
+      {
+        "name": "mysql_query_slow_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of slow queries."
+      },
+      {
+        "name": "mysql_replica_sql_delay",
+        "type": "sum",
+        "unit": "seconds",
+        "description": "The number of seconds that the replica must lag the source."
+      },
+      {
+        "name": "mysql_replica_time_behind_source",
+        "type": "sum",
+        "unit": "seconds",
+        "description": "This field is an indication of how “late” the replica is."
+      },
+      {
+        "name": "mysql_row_locks",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of InnoDB row locks."
+      },
+      {
+        "name": "mysql_row_operations",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of InnoDB row operations."
+      },
+      {
+        "name": "mysql_sorts",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of MySQL sorts."
+      },
+      {
+        "name": "mysql_table_io_wait_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "The total count of I/O wait events for a table."
+      },
+      {
+        "name": "mysql_table_io_wait_time",
+        "type": "sum",
+        "unit": "nanoseconds",
+        "description": "The total time of I/O wait events for a table."
+      },
+      {
+        "name": "mysql_threads",
+        "type": "sum",
+        "unit": "number",
+        "description": "The state of MySQL threads."
+      },
+      {
+        "name": "mysql_tmp_resources",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of created temporary resources."
+      },
+      {
+        "name": "mysql_uptime",
+        "type": "sum",
+        "unit": "seconds",
+        "description": "The number of seconds that the server has been up."
+      }
+    ]
+  },
+  "assets": {
+    "logs": {
+      "pipelines": [
+        {
+          "id": "mysql-error-log",
+          "orderId": 1,
+          "name": "MySQL error log",
+          "alias": "mysql-error-log",
+          "description": "Parses the MySQL error log: timestamp, severity, thread id, error code and subsystem.",
+          "enabled": true,
+          "filter": {
+            "op": "AND",
+            "items": [
+              {
+                "key": {
+                  "key": "source",
+                  "dataType": "string",
+                  "type": "tag",
+                  "isColumn": false,
+                  "isJSON": false
+                },
+                "value": "mysql",
+                "op": "="
+              },
+              {
+                "key": {
+                  "key": "log_type",
+                  "dataType": "string",
+                  "type": "tag",
+                  "isColumn": false,
+                  "isJSON": false
+                },
+                "value": "error",
+                "op": "="
+              }
+            ]
+          },
+          "config": [
+            {
+              "type": "regex_parser",
+              "id": "parse-error-line",
+              "output": "parse-utc-timestamp",
+              "on_error": "send",
+              "orderId": 1,
+              "enabled": true,
+              "name": "Parse error log line",
+              "parse_to": "attributes",
+              "regex": "^(?P\u003ctimestamp\u003e\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+(?:Z|[+-]\\d{2}:\\d{2}))\\s+(?P\u003cthread_id\u003e\\d+)\\s+\\[(?P\u003clevel\u003e[A-Za-z]+)\\](?:\\s+\\[(?P\u003cerror_code\u003eMY-\\d+)\\])?(?:\\s+\\[(?P\u003csubsystem\u003e[A-Za-z]+)\\])?\\s+(?P\u003cmessage\u003e[\\s\\S]*)$",
+              "parse_from": "body"
+            },
+            {
+              "type": "time_parser",
+              "id": "parse-utc-timestamp",
+              "output": "parse-offset-timestamp",
+              "on_error": "send",
+              "orderId": 2,
+              "enabled": true,
+              "name": "Parse UTC timestamp",
+              "parse_from": "attributes.timestamp",
+              "layout": "%Y-%m-%dT%H:%M:%S.%fZ",
+              "layout_type": "strptime"
+            },
+            {
+              "type": "time_parser",
+              "id": "parse-offset-timestamp",
+              "output": "parse-severity",
+              "on_error": "send",
+              "orderId": 3,
+              "enabled": true,
+              "name": "Parse timestamp with UTC offset",
+              "parse_from": "attributes.timestamp",
+              "layout": "%Y-%m-%dT%H:%M:%S.%f%j",
+              "layout_type": "strptime"
+            },
+            {
+              "type": "severity_parser",
+              "id": "parse-severity",
+              "output": "move-message",
+              "on_error": "send",
+              "orderId": 4,
+              "enabled": true,
+              "name": "Parse severity",
+              "parse_from": "attributes.level",
+              "mapping": {
+                "error": [
+                  "Error",
+                  "ERROR"
+                ],
+                "info": [
+                  "System",
+                  "SYSTEM",
+                  "Note",
+                  "NOTE"
+                ],
+                "warn": [
+                  "Warning",
+                  "WARNING"
+                ]
+              },
+              "overwrite_text": true
+            },
+            {
+              "type": "move",
+              "id": "move-message",
+              "output": "remove-timestamp",
+              "on_error": "send",
+              "orderId": 5,
+              "enabled": true,
+              "name": "Move message to body",
+              "from": "attributes.message",
+              "to": "body"
+            },
+            {
+              "type": "remove",
+              "id": "remove-timestamp",
+              "output": "remove-level",
+              "on_error": "send",
+              "orderId": 6,
+              "enabled": true,
+              "name": "Remove parsed timestamp",
+              "field": "attributes.timestamp"
+            },
+            {
+              "type": "remove",
+              "id": "remove-level",
+              "on_error": "send",
+              "orderId": 7,
+              "enabled": true,
+              "name": "Remove parsed level",
+              "field": "attributes.level"
+            }
+          ]
+        },
+        {
+          "id": "mysql-slow-query-log",
+          "orderId": 2,
+          "name": "MySQL slow query log",
+          "alias": "mysql-slow-log",
+          "description": "Parses MySQL slow query log entries: timestamp, user, client, query time, lock time, rows sent and rows examined.",
+          "enabled": true,
+          "filter": {
+            "op": "AND",
+            "items": [
+              {
+                "key": {
+                  "key": "source",
+                  "dataType": "string",
+                  "type": "tag",
+                  "isColumn": false,
+                  "isJSON": false
+                },
+                "value": "mysql",
+                "op": "="
+              },
+              {
+                "key": {
+                  "key": "log_type",
+                  "dataType": "string",
+                  "type": "tag",
+                  "isColumn": false,
+                  "isJSON": false
+                },
+                "value": "slow",
+                "op": "="
+              }
+            ]
+          },
+          "config": [
+            {
+              "type": "regex_parser",
+              "id": "parse-slow-entry",
+              "output": "parse-utc-timestamp",
+              "on_error": "send",
+              "orderId": 1,
+              "enabled": true,
+              "name": "Parse slow query entry",
+              "parse_to": "attributes",
+              "regex": "^# Time: (?P\u003ctimestamp\u003e\\S+)\\s*\\n# User@Host: (?P\u003cdb_user\u003e[^\\[\\s]*)\\[[^\\]]*\\]\\s*@\\s*(?P\u003cclient_host\u003e[^\\s\\[]*)\\s*\\[(?P\u003cclient_ip\u003e[^\\]]*)\\](?:\\s+Id:\\s*(?P\u003cthread_id\u003e\\d+))?[^\\n]*\\n# Query_time: (?P\u003cquery_time\u003e[0-9.]+)\\s+Lock_time: (?P\u003clock_time\u003e[0-9.]+)\\s+Rows_sent: (?P\u003crows_sent\u003e\\d+)\\s+Rows_examined: (?P\u003crows_examined\u003e\\d+)[^\\n]*\\n(?P\u003cstatement\u003e[\\s\\S]*)$",
+              "parse_from": "body"
+            },
+            {
+              "type": "time_parser",
+              "id": "parse-utc-timestamp",
+              "output": "parse-offset-timestamp",
+              "on_error": "send",
+              "orderId": 2,
+              "enabled": true,
+              "name": "Parse UTC timestamp",
+              "parse_from": "attributes.timestamp",
+              "layout": "%Y-%m-%dT%H:%M:%S.%fZ",
+              "layout_type": "strptime"
+            },
+            {
+              "type": "time_parser",
+              "id": "parse-offset-timestamp",
+              "output": "move-statement",
+              "on_error": "send",
+              "orderId": 3,
+              "enabled": true,
+              "name": "Parse timestamp with UTC offset",
+              "parse_from": "attributes.timestamp",
+              "layout": "%Y-%m-%dT%H:%M:%S.%f%j",
+              "layout_type": "strptime"
+            },
+            {
+              "type": "move",
+              "id": "move-statement",
+              "output": "remove-timestamp",
+              "on_error": "send",
+              "orderId": 4,
+              "enabled": true,
+              "name": "Move statement to body",
+              "from": "attributes.statement",
+              "to": "body"
+            },
+            {
+              "type": "remove",
+              "id": "remove-timestamp",
+              "on_error": "send",
+              "orderId": 5,
+              "enabled": true,
+              "name": "Remove parsed timestamp",
+              "field": "attributes.timestamp"
+            }
+          ]
+        }
+      ]
+    },
+    "dashboards": [
+      {
+        "id": "overview",
+        "definition": {
+          "schemaVersion": "v6",
+          "image": "",
+          "name": "",
+          "generateName": true,
+          "tags": [
+            {
+              "key": "tag",
+              "value": "mysql"
+            },
+            {
+              "key": "tag",
+              "value": "database"
+            }
+          ],
+          "spec": {
+            "display": {
+              "name": "MySQL overview",
+              "description": "Throughput, connections, InnoDB buffer pool, locks and replication of MySQL servers.\n"
+            },
+            "variables": [
+              {
+                "kind": "ListVariable",
+                "spec": {
+                  "display": {
+                    "name": "mysql.instance.endpoint",
+                    "description": "MySQL instances sending metrics"
+                  },
+                  "allowAllValue": true,
+                  "allowMultiple": true,
+                  "customAllValue": "",
+                  "capturingRegexp": "",
+                  "sort": "alphabetical-asc",
+                  "plugin": {
+                    "kind": "signoz/QueryVariable",
+                    "spec": {
+                      "queryValue": "SELECT JSONExtractString(labels, 'mysql.instance.endpoint') AS `mysql.instance.endpoint`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'mysql.uptime'\nGROUP BY `mysql.instance.endpoint`"
+                    }
+                  },
+                  "name": "mysql.instance.endpoint"
+                }
+              }
+            ],
+            "panels": {
+              "066fa48e-8e50-5fa0-abca-fadeb6245bf1": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Table locks per second",
+                    "description": "Table locks granted immediately or after a wait."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "ops",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.locks",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{kind}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "17fd4162-5ed4-5bb7-b765-99e77081155e": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Slow queries",
+                    "description": "Queries that took longer than long_query_time."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.query.slow.count",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "slow queries"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "199cf377-d6a4-5969-bdca-4feba0dd2c0e": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Buffer pool operations per second",
+                    "description": "Read requests, disk reads and write requests on the buffer pool."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "ops",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.buffer_pool.operations",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "operation",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{operation}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "32498890-8e49-56b0-9280-600dbc996037": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Replica lag",
+                    "description": "Seconds the replica is behind its source."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "s",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.replica.time_behind_source",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "lag"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "379d1d00-ee94-5f35-8e0c-1c492ab80735": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Row operations per second",
+                    "description": "InnoDB rows read, inserted, updated and deleted."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "ops",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.row_operations",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "operation",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{operation}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "3ceac2ef-1d56-5ae1-8754-8b1185b3378f": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Connection errors",
+                    "description": "Errors raised while clients connect."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.connection.errors",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "error",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{error}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "542565dd-d4c3-592a-bc2e-c17695ab31fe": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Buffer pool pages",
+                    "description": "InnoDB buffer pool pages by kind."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.buffer_pool.pages",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{kind}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "6e7c8509-f8c6-52be-a628-7e869651149d": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Row lock waits",
+                    "description": "InnoDB row lock waits."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.row_locks",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{kind}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "70b76fc0-3088-50a0-a3c1-1875c951712d": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Temporary resources",
+                    "description": "Temporary tables and files created, in memory and on disk."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "ops",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.tmp_resources",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "resource",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{resource}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "7963ce6f-0b10-56cd-9717-d6479693f5ad": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Network I/O",
+                    "description": "Bytes sent to and received from clients."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "binBps",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.client.network.io",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{kind}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "7a52778a-94ff-5400-a60e-e2930f1be63c": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Table I/O wait time",
+                    "description": "Total I/O wait time per table, in nanoseconds."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TablePanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time"
+                      },
+                      "formatting": {
+                        "columnUnits": null,
+                        "decimalPrecision": "2"
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "scalar",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.table.io.wait.time",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "schema",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              },
+                              {
+                                "name": "table",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "wait time"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "904b500e-7f88-5632-9d37-6614819d7995": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Commands per second",
+                    "description": "Executions of each command type."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "ops",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.commands",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "command",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{command}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "bbf77613-1169-526a-b21c-edb9ec57e110": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Threads",
+                    "description": "Connected, running, cached and created threads."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.threads",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "kind",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{kind}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "d9b6693c-fdd2-521b-bf4b-97954acce911": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Buffer pool usage",
+                    "description": "Bytes in the InnoDB buffer pool, clean and dirty."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "bytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.buffer_pool.usage",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "status",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{status}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "f3e1284c-7414-586c-a66b-40a36573293c": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Queries per second",
+                    "description": "Statements executed by the server."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "reqps",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.query.count",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "queries/s"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "fba5ba9d-8e6a-5e54-a34a-7f63bc9f608f": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Table I/O wait events",
+                    "description": "I/O wait events per table."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TablePanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time"
+                      },
+                      "formatting": {
+                        "columnUnits": null,
+                        "decimalPrecision": "2"
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "scalar",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mysql.table.io.wait.count",
+                                "temporality": "",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "mysql.instance.endpoint IN $mysql.instance.endpoint"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "schema",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              },
+                              {
+                                "name": "table",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "events"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              }
+            },
+            "layouts": [
+              {
+                "kind": "Grid",
+                "spec": {
+                  "items": [
+                    {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/f3e1284c-7414-586c-a66b-40a36573293c"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/17fd4162-5ed4-5bb7-b765-99e77081155e"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 3,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/904b500e-7f88-5632-9d37-6614819d7995"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 3,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/379d1d00-ee94-5f35-8e0c-1c492ab80735"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 6,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/bbf77613-1169-526a-b21c-edb9ec57e110"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 6,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/3ceac2ef-1d56-5ae1-8754-8b1185b3378f"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 9,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/d9b6693c-fdd2-521b-bf4b-97954acce911"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 9,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/542565dd-d4c3-592a-bc2e-c17695ab31fe"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 12,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/199cf377-d6a4-5969-bdca-4feba0dd2c0e"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 12,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/7963ce6f-0b10-56cd-9717-d6479693f5ad"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 15,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/066fa48e-8e50-5fa0-abca-fadeb6245bf1"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 15,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/6e7c8509-f8c6-52be-a628-7e869651149d"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 18,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/70b76fc0-3088-50a0-a3c1-1875c951712d"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 18,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/32498890-8e49-56b0-9280-600dbc996037"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 21,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/7a52778a-94ff-5400-a60e-e2930f1be63c"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 21,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/fba5ba9d-8e6a-5e54-a34a-7f63bc9f608f"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "duration": "",
+            "refreshInterval": "",
+            "links": []
+          }
+        }
+      }
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "mysql"
+    },
+    "metrics": [
+      "mysql_buffer_pool_data_pages",
+      "mysql_buffer_pool_limit",
+      "mysql_buffer_pool_operations",
+      "mysql_buffer_pool_page_flushes",
+      "mysql_buffer_pool_pages",
+      "mysql_buffer_pool_usage",
+      "mysql_client_network_io",
+      "mysql_commands",
+      "mysql_connection_count",
+      "mysql_connection_errors",
+      "mysql_double_writes",
+      "mysql_handlers",
+      "mysql_index_io_wait_count",
+      "mysql_index_io_wait_time",
+      "mysql_joins",
+      "mysql_locks",
+      "mysql_log_operations",
+      "mysql_max_used_connections",
+      "mysql_mysqlx_connections",
+      "mysql_opened_resources",
+      "mysql_operations",
+      "mysql_page_operations",
+      "mysql_prepared_statements",
+      "mysql_query_count",
+      "mysql_query_slow_count",
+      "mysql_replica_sql_delay",
+      "mysql_replica_time_behind_source",
+      "mysql_row_locks",
+      "mysql_row_operations",
+      "mysql_sorts",
+      "mysql_table_io_wait_count",
+      "mysql_table_io_wait_time",
+      "mysql_threads",
+      "mysql_tmp_resources",
+      "mysql_uptime"
+    ]
+  },
+  "version": "1.0.1",
+  "latest_version": "1.0.1",
+  "installation": null
+}

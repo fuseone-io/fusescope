@@ -8,15 +8,17 @@ from sqlalchemy import sql
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 
-BUILTIN_IDS = {
-    "builtin-aws_elasticache_redis",
-    "builtin-aws_rds_mysql",
-    "builtin-aws_rds_postgresql",
-    "builtin-clickhouse",
-    "builtin-mongo",
-    "builtin-nginx",
-    "builtin-postgres",
-    "builtin-redis",
+BUILTIN_VERSIONS = {
+    "builtin-aws_elasticache_redis": "1.0.0",
+    "builtin-aws_rds_mysql": "1.0.0",
+    "builtin-aws_rds_postgresql": "1.0.0",
+    "builtin-clickhouse": "1.0.0",
+    "builtin-gcp_cloudsql": "1.0.1",
+    "builtin-mongo": "1.0.0",
+    "builtin-mysql": "1.0.1",
+    "builtin-nginx": "1.0.0",
+    "builtin-postgres": "1.0.0",
+    "builtin-redis": "1.0.0",
 }
 
 
@@ -35,11 +37,10 @@ def test_list_serves_the_embedded_catalog(
 
     assert response.status_code == HTTPStatus.OK, response.text
     integrations = response.json()["data"]["integrations"]
-    assert {i["id"] for i in integrations} == BUILTIN_IDS
+    assert {i["id"]: i["version"] for i in integrations} == BUILTIN_VERSIONS
     for integration in integrations:
         assert integration["is_installed"] is False
-        assert integration["version"] == "1.0.0"
-        assert integration["latest_version"] == "1.0.0"
+        assert integration["latest_version"] == integration["version"]
         assert integration["icon"].startswith("data:image/")
 
 

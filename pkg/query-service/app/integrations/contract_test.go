@@ -61,7 +61,7 @@ func TestAPIContract(t *testing.T) {
 
 	list, apiErr := manager.ListIntegrations(ctx, orgID.StringValue(), nil)
 	require.Nil(t, apiErr)
-	require.Len(t, list, 8)
+	require.Len(t, list, 10)
 	assertGolden(t, "list.json", list)
 
 	for _, item := range list {

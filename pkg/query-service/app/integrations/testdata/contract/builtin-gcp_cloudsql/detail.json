@@ -1,0 +1,1792 @@
+{
+  "id": "builtin-gcp_cloudsql",
+  "title": "Google Cloud SQL",
+  "description": "Monitor Google Cloud SQL with metrics and logs",
+  "author": {
+    "name": "FuseScope",
+    "email": "",
+    "homepage": "https://github.com/fuseone-io/fusescope"
+  },
+  "icon": "data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjNDI4NUY0IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+R29vZ2xlIENsb3VkPC90aXRsZT48cGF0aCBkPSJNMTIuMTkgMi4zOGE5LjM0NCA5LjM0NCAwIDAgMC05LjIzNCA2Ljg5M2MuMDUzLS4wMi0uMDU1LjAxMyAwIDAtMy44NzUgMi41NTEtMy45MjIgOC4xMS0uMjQ3IDEwLjk0MWwuMDA2LS4wMDctLjAwNy4wM2E2LjcxNyA2LjcxNyAwIDAgMCA0LjA3NyAxLjM1Nmg1LjE3M2wuMDMuMDNoNS4xOTJjNi42ODcuMDUzIDkuMzc2LTguNjA1IDMuODM1LTEyLjM1YTkuMzY1IDkuMzY1IDAgMCAwLTIuODIxLTQuNTUybC0uMDQzLjA0My4wMDYtLjA1QTkuMzQ0IDkuMzQ0IDAgMCAwIDEyLjE5IDIuMzh6bS0uMzU4IDQuMTQ2YzEuMjQ0LS4wNCAyLjUxOC4zNjggMy40ODYgMS4xNWE1LjE4NiA1LjE4NiAwIDAgMSAxLjg2MiA0LjA3OHYuNTE4YzMuNTMtLjA3IDMuNTMgNS4yNjIgMCA1LjE5M2gtNS4xOTNsLS4wMDguMDA5di0uMDRINi43ODVhMi41OSAyLjU5IDAgMCAxLTEuMDY3LS4yM2guMDAxYTIuNTk3IDIuNTk3IDAgMSAxIDMuNDM3LTMuNDM3bDMuMDEzLTMuMDEyQTYuNzQ3IDYuNzQ3IDAgMCAwIDguMTEgOC4yNGMuMDE4LS4wMS4wNC0uMDI2LjA1NC0uMDIzYTUuMTg2IDUuMTg2IDAgMCAxIDMuNjctMS42OXoiLz48L3N2Zz4=",
+  "categories": [
+    "Database"
+  ],
+  "overview": "### Monitor Google Cloud SQL with FuseScope\n\nCollect Cloud SQL metrics from Cloud Monitoring with the OpenTelemetry `googlecloudmonitoring` receiver and view CPU, memory, disk, network, connections and replica lag on an out of the box dashboard.\n\nCollect Cloud SQL logs by routing them from Cloud Logging to a Pub/Sub topic and reading the subscription with the `googlecloudpubsub` receiver. Installed log pipelines parse the MySQL error log and the PostgreSQL log.\n\nCovers Cloud SQL for MySQL, PostgreSQL and SQL Server. To collect engine metrics as well, add the MySQL or PostgreSQL integration pointed at the instance.\n",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "## Before You Begin\n\nTo collect Cloud SQL metrics and logs, you need the following.\n\n### Prepare Google Cloud\n\nThe commands below use the [gcloud CLI](https://cloud.google.com/sdk/docs/install) and read the project from `GCP_PROJECT_ID`:\n\n```bash\nexport GCP_PROJECT_ID=\"\u003cproject-id\u003e\"\n```\n\n- **Enable the APIs** in the project that holds the Cloud SQL instances:\n  ```sh\n  gcloud services enable monitoring.googleapis.com logging.googleapis.com pubsub.googleapis.com \\\n    --project \"$GCP_PROJECT_ID\"\n  ```\n\n- **Create a service account for the collector**\n  ```sh\n  gcloud iam service-accounts create fusescope-collector \\\n    --project \"$GCP_PROJECT_ID\" \\\n    --display-name \"FuseScope collector\"\n  ```\n\n- **Grant it the roles it needs**\n\n  | Role | On | Used for |\n  |---|---|---|\n  | `roles/monitoring.viewer` | project | reading metrics from Cloud Monitoring |\n  | `roles/pubsub.subscriber` | the log subscription | pulling logs from Pub/Sub, granted in the **Collect Logs** step |\n\n  ```sh\n  gcloud projects add-iam-policy-binding \"$GCP_PROJECT_ID\" \\\n    --member \"serviceAccount:fusescope-collector@$GCP_PROJECT_ID.iam.gserviceaccount.com\" \\\n    --role roles/monitoring.viewer\n  ```\n\n  The person running the setup needs `roles/iam.serviceAccountAdmin`, `roles/resourcemanager.projectIamAdmin`, `roles/pubsub.admin` and `roles/logging.configWriter`, or `roles/owner`.\n\n- **Give the collector the service account's credentials**\n  The receivers use [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials).\n  - On Compute Engine, attach the service account to the VM.\n  - On GKE, bind it to the collector's Kubernetes service account with [Workload Identity Federation](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity).\n  - Elsewhere, create a key and point `GOOGLE_APPLICATION_CREDENTIALS` at it. Store the key file as a secret and keep it out of version control.\n    ```sh\n    gcloud iam service-accounts keys create fusescope-collector-key.json \\\n      --iam-account \"fusescope-collector@$GCP_PROJECT_ID.iam.gserviceaccount.com\"\n    ```\n    ```bash\n    export GOOGLE_APPLICATION_CREDENTIALS=/etc/otelcol-contrib/fusescope-collector-key.json\n    ```\n\n### Prepare the OpenTelemetry Collector\n\n- **Run an OpenTelemetry Collector**\n  If needed, [install the OpenTelemetry Collector Contrib distribution](https://opentelemetry.io/docs/collector/installation/). The configs below are validated with `otelcol-contrib` v0.163; older releases may lack the `google_cloud_logentry_encoding` extension.\n\n  Make sure you can pass config files, environment variables and command line flags to it.\n\n- **Allow outbound HTTPS** from the collector to `monitoring.googleapis.com` and `pubsub.googleapis.com`.\n"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "### Collect Cloud SQL Metrics\n\nThe `googlecloudmonitoring` receiver lists time series from the Cloud Monitoring API. Each metric keeps its Cloud Monitoring name, such as `cloudsql.googleapis.com/database/cpu/utilization`, and the `cloudsql_database` resource labels (`project_id`, `database_id`, `region`) become resource attributes.\n\nCloud Monitoring bills API reads; the default interval below keeps the cost low. The minimum is 60s.\n\n#### Create collector config file\n\nSave the following config in a file named `gcp-cloudsql-metrics-collection-config.yaml`.\n\n```yaml\nreceivers:\n  googlecloudmonitoring:\n    project_id: ${env:GCP_PROJECT_ID}\n    collection_interval: 120s\n    metrics_list:\n      - metric_name: \"cloudsql.googleapis.com/database/cpu/utilization\"\n      - metric_name: \"cloudsql.googleapis.com/database/memory/utilization\"\n      - metric_name: \"cloudsql.googleapis.com/database/disk/utilization\"\n      - metric_name: \"cloudsql.googleapis.com/database/disk/bytes_used\"\n      - metric_name: \"cloudsql.googleapis.com/database/disk/read_ops_count\"\n      - metric_name: \"cloudsql.googleapis.com/database/disk/write_ops_count\"\n      - metric_name: \"cloudsql.googleapis.com/database/network/received_bytes_count\"\n      - metric_name: \"cloudsql.googleapis.com/database/network/sent_bytes_count\"\n      - metric_name: \"cloudsql.googleapis.com/database/network/connections\"\n      - metric_name: \"cloudsql.googleapis.com/database/postgresql/num_backends\"\n      - metric_name: \"cloudsql.googleapis.com/database/postgresql/transaction_count\"\n      - metric_name: \"cloudsql.googleapis.com/database/mysql/queries\"\n      - metric_name: \"cloudsql.googleapis.com/database/replication/replica_lag\"\n      - metric_name: \"cloudsql.googleapis.com/database/up\"\n\nprocessors:\n  batch:\n    send_batch_size: 10000\n    timeout: 10s\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    metrics/gcp_cloudsql:\n      receivers: [googlecloudmonitoring]\n      processors: [batch]\n      exporters: [otlp/fusescope]\n```\n\nTo collect from several projects, add one `googlecloudmonitoring/\u003cname\u003e` receiver per project, and grant the service account `roles/monitoring.viewer` in each.\n\n#### Set Environment Variables\n\nSet the following environment variables in your collector environment:\n\n```bash\n\n# project that holds the Cloud SQL instances\nexport GCP_PROJECT_ID=\"\u003cproject-id\u003e\"\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nPass the config file to your collector with the following flag:\n```bash\n--config gcp-cloudsql-metrics-collection-config.yaml\n```\nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "### Collect Cloud SQL Logs\n\nCloud SQL writes its logs to Cloud Logging. A log sink routes them to a Pub/Sub topic, and the `googlecloudpubsub` receiver pulls them from a subscription. The `google_cloud_logentry_encoding` extension turns each `LogEntry` into an OpenTelemetry log: timestamp, severity, trace context, labels and the payload as the body.\n\n#### Route the logs to Pub/Sub\n\n```sh\n# topic and pull subscription for the logs\ngcloud pubsub topics create fusescope-cloudsql-logs --project \"$GCP_PROJECT_ID\"\ngcloud pubsub subscriptions create fusescope-cloudsql-logs \\\n  --project \"$GCP_PROJECT_ID\" \\\n  --topic fusescope-cloudsql-logs \\\n  --ack-deadline 60 \\\n  --message-retention-duration 1d\n\n# sink that sends Cloud SQL logs to the topic\ngcloud logging sinks create fusescope-cloudsql-logs \\\n  \"pubsub.googleapis.com/projects/$GCP_PROJECT_ID/topics/fusescope-cloudsql-logs\" \\\n  --project \"$GCP_PROJECT_ID\" \\\n  --log-filter 'resource.type=\"cloudsql_database\"'\n\n# let the sink publish to the topic\ngcloud pubsub topics add-iam-policy-binding fusescope-cloudsql-logs \\\n  --project \"$GCP_PROJECT_ID\" \\\n  --member \"$(gcloud logging sinks describe fusescope-cloudsql-logs --project \"$GCP_PROJECT_ID\" --format 'value(writerIdentity)')\" \\\n  --role roles/pubsub.publisher\n\n# let the collector pull from the subscription\ngcloud pubsub subscriptions add-iam-policy-binding fusescope-cloudsql-logs \\\n  --project \"$GCP_PROJECT_ID\" \\\n  --member \"serviceAccount:fusescope-collector@$GCP_PROJECT_ID.iam.gserviceaccount.com\" \\\n  --role roles/pubsub.subscriber\n```\n\nNarrow `--log-filter` to keep costs down, for example `resource.type=\"cloudsql_database\" AND severity\u003e=WARNING`. For the slow query log of Cloud SQL for MySQL, set the `slow_query_log` and `log_output=FILE` database flags.\n\n#### Create collector config file\n\nSave the following config in a file named `gcp-cloudsql-logs-collection-config.yaml`.\n\n```yaml\nextensions:\n  google_cloud_logentry_encoding:\n    handle_json_payload_as: json\n\nreceivers:\n  googlecloudpubsub:\n    project: ${env:GCP_PROJECT_ID}\n    subscription: ${env:GCP_PUBSUB_SUBSCRIPTION}\n    encoding: google_cloud_logentry_encoding\n\nprocessors:\n  attributes/gcp_cloudsql:\n    actions:\n      - key: source\n        value: gcp_cloudsql\n        action: insert\n  batch:\n    send_batch_size: 10000\n    send_batch_max_size: 11000\n    timeout: 10s\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  extensions: [google_cloud_logentry_encoding]\n  pipelines:\n    logs/gcp_cloudsql:\n      receivers: [googlecloudpubsub]\n      processors: [attributes/gcp_cloudsql, batch]\n      exporters: [otlp/fusescope]\n```\n\n#### Set Environment Variables\n\nSet the following environment variables in your collector environment:\n\n```bash\n\n# project that holds the Pub/Sub subscription\nexport GCP_PROJECT_ID=\"\u003cproject-id\u003e\"\n\n# full name of the subscription created above\nexport GCP_PUBSUB_SUBSCRIPTION=\"projects/\u003cproject-id\u003e/subscriptions/fusescope-cloudsql-logs\"\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nPass the config file to your collector with the following flag:\n```bash\n--config gcp-cloudsql-logs-collection-config.yaml\n```\nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n\n#### Parsed attributes\n\nThe log name (for example `cloudsql.googleapis.com%2Fmysql.err`) is in the `cloud.resource_id` resource attribute, the instance in `gcp.label.database_id`.\n\n| Log | Attributes |\n|---|---|\n| MySQL error log (`mysql.err`) | `thread_id`, `error_code`, `subsystem` |\n| PostgreSQL log (`postgres.log`) | `pid`, `db_name`, `db_user` |\n"
+    }
+  ],
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      },
+      {
+        "name": "Severity Text",
+        "path": "severity_text",
+        "type": "string"
+      },
+      {
+        "name": "Severity Number",
+        "path": "severity_number",
+        "type": "number"
+      },
+      {
+        "name": "Log Name",
+        "path": "resource.cloud.resource_id",
+        "type": "string"
+      },
+      {
+        "name": "Instance",
+        "path": "resource.gcp.label.database_id",
+        "type": "string"
+      },
+      {
+        "name": "Project",
+        "path": "resource.gcp.project",
+        "type": "string"
+      },
+      {
+        "name": "Region",
+        "path": "resource.gcp.label.region",
+        "type": "string"
+      },
+      {
+        "name": "Thread ID",
+        "path": "attributes.thread_id",
+        "type": "string"
+      },
+      {
+        "name": "Error Code",
+        "path": "attributes.error_code",
+        "type": "string"
+      },
+      {
+        "name": "Subsystem",
+        "path": "attributes.subsystem",
+        "type": "string"
+      },
+      {
+        "name": "Process ID",
+        "path": "attributes.pid",
+        "type": "string"
+      },
+      {
+        "name": "Database",
+        "path": "attributes.db_name",
+        "type": "string"
+      },
+      {
+        "name": "User",
+        "path": "attributes.db_user",
+        "type": "string"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "cloudsql.googleapis.com/database/cpu/utilization",
+        "type": "gauge",
+        "unit": "fraction",
+        "description": "Fraction of the reserved CPU in use."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/memory/utilization",
+        "type": "gauge",
+        "unit": "fraction",
+        "description": "Fraction of the instance memory in use."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/disk/utilization",
+        "type": "gauge",
+        "unit": "fraction",
+        "description": "Fraction of the data disk quota in use."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/disk/bytes_used",
+        "type": "gauge",
+        "unit": "Bytes",
+        "description": "Data disk usage."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/disk/read_ops_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "Delta count of data disk read IO operations."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/disk/write_ops_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "Delta count of data disk write IO operations."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/network/received_bytes_count",
+        "type": "sum",
+        "unit": "Bytes",
+        "description": "Delta count of bytes received through the network."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/network/sent_bytes_count",
+        "type": "sum",
+        "unit": "Bytes",
+        "description": "Delta count of bytes sent through the network."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/network/connections",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Connections to the instance. MySQL and SQL Server only."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/postgresql/num_backends",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Connections per database. PostgreSQL only."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/postgresql/transaction_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "Delta count of committed and rolled back transactions. PostgreSQL only."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/mysql/queries",
+        "type": "sum",
+        "unit": "number",
+        "description": "Delta count of statements executed by the server. MySQL only."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/replication/replica_lag",
+        "type": "gauge",
+        "unit": "seconds",
+        "description": "Seconds a read replica is behind its primary."
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/up",
+        "type": "gauge",
+        "unit": "number",
+        "description": "1 when the instance is up, 0 otherwise."
+      }
+    ]
+  },
+  "assets": {
+    "logs": {
+      "pipelines": [
+        {
+          "id": "gcp-cloudsql-mysql-error-log",
+          "orderId": 1,
+          "name": "Cloud SQL MySQL error log",
+          "alias": "cloudsql-mysql-err",
+          "description": "Parses the MySQL error log of Cloud SQL instances: thread id, error code and subsystem.",
+          "enabled": true,
+          "filter": {
+            "op": "AND",
+            "items": [
+              {
+                "key": {
+                  "key": "source",
+                  "dataType": "string",
+                  "type": "tag",
+                  "isColumn": false,
+                  "isJSON": false
+                },
+                "value": "gcp_cloudsql",
+                "op": "="
+              },
+              {
+                "key": {
+                  "key": "cloud.resource_id",
+                  "dataType": "string",
+                  "type": "resource",
+                  "isColumn": false,
+                  "isJSON": false
+                },
+                "value": "mysql.err",
+                "op": "contains"
+              }
+            ]
+          },
+          "config": [
+            {
+              "type": "regex_parser",
+              "id": "parse-error-line",
+              "output": "move-message",
+              "on_error": "send",
+              "orderId": 1,
+              "enabled": true,
+              "name": "Parse error log line",
+              "parse_to": "attributes",
+              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+(?:Z|[+-]\\d{2}:\\d{2})\\s+(?P\u003cthread_id\u003e\\d+)\\s+\\[(?P\u003clevel\u003e[A-Za-z]+)\\](?:\\s+\\[(?P\u003cerror_code\u003eMY-\\d+)\\])?(?:\\s+\\[(?P\u003csubsystem\u003e[A-Za-z]+)\\])?\\s+(?P\u003cmessage\u003e[\\s\\S]*)$",
+              "parse_from": "body"
+            },
+            {
+              "type": "move",
+              "id": "move-message",
+              "output": "remove-level",
+              "on_error": "send",
+              "orderId": 2,
+              "enabled": true,
+              "name": "Move message to body",
+              "from": "attributes.message",
+              "to": "body"
+            },
+            {
+              "type": "remove",
+              "id": "remove-level",
+              "on_error": "send",
+              "orderId": 3,
+              "enabled": true,
+              "name": "Remove parsed level",
+              "field": "attributes.level"
+            }
+          ]
+        },
+        {
+          "id": "gcp-cloudsql-postgres-log",
+          "orderId": 2,
+          "name": "Cloud SQL PostgreSQL log",
+          "alias": "cloudsql-postgres",
+          "description": "Parses the PostgreSQL log of Cloud SQL instances: process id, database and user.",
+          "enabled": true,
+          "filter": {
+            "op": "AND",
+            "items": [
+              {
+                "key": {
+                  "key": "source",
+                  "dataType": "string",
+                  "type": "tag",
+                  "isColumn": false,
+                  "isJSON": false
+                },
+                "value": "gcp_cloudsql",
+                "op": "="
+              },
+              {
+                "key": {
+                  "key": "cloud.resource_id",
+                  "dataType": "string",
+                  "type": "resource",
+                  "isColumn": false,
+                  "isJSON": false
+                },
+                "value": "postgres.log",
+                "op": "contains"
+              }
+            ]
+          },
+          "config": [
+            {
+              "type": "regex_parser",
+              "id": "parse-log-line",
+              "output": "move-message",
+              "on_error": "send",
+              "orderId": 1,
+              "enabled": true,
+              "name": "Parse log line",
+              "parse_to": "attributes",
+              "regex": "^(?:\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)? [A-Za-z]+ )?\\[(?P\u003cpid\u003e\\d+)\\]: \\[\\d+-\\d+\\] db=(?P\u003cdb_name\u003e[^,]*),user=(?P\u003cdb_user\u003e\\S*)\\s+(?P\u003clevel\u003e[A-Z0-9]+):\\s+(?P\u003cmessage\u003e[\\s\\S]*)$",
+              "parse_from": "body"
+            },
+            {
+              "type": "move",
+              "id": "move-message",
+              "output": "remove-level",
+              "on_error": "send",
+              "orderId": 2,
+              "enabled": true,
+              "name": "Move message to body",
+              "from": "attributes.message",
+              "to": "body"
+            },
+            {
+              "type": "remove",
+              "id": "remove-level",
+              "on_error": "send",
+              "orderId": 3,
+              "enabled": true,
+              "name": "Remove parsed level",
+              "field": "attributes.level"
+            }
+          ]
+        }
+      ]
+    },
+    "dashboards": [
+      {
+        "id": "overview",
+        "definition": {
+          "schemaVersion": "v6",
+          "image": "",
+          "name": "",
+          "generateName": true,
+          "tags": [
+            {
+              "key": "tag",
+              "value": "gcp"
+            },
+            {
+              "key": "tag",
+              "value": "cloudsql"
+            },
+            {
+              "key": "tag",
+              "value": "database"
+            }
+          ],
+          "spec": {
+            "display": {
+              "name": "Cloud SQL overview",
+              "description": "CPU, memory, disk, network, connections and replication of Google Cloud SQL instances.\n"
+            },
+            "variables": [
+              {
+                "kind": "ListVariable",
+                "spec": {
+                  "display": {
+                    "name": "database_id",
+                    "description": "Cloud SQL instances, as project:instance"
+                  },
+                  "allowAllValue": true,
+                  "allowMultiple": true,
+                  "customAllValue": "",
+                  "capturingRegexp": "",
+                  "sort": "alphabetical-asc",
+                  "plugin": {
+                    "kind": "signoz/QueryVariable",
+                    "spec": {
+                      "queryValue": "SELECT JSONExtractString(labels, 'database_id') AS `database_id`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'cloudsql.googleapis.com/database/up'\nGROUP BY `database_id`"
+                    }
+                  },
+                  "name": "database_id"
+                }
+              }
+            ],
+            "panels": {
+              "0c1125a7-4d06-5c24-b449-aa27a559e7f4": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Network sent",
+                    "description": "Bytes sent per second."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "binBps",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/network/sent_bytes_count",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "1d949061-df76-5472-a487-6c70cd6f3048": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Connections (MySQL, SQL Server)",
+                    "description": "Connections to the instance."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/network/connections",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "34153dec-b1c7-5249-b018-f868dfc7644f": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Memory utilization",
+                    "description": "Memory in use, as a fraction of the instance memory."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "percentunit",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/memory/utilization",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "4459df6e-a502-561d-b239-597b106cb3b0": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Transactions (PostgreSQL)",
+                    "description": "Committed and rolled back transactions per second."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "ops",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/postgresql/transaction_count",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              },
+                              {
+                                "name": "transaction_type",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}} {{transaction_type}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "44e2504b-5296-5d8c-9c9d-c7316e42d7c0": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Disk bytes used",
+                    "description": "Data disk usage."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "bytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/disk/bytes_used",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "58263341-d5dc-59bd-9e51-aea6c32917b5": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Replica lag",
+                    "description": "Seconds a read replica is behind its primary."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "s",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/replication/replica_lag",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "664f626f-1fe3-520a-89d4-58163f75c4f5": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "CPU utilization",
+                    "description": "Reserved CPU in use."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "percentunit",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/cpu/utilization",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "86042d7d-746e-5e3c-af65-edf95893eb5b": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Up",
+                    "description": "1 when the instance is serving."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/up",
+                                "temporality": "",
+                                "timeAggregation": "min",
+                                "spaceAggregation": "min",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "aab5b370-5b04-5423-a142-dcfcabc8a929": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Disk write operations",
+                    "description": "Data disk write IO operations per second."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "ops",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/disk/write_ops_count",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "c1fd5e7f-563f-513d-a09e-675baf483fb6": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Disk utilization",
+                    "description": "Data disk in use, as a fraction of the disk quota."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "percentunit",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/disk/utilization",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "c33feaa6-6318-59b2-8f0e-f5862eaaf64e": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Queries (MySQL)",
+                    "description": "Statements executed per second."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "reqps",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/mysql/queries",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "dcfbf3af-ad5a-5215-9b69-e9fd8606b7ef": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Network received",
+                    "description": "Bytes received per second."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "binBps",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/network/received_bytes_count",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "dd5f2b2f-343f-54c3-ba32-ea714fe9bf7d": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Disk read operations",
+                    "description": "Data disk read IO operations per second."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "ops",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/disk/read_ops_count",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "f4737f37-6a6f-54bc-a223-dd6779409533": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Backends (PostgreSQL)",
+                    "description": "Connections per database."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "cloudsql.googleapis.com/database/postgresql/num_backends",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "database_id IN $database_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "database_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              },
+                              {
+                                "name": "database",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{database_id}} {{database}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              }
+            },
+            "layouts": [
+              {
+                "kind": "Grid",
+                "spec": {
+                  "items": [
+                    {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/664f626f-1fe3-520a-89d4-58163f75c4f5"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/34153dec-b1c7-5249-b018-f868dfc7644f"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 3,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/c1fd5e7f-563f-513d-a09e-675baf483fb6"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 3,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/44e2504b-5296-5d8c-9c9d-c7316e42d7c0"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 6,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/dd5f2b2f-343f-54c3-ba32-ea714fe9bf7d"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 6,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/aab5b370-5b04-5423-a142-dcfcabc8a929"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 9,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/dcfbf3af-ad5a-5215-9b69-e9fd8606b7ef"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 9,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/0c1125a7-4d06-5c24-b449-aa27a559e7f4"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 12,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/1d949061-df76-5472-a487-6c70cd6f3048"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 12,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/f4737f37-6a6f-54bc-a223-dd6779409533"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 15,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/c33feaa6-6318-59b2-8f0e-f5862eaaf64e"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 15,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/4459df6e-a502-561d-b239-597b106cb3b0"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 18,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/58263341-d5dc-59bd-9e51-aea6c32917b5"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 18,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/86042d7d-746e-5e3c-af65-edf95893eb5b"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "duration": "",
+            "refreshInterval": "",
+            "links": []
+          }
+        }
+      }
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "gcp_cloudsql"
+    },
+    "metrics": [
+      "cloudsql_googleapis_com_database_cpu_utilization",
+      "cloudsql_googleapis_com_database_memory_utilization",
+      "cloudsql_googleapis_com_database_disk_utilization",
+      "cloudsql_googleapis_com_database_disk_bytes_used",
+      "cloudsql_googleapis_com_database_disk_read_ops_count",
+      "cloudsql_googleapis_com_database_disk_write_ops_count",
+      "cloudsql_googleapis_com_database_network_received_bytes_count",
+      "cloudsql_googleapis_com_database_network_sent_bytes_count",
+      "cloudsql_googleapis_com_database_network_connections",
+      "cloudsql_googleapis_com_database_postgresql_num_backends",
+      "cloudsql_googleapis_com_database_postgresql_transaction_count",
+      "cloudsql_googleapis_com_database_mysql_queries",
+      "cloudsql_googleapis_com_database_replication_replica_lag",
+      "cloudsql_googleapis_com_database_up"
+    ]
+  },
+  "version": "1.0.1",
+  "latest_version": "1.0.1",
+  "installation": null
+}

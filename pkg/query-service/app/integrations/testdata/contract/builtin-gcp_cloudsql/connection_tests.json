@@ -1,0 +1,22 @@
+{
+  "logs": {
+    "attribute_key": "source",
+    "attribute_value": "gcp_cloudsql"
+  },
+  "metrics": [
+    "cloudsql_googleapis_com_database_cpu_utilization",
+    "cloudsql_googleapis_com_database_memory_utilization",
+    "cloudsql_googleapis_com_database_disk_utilization",
+    "cloudsql_googleapis_com_database_disk_bytes_used",
+    "cloudsql_googleapis_com_database_disk_read_ops_count",
+    "cloudsql_googleapis_com_database_disk_write_ops_count",
+    "cloudsql_googleapis_com_database_network_received_bytes_count",
+    "cloudsql_googleapis_com_database_network_sent_bytes_count",
+    "cloudsql_googleapis_com_database_network_connections",
+    "cloudsql_googleapis_com_database_postgresql_num_backends",
+    "cloudsql_googleapis_com_database_postgresql_transaction_count",
+    "cloudsql_googleapis_com_database_mysql_queries",
+    "cloudsql_googleapis_com_database_replication_replica_lag",
+    "cloudsql_googleapis_com_database_up"
+  ]
+}

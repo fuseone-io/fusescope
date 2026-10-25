@@ -1,1 +1,379 @@
-[]
+[
+  {
+    "createdBy": "",
+    "updatedBy": "",
+    "createdAt": "0001-01-01T00:00:00Z",
+    "updatedAt": "0001-01-01T00:00:00Z",
+    "id": "00000000-0000-0000-0000-000000000000",
+    "orderId": 1,
+    "enabled": true,
+    "name": "Cloud SQL MySQL error log",
+    "alias": "integration--builtin-gcp_cloudsql--cloudsql-mysql-err",
+    "description": "Parses the MySQL error log of Cloud SQL instances: thread id, error code and subsystem.",
+    "filter": {
+      "op": "AND",
+      "items": [
+        {
+          "key": {
+            "key": "source",
+            "dataType": "string",
+            "type": "tag",
+            "isColumn": false,
+            "isJSON": false
+          },
+          "value": "gcp_cloudsql",
+          "op": "="
+        },
+        {
+          "key": {
+            "key": "cloud.resource_id",
+            "dataType": "string",
+            "type": "resource",
+            "isColumn": false,
+            "isJSON": false
+          },
+          "value": "mysql.err",
+          "op": "contains"
+        }
+      ]
+    },
+    "config": [
+      {
+        "type": "regex_parser",
+        "id": "parse-error-line",
+        "output": "move-message",
+        "on_error": "send",
+        "orderId": 1,
+        "enabled": true,
+        "name": "Parse error log line",
+        "parse_to": "attributes",
+        "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+(?:Z|[+-]\\d{2}:\\d{2})\\s+(?P\u003cthread_id\u003e\\d+)\\s+\\[(?P\u003clevel\u003e[A-Za-z]+)\\](?:\\s+\\[(?P\u003cerror_code\u003eMY-\\d+)\\])?(?:\\s+\\[(?P\u003csubsystem\u003e[A-Za-z]+)\\])?\\s+(?P\u003cmessage\u003e[\\s\\S]*)$",
+        "parse_from": "body"
+      },
+      {
+        "type": "move",
+        "id": "move-message",
+        "output": "remove-level",
+        "on_error": "send",
+        "orderId": 2,
+        "enabled": true,
+        "name": "Move message to body",
+        "from": "attributes.message",
+        "to": "body"
+      },
+      {
+        "type": "remove",
+        "id": "remove-level",
+        "on_error": "send",
+        "orderId": 3,
+        "enabled": true,
+        "name": "Remove parsed level",
+        "field": "attributes.level"
+      }
+    ]
+  },
+  {
+    "createdBy": "",
+    "updatedBy": "",
+    "createdAt": "0001-01-01T00:00:00Z",
+    "updatedAt": "0001-01-01T00:00:00Z",
+    "id": "00000000-0000-0000-0000-000000000000",
+    "orderId": 2,
+    "enabled": true,
+    "name": "Cloud SQL PostgreSQL log",
+    "alias": "integration--builtin-gcp_cloudsql--cloudsql-postgres",
+    "description": "Parses the PostgreSQL log of Cloud SQL instances: process id, database and user.",
+    "filter": {
+      "op": "AND",
+      "items": [
+        {
+          "key": {
+            "key": "source",
+            "dataType": "string",
+            "type": "tag",
+            "isColumn": false,
+            "isJSON": false
+          },
+          "value": "gcp_cloudsql",
+          "op": "="
+        },
+        {
+          "key": {
+            "key": "cloud.resource_id",
+            "dataType": "string",
+            "type": "resource",
+            "isColumn": false,
+            "isJSON": false
+          },
+          "value": "postgres.log",
+          "op": "contains"
+        }
+      ]
+    },
+    "config": [
+      {
+        "type": "regex_parser",
+        "id": "parse-log-line",
+        "output": "move-message",
+        "on_error": "send",
+        "orderId": 1,
+        "enabled": true,
+        "name": "Parse log line",
+        "parse_to": "attributes",
+        "regex": "^(?:\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)? [A-Za-z]+ )?\\[(?P\u003cpid\u003e\\d+)\\]: \\[\\d+-\\d+\\] db=(?P\u003cdb_name\u003e[^,]*),user=(?P\u003cdb_user\u003e\\S*)\\s+(?P\u003clevel\u003e[A-Z0-9]+):\\s+(?P\u003cmessage\u003e[\\s\\S]*)$",
+        "parse_from": "body"
+      },
+      {
+        "type": "move",
+        "id": "move-message",
+        "output": "remove-level",
+        "on_error": "send",
+        "orderId": 2,
+        "enabled": true,
+        "name": "Move message to body",
+        "from": "attributes.message",
+        "to": "body"
+      },
+      {
+        "type": "remove",
+        "id": "remove-level",
+        "on_error": "send",
+        "orderId": 3,
+        "enabled": true,
+        "name": "Remove parsed level",
+        "field": "attributes.level"
+      }
+    ]
+  },
+  {
+    "createdBy": "",
+    "updatedBy": "",
+    "createdAt": "0001-01-01T00:00:00Z",
+    "updatedAt": "0001-01-01T00:00:00Z",
+    "id": "00000000-0000-0000-0000-000000000000",
+    "orderId": 1,
+    "enabled": true,
+    "name": "MySQL error log",
+    "alias": "integration--builtin-mysql--mysql-error-log",
+    "description": "Parses the MySQL error log: timestamp, severity, thread id, error code and subsystem.",
+    "filter": {
+      "op": "AND",
+      "items": [
+        {
+          "key": {
+            "key": "source",
+            "dataType": "string",
+            "type": "tag",
+            "isColumn": false,
+            "isJSON": false
+          },
+          "value": "mysql",
+          "op": "="
+        },
+        {
+          "key": {
+            "key": "log_type",
+            "dataType": "string",
+            "type": "tag",
+            "isColumn": false,
+            "isJSON": false
+          },
+          "value": "error",
+          "op": "="
+        }
+      ]
+    },
+    "config": [
+      {
+        "type": "regex_parser",
+        "id": "parse-error-line",
+        "output": "parse-utc-timestamp",
+        "on_error": "send",
+        "orderId": 1,
+        "enabled": true,
+        "name": "Parse error log line",
+        "parse_to": "attributes",
+        "regex": "^(?P\u003ctimestamp\u003e\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+(?:Z|[+-]\\d{2}:\\d{2}))\\s+(?P\u003cthread_id\u003e\\d+)\\s+\\[(?P\u003clevel\u003e[A-Za-z]+)\\](?:\\s+\\[(?P\u003cerror_code\u003eMY-\\d+)\\])?(?:\\s+\\[(?P\u003csubsystem\u003e[A-Za-z]+)\\])?\\s+(?P\u003cmessage\u003e[\\s\\S]*)$",
+        "parse_from": "body"
+      },
+      {
+        "type": "time_parser",
+        "id": "parse-utc-timestamp",
+        "output": "parse-offset-timestamp",
+        "on_error": "send",
+        "orderId": 2,
+        "enabled": true,
+        "name": "Parse UTC timestamp",
+        "parse_from": "attributes.timestamp",
+        "layout": "%Y-%m-%dT%H:%M:%S.%fZ",
+        "layout_type": "strptime"
+      },
+      {
+        "type": "time_parser",
+        "id": "parse-offset-timestamp",
+        "output": "parse-severity",
+        "on_error": "send",
+        "orderId": 3,
+        "enabled": true,
+        "name": "Parse timestamp with UTC offset",
+        "parse_from": "attributes.timestamp",
+        "layout": "%Y-%m-%dT%H:%M:%S.%f%j",
+        "layout_type": "strptime"
+      },
+      {
+        "type": "severity_parser",
+        "id": "parse-severity",
+        "output": "move-message",
+        "on_error": "send",
+        "orderId": 4,
+        "enabled": true,
+        "name": "Parse severity",
+        "parse_from": "attributes.level",
+        "mapping": {
+          "error": [
+            "Error",
+            "ERROR"
+          ],
+          "info": [
+            "System",
+            "SYSTEM",
+            "Note",
+            "NOTE"
+          ],
+          "warn": [
+            "Warning",
+            "WARNING"
+          ]
+        },
+        "overwrite_text": true
+      },
+      {
+        "type": "move",
+        "id": "move-message",
+        "output": "remove-timestamp",
+        "on_error": "send",
+        "orderId": 5,
+        "enabled": true,
+        "name": "Move message to body",
+        "from": "attributes.message",
+        "to": "body"
+      },
+      {
+        "type": "remove",
+        "id": "remove-timestamp",
+        "output": "remove-level",
+        "on_error": "send",
+        "orderId": 6,
+        "enabled": true,
+        "name": "Remove parsed timestamp",
+        "field": "attributes.timestamp"
+      },
+      {
+        "type": "remove",
+        "id": "remove-level",
+        "on_error": "send",
+        "orderId": 7,
+        "enabled": true,
+        "name": "Remove parsed level",
+        "field": "attributes.level"
+      }
+    ]
+  },
+  {
+    "createdBy": "",
+    "updatedBy": "",
+    "createdAt": "0001-01-01T00:00:00Z",
+    "updatedAt": "0001-01-01T00:00:00Z",
+    "id": "00000000-0000-0000-0000-000000000000",
+    "orderId": 2,
+    "enabled": true,
+    "name": "MySQL slow query log",
+    "alias": "integration--builtin-mysql--mysql-slow-log",
+    "description": "Parses MySQL slow query log entries: timestamp, user, client, query time, lock time, rows sent and rows examined.",
+    "filter": {
+      "op": "AND",
+      "items": [
+        {
+          "key": {
+            "key": "source",
+            "dataType": "string",
+            "type": "tag",
+            "isColumn": false,
+            "isJSON": false
+          },
+          "value": "mysql",
+          "op": "="
+        },
+        {
+          "key": {
+            "key": "log_type",
+            "dataType": "string",
+            "type": "tag",
+            "isColumn": false,
+            "isJSON": false
+          },
+          "value": "slow",
+          "op": "="
+        }
+      ]
+    },
+    "config": [
+      {
+        "type": "regex_parser",
+        "id": "parse-slow-entry",
+        "output": "parse-utc-timestamp",
+        "on_error": "send",
+        "orderId": 1,
+        "enabled": true,
+        "name": "Parse slow query entry",
+        "parse_to": "attributes",
+        "regex": "^# Time: (?P\u003ctimestamp\u003e\\S+)\\s*\\n# User@Host: (?P\u003cdb_user\u003e[^\\[\\s]*)\\[[^\\]]*\\]\\s*@\\s*(?P\u003cclient_host\u003e[^\\s\\[]*)\\s*\\[(?P\u003cclient_ip\u003e[^\\]]*)\\](?:\\s+Id:\\s*(?P\u003cthread_id\u003e\\d+))?[^\\n]*\\n# Query_time: (?P\u003cquery_time\u003e[0-9.]+)\\s+Lock_time: (?P\u003clock_time\u003e[0-9.]+)\\s+Rows_sent: (?P\u003crows_sent\u003e\\d+)\\s+Rows_examined: (?P\u003crows_examined\u003e\\d+)[^\\n]*\\n(?P\u003cstatement\u003e[\\s\\S]*)$",
+        "parse_from": "body"
+      },
+      {
+        "type": "time_parser",
+        "id": "parse-utc-timestamp",
+        "output": "parse-offset-timestamp",
+        "on_error": "send",
+        "orderId": 2,
+        "enabled": true,
+        "name": "Parse UTC timestamp",
+        "parse_from": "attributes.timestamp",
+        "layout": "%Y-%m-%dT%H:%M:%S.%fZ",
+        "layout_type": "strptime"
+      },
+      {
+        "type": "time_parser",
+        "id": "parse-offset-timestamp",
+        "output": "move-statement",
+        "on_error": "send",
+        "orderId": 3,
+        "enabled": true,
+        "name": "Parse timestamp with UTC offset",
+        "parse_from": "attributes.timestamp",
+        "layout": "%Y-%m-%dT%H:%M:%S.%f%j",
+        "layout_type": "strptime"
+      },
+      {
+        "type": "move",
+        "id": "move-statement",
+        "output": "remove-timestamp",
+        "on_error": "send",
+        "orderId": 4,
+        "enabled": true,
+        "name": "Move statement to body",
+        "from": "attributes.statement",
+        "to": "body"
+      },
+      {
+        "type": "remove",
+        "id": "remove-timestamp",
+        "on_error": "send",
+        "orderId": 5,
+        "enabled": true,
+        "name": "Remove parsed timestamp",
+        "field": "attributes.timestamp"
+      }
+    ]
+  }
+]

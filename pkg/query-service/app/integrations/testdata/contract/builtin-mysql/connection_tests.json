@@ -1,0 +1,43 @@
+{
+  "logs": {
+    "attribute_key": "source",
+    "attribute_value": "mysql"
+  },
+  "metrics": [
+    "mysql_buffer_pool_data_pages",
+    "mysql_buffer_pool_limit",
+    "mysql_buffer_pool_operations",
+    "mysql_buffer_pool_page_flushes",
+    "mysql_buffer_pool_pages",
+    "mysql_buffer_pool_usage",
+    "mysql_client_network_io",
+    "mysql_commands",
+    "mysql_connection_count",
+    "mysql_connection_errors",
+    "mysql_double_writes",
+    "mysql_handlers",
+    "mysql_index_io_wait_count",
+    "mysql_index_io_wait_time",
+    "mysql_joins",
+    "mysql_locks",
+    "mysql_log_operations",
+    "mysql_max_used_connections",
+    "mysql_mysqlx_connections",
+    "mysql_opened_resources",
+    "mysql_operations",
+    "mysql_page_operations",
+    "mysql_prepared_statements",
+    "mysql_query_count",
+    "mysql_query_slow_count",
+    "mysql_replica_sql_delay",
+    "mysql_replica_time_behind_source",
+    "mysql_row_locks",
+    "mysql_row_operations",
+    "mysql_sorts",
+    "mysql_table_io_wait_count",
+    "mysql_table_io_wait_time",
+    "mysql_threads",
+    "mysql_tmp_resources",
+    "mysql_uptime"
+  ]
+}
