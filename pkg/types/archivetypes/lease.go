@@ -35,3 +35,9 @@ func NewLease(signal string, holder string, expiresAt time.Time) *Lease {
 		ExpiresAt:     expiresAt.UTC(),
 	}
 }
+
+// BackstopLease names the lease of a signal's backstop, apart from its export lease, so
+// neither waits on the other.
+func BackstopLease(signal string) string {
+	return signal + "/backstop"
+}
