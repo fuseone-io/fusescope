@@ -38,6 +38,7 @@ func NewCatalogIntegrations(catalogs ...*catalog.Catalog) (*CatalogIntegrations,
 			if slices.ContainsFunc(ci.versions[pkg.ID], func(i catalogIntegration) bool { return i.version == pkg.Version }) {
 				return nil, fmt.Errorf("integration package %s@%s is provided twice", pkg.ID, pkg.Version)
 			}
+			details.version = pkg.Version
 			ci.versions[pkg.ID] = append(ci.versions[pkg.ID], catalogIntegration{version: pkg.Version, details: *details})
 		}
 	}
@@ -68,6 +69,16 @@ func (ci *CatalogIntegrations) get(ctx context.Context, integrationIds []string)
 		}
 	}
 	return result, nil
+}
+
+func (ci *CatalogIntegrations) getVersion(ctx context.Context, integrationType string, version string) (*IntegrationDetails, bool) {
+	for _, candidate := range ci.versions[integrationType] {
+		if candidate.version == version {
+			details := candidate.details
+			return &details, true
+		}
+	}
+	return nil, false
 }
 
 // decodeIntegration decodes a package document as integration.json files were

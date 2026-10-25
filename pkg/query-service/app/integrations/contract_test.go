@@ -118,6 +118,7 @@ func newTestManager(t *testing.T, store sqlstore.SQLStore, dashboards *dashboard
 		availableIntegrationsRepo: available,
 		installedIntegrationsRepo: repo,
 		dashboardModule:           dashboards,
+		logger:                    slog.Default(),
 	}
 }
 

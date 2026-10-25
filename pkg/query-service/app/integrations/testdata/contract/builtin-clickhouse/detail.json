@@ -13721,5 +13721,7 @@
       "ClickHouseErrorMetric_ALL"
     ]
   },
+  "version": "1.0.0",
+  "latest_version": "1.0.0",
   "installation": null
 }

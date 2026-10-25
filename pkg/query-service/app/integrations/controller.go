@@ -29,7 +29,7 @@ func NewController(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module,
 		return nil, fmt.Errorf("couldn't load the integration catalog: %w", err)
 	}
 
-	mgr, err := NewManager(sqlStore, dashboardModule, available)
+	mgr, err := NewManager(sqlStore, dashboardModule, available, logger)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations manager: %w", err)
 	}
