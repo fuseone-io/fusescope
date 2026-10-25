@@ -9,18 +9,12 @@ import PageHeader from 'components/PageTemplate/components/PageHeader';
 import PageTemplate from 'components/PageTemplate/PageTemplate';
 import type { CreateSubscription201 } from 'api/generated/services/fuseScope.schemas';
 import { fuseScopeDocsUrl } from 'constants/docs';
+import { FUSESCOPE_ISSUES_URL } from 'constants/product';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { SubscriptionCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
-import {
-	Book,
-	CreditCard,
-	Github,
-	MessageSquare,
-	Slack,
-	X,
-} from '@signozhq/icons';
+import { Book, CreditCard, Github, MessageSquare, X } from '@signozhq/icons';
 import { LifeBuoy } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
@@ -41,7 +35,7 @@ interface Channel {
 const channelsMap = {
 	documentation: 'documentation',
 	github: 'github',
-	slack_community: 'slack_community',
+	community: 'community',
 	chat: 'chat',
 	schedule_call: 'schedule_call',
 	slack_connect: 'slack_connect',
@@ -62,17 +56,17 @@ const supportChannels = [
 		name: 'Github',
 		icon: <Github size={16} />,
 		title: 'Create an issue on GitHub to report bugs or request new features.',
-		url: 'https://github.com/SigNoz/signoz/issues',
+		url: FUSESCOPE_ISSUES_URL,
 		btnText: 'Create issue',
 		isExternal: true,
 	},
 	{
-		key: 'slack_community',
-		name: 'Slack Community',
-		icon: <Slack size={16} />,
-		title: 'Get support from the FuseScope community on Slack.',
-		url: 'https://signoz.io/slack',
-		btnText: 'Join Slack',
+		key: 'community',
+		name: 'Community',
+		icon: <MessageSquare size={16} />,
+		title: 'Ask questions and get help from the FuseScope community on GitHub.',
+		url: FUSESCOPE_ISSUES_URL,
+		btnText: 'Ask the community',
 		isExternal: true,
 	},
 	{
@@ -173,14 +167,14 @@ export default function Support(): JSX.Element {
 		switch (channel.key) {
 			case channelsMap.documentation:
 			case channelsMap.github:
-			case channelsMap.slack_community:
+			case channelsMap.community:
 				handleChannelWithRedirects(channel.url);
 				break;
 			case channelsMap.chat:
 				handleChat();
 				break;
 			default:
-				handleChannelWithRedirects('https://signoz.io/slack');
+				handleChannelWithRedirects(FUSESCOPE_ISSUES_URL);
 				break;
 		}
 	};

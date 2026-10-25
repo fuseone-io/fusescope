@@ -1,7 +1,5 @@
 import PageHeader from 'components/PageTemplate/components/PageHeader';
-import { Button } from 'components/ui/button';
 import { IntegrationType } from 'container/Integrations/types';
-import { LifeBuoy } from 'lucide-react';
 
 import { useThemedIntegrationIcon } from '../../components/useThemedIntegrationIcon';
 import AccountActions from '../AmazonWebServices/AccountActions/AccountActions';
@@ -23,26 +21,7 @@ function Header({ type }: { type: IntegrationType }): JSX.Element {
 			}
 			title={title}
 			description={description}
-			actions={
-				<>
-					<AccountActions type={type} />
-					{type === IntegrationType.AWS_SERVICES && (
-						<Button
-							variant="outline"
-							className="tw:bg-surface-raised! tw:text-foreground! tw:hover:bg-muted!"
-							onClick={(): void => {
-								window.open(
-									'https://signoz.io/blog/native-aws-integrations-with-autodiscovery/',
-									'_blank',
-								);
-							}}
-						>
-							<LifeBuoy aria-hidden="true" />
-							Get Help
-						</Button>
-					)}
-				</>
-			}
+			actions={<AccountActions type={type} />}
 		/>
 	);
 }

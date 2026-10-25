@@ -96,19 +96,14 @@ const ALLOWED_SIGNOZ_LINKS = new Set([
 	'AppRoutes/Private.tsx: admin@signoz.cloud',
 	// Licence expiry banners.
 	'container/AppLayout/index.tsx: support@signoz.io',
-	'container/AppLayout/index.tsx: https://signoz.io/terms-of-service',
 	// Billing, custom domain and cloud workspace settings.
 	'container/BillingContainer/BillingContainer.tsx: cloud-support@signoz.io',
 	'container/BillingContainer/BillingContainer.tsx: https://signoz.io/pricing/',
 	'container/BillingContainer/CancelSubscriptionBanner.tsx: cloud-support@signoz.io',
-	'container/CustomDomainSettings/CustomDomainEditModal.tsx: https://signoz.io/support',
 	'container/GeneralSettingsCloud/GeneralSettingsCloud.tsx: cloud-support@signoz.io',
 	// Ingestion keys exist only with the cloud ingestion gateway.
 	"container/IngestionSettings/MultiIngestionSettings.tsx: signozDocsUrl('/ingestion/signoz-cloud/keys/')",
 	// One-click AWS, Azure and GCP integrations.
-	'container/Integrations/constants.ts: integrations@signoz.io',
-	'container/Integrations/constants.ts: https://signoz.io',
-	'container/Integrations/CloudIntegration/Header/Header.tsx: https://signoz.io/blog/native-aws-integrations-with-autodiscovery/',
 	"container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/SetupGuideCallout.tsx: signozDocsUrl('/integrations/gcp/gcp-integration/')",
 	// Hosted MCP server.
 	"container/MCPServerSettings/clients.ts: signozDocsUrl('/ai/use-cases/')",
@@ -116,9 +111,7 @@ const ALLOWED_SIGNOZ_LINKS = new Set([
 	"container/RolesSettings/CreateEditRolePage/components/ItemInputSelector.tsx: signozDocsUrl('/manage/administrator-guide/iam/permissions/')",
 	// Cloud trial, support and workspace states.
 	'pages/Services/components/ServicesList/TrialRpsWarning.tsx: cloud-support@signoz.io',
-	'pages/Support/Support.tsx: https://signoz.io/slack',
 	'pages/WorkspaceAccessRestricted/WorkspaceAccessRestricted.tsx: cloud-support@signoz.io',
-	'pages/WorkspaceAccessRestricted/WorkspaceAccessRestricted.tsx: https://signoz.io/terms-of-service',
 	'pages/WorkspaceLocked/WorkspaceLocked.tsx: cloud-support@signoz.io',
 	'pages/WorkspaceSuspended/WorkspaceSuspended.tsx: cloud-support@signoz.io',
 	// Example in a comment.

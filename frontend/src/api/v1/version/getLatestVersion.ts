@@ -8,7 +8,7 @@ const getLatestVersion = async (): Promise<
 > => {
 	try {
 		const response = await axios.get(
-			`https://api.github.com/repos/signoz/signoz/releases/latest`,
+			`https://api.github.com/repos/fuseone-io/fusescope/releases/latest`,
 		);
 
 		return {

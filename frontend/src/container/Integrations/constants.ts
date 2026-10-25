@@ -2,6 +2,7 @@ import awsDarkLogo from '@/assets/Logos/aws-dark.svg';
 import awsLightLogo from '@/assets/Logos/aws-light.svg';
 import azureOpenaiLogo from '@/assets/Logos/azure-openai.svg';
 import gcpLogo from '@/assets/Logos/gcp.svg';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import { AzureRegion, GCPRegion } from './types';
 
@@ -32,8 +33,8 @@ export const AWS_INTEGRATION = {
 	description: 'One click setup for AWS monitoring with FuseScope',
 	author: {
 		name: 'FuseScope',
-		email: 'integrations@signoz.io',
-		homepage: 'https://signoz.io',
+		email: '',
+		homepage: fuseScopeDocsUrl('/sending-data/integrations/'),
 	},
 	icon: awsDarkLogo,
 	icon_alt: 'aws-logo',
@@ -47,8 +48,8 @@ export const AZURE_INTEGRATION = {
 	description: 'One click setup for Azure monitoring with FuseScope',
 	author: {
 		name: 'FuseScope',
-		email: 'integrations@signoz.io',
-		homepage: 'https://signoz.io',
+		email: '',
+		homepage: fuseScopeDocsUrl('/sending-data/integrations/'),
 	},
 	icon: azureOpenaiLogo,
 	icon_alt: 'azure-logo',
@@ -62,8 +63,8 @@ export const GCP_INTEGRATION = {
 	description: 'Setup for GCP monitoring with FuseScope',
 	author: {
 		name: 'FuseScope',
-		email: 'integrations@signoz.io',
-		homepage: 'https://signoz.io',
+		email: '',
+		homepage: fuseScopeDocsUrl('/sending-data/integrations/'),
 	},
 	icon: gcpLogo,
 	icon_alt: 'gcp-logo',

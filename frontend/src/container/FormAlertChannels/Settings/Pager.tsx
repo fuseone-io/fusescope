@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { fuseScopeDocsUrl } from 'constants/docs';
 
 import { PagerChannel } from '../../CreateAlertChannels/config';
 
@@ -18,7 +19,11 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 					title: (
 						<MarkdownRenderer
 							markdownContent={t('tooltip_pager_routing_key')}
-							variables={{}}
+							variables={{
+								docsUrl: fuseScopeDocsUrl(
+									'/alerts/notification-channels/#channel-types',
+								),
+							}}
 						/>
 					),
 					overlayInnerStyle: { maxWidth: 400 },

@@ -51,7 +51,7 @@ export const appShellHandlers = [
 	),
 
 	rest.get(
-		'https://api.github.com/repos/signoz/signoz/releases/latest',
+		'https://api.github.com/repos/fuseone-io/fusescope/releases/latest',
 		(_req, res, ctx) =>
 			res(ctx.status(200), ctx.json(latestGithubReleaseResponse)),
 	),

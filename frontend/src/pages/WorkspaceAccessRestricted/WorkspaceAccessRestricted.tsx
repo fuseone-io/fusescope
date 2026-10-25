@@ -37,17 +37,6 @@ function WorkspaceAccessRestricted(): JSX.Element {
 		</a>
 	);
 
-	const termsLink = (
-		<a
-			href="https://signoz.io/terms-of-service"
-			target="_blank"
-			rel="noopener noreferrer"
-			className={LINK_CLASS}
-		>
-			terms of service
-		</a>
-	);
-
 	const isPageLoading = isFetchingActiveLicense || !activeLicense;
 
 	return (
@@ -67,15 +56,13 @@ function WorkspaceAccessRestricted(): JSX.Element {
 					{activeLicense?.state === LicenseState.EXPIRED && (
 						<>
 							Your FuseScope license is expired, please contact support at{' '}
-							{supportLink} for renewal to avoid termination of license as per our{' '}
-							{termsLink}.
+							{supportLink} for renewal to avoid termination of license.
 						</>
 					)}
 					{activeLicense?.state === LicenseState.CANCELLED && (
 						<>
 							Your FuseScope license is cancelled, please contact support at{' '}
-							{supportLink} for reactivation to avoid termination of license as per our{' '}
-							{termsLink}.
+							{supportLink} for reactivation to avoid termination of license.
 						</>
 					)}
 				</p>

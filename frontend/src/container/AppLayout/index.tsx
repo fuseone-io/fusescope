@@ -462,28 +462,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<>
 					Your FuseScope license has expired. Please contact support at{' '}
 					<a href="mailto:support@signoz.io">support@signoz.io</a> for renewal to
-					avoid termination of license as per our{' '}
-					<a
-						href="https://signoz.io/terms-of-service"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						terms of service
-					</a>
+					avoid termination of license.
 				</>
 			)}
 			{activeLicense?.state === LicenseState.CANCELLED && (
 				<>
 					Your FuseScope license is cancelled. Please contact support at{' '}
 					<a href="mailto:support@signoz.io">support@signoz.io</a> for reactivation
-					to avoid termination of license as per our{' '}
-					<a
-						href="https://signoz.io/terms-of-service"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						terms of service
-					</a>
+					to avoid termination of license.
 				</>
 			)}
 
@@ -492,14 +478,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					Your FuseScope license is defaulted. Please clear the bill to continue
 					using the enterprise features. Contact support at{' '}
 					<a href="mailto:support@signoz.io">support@signoz.io</a> to avoid
-					termination of license as per our{' '}
-					<a
-						href="https://signoz.io/terms-of-service"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						terms of service
-					</a>
+					termination of license.
 				</>
 			)}
 
@@ -507,14 +486,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<>
 					Your FuseScope trial has ended. Please contact support at{' '}
 					<a href="mailto:support@signoz.io">support@signoz.io</a> for next steps to
-					avoid termination of license as per our{' '}
-					<a
-						href="https://signoz.io/terms-of-service"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						terms of service
-					</a>
+					avoid termination of license.
 				</>
 			)}
 		</div>
