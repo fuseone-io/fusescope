@@ -64,3 +64,11 @@ packages:
       dir: '{{.InterfaceDir}}/authdomaintest'
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
+  github.com/fuseone-io/fusescope/pkg/modules/dashboard:
+    interfaces:
+      Module:
+    config:
+      dir: '{{.InterfaceDir}}/dashboardtest'
+      filename: "module.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'
