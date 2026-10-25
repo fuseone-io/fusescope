@@ -189,6 +189,45 @@ func TestHandlerUploadR8Mapping(t *testing.T) {
 			_ = writer.Close()
 			return body, map[string]string{"Content-Type": writer.FormDataContentType()}
 		}, status: http.StatusCreated, release: "2.1.2"},
+		{name: "Multipart_UnknownFieldsBeforeFile", target: "/mappings", body: func() (*bytes.Buffer, map[string]string) {
+			body := new(bytes.Buffer)
+			writer := multipart.NewWriter(body)
+			_ = writer.WriteField("release", "2.1.3")
+			_ = writer.WriteField("version_code", "213")
+			_ = writer.WriteField("map_id", "7e4c1a9")
+			part, _ := writer.CreateFormFile("file", "mapping.txt")
+			_, _ = part.Write([]byte(mapping))
+			_ = writer.Close()
+			return body, map[string]string{"Content-Type": writer.FormDataContentType()}
+		}, status: http.StatusCreated, release: "2.1.3"},
+		{name: "Multipart_ReleaseAfterFile", target: "/mappings", body: func() (*bytes.Buffer, map[string]string) {
+			body := new(bytes.Buffer)
+			writer := multipart.NewWriter(body)
+			_ = writer.WriteField("build_type", "release")
+			part, _ := writer.CreateFormFile("file", "mapping.txt")
+			_, _ = part.Write([]byte(mapping))
+			_ = writer.WriteField("variant", "prodRelease")
+			_ = writer.WriteField("release", "2.1.4")
+			_ = writer.Close()
+			return body, map[string]string{"Content-Type": writer.FormDataContentType()}
+		}, status: http.StatusCreated, release: "2.1.4"},
+		{name: "Multipart_QueryReleaseWins", target: "/mappings?release=2.1.5", body: func() (*bytes.Buffer, map[string]string) {
+			body := new(bytes.Buffer)
+			writer := multipart.NewWriter(body)
+			part, _ := writer.CreateFormFile("file", "mapping.txt")
+			_, _ = part.Write([]byte(mapping))
+			_ = writer.WriteField("release", "9.9.9")
+			_ = writer.Close()
+			return body, map[string]string{"Content-Type": writer.FormDataContentType()}
+		}, status: http.StatusCreated, release: "2.1.5"},
+		{name: "Multipart_NoFilePart_BadRequest", target: "/mappings?release=2.1.6", body: func() (*bytes.Buffer, map[string]string) {
+			body := new(bytes.Buffer)
+			writer := multipart.NewWriter(body)
+			part, _ := writer.CreateFormFile("mapping", "mapping.txt")
+			_, _ = part.Write([]byte(mapping))
+			_ = writer.Close()
+			return body, map[string]string{"Content-Type": writer.FormDataContentType()}
+		}, status: http.StatusBadRequest},
 		{name: "NoRelease_BadRequest", target: "/mappings", body: func() (*bytes.Buffer, map[string]string) {
 			return bytes.NewBufferString(mapping), map[string]string{"Content-Type": "text/plain"}
 		}, status: http.StatusBadRequest},

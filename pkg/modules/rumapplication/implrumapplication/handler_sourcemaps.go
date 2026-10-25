@@ -8,6 +8,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -21,9 +22,12 @@ import (
 const (
 	uploadTimeout     = 2 * time.Minute
 	maxFormFieldBytes = 1 << 20
-	partRelease       = "release"
-	partDebugIDs      = "debug_ids"
-	partFile          = "file"
+	// maxSpooledMappingBytes bounds the temporary file of a mapping sent
+	// before its release; the configured file size limit still applies.
+	maxSpooledMappingBytes = 1 << 30
+	partRelease            = "release"
+	partDebugIDs           = "debug_ids"
+	partFile               = "file"
 )
 
 // multipartSourceMaps reads an upload's parts: release and debug_ids are
@@ -177,18 +181,7 @@ func r8MappingContent(req *http.Request, release *string) (io.ReadCloser, error)
 		if err != nil {
 			return nil, errors.WrapInvalidInputf(err, rumtypes.ErrCodeSourceMapInvalidInput, "malformed multipart body")
 		}
-		parts := &multipartSourceMaps{reader: reader, debugIDs: map[string]string{}}
-		part, err := parts.Next()
-		if errors.Is(err, io.EOF) {
-			return nil, errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "the multipart body has no file part with the mapping")
-		}
-		if err != nil {
-			return nil, err
-		}
-		if *release == "" {
-			*release = parts.release
-		}
-		return io.NopCloser(part.Content), nil
+		return r8MultipartMapping(reader, release)
 	}
 
 	switch strings.ToLower(strings.TrimSpace(req.Header.Get("Content-Encoding"))) {
@@ -202,6 +195,85 @@ func r8MappingContent(req *http.Request, release *string) (io.ReadCloser, error)
 		return reader, nil
 	}
 	return nil, errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "unsupported content encoding %q, use gzip or none", req.Header.Get("Content-Encoding"))
+}
+
+// r8MultipartMapping returns the part named file and ignores other parts. A
+// file that comes before any release spools to a temporary file, so a
+// release field after it can still be read.
+func r8MultipartMapping(reader *multipart.Reader, release *string) (io.ReadCloser, error) {
+	fields := &multipartSourceMaps{reader: reader, debugIDs: map[string]string{}}
+	var mapping io.ReadCloser
+	fail := func(err error) (io.ReadCloser, error) {
+		if mapping != nil {
+			_ = mapping.Close()
+		}
+		return nil, err
+	}
+
+	for {
+		part, err := reader.NextPart()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return fail(errors.WrapInvalidInputf(err, rumtypes.ErrCodeSourceMapInvalidInput, "malformed multipart body"))
+		}
+
+		switch part.FormName() {
+		case partRelease:
+			if err := fields.readField(partRelease, part); err != nil {
+				return fail(err)
+			}
+			if *release == "" {
+				*release = fields.release
+			}
+		case partFile:
+			if mapping != nil {
+				continue
+			}
+			if *release != "" {
+				return io.NopCloser(part), nil
+			}
+			if mapping, err = spoolPart(part); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if mapping == nil {
+		return nil, errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "the multipart body has no file part with the mapping")
+	}
+	return mapping, nil
+}
+
+// spoolPart copies a part to a temporary file, removed on Close.
+func spoolPart(part *multipart.Part) (io.ReadCloser, error) {
+	file, err := os.CreateTemp("", "fusescope-r8-mapping-*")
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to buffer the mapping")
+	}
+	spooled := &spooledFile{File: file}
+	written, err := io.Copy(file, io.LimitReader(part, maxSpooledMappingBytes+1))
+	if err != nil {
+		_ = spooled.Close()
+		return nil, errors.WrapInvalidInputf(err, rumtypes.ErrCodeSourceMapInvalidInput, "malformed multipart body")
+	}
+	if written > maxSpooledMappingBytes {
+		_ = spooled.Close()
+		return nil, errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "the mapping is larger than %d bytes", maxSpooledMappingBytes)
+	}
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		_ = spooled.Close()
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to buffer the mapping")
+	}
+	return spooled, nil
+}
+
+type spooledFile struct{ *os.File }
+
+func (file *spooledFile) Close() error {
+	err := file.File.Close()
+	_ = os.Remove(file.Name())
+	return err
 }
 
 // rawFilename keeps the directories that multipart.Part.FileName strips.
