@@ -1,0 +1,154 @@
+{
+  "catalog_version": 1,
+  "source": {
+    "repository": "fuseone-io/fusescope-integrations",
+    "ref": "v1.0.0",
+    "commit": "198c853d5634b88d67bbd725505926dafabf4283"
+  },
+  "integrations": [
+    {
+      "id": "builtin-aws_elasticache_redis",
+      "version": "1.0.0",
+      "manifest_version": 1,
+      "fusescope": ">=0.154.0",
+      "title": "AWS ElastiCache (redis)",
+      "description": "Monitor AWS ElastiCache with metrics and logs",
+      "categories": [
+        "Database"
+      ],
+      "signals": [
+        "logs",
+        "metrics"
+      ],
+      "package": "builtin-aws_elasticache_redis-1.0.0.tar.gz",
+      "sha256": "9c72ced64e264f33e482c47a1fd02e4f34ca6a2f2758a2a850049d75dc95cf7a",
+      "size": 7541
+    },
+    {
+      "id": "builtin-aws_rds_mysql",
+      "version": "1.0.0",
+      "manifest_version": 1,
+      "fusescope": ">=0.154.0",
+      "title": "AWS RDS (MySQL)",
+      "description": "Monitor AWS RDS (MySQL) with metrics and logs",
+      "categories": [
+        "Database"
+      ],
+      "signals": [
+        "logs",
+        "metrics"
+      ],
+      "package": "builtin-aws_rds_mysql-1.0.0.tar.gz",
+      "sha256": "ead27ffeb5b6bdbacb1f70f2045cd9e3e369e5e422f466e4347881f247de4f1d",
+      "size": 11600
+    },
+    {
+      "id": "builtin-aws_rds_postgresql",
+      "version": "1.0.0",
+      "manifest_version": 1,
+      "fusescope": ">=0.154.0",
+      "title": "AWS RDS (PostgreSQL)",
+      "description": "Monitor AWS RDS (PostgreSQL) with metrics and logs",
+      "categories": [
+        "Database"
+      ],
+      "signals": [
+        "logs",
+        "metrics"
+      ],
+      "package": "builtin-aws_rds_postgresql-1.0.0.tar.gz",
+      "sha256": "7a974f44e2dca588f653b12b9a22bc674289ab702128b90c65e141b57849d4e4",
+      "size": 12555
+    },
+    {
+      "id": "builtin-clickhouse",
+      "version": "1.0.0",
+      "manifest_version": 1,
+      "fusescope": ">=0.154.0",
+      "title": "Clickhouse",
+      "description": "Monitor Clickhouse with metrics and logs",
+      "categories": [
+        "Database"
+      ],
+      "signals": [
+        "logs",
+        "metrics"
+      ],
+      "package": "builtin-clickhouse-1.0.0.tar.gz",
+      "sha256": "dae67b1c94f61d73e997062b7a65f0dae3734958e3e851cabac2b5a7e5b32746",
+      "size": 44864
+    },
+    {
+      "id": "builtin-mongo",
+      "version": "1.0.0",
+      "manifest_version": 1,
+      "fusescope": ">=0.154.0",
+      "title": "Mongo",
+      "description": "Monitor mongo using logs and metrics.",
+      "categories": [
+        "Database"
+      ],
+      "signals": [
+        "logs",
+        "metrics"
+      ],
+      "package": "builtin-mongo-1.0.0.tar.gz",
+      "sha256": "a70305301d9ea3aed8e409a7a257ff7287e48f80edb5f7200355aacd1bbbe526",
+      "size": 6812
+    },
+    {
+      "id": "builtin-nginx",
+      "version": "1.0.0",
+      "manifest_version": 1,
+      "fusescope": ">=0.154.0",
+      "title": "Nginx",
+      "description": "Monitor nginx using logs and metrics.",
+      "categories": [
+        "Ingress",
+        "HTTP"
+      ],
+      "signals": [
+        "logs"
+      ],
+      "package": "builtin-nginx-1.0.0.tar.gz",
+      "sha256": "b791ea81ccb1cacb03e1e9b9f4ef3f6862b6b672b08a32e8c74306e9473981f1",
+      "size": 3942
+    },
+    {
+      "id": "builtin-postgres",
+      "version": "1.0.0",
+      "manifest_version": 1,
+      "fusescope": ">=0.154.0",
+      "title": "PostgreSQL",
+      "description": "Monitor Postgres with metrics and logs",
+      "categories": [
+        "Database"
+      ],
+      "signals": [
+        "logs",
+        "metrics"
+      ],
+      "package": "builtin-postgres-1.0.0.tar.gz",
+      "sha256": "44258c6bd54aa06b54ad6be0cf9ec495736f89e00f411fc87dbb0dfd7a37f767",
+      "size": 11402
+    },
+    {
+      "id": "builtin-redis",
+      "version": "1.0.0",
+      "manifest_version": 1,
+      "fusescope": ">=0.154.0",
+      "title": "Redis",
+      "description": "Monitor redis with metrics and logs",
+      "categories": [
+        "Database"
+      ],
+      "signals": [
+        "logs",
+        "metrics"
+      ],
+      "package": "builtin-redis-1.0.0.tar.gz",
+      "sha256": "068484887ba50338a87bded1c293007f9a75586c58aebed87892f08e10b23cd2",
+      "size": 7419
+    }
+  ]
+}

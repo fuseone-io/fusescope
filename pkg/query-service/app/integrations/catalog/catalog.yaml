@@ -1,0 +1,4 @@
+# Written by `make integrations-catalog`; do not edit by hand.
+repository: fuseone-io/fusescope-integrations
+version: v1.0.0
+index_sha256: c13e1c44ca16c2f936ec06565c1675715c900f7e81f018e809835696a4066d1c
