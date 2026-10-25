@@ -14,7 +14,7 @@ import CloudIntegration from '../CloudIntegration/CloudIntegration';
 import IntegrationsError from '../components/IntegrationsError';
 import { INTEGRATION_TYPES } from '../constants';
 import { IntegrationType } from '../types';
-import { handleContactSupport } from '../utils';
+import { availableUpdate, handleContactSupport } from '../utils';
 import IntegrationDetailHeader from './IntegrationDetailHeader';
 import IntergrationsUninstallBar from './IntegrationsUninstallBar';
 import { integrationDetailTabs } from './integrationDetailTabs';
@@ -72,6 +72,14 @@ function IntegrationDetailPage(): JSX.Element {
 			title={title}
 			description={defaultTo(integrationData?.description, '')}
 			icon={defaultTo(integrationData?.icon, '')}
+			installedVersion={
+				integrationData?.installation ? integrationData.version : undefined
+			}
+			update={availableUpdate(
+				Boolean(integrationData?.installation),
+				integrationData?.version,
+				integrationData?.latest_version,
+			)}
 			connectionState={connectionStatus}
 			connectionData={defaultTo(integrationStatus?.data.data, NO_CONNECTION_DATA)}
 			onUnInstallSuccess={refetch}

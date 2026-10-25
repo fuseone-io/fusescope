@@ -9,7 +9,8 @@ import CardGrid from '../components/CardGrid';
 import IntegrationCard from '../components/IntegrationCard';
 import IntegrationsNotFound from '../components/IntegrationsNotFound';
 import SectionLabel from '../components/SectionLabel';
-import { handleContactSupport } from '../utils';
+import UpdateAvailableBadge from '../components/UpdateAvailableBadge';
+import { availableUpdate, handleContactSupport } from '../utils';
 import IntegrationsError from '../components/IntegrationsError';
 
 const SKELETON_KEYS = ['a', 'b', 'c', 'd', 'e', 'f'];
@@ -73,26 +74,36 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 
 			{!loading && integrationsList.length > 0 && (
 				<CardGrid testId="integrations-list">
-					{integrationsList.map((integration) => (
-						<IntegrationCard
-							key={integration.id}
-							className="integrations-list-item"
-							icon={integration.icon}
-							iconAlt={integration.title}
-							title={integration.title}
-							subtitle="by FuseScope"
-							description={integration.description}
-							footer={
-								<StatusBadge
-									dot
-									tone={integration.is_installed ? 'success' : 'neutral'}
-								>
-									{integration.is_installed ? 'Installed' : 'Not Installed'}
-								</StatusBadge>
-							}
-							onClick={(): void => setSelectedIntegration(integration)}
-						/>
-					))}
+					{integrationsList.map((integration) => {
+						const update = availableUpdate(
+							integration.is_installed,
+							integration.version,
+							integration.latest_version,
+						);
+						return (
+							<IntegrationCard
+								key={integration.id}
+								className="integrations-list-item"
+								icon={integration.icon}
+								iconAlt={integration.title}
+								title={integration.title}
+								subtitle="by FuseScope"
+								description={integration.description}
+								footer={
+									<span className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+										<StatusBadge
+											dot
+											tone={integration.is_installed ? 'success' : 'neutral'}
+										>
+											{integration.is_installed ? 'Installed' : 'Not Installed'}
+										</StatusBadge>
+										{update && <UpdateAvailableBadge update={update} />}
+									</span>
+								}
+								onClick={(): void => setSelectedIntegration(integration)}
+							/>
+						);
+					})}
 				</CardGrid>
 			)}
 		</section>

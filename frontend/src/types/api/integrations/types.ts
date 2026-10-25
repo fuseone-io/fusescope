@@ -10,6 +10,8 @@ export interface IntegrationsProps {
 	is_installed: boolean;
 	is_new?: boolean;
 	title: string;
+	version?: string;
+	latest_version?: string;
 }
 
 export interface AllIntegrationsProps {
@@ -37,8 +39,11 @@ export interface IntegrationDetailedProps {
 	id: string;
 	installation: {
 		installed_at: string;
+		version: string;
 	} | null;
 	title: string;
+	version: string;
+	latest_version: string;
 	author: {
 		email: string;
 		homepage: string;
@@ -109,6 +114,10 @@ export interface InstalledIntegrationsSuccessResponse {
 }
 
 export interface UninstallIntegrationProps {
+	integration_id: string;
+}
+
+export interface UpgradeIntegrationProps {
 	integration_id: string;
 }
 

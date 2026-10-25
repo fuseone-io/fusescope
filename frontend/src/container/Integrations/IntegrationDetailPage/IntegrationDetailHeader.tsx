@@ -8,10 +8,15 @@ import { Skeleton } from 'components/ui/skeleton';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Plug } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { IntegrationConnectionStatus } from 'types/api/integrations/types';
+import { USER_ROLES } from 'types/roles';
 
+import UpdateAvailableBadge from '../components/UpdateAvailableBadge';
 import { INTEGRATION_TELEMETRY_EVENTS } from '../constants';
+import { IntegrationUpdate } from '../utils';
 import ConnectionStatusBadge from './ConnectionStatusBadge';
+import IntegrationUpdateButton from './IntegrationUpdateButton';
 import { ConnectionStates } from './TestConnection';
 import TestConnectionModal from './TestConnectionModal';
 
@@ -20,6 +25,8 @@ interface IntegrationDetailHeaderProps {
 	title: string;
 	description: string;
 	icon: string;
+	installedVersion?: string;
+	update: IntegrationUpdate | null;
 	onUnInstallSuccess: () => void;
 	connectionState: ConnectionStates;
 	connectionData: IntegrationConnectionStatus;
@@ -35,6 +42,8 @@ function IntegrationDetailHeader(
 		title,
 		icon,
 		description,
+		installedVersion,
+		update,
 		connectionState,
 		connectionData,
 		isLoading,
@@ -42,6 +51,8 @@ function IntegrationDetailHeader(
 		onShowConfiguration,
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const { user } = useAppContext();
+	const canUpdate = user.role !== USER_ROLES.VIEWER;
 
 	const { notifications } = useNotifications();
 
@@ -97,22 +108,41 @@ function IntegrationDetailHeader(
 							{!isConnectionStateNotInstalled && (
 								<ConnectionStatusBadge connectionState={connectionState} />
 							)}
+							{installedVersion && (
+								<span
+									data-testid="integration-installed-version"
+									className="tw:tabular-nums"
+								>
+									v{installedVersion}
+								</span>
+							)}
+							{update && <UpdateAvailableBadge update={update} />}
 							<span>{description}</span>
 						</span>
 					)
 				}
 				actions={
-					<Button
-						variant={isConnectionStateNotInstalled ? 'default' : 'outline'}
-						data-testid="integration-connect-button"
-						disabled={isInstallLoading || isLoading}
-						onClick={handleConnectClick}
-					>
-						<ArrowLeftRight aria-hidden="true" />
-						<span className="translate-safe">
-							{isConnectionStateNotInstalled ? `Connect ${title}` : `Test Connection`}
-						</span>
-					</Button>
+					<span className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+						{update && canUpdate && !isLoading && (
+							<IntegrationUpdateButton
+								integrationId={id}
+								title={title}
+								update={update}
+								onUpdated={onUnInstallSuccess}
+							/>
+						)}
+						<Button
+							variant={isConnectionStateNotInstalled ? 'default' : 'outline'}
+							data-testid="integration-connect-button"
+							disabled={isInstallLoading || isLoading}
+							onClick={handleConnectClick}
+						>
+							<ArrowLeftRight aria-hidden="true" />
+							<span className="translate-safe">
+								{isConnectionStateNotInstalled ? `Connect ${title}` : `Test Connection`}
+							</span>
+						</Button>
+					</span>
 				}
 			/>
 
