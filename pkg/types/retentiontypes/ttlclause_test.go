@@ -110,3 +110,27 @@ func TestColdStorageVolume(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateColdStorage(t *testing.T) {
+	testCases := []struct {
+		name    string
+		volume  string
+		days    int
+		wantErr bool
+	}{
+		{name: "NoColdStorage", volume: "", days: 0},
+		{name: "VolumeWithDays", volume: "cold", days: 7},
+		{name: "VolumeWithoutDays_Error", volume: "cold", days: 0, wantErr: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := ValidateColdStorage(testCase.volume, testCase.days)
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+		})
+	}
+}

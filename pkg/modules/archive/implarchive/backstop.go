@@ -39,6 +39,9 @@ func NewBackstopService(providerSettings factory.ProviderSettings, setter retent
 }
 
 func (service *backstopService) Start(ctx context.Context) error {
+	if !service.config.Logs.Enabled {
+		service.warnBackstopKept(ctx)
+	}
 	close(service.healthyC)
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -52,7 +55,6 @@ func (service *backstopService) Start(ctx context.Context) error {
 	}()
 
 	if !service.config.Logs.Enabled {
-		service.warnBackstopKept(ctx)
 		<-ctx.Done()
 		return nil
 	}
@@ -97,13 +99,14 @@ func (service *backstopService) reconcile(ctx context.Context) error {
 	if !state.BackstopPending(days) {
 		return nil
 	}
+	resume := state.BackstopInterrupted(days)
 
 	// Several backends may run this service; one applies the backstop at a time.
-	return runUnderLease(ctx, service.store, service.settings.Logger(), archivetypes.BackstopLease(signal), service.holder, func(ctx context.Context, _ *archivetypes.Lease) error {
+	return runUnderLease(ctx, service.store, service.settings.Logger(), archivetypes.BackstopLease(signal), service.holder, leaseDuration, func(ctx context.Context, _ *archivetypes.Lease) error {
 		if err := service.store.SetBackstop(ctx, signal, days); err != nil {
 			return err
 		}
-		if err := service.setter.ApplyArchiveBackstop(ctx, signal, days); err != nil {
+		if err := service.setter.ApplyArchiveBackstop(ctx, signal, days, resume); err != nil {
 			return err
 		}
 		if err := service.store.MarkBackstopApplied(ctx, signal, time.Now()); err != nil {
