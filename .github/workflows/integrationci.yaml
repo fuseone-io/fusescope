@@ -67,6 +67,7 @@ jobs:
           - cloudintegrations
           - dashboard
           - ingestionkeys
+          - integrations
           - inframonitoring
           - llmpricingrules
           - logspipelines
