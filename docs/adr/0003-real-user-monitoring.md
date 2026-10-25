@@ -169,6 +169,27 @@ Each phase ships behind a feature flag and ends with docs and an e2e test.
 | **5 · Cross-platform** | React Native, Flutter, as demand appears | — |
 | **Later** | session replay, if accepted; rollup MVs, when an application nears 35 M spans per 7 days | — |
 
+## Phase 3 decisions (Android)
+
+Settled 2026-10-25, while building phase 3.
+
+- **One repo per native platform:** `fuseone-io/fusescope-sdk-android` now, `fusescope-sdk-ios` for phase 4. JS stays in the `fusescope-sdk` monorepo.
+- **Java and Kotlin first.** Uncaught exceptions, ANRs and app start ship in phase 3; NDK/native crashes and their symbol files are deferred.
+- **Applications.** An Android application has allowed package names instead of origins: exact (`com.example.shop`), sub-packages (`com.example.*`) or `*`. The gateway refuses a request when any resource's `app.package.name` is missing or not allowed, and refuses an `Origin` header, since an Android key never serves a browser.
+- **Attributes.** No upstream semantic convention names the package, so we add `app.package.name`. `opentelemetry-android`'s screen attribute fits the view model once copied into the route.
+
+| Signal | Attributes |
+|---|---|
+| Resource | `service.name`, `service.version` (the app's `versionName`, the release mappings are keyed by), `deployment.environment.name`, `app.package.name` (the `applicationId`), `telemetry.distro.name` = `io.fusescope:android` with `telemetry.distro.version`; the gateway stamps `fusescope.rum.platform` = `android` |
+| Crash | log record, `event.name` = `exception`, `exception.type` (class name), `exception.message`, `exception.stacktrace` (`printStackTrace` output), `fusescope.rum.error.source` = `crash` |
+| ANR | the same with `exception.type` = `ANR`, `fusescope.rum.error.source` = `anr` and the main thread's stack |
+| Screen | `app.screen.name` (upstream); the gateway copies it into `fusescope.rum.view.route` when unset |
+| App start | `rum.vital` with `fusescope.rum.vital.name` = `app_start` (decision 2); upstream reports an `AppStart` span the distribution maps |
+
+  The gateway also stores the upstream `app.crash` and `device.anr` events this way, so a plain `opentelemetry-android` app shows crashes and ANRs.
+- **R8 mappings.** One `mapping.txt` per application and release, uploaded to `POST /api/v1/rum/applications/{id}/mappings` and kept in the source map store with the kind `r8-mapping`, under the same limits, quota and retention. The parser is ours, written from the ProGuard and R8 format documentation. Stack traces are retraced at read time.
+- **Grouping.** A JVM error groups by its deobfuscated type and the class and method of its top three in-app frames, across the thrown exception and then its causes; line numbers are left out. A release without its mapping groups on obfuscated frames until the mapping is uploaded.
+
 ## Resolved decisions
 
 | # | Question | Decision |
