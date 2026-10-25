@@ -38,16 +38,16 @@ func (_m *MockBackstopSetter) EXPECT() *MockBackstopSetter_Expecter {
 }
 
 // ApplyArchiveBackstop provides a mock function for the type MockBackstopSetter
-func (_mock *MockBackstopSetter) ApplyArchiveBackstop(ctx context.Context, signal string, days int) error {
-	ret := _mock.Called(ctx, signal, days)
+func (_mock *MockBackstopSetter) ApplyArchiveBackstop(ctx context.Context, signal string, days int, resume bool) error {
+	ret := _mock.Called(ctx, signal, days, resume)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApplyArchiveBackstop")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int) error); ok {
-		r0 = returnFunc(ctx, signal, days)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int, bool) error); ok {
+		r0 = returnFunc(ctx, signal, days, resume)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,11 +63,12 @@ type MockBackstopSetter_ApplyArchiveBackstop_Call struct {
 //   - ctx context.Context
 //   - signal string
 //   - days int
-func (_e *MockBackstopSetter_Expecter) ApplyArchiveBackstop(ctx interface{}, signal interface{}, days interface{}) *MockBackstopSetter_ApplyArchiveBackstop_Call {
-	return &MockBackstopSetter_ApplyArchiveBackstop_Call{Call: _e.mock.On("ApplyArchiveBackstop", ctx, signal, days)}
+//   - resume bool
+func (_e *MockBackstopSetter_Expecter) ApplyArchiveBackstop(ctx interface{}, signal interface{}, days interface{}, resume interface{}) *MockBackstopSetter_ApplyArchiveBackstop_Call {
+	return &MockBackstopSetter_ApplyArchiveBackstop_Call{Call: _e.mock.On("ApplyArchiveBackstop", ctx, signal, days, resume)}
 }
 
-func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) Run(run func(ctx context.Context, signal string, days int)) *MockBackstopSetter_ApplyArchiveBackstop_Call {
+func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) Run(run func(ctx context.Context, signal string, days int, resume bool)) *MockBackstopSetter_ApplyArchiveBackstop_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -81,10 +82,15 @@ func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) Run(run func(ctx context
 		if args[2] != nil {
 			arg2 = args[2].(int)
 		}
+		var arg3 bool
+		if args[3] != nil {
+			arg3 = args[3].(bool)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -95,7 +101,7 @@ func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) Return(err error) *MockB
 	return _c
 }
 
-func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) RunAndReturn(run func(ctx context.Context, signal string, days int) error) *MockBackstopSetter_ApplyArchiveBackstop_Call {
+func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) RunAndReturn(run func(ctx context.Context, signal string, days int, resume bool) error) *MockBackstopSetter_ApplyArchiveBackstop_Call {
 	_c.Call.Return(run)
 	return _c
 }
