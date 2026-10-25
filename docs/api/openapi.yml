@@ -5221,6 +5221,14 @@ components:
           nullable: true
           type: object
       type: object
+    FormDataRumtypesPostableR8Mapping:
+      properties:
+        file:
+          $ref: '#/components/schemas/MultipartFile'
+        release:
+          description: The release, when the query has none.
+          type: string
+      type: object
     FormDataRumtypesPostableSourceMaps:
       properties:
         debug_ids:
@@ -10028,7 +10036,15 @@ components:
       properties:
         allowedOrigins:
           description: Browser origins allowed to ingest, e.g. https://shop.example.com
-            or https://*.example.com; * allows any.
+            or https://*.example.com; * allows any. Web only.
+          items:
+            type: string
+          nullable: true
+          type: array
+        allowedPackageNames:
+          description: Android package names allowed to ingest, matched against the
+            app.package.name resource attribute, e.g. com.example.shop or com.example.*;
+            * allows any. Android only.
           items:
             type: string
           nullable: true
@@ -10077,6 +10093,7 @@ components:
       - platform
       - environment
       - allowedOrigins
+      - allowedPackageNames
       - tracePropagationUrls
       - sampleRate
       - piiPolicy
@@ -10084,6 +10101,11 @@ components:
       - firstSeenAt
       - sourceMaps
       type: object
+    RumtypesArtifactKind:
+      enum:
+      - source-map
+      - r8-mapping
+      type: string
     RumtypesClient:
       properties:
         browser:
@@ -10126,11 +10148,49 @@ components:
       - pageLoads
       - lcpP75Ms
       type: object
+    RumtypesErrorCause:
+      properties:
+        frames:
+          items:
+            $ref: '#/components/schemas/RumtypesStackFrame'
+          nullable: true
+          type: array
+        message:
+          type: string
+        omittedFrames:
+          description: 'Frames the JVM printed as "... N more": the last N of the
+            enclosing exception''s.'
+          type: integer
+        relation:
+          $ref: '#/components/schemas/RumtypesErrorCauseRelation'
+        type:
+          description: Deobfuscated when a mapping resolves it.
+          type: string
+      required:
+      - type
+      - message
+      - relation
+      - frames
+      - omittedFrames
+      type: object
+    RumtypesErrorCauseRelation:
+      enum:
+      - caused_by
+      - suppressed
+      type: string
     RumtypesErrorEvent:
       properties:
+        causes:
+          description: The causes and suppressed exceptions of a JVM trace, in print
+            order; empty otherwise.
+          items:
+            $ref: '#/components/schemas/RumtypesErrorCause'
+          nullable: true
+          type: array
         client:
           $ref: '#/components/schemas/RumtypesClient'
         frames:
+          description: For a JVM trace, the thrown exception's.
           items:
             $ref: '#/components/schemas/RumtypesStackFrame'
           nullable: true
@@ -10153,8 +10213,8 @@ components:
           description: exception.stacktrace as received.
           type: string
         symbolicated:
-          description: Whether frames were mapped through an uploaded source map;
-            frames keep the minified position and carry the original one.
+          description: Whether frames were mapped through an uploaded source map or
+            R8 mapping; frames keep the minified position and carry the original one.
           type: boolean
         timestamp:
           format: date-time
@@ -10173,6 +10233,7 @@ components:
       - source
       - stacktrace
       - frames
+      - causes
       - symbolicated
       - missingSourceMap
       type: object
@@ -10234,12 +10295,16 @@ components:
           format: int64
           type: integer
         source:
+          description: fusescope.rum.error.source of the latest event; crash or anr
+            on Android.
           type: string
         sparkline:
           $ref: '#/components/schemas/RumtypesSparkline'
         topFrame:
           $ref: '#/components/schemas/RumtypesStackFrame'
         type:
+          description: Deobfuscated for Android when the release's R8 mapping resolves
+            it.
           type: string
       required:
       - fingerprint
@@ -10326,7 +10391,15 @@ components:
       properties:
         allowedOrigins:
           description: Browser origins allowed to ingest, e.g. https://shop.example.com
-            or https://*.example.com; * allows any.
+            or https://*.example.com; * allows any. Web only.
+          items:
+            type: string
+          nullable: true
+          type: array
+        allowedPackageNames:
+          description: Android package names allowed to ingest, matched against the
+            app.package.name resource attribute, e.g. com.example.shop or com.example.*;
+            * allows any. Android only.
           items:
             type: string
           nullable: true
@@ -10377,6 +10450,7 @@ components:
       - platform
       - environment
       - allowedOrigins
+      - allowedPackageNames
       - tracePropagationUrls
       - sampleRate
       - piiPolicy
@@ -10489,12 +10563,16 @@ components:
           format: int64
           type: integer
         source:
+          description: fusescope.rum.error.source of the latest event; crash or anr
+            on Android.
           type: string
         sparkline:
           $ref: '#/components/schemas/RumtypesSparkline'
         topFrame:
           $ref: '#/components/schemas/RumtypesStackFrame'
         type:
+          description: Deobfuscated for Android when the release's R8 mapping resolves
+            it.
           type: string
       required:
       - fingerprint
@@ -10830,7 +10908,8 @@ components:
           format: int64
           type: integer
         lastOrigin:
-          description: Origin header of the last refused request, empty when absent.
+          description: Origin header of the last refused request, or its app.package.name
+            when refused for it; empty when absent.
           type: string
         lastSeenAt:
           format: date-time
@@ -10863,11 +10942,14 @@ components:
     RumtypesMissingSourceMap:
       nullable: true
       properties:
+        kind:
+          $ref: '#/components/schemas/RumtypesArtifactKind'
         release:
           description: The event's service.version, empty when it has none.
           type: string
       required:
       - release
+      - kind
       type: object
     RumtypesOriginalFrame:
       nullable: true
@@ -10886,6 +10968,10 @@ components:
         inApp:
           description: False for sources under node_modules.
           type: boolean
+        inlined:
+          description: True for a JVM frame R8 inlined into the frame after it; both
+            come from one obfuscated frame.
+          type: boolean
         line:
           type: integer
         sourceMap:
@@ -10899,6 +10985,7 @@ components:
       - inApp
       - sourceMap
       - context
+      - inlined
       type: object
     RumtypesPIIPolicy:
       properties:
@@ -10944,6 +11031,11 @@ components:
     RumtypesPostableApplication:
       properties:
         allowedOrigins:
+          items:
+            type: string
+          nullable: true
+          type: array
+        allowedPackageNames:
           items:
             type: string
           nullable: true
@@ -10994,6 +11086,7 @@ components:
       - bad_key
       - unknown_key
       - origin_not_allowed
+      - package_not_allowed
       - rate_limited
       - too_large
       - invalid_payload
@@ -11269,10 +11362,12 @@ components:
           type: string
         generatedPath:
           description: 'URL path of the bundle the map matches by convention: path
-            without .map.'
+            without .map; empty for an R8 mapping.'
           type: string
         id:
           type: string
+        kind:
+          $ref: '#/components/schemas/RumtypesArtifactKind'
         lastUsedAt:
           format: date-time
           nullable: true
@@ -11289,6 +11384,7 @@ components:
           type: string
       required:
       - id
+      - kind
       - path
       - generatedPath
       - debugId
@@ -11462,6 +11558,11 @@ components:
     RumtypesUpdatableApplication:
       properties:
         allowedOrigins:
+          items:
+            type: string
+          nullable: true
+          type: array
+        allowedPackageNames:
           items:
             type: string
           nullable: true
@@ -17598,6 +17699,101 @@ paths:
       tags:
       - rum
       x-signoz-stability: alpha
+  /api/v1/rum/applications/{id}/mappings:
+    post:
+      deprecated: false
+      description: 'Stores the R8 or ProGuard mapping.txt of an Android application''s
+        release, replacing the release''s mapping if it has one. JVM stack traces
+        of events whose service.version equals the release are retraced with it when
+        read. The body is the mapping itself (any content type but multipart, optionally
+        with Content-Encoding: gzip), or multipart/form-data with the mapping in a
+        part named file and the release in a release field. release comes from the
+        query, or from that field. A body that is not a mapping, empty or larger than
+        the file limit (50 MB by default, after decompression) is refused with 400;
+        more than the application''s quota, 2 GB by default, with 413. Uploads share
+        the source map store, limits and retention, and are listed and deleted with
+        the sourcemaps endpoints. Use an API key with the Editor role in SigNoz-Api-Key;
+        the public RUM key is not accepted.'
+      operationId: UploadRUMR8Mapping
+      parameters:
+      - description: The release the mapping belongs to; it must equal the service.version
+          the SDK reports, the app's versionName.
+        in: query
+        name: release
+        schema:
+          description: The release the mapping belongs to; it must equal the service.version
+            the SDK reports, the app's versionName.
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FormDataRumtypesPostableR8Mapping'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RumtypesGettableUploadedSourceMaps'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Request Entity Too Large
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - rum-application:update
+      - tokenizer:
+        - rum-application:update
+      summary: Upload RUM R8 mapping
+      tags:
+      - rum
+      x-signoz-stability: alpha
   /api/v1/rum/applications/{id}/sessions:
     get:
       deprecated: false
@@ -17897,10 +18093,10 @@ paths:
       x-signoz-stability: alpha
     get:
       deprecated: false
-      description: Returns the application's releases with source maps, newest upload
-        first, with their size, uploader, last use and expiry, plus the storage used,
-        the limits and the retention settings. With release, returns that release
-        and its files.
+      description: Returns the application's releases with source maps or R8 mappings,
+        newest upload first, with their size, uploader, last use and expiry, plus
+        the storage used, the limits and the retention settings. With release, returns
+        that release and its files.
       operationId: ListRUMSourceMaps
       parameters:
       - description: List this release's files. Without it, the releases are listed.
