@@ -54,11 +54,16 @@ func (r *ClickHouseReader) ApplyArchiveBackstop(ctx context.Context, signal stri
 			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't set the archive backstop on %s", table)
 		}
 
+		before, err := r.mutations(ctx, table)
+		if err != nil {
+			return err
+		}
+
 		if err := r.db.Exec(ctx, fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MATERIALIZE TTL", table, r.cluster)); err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't materialize the TTL of %s", table)
 		}
 
-		if err := r.waitForMutations(ctx, table); err != nil {
+		if err := r.waitForMaterializeTTL(ctx, table, before); err != nil {
 			return err
 		}
 	}
@@ -156,26 +161,51 @@ func (r *ClickHouseReader) hasColumn(ctx context.Context, table string, column s
 	return count > 0, nil
 }
 
-// waitForMutations waits until no replica has an unfinished mutation on table.
-func (r *ClickHouseReader) waitForMutations(ctx context.Context, table string) error {
+func (r *ClickHouseReader) mutations(ctx context.Context, table string) ([]retentiontypes.Mutation, error) {
 	database, name := splitTableName(table)
-	query := fmt.Sprintf("SELECT count() FROM clusterAllReplicas(%s, system.mutations) WHERE database = ? AND table = ? AND NOT is_done", clickhousesql.StringLiteral(r.cluster))
+	query := fmt.Sprintf("SELECT hostName(), mutation_id, command, is_done, latest_fail_reason FROM clusterAllReplicas(%s, system.mutations) WHERE database = ? AND table = ?", clickhousesql.StringLiteral(r.cluster))
 
+	rows, err := r.db.Query(ctx, query, database, name)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the mutations of %s", table)
+	}
+	defer rows.Close()
+
+	var mutations []retentiontypes.Mutation
+	for rows.Next() {
+		var mutation retentiontypes.Mutation
+		var done uint8
+		if err := rows.Scan(&mutation.Host, &mutation.ID, &mutation.Command, &done, &mutation.FailReason); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the mutations of %s", table)
+		}
+		mutation.Done = done == 1
+		mutations = append(mutations, mutation)
+	}
+
+	return mutations, rows.Err()
+}
+
+// waitForMaterializeTTL waits for the MATERIALIZE TTL issued after before was read.
+func (r *ClickHouseReader) waitForMaterializeTTL(ctx context.Context, table string, before []retentiontypes.Mutation) error {
 	ticker := time.NewTicker(mutationPollInterval)
 	defer ticker.Stop()
 
 	for {
-		var pending uint64
-		if err := r.db.QueryRow(ctx, query, database, name).Scan(&pending); err != nil {
-			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the mutations of %s", table)
+		after, err := r.mutations(ctx, table)
+		if err != nil {
+			return err
 		}
-		if pending == 0 {
+		done, err := retentiontypes.MaterializeTTLDone(before, after)
+		if err != nil {
+			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't materialize the TTL of %s", table)
+		}
+		if done {
 			return nil
 		}
 
 		select {
 		case <-ctx.Done():
-			return errors.Wrapf(ctx.Err(), errors.TypeInternal, errors.CodeInternal, "stopped waiting for the mutations of %s", table)
+			return errors.Wrapf(ctx.Err(), errors.TypeInternal, errors.CodeInternal, "stopped waiting for the TTL of %s to materialize", table)
 		case <-ticker.C:
 		}
 	}
