@@ -34,6 +34,7 @@ type sourceMapSymbolicator struct {
 
 type sourceMapIndexEntry struct {
 	index     *rumtypes.SourceMapIndex
+	mapping   *rumtypes.StorableSourceMap
 	files     []*rumtypes.StorableSourceMap
 	expiresAt time.Time
 }
@@ -59,17 +60,18 @@ func (symbolicator *sourceMapSymbolicator) Symbolicate(ctx context.Context, appl
 		return result, nil
 	}
 	if release == "" {
-		result.MissingSourceMap = &rumtypes.MissingSourceMap{}
+		result.MissingSourceMap = &rumtypes.MissingSourceMap{Kind: rumtypes.ArtifactKindSourceMap}
 		return result, nil
 	}
 
-	index, err := symbolicator.index(ctx, applicationID, release)
+	entry, err := symbolicator.index(ctx, applicationID, release)
 	if err != nil {
 		symbolicator.logger.WarnContext(ctx, "failed to list rum source maps, frames stay minified", errors.Attr(err))
 		return result, nil
 	}
+	index := entry.index
 	if index.Len() == 0 {
-		result.MissingSourceMap = &rumtypes.MissingSourceMap{Release: release}
+		result.MissingSourceMap = &rumtypes.MissingSourceMap{Release: release, Kind: rumtypes.ArtifactKindSourceMap}
 		return result, nil
 	}
 	if len(frames) == 0 {
@@ -82,7 +84,7 @@ func (symbolicator *sourceMapSymbolicator) Symbolicate(ctx context.Context, appl
 		if match == nil {
 			return nil, ""
 		}
-		sourceMap, err := symbolicator.load(ctx, match)
+		sourceMap, err := loadArtifact(ctx, symbolicator, match, func(data []byte) (*rumtypes.SourceMap, error) { return rumtypes.ParseSourceMap(data) })
 		if err != nil {
 			symbolicator.logger.WarnContext(ctx, "failed to load rum source map, its frames stay minified", slog.String("source_map_id", match.ID.StringValue()), errors.Attr(err))
 			return nil, ""
@@ -90,6 +92,38 @@ func (symbolicator *sourceMapSymbolicator) Symbolicate(ctx context.Context, appl
 		symbolicator.markUsed(match.ID, now)
 		return sourceMap, match.Path
 	}, symbolicator.contextLines)
+	return result, nil
+}
+
+// Retrace never fails the read it serves: a mapping it cannot load leaves
+// the trace obfuscated.
+func (symbolicator *sourceMapSymbolicator) Retrace(ctx context.Context, applicationID valuer.UUID, release string, trace *rumtypes.JVMStackTrace) (*rumtypes.JVMRetrace, error) {
+	result := &rumtypes.JVMRetrace{Trace: trace}
+	if release == "" {
+		result.MissingSourceMap = &rumtypes.MissingSourceMap{Kind: rumtypes.ArtifactKindR8Mapping}
+		return result, nil
+	}
+
+	entry, err := symbolicator.index(ctx, applicationID, release)
+	if err != nil {
+		symbolicator.logger.WarnContext(ctx, "failed to list rum r8 mappings, the trace stays obfuscated", errors.Attr(err))
+		return result, nil
+	}
+	if entry.mapping == nil {
+		result.MissingSourceMap = &rumtypes.MissingSourceMap{Release: release, Kind: rumtypes.ArtifactKindR8Mapping}
+		return result, nil
+	}
+
+	mapping, err := loadArtifact(ctx, symbolicator, entry.mapping, rumtypes.ParseR8Mapping)
+	if err != nil {
+		symbolicator.logger.WarnContext(ctx, "failed to load rum r8 mapping, the trace stays obfuscated", slog.String("source_map_id", entry.mapping.ID.StringValue()), errors.Attr(err))
+		return result, nil
+	}
+	retraced, ok := rumtypes.RetraceJVMStackTrace(trace, mapping, entry.mapping.Path)
+	if ok {
+		result.Trace, result.Retraced = retraced, true
+		symbolicator.markUsed(entry.mapping.ID, time.Now())
+	}
 	return result, nil
 }
 
@@ -115,21 +149,24 @@ func (symbolicator *sourceMapSymbolicator) TakeUsage() map[valuer.UUID]time.Time
 	return usage
 }
 
-func (symbolicator *sourceMapSymbolicator) index(ctx context.Context, applicationID valuer.UUID, release string) (*rumtypes.SourceMapIndex, error) {
+func (symbolicator *sourceMapSymbolicator) index(ctx context.Context, applicationID valuer.UUID, release string) (sourceMapIndexEntry, error) {
 	key, now := indexKey(applicationID, release), time.Now()
 
 	symbolicator.mu.Lock()
 	entry, ok := symbolicator.indexes[key]
 	symbolicator.mu.Unlock()
 	if ok && now.Before(entry.expiresAt) {
-		return entry.index, nil
+		return entry, nil
 	}
 
 	files, err := symbolicator.store.ListReleaseSourceMaps(ctx, applicationID, release)
 	if err != nil {
-		return nil, err
+		return sourceMapIndexEntry{}, err
 	}
-	entry = sourceMapIndexEntry{index: rumtypes.NewSourceMapIndex(files), files: files, expiresAt: now.Add(symbolicator.indexTTL)}
+	entry = sourceMapIndexEntry{index: rumtypes.NewSourceMapIndex(rumtypes.FilterArtifacts(files, rumtypes.ArtifactKindSourceMap)), files: files, expiresAt: now.Add(symbolicator.indexTTL)}
+	if mappings := rumtypes.FilterArtifacts(files, rumtypes.ArtifactKindR8Mapping); len(mappings) > 0 {
+		entry.mapping = mappings[0]
+	}
 
 	symbolicator.mu.Lock()
 	if len(symbolicator.indexes) >= maxSourceMapIndexEntries {
@@ -137,13 +174,17 @@ func (symbolicator *sourceMapSymbolicator) index(ctx context.Context, applicatio
 	}
 	symbolicator.indexes[key] = entry
 	symbolicator.mu.Unlock()
-	return entry.index, nil
+	return entry, nil
 }
 
-func (symbolicator *sourceMapSymbolicator) load(ctx context.Context, file *rumtypes.StorableSourceMap) (*rumtypes.SourceMap, error) {
+// loadArtifact reads and parses a file once across concurrent reads, and
+// caches the result.
+func loadArtifact[T cachedArtifact](ctx context.Context, symbolicator *sourceMapSymbolicator, file *rumtypes.StorableSourceMap, parse func([]byte) (T, error)) (T, error) {
 	key := file.ID.StringValue()
-	if sourceMap, ok := symbolicator.maps.Get(key); ok {
-		return sourceMap, nil
+	if cached, ok := symbolicator.maps.Get(key); ok {
+		if artifact, ok := cached.(T); ok {
+			return artifact, nil
+		}
 	}
 
 	loaded, err, _ := symbolicator.loads.Do(key, func() (any, error) {
@@ -157,17 +198,18 @@ func (symbolicator *sourceMapSymbolicator) load(ctx context.Context, file *rumty
 		if err != nil {
 			return nil, errors.WrapInternalf(err, ErrCodeSourceMapStorage, "failed to read source map")
 		}
-		sourceMap, err := rumtypes.ParseSourceMap(data)
+		artifact, err := parse(data)
 		if err != nil {
 			return nil, err
 		}
-		symbolicator.maps.Add(key, sourceMap)
-		return sourceMap, nil
+		symbolicator.maps.Add(key, artifact)
+		return artifact, nil
 	})
 	if err != nil {
-		return nil, err
+		var zero T
+		return zero, err
 	}
-	return loaded.(*rumtypes.SourceMap), nil
+	return loaded.(T), nil
 }
 
 func (symbolicator *sourceMapSymbolicator) markUsed(id valuer.UUID, at time.Time) {

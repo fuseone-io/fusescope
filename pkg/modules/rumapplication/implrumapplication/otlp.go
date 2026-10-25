@@ -29,6 +29,9 @@ func processTraces(application *rumtypes.Application, traces ptrace.Traces) *rum
 					scrubAttributes(application.PIIPolicy, span.Links().At(l).Attributes())
 				}
 
+				if application.Platform == rumtypes.PlatformAndroid {
+					copyScreenRoute(span.Attributes())
+				}
 				collectSession(span.Attributes(), sessions)
 				if span.Name() == rumtypes.SpanNameView {
 					batch.Views++
@@ -61,6 +64,10 @@ func processLogs(application *rumtypes.Application, logs plog.Logs) *rumtypes.In
 					if _, ok := attributes.Get(rumtypes.AttributeEventName); !ok {
 						attributes.PutStr(rumtypes.AttributeEventName, eventName)
 					}
+				}
+				if application.Platform == rumtypes.PlatformAndroid {
+					normalizeAndroidEvent(attributes)
+					copyScreenRoute(attributes)
 				}
 
 				collectSession(attributes, sessions)
@@ -101,6 +108,56 @@ func stampResource(application *rumtypes.Application, resource pcommon.Resource,
 			batch.SDKName, batch.SDKVersion = name.Str(), version.AsString()
 			return
 		}
+	}
+}
+
+// allowedPackageNames checks every resource's app.package.name against an
+// android application's allowed package names, and returns the first
+// refused, empty when missing.
+func allowedPackageNames(application *rumtypes.Application, resources []pcommon.Resource) (string, bool) {
+	if application.Platform != rumtypes.PlatformAndroid {
+		return "", true
+	}
+	for _, resource := range resources {
+		packageName, _ := resource.Attributes().Get(rumtypes.AttributePackageName)
+		if !application.AllowsPackageName(packageName.Str()) {
+			return packageName.Str(), false
+		}
+	}
+	return "", true
+}
+
+// normalizeAndroidEvent stores the crash and ANR events of
+// opentelemetry-android as exceptions with their source, and gives an ANR,
+// which reports only the main thread's stack, its type and message.
+func normalizeAndroidEvent(attributes pcommon.Map) {
+	eventName, _ := attributes.Get(rumtypes.AttributeEventName)
+	var source string
+	switch eventName.Str() {
+	case rumtypes.EventNameAppCrash:
+		source = rumtypes.ErrorSourceCrash
+	case rumtypes.EventNameDeviceANR:
+		source = rumtypes.ErrorSourceANR
+		putIfMissing(attributes, rumtypes.AttributeExceptionType, rumtypes.ExceptionTypeANR)
+		putIfMissing(attributes, rumtypes.AttributeExceptionMessage, rumtypes.ANRMessage)
+	default:
+		return
+	}
+	attributes.PutStr(rumtypes.AttributeEventName, rumtypes.EventNameException)
+	putIfMissing(attributes, rumtypes.AttributeErrorSource, source)
+}
+
+// copyScreenRoute makes the screen name the view route the RUM screens group
+// by, when the client set none.
+func copyScreenRoute(attributes pcommon.Map) {
+	if screen, ok := attributes.Get(rumtypes.AttributeScreenName); ok && screen.Str() != "" {
+		putIfMissing(attributes, rumtypes.AttributeViewRoute, screen.Str())
+	}
+}
+
+func putIfMissing(attributes pcommon.Map, key string, value string) {
+	if current, ok := attributes.Get(key); !ok || current.Str() == "" {
+		attributes.PutStr(key, value)
 	}
 }
 

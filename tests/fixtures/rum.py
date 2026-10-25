@@ -1,3 +1,4 @@
+import gzip
 import json
 import time
 import uuid
@@ -60,9 +61,11 @@ def rum_event(event_name: str, time_ns: int, attributes: dict) -> dict:
     return {"timeUnixNano": str(time_ns), "eventName": event_name, "severityNumber": 17 if event_name == "exception" else 9, "attributes": otlp_attributes(attributes)}
 
 
-def send_rum(signoz: types.SigNoz, key: str, resource: dict, spans: list[dict] | None = None, events: list[dict] | None = None) -> None:
-    """Posts spans and log events through the RUM gateway, as the browser SDK does."""
-    headers = {RUM_KEY_HEADER: key, "Content-Type": "application/json", "Origin": RUM_ORIGIN}
+def send_rum(signoz: types.SigNoz, key: str, resource: dict, spans: list[dict] | None = None, events: list[dict] | None = None, origin: str | None = RUM_ORIGIN) -> None:
+    """Posts spans and log events through the RUM gateway, as the browser SDK does; with origin None, as a native app does."""
+    headers = {RUM_KEY_HEADER: key, "Content-Type": "application/json"}
+    if origin is not None:
+        headers["Origin"] = origin
     if spans:
         body = {"resourceSpans": [{"resource": {"attributes": otlp_attributes(resource)}, "scopeSpans": [{"spans": spans}]}]}
         response = requests.post(signoz.self.host_configs["8080"].get("/rum/v1/traces"), json=body, headers=headers, timeout=10)
@@ -105,6 +108,14 @@ def upload_source_maps(signoz: types.SigNoz, application_id: str, release: str, 
     files = [(path, (path.rsplit("/", 1)[-1], content, "application/json")) for path, content in maps.items()]
     data = {"debug_ids": json.dumps(debug_ids)} if debug_ids else None
     return requests.post(signoz.self.host_configs["8080"].get(f"{RUM_APPLICATIONS}/{application_id}/sourcemaps"), params={"release": release}, files=files, data=data, headers=headers, timeout=30)
+
+
+def upload_r8_mapping(signoz: types.SigNoz, application_id: str, release: str, headers: dict, mapping: bytes, compress: bool = False) -> requests.Response:
+    """Uploads as the FuseScope Gradle plugin does: the mapping as the raw body, gzip optional."""
+    body, upload_headers = mapping, {**headers, "Content-Type": "text/plain"}
+    if compress:
+        body, upload_headers["Content-Encoding"] = gzip.compress(mapping), "gzip"
+    return requests.post(signoz.self.host_configs["8080"].get(f"{RUM_APPLICATIONS}/{application_id}/mappings"), params={"release": release}, data=body, headers=upload_headers, timeout=30)
 
 
 def padded_source_map(size: int) -> bytes:

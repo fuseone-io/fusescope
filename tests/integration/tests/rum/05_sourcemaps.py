@@ -165,5 +165,5 @@ def test_sourcemaps_symbolicate_error(
 
     unmapped = events["1.7.0"]
     assert unmapped["symbolicated"] is False
-    assert unmapped["missingSourceMap"] == {"release": "1.7.0"}
+    assert unmapped["missingSourceMap"] == {"release": "1.7.0", "kind": "source-map"}
     assert unmapped["frames"][0]["original"] is None

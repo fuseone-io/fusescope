@@ -17,6 +17,7 @@ type OriginalFrame struct {
 	InApp     bool           `json:"inApp" required:"true" description:"False for sources under node_modules."`
 	SourceMap string         `json:"sourceMap" required:"true" description:"Path of the map that resolved the frame."`
 	Context   *SourceContext `json:"context" required:"true" nullable:"true" description:"Lines around the position when the map embeds sourcesContent."`
+	Inlined   bool           `json:"inlined" required:"true" description:"True for a JVM frame R8 inlined into the frame after it; both come from one obfuscated frame."`
 }
 
 // IsScriptFile reports whether a frame's file is a script a source map can
@@ -44,12 +45,21 @@ func HasScriptFrame(frames []StackFrame) bool {
 }
 
 type MissingSourceMap struct {
-	Release string `json:"release" required:"true" description:"The event's service.version, empty when it has none."`
+	Release string       `json:"release" required:"true" description:"The event's service.version, empty when it has none."`
+	Kind    ArtifactKind `json:"kind" required:"true" description:"The artifact the release lacks: a source map for web, an R8 mapping for Android."`
 }
 
 type Symbolication struct {
 	Frames           []StackFrame
 	Symbolicated     bool
+	MissingSourceMap *MissingSourceMap
+}
+
+// JVMRetrace is a JVM stack trace mapped through a release's R8 mapping;
+// Trace is the input when nothing was mapped.
+type JVMRetrace struct {
+	Trace            *JVMStackTrace
+	Retraced         bool
 	MissingSourceMap *MissingSourceMap
 }
 

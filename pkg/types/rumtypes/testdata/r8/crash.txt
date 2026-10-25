@@ -1,0 +1,12 @@
+a.a: Cart is empty
+	at a.b.a(SourceFile:6)
+	at a.b.b(SourceFile:2)
+	at com.example.shop.CheckoutActivity.onCreate(SourceFile:3)
+	at android.app.Activity.performCreate(Activity.java:8595)
+	at android.app.ActivityThread.main(ActivityThread.java:8177)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:971)
+Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'long a.d.a()' on a null object reference
+	at a.b.a(SourceFile:6)
+	at a.b.e(SourceFile:1)
+	... 5 more

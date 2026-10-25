@@ -15,13 +15,16 @@ func (module *module) queryScope(ctx context.Context, orgID valuer.UUID, id valu
 	if err != nil {
 		return telemetryScope{}, err
 	}
-	if _, err := module.Get(ctx, orgID, id); err != nil {
+	application, err := module.Get(ctx, orgID, id)
+	if err != nil {
 		return telemetryScope{}, err
 	}
 	if err := module.PromoteFields(ctx); err != nil {
 		return telemetryScope{}, err
 	}
-	return newTelemetryScope(id.StringValue(), queryRange), nil
+	scope := newTelemetryScope(id.StringValue(), queryRange)
+	scope.platform = application.Platform
+	return scope, nil
 }
 
 func newSpanTimelineEvent(row *sessionSpanRow) *rumtypes.TimelineEvent {

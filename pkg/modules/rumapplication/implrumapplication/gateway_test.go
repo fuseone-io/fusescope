@@ -359,3 +359,48 @@ func TestGatewayDisabled(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, response.Code)
 	assert.Empty(t, fixture.collector.received("/v1/traces"))
 }
+
+func TestGatewayAndroidPackageNames(t *testing.T) {
+	fixture := newGatewayFixture(t, nil)
+	created, err := fixture.module.Create(context.Background(), fixture.orgID, "admin@example.com", newTestPostable(t, `{"name":"shop-android","platform":"android","environment":"production","allowedPackageNames":["com.example.shop"]}`))
+	require.NoError(t, err)
+	logs := func(resource string) string {
+		return `{"resourceLogs":[{"resource":{"attributes":[` + resource + `]},"scopeLogs":[{"logRecords":[{"timeUnixNano":"1700000000000000000","eventName":"device.anr","attributes":[{"key":"exception.stacktrace","value":{"stringValue":"java.lang.Thread.sleep(Native Method)"}}]}]}]}]}`
+	}
+
+	testCases := []struct {
+		name      string
+		body      string
+		headers   map[string]string
+		status    int
+		forwarded bool
+	}{
+		{name: "AllowedPackageNoOrigin_Accepted", body: logs(`{"key":"app.package.name","value":{"stringValue":"com.example.shop"}}`), status: http.StatusOK, forwarded: true},
+		{name: "OtherPackage_Forbidden", body: logs(`{"key":"app.package.name","value":{"stringValue":"com.evil.app"}}`), status: http.StatusForbidden},
+		{name: "MissingPackage_Forbidden", body: logs(``), status: http.StatusForbidden},
+		{name: "BrowserOrigin_Forbidden", body: logs(`{"key":"app.package.name","value":{"stringValue":"com.example.shop"}}`), headers: map[string]string{"Origin": "https://shop.example.com"}, status: http.StatusForbidden},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			headers := map[string]string{"Content-Type": "application/json", KeyHeader: created.Key.Key}
+			for key, value := range testCase.headers {
+				headers[key] = value
+			}
+			before := len(fixture.collector.received("/v1/logs"))
+			response := fixture.do(http.MethodPost, "/rum/v1/logs", strings.NewReader(testCase.body), headers)
+
+			assert.Equal(t, testCase.status, response.Code, response.Body.String())
+			assert.Empty(t, response.Header().Get("Access-Control-Allow-Origin"))
+			assert.Equal(t, testCase.forwarded, len(fixture.collector.received("/v1/logs")) > before)
+		})
+	}
+
+	status, err := fixture.module.Status(context.Background(), fixture.orgID, created.ID)
+	require.NoError(t, err)
+	reasons := map[rumtypes.RejectionReason]string{}
+	for _, rejection := range status.Rejections {
+		reasons[rejection.Reason] = rejection.LastOrigin
+	}
+	assert.Equal(t, map[rumtypes.RejectionReason]string{rumtypes.RejectionReasonPackageNotAllowed: "", rumtypes.RejectionReasonOriginNotAllowed: "https://shop.example.com"}, reasons)
+	assert.Equal(t, int64(1), status.Counts.Errors, "the upstream ANR counts as an error")
+}

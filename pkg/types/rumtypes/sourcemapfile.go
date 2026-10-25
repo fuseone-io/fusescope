@@ -53,14 +53,15 @@ type StorableSourceMap struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	OrgID         valuer.UUID `bun:"org_id"`
-	ApplicationID valuer.UUID `bun:"application_id"`
-	Release       string      `bun:"release_name"`
-	Path          string      `bun:"path"`
-	DebugID       string      `bun:"debug_id"`
-	Size          int64       `bun:"size"`
-	CreatedBy     string      `bun:"created_by"`
-	LastUsedAt    *time.Time  `bun:"last_used_at,nullzero"`
+	OrgID         valuer.UUID  `bun:"org_id"`
+	ApplicationID valuer.UUID  `bun:"application_id"`
+	Kind          ArtifactKind `bun:"kind"`
+	Release       string       `bun:"release_name"`
+	Path          string       `bun:"path"`
+	DebugID       string       `bun:"debug_id"`
+	Size          int64        `bun:"size"`
+	CreatedBy     string       `bun:"created_by"`
+	LastUsedAt    *time.Time   `bun:"last_used_at,nullzero"`
 }
 
 type SourceMapLimits struct {
@@ -87,6 +88,17 @@ type DeleteSourceMapsParams struct {
 type PostableSourceMaps struct {
 	DebugIDs string         `formData:"debug_ids" description:"JSON object of map URL path to debug ID; overrides the map's own debugId."`
 	File     multipart.File `formData:"file" description:"A map whose filename is its URL path, for clients that cannot name parts freely."`
+}
+
+// PostableR8Mapping documents the multipart form of an R8 mapping upload;
+// the handler also takes the mapping as the raw body.
+type PostableR8Mapping struct {
+	Release string         `formData:"release" description:"The release, when the query has none."`
+	File    multipart.File `formData:"file" description:"The mapping.txt R8 or ProGuard wrote."`
+}
+
+type PostableR8MappingParams struct {
+	Release string `query:"release" description:"The release the mapping belongs to; it must equal the service.version the SDK reports, the app's versionName."`
 }
 
 // PostableSourceMap is one map of an upload: its path and a reader of its
@@ -136,14 +148,15 @@ type SourceMapRelease struct {
 }
 
 type SourceMapFile struct {
-	ID            valuer.UUID `json:"id" required:"true"`
-	Path          string      `json:"path" required:"true"`
-	GeneratedPath string      `json:"generatedPath" required:"true" description:"URL path of the bundle the map matches by convention: path without .map."`
-	DebugID       string      `json:"debugId" required:"true" description:"The map's debugId, lowercase; empty when it has none."`
-	SizeBytes     int64       `json:"sizeBytes" required:"true"`
-	UploadedAt    time.Time   `json:"uploadedAt" required:"true"`
-	UploadedBy    string      `json:"uploadedBy" required:"true"`
-	LastUsedAt    *time.Time  `json:"lastUsedAt" required:"true" nullable:"true"`
+	ID            valuer.UUID  `json:"id" required:"true"`
+	Kind          ArtifactKind `json:"kind" required:"true"`
+	Path          string       `json:"path" required:"true"`
+	GeneratedPath string       `json:"generatedPath" required:"true" description:"URL path of the bundle the map matches by convention: path without .map; empty for an R8 mapping."`
+	DebugID       string       `json:"debugId" required:"true" description:"The map's debugId, lowercase; empty when it has none."`
+	SizeBytes     int64        `json:"sizeBytes" required:"true"`
+	UploadedAt    time.Time    `json:"uploadedAt" required:"true"`
+	UploadedBy    string       `json:"uploadedBy" required:"true"`
+	LastUsedAt    *time.Time   `json:"lastUsedAt" required:"true" nullable:"true"`
 }
 
 // SourceMapIndex finds the map of a stack frame's file among one release's
@@ -205,13 +218,14 @@ func (settings *SourceMapSettings) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func NewStorableSourceMap(orgID valuer.UUID, applicationID valuer.UUID, release string, path string, debugID string, size int64, createdBy string, now time.Time) *StorableSourceMap {
+func NewStorableSourceMap(orgID valuer.UUID, applicationID valuer.UUID, kind ArtifactKind, release string, path string, debugID string, size int64, createdBy string, now time.Time) *StorableSourceMap {
 	now = now.UTC()
 	return &StorableSourceMap{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		OrgID:         orgID,
 		ApplicationID: applicationID,
+		Kind:          kind,
 		Release:       release,
 		Path:          path,
 		DebugID:       debugID,
@@ -240,18 +254,26 @@ func NewSourceMapPath(raw string) (string, error) {
 }
 
 func (file *StorableSourceMap) GeneratedPath() string {
+	if file.Kind == ArtifactKindR8Mapping {
+		return ""
+	}
 	return strings.TrimSuffix(file.Path, sourceMapExtension)
 }
 
 // StorageKey names the file's content in the storage; it never holds user
 // input.
 func (file *StorableSourceMap) StorageKey() string {
-	return file.OrgID.StringValue() + "/" + file.ApplicationID.StringValue() + "/" + file.ID.StringValue() + sourceMapExtension
+	extension := sourceMapExtension
+	if file.Kind == ArtifactKindR8Mapping {
+		extension = ".txt"
+	}
+	return file.OrgID.StringValue() + "/" + file.ApplicationID.StringValue() + "/" + file.ID.StringValue() + extension
 }
 
 func NewSourceMapFile(file *StorableSourceMap) *SourceMapFile {
 	return &SourceMapFile{
 		ID:            file.ID,
+		Kind:          file.Kind,
 		Path:          file.Path,
 		GeneratedPath: file.GeneratedPath(),
 		DebugID:       file.DebugID,

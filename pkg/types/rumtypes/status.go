@@ -10,12 +10,13 @@ import (
 const StatusWindow = 5 * time.Minute
 
 var (
-	RejectionReasonBadKey           = RejectionReason{valuer.NewString("bad_key")}
-	RejectionReasonUnknownKey       = RejectionReason{valuer.NewString("unknown_key")}
-	RejectionReasonOriginNotAllowed = RejectionReason{valuer.NewString("origin_not_allowed")}
-	RejectionReasonRateLimited      = RejectionReason{valuer.NewString("rate_limited")}
-	RejectionReasonTooLarge         = RejectionReason{valuer.NewString("too_large")}
-	RejectionReasonInvalidPayload   = RejectionReason{valuer.NewString("invalid_payload")}
+	RejectionReasonBadKey            = RejectionReason{valuer.NewString("bad_key")}
+	RejectionReasonUnknownKey        = RejectionReason{valuer.NewString("unknown_key")}
+	RejectionReasonOriginNotAllowed  = RejectionReason{valuer.NewString("origin_not_allowed")}
+	RejectionReasonPackageNotAllowed = RejectionReason{valuer.NewString("package_not_allowed")}
+	RejectionReasonRateLimited       = RejectionReason{valuer.NewString("rate_limited")}
+	RejectionReasonTooLarge          = RejectionReason{valuer.NewString("too_large")}
+	RejectionReasonInvalidPayload    = RejectionReason{valuer.NewString("invalid_payload")}
 )
 
 type RejectionReason struct{ valuer.String }
@@ -51,7 +52,7 @@ type SeenSDK struct {
 type IngestRejection struct {
 	Reason     RejectionReason `json:"reason" required:"true"`
 	Count      int64           `json:"count" required:"true"`
-	LastOrigin string          `json:"lastOrigin" required:"true" description:"Origin header of the last refused request, empty when absent."`
+	LastOrigin string          `json:"lastOrigin" required:"true" description:"Origin header of the last refused request, or its app.package.name when refused for it; empty when absent."`
 	LastSeenAt time.Time       `json:"lastSeenAt" required:"true"`
 }
 
@@ -66,5 +67,5 @@ type IngestBatch struct {
 }
 
 func (RejectionReason) Enum() []any {
-	return []any{RejectionReasonBadKey, RejectionReasonUnknownKey, RejectionReasonOriginNotAllowed, RejectionReasonRateLimited, RejectionReasonTooLarge, RejectionReasonInvalidPayload}
+	return []any{RejectionReasonBadKey, RejectionReasonUnknownKey, RejectionReasonOriginNotAllowed, RejectionReasonPackageNotAllowed, RejectionReasonRateLimited, RejectionReasonTooLarge, RejectionReasonInvalidPayload}
 }

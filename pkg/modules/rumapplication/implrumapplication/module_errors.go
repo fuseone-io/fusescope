@@ -20,6 +20,14 @@ type errorFingerprints struct {
 	keys      map[string][]uint64
 	first     map[string]*errorKeyRow
 	resources map[string]*resourceInfo
+	jvm       map[string]*jvmErrorGroup
+}
+
+// jvmErrorGroup is what a JVM group shows from its keys' retraced traces.
+type jvmErrorGroup struct {
+	exceptionType string
+	topFrame      *rumtypes.StackFrame
+	retraced      bool
 }
 
 func (module *module) ListErrorGroups(ctx context.Context, orgID valuer.UUID, id valuer.UUID, params *rumtypes.ListErrorGroupsParams) (*rumtypes.GettableErrorGroups, error) {
@@ -32,7 +40,7 @@ func (module *module) ListErrorGroups(ctx context.Context, orgID valuer.UUID, id
 		return nil, err
 	}
 
-	fingerprints, err := module.errorFingerprints(ctx, scope)
+	fingerprints, err := module.errorFingerprints(ctx, id, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +73,7 @@ func (module *module) GetErrorGroup(ctx context.Context, orgID valuer.UUID, id v
 		return nil, err
 	}
 
-	fingerprints, err := module.errorFingerprints(ctx, scope)
+	fingerprints, err := module.errorFingerprints(ctx, id, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +87,11 @@ func (module *module) GetErrorGroup(ctx context.Context, orgID valuer.UUID, id v
 
 	gettable := &rumtypes.GettableErrorGroup{ErrorGroup: *groups[0]}
 	keys := fingerprints.keys[fingerprint]
-	if err := module.addErrorEvents(ctx, id, scope, keys, fingerprints.resources, params.EventID, gettable); err != nil {
+	application, err := module.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := module.addErrorEvents(ctx, application, scope, keys, fingerprints.resources, params.EventID, gettable); err != nil {
 		return nil, err
 	}
 	if err := module.addAffectedSessions(ctx, scope, keys, fingerprints.resources, gettable); err != nil {
@@ -90,7 +102,7 @@ func (module *module) GetErrorGroup(ctx context.Context, orgID valuer.UUID, id v
 
 // errorFingerprints reads the keys of the history window: it ignores the
 // release filter, so first seen spans releases.
-func (module *module) errorFingerprints(ctx context.Context, scope telemetryScope) (*errorFingerprints, error) {
+func (module *module) errorFingerprints(ctx context.Context, id valuer.UUID, scope telemetryScope) (*errorFingerprints, error) {
 	history := scope
 	history.start, history.release = scope.end.Add(-rumtypes.ErrorHistoryWindow), ""
 
@@ -103,9 +115,15 @@ func (module *module) errorFingerprints(ctx context.Context, scope telemetryScop
 		return nil, err
 	}
 
-	fingerprints := &errorFingerprints{keys: map[string][]uint64{}, first: map[string]*errorKeyRow{}, resources: resources}
+	fingerprints := &errorFingerprints{keys: map[string][]uint64{}, first: map[string]*errorKeyRow{}, resources: resources, jvm: map[string]*jvmErrorGroup{}}
 	for _, row := range rows {
 		fingerprint := rumtypes.NewErrorFingerprint(row.exceptionType, row.normalizedMessage, row.frameLine)
+		if isJVM(scope) {
+			fingerprint, err = module.jvmFingerprint(ctx, id, row, fingerprints.jvm)
+			if err != nil {
+				return nil, err
+			}
+		}
 		if _, ok := fingerprints.keys[fingerprint]; !ok {
 			fingerprints.order = append(fingerprints.order, fingerprint)
 		}
@@ -115,6 +133,26 @@ func (module *module) errorFingerprints(ctx context.Context, scope telemetryScop
 		}
 	}
 	return fingerprints, nil
+}
+
+// jvmFingerprint groups a JVM key by its retraced trace, keeping the first
+// retraced trace's type and top frame for the group.
+func (module *module) jvmFingerprint(ctx context.Context, id valuer.UUID, row *errorKeyRow, groups map[string]*jvmErrorGroup) (string, error) {
+	retrace, err := module.symbolicator.Retrace(ctx, id, row.release, rumtypes.ParseJVMStackTrace(row.frameLine, row.exceptionType, row.normalizedMessage))
+	if err != nil {
+		return "", err
+	}
+	fingerprint := rumtypes.NewJVMErrorFingerprint(retrace.Trace)
+	if group, ok := groups[fingerprint]; ok && (group.retraced || !retrace.Retraced) {
+		return fingerprint, nil
+	}
+
+	group := &jvmErrorGroup{exceptionType: retrace.Trace.Exceptions[0].Type, retraced: retrace.Retraced}
+	if frames := rumtypes.JVMTopInAppFrames(retrace.Trace, 1); len(frames) > 0 {
+		group.topFrame = &frames[0]
+	}
+	groups[fingerprint] = group
+	return fingerprint, nil
 }
 
 // errorGroups aggregates the range's events of the given fingerprints, by
@@ -164,8 +202,11 @@ func newErrorGroup(fingerprint string, fingerprints *errorFingerprints, row *err
 	first := fingerprints.first[fingerprint]
 	firstRelease := resourceOf(fingerprints.resources, first.firstFingerprint).release
 
+	exceptionType := first.exceptionType
 	var topFrame *rumtypes.StackFrame
-	if frames := rumtypes.ParseStackFrames(row.frameLine); len(frames) > 0 {
+	if group, ok := fingerprints.jvm[fingerprint]; ok {
+		exceptionType, topFrame = group.exceptionType, group.topFrame
+	} else if frames := rumtypes.ParseStackFrames(row.frameLine); len(frames) > 0 {
 		topFrame = &frames[0]
 	}
 
@@ -177,7 +218,7 @@ func newErrorGroup(fingerprint string, fingerprints *errorFingerprints, row *err
 
 	return &rumtypes.ErrorGroup{
 		Fingerprint:       fingerprint,
-		Type:              first.exceptionType,
+		Type:              exceptionType,
 		Message:           row.message,
 		NormalizedMessage: first.normalizedMessage,
 		TopFrame:          topFrame,
@@ -195,7 +236,7 @@ func newErrorGroup(fingerprint string, fingerprints *errorFingerprints, row *err
 	}
 }
 
-func (module *module) addErrorEvents(ctx context.Context, applicationID valuer.UUID, scope telemetryScope, keys []uint64, resources map[string]*resourceInfo, eventID string, gettable *rumtypes.GettableErrorGroup) error {
+func (module *module) addErrorEvents(ctx context.Context, application *rumtypes.Application, scope telemetryScope, keys []uint64, resources map[string]*resourceInfo, eventID string, gettable *rumtypes.GettableErrorGroup) error {
 	rows, err := module.telemetry.ErrorEvents(ctx, scope, keys)
 	if err != nil {
 		return err
@@ -204,15 +245,9 @@ func (module *module) addErrorEvents(ctx context.Context, applicationID valuer.U
 	gettable.LatestEvents = make([]*rumtypes.ErrorEvent, 0, len(rows))
 	var selected *rumtypes.ErrorEvent
 	for _, row := range rows {
-		info := resourceOf(resources, row.fingerprint)
-		symbolication, err := module.symbolicator.Symbolicate(ctx, applicationID, info.release, rumtypes.ParseStackFrames(row.stacktrace))
+		event, err := module.newErrorEvent(ctx, application, resourceOf(resources, row.fingerprint), row)
 		if err != nil {
 			return err
-		}
-		event := &rumtypes.ErrorEvent{
-			ID: row.id, Timestamp: time.Unix(0, int64(row.timestamp)).UTC(), SessionID: row.sessionID, Route: row.route, Release: info.release, Client: info.client,
-			Type: row.errorType, Message: row.message, Source: row.source, Stacktrace: row.stacktrace,
-			Frames: symbolication.Frames, Symbolicated: symbolication.Symbolicated, MissingSourceMap: symbolication.MissingSourceMap,
 		}
 		gettable.LatestEvents = append(gettable.LatestEvents, event)
 		if selected == nil || event.ID == eventID {
@@ -229,6 +264,33 @@ func (module *module) addErrorEvents(ctx context.Context, applicationID valuer.U
 		return nil
 	}
 	return module.addBreadcrumbs(ctx, scope, selected, gettable)
+}
+
+// newErrorEvent symbolicates an event's stack trace: through the release's
+// source maps on the web, its R8 mapping on Android.
+func (module *module) newErrorEvent(ctx context.Context, application *rumtypes.Application, info *resourceInfo, row *errorEventRow) (*rumtypes.ErrorEvent, error) {
+	event := &rumtypes.ErrorEvent{
+		ID: row.id, Timestamp: time.Unix(0, int64(row.timestamp)).UTC(), SessionID: row.sessionID, Route: row.route, Release: info.release, Client: info.client,
+		Type: row.errorType, Message: row.message, Source: row.source, Stacktrace: row.stacktrace, Causes: []*rumtypes.ErrorCause{},
+	}
+
+	if application.Platform == rumtypes.PlatformAndroid {
+		retrace, err := module.symbolicator.Retrace(ctx, application.ID, info.release, rumtypes.ParseJVMStackTrace(row.stacktrace, row.errorType, row.message))
+		if err != nil {
+			return nil, err
+		}
+		thrown := retrace.Trace.Exceptions[0]
+		event.Type, event.Frames, event.Causes = thrown.Type, thrown.Frames, retrace.Trace.Exceptions[1:]
+		event.Symbolicated, event.MissingSourceMap = retrace.Retraced, retrace.MissingSourceMap
+		return event, nil
+	}
+
+	symbolication, err := module.symbolicator.Symbolicate(ctx, application.ID, info.release, rumtypes.ParseStackFrames(row.stacktrace))
+	if err != nil {
+		return nil, err
+	}
+	event.Frames, event.Symbolicated, event.MissingSourceMap = symbolication.Frames, symbolication.Symbolicated, symbolication.MissingSourceMap
+	return event, nil
 }
 
 func (module *module) addBreadcrumbs(ctx context.Context, scope telemetryScope, selected *rumtypes.ErrorEvent, gettable *rumtypes.GettableErrorGroup) error {

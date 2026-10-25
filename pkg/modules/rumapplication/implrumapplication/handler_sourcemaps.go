@@ -1,12 +1,14 @@
 package implrumapplication
 
 import (
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"io"
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -58,6 +60,27 @@ func (h *handler) UploadSourceMaps(rw http.ResponseWriter, req *http.Request) {
 			release = parts.release
 		}
 		uploaded, err := h.module.UploadSourceMaps(ctx, orgID, id, release, claims.Email, parts)
+		return http.StatusCreated, uploaded, err
+	})
+}
+
+// UploadR8Mapping takes the mapping as the raw body, gzip allowed, or as the
+// file part of a multipart body with an optional release field.
+func (h *handler) UploadR8Mapping(rw http.ResponseWriter, req *http.Request) {
+	h.withOrgTimeout(rw, req, uploadTimeout, func(ctx context.Context, orgID valuer.UUID, claims *authtypes.Claims) (int, any, error) {
+		id, err := valuer.NewUUID(mux.Vars(req)["id"])
+		if err != nil {
+			return 0, nil, err
+		}
+
+		release := req.URL.Query().Get(partRelease)
+		content, err := r8MappingContent(req, &release)
+		if err != nil {
+			return 0, nil, err
+		}
+		defer func() { _ = content.Close() }()
+
+		uploaded, err := h.module.UploadR8Mapping(ctx, orgID, id, release, claims.Email, content)
 		return http.StatusCreated, uploaded, err
 	})
 }
@@ -143,6 +166,42 @@ func (parts *multipartSourceMaps) readField(name string, part *multipart.Part) e
 		parts.debugIDs[path] = debugID
 	}
 	return nil
+}
+
+// r8MappingContent finds the mapping in the body. A multipart release field
+// fills release when the query left it empty.
+func r8MappingContent(req *http.Request, release *string) (io.ReadCloser, error) {
+	mediaType, _, _ := mime.ParseMediaType(req.Header.Get("Content-Type"))
+	if mediaType == "multipart/form-data" {
+		reader, err := req.MultipartReader()
+		if err != nil {
+			return nil, errors.WrapInvalidInputf(err, rumtypes.ErrCodeSourceMapInvalidInput, "malformed multipart body")
+		}
+		parts := &multipartSourceMaps{reader: reader, debugIDs: map[string]string{}}
+		part, err := parts.Next()
+		if errors.Is(err, io.EOF) {
+			return nil, errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "the multipart body has no file part with the mapping")
+		}
+		if err != nil {
+			return nil, err
+		}
+		if *release == "" {
+			*release = parts.release
+		}
+		return io.NopCloser(part.Content), nil
+	}
+
+	switch strings.ToLower(strings.TrimSpace(req.Header.Get("Content-Encoding"))) {
+	case "", "identity":
+		return req.Body, nil
+	case "gzip":
+		reader, err := gzip.NewReader(req.Body)
+		if err != nil {
+			return nil, errors.WrapInvalidInputf(err, rumtypes.ErrCodeSourceMapInvalidInput, "invalid gzip body")
+		}
+		return reader, nil
+	}
+	return nil, errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "unsupported content encoding %q, use gzip or none", req.Header.Get("Content-Encoding"))
 }
 
 // rawFilename keeps the directories that multipart.Part.FileName strips.

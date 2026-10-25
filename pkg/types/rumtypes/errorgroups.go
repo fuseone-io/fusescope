@@ -17,11 +17,11 @@ type GettableErrorGroups struct {
 // release look back ErrorHistoryWindow, or the data retention if shorter.
 type ErrorGroup struct {
 	Fingerprint       string      `json:"fingerprint" required:"true"`
-	Type              string      `json:"type" required:"true"`
+	Type              string      `json:"type" required:"true" description:"Deobfuscated for Android when the release's R8 mapping resolves it."`
 	Message           string      `json:"message" required:"true" description:"Message of the latest event."`
 	NormalizedMessage string      `json:"normalizedMessage" required:"true"`
-	TopFrame          *StackFrame `json:"topFrame" required:"true" nullable:"true"`
-	Source            string      `json:"source" required:"true"`
+	TopFrame          *StackFrame `json:"topFrame" required:"true" nullable:"true" description:"For Android, the top in-app frame, retraced."`
+	Source            string      `json:"source" required:"true" description:"fusescope.rum.error.source of the latest event; crash or anr on Android."`
 	Route             string      `json:"route" required:"true" description:"Route of the latest event."`
 	Events            int64       `json:"events" required:"true"`
 	Sessions          int64       `json:"sessions" required:"true"`
@@ -79,9 +79,10 @@ type ErrorEvent struct {
 	Message          string            `json:"message" required:"true"`
 	Source           string            `json:"source" required:"true"`
 	Stacktrace       string            `json:"stacktrace" required:"true" description:"exception.stacktrace as received."`
-	Frames           []StackFrame      `json:"frames" required:"true"`
-	Symbolicated     bool              `json:"symbolicated" required:"true" description:"Whether frames were mapped through an uploaded source map; frames keep the minified position and carry the original one."`
-	MissingSourceMap *MissingSourceMap `json:"missingSourceMap" required:"true" nullable:"true" description:"Set when the event's release has no uploaded source maps and a frame points at a script file; inline scripts never have one."`
+	Frames           []StackFrame      `json:"frames" required:"true" description:"For a JVM trace, the thrown exception's."`
+	Causes           []*ErrorCause     `json:"causes" required:"true" description:"The causes and suppressed exceptions of a JVM trace, in print order; empty otherwise."`
+	Symbolicated     bool              `json:"symbolicated" required:"true" description:"Whether frames were mapped through an uploaded source map or R8 mapping; frames keep the minified position and carry the original one."`
+	MissingSourceMap *MissingSourceMap `json:"missingSourceMap" required:"true" nullable:"true" description:"Set when the event's release has no uploaded source maps and a frame points at a script file, inline scripts never having one; for Android, when the release has no R8 mapping."`
 }
 
 type AffectedSession struct {

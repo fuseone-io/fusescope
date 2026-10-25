@@ -38,6 +38,32 @@ func TestApplicationAllowsOrigin(t *testing.T) {
 	}
 }
 
+func TestApplicationAllowsPackageName(t *testing.T) {
+	testCases := []struct {
+		name        string
+		allowed     []string
+		packageName string
+		expected    bool
+	}{
+		{name: "Exact_Allowed", allowed: []string{"com.example.shop"}, packageName: "com.example.shop", expected: true},
+		{name: "OtherPackage_Denied", allowed: []string{"com.example.shop"}, packageName: "com.example.shopping", expected: false},
+		{name: "CaseSensitive_Denied", allowed: []string{"com.example.shop"}, packageName: "com.Example.shop", expected: false},
+		{name: "Wildcard_Allowed", allowed: []string{"com.example.*"}, packageName: "com.example.shop.debug", expected: true},
+		{name: "WildcardApex_Denied", allowed: []string{"com.example.*"}, packageName: "com.example", expected: false},
+		{name: "WildcardSuffixTrick_Denied", allowed: []string{"com.example.*"}, packageName: "com.exampleevil.shop", expected: false},
+		{name: "Any_Allowed", allowed: []string{"*"}, packageName: "org.anything", expected: true},
+		{name: "Missing_Denied", allowed: []string{"*"}, packageName: "", expected: false},
+		{name: "None_Denied", allowed: []string{}, packageName: "com.example.shop", expected: false},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			app := &Application{Platform: PlatformAndroid, AllowedPackageNames: testCase.allowed}
+			assert.Equal(t, testCase.expected, app.AllowsPackageName(testCase.packageName))
+		})
+	}
+}
+
 func TestPostableApplicationUnmarshal(t *testing.T) {
 	testCases := []struct {
 		name  string
@@ -77,7 +103,28 @@ func TestPostableApplicationUnmarshal(t *testing.T) {
 				assert.Equal(t, []string{"page"}, postable.PIIPolicy.QueryAllowlist)
 			},
 		},
-		{name: "ReservedPlatform_Rejected", input: `{"name":"app","platform":"android","environment":"production"}`, code: ErrCodeApplicationInvalidInput},
+		{name: "ReservedPlatform_Rejected", input: `{"name":"app","platform":"ios","environment":"production"}`, code: ErrCodeApplicationInvalidInput},
+		{
+			name:  "Android_Accepted",
+			input: `{"name":"shop-android","platform":"android","environment":"production","allowedPackageNames":[" com.example.shop ","com.example.*"]}`,
+			check: func(t *testing.T, postable *PostableApplication) {
+				assert.Equal(t, PlatformAndroid, postable.Platform)
+				assert.Equal(t, []string{"com.example.shop", "com.example.*"}, postable.AllowedPackageNames)
+				assert.Equal(t, []string{}, postable.AllowedOrigins)
+			},
+		},
+		{
+			name:  "WebWithoutPackageNames_Empty",
+			input: `{"name":"shop","platform":"web","environment":"production"}`,
+			check: func(t *testing.T, postable *PostableApplication) {
+				assert.Equal(t, []string{}, postable.AllowedPackageNames)
+			},
+		},
+		{name: "AndroidWithOrigins_Rejected", input: `{"name":"a","platform":"android","environment":"p","allowedOrigins":["https://a.com"]}`, code: ErrCodeApplicationInvalidInput},
+		{name: "WebWithPackageNames_Rejected", input: `{"name":"a","platform":"web","environment":"p","allowedPackageNames":["com.example.shop"]}`, code: ErrCodeApplicationInvalidInput},
+		{name: "SingleSegmentPackageName_Rejected", input: `{"name":"a","platform":"android","environment":"p","allowedPackageNames":["shop"]}`, code: ErrCodeApplicationInvalidInput},
+		{name: "PackageNameDigitSegment_Rejected", input: `{"name":"a","platform":"android","environment":"p","allowedPackageNames":["com.1shop"]}`, code: ErrCodeApplicationInvalidInput},
+		{name: "PackageNameMidWildcard_Rejected", input: `{"name":"a","platform":"android","environment":"p","allowedPackageNames":["com.*.shop"]}`, code: ErrCodeApplicationInvalidInput},
 		{name: "UnknownPlatform_Rejected", input: `{"name":"app","platform":"tv","environment":"production"}`, code: ErrCodeApplicationInvalidInput},
 		{name: "BlankName_Rejected", input: `{"name":"  ","platform":"web","environment":"production"}`, code: ErrCodeApplicationInvalidInput},
 		{name: "SampleRateAboveOne_Rejected", input: `{"name":"a","platform":"web","environment":"p","sampleRate":1.5}`, code: ErrCodeApplicationInvalidInput},
@@ -124,6 +171,60 @@ func TestStorableApplicationRoundTrip(t *testing.T) {
 	assert.Equal(t, 0.5, restored.SampleRate)
 	assert.Equal(t, []string{"page"}, restored.PIIPolicy.QueryAllowlist)
 	assert.True(t, restored.PIIPolicy.DropQuery)
+}
+
+func TestStorableApplicationPackageNames(t *testing.T) {
+	testCases := []struct {
+		name     string
+		data     string
+		expected []string
+	}{
+		{name: "Stored", data: `{"allowedPackageNames":["com.example.shop"]}`, expected: []string{"com.example.shop"}},
+		{name: "BeforePackageNames_Empty", data: `{"sampleRate":1}`, expected: []string{}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			restored, err := NewApplicationFromStorable(&StorableApplication{Data: testCase.data})
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, restored.AllowedPackageNames)
+
+			storable, err := NewStorableApplication(restored)
+			require.NoError(t, err)
+			again, err := NewApplicationFromStorable(storable)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, again.AllowedPackageNames)
+		})
+	}
+}
+
+func TestApplicationUpdatePackageNames(t *testing.T) {
+	testCases := []struct {
+		name     string
+		platform Platform
+		input    string
+		expected []string
+		fails    bool
+	}{
+		{name: "Android_Replaced", platform: PlatformAndroid, input: `{"name":"shop","environment":"production","allowedPackageNames":["com.example.app"]}`, expected: []string{"com.example.app"}},
+		{name: "AndroidOrigins_Rejected", platform: PlatformAndroid, input: `{"name":"shop","environment":"production","allowedOrigins":["https://a.com"]}`, fails: true},
+		{name: "WebPackageNames_Rejected", platform: PlatformWeb, input: `{"name":"shop","environment":"production","allowedPackageNames":["com.example.app"]}`, fails: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			app := &Application{Name: "shop", Platform: testCase.platform, Environment: "production", SourceMaps: NewDefaultSourceMapSettings()}
+			updatable := new(UpdatableApplication)
+			require.NoError(t, json.Unmarshal([]byte(testCase.input), updatable))
+			err := app.Update(updatable)
+			if testCase.fails {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, app.AllowedPackageNames)
+		})
+	}
 }
 
 func TestStorableApplicationSourceMaps(t *testing.T) {
