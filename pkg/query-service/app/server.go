@@ -50,8 +50,17 @@ func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) 
 		return nil, err
 	}
 
-	archiveBackstop := implarchive.NewBackstopService(signoz.Instrumentation.ToProviderSettings(), reader, implarchive.NewStore(signoz.SQLStore), config.Archive)
+	archiveStore := implarchive.NewStore(signoz.SQLStore)
+	archiveBackstop := implarchive.NewBackstopService(signoz.Instrumentation.ToProviderSettings(), reader, archiveStore, config.Archive)
 	if err := signoz.Registry.Add(context.Background(), factory.NewNamedService(factory.MustNewName("archivebackstop"), archiveBackstop)); err != nil {
+		return nil, err
+	}
+
+	archiveExport, err := implarchive.NewExportService(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore, config.TelemetryStore.Clickhouse.DSN, archiveStore, config.Archive)
+	if err != nil {
+		return nil, err
+	}
+	if err := signoz.Registry.Add(context.Background(), factory.NewNamedService(factory.MustNewName("archiveexport"), archiveExport)); err != nil {
 		return nil, err
 	}
 

@@ -614,6 +614,9 @@ retention:
 
 ##################### Archive #####################
 # Long-term archive of telemetry to object storage, as Parquet (docs/adr/0002).
+# The backend connects to every replica of the telemetry store cluster directly,
+# at the host and port in system.clusters, with the DSN's credentials; the
+# ClickHouse user needs GRANT NAMED COLLECTION ON <named_collection>.
 archive:
   # How often the export cycle runs.
   interval: 1h
