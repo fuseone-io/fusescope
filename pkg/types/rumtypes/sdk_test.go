@@ -21,6 +21,8 @@ func TestSDKSupportOf(t *testing.T) {
 		{name: "DistroPrerelease_Supported", sdkName: SDKBrowserName, version: "0.2.0-beta.1", expected: SDKSupportSupported},
 		{name: "AndroidDistroInRange_Supported", sdkName: SDKAndroidName, version: "0.3.0", expected: SDKSupportSupported},
 		{name: "AndroidDistroAboveRange_Outdated", sdkName: SDKAndroidName, version: "1.0.0", expected: SDKSupportOutdated},
+		{name: "AndroidMavenCoordinates_Supported", sdkName: "io.fuseone.fusescope:android", version: "0.3.0", expected: SDKSupportSupported},
+		{name: "AndroidOldCoordinates_Other", sdkName: "io.fusescope:android", version: "0.3.0", expected: SDKSupportOther},
 		{name: "PlainOpenTelemetry_Other", sdkName: "opentelemetry", version: "2.12.0", expected: SDKSupportOther},
 		{name: "Nothing_Unknown", sdkName: "", version: "", expected: SDKSupportUnknown},
 	}

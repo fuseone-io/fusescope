@@ -52,7 +52,7 @@ We publish distributions, not new SDKs. Each one pins a tested set of upstream O
 |---|---|---|
 | `@fusescope/browser` | `@opentelemetry/sdk-trace`, `sdk-logs`, OTLP/HTTP exporters, `@opentelemetry/browser-sdk` and `browser-instrumentation` where they cover a module | cross-tab sessions with `session.previous_id`, session sampling, SPA view spans with route templates, PII scrubbing (attributes and span names), standard attributes |
 | `@fusescope/browser-react` (later others) | `@fusescope/browser` | router integration, error boundary |
-| `io.fusescope:android` | `opentelemetry-android` | standard attributes, defaults, symbol upload plugin |
+| `io.fuseone.fusescope:android` | `opentelemetry-android` | standard attributes, defaults, symbol upload plugin |
 | `FuseScopeKit` (SwiftPM) | `opentelemetry-swift` | session, crash, app start, standard attributes |
 
 Rules:
@@ -164,7 +164,7 @@ Each phase ships behind a feature flag and ends with docs and an e2e test.
 | **0 · Spike** (done 2026-10-21) | `@fusescope/browser` prototype on HotROD's frontend; measure bundle size and query cost of the sessions list on traces/logs | bundle ≤ 35 KB gzip (34.5 KB); sessions list p95 < 2 s on 7 days of demo data (1.04 s, 0.45 s promoted); this ADR amended |
 | **1 · Web MVP** | browser distro 0.x on npm, RUM gateway, applications and keys, Setup and Applications screens, browser→backend trace link | a sample React app is visible end to end, including the trace link |
 | **2 · Web complete** | Views, Errors and Sessions screens; source maps; RUM alerts (vitals and error-rate thresholds through existing alert rules); React router integration; CDN and backend-served bundle with SRI | a beginner can instrument an app from the docs alone |
-| **3 · Android** | `io.fusescope:android` on Maven Central, crashes, ANRs, app start, R8 mappings | crash grouped and symbolicated in the Errors screen |
+| **3 · Android** | `io.fuseone.fusescope:android` on Maven Central, crashes, ANRs, app start, R8 mappings | crash grouped and symbolicated in the Errors screen |
 | **4 · iOS** | SwiftPM package, crashes, app start, dSYMs | same as Android |
 | **5 · Cross-platform** | React Native, Flutter, as demand appears | — |
 | **Later** | session replay, if accepted; rollup MVs, when an application nears 35 M spans per 7 days | — |
@@ -180,7 +180,7 @@ Settled 2026-10-25, while building phase 3.
 
 | Signal | Attributes |
 |---|---|
-| Resource | `service.name`, `service.version` (the app's `versionName`, the release mappings are keyed by), `deployment.environment.name`, `app.package.name` (the `applicationId`), `telemetry.distro.name` = `io.fusescope:android` with `telemetry.distro.version`; the gateway stamps `fusescope.rum.platform` = `android` |
+| Resource | `service.name`, `service.version` (the app's `versionName`, the release mappings are keyed by), `deployment.environment.name`, `app.package.name` (the `applicationId`), `telemetry.distro.name` = `io.fuseone.fusescope:android` with `telemetry.distro.version`; the gateway stamps `fusescope.rum.platform` = `android` |
 | Crash | log record, `event.name` = `exception`, `exception.type` (class name), `exception.message`, `exception.stacktrace` (`printStackTrace` output), `fusescope.rum.error.source` = `crash` |
 | ANR | the same with `exception.type` = `ANR`, `fusescope.rum.error.source` = `anr` and the main thread's stack |
 | Screen | `app.screen.name` (upstream); the gateway copies it into `fusescope.rum.view.route` when unset |

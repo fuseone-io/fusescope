@@ -12,7 +12,7 @@ import (
 // excluded. The name is the distribution's telemetry.distro.name.
 const (
 	SDKBrowserName         = "@fusescope/browser"
-	SDKAndroidName         = "io.fusescope:android"
+	SDKAndroidName         = "io.fuseone.fusescope:android"
 	SupportedSDKMinVersion = "0.1.0"
 	SupportedSDKMaxVersion = "1.0.0"
 )
