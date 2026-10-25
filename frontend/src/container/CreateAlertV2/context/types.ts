@@ -180,7 +180,7 @@ export interface AdvancedOptionsState {
 		custom: {
 			repeatEvery: string;
 			startAt: string;
-			occurence: string[];
+			occurrence: string[];
 			timezone: string;
 		};
 		rrule: {
@@ -220,7 +220,7 @@ export type AdvancedOptionsAction =
 					repeatEvery: string;
 					startAt: string;
 					timezone: string;
-					occurence: string[];
+					occurrence: string[];
 				};
 				rrule: { date: Dayjs | null; startAt: string; rrule: string };
 			};
