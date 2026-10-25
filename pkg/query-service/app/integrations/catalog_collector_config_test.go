@@ -36,8 +36,8 @@ type collectorConfigSnippet struct {
 	} `yaml:"service"`
 }
 
-func TestBuiltinIntegrationsCollectorConfigs(t *testing.T) {
-	repo := BuiltInIntegrations{}
+func TestEmbeddedIntegrationsCollectorConfigs(t *testing.T) {
+	repo := embeddedIntegrations(t)
 	builtins, apiErr := repo.list(context.Background())
 	require.Nil(t, apiErr)
 
@@ -89,8 +89,8 @@ func TestBuiltinIntegrationsCollectorConfigs(t *testing.T) {
 	assert.Positive(t, snippets)
 }
 
-func TestBuiltinIntegrationsClickHouseQueryLogsNamesItsCollector(t *testing.T) {
-	repo := BuiltInIntegrations{}
+func TestEmbeddedIntegrationsClickHouseQueryLogsNamesItsCollector(t *testing.T) {
+	repo := embeddedIntegrations(t)
 	integrations, apiErr := repo.get(context.Background(), []string{"builtin-clickhouse"})
 	require.Nil(t, apiErr)
 	clickhouse, ok := integrations["builtin-clickhouse"]
