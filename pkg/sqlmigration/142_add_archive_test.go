@@ -32,7 +32,7 @@ func TestAddArchive(t *testing.T) {
 
 	var tables []string
 	require.NoError(t, store.BunDB().NewRaw("SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'archive_%' ORDER BY name").Scan(ctx, &tables))
-	assert.Equal(t, []string{"archive_attempt", "archive_cycle", "archive_inventory", "archive_lease", "archive_loss", "archive_object", "archive_part", "archive_signal"}, tables)
+	assert.Equal(t, []string{"archive_attempt", "archive_cycle", "archive_inventory", "archive_lease", "archive_loss", "archive_object", "archive_part", "archive_shard", "archive_signal"}, tables)
 
 	_, err = store.BunDB().ExecContext(ctx, "INSERT INTO archive_lease (id, signal, holder, epoch, expires_at, created_at, updated_at) VALUES ('a', 'logs', 'h', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)")
 	require.NoError(t, err)
@@ -60,4 +60,12 @@ func TestAddArchive(t *testing.T) {
 	require.NoError(t, err)
 	_, err = store.BunDB().ExecContext(ctx, partInsert, "i2")
 	assert.Error(t, err, "one inventory row per part")
+
+	shardInsert := "INSERT INTO archive_shard (id, table_name, shard, replica_path, created_at, updated_at) VALUES (?, 'logs_v2', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+	_, err = store.BunDB().ExecContext(ctx, shardInsert, "s1", 1, "/clickhouse/tables/u/01")
+	require.NoError(t, err)
+	_, err = store.BunDB().ExecContext(ctx, shardInsert, "s2", 1, "/clickhouse/tables/u/02")
+	assert.Error(t, err, "one identity per shard number")
+	_, err = store.BunDB().ExecContext(ctx, shardInsert, "s3", 2, "/clickhouse/tables/u/01")
+	assert.Error(t, err, "one shard number per identity")
 }
