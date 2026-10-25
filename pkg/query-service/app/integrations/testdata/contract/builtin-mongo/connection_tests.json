@@ -1,0 +1,38 @@
+{
+  "logs": {
+    "attribute_key": "source",
+    "attribute_value": "mongodb"
+  },
+  "metrics": [
+    "mongodb_cache_operations",
+    "mongodb_collection_count",
+    "mongodb_data_size",
+    "mongodb_connection_count",
+    "mongodb_extent_count",
+    "mongodb_global_lock_time",
+    "mongodb_index_count",
+    "mongodb_index_size",
+    "mongodb_memory_usage",
+    "mongodb_object_count",
+    "mongodb_operation_latency_time",
+    "mongodb_operation_count",
+    "mongodb_operation_repl_count",
+    "mongodb_storage_size",
+    "mongodb_database_count",
+    "mongodb_index_access_count",
+    "mongodb_document_operation_count",
+    "mongodb_network_io_receive",
+    "mongodb_network_io_transmit",
+    "mongodb_network_request_count",
+    "mongodb_operation_time",
+    "mongodb_session_count",
+    "mongodb_cursor_count",
+    "mongodb_cursor_timeout_count",
+    "mongodb_lock_acquire_count",
+    "mongodb_lock_acquire_wait_count",
+    "mongodb_lock_acquire_time",
+    "mongodb_lock_deadlock_count",
+    "mongodb_health",
+    "mongodb_uptime"
+  ]
+}

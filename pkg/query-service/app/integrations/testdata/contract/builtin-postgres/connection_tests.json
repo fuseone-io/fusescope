@@ -1,0 +1,35 @@
+{
+  "logs": {
+    "attribute_key": "source",
+    "attribute_value": "postgres"
+  },
+  "metrics": [
+    "postgresql_backends",
+    "postgresql_bgwriter_buffers_allocated",
+    "postgresql_bgwriter_buffers_writes",
+    "postgresql_bgwriter_checkpoint_count",
+    "postgresql_bgwriter_duration",
+    "postgresql_bgwriter_maxwritten",
+    "postgresql_blocks_read",
+    "postgresql_commits",
+    "postgresql_connection_max",
+    "postgresql_database_count",
+    "postgresql_database_locks",
+    "postgresql_db_size",
+    "postgresql_deadlocks",
+    "postgresql_index_scans",
+    "postgresql_index_size",
+    "postgresql_operations",
+    "postgresql_replication_data_delay",
+    "postgresql_rollbacks",
+    "postgresql_rows",
+    "postgresql_sequential_scans",
+    "postgresql_table_count",
+    "postgresql_table_size",
+    "postgresql_table_vacuum_count",
+    "postgresql_temp_files",
+    "postgresql_wal_age",
+    "postgresql_wal_delay",
+    "postgresql_wal_lag"
+  ]
+}

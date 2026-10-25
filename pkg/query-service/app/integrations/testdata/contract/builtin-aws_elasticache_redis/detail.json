@@ -1,0 +1,1928 @@
+{
+  "id": "builtin-aws_elasticache_redis",
+  "title": "AWS ElastiCache (redis)",
+  "description": "Monitor AWS ElastiCache with metrics and logs",
+  "author": {
+    "name": "FuseScope",
+    "email": "",
+    "homepage": "https://github.com/fuseone-io/fusescope"
+  },
+  "icon": "data:image/svg+xml;base64,CjxzdmcgaGVpZ2h0PSIzMDgiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIiB2aWV3Qm94PSIwIDAgMjU2IDMwOCIgd2lkdGg9IjI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtLjgyMTcgMjA3LjYwNDIgMTI3LjE3OCA5OS41OTYgMTI3LjE3OS05OS41OTYtMTI3LjE4My0xNS44MTJ6IiBmaWxsPSIjOTliY2UzIi8+PHBhdGggZD0ibTEyNy45OTk4LjAwMDMtMTI4IDk5LjU5MSAxMjcuMTc1IDE1LjgxMyAxMjguODI1LTE1LjgwOHoiIGZpbGw9IiMxOTQ4NmYiLz48ZyBmaWxsPSIjMWY1Yjk5Ij48cGF0aCBkPSJtMTI3Ljk5OTguMDAwMy0xMjggNjMuNTkxdjM2LjAwNWwxMjgtMzguMTU1eiIvPjxwYXRoIGQ9Im0wIDI0My42MDg3IDEyOCA2My41OTF2LTYxLjQ0MmwtMTI4LTM4LjE0OXoiLz48cGF0aCBkPSJtMTI4IDIwMC4wNTM3LTU1LjQ2Ny04LjEyNXYtNzYuMDM3bDU1LjQ2Ny04IDEuMzA5IDIuNTMyLS4xMzggODcuMDk5eiIvPjwvZz48cGF0aCBkPSJtMTI3Ljk5OTguMDAwM3Y2MS40NDFsMTI4IDM4LjE1NXYtMzYuMDA1eiIgZmlsbD0iIzUyOTRjZiIvPjxwYXRoIGQ9Im0xMjcuOTk5OCAyNDUuNzU3OXY2MS40NDJsMTI4LTYzLjU5MXYtMzZ6IiBmaWxsPSIjNTI5NGNmIi8+PHBhdGggZD0ibTEyOCAyMDAuMDUzNyA1NS40NjctOC4xMjV2LTc2LjAzN2wtNTUuNDY3LTh6IiBmaWxsPSIjNTI5NGNmIi8+PC9zdmc+",
+  "categories": [
+    "Database"
+  ],
+  "overview": "### Monitor AWS ElastiCache (redis) with FuseScope\n\nCollect key AWS ElastiCache (redis) metrics and view them with an out of the box dashboard.  \n\nCollect and parse AWS ElastiCache (redis) logs to populate timestamp, severity, and other log attributes for better querying and aggregation.\n",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "## Before You Begin  \n\nTo configure metrics and logs collection for an AWS ElastiCache server, you need the following.\n\n\n- **Ensure Credentials and permissions are set correctly**  \n The components used for this integration relies on AWS SDKs, which offer a variety of ways to provide credentials, including the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.  \n The following IAM permissions are required:\n    - `cloudwatch:ListMetrics`\n    - `cloudwatch:GetMetricStatistics`\n    - `cloudwatch:GetMetricData`\n    - `tag:GetResources` (if aws_tag_select feature is used)\n    - `logs:DescribeLogGroups`\n    - `logs:FilterLogEvents`\n\n- **Ensure Java Runtime Environment (JRE), version 11 or newer**  \n The CloudWatch Exporter used to collect the metrics requires a Java runtime environment version 11 or newer. This is not required if you can run the docker container.\n\n- **Ensure that an OTEL collector is running in your deployment environment**  \n If needed, please [install an OTEL Collector](https://opentelemetry.io/docs/collector/installation/) If already installed, ensure that the collector version is v0.88.0 or newer. Also, ensure that you can provide config files to the collector and that you can set environment variables and command line flags used for running it.\n\n\n- **Ensure that the OTEL collector can access the Redis server**\n To collect Redis native metrics, the collector must be able to access the Redis server as a client. This step is optional.\n"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "### Collect ElastiCache Metrics\n\nThe ElastiCache (redis) metrics collection is a two-step process.\n\n#### Set up the Prometheus CloudWatch exporter\n\nThe [CloudWatch Exporter](https://github.com/prometheus/cloudwatch_exporter) is A Prometheus exporter for collecting CloudWatch metrics. This section describes the steps for downloading and configuring the Prometheus CloudWatch exporter.\n\n1. Download the Prometheus CloudWatch exporter JAR file, and run the following command:\n\n```sh\ncurl -sLSO https://github.com/prometheus/cloudwatch_exporter/releases/download/v0.15.5/cloudwatch_exporter-0.15.5-jar-with-dependencies.jar\n```\n\n2. Configure the Prometheus exporter\n\nSave the following config for collecting AWS ElastiCache metrics in a file named `aws-elasticache-metrics.yaml` and set the `region` with the relevant value.\n\n```yaml\n---\nregion: us-east-1\nmetrics:\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: CPUUtilization\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: FreeableMemory\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: NetworkBytesIn\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Sum, Average]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: NetworkBytesOut\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Sum, Average]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: NetworkPacketsIn\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Sum, Average]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: NetworkPacketsOut\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Sum, Average]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: SwapUsage\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: BytesUsedForCache\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Sum, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: CacheHits\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Sum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: CacheMisses\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Sum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: CacheHitRate\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: CurrConnections\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: CurrItems\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: CurrVolatileItems\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: ReplicationLag\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: SaveInProgress\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: TrafficManagementActive\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: DatabaseCapacityUsagePercentage\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: DatabaseMemoryUsagePercentage\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: EngineCPUUtilization\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: Evictions\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Sum, Average]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: GlobalDatastoreReplicationLag\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum]\n\n - aws_namespace: AWS/ElastiCache\n   aws_metric_name: MemoryFragmentationRatio\n   aws_dimensions: [CacheClusterId, CacheNodeId]\n   aws_statistics: [Average, Maximum, Sum]\n```\n\n3. Run the following command\n\n```sh\njava -jar cloudwatch_exporter-0.15.5-jar-with-dependencies.jar 9106 aws-elasticache-metrics.yaml\n```\n\n#### Set up the OTEL Collector\n\nSave the following config for collecting Redis native metrics in a file named `redis-metrics-collection-config.yaml`\n\n```yaml\nreceivers:\n  redis:\n    # The hostname and port of the Redis instance, separated by a colon.\n    endpoint: ${env:REDIS_ENDPOINT}\n    # The frequency at which to collect metrics from the Redis instance.\n    collection_interval: 60s\n    # The password used to access the Redis instance; must match the password specified in the requirepass server configuration option.\n    password: ${env:REDIS_PASSWORD}\n    # # Defines the network to use for connecting to the server. Valid Values are `tcp` or `Unix`\n    # transport: tcp\n    # tls:\n    #   insecure: false\n    #   ca_file: /etc/ssl/certs/ca-certificates.crt\n    #   cert_file: /etc/ssl/certs/redis.crt\n    #   key_file: /etc/ssl/certs/redis.key\n    metrics:\n      redis.maxmemory:\n        enabled: true\n      redis.cmd.latency:\n        enabled: true\n\n  prometheus:\n    config:\n      scrape_configs:\n        - job_name: 'aws-cloudwatch-metrics'\n          scrape_timeout: 120s\n          scrape_interval: 120s\n          static_configs:\n            - targets: ['0.0.0.0:9106']\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    metrics/redis:\n      receivers: [redis, prometheus]\n      processors: []\n      exporters: [otlp/fusescope]\n```\n\n#### Set Environment Variables\n\nSet the following environment variables in your otel-collector environment:\n\n```bash\n\n# The accessible endpoint where redis server is running.\n# The hostname and port of the Redis instance, separated by a colon.\nexport REDIS_ENDPOINT=\"\u003credis-server-endpoint\u003e\"\n\n# The password to use for accessing redis instance\nexport REDIS_PASSWORD=\"\u003cPASSWORD\u003e\"\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nMake the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  \n```bash\n--config redis-metrics-collection-config.yaml\n```  \nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "### Collect ElastiCache Logs\n\nUse the [log delivery](https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/Log_Delivery.html) instructions to send redis logs to CloudWatch Logs\n\n#### Find the list of log group names for ElastiCache instance\n\nCollecting logs from an ElastiCache instance requires specifying the list of log group names. From the AWS CloudWatch console, find the log group(s) relevant to the integration.\n\n#### Create collector config file\n\nSave the following configuration for collecting ElastiCache logs in a file named `redis-logs-collection-config.yaml` and set the `region` key with the relevant value.\n\n```yaml\nreceivers:\n  awscloudwatch:\n    region: us-east-1\n    logs:\n      poll_interval: 1m\n      groups:\n        named:\n          # replace the following name with your log group for elasticache logs\n          /aws/elasticache/:\n\nprocessors:\n  attributes/add_source:\n    actions:\n      - key: source\n        value: \"elasticache_redis\"\n        action: insert\n  batch:\n    send_batch_size: 10000\n    send_batch_max_size: 11000\n    timeout: 10s\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    logs/redis:\n      receivers: [awscloudwatch]\n      processors: [attributes/add_source, batch]\n      exporters: [otlp/fusescope]\n```\n\n#### Set Environment Variables\n\nSet the following environment variables in your otel-collector environment:\n\n```bash\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nMake the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  \n```bash\n--config redis-logs-collection-config.yaml\n```  \nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n\n"
+    }
+  ],
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      },
+      {
+        "name": "Body",
+        "path": "body",
+        "type": "string"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "aws_elasticache_bytes_used_for_cache_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache BytesUsedForCache Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_bytes_used_for_cache_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache BytesUsedForCache Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_cache_hits_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CacheHits Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_cache_misses_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CacheMisses Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CPUUtilization Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CPUUtilization Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_curr_connections_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrConnections Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_curr_connections_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrConnections Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_curr_items_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrItems Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_curr_items_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrItems Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_curr_volatile_items_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrVolatileItems Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_curr_volatile_items_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrVolatileItems Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_database_capacity_usage_percentage_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache DatabaseCapacityUsagePercentage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_database_capacity_usage_percentage_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache DatabaseCapacityUsagePercentage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_database_memory_usage_percentage_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache DatabaseMemoryUsagePercentage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_database_memory_usage_percentage_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache DatabaseMemoryUsagePercentage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_engine_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache EngineCPUUtilization Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_engine_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache EngineCPUUtilization Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_evictions_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache Evictions Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_evictions_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache Evictions Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_freeable_memory_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache FreeableMemory Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_freeable_memory_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache FreeableMemory Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_memory_fragmentation_ratio_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache MemoryFragmentationRatio Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: None"
+      },
+      {
+        "name": "aws_elasticache_memory_fragmentation_ratio_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache MemoryFragmentationRatio Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: None"
+      },
+      {
+        "name": "aws_elasticache_memory_fragmentation_ratio_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache MemoryFragmentationRatio Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: None"
+      },
+      {
+        "name": "aws_elasticache_network_bytes_in_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkBytesIn Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_network_bytes_in_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkBytesIn Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_network_bytes_out_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkBytesOut Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_network_bytes_out_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkBytesOut Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_network_packets_in_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkPacketsIn Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_network_packets_in_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkPacketsIn Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_network_packets_out_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkPacketsOut Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_network_packets_out_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkPacketsOut Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_replication_lag_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache ReplicationLag Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_elasticache_save_in_progress_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SaveInProgress Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_save_in_progress_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SaveInProgress Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_save_in_progress_minimum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SaveInProgress Dimensions: [CacheClusterId, CacheNodeId] Statistic: Minimum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_save_in_progress_sample_count",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SaveInProgress Dimensions: [CacheClusterId, CacheNodeId] Statistic: SampleCount Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_save_in_progress_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SaveInProgress Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_swap_usage_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SwapUsage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_swap_usage_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SwapUsage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_traffic_management_active_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache TrafficManagementActive Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: None"
+      },
+      {
+        "name": "aws_elasticache_traffic_management_active_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache TrafficManagementActive Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: None"
+      },
+      {
+        "name": "aws_elasticache_traffic_management_active_minimum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache TrafficManagementActive Dimensions: [CacheClusterId, CacheNodeId] Statistic: Minimum Unit: None"
+      },
+      {
+        "name": "aws_elasticache_traffic_management_active_sample_count",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache TrafficManagementActive Dimensions: [CacheClusterId, CacheNodeId] Statistic: SampleCount Unit: None"
+      },
+      {
+        "name": "aws_elasticache_traffic_management_active_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache TrafficManagementActive Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: None"
+      },
+      {
+        "name": "redis_commands_processed",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of commands processed by the server"
+      },
+      {
+        "name": "redis_cpu_time",
+        "type": "Sum",
+        "unit": "s",
+        "description": "System CPU consumed by the Redis server in seconds since server start"
+      },
+      {
+        "name": "redis_keys_expired",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of key expiration events"
+      },
+      {
+        "name": "redis_db_expires",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Number of keyspace keys with an expiration"
+      },
+      {
+        "name": "redis_commands",
+        "type": "Gauge",
+        "unit": "ops/s",
+        "description": "Number of commands processed per second"
+      },
+      {
+        "name": "redis_replication_offset",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The server's current replication offset"
+      },
+      {
+        "name": "redis_net_input",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total number of bytes read from the network"
+      },
+      {
+        "name": "redis_clients_connected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of client connections (excluding connections from replicas)"
+      },
+      {
+        "name": "redis_keys_evicted",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of evicted keys due to maxmemory limit"
+      },
+      {
+        "name": "redis_maxmemory",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The value of the maxmemory configuration directive"
+      },
+      {
+        "name": "redis_clients_max_input_buffer",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Biggest input buffer among current client connections"
+      },
+      {
+        "name": "redis_cmd_latency",
+        "type": "Gauge",
+        "unit": "s",
+        "description": "Command execution latency"
+      },
+      {
+        "name": "redis_memory_lua",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Number of bytes used by the Lua engine"
+      },
+      {
+        "name": "redis_replication_backlog_first_byte_offset",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The master offset of the replication backlog buffer"
+      },
+      {
+        "name": "redis_keyspace_hits",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of successful lookup of keys in the main dictionary"
+      },
+      {
+        "name": "redis_clients_blocked",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of clients pending on a blocking call"
+      },
+      {
+        "name": "redis_connections_rejected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of connections rejected because of maxclients limit"
+      },
+      {
+        "name": "redis_latest_fork",
+        "type": "Gauge",
+        "unit": "us",
+        "description": "Duration of the latest fork operation in microseconds"
+      },
+      {
+        "name": "redis_clients_max_output_buffer",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Longest output list among current client connections"
+      },
+      {
+        "name": "redis_slaves_connected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of connected replicas"
+      },
+      {
+        "name": "redis_db_keys",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Number of keyspace keys"
+      },
+      {
+        "name": "redis_keyspace_misses",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of failed lookup of keys in the main dictionary"
+      },
+      {
+        "name": "redis_uptime",
+        "type": "Sum",
+        "unit": "s",
+        "description": "Number of seconds since Redis server start"
+      },
+      {
+        "name": "redis_memory_used",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Total number of bytes allocated by Redis using its allocator"
+      },
+      {
+        "name": "redis_net_output",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total number of bytes written to the network"
+      },
+      {
+        "name": "redis_connections_received",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of connections accepted by the server"
+      },
+      {
+        "name": "redis_rdb_changes_since_last_save",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of changes since the last dump"
+      },
+      {
+        "name": "redis_memory_rss",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Number of bytes that Redis allocated as seen by the operating system"
+      },
+      {
+        "name": "redis_db_avg_ttl",
+        "type": "Gauge",
+        "unit": "ms",
+        "description": "Average keyspace keys TTL"
+      },
+      {
+        "name": "redis_memory_peak",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Peak memory consumed by Redis (in bytes)"
+      },
+      {
+        "name": "redis_memory_fragmentation_ratio",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Ratio between used_memory_rss and used_memory"
+      }
+    ]
+  },
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      {
+        "id": "overview",
+        "definition": {
+          "schemaVersion": "v6",
+          "image": "",
+          "name": "",
+          "generateName": true,
+          "tags": [
+            {
+              "key": "tag",
+              "value": "aws"
+            },
+            {
+              "key": "tag",
+              "value": "cache"
+            },
+            {
+              "key": "tag",
+              "value": "redis"
+            }
+          ],
+          "spec": {
+            "display": {
+              "name": "AWS ElastiCache Redis",
+              "description": "Overview of ElastiCache CloudWatch metrics. Provides both host-level metrics (for example, CPU usage) and redis engine metrics"
+            },
+            "variables": [
+              {
+                "kind": "ListVariable",
+                "spec": {
+                  "display": {
+                    "name": "cache_cluster_id",
+                    "description": ""
+                  },
+                  "allowAllValue": true,
+                  "allowMultiple": true,
+                  "customAllValue": "",
+                  "capturingRegexp": "",
+                  "sort": "none",
+                  "plugin": {
+                    "kind": "signoz/QueryVariable",
+                    "spec": {
+                      "queryValue": "SELECT JSONExtractString(labels, 'cache_cluster_id') as cache_cluster_id\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name like 'aws_elasticache_%'\nGROUP BY cache_cluster_id"
+                    }
+                  },
+                  "name": "cache_cluster_id"
+                }
+              }
+            ],
+            "panels": {
+              "00d78996-1ba9-42d9-b22b-5818fc3bde4c": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "CPU Utilization",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_cpuutilization_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{cache_cluster_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "18798789-b67a-4c90-8127-f6bb63f012b2": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Database Capacity Usage Percentage",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_database_capacity_usage_percentage_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": ""
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "3604137c-12fe-4205-b7fc-f10d6143583b": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Freeable Memory",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "decbytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_freeable_memory_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": ""
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "5e69ac87-580f-4dc2-becd-943296e5cd1d": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Network Bytes In",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "decbytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_network_bytes_in_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{cache_cluster_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "6a56afd1-6205-4afe-90fe-86befc3fb55e": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Current Connections",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_curr_connections_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{cache_cluster_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "79723065-b871-4c79-83eb-b32f025c7642": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Evictions",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_evictions_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{cache_cluster_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "8eba8049-2af5-4998-b0e1-cbc2235f9b40": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Replication Lag",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "s",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_replication_lag_maximum",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{cache_cluster_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "96c23215-c494-4650-9dc3-ae20858ce1f7": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Engine CPU Utilization",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_engine_cpuutilization_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{cache_cluster_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "af269a1c-95a3-46b3-8d3b-322c194450e2": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Cache Hit Rate",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_cache_hits_sum",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": ""
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{cache_cluster_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "b3cdeb88-6988-419c-9e94-4a6bccfdd467": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Database Memory Usage Percentage",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_database_memory_usage_percentage_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{cache_cluster_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "dccdd9c3-3864-4aef-a98f-6fb0e30baf0c": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Swap Usage",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_swap_usage_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{cache_cluster_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "e5c9ccb6-31de-4b80-8f4c-220ea2e874d0": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Network Bytes Out",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "decbytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_network_bytes_out_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "{{cache_cluster_id}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "f9b0f03a-8d78-4c26-a037-daae69650eb6": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Memory Fragmentation Ratio",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "aws_elasticache_memory_fragmentation_ratio_average",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "cache_cluster_id",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": ""
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              }
+            },
+            "layouts": [
+              {
+                "kind": "Grid",
+                "spec": {
+                  "items": [
+                    {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/00d78996-1ba9-42d9-b22b-5818fc3bde4c"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/96c23215-c494-4650-9dc3-ae20858ce1f7"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 5,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/6a56afd1-6205-4afe-90fe-86befc3fb55e"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 5,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/af269a1c-95a3-46b3-8d3b-322c194450e2"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 10,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/f9b0f03a-8d78-4c26-a037-daae69650eb6"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 10,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/18798789-b67a-4c90-8127-f6bb63f012b2"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 15,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/b3cdeb88-6988-419c-9e94-4a6bccfdd467"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 15,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/3604137c-12fe-4205-b7fc-f10d6143583b"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 20,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/5e69ac87-580f-4dc2-becd-943296e5cd1d"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 20,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/e5c9ccb6-31de-4b80-8f4c-220ea2e874d0"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 25,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/dccdd9c3-3864-4aef-a98f-6fb0e30baf0c"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 25,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/79723065-b871-4c79-83eb-b32f025c7642"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 30,
+                      "width": 6,
+                      "height": 5,
+                      "content": {
+                        "$ref": "#/spec/panels/8eba8049-2af5-4998-b0e1-cbc2235f9b40"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "duration": "",
+            "refreshInterval": "",
+            "links": []
+          }
+        }
+      }
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "elasticache_redis"
+    },
+    "metrics": [
+      "aws_elasticache_bytes_used_for_cache_maximum",
+      "aws_elasticache_bytes_used_for_cache_sum",
+      "aws_elasticache_cache_hits_sum",
+      "aws_elasticache_cache_misses_sum",
+      "aws_elasticache_cpuutilization_average",
+      "aws_elasticache_cpuutilization_maximum",
+      "aws_elasticache_curr_connections_average",
+      "aws_elasticache_curr_connections_maximum",
+      "aws_elasticache_curr_items_average",
+      "aws_elasticache_curr_items_maximum",
+      "aws_elasticache_curr_volatile_items_average",
+      "aws_elasticache_curr_volatile_items_maximum",
+      "aws_elasticache_database_capacity_usage_percentage_average",
+      "aws_elasticache_database_capacity_usage_percentage_maximum",
+      "aws_elasticache_database_memory_usage_percentage_average",
+      "aws_elasticache_database_memory_usage_percentage_maximum",
+      "aws_elasticache_engine_cpuutilization_average",
+      "aws_elasticache_engine_cpuutilization_maximum",
+      "aws_elasticache_evictions_average",
+      "aws_elasticache_evictions_sum",
+      "aws_elasticache_freeable_memory_average",
+      "aws_elasticache_freeable_memory_maximum",
+      "aws_elasticache_memory_fragmentation_ratio_average",
+      "aws_elasticache_memory_fragmentation_ratio_maximum",
+      "aws_elasticache_memory_fragmentation_ratio_sum",
+      "aws_elasticache_network_bytes_in_average",
+      "aws_elasticache_network_bytes_in_sum",
+      "aws_elasticache_network_bytes_out_average",
+      "aws_elasticache_network_bytes_out_sum",
+      "aws_elasticache_network_packets_in_average",
+      "aws_elasticache_network_packets_in_sum",
+      "aws_elasticache_network_packets_out_average",
+      "aws_elasticache_network_packets_out_sum",
+      "aws_elasticache_replication_lag_maximum",
+      "aws_elasticache_save_in_progress_average",
+      "aws_elasticache_save_in_progress_maximum",
+      "aws_elasticache_save_in_progress_minimum",
+      "aws_elasticache_save_in_progress_sample_count",
+      "aws_elasticache_save_in_progress_sum",
+      "aws_elasticache_swap_usage_average",
+      "aws_elasticache_swap_usage_maximum",
+      "aws_elasticache_traffic_management_active_average",
+      "aws_elasticache_traffic_management_active_maximum",
+      "aws_elasticache_traffic_management_active_minimum",
+      "aws_elasticache_traffic_management_active_sample_count",
+      "aws_elasticache_traffic_management_active_sum",
+      "redis_commands_processed",
+      "redis_cpu_time",
+      "redis_keys_expired",
+      "redis_db_expires",
+      "redis_commands",
+      "redis_replication_offset",
+      "redis_net_input",
+      "redis_clients_connected",
+      "redis_keys_evicted",
+      "redis_maxmemory",
+      "redis_clients_max_input_buffer",
+      "redis_cmd_latency",
+      "redis_memory_lua",
+      "redis_replication_backlog_first_byte_offset",
+      "redis_keyspace_hits",
+      "redis_clients_blocked",
+      "redis_connections_rejected",
+      "redis_latest_fork",
+      "redis_clients_max_output_buffer",
+      "redis_slaves_connected",
+      "redis_db_keys",
+      "redis_keyspace_misses",
+      "redis_uptime",
+      "redis_memory_used",
+      "redis_net_output",
+      "redis_connections_received",
+      "redis_rdb_changes_since_last_save",
+      "redis_memory_rss",
+      "redis_db_avg_ttl",
+      "redis_memory_peak",
+      "redis_memory_fragmentation_ratio"
+    ]
+  },
+  "installation": null
+}

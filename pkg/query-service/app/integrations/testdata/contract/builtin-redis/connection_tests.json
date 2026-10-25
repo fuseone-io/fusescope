@@ -1,0 +1,39 @@
+{
+  "logs": {
+    "attribute_key": "source",
+    "attribute_value": "redis"
+  },
+  "metrics": [
+    "redis_commands_processed",
+    "redis_cpu_time",
+    "redis_keys_expired",
+    "redis_db_expires",
+    "redis_commands",
+    "redis_replication_offset",
+    "redis_net_input",
+    "redis_clients_connected",
+    "redis_keys_evicted",
+    "redis_maxmemory",
+    "redis_clients_max_input_buffer",
+    "redis_cmd_latency",
+    "redis_memory_lua",
+    "redis_replication_backlog_first_byte_offset",
+    "redis_keyspace_hits",
+    "redis_clients_blocked",
+    "redis_connections_rejected",
+    "redis_latest_fork",
+    "redis_clients_max_output_buffer",
+    "redis_slaves_connected",
+    "redis_db_keys",
+    "redis_keyspace_misses",
+    "redis_uptime",
+    "redis_memory_used",
+    "redis_net_output",
+    "redis_connections_received",
+    "redis_rdb_changes_since_last_save",
+    "redis_memory_rss",
+    "redis_db_avg_ttl",
+    "redis_memory_peak",
+    "redis_memory_fragmentation_ratio"
+  ]
+}

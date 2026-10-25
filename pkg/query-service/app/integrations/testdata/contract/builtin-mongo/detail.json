@@ -1,0 +1,1042 @@
+{
+  "id": "builtin-mongo",
+  "title": "Mongo",
+  "description": "Monitor mongo using logs and metrics.",
+  "author": {
+    "name": "FuseScope",
+    "email": "",
+    "homepage": "https://github.com/fuseone-io/fusescope"
+  },
+  "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyLjQ2NSAyMi41TDExLjkwMTggMjIuMzEzMkMxMS45MDE4IDIyLjMxMzIgMTEuOTc2NyAxOS40NjMzIDEwLjk0NTUgMTkuMjYzQzEwLjI3MDUgMTguNDc3IDExLjA0NTIgLTE0LjI5MjggMTMuNTEyNyAxOS4xNTEyQzEzLjA0NDYgMTkuMzg4NyAxMi42ODY0IDE5Ljc5OCAxMi41MTMgMjAuMjkzNUMxMi40MjAxIDIxLjAyNTMgMTIuNDA0IDIxLjc2NDggMTIuNDY1IDIyLjVaIiBmaWxsPSJ1cmwoI3BhaW50MF9saW5lYXJfMjEyOF80NTApIi8+CjxwYXRoIGQ9Ik0xMi43Njk1IDE5Ljc0NjdDMTQuMjY5MiAxOC42MTc4IDE1LjQxNzcgMTcuMDg2NSAxNi4wODE1IDE1LjMzMDdDMTYuNzQ1MyAxMy41NzQ5IDE2Ljg5NzIgMTEuNjY2NyAxNi41MTk1IDkuODI4QzE1LjQxNyA0Ljk2NDI1IDEyLjgwNjMgMy4zNjUyNSAxMi41MjUgMi43NTQ3NUMxMi4yODIzIDIuMzc0NiAxMi4wNzUyIDEuOTcyOSAxMS45MDYyIDEuNTU0NzVMMTIuMTE0IDE1LjEwNjVDMTIuMTE0IDE1LjEwNjUgMTEuNjgzNSAxOS4yNDggMTIuNzY5NSAxOS43NDY3WiIgZmlsbD0idXJsKCNwYWludDFfbGluZWFyXzIxMjhfNDUwKSIvPgo8cGF0aCBkPSJNMTEuNjE1MyAxOS45MjY4QzExLjYxNTMgMTkuOTI2OCA3LjAyNDUgMTYuOCA3LjI5IDExLjI2ODdDNy4zMTQ3NyA5LjYwMTIzIDcuNjk3MSA3Ljk1ODQ1IDguNDExMTggNi40NTEzNkM5LjEyNTI3IDQuOTQ0MjggMTAuMTU0NSAzLjYwNzk5IDExLjQyOTMgMi41MzI3NUMxMS41NzgyIDIuNDA2MTggMTEuNjk2NiAyLjI0NzUxIDExLjc3NTQgMi4wNjg2NEMxMS44NTQzIDEuODg5NzYgMTEuODkxNiAxLjY5NTM1IDExLjg4NDUgMS41QzEyLjE3MDIgMi4xMTUgMTIuMTIzNyAxMC42ODIzIDEyLjE1MzcgMTEuNjg0MkMxMi4yNyAxNS41ODIgMTEuOTM3IDE5LjE5MSAxMS42MTUzIDE5LjkyNjhaIiBmaWxsPSJ1cmwoI3BhaW50Ml9saW5lYXJfMjEyOF80NTApIi8+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MF9saW5lYXJfMjEyOF80NTAiIHgxPSI4LjY3ODczIiB5MT0iMTIuMTg5MiIgeDI9IjE1LjE1MjUiIHkyPSIxNC4zODYxIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIG9mZnNldD0iMC4yMzEiIHN0b3AtY29sb3I9IiM5OTk4NzUiLz4KPHN0b3Agb2Zmc2V0PSIwLjU2MyIgc3RvcC1jb2xvcj0iIzlCOTk3NyIvPgo8c3RvcCBvZmZzZXQ9IjAuNjgzIiBzdG9wLWNvbG9yPSIjQTA5RjdFIi8+CjxzdG9wIG9mZnNldD0iMC43NjgiIHN0b3AtY29sb3I9IiNBOUE4ODkiLz4KPHN0b3Agb2Zmc2V0PSIwLjgzNyIgc3RvcC1jb2xvcj0iI0I3QjY5QSIvPgo8c3RvcCBvZmZzZXQ9IjAuODk2IiBzdG9wLWNvbG9yPSIjQzlDN0IwIi8+CjxzdG9wIG9mZnNldD0iMC45NDgiIHN0b3AtY29sb3I9IiNERUREQ0IiLz4KPHN0b3Agb2Zmc2V0PSIwLjk5NCIgc3RvcC1jb2xvcj0iI0Y4RjZFQiIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNGQkY5RUYiLz4KPC9saW5lYXJHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDFfbGluZWFyXzIxMjhfNDUwIiB4MT0iMTEuMDUyNyIgeTE9IjEuNDU3OTEiIHgyPSIxMy45MTQ3IiB5Mj0iMTkuMzI5NiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjNDhBNTQ3Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzNGOTE0MyIvPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50Ml9saW5lYXJfMjEyOF80NTAiIHgxPSI2Ljg5NTEiIHkxPSIxMS44MTYzIiB4Mj0iMTQuNTc1NiIgeTI9IjkuMjQ0MDgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzQxQTI0NyIvPgo8c3RvcCBvZmZzZXQ9IjAuMzUyIiBzdG9wLWNvbG9yPSIjNEJBNzRCIi8+CjxzdG9wIG9mZnNldD0iMC45NTYiIHN0b3AtY29sb3I9IiM2N0I1NTQiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNjlCNjU1Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==",
+  "categories": [
+    "Database"
+  ],
+  "overview": "### Monitor MongoDB with FuseScope\n\nCollect key MongoDB metrics and view them with an out of the box dashboard.\n\nCollect and parse MongoDB logs to populate timestamp, severity, and other log attributes for better querying and aggregation.\n\n",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "## Before You Begin  \n\nTo configure metrics and logs collection for MongoDB, you need the following.\n\n### Ensure MongoDB server is prepared for monitoring\n\n- **Ensure that the MongoDB server is running a supported version**  \n  MongoDB versions 4.4+ are supported.  \n  You can use the following statement to determine server version  \n  ```js\n  db.version()\n  ```\n\n- **If collecting metrics, ensure that there is a MongoDB user with required permissions**  \n  Mongodb recommends to set up a least privilege user (LPU) with a clusterMonitor role in order to collect metrics\n\n  To create a monitoring user, run:  \n  ```js\n  use admin\n  db.createUser(\n    {\n      user: \"monitoring\",\n      pwd: \"\u003cPASSWORD\u003e\",\n      roles: [\"clusterMonitor\"]\n    }\n  );\n    ```  \n    \n\n### Ensure OTEL Collector is running with access to the MongoDB server\n\n- **Ensure that an OTEL collector is running in your deployment environment**  \n  If needed, please [install an OTEL Collector](https://opentelemetry.io/docs/collector/installation/)  \n  If already installed, ensure that the collector version is v0.88.0 or newer.  \n\n  Also ensure that you can provide config files to the collector and that you can set environment variables and command line flags used for running it.  \n\n- **Ensure that the OTEL collector can access the MongoDB server**  \n  In order to collect metrics, the collector must be able to access the MongoDB server as a client using the monitoring user.  \n\n  In order to collect logs, the collector must be able to read the MongoDB server log file.\n"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "### Collect MongoDB Metrics\n\nYou can configure MongoDB metrics collection by providing the required collector config to your collector.\n\n#### Create collector config file\n\nSave the following config for collecting mongodb metrics in a file named `mongodb-metrics-collection-config.yaml`\n\n```yaml\nreceivers:\n  mongodb:\n    # - For standalone MongoDB deployments this is the hostname and port of the mongod instance\n    # - For replica sets specify the hostnames and ports of the mongod instances that are in the replica set configuration. If the replica_set field is specified, nodes will be autodiscovered.\n    # - For a sharded MongoDB deployment, please specify a list of the mongos hosts.\n    hosts:\n      - endpoint: ${env:MONGODB_ENDPOINT}\n    # If authentication is required, the user can with clusterMonitor permissions can be provided here\n    username: ${env:MONGODB_USERNAME}\n    # If authentication is required, the password can be provided here.\n    password: ${env:MONGODB_PASSWORD}\n    collection_interval: 60s\n    # If TLS is enabled, the following fields can be used to configure the connection\n    tls:\n      insecure: true\n      insecure_skip_verify: true\n    #   ca_file: /etc/ssl/certs/ca-certificates.crt\n    #   cert_file: /etc/ssl/certs/mongodb.crt\n    #   key_file: /etc/ssl/certs/mongodb.key\n    metrics:\n      mongodb.lock.acquire.count:\n        enabled: true\n      mongodb.lock.acquire.time:\n        enabled: true\n      mongodb.lock.acquire.wait_count:\n        enabled: true\n      mongodb.lock.deadlock.count:\n        enabled: true\n      mongodb.operation.latency.time:\n        enabled: true\n\nprocessors:\n  # enriches the data with additional host information\n  # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/resourcedetectionprocessor#resource-detection-processor\n  resourcedetection/system:\n    # add additional detectors if needed\n    detectors: [\"system\"]\n    system:\n      hostname_sources: [\"os\"]\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    metrics/mongodb:\n      receivers: [mongodb]\n      # note: remove this processor if the collector host is not running on the same host as the mongo instance\n      processors: [resourcedetection/system]\n      exporters: [otlp/fusescope]\n\n```\n\n#### Set Environment Variables\n\nSet the following environment variables in your otel-collector environment:\n\n```bash\n\n# MongoDB endpoint reachable from the otel collector\"\nexport MONGODB_ENDPOINT=\"host:port\"\n\n# password for MongoDB monitoring user\"\nexport MONGODB_USERNAME=\"monitoring\"\n\n# password for MongoDB monitoring user\"\nexport MONGODB_PASSWORD=\"\u003cPASSWORD\u003e\"\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nMake the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  \n```bash\n--config mongodb-metrics-collection-config.yaml\n```  \nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "### Collect MongoDB Logs\n\nYou can configure MongoDB logs collection by providing the required collector config to your collector.\n\n#### Create collector config file\n\nSave the following config for collecting MongoDB logs in a file named `mongodb-logs-collection-config.yaml`\n\n```yaml\nreceivers:\n  filelog/mongodb:\n    include: [\"${env:MONGODB_LOG_FILE}\"]\n    operators:\n      # Parse structured mongodb logs\n      # For more details, see https://www.mongodb.com/docs/manual/reference/log-messages/#structured-logging\n      - type: json_parser\n        if: body matches '^\\\\s*{\\\\s*\".*}\\\\s*$'\n        parse_from: body\n        parse_to: attributes\n        timestamp:\n          parse_from: attributes.t.$$date\n          layout: '2006-01-02T15:04:05.000-07:00'\n          layout_type: gotime\n        severity:\n          parse_from: attributes.s\n          overwrite_text: true\n          mapping:\n            debug:\n              - D1\n              - D2\n              - D3\n              - D4\n              - D5\n            info: I\n            warn: W\n            error: E\n            fatal: F\n      - type: flatten\n        if: attributes.attr != nil\n        field: attributes.attr\n      - type: move\n        if: attributes.msg != nil\n        from: attributes.msg\n        to: body\n      - type: move\n        if: attributes.c != nil\n        from: attributes.c\n        to: attributes.component\n      - type: move\n        if: attributes.id != nil\n        from: attributes.id\n        to: attributes.mongo_log_id\n      - type: remove\n        if: attributes.t != nil\n        field: attributes.t\n      - type: remove\n        if: attributes.s != nil\n        field: attributes.s\n      - type: add\n        field: attributes.source\n        value: mongodb\n\nprocessors:\n  batch:\n    send_batch_size: 10000\n    send_batch_max_size: 11000\n    timeout: 10s\n\nexporters:\n  otlp/fusescope:\n    endpoint: ${env:OTLP_DESTINATION_ENDPOINT}\n    tls:\n      # set to false when the FuseScope endpoint uses TLS\n      insecure: true\n\nservice:\n  pipelines:\n    logs/mongodb:\n      receivers: [filelog/mongodb]\n      processors: [batch]\n      exporters: [otlp/fusescope]\n```\n\n#### Set Environment Variables\n\nSet the following environment variables in your otel-collector environment:\n\n```bash\n\n# path of MongoDB server log file. must be accessible by the otel collector\n# typically found in /usr/local/var/log/mongodb on macOS\n# mongod.conf file can also be checked for finding log file location\nexport MONGODB_LOG_FILE=/var/log/mongodb/mongodb.log\n\n# OTLP gRPC endpoint of your FuseScope collector, see https://fuseone-io.github.io/fusescope-docs/sending-data/otlp/\nexport OTLP_DESTINATION_ENDPOINT=\"\u003cfusescope-otel-collector-host\u003e:4317\"\n\n```\n\n#### Use collector config file\n\nMake the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  \n```bash\n--config mongodb-logs-collection-config.yaml\n```  \nNote: the collector can use multiple config files, specified by multiple occurrences of the --config flag.\n\n"
+    }
+  ],
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      },
+      {
+        "name": "Severity Text",
+        "path": "severity_text",
+        "type": "string"
+      },
+      {
+        "name": "Severity Number",
+        "path": "severity_number",
+        "type": "number"
+      },
+      {
+        "name": "MongoDB Component",
+        "path": "attributes.component",
+        "type": "string"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "mongodb_cache_operations",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of cache operations of the instance."
+      },
+      {
+        "name": "mongodb_collection_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of collections."
+      },
+      {
+        "name": "mongodb_data_size",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The size of the collection. Data compression does not affect this value."
+      },
+      {
+        "name": "mongodb_connection_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of connections."
+      },
+      {
+        "name": "mongodb_extent_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of extents."
+      },
+      {
+        "name": "mongodb_global_lock_time",
+        "type": "Sum",
+        "unit": "ms",
+        "description": "The time the global lock has been held."
+      },
+      {
+        "name": "mongodb_index_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of indexes."
+      },
+      {
+        "name": "mongodb_index_size",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "Sum of the space allocated to all indexes in the database, including free index space."
+      },
+      {
+        "name": "mongodb_memory_usage",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The amount of memory used."
+      },
+      {
+        "name": "mongodb_object_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of objects."
+      },
+      {
+        "name": "mongodb_operation_latency_time",
+        "type": "Gauge",
+        "unit": "us",
+        "description": "The latency of operations."
+      },
+      {
+        "name": "mongodb_operation_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of operations executed."
+      },
+      {
+        "name": "mongodb_operation_repl_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of replicated operations executed."
+      },
+      {
+        "name": "mongodb_storage_size",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total amount of storage allocated to this collection."
+      },
+      {
+        "name": "mongodb_database_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of existing databases."
+      },
+      {
+        "name": "mongodb_index_access_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of times an index has been accessed."
+      },
+      {
+        "name": "mongodb_document_operation_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of document operations executed."
+      },
+      {
+        "name": "mongodb_network_io_receive",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The number of bytes received."
+      },
+      {
+        "name": "mongodb_network_io_transmit",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The number of by transmitted."
+      },
+      {
+        "name": "mongodb_network_request_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of requests received by the server."
+      },
+      {
+        "name": "mongodb_operation_time",
+        "type": "Sum",
+        "unit": "ms",
+        "description": "The total time spent performing operations."
+      },
+      {
+        "name": "mongodb_session_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The total number of active sessions."
+      },
+      {
+        "name": "mongodb_cursor_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of open cursors maintained for clients."
+      },
+      {
+        "name": "mongodb_cursor_timeout_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "The number of cursors that have timed out."
+      },
+      {
+        "name": "mongodb_lock_acquire_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of times the lock was acquired in the specified mode."
+      },
+      {
+        "name": "mongodb_lock_acquire_wait_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of times the lock acquisitions encountered waits because the locks were held in a conflicting mode."
+      },
+      {
+        "name": "mongodb_lock_acquire_time",
+        "type": "Sum",
+        "unit": "microseconds",
+        "description": "Cumulative wait time for the lock acquisitions."
+      },
+      {
+        "name": "mongodb_lock_deadlock_count",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of times the lock acquisitions encountered deadlocks."
+      },
+      {
+        "name": "mongodb_health",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "The health status of the server."
+      },
+      {
+        "name": "mongodb_uptime",
+        "type": "Sum",
+        "unit": "ms",
+        "description": "The amount of time that the server has been running."
+      }
+    ]
+  },
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      {
+        "id": "overview",
+        "definition": {
+          "schemaVersion": "v6",
+          "image": "",
+          "name": "",
+          "generateName": true,
+          "tags": [
+            {
+              "key": "tag",
+              "value": "mongo"
+            },
+            {
+              "key": "tag",
+              "value": "database"
+            }
+          ],
+          "spec": {
+            "display": {
+              "name": "Mongo overview",
+              "description": "This dashboard provides a high-level overview of your MongoDB. It includes read/write performance, most-used replicas, collection metrics etc..."
+            },
+            "variables": [
+              {
+                "kind": "ListVariable",
+                "spec": {
+                  "display": {
+                    "name": "host.name",
+                    "description": "List of hosts sending mongo metrics"
+                  },
+                  "allowAllValue": true,
+                  "allowMultiple": true,
+                  "customAllValue": "",
+                  "capturingRegexp": "",
+                  "sort": "alphabetical-asc",
+                  "plugin": {
+                    "kind": "signoz/QueryVariable",
+                    "spec": {
+                      "queryValue": "SELECT JSONExtractString(labels, 'host.name') AS `host.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'mongodb_memory_usage'\nGROUP BY `host.name`"
+                    }
+                  },
+                  "name": "host.name"
+                }
+              }
+            ],
+            "panels": {
+              "0c3d2b15-89be-4d62-a821-b26d93332ed3": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Network IO",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "bytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "builder_query",
+                                "spec": {
+                                  "name": "A",
+                                  "stepInterval": 60,
+                                  "signal": "metrics",
+                                  "source": "",
+                                  "aggregations": [
+                                    {
+                                      "metricName": "mongodb.network.io.receive",
+                                      "temporality": "",
+                                      "timeAggregation": "avg",
+                                      "spaceAggregation": "avg",
+                                      "reduceTo": "sum"
+                                    }
+                                  ],
+                                  "disabled": false,
+                                  "filter": {
+                                    "expression": "host.name IN $host.name"
+                                  },
+                                  "groupBy": [
+                                    {
+                                      "name": "host.name",
+                                      "signal": "",
+                                      "fieldContext": "attribute",
+                                      "fieldDataType": "string"
+                                    }
+                                  ],
+                                  "order": [],
+                                  "selectFields": null,
+                                  "having": {
+                                    "expression": ""
+                                  },
+                                  "secondaryAggregations": null,
+                                  "functions": null,
+                                  "legend": "Bytes received :: {{host.name}}"
+                                }
+                              },
+                              {
+                                "type": "builder_query",
+                                "spec": {
+                                  "name": "B",
+                                  "stepInterval": 60,
+                                  "signal": "metrics",
+                                  "source": "",
+                                  "aggregations": [
+                                    {
+                                      "metricName": "mongodb.network.io.transmit",
+                                      "temporality": "",
+                                      "timeAggregation": "avg",
+                                      "spaceAggregation": "avg",
+                                      "reduceTo": "sum"
+                                    }
+                                  ],
+                                  "disabled": false,
+                                  "filter": {
+                                    "expression": "host.name IN $host.name"
+                                  },
+                                  "groupBy": [
+                                    {
+                                      "name": "host.name",
+                                      "signal": "",
+                                      "fieldContext": "attribute",
+                                      "fieldDataType": "string"
+                                    }
+                                  ],
+                                  "order": [],
+                                  "selectFields": null,
+                                  "having": {
+                                    "expression": ""
+                                  },
+                                  "secondaryAggregations": null,
+                                  "functions": null,
+                                  "legend": "Bytes transmitted :: {{host.name}}"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "14504a3c-4a05-4d22-bab3-e22e94f51380": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Read latency",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "µs",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mongodb.operation.latency.time",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "(operation = 'read' AND host.name IN $host.name)"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "Latency"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "4c07a7d2-893a-46c2-bcdb-a19b6efeac3a": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Operations count",
+                    "description": "Total number of operations"
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mongodb.operation.count",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "host.name IN $host.name"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "operation",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "{{operation}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "503af589-ef4d-4fe3-8934-c8f7eb480d9a": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Command latency",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "µs",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mongodb.operation.latency.time",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "(host.name IN $host.name AND operation = 'command')"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "Latency"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "a5a64eec-1034-4aa6-8cb1-05673c4426c6": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Write latency",
+                    "description": ""
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "µs",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mongodb.operation.latency.time",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "(host.name IN $host.name AND operation = 'write')"
+                            },
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "Latency"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "bfc9e80b-02bf-4122-b3da-3dd943d35012": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Total operations time",
+                    "description": "The total time spent performing operations."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "ms",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mongodb.operation.time",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "host.name IN $host.name"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "operation",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "{{operation}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              },
+              "dcfb3829-c3f2-44bb-907d-8dc8a6dc4aab": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Cache operations",
+                    "description": "The number of cache operations"
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "none",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": null,
+                        "softMax": null,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "name": "A",
+                        "plugin": {
+                          "kind": "signoz/BuilderQuery",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "mongodb.cache.operations",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "sum"
+                              }
+                            ],
+                            "disabled": false,
+                            "filter": {
+                              "expression": "host.name IN $host.name"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "type",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "{{type}}"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": []
+                }
+              }
+            },
+            "layouts": [
+              {
+                "kind": "Grid",
+                "spec": {
+                  "items": [
+                    {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/4c07a7d2-893a-46c2-bcdb-a19b6efeac3a"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/bfc9e80b-02bf-4122-b3da-3dd943d35012"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 3,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/dcfb3829-c3f2-44bb-907d-8dc8a6dc4aab"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 3,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/0c3d2b15-89be-4d62-a821-b26d93332ed3"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 6,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/14504a3c-4a05-4d22-bab3-e22e94f51380"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 6,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/a5a64eec-1034-4aa6-8cb1-05673c4426c6"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 9,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/503af589-ef4d-4fe3-8934-c8f7eb480d9a"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "duration": "",
+            "refreshInterval": "",
+            "links": []
+          }
+        }
+      }
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "mongodb"
+    },
+    "metrics": [
+      "mongodb_cache_operations",
+      "mongodb_collection_count",
+      "mongodb_data_size",
+      "mongodb_connection_count",
+      "mongodb_extent_count",
+      "mongodb_global_lock_time",
+      "mongodb_index_count",
+      "mongodb_index_size",
+      "mongodb_memory_usage",
+      "mongodb_object_count",
+      "mongodb_operation_latency_time",
+      "mongodb_operation_count",
+      "mongodb_operation_repl_count",
+      "mongodb_storage_size",
+      "mongodb_database_count",
+      "mongodb_index_access_count",
+      "mongodb_document_operation_count",
+      "mongodb_network_io_receive",
+      "mongodb_network_io_transmit",
+      "mongodb_network_request_count",
+      "mongodb_operation_time",
+      "mongodb_session_count",
+      "mongodb_cursor_count",
+      "mongodb_cursor_timeout_count",
+      "mongodb_lock_acquire_count",
+      "mongodb_lock_acquire_wait_count",
+      "mongodb_lock_acquire_time",
+      "mongodb_lock_deadlock_count",
+      "mongodb_health",
+      "mongodb_uptime"
+    ]
+  },
+  "installation": null
+}
