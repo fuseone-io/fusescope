@@ -43,18 +43,18 @@ func logsTTLStatements(tables logsTTLTables, cluster string, params *retentionty
 
 // customRetentionLogsTTLStatements are the TTL statements of a custom (v2) logs retention,
 // by table. The logs and resource TTLs read _retention_days, so they are rewritten only to
-// set a move rule; the keys tables keep keysRetentionDays.
-func customRetentionLogsTTLStatements(tables logsTTLTables, cluster string, coldStorageVolume string, keysRetentionDays int) map[string]string {
+// set a move rule after coldStorageDays; the keys tables keep keysRetentionDays.
+func customRetentionLogsTTLStatements(tables logsTTLTables, cluster string, coldStorageVolume string, coldStorageDays int, keysRetentionDays int) map[string]string {
 	statements := map[string]string{
 		tables.AttributeKeys: retentiontypes.TTLClause{Time: "timestamp", Delete: retentiontypes.IntervalDays(keysRetentionDays)}.Statement(tables.AttributeKeys, cluster),
 		tables.ResourceKeys:  retentiontypes.TTLClause{Time: "timestamp", Delete: retentiontypes.IntervalDays(keysRetentionDays)}.Statement(tables.ResourceKeys, cluster),
 	}
-	if coldStorageVolume == "" {
+	if coldStorageVolume == "" || coldStorageDays <= 0 {
 		return statements
 	}
 
 	deleteAfter := retentiontypes.IntervalDaysOf("_retention_days")
-	moveAfter := retentiontypes.IntervalDaysOf(retentiontypes.LogsColdStorageDays)
+	moveAfter := retentiontypes.IntervalDaysOf(retentiontypes.LogsColdStorageDays(coldStorageDays))
 	statements[tables.Logs] = retentiontypes.TTLClause{Time: retentiontypes.UnixNanoTime("timestamp"), Delete: deleteAfter, Volume: coldStorageVolume, MoveAfter: moveAfter}.Statement(tables.Logs, cluster)
 	statements[tables.Resource] = retentiontypes.TTLClause{Time: retentiontypes.ResourceBucketTime, Delete: deleteAfter, Volume: coldStorageVolume, MoveAfter: moveAfter}.Statement(tables.Resource, cluster)
 

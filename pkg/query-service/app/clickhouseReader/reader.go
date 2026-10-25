@@ -1301,7 +1301,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
 	}
 
-	ttlStatements := customRetentionLogsTTLStatements(logsTTLTables{Logs: tableNames[0], Resource: tableNames[1], AttributeKeys: tableNames[2], ResourceKeys: tableNames[3]}, r.cluster, params.ColdStorageVolume, maxRetentionTTL)
+	ttlStatements := customRetentionLogsTTLStatements(logsTTLTables{Logs: tableNames[0], Resource: tableNames[1], AttributeKeys: tableNames[2], ResourceKeys: tableNames[3]}, r.cluster, params.ColdStorageVolume, coldStorageDuration, maxRetentionTTL)
 
 	ttlPayload := make(map[string][]string)
 
