@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -42,7 +43,12 @@ func (r *ClickHouseReader) ApplyArchiveBackstop(ctx context.Context, signal stri
 			return err
 		}
 
-		clause := customRetentionLogsTTLClauses(tables, volume, backstop)[table]
+		coldStorageDays, err := r.coldStorageDays(ctx, table)
+		if err != nil {
+			return err
+		}
+
+		clause := customRetentionLogsTTLClauses(tables, volume, coldStorageDays, backstop)[table]
 
 		if err := r.db.Exec(ctx, clause.Statement(table, r.cluster)); err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't set the archive backstop on %s", table)
@@ -115,6 +121,27 @@ func (r *ClickHouseReader) coldStorageVolume(ctx context.Context, table string) 
 	}
 
 	return retentiontypes.ColdStorageVolume(createTableQuery), nil
+}
+
+// coldStorageDays is the _retention_days_cold default SetTTLV2 wrote on table, 0 when unset.
+func (r *ClickHouseReader) coldStorageDays(ctx context.Context, table string) (int, error) {
+	database, name := splitTableName(table)
+
+	var defaultExpression string
+	err := r.db.QueryRow(ctx, "SELECT default_expression FROM system.columns WHERE database = ? AND table = ? AND name = '_retention_days_cold'", database, name).Scan(&defaultExpression)
+	if err != nil {
+		return 0, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the cold-storage days of %s", table)
+	}
+	if defaultExpression == "" {
+		return 0, nil
+	}
+
+	days, err := strconv.Atoi(defaultExpression)
+	if err != nil {
+		return 0, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unexpected cold-storage days %q on %s", defaultExpression, table)
+	}
+
+	return days, nil
 }
 
 func (r *ClickHouseReader) hasColumn(ctx context.Context, table string, column string) (bool, error) {
