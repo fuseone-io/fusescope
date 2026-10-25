@@ -12,6 +12,7 @@ import { frameLabel } from 'lib/rum/stackFrames';
 import { cn } from 'lib/utils';
 
 import { releasesSummary, sessionShare } from '../utils';
+import ErrorKindBadge from './ErrorKindBadge';
 
 interface ErrorGroupRowProps {
 	applicationId: string;
@@ -19,6 +20,7 @@ interface ErrorGroupRowProps {
 	/** Sessions in the range. */
 	totalSessions: number;
 	sourceMapMissing: boolean;
+	jvm: boolean;
 }
 
 const NUMBER = 'tw:text-right tw:tabular-nums';
@@ -29,6 +31,7 @@ function ErrorGroupRow({
 	group,
 	totalSessions,
 	sourceMapMissing,
+	jvm,
 }: ErrorGroupRowProps): JSX.Element {
 	const { search } = useLocation();
 	const releases = releasesSummary(group);
@@ -49,6 +52,7 @@ function ErrorGroupRow({
 						>
 							{group.type}
 						</Link>
+						<ErrorKindBadge group={group} testId="rum-error-group-kind" />
 						{group.newInRelease && (
 							<StatusBadge tone="info" testId="rum-error-group-new">
 								New in {group.firstSeenRelease}
@@ -72,7 +76,7 @@ function ErrorGroupRow({
 								className="tw:flex-none"
 								testId="rum-error-group-no-map"
 							>
-								Source map missing
+								{jvm ? 'R8 mapping missing' : 'Source map missing'}
 							</StatusBadge>
 						)}
 					</span>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { generatePath, matchPath, useLocation } from 'react-router-dom';
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import HeaderBandTabsLayout from 'components/PageTemplate/components/HeaderBandTabsLayout';
 import { PageTab } from 'components/PageTemplate/types';
 import RumApplicationSheet from 'components/RumApplicationSheet/RumApplicationSheet';
@@ -47,6 +48,7 @@ function RumApplication(): JSX.Element {
 	const [settingsTab, setSettingsTab] = useState<SheetTab | null>(null);
 	const state = useApplicationOverview(id, release);
 	const filter = overviewFilter(id, release);
+	const jvm = state.application?.platform === RumtypesPlatformDTO.android;
 
 	if (state.notFound) {
 		return <ApplicationNotFound />;
@@ -68,10 +70,16 @@ function RumApplication(): JSX.Element {
 			fingerprint={decodeURIComponent(fingerprint)}
 			release={release}
 			window={state.window}
+			jvm={jvm}
 			onOpenSourceMaps={(): void => setSettingsTab('sourcemaps')}
 		/>
 	) : (
-		<ErrorsTab applicationId={id} release={release} window={state.window} />
+		<ErrorsTab
+			applicationId={id}
+			release={release}
+			window={state.window}
+			jvm={jvm}
+		/>
 	);
 
 	const tabs: PageTab[] = [

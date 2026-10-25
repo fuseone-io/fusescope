@@ -7,6 +7,7 @@ import {
 	frameLabel,
 	frameLocation,
 	groupFrames,
+	isJvmLibraryClass,
 	isLibraryFile,
 	isScriptFile,
 	StackFrame,
@@ -209,5 +210,68 @@ describe('defaultStackMode', () => {
 		['minified without frames', event([]), 'minified'],
 	])('%s', (_name, input, mode) => {
 		expect(defaultStackMode(input)).toBe(mode);
+	});
+});
+
+describe('isJvmLibraryClass', () => {
+	it.each([
+		['android.app.Activity.performCreate', true],
+		['androidx.fragment.app.Fragment.onResume', true],
+		['java.lang.Thread.run', true],
+		['kotlinx.coroutines.DispatchedTask.run', true],
+		['com.example.shop.Cart.add', false],
+		['a.b.a', false],
+	])('%s is library: %s', (fn, expected) => {
+		expect(isJvmLibraryClass(fn)).toBe(expected);
+	});
+});
+
+describe('displayFrames for JVM traces', () => {
+	const jvm = (fn: string, file: string, line: number): Frame => ({
+		function: fn,
+		file,
+		line,
+		column: 0,
+		original: null,
+	});
+
+	it('marks unmapped platform frames as library and app frames as in app', () => {
+		const frames = displayFrames(
+			[
+				jvm('a.b.a', 'SourceFile', 6),
+				jvm('android.app.Activity.performCreate', 'Activity.java', 8595),
+			],
+			'original',
+			true,
+		);
+		expect(frames.map((frame) => frame.inApp)).toStrictEqual([true, false]);
+		expect(frameLocation(frames[1])).toBe('Activity.java:8595');
+	});
+
+	it('keeps the inlined flag of retraced frames', () => {
+		const [frame] = displayFrames(
+			[
+				{
+					...jvm('a.b.a', 'SourceFile', 6),
+					original: {
+						function: 'com.example.shop.Item.price',
+						file: 'Item.kt',
+						line: 15,
+						column: 0,
+						inApp: true,
+						inlined: true,
+						sourceMap: '/mapping.txt',
+						context: null,
+					},
+				},
+			],
+			'original',
+			true,
+		);
+		expect(frame).toMatchObject({
+			function: 'com.example.shop.Item.price',
+			inlined: true,
+			symbolicated: true,
+		});
 	});
 });

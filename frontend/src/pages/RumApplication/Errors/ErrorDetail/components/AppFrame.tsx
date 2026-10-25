@@ -23,6 +23,14 @@ function AppFrame({ frame, initiallyOpen }: AppFrameProps): JSX.Element {
 				{frameLocation(frame)}
 			</span>
 			<span className="tw:flex-1" />
+			{frame.inlined && (
+				<span
+					title="R8 inlined this method into the frame below"
+					className="tw:inline-flex tw:h-5 tw:flex-none tw:items-center tw:rounded-sm tw:bg-primary-soft tw:px-1.5 tw:text-[11px] tw:font-medium tw:text-primary-ink"
+				>
+					inlined
+				</span>
+			)}
 			<span className="tw:inline-flex tw:h-5 tw:flex-none tw:items-center tw:rounded-sm tw:bg-muted tw:px-1.5 tw:text-[11px] tw:font-medium tw:text-muted-foreground">
 				in app
 			</span>

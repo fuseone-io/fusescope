@@ -26,16 +26,26 @@ export const APP = {
 	},
 };
 
+export const ANDROID_APP = {
+	...APP,
+	name: 'shop-android',
+	platform: 'android',
+	allowedPackageNames: ['com.example.shop'],
+};
+
 export const ok = (data: unknown): Record<string, unknown> => ({
 	status: 'success',
 	data,
 });
 
 /** Serves the application and renders the page at `path`. */
-export function renderPage(path = '/frontend/applications/app-1'): void {
+export function renderPage(
+	path = '/frontend/applications/app-1',
+	app: Record<string, unknown> = APP,
+): void {
 	server.use(
 		rest.get('*/api/v1/rum/applications/app-1', (_req, res, ctx) =>
-			res(ctx.json(ok(APP))),
+			res(ctx.json(ok(app))),
 		),
 	);
 	render(

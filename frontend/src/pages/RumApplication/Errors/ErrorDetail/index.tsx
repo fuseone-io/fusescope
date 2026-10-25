@@ -9,6 +9,7 @@ interface ErrorDetailProps {
 	fingerprint: string;
 	release: string;
 	window: ApmWindow;
+	jvm?: boolean;
 	onOpenSourceMaps: () => void;
 }
 
@@ -20,6 +21,7 @@ function ErrorDetail({
 	fingerprint,
 	release,
 	window,
+	jvm = false,
 	onOpenSourceMaps,
 }: ErrorDetailProps): JSX.Element {
 	const [eventId] = useEventParam();
@@ -58,6 +60,7 @@ function ErrorDetail({
 			group={state.group}
 			release={release}
 			window={window}
+			jvm={jvm}
 			onOpenSourceMaps={onOpenSourceMaps}
 		/>
 	);

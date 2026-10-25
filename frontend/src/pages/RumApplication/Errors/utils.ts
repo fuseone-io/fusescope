@@ -116,7 +116,16 @@ export function releasesSummary(group: RumtypesErrorGroupDTO): {
 export function sourceMapMissing(
 	group: RumtypesErrorGroupDTO,
 	uploaded: Set<string> | undefined,
+	jvm = false,
 ): boolean {
+	if (jvm) {
+		return Boolean(
+			uploaded &&
+			group.lastSeenRelease &&
+			!group.topFrame?.original &&
+			!uploaded.has(group.lastSeenRelease),
+		);
+	}
 	const file = group.topFrame?.file ?? '';
 	return Boolean(
 		uploaded &&
