@@ -2452,6 +2452,10 @@ func (aH *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *middlewa
 		"/uninstall", am.ViewAccess(aH.UninstallIntegration),
 	).Methods(http.MethodPost)
 
+	subRouter.HandleFunc(
+		"/upgrade", am.EditAccess(aH.UpgradeIntegration),
+	).Methods(http.MethodPost)
+
 	// Used for polling for status in v0
 	subRouter.HandleFunc(
 		"/{integrationId}/connection_status", am.ViewAccess(aH.GetIntegrationConnectionStatus),
@@ -2774,6 +2778,28 @@ func (aH *APIHandler) UninstallIntegration(w http.ResponseWriter, r *http.Reques
 	}
 
 	aH.Respond(w, map[string]interface{}{})
+}
+
+func (aH *APIHandler) UpgradeIntegration(w http.ResponseWriter, r *http.Request) {
+	req := integrations.UpgradeIntegrationRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+		return
+	}
+
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	integration, err := aH.IntegrationsController.Upgrade(r.Context(), claims.OrgID, &req, claims.Email, valuer.MustNewUUID(claims.IdentityID()))
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	aH.Respond(w, integration)
 }
 
 // logs

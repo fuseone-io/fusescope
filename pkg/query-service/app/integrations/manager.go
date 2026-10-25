@@ -505,15 +505,7 @@ func (m *Manager) deprovisionDashboards(
 	}
 
 	for _, row := range rows {
-		if err := m.installedIntegrationsRepo.deleteIntegrationDashboardBySlug(ctx, orgID.StringValue(), row.Slug); err != nil {
-			return err
-		}
-
-		dashID, err := valuer.NewUUID(row.DashboardID)
-		if err != nil {
-			return err
-		}
-		if err := m.dashboardModule.DeleteUnsafeV2(ctx, orgID, dashID); err != nil {
+		if err := m.deleteProvisionedDashboard(ctx, orgID, row); err != nil {
 			return err
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"testing"
 
 	"github.com/fuseone-io/fusescope/pkg/modules/dashboard/dashboardtest"
@@ -15,18 +16,31 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testPackage(id string, version string, title string, pipelineName string) catalog.Package {
+type testDashboard struct {
+	id    string
+	title string
+}
+
+func testPackage(id string, version string, title string, pipelineName string, dashboards ...testDashboard) catalog.Package {
 	pipelines := `[]`
 	if pipelineName != "" {
 		pipelines = fmt.Sprintf(`[{"name": %q, "alias": "parse", "enabled": true, "filter": {"op": "AND", "items": []}, "config": []}]`, pipelineName)
 	}
+	dashboardAssets := `null`
+	if len(dashboards) > 0 {
+		definitions := []string{}
+		for _, dashboard := range dashboards {
+			definitions = append(definitions, fmt.Sprintf(`{"id": %q, "definition": {"schemaVersion": "v6", "generateName": true, "tags": [], "spec": {"display": {"name": %q}, "links": [], "variables": [], "panels": {}, "layouts": []}}}`, dashboard.id, dashboard.title))
+		}
+		dashboardAssets = "[" + strings.Join(definitions, ",") + "]"
+	}
 	return catalog.Package{ID: id, Version: version, Document: fmt.Appendf(nil, `{
 		"id": %q, "title": %q, "description": "", "author": {"name": "", "email": "", "homepage": ""},
 		"icon": "", "categories": [], "overview": "", "configuration": [],
-		"assets": {"logs": {"pipelines": %s}, "dashboards": null, "alerts": null},
+		"assets": {"logs": {"pipelines": %s}, "dashboards": %s, "alerts": null},
 		"connection_tests": {"logs": {"attribute_key": "source", "attribute_value": "demo"}},
 		"data_collected": {"logs": [], "metrics": []}
-	}`, id, title, pipelines)}
+	}`, id, title, pipelines, dashboardAssets)}
 }
 
 func newCatalogManager(t *testing.T, store sqlstore.SQLStore, packages ...catalog.Package) *Manager {

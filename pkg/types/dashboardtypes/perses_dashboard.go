@@ -492,6 +492,16 @@ func (u *UpdatableDashboardV2) Validate() error {
 	return u.Spec.Validate()
 }
 
+// ToUpdatable re-applies a definition onto an existing dashboard, whose name is immutable.
+func (postable PostableDashboardV2) ToUpdatable(name string) UpdatableDashboardV2 {
+	return UpdatableDashboardV2{
+		DashboardV2MetadataBase: postable.DashboardV2MetadataBase,
+		Name:                    name,
+		Tags:                    postable.Tags,
+		Spec:                    postable.Spec,
+	}
+}
+
 func (d DashboardV2) toUpdatableDashboardV2() UpdatableDashboardV2 {
 	return UpdatableDashboardV2{
 		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
