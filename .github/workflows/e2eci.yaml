@@ -27,12 +27,12 @@ on:
       - checks_requested
 
 concurrency:
-  group: e2eci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  group: e2eci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}${{ (github.event.action == 'labeled' && github.event.label.name != 'safe-to-e2e' && github.event.label.name != 'safe-to-test') && format('-ignored-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 jobs:
   changes:
-    if: github.event_name != 'merge_group'
+    if: github.event_name != 'merge_group' && !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-e2e' && github.event.label.name != 'safe-to-test')
     runs-on: ubuntu-24.04
     outputs:
       e2e: ${{ steps.changes.outputs.e2e }}
