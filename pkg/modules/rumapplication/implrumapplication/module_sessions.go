@@ -2,7 +2,6 @@ package implrumapplication
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -38,7 +37,7 @@ func (module *module) ListSessions(ctx context.Context, orgID valuer.UUID, id va
 	if filter.Browser != "" {
 		scope.clientKeys = []uint64{}
 		for _, info := range resources {
-			if strings.EqualFold(info.client.Browser, filter.Browser) {
+			if info.client.MatchesBrowser(filter.Browser) {
 				scope.clientKeys = append(scope.clientKeys, info.clientKey)
 			}
 		}

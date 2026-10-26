@@ -255,7 +255,7 @@ def test_android_r8_mappings_per_map_id(
 
     second = 1_000_000_000
     t0 = time.time_ns() - 300 * second
-    resource = {"service.name": created["id"], "service.version": "2.1.0", "app.package.name": PACKAGE}
+    resource = {"service.name": created["id"], "service.version": "2.1.0", "app.package.name": PACKAGE, "os.name": "Android", "os.version": "14", "device.manufacturer": "Google", "device.model.name": "Pixel 8"}
     events = [
         rum_event("exception", t0 + i * second, {"exception.type": "a.a", "exception.message": "Cart is empty", "exception.stacktrace": CRASH.replace("SourceFile", f"r8-map-id-{map_id}"), "fusescope.rum.error.source": "crash", "session.id": f"build-{uuid.uuid4().hex}"})
         for i, map_id in enumerate(["7e4c1a9", "260eabab"])
@@ -266,6 +266,10 @@ def test_android_r8_mappings_per_map_id(
     params = {"start": t0 // 1_000_000 - 60_000, "end": t0 // 1_000_000 + 60_000}
     errors = wait_for_rum_query(signoz, token, f"{base}/errors", params, lambda data: data["events"] == 3)
     assert sorted(group["type"] for group in errors["groups"]) == ["ANR", "com.example.shop.BasketException", "com.example.shop.CartException"], "each build retraces with its own mapping; the beta ANR type is normalized"
+
+    anr = next(group for group in errors["groups"] if group["type"] == "ANR")
+    detail = wait_for_rum_query(signoz, token, f"{base}/errors/{anr['fingerprint']}", params, lambda data: len(data["affectedSessions"]) == 1)
+    assert detail["affectedSessions"][0]["client"] == {"browser": "", "browserVersion": "", "device": "Google Pixel 8", "os": "Android", "osVersion": "14"}, "a mobile client is read from os.* and device.*"
 
     rows = signoz.telemetrystore.conn.query(
         "SELECT DISTINCT resources_string['service.name'] FROM signoz_logs.distributed_logs_v2 WHERE resources_string['fusescope.rum.application.id'] = {application:String}",

@@ -20,7 +20,7 @@ const (
 
 var (
 	androidKeyColumns   = []cmock.ColumnType{{Name: "key", Type: "UInt64"}, {Name: "type", Type: "String"}, {Name: "normalized_message", Type: "String"}, {Name: "frame_line", Type: "String"}, {Name: "first_seen", Type: "UInt64"}, {Name: "first_fingerprint", Type: "String"}, {Name: "release", Type: "String"}, {Name: "error_source", Type: "String"}}
-	androidResourceCols = []cmock.ColumnType{{Name: "fingerprint", Type: "String"}, {Name: "release", Type: "String"}, {Name: "environment", Type: "String"}, {Name: "ua", Type: "String"}, {Name: "brands", Type: "String"}, {Name: "platform", Type: "String"}, {Name: "client_key", Type: "UInt64"}, {Name: "first_seen", Type: "Int64"}}
+	androidResourceCols = []cmock.ColumnType{{Name: "fingerprint", Type: "String"}, {Name: "release", Type: "String"}, {Name: "environment", Type: "String"}, {Name: "ua", Type: "String"}, {Name: "brands", Type: "String"}, {Name: "platform", Type: "String"}, {Name: "os_name", Type: "String"}, {Name: "os_version", Type: "String"}, {Name: "device_manufacturer", Type: "String"}, {Name: "device_model", Type: "String"}, {Name: "client_key", Type: "UInt64"}, {Name: "first_seen", Type: "Int64"}}
 	androidGroupColumns = []cmock.ColumnType{{Name: "group_index", Type: "UInt16"}, {Name: "events", Type: "UInt64"}, {Name: "sessions", Type: "UInt64"}, {Name: "first", Type: "UInt64"}, {Name: "last", Type: "UInt64"}, {Name: "message", Type: "String"}, {Name: "route", Type: "String"}, {Name: "source", Type: "String"}, {Name: "frame_line", Type: "String"}, {Name: "last_release", Type: "String"}, {Name: "releases", Type: "Array(String)"}, {Name: "sparkline", Type: "Map(UInt64, UInt64)"}}
 )
 
@@ -32,7 +32,7 @@ func expectAndroidErrorKeys(mock cmock.ClickConnMockCommon) {
 		{uint64(24), "a.a", "Cart is empty", androidKeyFrames, uint64(4_000_000_000), "fp-mapped", "2.1.0", "manual"},
 	}))
 	mock.ExpectQuery(`FROM .signoz_logs.\..distributed_logs_v2_resource. WHERE .* GROUP BY fingerprint LIMIT \?`).WithArgs(anyArgs(5)...).WillReturnRows(cmock.NewRows(androidResourceCols, [][]any{
-		{"fp-mapped", "2.1.0", "production", "", "", "", uint64(1), int64(1500)}, {"fp-debug", "2.1.0-debug", "production", "", "", "", uint64(2), int64(500)},
+		{"fp-mapped", "2.1.0", "production", "", "", "", "Android", "14", "Google", "Pixel 8", uint64(1), int64(1500)}, {"fp-debug", "2.1.0-debug", "production", "", "", "", "", "", "", "", uint64(2), int64(500)},
 	}))
 }
 

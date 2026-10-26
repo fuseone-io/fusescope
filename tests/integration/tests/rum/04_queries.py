@@ -239,7 +239,7 @@ def test_sessions_query(  # pylint: disable=too-many-locals
     assert summary["userId"] == user
     assert (summary["views"], summary["actions"], summary["errors"]) == (2, 2, 1)
     assert summary["durationMs"] == 120_000
-    assert summary["client"] == {"browser": "Firefox", "browserVersion": "131", "os": "Linux", "osVersion": ""}
+    assert summary["client"] == {"browser": "Firefox", "browserVersion": "131", "device": "", "os": "Linux", "osVersion": ""}
     assert summary["release"] == "1.8.0"
     assert summary["environment"] == "production"
 

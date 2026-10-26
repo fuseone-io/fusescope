@@ -40,19 +40,39 @@ var clientHintBrands = []struct{ brand, name string }{
 type Client struct {
 	Browser        string `json:"browser" required:"true" description:"Empty when unknown."`
 	BrowserVersion string `json:"browserVersion" required:"true" description:"Major version."`
+	Device         string `json:"device" required:"true" description:"Manufacturer and model of a mobile device, from device.manufacturer and device.model.name, e.g. Google Pixel 8; empty in a browser."`
 	OS             string `json:"os" required:"true" description:"Empty when unknown."`
 	OSVersion      string `json:"osVersion" required:"true" description:"Major version, major.minor for macOS, empty when the user agent hides it."`
 }
 
+// ClientAttributes are the resource attributes a client is read from: the
+// browser's user agent and client hints, or the os.* and device.* a mobile
+// SDK sends.
+type ClientAttributes struct {
+	UserAgent          string
+	BrowserBrands      string
+	BrowserPlatform    string
+	OSName             string
+	OSVersion          string
+	DeviceManufacturer string
+	DeviceModel        string
+}
+
 // NewClient reads the user agent and falls back to the browser.brands and
-// browser.platform client hints the SDK records.
-func NewClient(userAgent string, brands string, platform string) Client {
-	client := ParseUserAgent(userAgent)
+// browser.platform client hints the SDK records. Without a user agent, a
+// mobile resource's os.name and device.* name the client.
+func NewClient(attributes ClientAttributes) Client {
+	if attributes.UserAgent == "" && attributes.OSName != "" {
+		version, _, _ := strings.Cut(attributes.OSVersion, ".")
+		return Client{Device: deviceLabel(attributes.DeviceManufacturer, attributes.DeviceModel), OS: attributes.OSName, OSVersion: version}
+	}
+
+	client := ParseUserAgent(attributes.UserAgent)
 	if client.Browser == "" {
-		client.Browser, client.BrowserVersion = browserFromBrands(brands)
+		client.Browser, client.BrowserVersion = browserFromBrands(attributes.BrowserBrands)
 	}
 	if client.OS == "" {
-		client.OS = platform
+		client.OS = attributes.BrowserPlatform
 	}
 	return client
 }
@@ -101,4 +121,18 @@ func browserFromBrands(brands string) (string, string) {
 		}
 	}
 	return "", ""
+}
+
+// deviceLabel prefixes the model with its manufacturer, capitalized, unless
+// the model already names it.
+func deviceLabel(manufacturer string, model string) string {
+	manufacturer, model = strings.TrimSpace(manufacturer), strings.TrimSpace(model)
+	if manufacturer == "" || strings.HasPrefix(strings.ToLower(model), strings.ToLower(manufacturer)) {
+		return model
+	}
+	label := strings.ToUpper(manufacturer[:1]) + manufacturer[1:]
+	if model == "" {
+		return label
+	}
+	return label + " " + model
 }

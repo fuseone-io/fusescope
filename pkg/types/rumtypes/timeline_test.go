@@ -113,6 +113,7 @@ func TestClientLabels(t *testing.T) {
 		{name: "Full", client: Client{Browser: "Chrome", BrowserVersion: "130", OS: "Android", OSVersion: "14"}, browser: "Chrome 130", os: "Android 14"},
 		{name: "NoVersion", client: Client{Browser: "Chrome", OS: "Linux"}, browser: "Chrome", os: "Linux"},
 		{name: "Unknown", client: Client{}, browser: "Unknown", os: "Unknown"},
+		{name: "Mobile_DeviceForBrowser", client: Client{Device: "Google Pixel 8", OS: "Android", OSVersion: "14"}, browser: "Google Pixel 8", os: "Android 14"},
 	}
 
 	for _, testCase := range testCases {
@@ -173,4 +174,23 @@ func TestGettableSessionObserve(t *testing.T) {
 
 	assert.Equal(t, at, session.StartedAt)
 	assert.Equal(t, at.Add(2*time.Minute), session.EndedAt)
+}
+
+func TestClientMatchesBrowser(t *testing.T) {
+	testCases := []struct {
+		name    string
+		client  Client
+		filter  string
+		matches bool
+	}{
+		{name: "Browser_IgnoresCase", client: Client{Browser: "Chrome"}, filter: "chrome", matches: true},
+		{name: "Device_Matches", client: Client{Device: "Google Pixel 8"}, filter: "google pixel 8", matches: true},
+		{name: "Other_NoMatch", client: Client{Browser: "Firefox"}, filter: "Chrome"},
+		{name: "EmptyClient_NoMatch", client: Client{}, filter: "Chrome"},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.matches, testCase.client.MatchesBrowser(testCase.filter))
+		})
+	}
 }

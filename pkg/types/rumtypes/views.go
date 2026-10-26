@@ -1,6 +1,7 @@
 package rumtypes
 
 import (
+	"strings"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/valuer"
@@ -146,8 +147,18 @@ func (VitalRating) Enum() []any {
 	return []any{VitalRatingGood, VitalRatingNeedsImprovement, VitalRatingPoor}
 }
 
+// BrowserLabel names the browser, or the device of a mobile client.
 func (client Client) BrowserLabel() string {
+	if client.Browser == "" && client.Device != "" {
+		return client.Device
+	}
 	return label(client.Browser, client.BrowserVersion)
+}
+
+// MatchesBrowser reports whether the browser name, or the device of a
+// mobile client, is name, ignoring case.
+func (client Client) MatchesBrowser(name string) bool {
+	return (client.Browser != "" && strings.EqualFold(client.Browser, name)) || (client.Device != "" && strings.EqualFold(client.Device, name))
 }
 
 func (client Client) OSLabel() string {
