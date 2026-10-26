@@ -11,11 +11,11 @@ export const MAPPING_FILE = 'app/build/outputs/mapping/release/mapping.txt';
 
 export interface AndroidSnippetInput {
 	applicationId: string;
-	name: string;
 	environment: string;
 	publicKey: string;
 	endpoint: string;
 	sampleRate: number;
+	tracePropagationUrls: string[];
 	piiPolicy: RumtypesPIIPolicyDTO;
 }
 
@@ -49,6 +49,18 @@ export function gradleDependencySnippet(): string {
 	].join('\n');
 }
 
+/** The hosts of the URLs, lowercase and once each; the SDK matches hosts. */
+export function traceparentHosts(urls: string[]): string[] {
+	const hosts = urls.flatMap((url) => {
+		try {
+			return [new URL(url).hostname];
+		} catch {
+			return [];
+		}
+	});
+	return [...new Set(hosts)];
+}
+
 /** Only the privacy options that differ from the SDK defaults. */
 function privacyArguments(policy: RumtypesPIIPolicyDTO): string[] {
 	const entries: string[] = [];
@@ -71,14 +83,18 @@ export function buildAndroidInitSnippet(input: AndroidSnippetInput): string {
 		`applicationId = ${kotlinString(input.applicationId)}`,
 		`key = ${kotlinString(input.publicKey)}`,
 		`endpoint = ${kotlinString(input.endpoint)}`,
-		`service = ${kotlinString(input.name)}`,
-		'release = BuildConfig.VERSION_NAME',
 	];
 	if (input.environment) {
 		config.push(`environment = ${kotlinString(input.environment)}`);
 	}
 	if (input.sampleRate < 1) {
 		config.push(`sessionSampleRate = ${input.sampleRate}`);
+	}
+	const hosts = traceparentHosts(input.tracePropagationUrls);
+	if (hosts.length > 0) {
+		config.push(
+			`traceparentHosts = listOf(${hosts.map(kotlinString).join(', ')})`,
+		);
 	}
 	if (input.piiPolicy.requireConsent) {
 		config.push('requireConsent = true');

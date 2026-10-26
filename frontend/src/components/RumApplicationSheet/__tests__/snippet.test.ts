@@ -3,7 +3,6 @@ import { buildNpmSnippet, NPM_INSTALL_COMMAND } from '../utils/snippet';
 
 const BASE: SnippetInput = {
 	applicationId: '01a16115-094c-79a3-aa4c-39d2a99907d1',
-	name: 'web-shop',
 	environment: 'production',
 	publicKey: 'rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs',
 	endpoint: 'https://fusescope.example.com',
@@ -25,7 +24,6 @@ init({
   applicationId: '01a16115-094c-79a3-aa4c-39d2a99907d1',
   publicKey: 'rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs',
   endpoint: 'https://fusescope.example.com',
-  service: 'web-shop',
   version: '<your app version>', // your release, e.g. from package.json
   environment: 'production',`;
 
@@ -76,15 +74,15 @@ describe('buildNpmSnippet', () => {
 		],
 		[
 			'quotes in values are escaped',
-			{ name: "o'brien", environment: '' },
+			{ environment: "o'brien" },
 			`import { init } from '@fusescope/browser';
 
 init({
   applicationId: '01a16115-094c-79a3-aa4c-39d2a99907d1',
   publicKey: 'rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs',
   endpoint: 'https://fusescope.example.com',
-  service: 'o\\'brien',
   version: '<your app version>', // your release, e.g. from package.json
+  environment: 'o\\'brien',
 });
 `,
 		],
