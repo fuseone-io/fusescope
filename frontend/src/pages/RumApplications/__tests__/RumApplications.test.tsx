@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, waitFor, within } from 'tests/test-utils';
@@ -154,6 +155,32 @@ describe('RumApplications', () => {
 		).resolves.toHaveTextContent(/^2 applications ·/);
 		expect(screen.getByTestId('rum-applications-shown')).toHaveTextContent(
 			/^2 of 2 applications$/,
+		);
+	});
+
+	it('filters by the Android platform', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		mockApplications([
+			APP,
+			{ ...APP, id: 'app-2', name: 'shop-android', platform: 'android' },
+		]);
+		render(<RumApplications />);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('rum-applications-shown')).toHaveTextContent(
+				/^2 of 2 applications$/,
+			),
+		);
+		const android = screen.getByTestId('rum-platform-android');
+		expect(android).toBeEnabled();
+		expect(android).not.toHaveTextContent(/soon/i);
+		expect(screen.getByTestId('rum-platform-ios')).toBeDisabled();
+
+		await user.click(android);
+		await waitFor(() =>
+			expect(screen.getByTestId('rum-applications-shown')).toHaveTextContent(
+				/^1 of 2 applications$/,
+			),
 		);
 	});
 
