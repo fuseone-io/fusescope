@@ -32,5 +32,7 @@ const (
 const (
 	ErrorSourceCrash = "crash"
 	ErrorSourceANR   = "anr"
-	ANRMessage       = "Application Not Responding"
+	// ExceptionTypeLegacyANR is the ANR type SDK 0.1.0-beta.1 sends.
+	ExceptionTypeLegacyANR = "ApplicationNotResponding"
+	ANRMessage             = "Application Not Responding"
 )
