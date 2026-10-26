@@ -1157,6 +1157,9 @@ export const uploadRUMR8Mapping = (
 	if (formDataRumtypesPostableR8MappingDTO?.file !== undefined) {
 		formData.append(`file`, formDataRumtypesPostableR8MappingDTO.file);
 	}
+	if (formDataRumtypesPostableR8MappingDTO?.map_id !== undefined) {
+		formData.append(`map_id`, formDataRumtypesPostableR8MappingDTO.map_id);
+	}
 	if (formDataRumtypesPostableR8MappingDTO?.release !== undefined) {
 		formData.append(`release`, formDataRumtypesPostableR8MappingDTO.release);
 	}
