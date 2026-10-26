@@ -52,6 +52,18 @@ func TestProcessLogsAndroid(t *testing.T) {
 			wantErrors: 1,
 		},
 		{
+			name: "BetaANRType_Normalized", application: newTestAndroidApplication(), eventName: "exception",
+			attrs:      map[string]any{"exception.type": "ApplicationNotResponding", rumtypes.AttributeErrorSource: rumtypes.ErrorSourceANR},
+			want:       map[string]string{"exception.type": rumtypes.ExceptionTypeANR},
+			wantErrors: 1,
+		},
+		{
+			name: "CrashNamedApplicationNotResponding_Kept", application: newTestAndroidApplication(), eventName: "exception",
+			attrs:      map[string]any{"exception.type": "ApplicationNotResponding", rumtypes.AttributeErrorSource: rumtypes.ErrorSourceCrash},
+			want:       map[string]string{"exception.type": "ApplicationNotResponding"},
+			wantErrors: 1,
+		},
+		{
 			name: "ScreenName_Route", application: newTestAndroidApplication(), eventName: "app.screen.click",
 			attrs: map[string]any{rumtypes.AttributeScreenName: "CheckoutScreen"},
 			want:  map[string]string{rumtypes.AttributeViewRoute: "CheckoutScreen"},

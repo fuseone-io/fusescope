@@ -129,22 +129,26 @@ func allowedPackageNames(application *rumtypes.Application, resources []pcommon.
 
 // normalizeAndroidEvent stores the crash and ANR events of
 // opentelemetry-android as exceptions with their source, and gives an ANR,
-// which reports only the main thread's stack, its type and message.
+// which reports only the main thread's stack, its type and message. The
+// ApplicationNotResponding type of SDK 0.1.0-beta.1 becomes ANR.
 func normalizeAndroidEvent(attributes pcommon.Map) {
 	eventName, _ := attributes.Get(rumtypes.AttributeEventName)
-	var source string
 	switch eventName.Str() {
 	case rumtypes.EventNameAppCrash:
-		source = rumtypes.ErrorSourceCrash
+		attributes.PutStr(rumtypes.AttributeEventName, rumtypes.EventNameException)
+		putIfMissing(attributes, rumtypes.AttributeErrorSource, rumtypes.ErrorSourceCrash)
 	case rumtypes.EventNameDeviceANR:
-		source = rumtypes.ErrorSourceANR
+		attributes.PutStr(rumtypes.AttributeEventName, rumtypes.EventNameException)
+		putIfMissing(attributes, rumtypes.AttributeErrorSource, rumtypes.ErrorSourceANR)
 		putIfMissing(attributes, rumtypes.AttributeExceptionType, rumtypes.ExceptionTypeANR)
 		putIfMissing(attributes, rumtypes.AttributeExceptionMessage, rumtypes.ANRMessage)
-	default:
-		return
 	}
-	attributes.PutStr(rumtypes.AttributeEventName, rumtypes.EventNameException)
-	putIfMissing(attributes, rumtypes.AttributeErrorSource, source)
+
+	source, _ := attributes.Get(rumtypes.AttributeErrorSource)
+	exceptionType, _ := attributes.Get(rumtypes.AttributeExceptionType)
+	if source.Str() == rumtypes.ErrorSourceANR && exceptionType.Str() == rumtypes.ExceptionTypeLegacyANR {
+		attributes.PutStr(rumtypes.AttributeExceptionType, rumtypes.ExceptionTypeANR)
+	}
 }
 
 // copyScreenRoute makes the screen name the view route the RUM screens group
