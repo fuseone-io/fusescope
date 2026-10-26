@@ -46,7 +46,7 @@ var (
 
 	eventNameExpr  = attribute(rumtypes.AttributeEventName)
 	vitalValueExpr = "attributes_number[" + clickhousesql.StringLiteral(rumtypes.AttributeVitalValue) + "]"
-	clientKeyExpr  = fmt.Sprintf("cityHash64(%s, %s, %s)", label(rumtypes.AttributeUserAgent), label(rumtypes.AttributeBrowserBrands), label(rumtypes.AttributeBrowserPlatform))
+	clientKeyExpr  = fmt.Sprintf("cityHash64(%s, %s, %s, %s, %s, %s, %s)", label(rumtypes.AttributeUserAgent), label(rumtypes.AttributeBrowserBrands), label(rumtypes.AttributeBrowserPlatform), label(rumtypes.AttributeOSName), label(rumtypes.AttributeOSVersion), label(rumtypes.AttributeDeviceMaker), label(rumtypes.AttributeDeviceModel))
 )
 
 type telemetryReader struct {
@@ -129,6 +129,10 @@ func (reader *telemetryReader) Resources(ctx context.Context, signal telemetrySi
 		"any("+label(rumtypes.AttributeUserAgent)+")",
 		"any("+label(rumtypes.AttributeBrowserBrands)+")",
 		"any("+label(rumtypes.AttributeBrowserPlatform)+")",
+		"any("+label(rumtypes.AttributeOSName)+")",
+		"any("+label(rumtypes.AttributeOSVersion)+")",
+		"any("+label(rumtypes.AttributeDeviceMaker)+")",
+		"any("+label(rumtypes.AttributeDeviceModel)+")",
 		"any("+clientKeyExpr+")",
 		"min(seen_at_ts_bucket_start)",
 	)
@@ -139,14 +143,14 @@ func (reader *telemetryReader) Resources(ctx context.Context, signal telemetrySi
 
 	resources := map[string]*resourceInfo{}
 	err := reader.query(ctx, "Resources", sb, func(rows driver.Rows) error {
-		var fingerprint, userAgent, brands, platform string
+		var fingerprint string
 		var firstSeen int64
-		info := &resourceInfo{}
-		if err := rows.Scan(&fingerprint, &info.release, &info.environment, &userAgent, &brands, &platform, &info.clientKey, &firstSeen); err != nil {
+		info, attributes := &resourceInfo{}, rumtypes.ClientAttributes{}
+		if err := rows.Scan(&fingerprint, &info.release, &info.environment, &attributes.UserAgent, &attributes.BrowserBrands, &attributes.BrowserPlatform, &attributes.OSName, &attributes.OSVersion, &attributes.DeviceManufacturer, &attributes.DeviceModel, &info.clientKey, &firstSeen); err != nil {
 			return err
 		}
 		info.firstSeen = time.Unix(firstSeen, 0).UTC()
-		info.client = rumtypes.NewClient(userAgent, brands, platform)
+		info.client = rumtypes.NewClient(attributes)
 		resources[fingerprint] = info
 		return nil
 	})

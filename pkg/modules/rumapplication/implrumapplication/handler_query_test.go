@@ -139,8 +139,8 @@ func TestHandlerListErrorGroupsMergesKeysByFingerprint(t *testing.T) {
 		{uint64(13), "RangeError", "Invalid time value", "", uint64(3_000_000_000), "fp-new"},
 	}))
 	mock.ExpectQuery(`FROM .signoz_logs.\..distributed_logs_v2_resource. WHERE .* GROUP BY fingerprint LIMIT \?`).WithArgs(anyArgs(5)...).WillReturnRows(cmock.NewRows(
-		[]cmock.ColumnType{{Name: "fingerprint", Type: "String"}, {Name: "release", Type: "String"}, {Name: "environment", Type: "String"}, {Name: "ua", Type: "String"}, {Name: "brands", Type: "String"}, {Name: "platform", Type: "String"}, {Name: "client_key", Type: "UInt64"}, {Name: "first_seen", Type: "Int64"}},
-		[][]any{{"fp-old", "1.7.4", "production", "", "", "", uint64(1), int64(500)}, {"fp-new", "1.8.0", "production", "", "", "", uint64(2), int64(1500)}},
+		[]cmock.ColumnType{{Name: "fingerprint", Type: "String"}, {Name: "release", Type: "String"}, {Name: "environment", Type: "String"}, {Name: "ua", Type: "String"}, {Name: "brands", Type: "String"}, {Name: "platform", Type: "String"}, {Name: "os_name", Type: "String"}, {Name: "os_version", Type: "String"}, {Name: "device_manufacturer", Type: "String"}, {Name: "device_model", Type: "String"}, {Name: "client_key", Type: "UInt64"}, {Name: "first_seen", Type: "Int64"}},
+		[][]any{{"fp-old", "1.7.4", "production", "", "", "", "", "", "", "", uint64(1), int64(500)}, {"fp-new", "1.8.0", "production", "", "", "", "", "", "", "", uint64(2), int64(1500)}},
 	))
 	mock.ExpectQuery(`transform\(cityHash64\(type, normalized_message, frame_line\), \?, \?, toUInt16\(0\)\) AS group_index`).WithArgs(anyArgs(15)...).WillReturnRows(cmock.NewRows(
 		[]cmock.ColumnType{{Name: "group_index", Type: "UInt16"}, {Name: "events", Type: "UInt64"}, {Name: "sessions", Type: "UInt64"}, {Name: "first", Type: "UInt64"}, {Name: "last", Type: "UInt64"}, {Name: "message", Type: "String"}, {Name: "route", Type: "String"}, {Name: "source", Type: "String"}, {Name: "frame_line", Type: "String"}, {Name: "last_release", Type: "String"}, {Name: "releases", Type: "Array(String)"}, {Name: "sparkline", Type: "Map(UInt64, UInt64)"}},
@@ -209,8 +209,8 @@ func TestHandlerGetSessionIgnoresRelease(t *testing.T) {
 		[][]any{},
 	))
 	mock.ExpectQuery(`FROM .signoz_traces.\..distributed_traces_v3_resource. WHERE .* GROUP BY fingerprint LIMIT \?`).WithArgs(anyArgs(5)...).WillReturnRows(cmock.NewRows(
-		[]cmock.ColumnType{{Name: "fingerprint", Type: "String"}, {Name: "release", Type: "String"}, {Name: "environment", Type: "String"}, {Name: "ua", Type: "String"}, {Name: "brands", Type: "String"}, {Name: "platform", Type: "String"}, {Name: "client_key", Type: "UInt64"}, {Name: "first_seen", Type: "Int64"}},
-		[][]any{{"fp-174", "1.7.4", "production", "", "", "", uint64(1), int64(500)}},
+		[]cmock.ColumnType{{Name: "fingerprint", Type: "String"}, {Name: "release", Type: "String"}, {Name: "environment", Type: "String"}, {Name: "ua", Type: "String"}, {Name: "brands", Type: "String"}, {Name: "platform", Type: "String"}, {Name: "os_name", Type: "String"}, {Name: "os_version", Type: "String"}, {Name: "device_manufacturer", Type: "String"}, {Name: "device_model", Type: "String"}, {Name: "client_key", Type: "UInt64"}, {Name: "first_seen", Type: "Int64"}},
+		[][]any{{"fp-174", "1.7.4", "production", "", "", "", "", "", "", "", uint64(1), int64(500)}},
 	))
 
 	status, data := serveQuery(t, NewHandler(module).GetSession, orgID, "/sessions/s1?release=1.8.0&start=0&end=2000000", map[string]string{"id": created.ID.StringValue(), "sessionId": "s1"})

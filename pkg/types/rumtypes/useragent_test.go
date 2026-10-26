@@ -38,24 +38,27 @@ func TestParseUserAgent(t *testing.T) {
 
 func TestNewClient(t *testing.T) {
 	testCases := []struct {
-		name      string
-		userAgent string
-		brands    string
-		platform  string
-		expected  Client
+		name       string
+		attributes ClientAttributes
+		expected   Client
 	}{
-		{name: "UserAgentWins", userAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0", brands: `["Chromium 147"]`, platform: "Windows", expected: Client{Browser: "Firefox", BrowserVersion: "131", OS: "Linux"}},
-		{name: "BrandsFallback", brands: `["Not.A/Brand 8","Chromium 147","Google Chrome 147"]`, platform: "macOS", expected: Client{Browser: "Chrome", BrowserVersion: "147", OS: "macOS"}},
-		{name: "BrandsFallback_Edge", brands: `["Microsoft Edge 130","Chromium 130","Not?A_Brand 99"]`, platform: "Windows", expected: Client{Browser: "Edge", BrowserVersion: "130", OS: "Windows"}},
-		{name: "BrandsFallback_ChromiumOnly", brands: `["Chromium 147","Not.A/Brand 8"]`, platform: "Linux", expected: Client{Browser: "Chromium", BrowserVersion: "147", OS: "Linux"}},
-		{name: "PlatformOnly", platform: "Android", expected: Client{OS: "Android"}},
-		{name: "BadBrands", brands: `not json`, expected: Client{}},
+		{name: "UserAgentWins", attributes: ClientAttributes{UserAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0", BrowserBrands: `["Chromium 147"]`, BrowserPlatform: "Windows"}, expected: Client{Browser: "Firefox", BrowserVersion: "131", OS: "Linux"}},
+		{name: "BrandsFallback", attributes: ClientAttributes{BrowserBrands: `["Not.A/Brand 8","Chromium 147","Google Chrome 147"]`, BrowserPlatform: "macOS"}, expected: Client{Browser: "Chrome", BrowserVersion: "147", OS: "macOS"}},
+		{name: "BrandsFallback_Edge", attributes: ClientAttributes{BrowserBrands: `["Microsoft Edge 130","Chromium 130","Not?A_Brand 99"]`, BrowserPlatform: "Windows"}, expected: Client{Browser: "Edge", BrowserVersion: "130", OS: "Windows"}},
+		{name: "BrandsFallback_ChromiumOnly", attributes: ClientAttributes{BrowserBrands: `["Chromium 147","Not.A/Brand 8"]`, BrowserPlatform: "Linux"}, expected: Client{Browser: "Chromium", BrowserVersion: "147", OS: "Linux"}},
+		{name: "PlatformOnly", attributes: ClientAttributes{BrowserPlatform: "Android"}, expected: Client{OS: "Android"}},
+		{name: "BadBrands", attributes: ClientAttributes{BrowserBrands: `not json`}, expected: Client{}},
 		{name: "Nothing", expected: Client{}},
+		{name: "AndroidResource_DeviceAndOS", attributes: ClientAttributes{OSName: "Android", OSVersion: "14", DeviceManufacturer: "Google", DeviceModel: "Pixel 8"}, expected: Client{Device: "Google Pixel 8", OS: "Android", OSVersion: "14"}},
+		{name: "AndroidResource_MajorVersion", attributes: ClientAttributes{OSName: "Android", OSVersion: "8.1.0", DeviceManufacturer: "samsung", DeviceModel: "SM-G960F"}, expected: Client{Device: "Samsung SM-G960F", OS: "Android", OSVersion: "8"}},
+		{name: "AndroidResource_ModelNamesManufacturer", attributes: ClientAttributes{OSName: "Android", OSVersion: "13", DeviceManufacturer: "OnePlus", DeviceModel: "OnePlus 11"}, expected: Client{Device: "OnePlus 11", OS: "Android", OSVersion: "13"}},
+		{name: "AndroidResource_ModelOnly", attributes: ClientAttributes{OSName: "Android", DeviceModel: "sdk_gphone64_x86_64"}, expected: Client{Device: "sdk_gphone64_x86_64", OS: "Android"}},
+		{name: "UserAgentOverResource", attributes: ClientAttributes{UserAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0", OSName: "Android", OSVersion: "14"}, expected: Client{Browser: "Firefox", BrowserVersion: "131", OS: "Linux"}},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.expected, NewClient(testCase.userAgent, testCase.brands, testCase.platform))
+			assert.Equal(t, testCase.expected, NewClient(testCase.attributes))
 		})
 	}
 }

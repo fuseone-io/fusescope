@@ -28,6 +28,10 @@ const (
 	AttributeUserAgent         = "user_agent.original"
 	AttributeBrowserBrands     = "browser.brands"
 	AttributeBrowserPlatform   = "browser.platform"
+	AttributeOSName            = "os.name"
+	AttributeOSVersion         = "os.version"
+	AttributeDeviceModel       = "device.model.name"
+	AttributeDeviceMaker       = "device.manufacturer"
 )
 
 const (
