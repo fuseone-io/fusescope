@@ -16,16 +16,14 @@ interface ApplicationsToolbarProps {
 const PLATFORMS = [
 	{ value: 'all' as const, label: 'All platforms' },
 	{ value: 'web' as const, label: 'Web' },
-	...(['android', 'ios'] as const).map((value) => {
-		const label = value === 'ios' ? 'iOS' : 'Android';
-		return {
-			value,
-			label,
-			disabled: true,
-			title: `${label} SDK is coming soon`,
-			badge: <SoonBadge />,
-		};
-	}),
+	{ value: 'android' as const, label: 'Android' },
+	{
+		value: 'ios' as const,
+		label: 'iOS',
+		disabled: true,
+		title: 'iOS SDK is coming soon',
+		badge: <SoonBadge />,
+	},
 ];
 
 function ApplicationsToolbar({
