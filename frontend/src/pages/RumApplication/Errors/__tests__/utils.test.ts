@@ -47,6 +47,8 @@ describe('parseErrorFilters', () => {
 			{ search: 'price', source: 'unhandledrejection', route: '/cart' },
 		],
 		['?source=bogus', { search: '', source: '', route: '' }],
+		['?source=crash', { search: '', source: 'crash', route: '' }],
+		['?source=anr', { search: '', source: 'anr', route: '' }],
 	])('%s', (search, filters) => {
 		expect(parseErrorFilters(search)).toStrictEqual(filters);
 	});

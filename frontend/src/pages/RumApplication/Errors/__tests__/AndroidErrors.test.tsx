@@ -1,3 +1,4 @@
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import userEvent from '@testing-library/user-event';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -44,6 +45,23 @@ describe('Android errors', () => {
 			'ANR',
 		);
 		expect(rows[0]).toHaveTextContent('com.example.shop.Item.price · Item.kt:15');
+	});
+
+	it('filters by the Android error sources', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		serve();
+		renderPage(`${PATH}?source=anr`, ANDROID_APP);
+
+		const rows = await screen.findAllByTestId('rum-error-group');
+		expect(rows).toHaveLength(1);
+		expect(within(rows[0]).getByTestId('rum-error-group-kind')).toHaveTextContent(
+			'ANR',
+		);
+		expect(screen.queryByTestId('rum-errors-source-onerror')).toBeNull();
+		expect(screen.queryByTestId('rum-errors-source-native')).toBeNull();
+
+		await user.click(screen.getByTestId('rum-errors-source-crash'));
+		expect(safeNavigateMock).toHaveBeenCalledWith(`${PATH}?source=crash`);
 	});
 
 	it('marks groups whose release has no R8 mapping', async () => {
