@@ -38,13 +38,13 @@ describe('gradleDependencySnippet', () => {
 		expect(ANDROID_SDK_ARTIFACT).toBe('io.fuseone.fusescope:android');
 		expect(ANDROID_PLUGIN_ID).toBe('io.fuseone.fusescope.android.mappings');
 		expect(snippet).toContain(
-			'id("io.fuseone.fusescope.android.mappings") version "0.1.0-beta.1"',
+			'id("io.fuseone.fusescope.android.mappings") version "0.1.0-beta.2"',
 		);
 		expect(snippet).toContain(
-			'implementation("io.fuseone.fusescope:android:0.1.0-beta.1")',
+			'implementation("io.fuseone.fusescope:android:0.1.0-beta.2")',
 		);
 		expect(snippet).toContain(
-			'implementation("io.fuseone.fusescope:android-compose:0.1.0-beta.1") // optional',
+			'implementation("io.fuseone.fusescope:android-compose:0.1.0-beta.2") // optional',
 		);
 	});
 });

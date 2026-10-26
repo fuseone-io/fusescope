@@ -5,7 +5,7 @@ import { UploadTarget } from './sourceMapCommands';
 export const ANDROID_SDK_ARTIFACT = 'io.fuseone.fusescope:android';
 export const ANDROID_COMPOSE_ARTIFACT = 'io.fuseone.fusescope:android-compose';
 export const ANDROID_PLUGIN_ID = 'io.fuseone.fusescope.android.mappings';
-export const ANDROID_SDK_VERSION = '0.1.0-beta.1';
+export const ANDROID_SDK_VERSION = '0.1.0-beta.2';
 const ANDROID_SDK_PACKAGE = 'io.fuseone.fusescope.android';
 export const MAPPING_FILE = 'app/build/outputs/mapping/release/mapping.txt';
 
