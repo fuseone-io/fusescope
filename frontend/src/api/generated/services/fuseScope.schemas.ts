@@ -6824,6 +6824,11 @@ export interface FormDataRumtypesPostableR8MappingDTO {
 	file?: MultipartFileDTO;
 	/**
 	 * @type string
+	 * @description The map id, when the query has none; read only before the file part, or when release follows the file.
+	 */
+	map_id?: string;
+	/**
+	 * @type string
 	 * @description The release, when the query has none.
 	 */
 	release?: string;
@@ -11328,6 +11333,11 @@ export interface RumtypesClientDTO {
 	browserVersion: string;
 	/**
 	 * @type string
+	 * @description Manufacturer and model of a mobile device, from device.manufacturer and device.model.name, e.g. Google Pixel 8; empty in a browser.
+	 */
+	device: string;
+	/**
+	 * @type string
 	 * @description Empty when unknown.
 	 */
 	os: string;
@@ -15541,6 +15551,11 @@ export type UploadRUMR8MappingParams = {
 	 * @description The release the mapping belongs to; it must equal the service.version the SDK reports, the app's versionName.
 	 */
 	release?: string;
+	/**
+	 * @type string
+	 * @description R8's pg_map_id. A release keeps one mapping per map id, so several builds of one release retrace; without it, the mapping's own pg_map_id, and without that, one mapping per release. It must equal the mapping's pg_map_id.
+	 */
+	map_id?: string;
 };
 
 export type UploadRUMR8Mapping201 = {
