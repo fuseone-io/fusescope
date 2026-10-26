@@ -2,9 +2,11 @@ import type { RumtypesPIIPolicyDTO } from 'api/generated/services/fuseScope.sche
 
 import { UploadTarget } from './sourceMapCommands';
 
-export const ANDROID_SDK_ARTIFACT = 'io.fusescope:android';
-export const ANDROID_PLUGIN_ID = 'io.fusescope.android.mappings';
-export const ANDROID_SDK_VERSION = '0.1.0';
+export const ANDROID_SDK_ARTIFACT = 'io.fuseone.fusescope:android';
+export const ANDROID_COMPOSE_ARTIFACT = 'io.fuseone.fusescope:android-compose';
+export const ANDROID_PLUGIN_ID = 'io.fuseone.fusescope.android.mappings';
+export const ANDROID_SDK_VERSION = '0.1.0-beta.1';
+const ANDROID_SDK_PACKAGE = 'io.fuseone.fusescope.android';
 export const MAPPING_FILE = 'app/build/outputs/mapping/release/mapping.txt';
 
 export interface AndroidSnippetInput {
@@ -20,6 +22,19 @@ export interface AndroidSnippetInput {
 const kotlinString = (value: string): string =>
 	`"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$/g, '\\$')}"`;
 
+/** settings.gradle.kts: the mapping plugin is published to Maven Central. */
+export function gradleSettingsSnippet(): string {
+	return [
+		'pluginManagement {',
+		'    repositories {',
+		'        google()',
+		'        mavenCentral()',
+		'        gradlePluginPortal()',
+		'    }',
+		'}',
+	].join('\n');
+}
+
 /** app/build.gradle.kts: the SDK, and the plugin that uploads R8 mappings. */
 export function gradleDependencySnippet(): string {
 	return [
@@ -29,6 +44,7 @@ export function gradleDependencySnippet(): string {
 		'',
 		'dependencies {',
 		`    implementation("${ANDROID_SDK_ARTIFACT}:${ANDROID_SDK_VERSION}")`,
+		`    implementation("${ANDROID_COMPOSE_ARTIFACT}:${ANDROID_SDK_VERSION}") // optional, Compose and Navigation screens`,
 		'}',
 	].join('\n');
 }
@@ -67,13 +83,14 @@ export function buildAndroidInitSnippet(input: AndroidSnippetInput): string {
 	if (input.piiPolicy.requireConsent) {
 		config.push('requireConsent = true');
 	}
+	const imports = ['FuseScope', 'FuseScopeConfig'];
 	const privacy = privacyArguments(input.piiPolicy);
 	if (privacy.length > 0) {
 		config.push(`privacy = PrivacyConfig(${privacy.join(', ')})`);
+		imports.push('PrivacyConfig');
 	}
 	return [
-		'import io.fusescope.android.FuseScope',
-		'import io.fusescope.android.FuseScopeConfig',
+		...imports.map((name) => `import ${ANDROID_SDK_PACKAGE}.${name}`),
 		'',
 		'class ShopApplication : Application() {',
 		'    override fun onCreate() {',

@@ -3,6 +3,7 @@ import {
 	ANDROID_SDK_ARTIFACT,
 	buildAndroidInitSnippet,
 	gradleDependencySnippet,
+	gradleSettingsSnippet,
 	mappingCurlSnippet,
 	mappingGradleSnippet,
 	mappingUploadCommand,
@@ -33,16 +34,39 @@ const TARGET = {
 };
 
 describe('gradleDependencySnippet', () => {
-	it('adds the SDK and the mapping plugin', () => {
+	it('adds the SDK, the optional Compose module and the mapping plugin from Maven Central', () => {
 		const snippet = gradleDependencySnippet();
-		expect(snippet).toContain(`id("${ANDROID_PLUGIN_ID}")`);
-		expect(snippet).toContain(`implementation("${ANDROID_SDK_ARTIFACT}:`);
+		expect(ANDROID_SDK_ARTIFACT).toBe('io.fuseone.fusescope:android');
+		expect(ANDROID_PLUGIN_ID).toBe('io.fuseone.fusescope.android.mappings');
+		expect(snippet).toContain(
+			'id("io.fuseone.fusescope.android.mappings") version "0.1.0-beta.1"',
+		);
+		expect(snippet).toContain(
+			'implementation("io.fuseone.fusescope:android:0.1.0-beta.1")',
+		);
+		expect(snippet).toContain(
+			'implementation("io.fuseone.fusescope:android-compose:0.1.0-beta.1") // optional',
+		);
+	});
+});
+
+describe('gradleSettingsSnippet', () => {
+	it('resolves the plugin from Maven Central', () => {
+		const snippet = gradleSettingsSnippet();
+		expect(snippet).toMatch(/^pluginManagement \{\n {4}repositories \{/);
+		expect(snippet).toContain('        mavenCentral()');
+		expect(snippet).toContain('        gradlePluginPortal()');
 	});
 });
 
 describe('buildAndroidInitSnippet', () => {
 	it('initializes from Application.onCreate with the release from versionName', () => {
 		const snippet = buildAndroidInitSnippet(INPUT);
+		expect(snippet).toContain('import io.fuseone.fusescope.android.FuseScope\n');
+		expect(snippet).toContain(
+			'import io.fuseone.fusescope.android.FuseScopeConfig\n',
+		);
+		expect(snippet).not.toContain('PrivacyConfig');
 		expect(snippet).toContain('FuseScope.init(');
 		expect(snippet).toContain('applicationId = "app-1"');
 		expect(snippet).toContain('key = "rum_pub_abc"');
@@ -63,6 +87,9 @@ describe('buildAndroidInitSnippet', () => {
 		expect(snippet).toContain('sessionSampleRate = 0.25');
 		expect(snippet).toContain('requireConsent = true');
 		expect(snippet).toContain('privacy = PrivacyConfig(hashUserId = false)');
+		expect(snippet).toContain(
+			'import io.fuseone.fusescope.android.PrivacyConfig\n',
+		);
 	});
 
 	it('escapes Kotlin string literals', () => {
