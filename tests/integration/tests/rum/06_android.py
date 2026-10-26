@@ -74,7 +74,7 @@ def test_android_r8_mapping_upload(
     assert response.status_code == HTTPStatus.CREATED, response.text
     uploaded = response.json()["data"]
     assert uploaded["release"] == "2.1.0"
-    assert [(file["kind"], file["path"], file["debugId"], file["sizeBytes"]) for file in uploaded["files"]] == [("r8-mapping", "/mapping.txt", "7e4c1a9", len(MAPPING))]
+    assert [(file["kind"], file["path"], file["debugId"], file["sizeBytes"]) for file in uploaded["files"]] == [("r8-mapping", "/mapping-7e4c1a9.txt", "7e4c1a9", len(MAPPING))], "keyed by the pg_map_id"
 
     response = upload_r8_mapping(signoz, android["id"], "2.1.0", editor, MAPPING, compress=True)
     assert response.status_code == HTTPStatus.CREATED, response.text
@@ -172,7 +172,7 @@ def test_android_r8_mapping_multipart_field_order(
         response = requests.post(url, files=parts, headers={SIGNOZ_API_KEY_HEADER: editor_key}, timeout=30)
         assert response.status_code == HTTPStatus.CREATED, response.text
         uploaded = response.json()["data"]
-        assert (uploaded["release"], [(file["path"], file["sizeBytes"]) for file in uploaded["files"]]) == (release, [("/mapping.txt", len(MAPPING))]), "only the part named file is the mapping"
+        assert (uploaded["release"], [(file["path"], file["sizeBytes"]) for file in uploaded["files"]]) == (release, [("/mapping-7e4c1a9.txt", len(MAPPING))]), "only the part named file is the mapping"
 
     response = requests.post(url, params={"release": "3.0.2"}, files=[("mapping", ("mapping.txt", MAPPING, "text/plain"))], headers={SIGNOZ_API_KEY_HEADER: editor_key}, timeout=30)
     assert response.status_code == HTTPStatus.BAD_REQUEST, "a body without a file part has no mapping"
@@ -227,3 +227,53 @@ def test_android_crash_anr_and_handled_grouped_apart(
         ("io.fusescope.sample.MainActivity.onCreate$lambda$1", 32, True, True),
         ("io.fusescope.sample.MainActivity.onNewIntent", 60, True, False),
     ]
+
+
+def test_android_r8_mappings_per_map_id(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    created = create_rum_application(signoz, token, {"name": f"android-{uuid.uuid4().hex[:8]}", "platform": "android", "environment": "production", "allowedPackageNames": [PACKAGE]})
+    base = f"{RUM_APPLICATIONS}/{created['id']}"
+    _, api_key = create_service_account_with_key(signoz, token, f"gradle-{uuid.uuid4().hex[:8]}", role="signoz-editor")
+    editor = {SIGNOZ_API_KEY_HEADER: api_key}
+    second_build = MAPPING.replace(b"pg_map_id: 7e4c1a9", b"pg_map_id: 260eabab").replace(b"com.example.shop.CartException", b"com.example.shop.BasketException")
+    url = signoz.self.host_configs["8080"].get(f"{base}/mappings")
+
+    assert upload_r8_mapping(signoz, created["id"], "2.1.0", editor, MAPPING).status_code == HTTPStatus.CREATED
+    response = requests.post(url, files=[("release", (None, "2.1.0")), ("map_id", (None, "260eabab")), ("file", ("mapping.txt", second_build, "text/plain"))], headers=editor, timeout=30)
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    assert response.json()["data"]["replaced"] == 0, "another build of the release keeps its own mapping"
+    response = requests.post(url, params={"release": "2.1.0", "map_id": "ffffffff"}, data=MAPPING, headers={**editor, "Content-Type": "text/plain"}, timeout=30)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, "a map_id must match the mapping's pg_map_id"
+
+    listed = requests.get(signoz.self.host_configs["8080"].get(f"{base}/sourcemaps"), params={"release": "2.1.0"}, headers=editor, timeout=10).json()["data"]
+    assert [(file["path"], file["debugId"]) for file in listed["files"]] == [("/mapping-260eabab.txt", "260eabab"), ("/mapping-7e4c1a9.txt", "7e4c1a9")]
+    assert listed["sizeBytes"] == len(MAPPING) + len(second_build)
+
+    second = 1_000_000_000
+    t0 = time.time_ns() - 300 * second
+    resource = {"service.name": created["id"], "service.version": "2.1.0", "app.package.name": PACKAGE}
+    events = [
+        rum_event("exception", t0 + i * second, {"exception.type": "a.a", "exception.message": "Cart is empty", "exception.stacktrace": CRASH.replace("SourceFile", f"r8-map-id-{map_id}"), "fusescope.rum.error.source": "crash", "session.id": f"build-{uuid.uuid4().hex}"})
+        for i, map_id in enumerate(["7e4c1a9", "260eabab"])
+    ]
+    events.append(rum_event("exception", t0 + 2 * second, {"exception.type": "ApplicationNotResponding", "exception.message": "Application Not Responding", "exception.stacktrace": ANR, "fusescope.rum.error.source": "anr", "session.id": f"anr-{uuid.uuid4().hex}"}))
+    send_rum(signoz, created["key"]["key"], resource, events=events, origin=None)
+
+    params = {"start": t0 // 1_000_000 - 60_000, "end": t0 // 1_000_000 + 60_000}
+    errors = wait_for_rum_query(signoz, token, f"{base}/errors", params, lambda data: data["events"] == 3)
+    assert sorted(group["type"] for group in errors["groups"]) == ["ANR", "com.example.shop.BasketException", "com.example.shop.CartException"], "each build retraces with its own mapping; the beta ANR type is normalized"
+
+    rows = signoz.telemetrystore.conn.query(
+        "SELECT DISTINCT resources_string['service.name'] FROM signoz_logs.distributed_logs_v2 WHERE resources_string['fusescope.rum.application.id'] = {application:String}",
+        parameters={"application": created["id"]},
+    ).result_rows
+    assert rows == [(created["name"],)], "a service named after the application id takes the application name"
+
+    for file in listed["files"]:
+        assert requests.delete(signoz.self.host_configs["8080"].get(f"{base}/sourcemaps/{file['id']}"), headers=editor, timeout=10).status_code == HTTPStatus.NO_CONTENT
+    listed = requests.get(signoz.self.host_configs["8080"].get(f"{base}/sourcemaps"), headers=editor, timeout=10).json()["data"]
+    assert (listed["releases"], listed["sizeBytes"]) == ([], 0)

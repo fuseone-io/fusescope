@@ -16,8 +16,8 @@ func (module *module) UploadSourceMaps(ctx context.Context, orgID valuer.UUID, i
 	return module.uploadArtifacts(ctx, orgID, id, rumtypes.ArtifactKindSourceMap, release, createdBy, parts)
 }
 
-func (module *module) UploadR8Mapping(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string, createdBy string, content io.Reader) (*rumtypes.GettableUploadedSourceMaps, error) {
-	parts := &singleArtifactPart{part: &rumtypes.PostableSourceMap{Path: rumtypes.R8MappingPath, Content: content}}
+func (module *module) UploadR8Mapping(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string, mapID string, createdBy string, content io.Reader) (*rumtypes.GettableUploadedSourceMaps, error) {
+	parts := &singleArtifactPart{part: &rumtypes.PostableSourceMap{Path: rumtypes.R8MappingPath, MapID: mapID, Content: content}}
 	uploaded, err := module.uploadArtifacts(ctx, orgID, id, rumtypes.ArtifactKindR8Mapping, release, createdBy, parts)
 	if err != nil {
 		return nil, err
@@ -205,6 +205,12 @@ func (module *module) storeSourceMap(ctx context.Context, plan *rumtypes.SourceM
 		debugID, err = artifactDebugID(kind, data)
 		if err != nil {
 			return nil, &rumtypes.RejectedSourceMap{Path: path, Reason: errorMessage(err)}, nil
+		}
+	}
+	if kind == rumtypes.ArtifactKindR8Mapping {
+		debugID, path, err = rumtypes.NewR8MappingKey(part.MapID, debugID)
+		if err != nil {
+			return nil, &rumtypes.RejectedSourceMap{Path: part.Path, Reason: errorMessage(err)}, nil
 		}
 	}
 	rejection, err := plan.Add(path, int64(len(data)))

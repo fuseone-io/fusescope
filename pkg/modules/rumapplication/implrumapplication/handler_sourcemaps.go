@@ -26,6 +26,7 @@ const (
 	// before its release; the configured file size limit still applies.
 	maxSpooledMappingBytes = 1 << 30
 	partRelease            = "release"
+	partMapID              = "map_id"
 	partDebugIDs           = "debug_ids"
 	partFile               = "file"
 )
@@ -77,14 +78,14 @@ func (h *handler) UploadR8Mapping(rw http.ResponseWriter, req *http.Request) {
 			return 0, nil, err
 		}
 
-		release := req.URL.Query().Get(partRelease)
-		content, err := r8MappingContent(req, &release)
+		fields := r8MappingFields{release: req.URL.Query().Get(partRelease), mapID: req.URL.Query().Get(partMapID)}
+		content, err := r8MappingContent(req, &fields)
 		if err != nil {
 			return 0, nil, err
 		}
 		defer func() { _ = content.Close() }()
 
-		uploaded, err := h.module.UploadR8Mapping(ctx, orgID, id, release, claims.Email, content)
+		uploaded, err := h.module.UploadR8Mapping(ctx, orgID, id, fields.release, fields.mapID, claims.Email, content)
 		return http.StatusCreated, uploaded, err
 	})
 }
@@ -151,19 +152,16 @@ func (parts *multipartSourceMaps) DebugIDs() map[string]string {
 }
 
 func (parts *multipartSourceMaps) readField(name string, part *multipart.Part) error {
-	value, err := io.ReadAll(io.LimitReader(part, maxFormFieldBytes+1))
+	value, err := readFormField(part)
 	if err != nil {
-		return errors.WrapInvalidInputf(err, rumtypes.ErrCodeSourceMapInvalidInput, "malformed multipart body")
-	}
-	if len(value) > maxFormFieldBytes {
-		return errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "the %s field is larger than %d bytes", name, maxFormFieldBytes)
+		return err
 	}
 	if name == partRelease {
-		parts.release = string(value)
+		parts.release = value
 		return nil
 	}
 	debugIDs := map[string]string{}
-	if err := json.Unmarshal(value, &debugIDs); err != nil {
+	if err := json.Unmarshal([]byte(value), &debugIDs); err != nil {
 		return errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "debug_ids must be a JSON object of URL path to debug ID")
 	}
 	for path, debugID := range debugIDs {
@@ -172,16 +170,23 @@ func (parts *multipartSourceMaps) readField(name string, part *multipart.Part) e
 	return nil
 }
 
-// r8MappingContent finds the mapping in the body. A multipart release field
-// fills release when the query left it empty.
-func r8MappingContent(req *http.Request, release *string) (io.ReadCloser, error) {
+// r8MappingFields are the release and map id of an R8 mapping upload; the
+// query's win over the multipart fields.
+type r8MappingFields struct {
+	release string
+	mapID   string
+}
+
+// r8MappingContent finds the mapping in the body. Multipart release and
+// map_id fields fill what the query left empty.
+func r8MappingContent(req *http.Request, fields *r8MappingFields) (io.ReadCloser, error) {
 	mediaType, _, _ := mime.ParseMediaType(req.Header.Get("Content-Type"))
 	if mediaType == "multipart/form-data" {
 		reader, err := req.MultipartReader()
 		if err != nil {
 			return nil, errors.WrapInvalidInputf(err, rumtypes.ErrCodeSourceMapInvalidInput, "malformed multipart body")
 		}
-		return r8MultipartMapping(reader, release)
+		return r8MultipartMapping(reader, fields)
 	}
 
 	switch strings.ToLower(strings.TrimSpace(req.Header.Get("Content-Encoding"))) {
@@ -200,8 +205,7 @@ func r8MappingContent(req *http.Request, release *string) (io.ReadCloser, error)
 // r8MultipartMapping returns the part named file and ignores other parts. A
 // file that comes before any release spools to a temporary file, so a
 // release field after it can still be read.
-func r8MultipartMapping(reader *multipart.Reader, release *string) (io.ReadCloser, error) {
-	fields := &multipartSourceMaps{reader: reader, debugIDs: map[string]string{}}
+func r8MultipartMapping(reader *multipart.Reader, upload *r8MappingFields) (io.ReadCloser, error) {
 	var mapping io.ReadCloser
 	fail := func(err error) (io.ReadCloser, error) {
 		if mapping != nil {
@@ -220,18 +224,22 @@ func r8MultipartMapping(reader *multipart.Reader, release *string) (io.ReadClose
 		}
 
 		switch part.FormName() {
-		case partRelease:
-			if err := fields.readField(partRelease, part); err != nil {
+		case partRelease, partMapID:
+			value, err := readFormField(part)
+			if err != nil {
 				return fail(err)
 			}
-			if *release == "" {
-				*release = fields.release
+			if part.FormName() == partRelease && upload.release == "" {
+				upload.release = value
+			}
+			if part.FormName() == partMapID && upload.mapID == "" {
+				upload.mapID = value
 			}
 		case partFile:
 			if mapping != nil {
 				continue
 			}
-			if *release != "" {
+			if upload.release != "" {
 				return io.NopCloser(part), nil
 			}
 			if mapping, err = spoolPart(part); err != nil {
@@ -243,6 +251,17 @@ func r8MultipartMapping(reader *multipart.Reader, release *string) (io.ReadClose
 		return nil, errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "the multipart body has no file part with the mapping")
 	}
 	return mapping, nil
+}
+
+func readFormField(part *multipart.Part) (string, error) {
+	value, err := io.ReadAll(io.LimitReader(part, maxFormFieldBytes+1))
+	if err != nil {
+		return "", errors.WrapInvalidInputf(err, rumtypes.ErrCodeSourceMapInvalidInput, "malformed multipart body")
+	}
+	if len(value) > maxFormFieldBytes {
+		return "", errors.NewInvalidInputf(rumtypes.ErrCodeSourceMapInvalidInput, "the %s field is larger than %d bytes", part.FormName(), maxFormFieldBytes)
+	}
+	return string(value), nil
 }
 
 // spoolPart copies a part to a temporary file, removed on Close.

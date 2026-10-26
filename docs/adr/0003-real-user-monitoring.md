@@ -187,7 +187,9 @@ Settled 2026-10-25, while building phase 3.
 | App start | `rum.vital` with `fusescope.rum.vital.name` = `app_start` (decision 2); upstream reports an `AppStart` span the distribution maps |
 
   The gateway also stores the upstream `app.crash` and `device.anr` events this way, so a plain `opentelemetry-android` app shows crashes and ANRs.
-- **R8 mappings.** One `mapping.txt` per application and release, uploaded to `POST /api/v1/rum/applications/{id}/mappings` and kept in the source map store with the kind `r8-mapping`, under the same limits, quota and retention. The parser is ours, written from the ProGuard and R8 format documentation. Stack traces are retraced at read time.
+- **R8 mappings.** Uploaded to `POST /api/v1/rum/applications/{id}/mappings` and kept in the source map store with the kind `r8-mapping`, under the same limits, quota and retention. The parser is ours, written from the ProGuard and R8 format documentation. Stack traces are retraced at read time.
+  - A release keeps one mapping per R8 map id (`pg_map_id`), so several builds of one release retrace. The id is the `map_id` the uploader gives, else the mapping's own `pg_map_id`; a given id must match it. A mapping without either is the release's single unkeyed mapping.
+  - A trace is retraced with the mapping whose map id its frames name (`r8-map-id-<id>` as the source file), else the release's latest upload.
 - **Grouping.** A JVM error groups by its deobfuscated type and the class and method of its top three in-app frames, across the thrown exception and then its causes; line numbers are left out. A release without its mapping groups on obfuscated frames until the mapping is uploaded.
 
 ## Resolved decisions

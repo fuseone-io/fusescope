@@ -337,3 +337,21 @@ func TestJVMKeyPatterns(t *testing.T) {
 		})
 	}
 }
+
+func TestJVMStackTraceR8MapID(t *testing.T) {
+	testCases := []struct {
+		name       string
+		stacktrace string
+		mapID      string
+	}{
+		{name: "MapIDSourceFile_Found", stacktrace: "a.a: boom\n\tat a.b.a(r8-map-id-7E4C1A9:6)\n\tat android.app.Activity.performCreate(Activity.java:8595)", mapID: "7e4c1a9"},
+		{name: "MapIDInCause_Found", stacktrace: "a.a: boom\n\tat android.os.Looper.loop(Looper.java:1)\nCaused by: a.c: inner\n\tat a.b.e(r8-map-id-260eabab:1)", mapID: "260eabab"},
+		{name: "SourceFile_None", stacktrace: "a.a: boom\n\tat a.b.a(SourceFile:6)"},
+		{name: "NoFrames_None", stacktrace: "a.a: boom"},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.mapID, ParseJVMStackTrace(testCase.stacktrace, "", "").R8MapID())
+		})
+	}
+}
