@@ -299,6 +299,7 @@ func TestJVMTopInAppFrames(t *testing.T) {
 		{name: "LibraryFramesSkipped", stacktrace: "java.lang.Error\n\tat java.util.ArrayList.get(ArrayList.java:1)\n\tat androidx.recyclerview.widget.RecyclerView.a(RecyclerView.java:2)\n\tat com.example.Main.run(Main.kt:3)\n", expected: []string{"com.example.Main.run"}},
 		{name: "CauseFramesFollow", stacktrace: "java.lang.RuntimeException: wrap\n\tat android.app.ActivityThread.main(ActivityThread.java:1)\nCaused by: java.lang.NullPointerException\n\tat com.example.A.a(A.kt:1)\n\tat com.example.B.b(B.kt:2)\n", expected: []string{"com.example.A.a", "com.example.B.b"}},
 		{name: "OnlyLibrary_TopFrames", stacktrace: "java.lang.Error\n\tat android.os.Looper.loop(Looper.java:1)\n\tat android.app.ActivityThread.main(ActivityThread.java:2)\n", expected: []string{"android.os.Looper.loop", "android.app.ActivityThread.main"}},
+		{name: "SDKFramesSkipped_AppPackageKept", stacktrace: "java.lang.Error\n\tat io.fuseone.fusescope.android.Rum.addError(Rum.kt:60)\n\tat io.fuseone.fusescope.sample.MainActivity.onCreate(MainActivity.kt:31)\n", expected: []string{"io.fuseone.fusescope.sample.MainActivity.onCreate"}},
 		{name: "NoFrames_None", stacktrace: "java.lang.Error", expected: []string{}},
 	}
 	for _, testCase := range testCases {
