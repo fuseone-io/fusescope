@@ -3,27 +3,38 @@ import TagChip from 'components/PageTemplate/components/TagChip';
 import { Button } from 'components/ui/button';
 import { X } from 'lucide-react';
 
-import { ERROR_SOURCES } from '../constants';
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
+
+import { ANDROID_ERROR_SOURCES, WEB_ERROR_SOURCES } from '../constants';
 import { useErrorFilters } from '../hooks/useErrorFilters';
 import { ErrorFilters } from '../types';
 import ErrorSearch from './ErrorSearch';
 
 type SourceOption = ErrorFilters['source'] | 'all';
 
-const SOURCES = [
+interface ErrorFiltersBarProps {
+	platform?: RumtypesPlatformDTO;
+}
+
+const sourceOptions = (
+	platform: RumtypesPlatformDTO | undefined,
+): { value: SourceOption; label: string; testId: string }[] => [
 	{
-		value: 'all' as const,
+		value: 'all',
 		label: 'All sources',
 		testId: 'rum-errors-source-all',
 	},
-	...ERROR_SOURCES.map((source) => ({
+	...(platform === RumtypesPlatformDTO.android
+		? ANDROID_ERROR_SOURCES
+		: WEB_ERROR_SOURCES
+	).map((source) => ({
 		value: source,
 		label: source,
 		testId: `rum-errors-source-${source}`,
 	})),
 ];
 
-function ErrorFiltersBar(): JSX.Element {
+function ErrorFiltersBar({ platform }: ErrorFiltersBarProps): JSX.Element {
 	const [filters, update] = useErrorFilters();
 	return (
 		<>
@@ -35,7 +46,7 @@ function ErrorFiltersBar(): JSX.Element {
 			<span title="fusescope.rum.error.source">
 				<SegmentedControl<SourceOption>
 					label="Error source"
-					options={SOURCES}
+					options={sourceOptions(platform)}
 					value={filters.source || 'all'}
 					onChange={(next): void => update({ source: next === 'all' ? '' : next })}
 				/>

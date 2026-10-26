@@ -145,6 +145,7 @@ function RumApplication(): JSX.Element {
 						releases={state.overview.releases}
 						release={release}
 						onReleaseChange={setRelease}
+						platform={state.application?.platform}
 					/>
 				}
 			/>

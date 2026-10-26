@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import { rumErrorsUrl, rumSessionsUrl } from 'lib/rum/links';
 import { ArrowLeft } from 'lucide-react';
 
@@ -16,6 +17,7 @@ interface ApplicationToolbarProps {
 	releases: string[];
 	release: string;
 	onReleaseChange: (release: string) => void;
+	platform?: RumtypesPlatformDTO;
 }
 
 function ApplicationToolbar({
@@ -25,6 +27,7 @@ function ApplicationToolbar({
 	releases,
 	release,
 	onReleaseChange,
+	platform,
 }: ApplicationToolbarProps): JSX.Element {
 	const { search } = useLocation();
 	if (detail) {
@@ -53,7 +56,7 @@ function ApplicationToolbar({
 				onChange={onReleaseChange}
 			/>
 			{tab === SESSIONS_TAB && <SessionFiltersBar applicationId={applicationId} />}
-			{tab === ERRORS_TAB && <ErrorFiltersBar />}
+			{tab === ERRORS_TAB && <ErrorFiltersBar platform={platform} />}
 		</div>
 	);
 }
