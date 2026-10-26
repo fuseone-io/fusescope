@@ -11,7 +11,6 @@ import {
 
 const INPUT = {
 	applicationId: 'app-1',
-	name: 'shop-android',
 	environment: 'production',
 	publicKey: 'rum_pub_abc',
 	endpoint: 'https://fusescope.example.com',
@@ -60,7 +59,7 @@ describe('gradleSettingsSnippet', () => {
 });
 
 describe('buildAndroidInitSnippet', () => {
-	it('initializes from Application.onCreate with the release from versionName', () => {
+	it('initializes from Application.onCreate, leaving service and release to their defaults', () => {
 		const snippet = buildAndroidInitSnippet(INPUT);
 		expect(snippet).toContain('import io.fuseone.fusescope.android.FuseScope\n');
 		expect(snippet).toContain(
@@ -71,8 +70,10 @@ describe('buildAndroidInitSnippet', () => {
 		expect(snippet).toContain('applicationId = "app-1"');
 		expect(snippet).toContain('key = "rum_pub_abc"');
 		expect(snippet).toContain('endpoint = "https://fusescope.example.com"');
-		expect(snippet).toContain('service = "shop-android"');
-		expect(snippet).toContain('release = BuildConfig.VERSION_NAME');
+		expect(snippet).not.toContain('service =');
+		expect(snippet).not.toContain('release =');
+		expect(snippet).not.toContain('BuildConfig');
+		expect(snippet).not.toContain('traceparentHosts');
 		expect(snippet).toContain('environment = "production"');
 		expect(snippet).not.toContain('sessionSampleRate');
 		expect(snippet).not.toContain('requireConsent');
@@ -92,10 +93,25 @@ describe('buildAndroidInitSnippet', () => {
 		);
 	});
 
+	it('sends traceparent to the hosts of the trace propagation URLs', () => {
+		expect(
+			buildAndroidInitSnippet({
+				...INPUT,
+				tracePropagationUrls: [
+					'https://api.example.com/v1',
+					'https://API.example.com/v2',
+					'http://pay.example.com:8443/',
+				],
+			}),
+		).toContain(
+			'traceparentHosts = listOf("api.example.com", "pay.example.com")',
+		);
+	});
+
 	it('escapes Kotlin string literals', () => {
 		expect(
-			buildAndroidInitSnippet({ ...INPUT, name: 'shop "beta" $x' }),
-		).toContain('service = "shop \\"beta\\" \\$x"');
+			buildAndroidInitSnippet({ ...INPUT, environment: 'prod "beta" $x' }),
+		).toContain('environment = "prod \\"beta\\" \\$x"');
 	});
 });
 

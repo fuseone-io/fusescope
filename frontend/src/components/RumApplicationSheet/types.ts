@@ -32,7 +32,6 @@ export type SheetTab = 'settings' | 'key' | 'install' | 'sourcemaps';
 
 export interface SnippetInput {
 	applicationId: string;
-	name: string;
 	environment: string;
 	publicKey: string;
 	endpoint: string;

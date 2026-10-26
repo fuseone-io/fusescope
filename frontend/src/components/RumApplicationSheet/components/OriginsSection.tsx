@@ -99,9 +99,11 @@ function OriginsSection({
 				description={
 					android ? (
 						<>
-							OkHttp requests to these URLs carry{' '}
+							OkHttp requests to the hosts of these URLs carry{' '}
 							<span className="tw:font-mono">traceparent</span>, linking them to the
-							backend trace.
+							backend trace; the setup snippet passes them as{' '}
+							<span className="tw:font-mono">traceparentHosts</span>. Other hosts never
+							receive it.
 						</>
 					) : (
 						<>

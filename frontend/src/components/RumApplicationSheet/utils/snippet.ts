@@ -42,7 +42,6 @@ export function buildNpmSnippet(input: SnippetInput): string {
 		`applicationId: ${literal(input.applicationId)}`,
 		`publicKey: ${literal(input.publicKey)}`,
 		`endpoint: ${literal(input.endpoint)}`,
-		`service: ${literal(input.name)}`,
 		VERSION_PLACEHOLDER,
 	];
 	if (input.environment) {

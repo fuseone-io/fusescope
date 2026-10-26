@@ -33,11 +33,11 @@ function AndroidInstall({
 		() =>
 			buildAndroidInitSnippet({
 				applicationId: application.id,
-				name: application.name,
 				environment: application.environment,
 				publicKey,
 				endpoint,
 				sampleRate: application.sampleRate,
+				tracePropagationUrls: application.tracePropagationUrls ?? [],
 				piiPolicy: application.piiPolicy,
 			}),
 		[application, publicKey, endpoint],

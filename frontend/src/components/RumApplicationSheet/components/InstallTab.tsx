@@ -67,7 +67,6 @@ function InstallTab({
 		() =>
 			buildNpmSnippet({
 				applicationId: application.id,
-				name: application.name,
 				environment: application.environment,
 				publicKey,
 				endpoint: sdkEndpoint(),
