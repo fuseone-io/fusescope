@@ -141,7 +141,9 @@ describe('RumApplicationSheet', () => {
 
 		await expect(
 			screen.findByTestId('rum-install-gradle'),
-		).resolves.toHaveTextContent('implementation("io.fusescope:android:');
+		).resolves.toHaveTextContent(
+			'implementation("io.fuseone.fusescope:android:0.1.0-beta.1")',
+		);
 		expect(created.body).toMatchObject({
 			name: 'shop-android',
 			platform: 'android',

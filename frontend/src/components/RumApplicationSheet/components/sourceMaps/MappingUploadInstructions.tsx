@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 import {
+	ANDROID_PLUGIN_ID,
 	MAPPING_FILE,
 	mappingCurlSnippet,
 	mappingGradleSnippet,
@@ -44,8 +45,8 @@ function MappingUploadInstructions({
 				<>
 					<span className={HINT}>
 						In <span className={MONO}>app/build.gradle.kts</span>, with the{' '}
-						<span className={MONO}>io.fusescope.android.mappings</span> plugin
-						applied; it uploads after each minified build:
+						<span className={MONO}>{ANDROID_PLUGIN_ID}</span> plugin applied; it
+						uploads after each minified build:
 					</span>
 					<SnippetBlock
 						code={mappingGradleSnippet(target)}

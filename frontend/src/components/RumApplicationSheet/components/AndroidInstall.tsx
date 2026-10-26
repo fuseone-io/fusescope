@@ -4,6 +4,7 @@ import {
 	ANDROID_SDK_ARTIFACT,
 	buildAndroidInitSnippet,
 	gradleDependencySnippet,
+	gradleSettingsSnippet,
 	mappingGradleSnippet,
 } from 'lib/rum/androidSetup';
 
@@ -59,7 +60,16 @@ function AndroidInstall({
 				</span>
 			</div>
 			<span className={HINT}>
-				In <span className={MONO}>app/build.gradle.kts</span>, from Maven Central:
+				In <span className={MONO}>settings.gradle.kts</span>, resolve plugins from
+				Maven Central:
+			</span>
+			<SnippetBlock
+				code={gradleSettingsSnippet()}
+				label="Copy settings"
+				testId="rum-install-settings"
+			/>
+			<span className={HINT}>
+				Then in <span className={MONO}>app/build.gradle.kts</span>:
 			</span>
 			<SnippetBlock
 				code={gradleDependencySnippet()}
