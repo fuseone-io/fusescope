@@ -63,7 +63,7 @@ const JVM_LIBRARY_PREFIXES = [
 	'okio.',
 	'retrofit2.',
 	'io.opentelemetry.',
-	'io.fusescope.',
+	'io.fuseone.fusescope.android.',
 ];
 
 /** The platform's and common libraries' classes, as the server tells them from the app's. */

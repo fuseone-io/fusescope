@@ -221,6 +221,8 @@ describe('isJvmLibraryClass', () => {
 		['kotlinx.coroutines.DispatchedTask.run', true],
 		['com.example.shop.Cart.add', false],
 		['a.b.a', false],
+		['io.fuseone.fusescope.android.Rum.addError', true],
+		['io.fuseone.fusescope.sample.MainActivity.onCreate', false],
 	])('%s is library: %s', (fn, expected) => {
 		expect(isJvmLibraryClass(fn)).toBe(expected);
 	});
