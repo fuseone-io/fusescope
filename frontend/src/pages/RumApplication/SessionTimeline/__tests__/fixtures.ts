@@ -80,6 +80,7 @@ export function session(
 		client: {
 			browser: 'Chrome',
 			browserVersion: '130',
+			device: '',
 			os: 'Linux',
 			osVersion: '',
 		},

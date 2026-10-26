@@ -42,9 +42,11 @@ export function useApplicationOverview(
 		{ query: { refetchOnWindowFocus: false } },
 	);
 
+	const platform = app.data?.data?.platform;
 	const request = useMemo(
-		() => overviewRequest(window, applicationId, release),
-		[window, applicationId, release],
+		() =>
+			platform ? overviewRequest(window, applicationId, release, platform) : null,
+		[window, applicationId, release, platform],
 	);
 	const response = useApmQueryRange(['rum-overview'], request);
 	const overview = useMemo(

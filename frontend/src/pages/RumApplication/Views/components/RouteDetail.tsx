@@ -1,11 +1,15 @@
 import { Link } from 'react-router-dom';
-import type { RumtypesGettableViewDTO } from 'api/generated/services/fuseScope.schemas';
+import {
+	RumtypesGettableViewDTO,
+	RumtypesPlatformDTO,
+} from 'api/generated/services/fuseScope.schemas';
 import { formatCount } from 'lib/apm/format';
 import { ApmWindow } from 'lib/apm/window';
 import { formatTimeOnView } from 'lib/rum/format';
 import { rumErrorsUrl, rumSessionsUrl } from 'lib/rum/links';
 import { cn } from 'lib/utils';
 
+import { useApplicationPlatform } from '../../hooks/useApplicationPlatform';
 import ClientBreakdown from './ClientBreakdown';
 import RouteSessionsTable from './RouteSessionsTable';
 import SheetSection from './SheetSection';
@@ -25,6 +29,7 @@ function RouteDetail({
 	release,
 	window,
 }: RouteDetailProps): JSX.Element {
+	const platform = useApplicationPlatform(applicationId);
 	const kpis = [
 		{ label: 'Views', value: formatCount(detail.views) },
 		{ label: 'Page loads', value: formatCount(detail.pageLoads) },
@@ -95,6 +100,7 @@ function RouteDetail({
 			<ClientBreakdown
 				browsers={detail.browsers}
 				operatingSystems={detail.operatingSystems}
+				mobile={platform === RumtypesPlatformDTO.android}
 			/>
 			<SheetSection
 				title="Recent sessions on this route"

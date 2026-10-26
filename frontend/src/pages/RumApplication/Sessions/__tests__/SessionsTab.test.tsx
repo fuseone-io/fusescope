@@ -10,7 +10,7 @@ import {
 	rumViews,
 } from '@/storybook/msw/__story_mockdata__/rumQueries';
 
-import { ok, renderPage } from '../../__tests__/renderPage';
+import { ANDROID_APP, ok, renderPage } from '../../__tests__/renderPage';
 
 const BASE = '*/api/v1/rum/applications/app-1';
 const PATH = '/frontend/applications/app-1/sessions';
@@ -50,6 +50,17 @@ describe('SessionsTab', () => {
 		);
 		expect(rows[0]).toHaveTextContent('usr_9f…41ab');
 		expect(rows[0]).toHaveTextContent('Chrome 130 · Windows 10');
+	});
+
+	it('names the device column and drops the browser filter on Android', async () => {
+		serveSessions();
+		renderPage(PATH, ANDROID_APP);
+
+		await screen.findAllByTestId('rum-sessions-row');
+		expect(
+			screen.getByRole('columnheader', { name: 'Device · OS' }),
+		).toBeInTheDocument();
+		expect(screen.queryByTestId('rum-sessions-browser')).toBeNull();
 	});
 
 	it('sends the filters and page from the URL', async () => {

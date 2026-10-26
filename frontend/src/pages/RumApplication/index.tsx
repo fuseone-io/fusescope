@@ -96,6 +96,7 @@ function RumApplication(): JSX.Element {
 					window={state.window}
 					sessionErrors={state.sessionErrors}
 					sessionRequests={state.sessionRequests}
+					platform={state.application?.platform}
 				/>
 			),
 		},

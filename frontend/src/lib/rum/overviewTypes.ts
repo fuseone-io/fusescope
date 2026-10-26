@@ -1,3 +1,4 @@
+import { AppStartSummaries } from './appStart';
 import { SessionTotals, VitalSummaries, VitalSummary } from './metricTypes';
 
 export interface RouteVitals {
@@ -16,6 +17,8 @@ export interface SessionSummary {
 	durationMs?: number;
 	views: number;
 	userAgent: string;
+	/** "Chrome 130 · Windows", or "Google Pixel 8 · Android 14" on mobile. */
+	client: string;
 	release: string;
 }
 
@@ -33,6 +36,8 @@ export interface ApplicationOverview {
 	previous?: SessionTotals;
 	views: number;
 	vitals: VitalSummaries;
+	/** Android only. */
+	appStart: AppStartSummaries;
 	routes: RouteVitals[];
 	routeCount: number;
 	sessions: SessionSummary[];

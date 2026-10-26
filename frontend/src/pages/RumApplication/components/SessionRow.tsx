@@ -4,7 +4,6 @@ import dayjs from 'dayjs';
 import { formatSessionDuration } from 'lib/rum/format';
 import { rumSessionUrl, traceDetailUrl } from 'lib/rum/links';
 import { SessionRequest, SessionSummary } from 'lib/rum/overviewTypes';
-import { describeUserAgent } from 'lib/rum/userAgent';
 import { cn } from 'lib/utils';
 import { ArrowUpRight } from 'lucide-react';
 
@@ -56,8 +55,11 @@ function SessionRow({
 			>
 				{errors}
 			</TableCell>
-			<TableCell className="tw:max-w-0 tw:truncate" title={session.userAgent}>
-				{describeUserAgent(session.userAgent)}
+			<TableCell
+				className="tw:max-w-0 tw:truncate"
+				title={session.userAgent || session.client}
+			>
+				{session.client}
 			</TableCell>
 			<TableCell className="tw:font-mono tw:text-xs tw:text-muted-foreground">
 				{session.release || '—'}

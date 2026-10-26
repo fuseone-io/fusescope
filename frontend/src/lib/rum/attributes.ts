@@ -13,6 +13,14 @@ export const RUM_ATTRIBUTES = {
 	vitalName: 'browser.web_vital.name',
 	vitalValue: 'browser.web_vital.value',
 	vitalRating: 'browser.web_vital.rating',
+	appVitalName: 'fusescope.rum.vital.name',
+	appVitalValue: 'fusescope.rum.vital.value',
+	appVitalRating: 'fusescope.rum.vital.rating',
+	startType: 'start.type',
+	osName: 'os.name',
+	osVersion: 'os.version',
+	deviceManufacturer: 'device.manufacturer',
+	deviceModel: 'device.model.name',
 	exceptionType: 'exception.type',
 	exceptionMessage: 'exception.message',
 } as const;
@@ -30,6 +38,8 @@ export const viewSpansFilter = `name = ${quote(VIEW_SPAN)}`;
 export const exceptionEventsFilter = `${EVENT_NAME} = ${quote('exception')}`;
 
 export const webVitalEventsFilter = `${EVENT_NAME} = ${quote('browser.web_vital')}`;
+
+export const appStartEventsFilter = `${EVENT_NAME} = ${quote('rum.vital')} AND ${RUM_ATTRIBUTES.appVitalName} = ${quote('app_start')}`;
 
 export const applicationFilter = (applicationId: string): string =>
 	`${RUM_ATTRIBUTES.applicationId} = ${quote(applicationId)}`;

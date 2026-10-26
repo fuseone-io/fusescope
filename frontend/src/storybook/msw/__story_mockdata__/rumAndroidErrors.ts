@@ -182,7 +182,13 @@ export function rumAndroidErrorGroup({
 		sessionId: 'session-android-1',
 		route: 'CheckoutScreen',
 		release: ANDROID_RELEASE,
-		client: { browser: '', browserVersion: '', os: 'Android', osVersion: '15' },
+		client: {
+			browser: '',
+			browserVersion: '',
+			device: 'Google Pixel 9',
+			os: 'Android',
+			osVersion: '15',
+		},
 		type: mapped ? 'com.example.shop.CartException' : 'a.a',
 		message: 'Cart is empty',
 		source: 'crash',
@@ -200,6 +206,16 @@ export function rumAndroidErrorGroup({
 		selectedEventId: event.id,
 		breadcrumbs: [],
 		linkedRequest: null,
-		affectedSessions: [],
+		affectedSessions: [
+			{
+				sessionId: event.sessionId,
+				startedAt: ago(20 * MINUTE),
+				lastErrorAt: event.timestamp,
+				release: ANDROID_RELEASE,
+				client: event.client,
+				views: 4,
+				errors: 1,
+			},
+		],
 	};
 }

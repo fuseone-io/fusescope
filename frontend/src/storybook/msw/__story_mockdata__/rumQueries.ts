@@ -465,7 +465,7 @@ export const RUM_SESSION_LIST = SESSIONS.map(
 		views,
 		actions,
 		errors,
-		client: { browser, browserVersion, os, osVersion },
+		client: { browser, browserVersion, device: '', os, osVersion },
 		release,
 		environment: 'production',
 	}),

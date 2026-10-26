@@ -9,9 +9,11 @@ import {
 } from 'components/ui/table';
 import { formatCount } from 'lib/apm/format';
 import { ApmWindow } from 'lib/apm/window';
+import { clientColumnLabel } from 'lib/rum/client';
 import { plural } from 'lib/rum/format';
 
 import EmptyRow from '../components/EmptyRow';
+import { useApplicationPlatform } from '../hooks/useApplicationPlatform';
 import SessionListRow from './components/SessionListRow';
 import { PAGE_SIZES } from './constants';
 import { useSessionFilters } from './hooks/useSessionFilters';
@@ -32,6 +34,7 @@ function SessionsTab({
 }: SessionsTabProps): JSX.Element {
 	const [filters, update] = useSessionFilters();
 	const state = useSessionsQuery(applicationId, filters, window, release);
+	const platform = useApplicationPlatform(applicationId);
 	const total = state.status === 'ready' ? state.total : 0;
 
 	return (
@@ -80,7 +83,7 @@ function SessionsTab({
 							<TableHead className={RIGHT}>Views</TableHead>
 							<TableHead className={RIGHT}>Actions</TableHead>
 							<TableHead className={RIGHT}>Errors</TableHead>
-							<TableHead>Browser · OS</TableHead>
+							<TableHead>{clientColumnLabel(platform)}</TableHead>
 							<TableHead>Release</TableHead>
 						</TableRow>
 					</TableHeader>

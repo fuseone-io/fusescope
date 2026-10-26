@@ -10,13 +10,14 @@ import {
 	TableRow,
 } from 'components/ui/table';
 import dayjs from 'dayjs';
-import { clientLabel } from 'lib/rum/client';
+import { clientColumnLabel, clientLabel } from 'lib/rum/client';
 import { shortId } from 'lib/rum/format';
 import { rumSessionUrl } from 'lib/rum/links';
 import { formatVital } from 'lib/rum/vitals';
 import { cn } from 'lib/utils';
 
 import EmptyRow from '../../components/EmptyRow';
+import { useApplicationPlatform } from '../../hooks/useApplicationPlatform';
 
 interface RouteSessionsTableProps {
 	applicationId: string;
@@ -33,6 +34,7 @@ function RouteSessionsTable({
 	applicationId,
 	sessions,
 }: RouteSessionsTableProps): JSX.Element {
+	const platform = useApplicationPlatform(applicationId);
 	return (
 		<div className="tw:overflow-x-auto tw:rounded-lg tw:border tw:border-border">
 			<Table className="tw:min-w-[600px]">
@@ -42,7 +44,7 @@ function RouteSessionsTable({
 						<TableHead>Started</TableHead>
 						<TableHead>This view</TableHead>
 						<TableHead className="tw:text-right">Errors</TableHead>
-						<TableHead>Browser · OS</TableHead>
+						<TableHead>{clientColumnLabel(platform)}</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>

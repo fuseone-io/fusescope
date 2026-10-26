@@ -1,8 +1,10 @@
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import { RangeResponse } from 'lib/apm/queryRange';
 
 import {
 	applicationOverview,
 	overviewFilter,
+	overviewRequest,
 	topRoutes,
 } from '../overviewQueries';
 import { pickSessionRequests, sessionErrorCounts } from '../sessionRequests';
@@ -102,6 +104,106 @@ describe('applicationOverview', () => {
 		const empty = applicationOverview(undefined, 'a');
 		expect(empty.current.errorRate).toBeUndefined();
 		expect(empty.routes).toStrictEqual([]);
+	});
+});
+
+describe('Android overview', () => {
+	const WINDOW = { start: 0, end: 3_600_000, seconds: 3600, step: 120 };
+	const MOBILE = [
+		'session.id',
+		'user_agent.original',
+		'service.version',
+		'os.name',
+		'os.version',
+		'device.manufacturer',
+		'device.model.name',
+	];
+	const queries = (
+		platform: RumtypesPlatformDTO,
+	): Partial<Record<string, unknown>>[] =>
+		overviewRequest(WINDOW, 'a', '', platform).compositeQuery.queries.map(
+			(query): Partial<Record<string, unknown>> => ({ ...query.spec }),
+		);
+
+	it('asks for app start p75 by start type only for Android', () => {
+		const appStart = queries(RumtypesPlatformDTO.android).find(
+			(spec) => spec.name === 'AS',
+		);
+		expect(appStart).toMatchObject({
+			signal: 'logs',
+			filter: {
+				expression:
+					"fusescope.rum.application.id = 'a' AND attribute.event.name = 'rum.vital' AND fusescope.rum.vital.name = 'app_start'",
+			},
+			groupBy: [{ name: 'start.type' }],
+			aggregations: [
+				{ expression: 'p75(fusescope.rum.vital.value)' },
+				{ expression: "countIf(fusescope.rum.vital.rating = 'good')" },
+				{ expression: "countIf(fusescope.rum.vital.rating = 'needs-improvement')" },
+				{ expression: "countIf(fusescope.rum.vital.rating = 'poor')" },
+			],
+		});
+		expect(
+			queries(RumtypesPlatformDTO.web).some((spec) => spec.name === 'AS'),
+		).toBe(false);
+	});
+
+	it('groups recent Android sessions by device and OS', () => {
+		const sessions = queries(RumtypesPlatformDTO.android).find(
+			(spec) => spec.name === 'SS',
+		);
+		expect(sessions?.groupBy).toStrictEqual(MOBILE.map((name) => ({ name })));
+		expect(
+			queries(RumtypesPlatformDTO.web).find((spec) => spec.name === 'SS')?.groupBy,
+		).toStrictEqual(MOBILE.slice(0, 3).map((name) => ({ name })));
+	});
+
+	const android = applicationOverview(
+		{
+			data: {
+				results: [
+					scalar('AS', ['start.type'], 4, [
+						['cold', 2140, 8, 1, 1],
+						['warm', 640, 3, 0, 0],
+					]),
+					scalar('SS', MOBILE, 3, [
+						[
+							's1',
+							'',
+							'2.1.0',
+							'Android',
+							'14',
+							'Google',
+							'Pixel 8',
+							'2026-10-21T10:00:00Z',
+							'2026-10-21T10:02:00Z',
+							3,
+						],
+					]),
+				],
+			},
+		},
+		'a',
+	);
+
+	it('summarizes app start by start type', () => {
+		expect(android.appStart).toStrictEqual({
+			cold: {
+				p75: 2140,
+				samples: 10,
+				counts: { good: 8, needsImprovement: 1, poor: 1 },
+			},
+			warm: {
+				p75: 640,
+				samples: 3,
+				counts: { good: 3, needsImprovement: 0, poor: 0 },
+			},
+		});
+	});
+
+	it('labels sessions with the device and OS', () => {
+		expect(android.sessions[0].client).toBe('Google Pixel 8 · Android 14');
+		expect(applicationOverview(RESPONSE, 'a').sessions[0].client).toBe('Other');
 	});
 });
 
