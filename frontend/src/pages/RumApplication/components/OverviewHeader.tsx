@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 import CreateAlertMenu from './CreateAlertMenu';
+import DefaultEnvironmentChip from './DefaultEnvironmentChip';
 
 interface OverviewHeaderProps {
 	application?: RumtypesApplicationDTO;
@@ -56,9 +57,7 @@ function OverviewHeader({
 						<TagChip title="fusescope.rum.platform">
 							{PLATFORM_LABELS[application.platform]}
 						</TagChip>
-						<TagChip title="deployment.environment.name">
-							env: {application.environment}
-						</TagChip>
+						<DefaultEnvironmentChip environment={application.environment} />
 						{release && <TagChip title="service.version">release {release}</TagChip>}
 						{sdk && (
 							<SdkBadge
