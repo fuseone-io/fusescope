@@ -42,19 +42,19 @@ func TestModuleUploadR8Mapping(t *testing.T) {
 	id := createTestAndroidApplication(t, module, orgID)
 	mapping := readR8Fixture(t, "mapping.txt")
 
-	uploaded, err := module.UploadR8Mapping(ctx, orgID, id, "2.1.0", "ci@example.com", strings.NewReader(mapping))
+	uploaded, err := module.UploadR8Mapping(ctx, orgID, id, "2.1.0", "", "ci@example.com", strings.NewReader(mapping))
 	require.NoError(t, err)
 	assert.Equal(t, "2.1.0", uploaded.Release)
 	require.Len(t, uploaded.Files, 1)
 	assert.Equal(t, rumtypes.ArtifactKindR8Mapping, uploaded.Files[0].Kind)
-	assert.Equal(t, rumtypes.R8MappingPath, uploaded.Files[0].Path)
+	assert.Equal(t, "/mapping-7e4c1a9.txt", uploaded.Files[0].Path, "keyed by the pg_map_id")
 	assert.Equal(t, "7e4c1a9", uploaded.Files[0].DebugID, "the pg_map_id")
 	assert.Equal(t, int64(len(mapping)), uploaded.Files[0].SizeBytes)
 	assert.Zero(t, uploaded.Replaced)
 
-	again, err := module.UploadR8Mapping(ctx, orgID, id, "2.1.0", "ci@example.com", strings.NewReader(mapping))
+	again, err := module.UploadR8Mapping(ctx, orgID, id, "2.1.0", "", "ci@example.com", strings.NewReader(mapping))
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), again.Replaced, "a release holds one mapping")
+	assert.Equal(t, int64(1), again.Replaced, "a release holds one mapping per map id")
 	assert.Equal(t, 1, storedContentCount(t, module))
 
 	listed, err := module.ListSourceMaps(ctx, orgID, id, "2.1.0")
@@ -76,21 +76,25 @@ func TestModuleUploadR8MappingRejects(t *testing.T) {
 		message string
 	}{
 		{name: "NotAMapping_Rejected", upload: func() error {
-			_, err := module.UploadR8Mapping(ctx, orgID, android, "2.1.0", "ci@example.com", strings.NewReader(`{"version":3}`))
+			_, err := module.UploadR8Mapping(ctx, orgID, android, "2.1.0", "", "ci@example.com", strings.NewReader(`{"version":3}`))
 			return err
 		}, message: "mapping line 1"},
 		{name: "Empty_Rejected", upload: func() error {
-			_, err := module.UploadR8Mapping(ctx, orgID, android, "2.1.0", "ci@example.com", strings.NewReader(""))
+			_, err := module.UploadR8Mapping(ctx, orgID, android, "2.1.0", "", "ci@example.com", strings.NewReader(""))
 			return err
 		}, message: "empty"},
 		{name: "NoRelease_Rejected", upload: func() error {
-			_, err := module.UploadR8Mapping(ctx, orgID, android, " ", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
+			_, err := module.UploadR8Mapping(ctx, orgID, android, " ", "", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
 			return err
 		}, message: "release"},
 		{name: "WebApplication_Rejected", upload: func() error {
-			_, err := module.UploadR8Mapping(ctx, orgID, web, "2.1.0", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
+			_, err := module.UploadR8Mapping(ctx, orgID, web, "2.1.0", "", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
 			return err
 		}, message: "android"},
+		{name: "MapIDDiffersFromHeader_Rejected", upload: func() error {
+			_, err := module.UploadR8Mapping(ctx, orgID, android, "2.1.0", "260eabab", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
+			return err
+		}, message: "pg_map_id"},
 		{name: "SourceMapToAndroid_Rejected", upload: func() error {
 			_, err := module.UploadSourceMaps(ctx, orgID, android, "2.1.0", "ci@example.com", newTestParts(nil, "/assets/main.js.map", readFixture(t, "main.js.map")))
 			return err
@@ -120,7 +124,7 @@ func TestModuleRetraceUploadedR8Mapping(t *testing.T) {
 	assert.Same(t, trace, missing.Trace)
 	assert.Equal(t, &rumtypes.MissingSourceMap{Release: "2.1.0", Kind: rumtypes.ArtifactKindR8Mapping}, missing.MissingSourceMap)
 
-	_, err = module.UploadR8Mapping(ctx, orgID, id, "2.1.0", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
+	_, err = module.UploadR8Mapping(ctx, orgID, id, "2.1.0", "", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -156,6 +160,55 @@ func TestModuleRetraceUploadedR8Mapping(t *testing.T) {
 	deleted, err := module.symbolicator.Retrace(ctx, id, "2.1.0", trace)
 	require.NoError(t, err)
 	assert.False(t, deleted.Retraced, "a delete is seen at once")
+}
+
+func TestModuleR8MappingsPerMapID(t *testing.T) {
+	ctx := context.Background()
+	module, orgID := newTestModule(t)
+	id := createTestAndroidApplication(t, module, orgID)
+	first := readR8Fixture(t, "mapping.txt")
+	second := strings.NewReplacer("pg_map_id: 7e4c1a9", "pg_map_id: 260eabab", "com.example.shop.CartException", "com.example.shop.BasketException").Replace(first)
+	unkeyed := strings.Replace(first, "# pg_map_id: 7e4c1a9\n", "", 1)
+
+	for _, upload := range []struct{ mapID, content string }{{"", first}, {"", second}, {"", unkeyed}} {
+		uploaded, err := module.UploadR8Mapping(ctx, orgID, id, "2.1.0", upload.mapID, "ci@example.com", strings.NewReader(upload.content))
+		require.NoError(t, err)
+		assert.Zero(t, uploaded.Replaced)
+	}
+	listed, err := module.ListSourceMaps(ctx, orgID, id, "2.1.0")
+	require.NoError(t, err)
+	paths := []string{}
+	for _, file := range listed.Files {
+		paths = append(paths, file.Path)
+	}
+	assert.Equal(t, []string{"/mapping-260eabab.txt", "/mapping-7e4c1a9.txt", rumtypes.R8MappingPath}, paths)
+
+	again, err := module.UploadR8Mapping(ctx, orgID, id, "2.1.0", "260EABAB", "ci@example.com", strings.NewReader(second))
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), again.Replaced)
+
+	crash := readR8Fixture(t, "crash.txt")
+	testCases := []struct {
+		name       string
+		stacktrace string
+		thrown     string
+	}{
+		{name: "FirstBuildFrames_FirstMapping", stacktrace: strings.ReplaceAll(crash, "SourceFile", "r8-map-id-7e4c1a9"), thrown: "com.example.shop.CartException"},
+		{name: "SecondBuildFrames_SecondMapping", stacktrace: strings.ReplaceAll(crash, "SourceFile", "r8-map-id-260eabab"), thrown: "com.example.shop.BasketException"},
+		{name: "UnknownMapID_LatestMapping", stacktrace: strings.ReplaceAll(crash, "SourceFile", "r8-map-id-ffffff"), thrown: "com.example.shop.BasketException"},
+		{name: "NoMapID_LatestMapping", stacktrace: crash, thrown: "com.example.shop.BasketException"},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result, err := module.symbolicator.Retrace(ctx, id, "2.1.0", rumtypes.ParseJVMStackTrace(testCase.stacktrace, "", ""))
+			require.NoError(t, err)
+			require.True(t, result.Retraced)
+			assert.Equal(t, testCase.thrown, result.Trace.Exceptions[0].Type)
+		})
+	}
+
+	require.NoError(t, module.DeleteSourceMapRelease(ctx, orgID, id, "2.1.0"))
+	assert.Zero(t, storedContentCount(t, module))
 }
 
 func TestHandlerUploadR8Mapping(t *testing.T) {
@@ -220,6 +273,22 @@ func TestHandlerUploadR8Mapping(t *testing.T) {
 			_ = writer.Close()
 			return body, map[string]string{"Content-Type": writer.FormDataContentType()}
 		}, status: http.StatusCreated, release: "2.1.5"},
+		{name: "MapIDInQuery_Keyed", target: "/mappings?release=2.1.7&map_id=7e4c1a9", body: func() (*bytes.Buffer, map[string]string) {
+			return bytes.NewBufferString(mapping), map[string]string{"Content-Type": "text/plain"}
+		}, status: http.StatusCreated, release: "2.1.7"},
+		{name: "MapIDFieldDiffers_BadRequest", target: "/mappings", body: func() (*bytes.Buffer, map[string]string) {
+			body := new(bytes.Buffer)
+			writer := multipart.NewWriter(body)
+			_ = writer.WriteField("release", "2.1.8")
+			_ = writer.WriteField("map_id", "260eabab")
+			part, _ := writer.CreateFormFile("file", "mapping.txt")
+			_, _ = part.Write([]byte(mapping))
+			_ = writer.Close()
+			return body, map[string]string{"Content-Type": writer.FormDataContentType()}
+		}, status: http.StatusBadRequest},
+		{name: "MapIDQueryDiffers_BadRequest", target: "/mappings?release=2.1.9&map_id=260eabab", body: func() (*bytes.Buffer, map[string]string) {
+			return bytes.NewBufferString(mapping), map[string]string{"Content-Type": "text/plain"}
+		}, status: http.StatusBadRequest},
 		{name: "Multipart_NoFilePart_BadRequest", target: "/mappings?release=2.1.6", body: func() (*bytes.Buffer, map[string]string) {
 			body := new(bytes.Buffer)
 			writer := multipart.NewWriter(body)

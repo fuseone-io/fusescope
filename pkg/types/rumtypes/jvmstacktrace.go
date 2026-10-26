@@ -171,6 +171,19 @@ func RetraceJVMStackTrace(trace *JVMStackTrace, mapping *R8Mapping, mappingPath 
 	return retraced, resolved
 }
 
+// R8MapID is the map id of the build that threw, from the first frame whose
+// source file R8 named r8-map-id-<id>, or "".
+func (trace *JVMStackTrace) R8MapID() string {
+	for _, exception := range trace.Exceptions {
+		for _, frame := range exception.Frames {
+			if mapID, ok := strings.CutPrefix(frame.File, r8MapIDSourceFile); ok && mapID != "" {
+				return strings.ToLower(mapID)
+			}
+		}
+	}
+	return ""
+}
+
 // IsJVMLibraryClass reports whether a class belongs to the platform or a
 // common library rather than the application.
 func IsJVMLibraryClass(class string) bool {

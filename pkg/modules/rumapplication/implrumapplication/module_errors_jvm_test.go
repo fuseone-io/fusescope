@@ -39,7 +39,7 @@ func expectAndroidErrorKeys(mock cmock.ClickConnMockCommon) {
 func TestHandlerListErrorGroupsAndroidGroupsRetracedFrames(t *testing.T) {
 	module, orgID, mock := newTestModuleWithMock(t, true)
 	id := createTestAndroidApplication(t, module, orgID)
-	_, err := module.UploadR8Mapping(context.Background(), orgID, id, "2.1.0", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
+	_, err := module.UploadR8Mapping(context.Background(), orgID, id, "2.1.0", "", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
 	require.NoError(t, err)
 
 	expectAndroidErrorKeys(mock)
@@ -81,7 +81,7 @@ func TestHandlerListErrorGroupsAndroidGroupsRetracedFrames(t *testing.T) {
 func TestModuleAndroidErrorEvent(t *testing.T) {
 	module, orgID := newTestModule(t)
 	id := createTestAndroidApplication(t, module, orgID)
-	_, err := module.UploadR8Mapping(context.Background(), orgID, id, "2.1.0", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
+	_, err := module.UploadR8Mapping(context.Background(), orgID, id, "2.1.0", "", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
 	require.NoError(t, err)
 	application, err := module.Get(context.Background(), orgID, id)
 	require.NoError(t, err)

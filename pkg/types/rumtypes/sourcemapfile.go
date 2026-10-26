@@ -94,17 +94,21 @@ type PostableSourceMaps struct {
 // the handler also takes the mapping as the raw body.
 type PostableR8Mapping struct {
 	Release string         `formData:"release" description:"The release, when the query has none."`
+	MapID   string         `formData:"map_id" description:"The map id, when the query has none; read only before the file part, or when release follows the file."`
 	File    multipart.File `formData:"file" description:"The mapping.txt R8 or ProGuard wrote."`
 }
 
 type PostableR8MappingParams struct {
 	Release string `query:"release" description:"The release the mapping belongs to; it must equal the service.version the SDK reports, the app's versionName."`
+	MapID   string `query:"map_id" description:"R8's pg_map_id. A release keeps one mapping per map id, so several builds of one release retrace; without it, the mapping's own pg_map_id, and without that, one mapping per release. It must equal the mapping's pg_map_id."`
 }
 
 // PostableSourceMap is one map of an upload: its path and a reader of its
 // content.
 type PostableSourceMap struct {
-	Path    string
+	Path string
+	// MapID is the map id an uploader gave an R8 mapping.
+	MapID   string
 	Content io.Reader
 }
 

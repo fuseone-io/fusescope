@@ -63,9 +63,12 @@ type Module interface {
 	// release's map with the same path, and reports the others as rejected.
 	// Nothing is stored when the upload exceeds the release or quota limits.
 	UploadSourceMaps(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string, createdBy string, parts rumtypes.PostableSourceMapParts) (*rumtypes.GettableUploadedSourceMaps, error)
-	// UploadR8Mapping stores the release's R8 mapping, replacing any it
-	// holds. A mapping that does not parse fails the upload.
-	UploadR8Mapping(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string, createdBy string, content io.Reader) (*rumtypes.GettableUploadedSourceMaps, error)
+	// UploadR8Mapping stores an R8 mapping of the release, keyed by its map
+	// id, the given one or else its pg_map_id, and replaces the mapping with
+	// the same key; without either, the release's one unkeyed mapping. A
+	// mapping that does not parse, or whose pg_map_id differs from the given
+	// id, fails the upload.
+	UploadR8Mapping(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string, mapID string, createdBy string, content io.Reader) (*rumtypes.GettableUploadedSourceMaps, error)
 	// ListSourceMaps lists the releases, or with release set that release and its files.
 	ListSourceMaps(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string) (*rumtypes.GettableSourceMaps, error)
 	DeleteSourceMapRelease(ctx context.Context, orgID valuer.UUID, id valuer.UUID, release string) error

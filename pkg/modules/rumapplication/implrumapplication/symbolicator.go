@@ -34,7 +34,6 @@ type sourceMapSymbolicator struct {
 
 type sourceMapIndexEntry struct {
 	index     *rumtypes.SourceMapIndex
-	mapping   *rumtypes.StorableSourceMap
 	files     []*rumtypes.StorableSourceMap
 	expiresAt time.Time
 }
@@ -95,8 +94,9 @@ func (symbolicator *sourceMapSymbolicator) Symbolicate(ctx context.Context, appl
 	return result, nil
 }
 
-// Retrace never fails the read it serves: a mapping it cannot load leaves
-// the trace obfuscated.
+// Retrace uses the release's mapping of the trace's map id, else its latest.
+// It never fails the read it serves: a mapping it cannot load leaves the
+// trace obfuscated.
 func (symbolicator *sourceMapSymbolicator) Retrace(ctx context.Context, applicationID valuer.UUID, release string, trace *rumtypes.JVMStackTrace) (*rumtypes.JVMRetrace, error) {
 	result := &rumtypes.JVMRetrace{Trace: trace}
 	if release == "" {
@@ -109,20 +109,21 @@ func (symbolicator *sourceMapSymbolicator) Retrace(ctx context.Context, applicat
 		symbolicator.logger.WarnContext(ctx, "failed to list rum r8 mappings, the trace stays obfuscated", errors.Attr(err))
 		return result, nil
 	}
-	if entry.mapping == nil {
+	file := rumtypes.SelectR8Mapping(entry.files, trace.R8MapID())
+	if file == nil {
 		result.MissingSourceMap = &rumtypes.MissingSourceMap{Release: release, Kind: rumtypes.ArtifactKindR8Mapping}
 		return result, nil
 	}
 
-	mapping, err := loadArtifact(ctx, symbolicator, entry.mapping, rumtypes.ParseR8Mapping)
+	mapping, err := loadArtifact(ctx, symbolicator, file, rumtypes.ParseR8Mapping)
 	if err != nil {
-		symbolicator.logger.WarnContext(ctx, "failed to load rum r8 mapping, the trace stays obfuscated", slog.String("source_map_id", entry.mapping.ID.StringValue()), errors.Attr(err))
+		symbolicator.logger.WarnContext(ctx, "failed to load rum r8 mapping, the trace stays obfuscated", slog.String("source_map_id", file.ID.StringValue()), errors.Attr(err))
 		return result, nil
 	}
-	retraced, ok := rumtypes.RetraceJVMStackTrace(trace, mapping, entry.mapping.Path)
+	retraced, ok := rumtypes.RetraceJVMStackTrace(trace, mapping, file.Path)
 	if ok {
 		result.Trace, result.Retraced = retraced, true
-		symbolicator.markUsed(entry.mapping.ID, time.Now())
+		symbolicator.markUsed(file.ID, time.Now())
 	}
 	return result, nil
 }
@@ -164,9 +165,6 @@ func (symbolicator *sourceMapSymbolicator) index(ctx context.Context, applicatio
 		return sourceMapIndexEntry{}, err
 	}
 	entry = sourceMapIndexEntry{index: rumtypes.NewSourceMapIndex(rumtypes.FilterArtifacts(files, rumtypes.ArtifactKindSourceMap)), files: files, expiresAt: now.Add(symbolicator.indexTTL)}
-	if mappings := rumtypes.FilterArtifacts(files, rumtypes.ArtifactKindR8Mapping); len(mappings) > 0 {
-		entry.mapping = mappings[0]
-	}
 
 	symbolicator.mu.Lock()
 	if len(symbolicator.indexes) >= maxSourceMapIndexEntries {
