@@ -251,14 +251,16 @@ def test_editor_allowed_on_mutations(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
-def test_viewer_forbidden_on_public_config(
+@pytest.mark.parametrize("email,password", [(_VIEWER_EMAIL, _VIEWER_PASSWORD), (_EDITOR_EMAIL, _EDITOR_PASSWORD)])
+def test_non_admin_forbidden_on_public_config(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    email: str,
+    password: str,
 ):
-    # The public config routes authorize on the dashboard itself, so a viewer is
-    # refused before the handler runs, licensed or not.
-    token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+    # Publishing requires admin rights, even when the caller can edit dashboards.
+    token = get_token(email, password)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}?limit={MAX_LIST_LIMIT}"),
@@ -338,14 +340,12 @@ def test_apply_license(
     add_license(signoz, make_http_mocks, get_token)
 
 
-def test_editor_allowed_on_public_config(
+def test_admin_allowed_on_public_config(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    # An editor holds dashboard update, which is what the public config routes ask
-    # for, so publishing is open to editors and not just admins.
-    token = get_token(_EDITOR_EMAIL, _EDITOR_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}?limit={MAX_LIST_LIMIT}"),
@@ -370,15 +370,23 @@ def test_editor_allowed_on_public_config(
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
-    # Reading the config asks only for dashboard read, so a viewer sees it too.
-    viewer_token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
-
-    response = requests.get(
+    response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{target_id}/public"),
-        headers={"Authorization": f"Bearer {viewer_token}"},
+        json={"timeRangeEnabled": False, "defaultTimeRange": "1h"},
+        headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    # Reading the config remains available to editors and viewers.
+    for email, password in ((_EDITOR_EMAIL, _EDITOR_PASSWORD), (_VIEWER_EMAIL, _VIEWER_PASSWORD)):
+        reader_token = get_token(email, password)
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{target_id}/public"),
+            headers={"Authorization": f"Bearer {reader_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
 
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{target_id}/public"),

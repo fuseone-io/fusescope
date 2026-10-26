@@ -523,7 +523,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(
-		provider.authzMiddleware.CheckResources(provider.dashboardHandler.CreatePublic, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		provider.authzMiddleware.CheckResources(provider.dashboardHandler.CreatePublic, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                  "CreatePublicDashboard",
 			Tags:                []string{"dashboard"},
@@ -577,7 +577,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(
-		provider.authzMiddleware.CheckResources(provider.dashboardHandler.UpdatePublic, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		provider.authzMiddleware.CheckResources(provider.dashboardHandler.UpdatePublic, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                  "UpdatePublicDashboard",
 			Tags:                []string{"dashboard"},
@@ -604,7 +604,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(
-		provider.authzMiddleware.CheckResources(provider.dashboardHandler.DeletePublic, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		provider.authzMiddleware.CheckResources(provider.dashboardHandler.DeletePublic, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                  "DeletePublicDashboard",
 			Tags:                []string{"dashboard"},
