@@ -57,6 +57,20 @@ func TestProcessTraces(t *testing.T) {
 			wantName: "documentLoad",
 			wantRes:  map[string]string{rumtypes.AttributeServiceName: "shop-web", "location.href": "https://shop.example.com/"},
 		},
+		{
+			name:     "EmptyServiceName_Stamped",
+			spanName: "view",
+			resource: map[string]any{rumtypes.AttributeServiceName: ""},
+			wantName: "view",
+			wantRes:  map[string]string{rumtypes.AttributeServiceName: "shop-web"},
+		},
+		{
+			name:     "ServiceNameIsApplicationID_Stamped",
+			spanName: "view",
+			resource: map[string]any{rumtypes.AttributeServiceName: application.ID.StringValue()},
+			wantName: "view",
+			wantRes:  map[string]string{rumtypes.AttributeServiceName: "shop-web"},
+		},
 	}
 
 	for _, testCase := range testCases {

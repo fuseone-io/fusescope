@@ -88,14 +88,15 @@ func processLogs(application *rumtypes.Application, logs plog.Logs) *rumtypes.In
 }
 
 // stampResource overwrites the application and platform a client may have
-// forged, and fills service and environment only when missing.
+// forged, and fills service and environment only when missing; a service
+// named after the application id, an SDK default, takes the application name.
 func stampResource(application *rumtypes.Application, resource pcommon.Resource, batch *rumtypes.IngestBatch) {
 	attributes := resource.Attributes()
 	scrubAttributes(application.PIIPolicy, attributes)
 
 	attributes.PutStr(rumtypes.AttributeApplicationID, application.ID.StringValue())
 	attributes.PutStr(rumtypes.AttributePlatform, application.Platform.StringValue())
-	if _, ok := attributes.Get(rumtypes.AttributeServiceName); !ok {
+	if service, ok := attributes.Get(rumtypes.AttributeServiceName); !ok || service.Str() == "" || service.Str() == application.ID.StringValue() {
 		attributes.PutStr(rumtypes.AttributeServiceName, application.Name)
 	}
 	if _, ok := attributes.Get(rumtypes.AttributeDeploymentEnvironment); !ok {
