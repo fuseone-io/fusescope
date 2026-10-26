@@ -18,6 +18,7 @@ import {
 const client = (browser: string, browserVersion: string) => ({
 	browser,
 	browserVersion,
+	device: '',
 	os: 'Windows',
 	osVersion: '10',
 });

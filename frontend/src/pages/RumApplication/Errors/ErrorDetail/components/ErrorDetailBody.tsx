@@ -1,5 +1,8 @@
 import { useLocation } from 'react-router-dom';
-import type { RumtypesGettableErrorGroupDTO } from 'api/generated/services/fuseScope.schemas';
+import {
+	RumtypesGettableErrorGroupDTO,
+	RumtypesPlatformDTO,
+} from 'api/generated/services/fuseScope.schemas';
 import { ApmWindow } from 'lib/apm/window';
 import { logsExplorerUrl, rumSessionUrl } from 'lib/rum/links';
 import { overviewFilter } from 'lib/rum/overviewQueries';
@@ -97,6 +100,7 @@ function ErrorDetailBody({
 				sessions={group.affectedSessions ?? []}
 				total={group.sessions}
 				sessionUrl={sessionUrl}
+				platform={jvm ? RumtypesPlatformDTO.android : RumtypesPlatformDTO.web}
 			/>
 		</section>
 	);

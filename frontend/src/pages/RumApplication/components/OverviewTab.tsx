@@ -1,3 +1,4 @@
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import { ApmWindow } from 'lib/apm/window';
 import { ApplicationOverview, SessionRequest } from 'lib/rum/overviewTypes';
 
@@ -15,6 +16,7 @@ interface OverviewTabProps {
 	window: ApmWindow;
 	sessionErrors: Record<string, number>;
 	sessionRequests: Record<string, SessionRequest>;
+	platform?: RumtypesPlatformDTO;
 }
 
 function OverviewTab({
@@ -26,10 +28,14 @@ function OverviewTab({
 	window,
 	sessionErrors,
 	sessionRequests,
+	platform,
 }: OverviewTabProps): JSX.Element {
 	return (
 		<div className="tw:flex tw:flex-col tw:gap-4" data-testid="rum-overview">
-			<OverviewKpis overview={overview} />
+			<OverviewKpis
+				overview={overview}
+				mobile={platform === RumtypesPlatformDTO.android}
+			/>
 			<TopRoutesPanel
 				applicationId={applicationId}
 				release={release}
@@ -52,6 +58,7 @@ function OverviewTab({
 				filter={filter}
 				window={window}
 				loading={loading}
+				platform={platform}
 			/>
 		</div>
 	);

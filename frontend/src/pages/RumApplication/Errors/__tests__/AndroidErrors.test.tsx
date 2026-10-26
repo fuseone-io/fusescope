@@ -104,6 +104,17 @@ describe('Android errors', () => {
 		);
 	});
 
+	it('lists affected sessions by device', async () => {
+		serve();
+		renderPage(`${PATH}/${ANDROID_CRASH}`, ANDROID_APP);
+
+		const sessions = await screen.findByTestId('rum-error-sessions');
+		expect(
+			within(sessions).getByRole('columnheader', { name: 'Device · OS' }),
+		).toBeInTheDocument();
+		expect(sessions).toHaveTextContent('Google Pixel 9 · Android 15');
+	});
+
 	it('asks for the release’s R8 mapping and keeps the obfuscated trace', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		serve(false);

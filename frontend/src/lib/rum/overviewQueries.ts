@@ -1,3 +1,4 @@
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import { allOf, quote } from 'lib/apm/filters';
 import {
 	rangeRequest,
@@ -15,13 +16,16 @@ import {
 	VITAL_AGGREGATIONS,
 	vitalSummaries,
 } from './applicationsQueries';
+import { APP_START_AGGREGATIONS, appStartSummaries } from './appStart';
 import {
+	appStartEventsFilter,
 	applicationFilter,
 	exceptionEventsFilter,
 	RUM_ATTRIBUTES,
 	viewSpansFilter,
 	webVitalEventsFilter,
 } from './attributes';
+import { mobileClientLabel } from './client';
 import {
 	ApplicationOverview,
 	RouteVitals,
@@ -29,11 +33,18 @@ import {
 } from './overviewTypes';
 import { logQuery, numberCell, orderedBy, timestampMs } from './queryRange';
 import { newestReleasesFirst } from './releases';
+import { describeUserAgent } from './userAgent';
 
 const SESSIONS = `count_distinct(${RUM_ATTRIBUTES.sessionId})`;
 const ROUTE = RUM_ATTRIBUTES.route;
 export const TOP_ROUTES = 7;
 export const RECENT_SESSIONS = 6;
+const MOBILE_CLIENT = [
+	RUM_ATTRIBUTES.osName,
+	RUM_ATTRIBUTES.osVersion,
+	RUM_ATTRIBUTES.deviceManufacturer,
+	RUM_ATTRIBUTES.deviceModel,
+];
 
 export function overviewFilter(applicationId: string, release: string): string {
 	return allOf(
@@ -42,11 +53,14 @@ export function overviewFilter(applicationId: string, release: string): string {
 	);
 }
 
+/** Android also gets app start by start type, and sessions by device and OS. */
 export function overviewRequest(
 	window: ApmWindow,
 	applicationId: string,
 	release: string,
+	platform: RumtypesPlatformDTO = RumtypesPlatformDTO.web,
 ): QueryRangeRequestV5 {
+	const android = platform === RumtypesPlatformDTO.android;
 	const app = overviewFilter(applicationId, release);
 	const errors = allOf(app, exceptionEventsFilter);
 	const vitals = allOf(app, webVitalEventsFilter);
@@ -102,6 +116,7 @@ export function overviewRequest(
 					RUM_ATTRIBUTES.sessionId,
 					RUM_ATTRIBUTES.userAgent,
 					RUM_ATTRIBUTES.serviceVersion,
+					...(android ? MOBILE_CLIENT : []),
 				],
 				aggregations: [
 					'min(timestamp)',
@@ -123,6 +138,16 @@ export function overviewRequest(
 			],
 			aggregations: ['max(timestamp)'],
 		}),
+		...(android
+			? [
+					logQuery({
+						name: 'AS',
+						filter: allOf(app, appStartEventsFilter),
+						groupBy: [RUM_ATTRIBUTES.startType],
+						aggregations: APP_START_AGGREGATIONS,
+					}),
+				]
+			: []),
 		traceQuery({
 			name: 'RL',
 			filter: applicationFilter(applicationId),
@@ -178,13 +203,24 @@ function sessionSummaries(
 		.map((row) => {
 			const start = timestampMs(row.values[0]);
 			const end = timestampMs(row.values[1]);
+			const userAgent = row.labels[RUM_ATTRIBUTES.userAgent] ?? '';
+			const label = (key: string): string => row.labels[key] ?? '';
 			return {
 				id: row.labels[RUM_ATTRIBUTES.sessionId] ?? '',
 				start,
 				durationMs:
 					start !== undefined && end !== undefined ? end - start : undefined,
 				views: count(row, 2),
-				userAgent: row.labels[RUM_ATTRIBUTES.userAgent] ?? '',
+				userAgent,
+				client:
+					!userAgent && label(RUM_ATTRIBUTES.osName)
+						? mobileClientLabel({
+								os: label(RUM_ATTRIBUTES.osName),
+								osVersion: label(RUM_ATTRIBUTES.osVersion),
+								manufacturer: label(RUM_ATTRIBUTES.deviceManufacturer),
+								model: label(RUM_ATTRIBUTES.deviceModel),
+							})
+						: describeUserAgent(userAgent),
 				release: row.labels[RUM_ATTRIBUTES.serviceVersion] ?? '',
 			};
 		})
@@ -210,6 +246,7 @@ export function applicationOverview(
 				: undefined,
 		views: count(row('S'), 1),
 		vitals: vitalSummaries(rawScalarRows(response, 'V')),
+		appStart: appStartSummaries(rawScalarRows(response, 'AS')),
 		routes: topRoutes(routes),
 		routeCount: routes.length,
 		sessions: sessionSummaries(response),

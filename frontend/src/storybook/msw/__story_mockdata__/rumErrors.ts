@@ -336,6 +336,7 @@ function affectedSessions(): RumtypesAffectedSessionDTO[] {
 			client: {
 				browser,
 				browserVersion: browser === 'Safari' ? '18' : '130',
+				device: '',
 				os,
 				osVersion: '',
 			},
@@ -355,7 +356,7 @@ function events(mapped: boolean, release: string): RumtypesErrorEventDTO[] {
 				sessionId,
 				route: '/cart',
 				release: index === 0 ? release : eventRelease,
-				client: { browser, browserVersion: '130', os, osVersion: '' },
+				client: { browser, browserVersion: '130', device: '', os, osVersion: '' },
 				type: 'HttpError',
 				message: 'POST /api/cart returned 502',
 				source: 'unhandledrejection',

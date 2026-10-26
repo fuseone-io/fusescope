@@ -1,3 +1,4 @@
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import { useListRUMViews } from 'api/generated/services/rum';
 import { NativeSelect, NativeSelectOption } from 'components/ui/native-select';
 import { Switch } from 'components/ui/switch';
@@ -8,6 +9,7 @@ import {
 	CUSTOM_DURATION,
 	DURATION_RANGES,
 } from '../constants';
+import { useApplicationPlatform } from '../../hooks/useApplicationPlatform';
 import { useSessionFilters } from '../hooks/useSessionFilters';
 import { durationRangeOf } from '../utils';
 import UserIdFilter from './UserIdFilter';
@@ -33,25 +35,29 @@ function SessionFiltersBar({
 		Boolean,
 	);
 	const duration = durationRangeOf(filters.minDurationMs, filters.maxDurationMs);
+	const android =
+		useApplicationPlatform(applicationId) === RumtypesPlatformDTO.android;
 
 	return (
 		<>
-			<label className={LABEL}>
-				Browser
-				<NativeSelect
-					data-testid="rum-sessions-browser"
-					value={filters.browser}
-					onChange={(event): void => update({ browser: event.target.value })}
-					className="tw:font-medium"
-				>
-					<NativeSelectOption value="">All</NativeSelectOption>
-					{browsers.map((browser) => (
-						<NativeSelectOption key={browser} value={browser}>
-							{browser}
-						</NativeSelectOption>
-					))}
-				</NativeSelect>
-			</label>
+			{!android && (
+				<label className={LABEL}>
+					Browser
+					<NativeSelect
+						data-testid="rum-sessions-browser"
+						value={filters.browser}
+						onChange={(event): void => update({ browser: event.target.value })}
+						className="tw:font-medium"
+					>
+						<NativeSelectOption value="">All</NativeSelectOption>
+						{browsers.map((browser) => (
+							<NativeSelectOption key={browser} value={browser}>
+								{browser}
+							</NativeSelectOption>
+						))}
+					</NativeSelect>
+				</label>
+			)}
 			<label className={LABEL}>
 				Route
 				<NativeSelect

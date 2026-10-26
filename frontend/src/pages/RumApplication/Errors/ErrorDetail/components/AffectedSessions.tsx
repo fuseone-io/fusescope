@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
-import type { RumtypesAffectedSessionDTO } from 'api/generated/services/fuseScope.schemas';
+import type {
+	RumtypesAffectedSessionDTO,
+	RumtypesPlatformDTO,
+} from 'api/generated/services/fuseScope.schemas';
 import {
 	Table,
 	TableBody,
@@ -10,7 +13,7 @@ import {
 } from 'components/ui/table';
 import dayjs from 'dayjs';
 import { formatCount } from 'lib/apm/format';
-import { clientLabel } from 'lib/rum/client';
+import { clientColumnLabel, clientLabel } from 'lib/rum/client';
 import { shortId } from 'lib/rum/format';
 
 import EmptyRow from '../../../components/EmptyRow';
@@ -20,6 +23,7 @@ interface AffectedSessionsProps {
 	/** Sessions of the group in the range. */
 	total: number;
 	sessionUrl: (sessionId: string) => string;
+	platform?: RumtypesPlatformDTO;
 }
 
 const RIGHT = 'tw:text-right tw:tabular-nums';
@@ -28,6 +32,7 @@ function AffectedSessions({
 	sessions,
 	total,
 	sessionUrl,
+	platform,
 }: AffectedSessionsProps): JSX.Element {
 	return (
 		<section
@@ -53,7 +58,7 @@ function AffectedSessions({
 							<TableHead>Session</TableHead>
 							<TableHead>Started</TableHead>
 							<TableHead>Release</TableHead>
-							<TableHead>Browser · OS</TableHead>
+							<TableHead>{clientColumnLabel(platform)}</TableHead>
 							<TableHead className={RIGHT}>Views</TableHead>
 							<TableHead className={RIGHT}>Errors</TableHead>
 							<TableHead>

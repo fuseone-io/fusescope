@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import {
 	Table,
@@ -8,6 +9,7 @@ import {
 	TableRow,
 } from 'components/ui/table';
 import { ApmWindow } from 'lib/apm/window';
+import { clientColumnLabel } from 'lib/rum/client';
 import { rumSessionsUrl, tracesExplorerUrl } from 'lib/rum/links';
 import { SessionRequest, SessionSummary } from 'lib/rum/overviewTypes';
 
@@ -24,6 +26,7 @@ interface RecentSessionsPanelProps {
 	filter: string;
 	window: ApmWindow;
 	loading: boolean;
+	platform?: RumtypesPlatformDTO;
 }
 
 function RecentSessionsPanel({
@@ -35,6 +38,7 @@ function RecentSessionsPanel({
 	filter,
 	window,
 	loading,
+	platform,
 }: RecentSessionsPanelProps): JSX.Element {
 	const ids = sessions.map((session) => session.id);
 	return (
@@ -87,7 +91,7 @@ function RecentSessionsPanel({
 							<TableHead className="tw:text-right">Duration</TableHead>
 							<TableHead className="tw:text-right">Views</TableHead>
 							<TableHead className="tw:text-right">Errors</TableHead>
-							<TableHead>Browser · OS</TableHead>
+							<TableHead>{clientColumnLabel(platform)}</TableHead>
 							<TableHead>Release</TableHead>
 							<TableHead className="tw:w-[24%]">Backend trace</TableHead>
 						</TableRow>
