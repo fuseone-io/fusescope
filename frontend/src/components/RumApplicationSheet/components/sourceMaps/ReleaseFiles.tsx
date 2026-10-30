@@ -6,6 +6,7 @@ import { formatBytes } from '../../utils/sourceMaps';
 
 interface ReleaseFilesProps {
 	applicationId: string;
+	android?: boolean;
 	release: string;
 	readOnly: boolean;
 	onDeleteFile: (fileId: string) => Promise<void>;
@@ -17,6 +18,7 @@ const GRID =
 /** The maps of one release, loaded when it is expanded. */
 function ReleaseFiles({
 	applicationId,
+	android = false,
 	release,
 	readOnly,
 	onDeleteFile,
@@ -31,8 +33,8 @@ function ReleaseFiles({
 			<div
 				className={`${GRID} tw:min-h-7 tw:text-[11px] tw:font-medium tw:tracking-[0.05em] tw:text-muted-foreground tw:uppercase`}
 			>
-				<span>Map file</span>
-				<span>Matches bundle URL</span>
+				<span>{android ? 'Mapping file' : 'Map file'}</span>
+				<span>{android ? 'R8 map ID' : 'Matches bundle URL'}</span>
 				<span className="tw:text-right">Size</span>
 				<span />
 			</div>
@@ -51,10 +53,16 @@ function ReleaseFiles({
 						{file.path}
 					</span>
 					<span
-						title={file.debugId ? `debug ID ${file.debugId}` : file.generatedPath}
+						title={
+							android
+								? file.debugId || 'No map ID'
+								: file.debugId
+									? `debug ID ${file.debugId}`
+									: file.generatedPath
+						}
 						className="tw:truncate tw:font-mono tw:text-muted-foreground"
 					>
-						{file.generatedPath}
+						{android ? file.debugId || '—' : file.generatedPath}
 					</span>
 					<span className="tw:text-right tw:text-muted-foreground tw:tabular-nums">
 						{formatBytes(file.sizeBytes)}
@@ -75,7 +83,9 @@ function ReleaseFiles({
 				</div>
 			))}
 			<span className="tw:pt-1 tw:text-[11px] tw:text-subtle-foreground">
-				Matched by the bundle’s URL path; serving under a prefix still matches.
+				{android
+					? 'Matched by release and R8 map ID (pg_map_id); traces without a map ID use the release’s latest mapping.'
+					: 'Matched by the bundle’s URL path; serving under a prefix still matches.'}
 			</span>
 		</div>
 	);

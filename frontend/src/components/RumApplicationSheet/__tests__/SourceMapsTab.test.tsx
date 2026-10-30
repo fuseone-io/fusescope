@@ -42,18 +42,21 @@ function serve(
 	server.use(
 		rest.get(APP_URL, (_req, res, ctx) => res(ctx.json(ok(rumApplication(app))))),
 		rest.get(`${APP_URL}/keys`, (_req, res, ctx) => res(ctx.json(ok([])))),
-		rest.get(`${APP_URL}/sourcemaps`, (req, res, ctx) =>
-			res(
-				ctx.json(
-					ok(
-						rumSourceMaps({
-							empty,
-							release: req.url.searchParams.get('release') ?? undefined,
-						}),
-					),
-				),
-			),
-		),
+		rest.get(`${APP_URL}/sourcemaps`, (req, res, ctx) => {
+			const data = rumSourceMaps({
+				empty,
+				release: req.url.searchParams.get('release') ?? undefined,
+			});
+			if (app.platform === RumtypesPlatformDTO.android) {
+				data.files = (data.files ?? []).map((file) => ({
+					...file,
+					path: '/mapping-7e4c1a9.txt',
+					generatedPath: '',
+					debugId: '7e4c1a9',
+				}));
+			}
+			return res(ctx.json(ok(data)));
+		}),
 		rest.delete(`${APP_URL}/sourcemaps`, (req, res, ctx) => {
 			calls.deleted.push(req.url.searchParams);
 			return res(ctx.status(204));
@@ -106,9 +109,19 @@ describe('SourceMapsTab', () => {
 		await user.click(screen.getByTestId('rum-mappings-method-api'));
 		await waitFor(() =>
 			expect(screen.getByTestId('rum-mappings-api')).toHaveTextContent(
-				'/api/v1/rum/applications/app-web-shop/mappings?release=1.8.0',
+				'/api/v1/rum/applications/app-web-shop/mappings?release=1.8.0&map_id=$R8_MAP_ID',
 			),
 		);
+		const [latest] = await screen.findAllByTestId('rum-sourcemaps-release');
+		await user.click(within(latest).getByTestId('rum-sourcemaps-expand'));
+		const files = within(latest).getByTestId('rum-sourcemaps-files');
+		expect(files).toHaveTextContent('Mapping file');
+		expect(files).toHaveTextContent('R8 map ID');
+		expect(files).not.toHaveTextContent('Matches bundle URL');
+		expect(files).toHaveTextContent('pg_map_id');
+		const [mapping] = await within(files).findAllByTestId('rum-sourcemaps-file');
+		expect(mapping).toHaveTextContent('/mapping-7e4c1a9.txt');
+		expect(mapping).toHaveTextContent('7e4c1a9');
 	});
 
 	it('lists the uploaded releases and expands one to its files', async () => {

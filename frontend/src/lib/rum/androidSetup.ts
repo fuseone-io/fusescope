@@ -138,7 +138,7 @@ const mappingsUrl = (target: UploadTarget, base = '$FUSESCOPE_URL'): string =>
 
 export function mappingCurlSnippet(target: UploadTarget): string {
 	return [
-		`curl -X POST "${mappingsUrl(target)}" \\`,
+		`curl -X POST "${mappingsUrl(target)}&map_id=$R8_MAP_ID" \\`,
 		'  -H "SigNoz-Api-Key: $FUSESCOPE_API_KEY" \\',
 		'  -H "Content-Type: text/plain" \\',
 		`  --data-binary @${MAPPING_FILE}`,

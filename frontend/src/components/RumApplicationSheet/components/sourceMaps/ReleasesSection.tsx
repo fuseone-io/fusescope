@@ -9,6 +9,7 @@ import ReleaseRow from './ReleaseRow';
 
 interface ReleasesSectionProps {
 	applicationId: string;
+	android?: boolean;
 	data?: RumtypesGettableSourceMapsDTO;
 	loading: boolean;
 	readOnly: boolean;
@@ -20,6 +21,7 @@ const HEAD =
 
 function ReleasesSection({
 	applicationId,
+	android = false,
 	data,
 	loading,
 	readOnly,
@@ -60,6 +62,7 @@ function ReleasesSection({
 						<ul className="tw:m-0 tw:p-0 tw:[&>li:last-child>div:first-child]:border-b-0">
 							{releases.map((release) => (
 								<ReleaseRow
+									android={android}
 									key={release.release}
 									applicationId={applicationId}
 									release={release}
@@ -72,7 +75,7 @@ function ReleasesSection({
 						</ul>
 						{loading && (
 							<p className="tw:m-0 tw:px-3.5 tw:py-6 tw:text-center tw:text-[13px] tw:text-muted-foreground">
-								Loading source maps…
+								{android ? 'Loading R8 mappings…' : 'Loading source maps…'}
 							</p>
 						)}
 						{!loading && releases.length === 0 && (
@@ -80,7 +83,9 @@ function ReleasesSection({
 								data-testid="rum-sourcemaps-empty"
 								className="tw:m-0 tw:px-3.5 tw:py-6 tw:text-center tw:text-[13px] tw:text-muted-foreground"
 							>
-								No source maps uploaded yet: stack traces show minified code.
+								{android
+									? 'No R8 mappings uploaded yet: stack traces show obfuscated code.'
+									: 'No source maps uploaded yet: stack traces show minified code.'}
 							</p>
 						)}
 					</div>
