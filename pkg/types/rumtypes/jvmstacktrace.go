@@ -44,6 +44,12 @@ var (
 	}
 )
 
+// retraceBudget is what a retrace may still keep and walk.
+type retraceBudget struct {
+	frames  int
+	entries int
+}
+
 // ErrorCauseRelation is how an exception of a JVM stack trace relates to the
 // one before it.
 type ErrorCauseRelation struct{ valuer.String }
@@ -169,16 +175,16 @@ func (frame StackFrame) OriginalFunction() string {
 // RetraceJVMStackTrace returns a copy of trace with types and frames mapped
 // back to the original code, and whether the mapping resolved anything.
 // Frames of classes outside the mapping are kept as they are. Inlined frames
-// expand the trace; the expansion stops at MaxStackFrames across its
-// exceptions.
+// expand the trace; across its exceptions it keeps at most MaxStackFrames
+// frames and walks at most maxRetraceEntries mapping entries.
 func RetraceJVMStackTrace(trace *JVMStackTrace, mapping *R8Mapping, mappingPath string) (*JVMStackTrace, bool) {
 	retraced := &JVMStackTrace{Exceptions: make([]*ErrorCause, 0, len(trace.Exceptions)), Truncated: trace.Truncated}
-	resolved, budget := false, MaxStackFrames
+	resolved, budget := false, &retraceBudget{frames: MaxStackFrames, entries: maxRetraceEntries}
 	for _, exception := range trace.Exceptions {
 		copied := *exception
 		var ok bool
 		copied.Type, ok = mapping.RetraceClass(exception.Type)
-		frames, framesResolved, truncated := retraceJVMFrames(exception.Frames, copied.Type, mapping, mappingPath, &budget)
+		frames, framesResolved, truncated := retraceJVMFrames(exception.Frames, copied.Type, mapping, mappingPath, budget)
 		copied.Frames = frames
 		resolved = resolved || ok || framesResolved
 		retraced.Truncated = retraced.Truncated || truncated
@@ -252,13 +258,14 @@ func NewJVMErrorFingerprint(trace *JVMStackTrace, source string) string {
 	return hex.EncodeToString(sum[:])[:ErrorFingerprintLength]
 }
 
-// retraceJVMFrames spends budget on the frames it emits, and reports whether
-// it ran out before the last.
-func retraceJVMFrames(frames []StackFrame, exceptionType string, mapping *R8Mapping, mappingPath string, budget *int) ([]StackFrame, bool, bool) {
-	retraced, synthesized := make([]StackFrame, 0, min(len(frames), *budget)), make([]bool, 0, min(len(frames), *budget))
+// retraceJVMFrames spends budget on the frames it keeps and the mapping
+// entries it walks, and reports whether it ran out before the last frame.
+// Synthesized frames are dropped unless every frame is synthesized.
+func retraceJVMFrames(frames []StackFrame, exceptionType string, mapping *R8Mapping, mappingPath string, budget *retraceBudget) ([]StackFrame, bool, bool) {
+	kept, synthesized := make([]StackFrame, 0, min(len(frames), budget.frames)), []StackFrame{}
 	resolved, truncated, outlinePosition := false, false, 0
 	for i, frame := range frames {
-		if *budget <= 0 {
+		if budget.frames <= 0 || budget.entries <= 0 {
 			truncated = true
 			break
 		}
@@ -275,20 +282,19 @@ func retraceJVMFrames(frames []StackFrame, exceptionType string, mapping *R8Mapp
 		if i == 0 {
 			throwing = exceptionType
 		}
-		originals, cut := mapping.LookupFrame(class, method, line, throwing, *budget)
-		if originals == nil {
-			retraced, synthesized = append(retraced, frame), append(synthesized, false)
-			*budget--
-			continue
-		}
-		resolved = true
-		if len(originals) == 1 && originals[0].Outline && frame.Line > 0 {
-			outlinePosition = frame.Line
-			continue
-		}
-		truncated = truncated || cut
+		first, outline := true, false
+		found := mapping.LookupFrame(class, method, line, throwing, func(original R8Frame) bool {
+			if budget.entries <= 0 {
+				truncated = true
+				return false
+			}
+			budget.entries--
+			if first && !original.Inlined && original.Outline && frame.Line > 0 {
+				outline = true
+				return false
+			}
+			first = false
 
-		for _, original := range originals {
 			copied := frame
 			copied.Original = &OriginalFrame{
 				Function:  original.Class + "." + original.Method,
@@ -298,21 +304,37 @@ func retraceJVMFrames(frames []StackFrame, exceptionType string, mapping *R8Mapp
 				SourceMap: mappingPath,
 				Inlined:   original.Inlined,
 			}
-			retraced, synthesized = append(retraced, copied), append(synthesized, original.Synthesized)
+			if original.Synthesized {
+				if len(synthesized) < budget.frames {
+					synthesized = append(synthesized, copied)
+				}
+				return true
+			}
+			if budget.frames <= 0 {
+				truncated = true
+				return false
+			}
+			kept = append(kept, copied)
+			budget.frames--
+			return true
+		})
+		if !found {
+			kept = append(kept, frame)
+			budget.frames, budget.entries = budget.frames-1, budget.entries-1
+			continue
 		}
-		*budget -= len(originals)
+		resolved = true
+		if outline {
+			outlinePosition = frame.Line
+		}
 	}
 
-	if !slices.Contains(synthesized, false) {
-		return retraced, resolved, truncated
+	if len(kept) > 0 {
+		return kept, resolved, truncated
 	}
-	kept := make([]StackFrame, 0, len(retraced))
-	for i, frame := range retraced {
-		if !synthesized[i] {
-			kept = append(kept, frame)
-		}
-	}
-	return kept, resolved, truncated
+	synthesized = synthesized[:min(len(synthesized), budget.frames)]
+	budget.frames -= len(synthesized)
+	return synthesized, resolved, truncated
 }
 
 func parseJVMHeader(line string) (string, string) {

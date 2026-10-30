@@ -235,3 +235,85 @@ func TestParseR8MappingRejectsTooManyRanges(t *testing.T) {
 	_, err = ParseR8Mapping([]byte(builder.String()))
 	assert.NoError(t, err)
 }
+
+func syntheticChainMapping(t *testing.T, synthetic int) *R8Mapping {
+	t.Helper()
+	builder := strings.Builder{}
+	builder.WriteString("# {\"id\":\"com.android.tools.r8.mapping\",\"version\":\"2.2\"}\n")
+	builder.WriteString("com.example.shop.Synth -> b:\n# {\"id\":\"com.android.tools.r8.synthesized\"}\n")
+	builder.WriteString("com.example.shop.Shop -> a:\n")
+	for i := range synthetic {
+		fmt.Fprintf(&builder, "    1:1:void com.example.shop.Synth.gen%d():3:3 -> a\n", i)
+	}
+	builder.WriteString("    1:1:void outer():9:9 -> a\n")
+	builder.WriteString("com.example.shop.Generated -> c:\n# {\"id\":\"com.android.tools.r8.synthesized\"}\n")
+	builder.WriteString("    1:1:void inner():4:4 -> a\n    1:1:void outer():7:7 -> a\n")
+	mapping, err := ParseR8Mapping([]byte(builder.String()))
+	require.NoError(t, err)
+	return mapping
+}
+
+func TestRetraceJVMStackTraceSyntheticFramesBudget(t *testing.T) {
+	testCases := []struct {
+		name      string
+		synthetic int
+		stack     string
+		functions []string
+		frames    int
+		truncated bool
+	}{
+		{
+			name:      "LastSlot_GoesToRealOuter",
+			synthetic: 1,
+			stack:     "a.a: boom\n" + strings.Repeat("\tat java.lang.Thread.run(Thread.java:1)\n", MaxStackFrames-1) + "\tat a.a(SourceFile:1)\n",
+			frames:    MaxStackFrames,
+			functions: []string{"com.example.shop.Shop.outer"},
+		},
+		{
+			name:      "ShortSyntheticRun_RealFrameEmitted",
+			synthetic: 300,
+			stack:     "a.a: boom\n\tat a.a(SourceFile:1)\n",
+			frames:    1,
+			functions: []string{"com.example.shop.Shop.outer"},
+		},
+		{
+			name:      "DeepSyntheticRun_WorkBudgetHit",
+			synthetic: 100_000,
+			stack:     "a.a: boom\n\tat a.a(SourceFile:1)\n",
+			truncated: true,
+		},
+		{
+			name:      "FullySynthetic_KeptAsFallback",
+			stack:     "a.a: boom\n\tat c.a(SourceFile:1)\n",
+			frames:    2,
+			functions: []string{"com.example.shop.Generated.inner", "com.example.shop.Generated.outer"},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			mapping := syntheticChainMapping(t, testCase.synthetic)
+			trace := ParseJVMStackTrace(testCase.stack, "", "")
+
+			var before, after runtime.MemStats
+			runtime.GC()
+			runtime.ReadMemStats(&before)
+			retraced, ok := RetraceJVMStackTrace(trace, mapping, "/mapping.txt")
+			runtime.ReadMemStats(&after)
+
+			require.True(t, ok)
+			assert.Equal(t, testCase.truncated, retraced.Truncated)
+			assert.Less(t, after.TotalAlloc-before.TotalAlloc, uint64(1<<20))
+			frames := retraced.Exceptions[0].Frames
+			assert.LessOrEqual(t, len(frames), MaxStackFrames)
+			if testCase.functions == nil {
+				return
+			}
+			assert.Equal(t, testCase.frames, len(frames))
+			tail := []string{}
+			for _, frame := range frames[len(frames)-len(testCase.functions):] {
+				tail = append(tail, frame.OriginalFunction())
+			}
+			assert.Equal(t, testCase.functions, tail)
+		})
+	}
+}

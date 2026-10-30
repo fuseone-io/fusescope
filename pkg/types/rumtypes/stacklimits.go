@@ -12,6 +12,9 @@ const (
 	MaxComponentStackFrames = 50
 	maxJVMExceptions        = 32
 	maxContextRadius        = 10
+	// maxRetraceEntries bounds the mapping entries a retrace walks,
+	// synthesized ones included, which take no output frame.
+	maxRetraceEntries = 4 * MaxStackFrames
 )
 
 // TruncateStack cuts text to at most limit bytes on a rune boundary, and
