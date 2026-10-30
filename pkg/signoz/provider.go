@@ -279,6 +279,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddArchiveBackstopTableFactory(sqlschema),
 		sqlmigration.NewAddArchiveIndexSequenceFactory(sqlschema),
 		sqlmigration.NewAddArchiveShardPinFactory(sqlschema),
+		sqlmigration.NewAddArchiveRehydrationFactory(sqlschema),
 	)
 }
 
