@@ -252,6 +252,10 @@ semconv-check: ## Fail if the generated semantic-convention files are stale
 integrations-catalog: ## Fetch and verify the pinned integration catalog release (CATALOG_VERSION=vX.Y.Z moves the pin, COSIGN=path uses a local cosign)
 	@go run ./scripts/integrationscatalog $(if $(CATALOG_VERSION),-version $(CATALOG_VERSION)) $(if $(COSIGN),-cosign $(COSIGN))
 
+.PHONY: rum-browser-sdk
+rum-browser-sdk: ## Fetch and verify the pinned @fusescope/browser bundle the backend serves (SDK_VERSION=x.y.z moves the pin)
+	@go run ./scripts/rumbrowsersdk $(if $(SDK_VERSION),-version $(SDK_VERSION))
+
 .PHONY: agpl-check
 agpl-check: ## Fail if the community binary links any AGPL collector package
 	@go run ./scripts/agplguard
