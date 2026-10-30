@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/fuseone-io/fusescope/pkg/http/handler"
+	"github.com/fuseone-io/fusescope/pkg/http/render"
 	"github.com/fuseone-io/fusescope/pkg/types"
 	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
@@ -630,7 +631,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/public/dashboards/{id}", handler.New(provider.authzMiddleware.CheckWithoutClaims(
+	if err := router.Handle("/api/v2/public/dashboards/{id}", handler.New(provider.rateLimitPublicDashboard(provider.authzMiddleware.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicDataV2,
 		authtypes.Relation{Verb: coretypes.VerbRead},
 		coretypes.ResourceMetaResourcePublicDashboard,
@@ -641,7 +642,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			}
 
 			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}, []string{authtypes.SigNozAnonymousRoleName}), handler.OpenAPIDef{
+		}, []string{authtypes.SigNozAnonymousRoleName})), handler.OpenAPIDef{
 		ID:                  "GetPublicDashboardDataV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get public dashboard data (v2)",
@@ -651,7 +652,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            new(dashboardtypes.GettablePublicDashboardDataV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusTooManyRequests},
 		Deprecated:          false,
 		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
 	}, handler.WithResourceDefs(handler.BasicResourceDef{
@@ -664,7 +665,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/public/dashboards/{id}/panels/{key}/query_range", handler.New(provider.authzMiddleware.CheckWithoutClaims(
+	if err := router.Handle("/api/v2/public/dashboards/{id}/panels/{key}/query_range", handler.New(provider.rateLimitPublicDashboard(provider.authzMiddleware.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicWidgetQueryRangeV2,
 		authtypes.Relation{Verb: coretypes.VerbRead},
 		coretypes.ResourceMetaResourcePublicDashboard,
@@ -675,7 +676,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			}
 
 			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}, []string{authtypes.SigNozAnonymousRoleName}), handler.OpenAPIDef{
+		}, []string{authtypes.SigNozAnonymousRoleName})), handler.OpenAPIDef{
 		ID:                  "GetPublicDashboardPanelQueryRangeV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get query range result (v2)",
@@ -686,7 +687,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            new(querybuildertypesv5.QueryRangeResponse),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusTooManyRequests},
 		Deprecated:          false,
 		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
 	}, handler.WithResourceDefs(handler.BasicResourceDef{
@@ -720,4 +721,16 @@ func (provider *provider) systemDashboardID() coretypes.ResourceIDExtractor {
 
 		return systemDashboard.ID.StringValue(), nil
 	})
+}
+
+// rateLimitPublicDashboard runs before authz, so a limited request costs no link lookup.
+func (provider *provider) rateLimitPublicDashboard(next http.HandlerFunc) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		if err := provider.dashboardHandler.CheckPublicRateLimit(req); err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		next(rw, req)
+	}
 }
