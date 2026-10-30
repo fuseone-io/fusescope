@@ -20,7 +20,7 @@ Never run git commands against `ee/` or `cmd/enterprise` paths, and never fetch 
    - Go: added `require` lines in `go.mod`. For each, find the license (`go env GOMODCACHE`/`<module>@<version>/LICENSE*`, or `go mod download -json <module>@<version>` then read its `Dir`).
    - npm: added entries in `frontend/package.json` and `tests/e2e/package.json`; read `node_modules/<pkg>/package.json` `license` when installed, else `npm view <pkg>@<version> license`.
    - Python: added entries in `tests/pyproject.toml`.
-   - Allowed: MIT, BSD-2/3-Clause, Apache-2.0, ISC. Anything else (GPL, LGPL, AGPL, SSPL, BUSL, MPL, Commons-Clause, unknown) is **BLOCKING**. Adding any dependency at all is **ATTENTION**: CLAUDE.md requires asking first.
+   - Allowed: MIT, BSD-2/3-Clause, Apache-2.0, ISC; MPL-2.0 only as an unmodified dependency attributed in `NOTICE` (vendored, copied or patched MPL-2.0 files, or a missing `NOTICE` entry, are **BLOCKING**). Anything else (GPL, LGPL, AGPL, SSPL, BUSL, Commons-Clause, Elastic License, unknown) is **BLOCKING**. Adding any dependency at all is **ATTENTION**: CLAUDE.md requires asking first.
 2. **AGPL collector imports.** Added lines importing `github.com/fuseone-io/fusescope-otel-collector` in non-generated `.go` files → **BLOCKING**. A moved existing import is **ATTENTION**.
 3. **Proprietary tree.** Added references to `ee/`, `cmd/enterprise`, `ee/query-service`, or code that reads like a translation of an enterprise feature with no clean-room note → **BLOCKING**.
 4. **Copied documentation.** Added prose (Markdown, docs strings, UI copy longer than a sentence) that looks lifted from signoz.io: SigNoz product wording, `signoz.io/docs` URLs outside `frontend/src/constants/docs.ts`. → **ATTENTION**, quote the lines.
