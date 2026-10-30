@@ -2,6 +2,8 @@ package rumtypes
 
 import (
 	"encoding/json"
+	"fmt"
+	"runtime"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -173,4 +175,63 @@ func TestComponentStackTruncatedBeforeTrim(t *testing.T) {
 	require.NotNil(t, parsed)
 	assert.True(t, parsed.Truncated)
 	assert.Len(t, parsed.Frames, 1)
+}
+
+func TestRetraceJVMStackTraceDeepInlineChainBounded(t *testing.T) {
+	builder := strings.Builder{}
+	builder.WriteString("com.example.shop.Deep -> a:\n")
+	for i := range 100_000 {
+		fmt.Fprintf(&builder, "    1:1:void inlined%d():5:5 -> a\n", i)
+	}
+	builder.WriteString("    1:1:void outer():9:9 -> a\n")
+	mapping, err := ParseR8Mapping([]byte(builder.String()))
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name   string
+		causes int
+	}{
+		{name: "OneFrame"},
+		{name: "OneFramePerCause_BudgetShared", causes: 3},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			stack := "a.a: boom\n\tat a.a(SourceFile:1)\n" + strings.Repeat("Caused by: a.a: inner\n\tat a.a(SourceFile:1)\n", testCase.causes)
+			trace := ParseJVMStackTrace(stack, "", "")
+
+			var before, after runtime.MemStats
+			runtime.GC()
+			runtime.ReadMemStats(&before)
+			retraced, ok := RetraceJVMStackTrace(trace, mapping, "/mapping.txt")
+			runtime.ReadMemStats(&after)
+
+			require.True(t, ok)
+			assert.True(t, retraced.Truncated)
+			frames := 0
+			for _, exception := range retraced.Exceptions {
+				frames += len(exception.Frames)
+			}
+			assert.Equal(t, MaxStackFrames, frames)
+			assert.Less(t, after.TotalAlloc-before.TotalAlloc, uint64(1<<20), "allocations stay O(budget), not O(inline depth)")
+		})
+	}
+}
+
+func TestParseR8MappingRejectsTooManyRanges(t *testing.T) {
+	builder := strings.Builder{}
+	builder.WriteString("com.example.shop.Wide -> a:\n")
+	for i := range maxR8MethodRanges + 1 {
+		fmt.Fprintf(&builder, "    %d:%d:void m():1:1 -> a\n", i+1, i+1)
+	}
+	_, err := ParseR8Mapping([]byte(builder.String()))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "ranges")
+
+	builder.Reset()
+	builder.WriteString("com.example.shop.Wide -> a:\n")
+	for i := range maxR8MethodRanges {
+		fmt.Fprintf(&builder, "    %d:%d:void m():1:1 -> a\n", i+1, i+1)
+	}
+	_, err = ParseR8Mapping([]byte(builder.String()))
+	assert.NoError(t, err)
 }
