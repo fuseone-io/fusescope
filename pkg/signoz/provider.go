@@ -274,6 +274,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddInstalledIntegrationVersionFactory(sqlschema),
 		sqlmigration.NewAddArchiveFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRUMSourceMapKindFactory(sqlschema),
+		sqlmigration.NewAddArchiveRehydrationFactory(sqlschema),
 	)
 }
 

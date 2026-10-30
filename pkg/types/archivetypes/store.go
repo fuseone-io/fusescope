@@ -44,4 +44,20 @@ type Store interface {
 	// IndexSnapshot returns a table's active objects with the number of commits they reflect,
 	// read together.
 	IndexSnapshot(ctx context.Context, table string) (*IndexSnapshot, error)
+
+	CreateRehydration(ctx context.Context, rehydration *Rehydration) error
+
+	// GetRehydration returns an error with ErrCodeRehydrationNotFound when id doesn't exist.
+	GetRehydration(ctx context.Context, id valuer.UUID) (*Rehydration, error)
+
+	// NextRehydration returns the signal's oldest restoration still pending or loading, or an
+	// error with ErrCodeRehydrationNotFound when there is none.
+	NextRehydration(ctx context.Context, signal string) (*Rehydration, error)
+
+	// UpdateRehydration writes the restoration's status, totals, DDL and failure.
+	UpdateRehydration(ctx context.Context, rehydration *Rehydration) error
+
+	// ListRestorableParts returns the published parts of table on day (YYYY-MM-DD) held by
+	// active objects, with their objects and attempts.
+	ListRestorableParts(ctx context.Context, table string, day string) ([]RestorablePart, error)
 }
