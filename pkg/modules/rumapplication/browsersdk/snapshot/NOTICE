@@ -1,0 +1,16 @@
+FuseScope SDK
+Copyright 2026 FuseOne
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product includes software developed by The OpenTelemetry Authors
+(https://opentelemetry.io/), licensed under the Apache License, Version 2.0:
+
+  - OpenTelemetry JavaScript (https://github.com/open-telemetry/opentelemetry-js)
+  - OpenTelemetry JavaScript Contrib (https://github.com/open-telemetry/opentelemetry-js-contrib)
+  - OpenTelemetry Browser (https://github.com/open-telemetry/opentelemetry-browser)
+
+Copyright The OpenTelemetry Authors.
+
+The browser bundle also includes web-vitals (https://github.com/GoogleChrome/web-vitals),
+Copyright Google LLC, licensed under the Apache License, Version 2.0.
