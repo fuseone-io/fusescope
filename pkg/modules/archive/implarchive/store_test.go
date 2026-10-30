@@ -81,7 +81,7 @@ func TestPublish(t *testing.T) {
 		assert.Len(t, objects, 2)
 
 		err = store.Publish(ctx, lease, publication)
-		assert.True(t, errors.Asc(err, archivetypes.ErrCodeAttemptNotPending), err)
+		assert.True(t, errors.Asc(err, archivetypes.ErrCodeAttemptAlreadyPublished), "a retry after a lost commit reply is told the attempt is live: %v", err)
 	})
 }
 
@@ -181,6 +181,42 @@ func TestPublishSupersedes(t *testing.T) {
 	}
 }
 
+func TestPublishKeepsOnePartPerRange(t *testing.T) {
+	ctx := context.Background()
+	mutated := archivetypes.Part{Name: "p_1_3_0_7", Range: archivetypes.BlockRange{Min: 1, Max: 3}, DataVersion: 7, Rows: 9}
+	lateOriginal := archivetypes.Part{Name: "p_1_3_0", Range: archivetypes.BlockRange{Min: 1, Max: 3}, DataVersion: 1, Rows: 10}
+	merged := archivetypes.Part{Name: "p_1_6_1", Range: archivetypes.BlockRange{Min: 1, Max: 6}, DataVersion: 1, Rows: 20}
+	contained := archivetypes.Part{Name: "p_1_3_0", Range: archivetypes.BlockRange{Min: 1, Max: 3}, DataVersion: 1, Rows: 10}
+
+	testCases := []struct {
+		name      string
+		first     archivetypes.Part
+		second    archivetypes.Part
+		wantParts []string
+	}{
+		{name: "OlderVersionOfAMutatedPart_MutatedKept", first: mutated, second: lateOriginal, wantParts: []string{"p_1_3_0_7"}},
+		{name: "PartAPublishedPartContains_NewSuperseded", first: merged, second: contained, wantParts: []string{"p_1_6_1"}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			forEachStore(t, func(t *testing.T, store archivetypes.Store) {
+				lease := acquireTestLease(t, store)
+				require.NoError(t, store.Publish(ctx, lease, newTestPublicationOf(t, store, lease, "20260903-15-0", testCase.first)))
+				require.NoError(t, store.Publish(ctx, lease, newTestPublicationOf(t, store, lease, "20260903-15-0", testCase.second)))
+
+				parts, err := store.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
+				require.NoError(t, err)
+				assert.Equal(t, testCase.wantParts, partNames(parts))
+
+				objects, err := store.ListActiveObjects(ctx, "logs_v2")
+				require.NoError(t, err)
+				assert.Len(t, objects, 1, "the index lists each row once")
+			})
+		})
+	}
+}
+
 func TestPublishKeepsObjectWithAPublishedPart(t *testing.T) {
 	ctx := context.Background()
 
@@ -188,6 +224,7 @@ func TestPublishKeepsObjectWithAPublishedPart(t *testing.T) {
 		lease := acquireTestLease(t, store)
 		attempt := archivetypes.NewExportAttempt(lease, "logs_v2", 1, "20260903-15-0", "archive", "fusescope")
 		require.NoError(t, store.CreateAttempt(ctx, attempt))
+		require.NoError(t, attempt.SetFormat([]archivetypes.ColumnMapping{{Name: "timestamp", SourceType: "UInt64", ExportType: "Int64"}}, "k/manifest.json", "sha"))
 		object := archivetypes.NewObject(attempt, "k/compacted.parquet", 4096, "etag", 20)
 		require.NoError(t, store.Publish(ctx, lease, &archivetypes.Publication{
 			Attempt: attempt,
@@ -217,6 +254,116 @@ func TestAbandonAttempt(t *testing.T) {
 
 		err := store.Publish(ctx, lease, publication)
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodeAttemptNotPending), err)
+
+		published := newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 4, Max: 5})
+		require.NoError(t, store.Publish(ctx, lease, published))
+		err = store.AbandonAttempt(ctx, published.Attempt.ID)
+		assert.True(t, errors.Asc(err, archivetypes.ErrCodeAttemptNotPending), "abandoning a published attempt fails, so its objects aren't cleaned up: %v", err)
+	})
+}
+
+func TestPublishRefusesStaleOrForeignLeases(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("OldEpochAfterTheSameHolderRenewedAnExpiredLease", func(t *testing.T) {
+		forEachStore(t, func(t *testing.T, store archivetypes.Store) {
+			old := acquireTestLease(t, store)
+			publication := newTestPublication(t, store, old, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})
+			_, err := store.AcquireLease(ctx, "logs", "a", time.Now().Add(-time.Second))
+			require.NoError(t, err)
+			renewed, err := store.AcquireLease(ctx, "logs", "a", time.Now().Add(time.Minute))
+			require.NoError(t, err)
+			require.Greater(t, renewed.Epoch, old.Epoch)
+
+			err = store.Publish(ctx, renewed, publication)
+			assert.True(t, errors.Asc(err, archivetypes.ErrCodeLeaseLost), err)
+		})
+	})
+
+	t.Run("AnotherSignalsLeaseAtTheSameEpoch", func(t *testing.T) {
+		forEachStore(t, func(t *testing.T, store archivetypes.Store) {
+			logs := acquireTestLease(t, store)
+			traces, err := store.AcquireLease(ctx, "traces", "a", time.Now().Add(time.Minute))
+			require.NoError(t, err)
+			require.Equal(t, logs.Epoch, traces.Epoch)
+			publication := newTestPublication(t, store, logs, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})
+
+			err = store.Publish(ctx, traces, publication)
+			assert.True(t, errors.Asc(err, archivetypes.ErrCodeLeaseLost), err)
+		})
+	})
+}
+
+func TestPublishRollsBackALateFailure(t *testing.T) {
+	ctx := context.Background()
+
+	forEachStore(t, func(t *testing.T, store archivetypes.Store) {
+		lease := acquireTestLease(t, store)
+		require.NoError(t, store.Publish(ctx, lease, newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})))
+		again := newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})
+
+		err := store.Publish(ctx, lease, again)
+		assert.True(t, errors.Ast(err, errors.TypeAlreadyExists), err)
+		assert.True(t, errors.Asc(err, archivetypes.ErrCodePartAlreadyPublished), err)
+
+		objects, err := store.ListActiveObjects(ctx, "logs_v2")
+		require.NoError(t, err)
+		assert.Len(t, objects, 1, "the objects of the failed commit are rolled back")
+		require.NoError(t, store.AbandonAttempt(ctx, again.Attempt.ID), "the failed attempt is still pending")
+	})
+}
+
+func TestPublishValidatesThePublication(t *testing.T) {
+	ctx := context.Background()
+
+	testCases := []struct {
+		name   string
+		mutate func(*archivetypes.Publication)
+	}{
+		{name: "NoManifestHash", mutate: func(publication *archivetypes.Publication) { publication.Attempt.ManifestSHA256 = "" }},
+		{name: "NoColumnMapping", mutate: func(publication *archivetypes.Publication) { publication.Attempt.ColumnMapping = "" }},
+		{name: "PartOfAnotherPartition", mutate: func(publication *archivetypes.Publication) { publication.Parts[0].PartitionID = "20260904-15-0" }},
+		{name: "PartOfAnotherShard", mutate: func(publication *archivetypes.Publication) { publication.Parts[0].Shard = 2 }},
+		{name: "ObjectOfAnotherAttempt", mutate: func(publication *archivetypes.Publication) { publication.Objects[0].AttemptID = valuer.GenerateUUID() }},
+		{name: "PartWithoutItsObject", mutate: func(publication *archivetypes.Publication) { publication.Parts[0].ObjectID = valuer.GenerateUUID() }},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			forEachStore(t, func(t *testing.T, store archivetypes.Store) {
+				lease := acquireTestLease(t, store)
+				publication := newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})
+				testCase.mutate(publication)
+
+				err := store.Publish(ctx, lease, publication)
+				assert.True(t, errors.Ast(err, errors.TypeInvalidInput), err)
+			})
+		})
+	}
+}
+
+func TestIndexSnapshot(t *testing.T) {
+	ctx := context.Background()
+
+	forEachStore(t, func(t *testing.T, store archivetypes.Store) {
+		snapshot, err := store.IndexSnapshot(ctx, "logs_v2")
+		require.NoError(t, err)
+		assert.Equal(t, int64(0), snapshot.Sequence)
+		assert.Empty(t, snapshot.Objects)
+
+		lease := acquireTestLease(t, store)
+		require.NoError(t, store.Publish(ctx, lease, newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})))
+		require.NoError(t, store.Publish(ctx, lease, newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 6})))
+
+		snapshot, err = store.IndexSnapshot(ctx, "logs_v2")
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), snapshot.Sequence, "each commit of the table moves the sequence")
+		require.Len(t, snapshot.Objects, 1)
+		assert.Contains(t, snapshot.Objects[0].ObjectKey, "p_1_6")
+
+		other, err := store.IndexSnapshot(ctx, "logs_v2_resource")
+		require.NoError(t, err)
+		assert.Equal(t, int64(0), other.Sequence, "sequences are per table")
 	})
 }
 
@@ -302,14 +449,23 @@ func acquireTestLease(t *testing.T, store archivetypes.Store) *archivetypes.Leas
 func newTestPublication(t *testing.T, store archivetypes.Store, lease *archivetypes.Lease, partitionID string, ranges ...archivetypes.BlockRange) *archivetypes.Publication {
 	t.Helper()
 
+	parts := make([]archivetypes.Part, len(ranges))
+	for i, blocks := range ranges {
+		parts[i] = testPart(blocks)
+	}
+	return newTestPublicationOf(t, store, lease, partitionID, parts...)
+}
+
+func newTestPublicationOf(t *testing.T, store archivetypes.Store, lease *archivetypes.Lease, partitionID string, parts ...archivetypes.Part) *archivetypes.Publication {
+	t.Helper()
+
 	attempt := archivetypes.NewExportAttempt(lease, "logs_v2", 1, partitionID, "archive", "fusescope")
 	require.NoError(t, store.CreateAttempt(context.Background(), attempt))
 	require.NoError(t, attempt.SetFormat([]archivetypes.ColumnMapping{{Name: "timestamp", SourceType: "UInt64", ExportType: "Int64"}}, "fusescope/logs_v2/manifests/attempt="+attempt.ID.StringValue()+".json", "sha"))
 
 	publication := &archivetypes.Publication{Attempt: attempt}
 	location := archivetypes.ObjectLocation{Prefix: "fusescope", Table: "logs_v2", Day: time.Date(2026, 9, 3, 0, 0, 0, 0, time.UTC), Shard: 1, PartitionID: partitionID, AttemptID: attempt.ID.StringValue()}
-	for _, blocks := range ranges {
-		part := testPart(blocks)
+	for _, part := range parts {
 		object := archivetypes.NewObject(attempt, location.ObjectKey(part.Name), 1024, "etag", int64(part.Rows))
 		publication.Objects = append(publication.Objects, object)
 		publication.Parts = append(publication.Parts, archivetypes.NewArchivedPart(attempt, object, part))

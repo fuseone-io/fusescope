@@ -26,7 +26,7 @@ func (store *store) CreateAttempt(ctx context.Context, attempt *archivetypes.Att
 }
 
 func (store *store) AbandonAttempt(ctx context.Context, id valuer.UUID) error {
-	_, err := store.
+	result, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewUpdate().
@@ -36,14 +36,20 @@ func (store *store) AbandonAttempt(ctx context.Context, id valuer.UUID) error {
 		Where("id = ?", id).
 		Where("status = ?", archivetypes.AttemptStatusPending).
 		Exec(ctx)
-	if err != nil {
+	if ok, err := oneRowAffected(result, err); err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't abandon archive attempt %s", id)
+	} else if !ok {
+		return errors.Newf(errors.TypeInvalidInput, archivetypes.ErrCodeAttemptNotPending, "archive attempt %s is not pending", id)
 	}
 
 	return nil
 }
 
 func (store *store) Publish(ctx context.Context, lease *archivetypes.Lease, publication *archivetypes.Publication) error {
+	if err := publication.Validate(); err != nil {
+		return err
+	}
+
 	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		db := store.sqlstore.BunDBCtx(ctx)
 		attempt := publication.Attempt
@@ -75,13 +81,14 @@ func (store *store) Publish(ctx context.Context, lease *archivetypes.Lease, publ
 			Set("manifest_sha256 = ?", attempt.ManifestSHA256).
 			Set("updated_at = ?", now).
 			Where("id = ?", attempt.ID).
+			Where("signal = ?", lease.Signal).
 			Where("epoch = ?", lease.Epoch).
 			Where("status = ?", archivetypes.AttemptStatusPending).
 			Exec(ctx)
 		if ok, err := oneRowAffected(published, err); err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't publish archive attempt %s", attempt.ID)
 		} else if !ok {
-			return errors.Newf(errors.TypeAlreadyExists, archivetypes.ErrCodeAttemptNotPending, "archive attempt %s is not pending at epoch %d", attempt.ID, lease.Epoch)
+			return notPublished(ctx, db, attempt.ID, lease)
 		}
 
 		if len(publication.Objects) > 0 {
@@ -91,6 +98,9 @@ func (store *store) Publish(ctx context.Context, lease *archivetypes.Lease, publ
 		}
 		if len(publication.Parts) > 0 {
 			if _, err := db.NewInsert().Model(&publication.Parts).Exec(ctx); err != nil {
+				if wrapped := store.sqlstore.WrapAlreadyExistsErrf(err, archivetypes.ErrCodePartAlreadyPublished, "a part of archive attempt %s is published already", attempt.ID); wrapped != err {
+					return wrapped
+				}
 				return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record the parts of archive attempt %s", attempt.ID)
 			}
 		}
@@ -140,8 +150,53 @@ func (store *store) ListActiveObjects(ctx context.Context, table string) ([]*arc
 	return objects, nil
 }
 
-// supersede marks the published parts of the partition that a part of publication contains,
-// then the objects left without a published part.
+func (store *store) IndexSnapshot(ctx context.Context, table string) (*archivetypes.IndexSnapshot, error) {
+	snapshot := new(archivetypes.IndexSnapshot)
+	err := store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		sequence, err := store.
+			sqlstore.
+			BunDBCtx(ctx).
+			NewSelect().
+			Model(new(archivetypes.Attempt)).
+			Where("table_name = ?", table).
+			Where("status = ?", archivetypes.AttemptStatusPublished).
+			Count(ctx)
+		if err != nil {
+			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't count the archive commits of %s", table)
+		}
+		snapshot.Sequence = int64(sequence)
+
+		snapshot.Objects, err = store.ListActiveObjects(ctx, table)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return snapshot, nil
+}
+
+// notPublished tells why the attempt update matched no row: the attempt is published, or the
+// lease isn't the attempt's.
+func notPublished(ctx context.Context, db bun.IDB, id valuer.UUID, lease *archivetypes.Lease) error {
+	attempt := new(archivetypes.Attempt)
+	if err := db.NewSelect().Model(attempt).Where("id = ?", id).Scan(ctx); err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read archive attempt %s", id)
+	}
+
+	switch {
+	case attempt.Status == archivetypes.AttemptStatusPublished:
+		return errors.Newf(errors.TypeAlreadyExists, archivetypes.ErrCodeAttemptAlreadyPublished, "archive attempt %s is published already", id)
+	case attempt.Signal != lease.Signal || attempt.Epoch != lease.Epoch:
+		return errors.Newf(errors.TypeForbidden, archivetypes.ErrCodeLeaseLost, "archive attempt %s was made under the %s lease at epoch %d, not the %s lease at epoch %d", id, attempt.Signal, attempt.Epoch, lease.Signal, lease.Epoch)
+	default:
+		return errors.Newf(errors.TypeInvalidInput, archivetypes.ErrCodeAttemptNotPending, "archive attempt %s is %s", id, attempt.Status)
+	}
+}
+
+// supersede marks the partition's published parts that a part of publication contains, and
+// the parts of publication that a remaining published part contains, then the objects left
+// without a published part.
 func supersede(ctx context.Context, db bun.IDB, publication *archivetypes.Publication, now time.Time) error {
 	attempt := publication.Attempt
 
@@ -163,10 +218,26 @@ func supersede(ctx context.Context, db bun.IDB, publication *archivetypes.Public
 	for _, part := range archivetypes.Superseded(archivetypes.PartsOf(existing), archivetypes.PartsOf(publication.Parts)) {
 		superseded[part.Name] = true
 	}
+	var remaining []*archivetypes.ArchivedPart
+	for _, part := range existing {
+		if !superseded[part.PartName] {
+			remaining = append(remaining, part)
+		}
+	}
+	newlySuperseded := make(map[string]bool)
+	for _, part := range archivetypes.Superseded(archivetypes.PartsOf(publication.Parts), archivetypes.PartsOf(remaining)) {
+		newlySuperseded[part.Name] = true
+	}
 
 	var partIDs, objectIDs []valuer.UUID
 	for _, part := range existing {
 		if superseded[part.PartName] {
+			partIDs = append(partIDs, part.ID)
+			objectIDs = append(objectIDs, part.ObjectID)
+		}
+	}
+	for _, part := range publication.Parts {
+		if newlySuperseded[part.PartName] {
 			partIDs = append(partIDs, part.ID)
 			objectIDs = append(objectIDs, part.ObjectID)
 		}

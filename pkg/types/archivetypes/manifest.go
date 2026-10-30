@@ -51,7 +51,8 @@ type ManifestPart struct {
 // with the highest key, since superseded objects stay in the bucket.
 type Index struct {
 	Table    string        `json:"table"`
-	CommitID string        `json:"commit_id"`
+	Epoch    int64         `json:"epoch"`
+	Sequence int64         `json:"sequence"`
 	Objects  []IndexObject `json:"objects"`
 }
 
@@ -70,9 +71,10 @@ func (location ObjectLocation) ManifestKey() string {
 	return fmt.Sprintf("%s/%s/manifests/attempt=%s.json", strings.TrimSuffix(location.Prefix, "/"), location.Table, location.AttemptID)
 }
 
-// IndexKey sorts by commitID, a UUIDv7, so the latest index has the highest key.
-func IndexKey(prefix string, table string, commitID string) string {
-	return fmt.Sprintf("%s/%s/index/%s.json", strings.TrimSuffix(prefix, "/"), table, commitID)
+// IndexKey sorts by the lease epoch, then by the table's commit sequence, so the latest
+// index has the highest key whatever the writers' clocks say.
+func IndexKey(prefix string, table string, epoch int64, sequence int64) string {
+	return fmt.Sprintf("%s/%s/index/%020d-%020d.json", strings.TrimSuffix(prefix, "/"), table, epoch, sequence)
 }
 
 // Encode returns the manifest's JSON and its SHA-256, recorded at commit so a restore can

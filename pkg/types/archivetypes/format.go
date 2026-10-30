@@ -2,6 +2,7 @@ package archivetypes
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
@@ -12,7 +13,17 @@ import (
 // manifest of every export.
 const FormatVersion = 1
 
-const unixNanoSuffix = "_unix_nano"
+const (
+	// ShardColumn and PartColumn are written to every object, so external readers don't
+	// depend on its path.
+	ShardColumn = "_shard"
+	PartColumn  = "_part"
+
+	// UInt64RuleBits exports a UInt64 as the Int64 with the same bits; restores cast it back.
+	UInt64RuleBits = "bits"
+
+	unixNanoSuffix = "_unix_nano"
+)
 
 var ErrCodeUnsupportedColumn = errors.MustNewCode("archive_unsupported_column")
 
@@ -23,12 +34,14 @@ type Column struct {
 }
 
 // ColumnMapping is how one column is exported. Restores cast ExportType back to
-// SourceType; UnixNano adds a portable <name>_unix_nano Int64 next to a DateTime64(9).
+// SourceType; UnixNano adds a portable <name>_unix_nano Int64 next to a DateTime64(9), and
+// UInt64Rule says how the UInt64 values in the column became Int64.
 type ColumnMapping struct {
 	Name       string `json:"name"`
 	SourceType string `json:"source_type"`
 	ExportType string `json:"export_type"`
 	UnixNano   bool   `json:"unix_nano,omitempty"`
+	UInt64Rule string `json:"uint64_rule,omitempty"`
 }
 
 func NewColumnMappings(columns []Column) ([]ColumnMapping, error) {
@@ -39,12 +52,19 @@ func NewColumnMappings(columns []Column) ([]ColumnMapping, error) {
 
 	mappings := make([]ColumnMapping, 0, len(columns))
 	for _, column := range columns {
+		if column.Name == ShardColumn || column.Name == PartColumn {
+			return nil, errors.Newf(errors.TypeUnsupported, ErrCodeUnsupportedColumn, "column %s clashes with the %s every export writes", column.Name, column.Name)
+		}
+
 		exportType, err := ExportType(column.Type)
 		if err != nil {
 			return nil, errors.Wrapf(err, errors.TypeUnsupported, ErrCodeUnsupportedColumn, "column %s can't be archived", column.Name)
 		}
 
 		mapping := ColumnMapping{Name: column.Name, SourceType: column.Type, ExportType: exportType, UnixNano: isNanosecondTimestamp(column.Type)}
+		if containsType(column.Type, "UInt64") {
+			mapping.UInt64Rule = UInt64RuleBits
+		}
 		if mapping.UnixNano && names[column.Name+unixNanoSuffix] {
 			return nil, errors.Newf(errors.TypeUnsupported, ErrCodeUnsupportedColumn, "column %s clashes with the exported %s%s", column.Name+unixNanoSuffix, column.Name, unixNanoSuffix)
 		}
@@ -54,9 +74,10 @@ func NewColumnMappings(columns []Column) ([]ColumnMapping, error) {
 	return mappings, nil
 }
 
-// ExportExpressions is the SELECT list of an export, in column order.
-func ExportExpressions(mappings []ColumnMapping) []string {
-	expressions := make([]string, 0, len(mappings))
+// ExportExpressions is the SELECT list of an export of shard, in column order, then the
+// shard and the source part of each row.
+func ExportExpressions(mappings []ColumnMapping, shard int) []string {
+	expressions := make([]string, 0, len(mappings)+2)
 	for _, mapping := range mappings {
 		column := clickhousesql.Identifier(mapping.Name)
 		if mapping.ExportType == mapping.SourceType {
@@ -69,7 +90,7 @@ func ExportExpressions(mappings []ColumnMapping) []string {
 		}
 	}
 
-	return expressions
+	return append(expressions, fmt.Sprintf("toInt32(%d) AS %s", shard, clickhousesql.Identifier(ShardColumn)), "_part AS "+clickhousesql.Identifier(PartColumn))
 }
 
 // ExportType is the ClickHouse type a column of type source is written as, so that its
@@ -124,7 +145,25 @@ func ExportType(source string) (string, error) {
 
 func isNanosecondTimestamp(source string) bool {
 	name, args, err := parseType(source)
+	if err == nil && (name == "Nullable" || name == "LowCardinality") && len(args) == 1 {
+		return isNanosecondTimestamp(args[0])
+	}
 	return err == nil && name == "DateTime64" && len(args) > 0 && args[0] == "9"
+}
+
+// containsType reports whether source is the type name or nests it.
+func containsType(source string, name string) bool {
+	typeName, args, err := parseType(source)
+	if err != nil {
+		return false
+	}
+	if typeName == name {
+		return true
+	}
+	if typeName == "Enum8" || typeName == "Enum16" || typeName == "DateTime64" || typeName == "FixedString" || typeName == "Decimal" {
+		return false
+	}
+	return slices.ContainsFunc(args, func(arg string) bool { return containsType(arg, name) })
 }
 
 // parseType splits a ClickHouse type into its name and top-level arguments, keeping quoted

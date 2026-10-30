@@ -25,8 +25,11 @@ const (
 )
 
 var (
-	ErrCodeLeaseLost         = errors.MustNewCode("archive_lease_lost")
-	ErrCodeAttemptNotPending = errors.MustNewCode("archive_attempt_not_pending")
+	ErrCodeLeaseLost               = errors.MustNewCode("archive_lease_lost")
+	ErrCodeAttemptNotPending       = errors.MustNewCode("archive_attempt_not_pending")
+	ErrCodeAttemptAlreadyPublished = errors.MustNewCode("archive_attempt_already_published")
+	ErrCodePartAlreadyPublished    = errors.MustNewCode("archive_part_already_published")
+	ErrCodeInvalidPublication      = errors.MustNewCode("archive_invalid_publication")
 )
 
 // Attempt is one export of a table's partition on one shard. Its objects are written under
@@ -91,6 +94,12 @@ type Publication struct {
 	Attempt *Attempt
 	Objects []*Object
 	Parts   []*ArchivedPart
+}
+
+// IndexSnapshot is a table's active objects as of its Sequence-th commit.
+type IndexSnapshot struct {
+	Sequence int64
+	Objects  []*Object
 }
 
 func NewExportAttempt(lease *Lease, table string, shard int, partitionID string, namedCollection string, prefix string) *Attempt {
@@ -168,4 +177,28 @@ func PartsOf(archived []*ArchivedPart) []Part {
 		parts[i] = part.Part()
 	}
 	return parts
+}
+
+// Validate checks that the attempt is ready to commit and that every object and part belongs
+// to it.
+func (publication *Publication) Validate() error {
+	attempt := publication.Attempt
+	if attempt == nil || attempt.FormatVersion == 0 || attempt.ColumnMapping == "" || attempt.ManifestKey == "" || attempt.ManifestSHA256 == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidPublication, "the publication's attempt has no format, column mapping or manifest")
+	}
+
+	objects := make(map[valuer.UUID]bool, len(publication.Objects))
+	for _, object := range publication.Objects {
+		if object.AttemptID != attempt.ID {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPublication, "object %s isn't of archive attempt %s", object.ObjectKey, attempt.ID)
+		}
+		objects[object.ID] = true
+	}
+	for _, part := range publication.Parts {
+		if part.AttemptID != attempt.ID || part.TableName != attempt.TableName || part.Shard != attempt.Shard || part.PartitionID != attempt.PartitionID || !objects[part.ObjectID] {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPublication, "part %s isn't of archive attempt %s on %s shard %d partition %s, or its object isn't published with it", part.PartName, attempt.ID, attempt.TableName, attempt.Shard, attempt.PartitionID)
+		}
+	}
+
+	return nil
 }
