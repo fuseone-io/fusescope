@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -24,6 +25,10 @@ const (
 	r8MetadataRewriteFrame    = "com.android.tools.r8.rewriteFrame"
 	r8MapIDPrefix             = "pg_map_id:"
 	r8EntryBytes              = 96
+	// maxR8MethodRanges bounds the line ranges of one obfuscated method name
+	// in a class, which a lookup scans; deeper mappings are rejected at
+	// upload.
+	maxR8MethodRanges = 1 << 14
 )
 
 // r8SupportedVersion is the newest mapping version whose metadata is read;
@@ -198,28 +203,30 @@ func (mapping *R8Mapping) RetraceField(class string, obfuscated string) (string,
 	return original, true
 }
 
-// LookupFrame returns the original frames of an obfuscated one, or nil when
-// the class is not in the mapping. line is 0 when unknown. A line inside no
-// range resolves to the method name alone, with line 0.
-func (mapping *R8Mapping) LookupFrame(class string, method string, line int) []R8Frame {
+// LookupFrame returns at most limit original frames of an obfuscated one,
+// innermost first, and whether the chain had more; nil when the class is
+// not in the mapping. line is 0 when unknown. A line inside no range
+// resolves to the method name alone, with line 0. throwing is the type of
+// the exception when the frame is its first, for rewriteFrame rules, else "".
+func (mapping *R8Mapping) LookupFrame(class string, method string, line int, throwing string, limit int) ([]R8Frame, bool) {
 	mapped, ok := mapping.classes[class]
 	if !ok {
-		return nil
+		return nil, false
 	}
 	chains := mapped.methods[method]
 	if len(chains) == 0 {
-		return []R8Frame{{Class: mapped.original, Method: method, File: mapping.sourceFile(mapped.original), Line: line}}
+		return []R8Frame{{Class: mapped.original, Method: method, File: mapping.sourceFile(mapped.original), Line: line}}, false
 	}
 
 	if chain := mapped.findChain(method, line, true); chain != nil {
-		return mapping.expand(mapped, method, chain, line)
+		return mapping.expand(mapped, method, chain, line, throwing, limit)
 	}
 	if chain := mapped.findChain(method, line, false); chain != nil {
-		return mapping.expand(mapped, method, chain, line)
+		return mapping.expand(mapped, method, chain, line, throwing, limit)
 	}
 	outer := mapping.frame(mapped, chains[0].entries[len(chains[0].entries)-1], 0)
 	outer.Synthesized = outer.Synthesized || mapped.isSynthesized(method, chains[0])
-	return []R8Frame{outer}
+	return []R8Frame{outer}, false
 }
 
 // OutlineCallsiteLine maps the position an outline frame reported to the
@@ -258,17 +265,26 @@ func (class *r8Class) findChain(obfuscated string, line int, ranged bool) *r8Cha
 	return found
 }
 
-func (mapping *R8Mapping) expand(mapped *r8Class, obfuscated string, chain *r8Chain, line int) []R8Frame {
-	frames := make([]R8Frame, 0, len(chain.entries))
-	for i, entry := range chain.entries {
-		frame := mapping.frame(mapped, entry, entry.originalLine(line))
-		frame.Inlined = i < len(chain.entries)-1
+// expand builds the chain's frames from its innermost kept one, at most
+// limit, so the work is bounded by limit rather than the inline depth.
+func (mapping *R8Mapping) expand(mapped *r8Class, obfuscated string, chain *r8Chain, line int, throwing string, limit int) ([]R8Frame, bool) {
+	first, outer := 0, len(chain.entries)-1
+	if chain.rewriteRemove > 0 && throwing != "" && slices.Contains(chain.rewriteThrows, throwing) {
+		first = min(chain.rewriteRemove, outer)
+	}
+	last := min(outer, first+max(limit, 1)-1)
+
+	frames := make([]R8Frame, 0, last-first+1)
+	for i := first; i <= last; i++ {
+		frame := mapping.frame(mapped, chain.entries[i], chain.entries[i].originalLine(line))
+		frame.Inlined = i < outer
+		if i == outer {
+			frame.RewriteThrows, frame.RewriteRemove = chain.rewriteThrows, chain.rewriteRemove
+			frame.Synthesized = frame.Synthesized || mapped.isSynthesized(obfuscated, chain)
+		}
 		frames = append(frames, frame)
 	}
-	last := &frames[len(frames)-1]
-	last.RewriteThrows, last.RewriteRemove = chain.rewriteThrows, chain.rewriteRemove
-	last.Synthesized = last.Synthesized || mapped.isSynthesized(obfuscated, chain)
-	return frames
+	return frames, last < outer
 }
 
 func (mapping *R8Mapping) frame(mapped *r8Class, entry *r8Method, line int) R8Frame {
@@ -380,6 +396,9 @@ func (parser *r8Parser) method(match []string) error {
 	if previous != nil && parser.lastObf == obfuscated && entry.obfStart >= 0 && previous.entries[0].obfStart == entry.obfStart && previous.entries[0].obfEnd == entry.obfEnd {
 		previous.entries = append(previous.entries, entry)
 	} else {
+		if len(chains) >= maxR8MethodRanges {
+			return errors.NewInvalidInputf(ErrCodeR8MappingInvalid, "method %s has more than %d line ranges", obfuscated, maxR8MethodRanges)
+		}
 		parser.chain = &r8Chain{entries: []*r8Method{entry}}
 		parser.class.methods[obfuscated] = append(chains, parser.chain)
 	}

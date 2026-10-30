@@ -127,7 +127,9 @@ func TestR8MappingLookupFrame(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.expected, testCase.mapping.LookupFrame(testCase.class, testCase.method, testCase.line))
+			frames, truncated := testCase.mapping.LookupFrame(testCase.class, testCase.method, testCase.line, "", MaxStackFrames)
+			assert.Equal(t, testCase.expected, frames)
+			assert.False(t, truncated)
 		})
 	}
 }
@@ -159,5 +161,6 @@ func TestR8MappingVersionGatesMetadata(t *testing.T) {
 	content := "# {\"id\":\"com.android.tools.r8.mapping\",\"version\":\"9.0\"}\na.B -> a:\n    1:1:void m():5:5 -> a\n    # {\"id\":\"com.android.tools.r8.synthesized\"}\n"
 	mapping, err := ParseR8Mapping([]byte(content))
 	require.NoError(t, err)
-	assert.Equal(t, []R8Frame{{Class: "a.B", Method: "m", File: "B.java", Line: 5}}, mapping.LookupFrame("a", "a", 1), "metadata of an unsupported version is a comment")
+	frames, _ := mapping.LookupFrame("a", "a", 1, "", MaxStackFrames)
+	assert.Equal(t, []R8Frame{{Class: "a.B", Method: "m", File: "B.java", Line: 5}}, frames, "metadata of an unsupported version is a comment")
 }
