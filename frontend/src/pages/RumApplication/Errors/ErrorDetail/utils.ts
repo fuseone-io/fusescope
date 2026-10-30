@@ -36,15 +36,18 @@ export function beforeError(at: string, errorAt: string): string {
 	return ms >= 50 ? `−${clock}` : clock;
 }
 
-export function topBrowser(
+export function topClient(
 	events: RumtypesErrorEventDTO[],
+	jvm = false,
 ): { label: string; share: string } | undefined {
 	const counts = new Map<string, number>();
 	events.forEach(({ client }) => {
-		if (client.browser) {
-			const label = [client.browser, client.browserVersion]
-				.filter(Boolean)
-				.join(' ');
+		const label = jvm
+			? client.device
+			: client.browser
+				? [client.browser, client.browserVersion].filter(Boolean).join(' ')
+				: '';
+		if (label) {
 			counts.set(label, (counts.get(label) ?? 0) + 1);
 		}
 	});

@@ -18,6 +18,7 @@ import { RELEASE_GRID } from './constants';
 
 interface ReleaseRowProps {
 	applicationId: string;
+	android?: boolean;
 	release: RumtypesSourceMapReleaseDTO;
 	latest: boolean;
 	readOnly: boolean;
@@ -30,6 +31,7 @@ const at = (value: string | null): number | undefined =>
 
 function ReleaseRow({
 	applicationId,
+	android = false,
 	release,
 	latest,
 	readOnly,
@@ -116,7 +118,7 @@ function ReleaseRow({
 					<Button
 						variant="ghost"
 						size="icon-sm"
-						aria-label={`Delete source maps of ${name}`}
+						aria-label={`Delete ${android ? 'R8 mappings' : 'source maps'} of ${name}`}
 						data-testid="rum-sourcemaps-release-delete"
 						onClick={(): void => setConfirming(true)}
 						className="tw:text-error-ink"
@@ -128,7 +130,7 @@ function ReleaseRow({
 			{confirming && (
 				<div
 					role="alertdialog"
-					aria-label={`Delete source maps of ${name}`}
+					aria-label={`Delete ${android ? 'R8 mappings' : 'source maps'} of ${name}`}
 					data-testid="rum-sourcemaps-confirm"
 					className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-x-3 tw:gap-y-2 tw:border-b tw:border-border tw:bg-error-soft tw:px-3.5 tw:py-2.5 tw:text-xs tw:text-error-ink"
 				>
@@ -136,8 +138,8 @@ function ReleaseRow({
 						{failure ?? (
 							<>
 								Delete {release.files} files of{' '}
-								<span className="tw:font-mono">{name}</span>? Its stack traces become
-								minified again. Events are kept.
+								<span className="tw:font-mono">{name}</span>?{' '}
+								<span>{`Its stack traces become ${android ? 'obfuscated' : 'minified'} again. Events are kept.`}</span>
 							</>
 						)}
 					</span>
@@ -166,6 +168,7 @@ function ReleaseRow({
 			)}
 			{open && (
 				<ReleaseFiles
+					android={android}
 					applicationId={applicationId}
 					release={name}
 					readOnly={readOnly}

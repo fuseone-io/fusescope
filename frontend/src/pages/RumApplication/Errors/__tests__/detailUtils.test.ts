@@ -12,7 +12,7 @@ import {
 	breadcrumbItems,
 	describeBreadcrumb,
 	eventPosition,
-	topBrowser,
+	topClient,
 } from '../ErrorDetail/utils';
 
 const client = (browser: string, browserVersion: string) => ({
@@ -81,10 +81,23 @@ describe('beforeError', () => {
 	});
 });
 
-describe('topBrowser', () => {
+describe('topClient', () => {
+	it('counts Android devices and includes unknown devices in the share denominator', () => {
+		expect(
+			topClient(
+				[
+					event('a', { client: { ...client('', ''), device: 'Google Pixel 9' } }),
+					event('b', { client: { ...client('', ''), device: 'Google Pixel 9' } }),
+					event('c', { client: client('', '') }),
+				],
+				true,
+			),
+		).toStrictEqual({ label: 'Google Pixel 9', share: '67% of latest events' });
+	});
+
 	it('names the most common browser of the events', () => {
 		expect(
-			topBrowser([
+			topClient([
 				event('a'),
 				event('b', { client: client('Safari', '18') }),
 				event('c'),
@@ -93,7 +106,7 @@ describe('topBrowser', () => {
 	});
 
 	it('is undefined without a browser', () => {
-		expect(topBrowser([event('a', { client: client('', '') })])).toBeUndefined();
+		expect(topClient([event('a', { client: client('', '') })])).toBeUndefined();
 	});
 });
 
