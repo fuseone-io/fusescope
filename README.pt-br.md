@@ -52,7 +52,7 @@ A lista completa (detecção de anomalias, papéis customizados, synthetics, SLO
 O FuseScope precisa do ClickHouse e do [coletor OpenTelemetry do FuseScope](https://github.com/fuseone-io/fusescope-otel-collector). Implante com os [charts Helm do FuseScope](https://github.com/fuseone-io/fusescope-charts) ou compile a partir do código-fonte:
 
 ```bash
-# backend (Go 1.25)
+# backend (Go 1.26)
 make go-build-community        # → target/<os>-<arch>/fusescope
 
 # frontend (Node 22, pnpm 10)

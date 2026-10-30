@@ -98,7 +98,7 @@ jobs:
         run: |
           printf '%s\n' \
             node:22-bookworm \
-            golang:1.25-bookworm \
+            golang:1.26-bookworm \
             python:3.13-slim \
             postgres:15 \
             clickhouse/clickhouse-server:25.12.5 \
