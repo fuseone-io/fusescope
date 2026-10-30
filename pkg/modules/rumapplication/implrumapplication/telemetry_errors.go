@@ -22,9 +22,10 @@ const (
 )
 
 var (
-	errorTypeExpr   = attribute(rumtypes.AttributeExceptionType)
-	errorMessageRaw = "if(" + attribute(rumtypes.AttributeExceptionMessage) + " = '', body, " + attribute(rumtypes.AttributeExceptionMessage) + ")"
-	errorStackExpr  = attribute(rumtypes.AttributeExceptionStack)
+	errorTypeExpr      = attribute(rumtypes.AttributeExceptionType)
+	errorMessageRaw    = "if(" + attribute(rumtypes.AttributeExceptionMessage) + " = '', body, " + attribute(rumtypes.AttributeExceptionMessage) + ")"
+	errorStackExpr     = attribute(rumtypes.AttributeExceptionStack)
+	componentStackExpr = attribute(rumtypes.AttributeReactComponentStack)
 	// A JVM key keeps the release, since a mapping retraces its frames, the
 	// frames below the top, since the top in-app ones group it, and the
 	// source, which groups it too.
@@ -61,16 +62,17 @@ type errorGroupRow struct {
 }
 
 type errorEventRow struct {
-	id          string
-	timestamp   uint64
-	sessionID   string
-	route       string
-	fingerprint string
-	key         uint64
-	errorType   string
-	message     string
-	source      string
-	stacktrace  string
+	id             string
+	timestamp      uint64
+	sessionID      string
+	route          string
+	fingerprint    string
+	key            uint64
+	errorType      string
+	message        string
+	source         string
+	stacktrace     string
+	componentStack string
 }
 
 type affectedSessionRow struct {
@@ -120,7 +122,7 @@ func (reader *telemetryReader) ErrorEvents(ctx context.Context, scope telemetryS
 	rows := []*errorEventRow{}
 	err := reader.query(ctx, "ErrorEvents", newErrorEventsQuery(scope, keys), func(scanner driver.Rows) error {
 		row := &errorEventRow{}
-		if err := scanner.Scan(&row.id, &row.timestamp, &row.sessionID, &row.route, &row.fingerprint, &row.key, &row.errorType, &row.message, &row.source, &row.stacktrace); err != nil {
+		if err := scanner.Scan(&row.id, &row.timestamp, &row.sessionID, &row.route, &row.fingerprint, &row.key, &row.errorType, &row.message, &row.source, &row.stacktrace, &row.componentStack); err != nil {
 			return err
 		}
 		rows = append(rows, row)
@@ -200,10 +202,11 @@ func newErrorEventsQuery(scope telemetryScope, keys []uint64) *sqlbuilder.Select
 		errorMessageRaw+" AS message",
 		attribute(rumtypes.AttributeErrorSource)+" AS source",
 		errorStackExpr+" AS stacktrace",
+		componentStackExpr+" AS component_stack",
 	)
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("id", "timestamp", "session", "route", "resource_fingerprint", errorKeyExpr(scope)+" AS key", "type", "message", "source", "stacktrace")
+	sb.Select("id", "timestamp", "session", "route", "resource_fingerprint", errorKeyExpr(scope)+" AS key", "type", "message", "source", "stacktrace", "component_stack")
 	sb.From(sb.BuilderAs(events, "events"))
 	sb.Where(sb.In(errorKeyExpr(scope), anySlice(keys)...))
 	sb.OrderBy("timestamp DESC")

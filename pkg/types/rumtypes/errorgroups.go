@@ -83,6 +83,7 @@ type ErrorEvent struct {
 	Causes           []*ErrorCause     `json:"causes" required:"true" description:"The causes and suppressed exceptions of a JVM trace, in print order; empty otherwise."`
 	Symbolicated     bool              `json:"symbolicated" required:"true" description:"Whether frames were mapped through an uploaded source map or R8 mapping; frames keep the minified position and carry the original one."`
 	MissingSourceMap *MissingSourceMap `json:"missingSourceMap" required:"true" nullable:"true" description:"Set when the event's release has no uploaded source maps and a frame points at a script file, inline scripts never having one; for Android, when the release has no R8 mapping."`
+	ComponentStack   *ComponentStack   `json:"componentStack" required:"true" nullable:"true" description:"React's component stack, for an error a React ErrorBoundary caught on the web."`
 }
 
 type AffectedSession struct {
