@@ -17,14 +17,14 @@ import { ok, renderPage } from '../../__tests__/renderPage';
 const BASE = '*/api/v1/rum/applications/app-1';
 const PATH = `/frontend/applications/app-1/errors/${HTTP_ERROR}`;
 
-function serveGroup(mapped = true, componentStack = false): URLSearchParams[] {
+type GroupOptions = NonNullable<Parameters<typeof rumErrorGroup>[1]>;
+
+function serveGroup(options: GroupOptions = {}): URLSearchParams[] {
 	const requests: URLSearchParams[] = [];
 	server.use(
 		rest.get(`${BASE}/errors/:fingerprint`, (req, res, ctx) => {
 			requests.push(req.url.searchParams);
-			return res(
-				ctx.json(ok(rumErrorGroup(HTTP_ERROR, { mapped, componentStack }))),
-			);
+			return res(ctx.json(ok(rumErrorGroup(HTTP_ERROR, options))));
 		}),
 		rest.get(`${BASE}/errors`, (_req, res, ctx) =>
 			res(ctx.json(ok(rumErrorGroups()))),
@@ -77,7 +77,7 @@ describe('ErrorDetail', () => {
 
 	it('gives the upload command when the release has no source maps', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		serveGroup(false);
+		serveGroup({ mapped: false });
 		renderPage(PATH);
 
 		const missing = await screen.findByTestId('rum-error-missing-map');
@@ -96,12 +96,20 @@ describe('ErrorDetail', () => {
 		).resolves.toBeInTheDocument();
 	});
 
-	it('lists the React component stack with each component’s original location', async () => {
-		serveGroup(true, true);
+	it('shows both stacks as original when both are symbolicated', async () => {
+		serveGroup({ componentStack: true });
 		renderPage(PATH);
 
 		const section = await screen.findByTestId('rum-error-component-stack');
 		expect(within(section).getByText('Component stack')).toBeInTheDocument();
+		expect(screen.getByTestId('rum-error-mode-original')).toHaveAttribute(
+			'aria-pressed',
+			'true',
+		);
+		expect(screen.getByTestId('rum-error-symbolicated')).toBeInTheDocument();
+		expect(
+			within(section).getByTestId('rum-error-component-symbolicated'),
+		).toHaveTextContent('/assets/cart.9b1e07.js.map');
 		const frames = within(section).getAllByTestId('rum-error-frame');
 		expect(frames).toHaveLength(3);
 		expect(frames[0]).toHaveTextContent('CartLine');
@@ -114,19 +122,75 @@ describe('ErrorDetail', () => {
 		expect(within(section).queryByTestId('rum-error-missing-map')).toBeNull();
 	});
 
-	it('shows the component stack’s raw locations and the stack trace’s notice without source maps', async () => {
-		serveGroup(false, true);
+	it('enables Original when only the component stack is symbolicated, keeping the stack trace minified', async () => {
+		serveGroup({ componentStack: true, exceptionMapped: false });
 		renderPage(PATH);
 
 		const section = await screen.findByTestId('rum-error-component-stack');
+		const original = screen.getByTestId('rum-error-mode-original');
+		expect(original).toBeEnabled();
+		expect(original).toHaveAttribute('aria-pressed', 'true');
+		expect(screen.getByTestId('rum-error-minified')).toBeInTheDocument();
+		expect(screen.queryByTestId('rum-error-symbolicated')).toBeNull();
+		expect(screen.getByTestId('rum-error-unmatched')).toHaveTextContent(
+			'no uploaded map matches these files',
+		);
+		expect(
+			within(section).getByTestId('rum-error-component-symbolicated'),
+		).toBeInTheDocument();
+		expect(
+			within(section).getAllByTestId('rum-error-frame')[0],
+		).toHaveTextContent('src/features/cart/CartLine.tsx:18:3');
+	});
+
+	it('keeps the component stack minified with its own status when only the stack trace is symbolicated', async () => {
+		serveGroup({ componentStack: true, componentMapped: false });
+		renderPage(PATH);
+
+		const section = await screen.findByTestId('rum-error-component-stack');
+		expect(screen.getByTestId('rum-error-mode-original')).toHaveAttribute(
+			'aria-pressed',
+			'true',
+		);
+		expect(screen.getByTestId('rum-error-symbolicated')).toBeInTheDocument();
+		expect(
+			within(section).queryByTestId('rum-error-component-symbolicated'),
+		).toBeNull();
+		expect(
+			within(section).getByTestId('rum-error-component-unmatched'),
+		).toHaveTextContent('Minified · no uploaded map matches these files');
+		expect(
+			within(section).getAllByTestId('rum-error-frame')[0],
+		).toHaveTextContent('https://shop.example.com/assets/cart.9b1e07.js:1:4020');
+	});
+
+	it('shows the component stack’s raw locations and the stack trace’s notice without source maps', async () => {
+		serveGroup({ mapped: false, componentStack: true });
+		renderPage(PATH);
+
+		const section = await screen.findByTestId('rum-error-component-stack');
+		expect(screen.getByTestId('rum-error-mode-original')).toBeDisabled();
 		expect(screen.getAllByTestId('rum-error-missing-map')).toHaveLength(1);
 		const frames = within(section).getAllByTestId('rum-error-frame');
 		expect(frames[0]).toHaveTextContent(
 			'https://shop.example.com/assets/cart.9b1e07.js:1:4020',
 		);
 		expect(
-			within(section).getByText(/no source map for 1\.8\.0/),
-		).toBeInTheDocument();
+			within(section).getByTestId('rum-error-component-missing'),
+		).toHaveTextContent('no source map for 1.8.0');
+	});
+
+	it('says when the server cut the stacks short', async () => {
+		serveGroup({ componentStack: true, truncated: true });
+		renderPage(PATH);
+
+		const section = await screen.findByTestId('rum-error-component-stack');
+		expect(screen.getByTestId('rum-error-stack-truncated')).toHaveTextContent(
+			'More frames not shown',
+		);
+		expect(
+			within(section).getByTestId('rum-error-component-truncated'),
+		).toHaveTextContent('More frames not shown');
 	});
 
 	it('has no component stack section when the event carries none', async () => {

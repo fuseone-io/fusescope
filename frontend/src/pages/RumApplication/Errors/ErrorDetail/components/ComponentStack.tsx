@@ -1,22 +1,34 @@
 import { useMemo } from 'react';
 import type { RumtypesComponentStackDTO } from 'api/generated/services/fuseScope.schemas';
-import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import CopyButton from 'components/RumApplicationSheet/components/CopyButton';
-import { componentFrameGroups, StackMode } from 'lib/rum/stackFrames';
+import {
+	componentFrameGroups,
+	defaultStackMode,
+	resolvingSourceMap,
+	StackMode,
+} from 'lib/rum/stackFrames';
+
+import { STACK_WORDS } from '../constants';
 
 import FrameList from './FrameList';
 import MissingSourceMap from './MissingSourceMap';
+import StackStatusBadge from './StackStatusBadge';
+import TruncatedFrames from './TruncatedFrames';
 
 interface ComponentStackProps {
 	applicationId: string;
 	stack: NonNullable<RumtypesComponentStackDTO>;
+	/** The view the stack trace's toggle selects. */
 	mode: StackMode;
 	/** The stack trace already shows the missing source map notice. */
 	missingShown: boolean;
 	onOpenSourceMaps: () => void;
 }
 
-/** React's component stack of an error an ErrorBoundary caught. */
+/**
+ * React's component stack of an error an ErrorBoundary caught; original
+ * only when its own frames were symbolicated.
+ */
 function ComponentStack({
 	applicationId,
 	stack,
@@ -24,9 +36,13 @@ function ComponentStack({
 	missingShown,
 	onOpenSourceMaps,
 }: ComponentStackProps): JSX.Element {
+	const shown =
+		mode === 'original' && defaultStackMode(stack) === 'original'
+			? 'original'
+			: 'minified';
 	const groups = useMemo(
-		() => componentFrameGroups(stack.frames, mode),
-		[stack.frames, mode],
+		() => componentFrameGroups(stack.frames, shown),
+		[stack.frames, shown],
 	);
 	const missing = stack.missingSourceMap;
 
@@ -44,11 +60,12 @@ function ComponentStack({
 					>
 						Component stack
 					</h3>
-					{missing && (
-						<StatusBadge tone="warning" dot>
-							Minified · no source map for {missing.release}
-						</StatusBadge>
-					)}
+					<StackStatusBadge
+						words={STACK_WORDS.web}
+						sourceMap={resolvingSourceMap(stack)}
+						missing={missing}
+						testId="rum-error-component"
+					/>
 				</div>
 				<CopyButton value={stack.stack} label="Copy component stack" iconOnly />
 			</div>
@@ -61,6 +78,9 @@ function ComponentStack({
 				/>
 			)}
 			<FrameList groups={groups} label="Component stack" />
+			{stack.truncated && (
+				<TruncatedFrames testId="rum-error-component-truncated" />
+			)}
 		</section>
 	);
 }

@@ -200,6 +200,7 @@ export function rumAndroidErrorGroup({
 			? null
 			: { release: ANDROID_RELEASE, kind: RumtypesArtifactKindDTO['r8-mapping'] },
 		componentStack: null,
+		truncated: false,
 	};
 	return {
 		...RUM_ANDROID_ERROR_GROUPS[0],

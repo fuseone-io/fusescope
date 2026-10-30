@@ -347,6 +347,16 @@ function affectedSessions(): RumtypesAffectedSessionDTO[] {
 	);
 }
 
+interface ErrorGroupOptions {
+	mapped?: boolean;
+	release?: string;
+	componentStack?: boolean;
+	exceptionMapped?: boolean;
+	componentMapped?: boolean;
+	/** The latest event's stacks were cut at the server's limits. */
+	truncated?: boolean;
+}
+
 const COMPONENT_STACK = [
 	'at CartLine (https://shop.example.com/assets/cart.9b1e07.js:1:4020)',
 	'    at Suspense',
@@ -355,10 +365,12 @@ const COMPONENT_STACK = [
 	'    at ErrorBoundary (https://shop.example.com/assets/vendor.c2d81f.js:2:118730)',
 ].join('\n');
 
-function componentStack(
-	mapped: boolean,
-	release: string,
-): RumtypesComponentStackDTO {
+function componentStack({
+	mapped,
+	componentMapped,
+	release,
+	truncated,
+}: Required<ErrorGroupOptions>): RumtypesComponentStackDTO {
 	const frames: [RumtypesStackFrameDTO, string, number, number][] = [
 		[
 			minifiedFrame('CartLine', '/assets/cart.9b1e07.js', 4020),
@@ -394,25 +406,30 @@ function componentStack(
 	return {
 		stack: COMPONENT_STACK,
 		frames: frames.map(([frame, file, line, column]) =>
-			mapped && file && frame
+			mapped && componentMapped && file && frame
 				? symbolicated(frame, frame.function, file, line, column)
 				: frame,
 		),
-		symbolicated: mapped,
+		symbolicated: mapped && componentMapped,
 		missingSourceMap: mapped
 			? null
 			: { release, kind: RumtypesArtifactKindDTO['source-map'] },
+		truncated,
 	};
 }
 
-function events(
-	mapped: boolean,
-	release: string,
-	withComponentStack: boolean,
-): RumtypesErrorEventDTO[] {
+function events(options: Required<ErrorGroupOptions>): RumtypesErrorEventDTO[] {
+	const {
+		mapped,
+		exceptionMapped,
+		release,
+		componentStack: withComponentStack,
+		truncated,
+	} = options;
+	const resolved = mapped && exceptionMapped;
 	return SESSIONS.map(
 		([sessionId, minutes, eventRelease, browser, os], index) => {
-			const frames = httpFrames(mapped);
+			const frames = httpFrames(resolved);
 			return {
 				id: `ev-${index + 1}`,
 				timestamp: ago(minutes * MINUTE - 4 * MINUTE),
@@ -426,15 +443,16 @@ function events(
 				stacktrace: stacktrace(httpFrames(false)),
 				frames,
 				causes: [],
-				symbolicated: mapped,
+				symbolicated: resolved,
 				missingSourceMap: mapped
 					? null
 					: {
 							release: index === 0 ? release : eventRelease,
 							kind: RumtypesArtifactKindDTO['source-map'],
 						},
+				truncated: truncated && index === 0,
 				componentStack:
-					withComponentStack && index === 0 ? componentStack(mapped, release) : null,
+					withComponentStack && index === 0 ? componentStack(options) : null,
 			};
 		},
 	);
@@ -511,20 +529,32 @@ function breadcrumbs(errorAt: number): RumtypesTimelineEventDTO[] {
 /**
  * The HttpError group of web-shop; `mapped` symbolicates its frames, else
  * `release` has no source maps. With `componentStack`, its latest event
- * carries React's component stack.
+ * carries React's component stack; `exceptionMapped` and `componentMapped`
+ * leave one stack minified though the release has maps, as when no map
+ * matches its files.
  */
 export function rumErrorGroup(
 	fingerprint: string,
 	{
 		mapped = true,
 		release = '1.8.0',
-		componentStack: withComponentStack = false,
-	}: { mapped?: boolean; release?: string; componentStack?: boolean } = {},
+		componentStack = false,
+		exceptionMapped = true,
+		componentMapped = true,
+		truncated = false,
+	}: ErrorGroupOptions = {},
 ): RumtypesGettableErrorGroupDTO {
 	const group =
 		RUM_ERROR_GROUPS.find((candidate) => candidate.fingerprint === fingerprint) ??
 		RUM_ERROR_GROUPS[2];
-	const latest = events(mapped, release, withComponentStack);
+	const latest = events({
+		mapped,
+		release,
+		componentStack,
+		exceptionMapped,
+		componentMapped,
+		truncated,
+	});
 	const crumbs = breadcrumbs(Date.parse(latest[0].timestamp));
 	return {
 		...group,

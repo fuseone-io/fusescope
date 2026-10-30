@@ -1,20 +1,24 @@
 import { useMemo, useState } from 'react';
 import type { RumtypesErrorEventDTO } from 'api/generated/services/fuseScope.schemas';
 import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
-import StatusBadge from 'components/PageTemplate/components/StatusBadge';
 import CopyButton from 'components/RumApplicationSheet/components/CopyButton';
 import {
 	defaultStackMode,
 	displayFrames,
 	groupFrames,
+	resolvingSourceMap,
 	StackMode,
 } from 'lib/rum/stackFrames';
+
+import { STACK_WORDS } from '../constants';
 
 import ComponentStack from './ComponentStack';
 import FrameList from './FrameList';
 import JvmCause from './JvmCause';
 import MinifiedStack from './MinifiedStack';
 import MissingSourceMap from './MissingSourceMap';
+import StackStatusBadge from './StackStatusBadge';
+import TruncatedFrames from './TruncatedFrames';
 
 interface StackTraceProps {
 	applicationId: string;
@@ -25,60 +29,28 @@ interface StackTraceProps {
 	onOpenSourceMaps: () => void;
 }
 
-const WORDS = {
-	web: {
-		resolved: 'Symbolicated',
-		raw: 'Minified',
-		noMatch: 'no uploaded map matches these files',
-		missing: 'no source map for',
-		upload: 'Upload this release’s source maps to see the original code',
-	},
-	jvm: {
-		resolved: 'Retraced',
-		raw: 'Obfuscated',
-		noMatch: 'the mapping resolves none of these frames',
-		missing: 'no R8 mapping for',
-		upload: 'Upload this release’s R8 mapping to see the original code',
-	},
-};
-
 function StackTrace({
 	applicationId,
 	event,
 	jvm,
 	onOpenSourceMaps,
 }: StackTraceProps): JSX.Element {
-	const words = jvm ? WORDS.jvm : WORDS.web;
-	const [mode, setMode] = useState<StackMode>(() => defaultStackMode(event));
-	const canShowOriginal = defaultStackMode(event) === 'original';
+	const words = jvm ? STACK_WORDS.jvm : STACK_WORDS.web;
+	const { componentStack } = event;
+	const exceptionOriginal = defaultStackMode(event) === 'original';
+	const canShowOriginal =
+		exceptionOriginal ||
+		(componentStack !== null && defaultStackMode(componentStack) === 'original');
+	const [mode, setMode] = useState<StackMode>(
+		canShowOriginal ? 'original' : 'minified',
+	);
 	const groups = useMemo(
 		() => groupFrames(displayFrames(event.frames, 'original', jvm)),
 		[event.frames, jvm],
 	);
 	const causes = jvm ? (event.causes ?? []) : [];
 	const firstApp = groups.find((group) => group.kind === 'app')?.key;
-	const sourceMap = event.frames?.find((frame) => frame?.original)?.original
-		?.sourceMap;
 	const missing = event.missingSourceMap;
-
-	let badge = (
-		<StatusBadge tone="neutral" dot>
-			{words.raw} · {words.noMatch}
-		</StatusBadge>
-	);
-	if (canShowOriginal) {
-		badge = (
-			<StatusBadge tone="success" dot testId="rum-error-symbolicated">
-				{words.resolved} · <span className="tw:font-mono">{sourceMap}</span>
-			</StatusBadge>
-		);
-	} else if (missing) {
-		badge = (
-			<StatusBadge tone="warning" dot>
-				{words.raw} · {words.missing} {missing.release}
-			</StatusBadge>
-		);
-	}
 
 	return (
 		<section
@@ -94,7 +66,12 @@ function StackTrace({
 					>
 						Stack trace
 					</h3>
-					{badge}
+					<StackStatusBadge
+						words={words}
+						sourceMap={resolvingSourceMap(event)}
+						missing={missing}
+						testId="rum-error"
+					/>
 				</div>
 				<div className="tw:flex tw:items-center tw:gap-1.5">
 					<SegmentedControl<StackMode>
@@ -128,7 +105,7 @@ function StackTrace({
 					onOpenSourceMaps={onOpenSourceMaps}
 				/>
 			)}
-			{mode === 'original' ? (
+			{mode === 'original' && exceptionOriginal ? (
 				<>
 					<FrameList
 						groups={groups}
@@ -145,11 +122,12 @@ function StackTrace({
 			) : (
 				<MinifiedStack event={event} jvm={jvm} />
 			)}
-			{event.componentStack && (
+			{event.truncated && <TruncatedFrames testId="rum-error-stack-truncated" />}
+			{componentStack && (
 				<ComponentStack
 					applicationId={applicationId}
-					stack={event.componentStack}
-					mode={canShowOriginal ? mode : 'original'}
+					stack={componentStack}
+					mode={mode}
 					missingShown={Boolean(missing)}
 					onOpenSourceMaps={onOpenSourceMaps}
 				/>
