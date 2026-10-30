@@ -30,6 +30,7 @@ type GettableApplicationStatus struct {
 	Counts        IngestCounts       `json:"counts" required:"true"`
 	SDK           SeenSDK            `json:"sdk" required:"true"`
 	SupportedSDKs []SupportedSDK     `json:"supportedSdks" required:"true"`
+	BrowserBundle BundledSDK         `json:"browserBundle" required:"true"`
 	Rejections    []*IngestRejection `json:"rejections" required:"true"`
 }
 

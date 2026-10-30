@@ -131,8 +131,8 @@ This is a new auth model, separate from user sessions, API keys and service acco
 
 - **Official registries with provenance:** npm `@fusescope/*` with npm provenance (Sigstore), Maven Central, Swift Package Manager, and pub.dev later.
 - **Release artifacts:** every release ships an SBOM, a licence scan (CI fails on GPL, AGPL or SSPL in the dependency tree) and a CVE scan.
-- **Versioned, immutable CDN for the web snippet:** `…/browser/v1.4.0/fusescope.min.js`, with SRI hashes published in the docs.
-- **The backend also serves the bundle it was released with** at `/rum/sdk/browser/v1.4.0.js`. Air-gapped and self-hosted users then never depend on an external CDN, and get the version that matches their server.
+- **Versioned, immutable CDN for the web snippet:** `https://cdn.fuseone.io/browser/1.4.0/fusescope.min.js`, with SRI hashes published in the docs.
+- **The backend also serves the bundle it was released with** at `/rum/v1/sdk/browser/1.4.0/fusescope.min.js`, with its source map next to it. Air-gapped and self-hosted users then never depend on an external CDN, and get the version that matches their server.
 - **A compatibility matrix** of SDK versions against FuseScope server versions is kept in the docs.
 
 ### 8. Privacy defaults

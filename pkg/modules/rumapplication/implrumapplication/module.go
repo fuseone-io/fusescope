@@ -8,6 +8,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication/browsersdk"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
@@ -160,7 +161,13 @@ func (module *module) Status(ctx context.Context, orgID valuer.UUID, id valuer.U
 		Counts:        counts,
 		SDK:           sdk,
 		SupportedSDKs: rumtypes.NewSupportedSDKs(),
-		Rejections:    rejections,
+		BrowserBundle: rumtypes.BundledSDK{
+			Name:      rumtypes.SDKBrowserName,
+			Version:   browsersdk.Version(),
+			Integrity: browsersdk.Integrity(),
+			Path:      browsersdk.ScriptPath(browsersdk.Version()),
+		},
+		Rejections: rejections,
 	}, nil
 }
 

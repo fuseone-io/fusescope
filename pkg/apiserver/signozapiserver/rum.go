@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/http/handler"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication/browsersdk"
 	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
@@ -63,6 +64,20 @@ func (provider *provider) addRUMRoutes(router *mux.Router) error {
 		}
 	}
 
+	return addRUMBrowserSDKRoutes(router)
+}
+
+// addRUMBrowserSDKRoutes registers the bundle without authentication: the page
+// loads it before init() knows the key.
+func addRUMBrowserSDKRoutes(router *mux.Router) error {
+	for path, handle := range map[string]http.HandlerFunc{
+		browsersdk.ScriptRoute:    browsersdk.Script,
+		browsersdk.SourceMapRoute: browsersdk.SourceMap,
+	} {
+		if err := router.HandleFunc(path, handle).Methods(http.MethodGet, http.MethodHead).GetError(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

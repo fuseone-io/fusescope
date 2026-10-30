@@ -13,6 +13,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication/browsersdk"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore/sqlitesqlstore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
@@ -231,4 +232,20 @@ func TestModuleFlushUsage(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, keys, 1)
 	assert.NotNil(t, keys[0].LastUsedAt)
+}
+
+func TestModuleStatusBrowserBundle(t *testing.T) {
+	ctx := context.Background()
+	module, orgID := newTestModule(t)
+	created, err := module.Create(ctx, orgID, "admin@example.com", newTestPostable(t, `{"name":"shop","platform":"web","environment":"production"}`))
+	require.NoError(t, err)
+
+	status, err := module.Status(ctx, orgID, created.ID)
+	require.NoError(t, err)
+	assert.Equal(t, rumtypes.BundledSDK{
+		Name:      rumtypes.SDKBrowserName,
+		Version:   browsersdk.Version(),
+		Integrity: browsersdk.Integrity(),
+		Path:      browsersdk.ScriptPath(browsersdk.Version()),
+	}, status.BrowserBundle)
 }
