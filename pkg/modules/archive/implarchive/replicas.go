@@ -13,15 +13,17 @@ import (
 // replica is one server of the cluster, reached directly: reads through Distributed tables
 // can land on a lagging replica (ADR 0002, E8).
 type replica struct {
-	shard int
-	addr  string
-	conn  clickhouse.Conn
+	shard   int
+	replica int
+	addr    string
+	conn    clickhouse.Conn
 }
 
 // replicaDialer keeps one connection per replica, with the credentials and TLS of the
 // telemetry store DSN.
 type replicaDialer struct {
 	options *clickhouse.Options
+	open    func(options *clickhouse.Options) (clickhouse.Conn, error)
 	mu      sync.Mutex
 	conns   map[string]clickhouse.Conn
 }
@@ -38,19 +40,26 @@ func newReplicaDialer(dsn string, maxConns int) (*replicaDialer, error) {
 	}
 	options.Settings["use_hedged_requests"] = 0
 
-	return &replicaDialer{options: options, conns: make(map[string]clickhouse.Conn)}, nil
+	return &replicaDialer{options: options, open: clickhouse.Open, conns: make(map[string]clickhouse.Conn)}, nil
 }
 
 type clusterReplica struct {
 	shard   int
+	replica int
 	host    string
+	address string
 	port    uint16
-	isLocal bool
 }
 
-// replicas returns every replica of cluster by shard.
+type resolvedReplica struct {
+	replica int
+	addrs   []string
+}
+
+// replicas returns every replica of cluster by shard, and disconnects the replicas no longer
+// in it.
 func (dialer *replicaDialer) replicas(ctx context.Context, conn clickhouse.Conn, cluster string) (map[int][]replica, error) {
-	rows, err := conn.Query(ctx, "SELECT shard_num, host_name, port, is_local FROM system.clusters WHERE cluster = ? ORDER BY shard_num, replica_num", cluster)
+	rows, err := conn.Query(ctx, "SELECT shard_num, replica_num, host_name, host_address, port FROM system.clusters WHERE cluster = ? ORDER BY shard_num, replica_num", cluster)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the replicas of cluster %s", cluster)
 	}
@@ -58,14 +67,13 @@ func (dialer *replicaDialer) replicas(ctx context.Context, conn clickhouse.Conn,
 
 	var listed []clusterReplica
 	for rows.Next() {
-		var shard uint32
-		var host string
+		var shard, replicaNum uint32
+		var host, address string
 		var port uint16
-		var isLocal uint8
-		if err := rows.Scan(&shard, &host, &port, &isLocal); err != nil {
+		if err := rows.Scan(&shard, &replicaNum, &host, &address, &port); err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the replicas of cluster %s", cluster)
 		}
-		listed = append(listed, clusterReplica{shard: int(shard), host: host, port: port, isLocal: isLocal == 1})
+		listed = append(listed, clusterReplica{shard: int(shard), replica: int(replicaNum), host: host, address: address, port: port})
 	}
 	if err := rows.Err(); err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the replicas of cluster %s", cluster)
@@ -76,29 +84,19 @@ func (dialer *replicaDialer) replicas(ctx context.Context, conn clickhouse.Conn,
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "couldn't resolve the replicas of cluster %s", cluster)
 	}
 
-	byShard := make(map[int][]replica, len(resolved))
-	for shard, shardAddrs := range resolved {
-		for _, addrs := range shardAddrs {
-			replicaConn, err := dialer.dial(addrs)
-			if err != nil {
-				return nil, err
-			}
-			byShard[shard] = append(byShard[shard], replica{shard: shard, addr: addrs[0], conn: replicaConn})
-		}
-	}
-
-	return byShard, nil
+	return dialer.connect(resolved)
 }
 
-// resolveReplicas returns the addresses to dial for each replica, by shard. The server the
-// DSN names lists itself as local, under whatever host the cluster definition gives it. A
-// server in two shards would export the same parts once per shard.
-func resolveReplicas(listed []clusterReplica, dsnAddrs []string) (map[int][][]string, error) {
-	resolved := make(map[int][][]string)
+// resolveReplicas returns the addresses to dial for each replica, by shard: the host and port
+// the cluster lists, as the DSN may name a load balancer over every server. A loopback replica
+// is the single server of a local setup, reached at the DSN. A server in two shards would
+// export the same parts once per shard.
+func resolveReplicas(listed []clusterReplica, dsnAddrs []string) (map[int][]resolvedReplica, error) {
+	resolved := make(map[int][]resolvedReplica)
 	shardOf := make(map[string]int)
 	for _, listedReplica := range listed {
 		addrs := []string{net.JoinHostPort(listedReplica.host, strconv.Itoa(int(listedReplica.port)))}
-		if listedReplica.isLocal {
+		if ip := net.ParseIP(listedReplica.address); listedReplica.host == "localhost" || (ip != nil && ip.IsLoopback()) {
 			addrs = dsnAddrs
 		}
 
@@ -109,13 +107,39 @@ func resolveReplicas(listed []clusterReplica, dsnAddrs []string) (map[int][][]st
 			continue
 		}
 		shardOf[addrs[0]] = listedReplica.shard
-		resolved[listedReplica.shard] = append(resolved[listedReplica.shard], addrs)
+		resolved[listedReplica.shard] = append(resolved[listedReplica.shard], resolvedReplica{replica: listedReplica.replica, addrs: addrs})
 	}
 	if len(resolved) == 0 {
 		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "the cluster has no replicas")
 	}
 
 	return resolved, nil
+}
+
+func (dialer *replicaDialer) connect(resolved map[int][]resolvedReplica) (map[int][]replica, error) {
+	dialer.mu.Lock()
+	defer dialer.mu.Unlock()
+
+	listed := make(map[string]bool)
+	byShard := make(map[int][]replica, len(resolved))
+	for shard, shardReplicas := range resolved {
+		for _, resolvedReplica := range shardReplicas {
+			replicaConn, err := dialer.dial(resolvedReplica.addrs)
+			if err != nil {
+				return nil, err
+			}
+			listed[resolvedReplica.addrs[0]] = true
+			byShard[shard] = append(byShard[shard], replica{shard: shard, replica: resolvedReplica.replica, addr: resolvedReplica.addrs[0], conn: replicaConn})
+		}
+	}
+
+	for addr, conn := range dialer.conns {
+		if !listed[addr] {
+			_ = conn.Close()
+			delete(dialer.conns, addr)
+		}
+	}
+	return byShard, nil
 }
 
 func (dialer *replicaDialer) close() {
@@ -129,16 +153,13 @@ func (dialer *replicaDialer) close() {
 }
 
 func (dialer *replicaDialer) dial(addrs []string) (clickhouse.Conn, error) {
-	dialer.mu.Lock()
-	defer dialer.mu.Unlock()
-
 	if conn, ok := dialer.conns[addrs[0]]; ok {
 		return conn, nil
 	}
 
 	options := *dialer.options
 	options.Addr = addrs
-	conn, err := clickhouse.Open(&options)
+	conn, err := dialer.open(&options)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't connect to replica %s", addrs[0])
 	}

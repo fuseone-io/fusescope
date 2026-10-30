@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,10 +29,9 @@ type exportService struct {
 	stopC          chan struct{}
 	healthyC       chan struct{}
 
-	mu           sync.Mutex
-	partitions   map[string]archivetypes.Partition
-	firstSeen    map[string][]archivetypes.Part
-	staleIndexes map[string]bool
+	mu         sync.Mutex
+	partitions map[string]archivetypes.Partition
+	firstSeen  map[string][]archivetypes.Part
 }
 
 // exportJob is one partition of one table on one shard, with the parts every replica of
@@ -66,7 +66,6 @@ func NewExportService(providerSettings factory.ProviderSettings, telemetryStore 
 		healthyC:       make(chan struct{}),
 		partitions:     make(map[string]archivetypes.Partition),
 		firstSeen:      make(map[string][]archivetypes.Part),
-		staleIndexes:   make(map[string]bool),
 	}, nil
 }
 
@@ -151,8 +150,10 @@ func (service *exportService) exportTables(ctx context.Context, lease *archivety
 		return err
 	}
 
-	for table, conn := range indexConns {
-		service.writeStaleIndex(ctx, conn, lease, table)
+	for _, table := range archivetypes.LogsTables() {
+		if conn, ok := indexConns[table]; ok {
+			service.syncIndex(ctx, conn, lease, table)
+		}
 	}
 	return nil
 }
@@ -160,17 +161,9 @@ func (service *exportService) exportTables(ctx context.Context, lease *archivety
 // jobs returns the table's partitions past retention on every shard that a replica answers
 // for, and a connection to one of them.
 func (service *exportService) jobs(ctx context.Context, table archivetypes.Table, replicas map[int][]replica) ([]exportJob, clickhouse.Conn, error) {
-	shards := make([]shardSnapshot, 0, len(replicas))
-	for _, shard := range sortedShards(replicas) {
-		snapshot, err := service.snapshotShard(ctx, table, shard, replicas[shard])
-		if err != nil {
-			service.settings.Logger().WarnContext(ctx, "archive export skipped a shard", slog.String("table", table.Name), slog.Int("shard", shard), errors.Attr(err))
-			continue
-		}
-		shards = append(shards, snapshot)
-	}
-	if len(shards) == 0 {
-		return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no shard of %s can be archived", table.Name)
+	shards, err := service.snapshotShards(ctx, table, replicas)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	conn := shards[0].replicas[shards[0].firstAddr].conn
@@ -212,33 +205,66 @@ func (service *exportService) jobs(ctx context.Context, table archivetypes.Table
 	return jobs, conn, nil
 }
 
-// shardSnapshot is the active parts of a table on the replicas of a shard that answered.
+// snapshotShards returns the snapshot of every shard that can be archived, each pinned to its
+// replica path. A table that isn't replicated has no path to tell its shards apart by, so it is
+// only archived on a single-server cluster.
+func (service *exportService) snapshotShards(ctx context.Context, table archivetypes.Table, replicas map[int][]replica) ([]shardSnapshot, error) {
+	servers := 0
+	for _, shardReplicas := range replicas {
+		servers += len(shardReplicas)
+	}
+
+	shards := make([]shardSnapshot, 0, len(replicas))
+	for _, shard := range sortedShards(replicas) {
+		snapshot, err := service.snapshotShard(ctx, table, shard, replicas[shard])
+		if err == nil && !snapshot.replicated && servers > 1 {
+			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "%s isn't replicated, so its shards can't be told apart; it can only be archived on a single-server cluster", table.Name)
+		}
+		if err == nil && snapshot.replicated {
+			err = service.store.PinShard(ctx, table.Name, shard, snapshot.path)
+		}
+		if err != nil {
+			service.settings.Logger().WarnContext(ctx, "archive export skipped a shard", slog.String("table", table.Name), slog.Int("shard", shard), errors.Attr(err))
+			continue
+		}
+		shards = append(shards, snapshot)
+	}
+	if len(shards) == 0 {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no shard of %s can be archived", table.Name)
+	}
+
+	return shards, nil
+}
+
+// shardSnapshot is the active parts of a table on the replicas of a shard that answered, and
+// the replica path they agree on.
 type shardSnapshot struct {
 	shard        int
 	firstAddr    string
+	replicated   bool
+	path         string
 	replicas     map[string]replica
 	parts        map[string]map[string][]archivetypes.Part
 	partitionIDs map[string]string
 }
 
 // snapshotShard reads the parts on every replica of shard it can reach. A replica that
-// doesn't answer is left out: ranges only it holds stay uncovered and are exported later. The
-// shard's replica path must be the one pinned to its number.
+// doesn't answer, that turns out to be another server or that lacks the table is left out:
+// ranges only it holds stay uncovered and are exported later. The replicas left must agree on
+// the shard's replica path.
 func (service *exportService) snapshotShard(ctx context.Context, table archivetypes.Table, shard int, shardReplicas []replica) (shardSnapshot, error) {
 	snapshot := shardSnapshot{shard: shard, replicas: make(map[string]replica), parts: make(map[string]map[string][]archivetypes.Part), partitionIDs: make(map[string]string)}
-	path := ""
 	for _, replica := range shardReplicas {
-		parts, err := activeParts(ctx, replica.conn, table)
-		if err == nil {
-			path, err = replicaPath(ctx, replica.conn, table)
-		}
+		inspected, parts, err := service.readReplica(ctx, table, replica)
 		if err != nil {
 			service.settings.Logger().WarnContext(ctx, "archive export skipped a replica", slog.String("table", table.Name), slog.Int("shard", shard), slog.String("replica", replica.addr), errors.Attr(err))
 			continue
 		}
 
 		if snapshot.firstAddr == "" {
-			snapshot.firstAddr = replica.addr
+			snapshot.firstAddr, snapshot.path, snapshot.replicated = replica.addr, inspected.path, inspected.path != ""
+		} else if inspected.path != snapshot.path {
+			return snapshot, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "replicas of shard %d disagree on the replica path of %s: %q and %q", shard, table.Name, snapshot.path, inspected.path)
 		}
 		snapshot.replicas[replica.addr], snapshot.parts[replica.addr] = replica, parts
 		for id := range parts {
@@ -249,7 +275,26 @@ func (service *exportService) snapshotShard(ctx context.Context, table archivety
 		return snapshot, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no replica of shard %d answered", shard)
 	}
 
-	return snapshot, service.store.PinShard(ctx, table.Name, shard, path)
+	return snapshot, nil
+}
+
+func (service *exportService) readReplica(ctx context.Context, table archivetypes.Table, replica replica) (replicaTable, map[string][]archivetypes.Part, error) {
+	inspected, err := inspectReplica(ctx, replica.conn, service.telemetryStore.Cluster(), replica.shard, replica.replica, table)
+	if err != nil {
+		return inspected, nil, err
+	}
+	if !inspected.isReplica {
+		return inspected, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "%s answered as a server other than replica %d of shard %d", replica.addr, replica.replica, replica.shard)
+	}
+	if inspected.engine == "" {
+		return inspected, nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "%s.%s doesn't exist on the replica yet", table.Database, table.Name)
+	}
+	if strings.HasPrefix(inspected.engine, "Replicated") && inspected.path == "" {
+		return inspected, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "%s.%s has no replica path yet", table.Database, table.Name)
+	}
+
+	parts, err := activeParts(ctx, replica.conn, table)
+	return inspected, parts, err
 }
 
 // partition caches day and retention, which never change for a partition ID.

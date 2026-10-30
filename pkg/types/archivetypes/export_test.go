@@ -46,8 +46,10 @@ func TestExportStatement(t *testing.T) {
 func TestObjectStatements(t *testing.T) {
 	assert.Equal(t, "SELECT _file, toUInt64(ifNull(_size, 0)), toString(ifNull(_etag, '')), count(), groupUniqArray(_part) FROM s3(`archive`, filename = 'fusescope/logs_v2/attempt/*.parquet', format = 'Parquet', structure = '_part String') GROUP BY ALL",
 		StatObjectsStatement("archive", "fusescope/logs_v2/attempt"))
-	assert.Equal(t, "INSERT INTO FUNCTION s3(`archive`, filename = 'm\\'s.json', format='RawBLOB', structure = 'raw String')",
+	assert.Equal(t, "INSERT INTO FUNCTION s3(`archive`, filename = 'm\\'s.json', format = 'RawBLOB', structure = 'raw String') SELECT raw FROM blob",
 		WriteBlobStatement("archive", "m's.json"))
+	assert.Equal(t, "SELECT _file FROM s3(`archive`, filename = 'fusescope/logs_v2/index/*.json', format = 'One')",
+		ListIndexesStatement("archive", "fusescope/", "logs_v2"))
 }
 
 func TestNewPublication(t *testing.T) {

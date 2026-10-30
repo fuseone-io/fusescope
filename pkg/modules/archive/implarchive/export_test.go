@@ -2,6 +2,7 @@ package implarchive
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
 	"github.com/fuseone-io/fusescope/pkg/modules/archive"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore/telemetrystoretest"
 	"github.com/fuseone-io/fusescope/pkg/types/archivetypes"
 )
 
@@ -23,7 +26,7 @@ var (
 
 	partColumns = []cmock.ColumnType{
 		{Name: "partition_id", Type: "String"}, {Name: "name", Type: "String"}, {Name: "min_block_number", Type: "Int64"}, {Name: "max_block_number", Type: "Int64"},
-		{Name: "data_version", Type: "Int64"}, {Name: "rows", Type: "UInt64"}, {Name: "modification_time", Type: "DateTime"},
+		{Name: "data_version", Type: "Int64"}, {Name: "rows", Type: "UInt64"}, {Name: "bytes_on_disk", Type: "UInt64"}, {Name: "modification_time", Type: "DateTime"},
 	}
 	statColumns = []cmock.ColumnType{
 		{Name: "_file", Type: "String"}, {Name: "size", Type: "UInt64"}, {Name: "etag", Type: "String"}, {Name: "count", Type: "UInt64"}, {Name: "parts", Type: "Array(String)"},
@@ -33,44 +36,112 @@ var (
 func TestSnapshotShard(t *testing.T) {
 	ctx := context.Background()
 	written := time.Date(2026, 9, 4, 0, 0, 0, 0, time.UTC)
-
-	t.Run("ReplicaDown_LeftOut", func(t *testing.T) {
-		service := newTestExportService(t, newTestStore(t))
-		down, up := newMockConn(t), newMockConn(t)
-		down.ExpectQuery("FROM system.parts").WithArgs(testLogsTable.Database, testLogsTable.Name).WillReturnError(errors.New(errors.TypeInternal, errors.CodeInternal, "connection refused"))
-		expectParts(up, written, "20260903-15-0_1_5_1")
-		expectReplicaPath(up, "/clickhouse/tables/u/01")
-
-		snapshot, err := service.snapshotShard(ctx, testLogsTable, 1, []replica{{shard: 1, addr: "ch-1:9000", conn: asConn(down)}, {shard: 1, addr: "ch-2:9000", conn: asConn(up)}})
-		require.NoError(t, err)
-
-		assert.Equal(t, "ch-2:9000", snapshot.firstAddr)
-		assert.Contains(t, snapshot.replicas, "ch-2:9000")
-		assert.NotContains(t, snapshot.replicas, "ch-1:9000", "a replica down is left out, so ranges only it holds stay uncovered")
-		assert.Equal(t, map[string]string{"20260903-15-0": "ch-2:9000"}, snapshot.partitionIDs)
-		assert.Equal(t, written, snapshot.parts["ch-2:9000"]["20260903-15-0"][0].FirstSeen, "a part is first seen when it was written")
-	})
-
-	t.Run("NoReplicaAnswers_Error", func(t *testing.T) {
-		service := newTestExportService(t, newTestStore(t))
-		down := newMockConn(t)
-		down.ExpectQuery("FROM system.parts").WithArgs(testLogsTable.Database, testLogsTable.Name).WillReturnError(errors.New(errors.TypeInternal, errors.CodeInternal, "connection refused"))
-
-		_, err := service.snapshotShard(ctx, testLogsTable, 1, []replica{{shard: 1, addr: "ch-1:9000", conn: asConn(down)}})
-		assert.Error(t, err)
-	})
-
-	t.Run("ShardNumberNamesOtherData_Refused", func(t *testing.T) {
-		store := newTestStore(t)
-		require.NoError(t, store.PinShard(ctx, testLogsTable.Name, 1, "/clickhouse/tables/u/01"))
-		service := newTestExportService(t, store)
+	down := func(t *testing.T) cmock.ClickConnMockCommon {
 		conn := newMockConn(t)
-		expectParts(conn, written, "20260903-15-0_1_5_1")
-		expectReplicaPath(conn, "/clickhouse/tables/u/02")
+		conn.ExpectQueryRow("FROM system.clusters").WillReturnRow(cmock.NewRow(nil, nil)).WillReturnError(errors.New(errors.TypeInternal, errors.CodeInternal, "connection refused"))
+		return conn
+	}
 
-		_, err := service.snapshotShard(ctx, testLogsTable, 1, []replica{{shard: 1, addr: "ch-1:9000", conn: asConn(conn)}})
-		assert.True(t, errors.Asc(err, archivetypes.ErrCodeShardMismatch), err)
-	})
+	testCases := []struct {
+		name       string
+		replicas   func(t *testing.T) []cmock.ClickConnMockCommon
+		wantErr    bool
+		wantAddrs  []string
+		wantPath   string
+		replicated bool
+	}{
+		{
+			name: "ReplicaDown_LeftOut",
+			replicas: func(t *testing.T) []cmock.ClickConnMockCommon {
+				up := newMockConn(t)
+				expectReplica(up, 1, "ReplicatedMergeTree", "/clickhouse/tables/u/01")
+				expectParts(up, written, "20260903-15-0_1_5_1")
+				return []cmock.ClickConnMockCommon{down(t), up}
+			},
+			wantAddrs:  []string{"ch-2:9000"},
+			wantPath:   "/clickhouse/tables/u/01",
+			replicated: true,
+		},
+		{
+			name: "ConnectionReachesAnotherServer_LeftOut",
+			replicas: func(t *testing.T) []cmock.ClickConnMockCommon {
+				elsewhere, up := newMockConn(t), newMockConn(t)
+				expectReplica(elsewhere, 0, "ReplicatedMergeTree", "/clickhouse/tables/u/02")
+				expectReplica(up, 1, "ReplicatedMergeTree", "/clickhouse/tables/u/01")
+				expectParts(up, written, "20260903-15-0_1_5_1")
+				return []cmock.ClickConnMockCommon{elsewhere, up}
+			},
+			wantAddrs:  []string{"ch-2:9000"},
+			wantPath:   "/clickhouse/tables/u/01",
+			replicated: true,
+		},
+		{
+			name: "TableMissingOnAReplica_LeftOut",
+			replicas: func(t *testing.T) []cmock.ClickConnMockCommon {
+				fresh, up := newMockConn(t), newMockConn(t)
+				expectReplica(fresh, 1, "", "")
+				expectReplica(up, 1, "ReplicatedMergeTree", "/clickhouse/tables/u/01")
+				expectParts(up, written, "20260903-15-0_1_5_1")
+				return []cmock.ClickConnMockCommon{fresh, up}
+			},
+			wantAddrs:  []string{"ch-2:9000"},
+			wantPath:   "/clickhouse/tables/u/01",
+			replicated: true,
+		},
+		{
+			name: "ReplicasDisagreeOnPath_Error",
+			replicas: func(t *testing.T) []cmock.ClickConnMockCommon {
+				first, second := newMockConn(t), newMockConn(t)
+				expectReplica(first, 1, "ReplicatedMergeTree", "/clickhouse/tables/u/01")
+				expectParts(first, written, "20260903-15-0_1_5_1")
+				expectReplica(second, 1, "ReplicatedMergeTree", "/clickhouse/tables/v/01")
+				expectParts(second, written, "20260903-15-0_1_5_1")
+				return []cmock.ClickConnMockCommon{first, second}
+			},
+			wantErr: true,
+		},
+		{
+			name: "NotReplicated_NoPath",
+			replicas: func(t *testing.T) []cmock.ClickConnMockCommon {
+				up := newMockConn(t)
+				expectReplica(up, 1, "MergeTree", "")
+				expectParts(up, written, "20260903-15-0_1_5_1")
+				return []cmock.ClickConnMockCommon{up}
+			},
+			wantAddrs: []string{"ch-1:9000"},
+		},
+		{
+			name:     "NoReplicaAnswers_Error",
+			replicas: func(t *testing.T) []cmock.ClickConnMockCommon { return []cmock.ClickConnMockCommon{down(t)} },
+			wantErr:  true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			service := newTestExportService(t, newTestStore(t))
+			var shardReplicas []replica
+			for i, conn := range testCase.replicas(t) {
+				shardReplicas = append(shardReplicas, replica{shard: 1, replica: i + 1, addr: fmt.Sprintf("ch-%d:9000", i+1), conn: asConn(conn)})
+			}
+
+			snapshot, err := service.snapshotShard(ctx, testLogsTable, 1, shardReplicas)
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			addrs := make([]string, 0, len(snapshot.replicas))
+			for addr := range snapshot.replicas {
+				addrs = append(addrs, addr)
+			}
+			assert.ElementsMatch(t, testCase.wantAddrs, addrs, "a replica that isn't the expected server with the table is left out, so ranges only it holds stay uncovered")
+			assert.Equal(t, testCase.wantPath, snapshot.path)
+			assert.Equal(t, testCase.replicated, snapshot.replicated)
+			assert.Equal(t, written, snapshot.parts[testCase.wantAddrs[0]]["20260903-15-0"][0].FirstSeen, "a part is first seen when it was written")
+		})
+	}
 }
 
 func TestExport(t *testing.T) {
@@ -98,9 +169,7 @@ func TestExport(t *testing.T) {
 			conn.ExpectExec("INSERT INTO FUNCTION s3")
 			conn.ExpectQuery("groupUniqArray").WillReturnRows(cmock.NewRows(statColumns, testCase.readBack))
 			if testCase.wantPublished {
-				batch := conn.ExpectPrepareBatch("RawBLOB")
-				batch.ExpectAppend()
-				batch.ExpectSend()
+				conn.ExpectExec("SELECT raw FROM blob")
 			}
 
 			job := exportJob{
@@ -129,7 +198,6 @@ func TestExport(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, published, 1)
 			assert.Equal(t, archivetypes.AttemptStatusPublished, attempts[0].Status)
-			assert.True(t, service.staleIndexes[testLogsTable.Name], "the index is written once per table at the end of the cycle")
 		})
 	}
 }
@@ -156,17 +224,17 @@ func TestHoldLateParts(t *testing.T) {
 func newTestExportService(t *testing.T, store archivetypes.Store) *exportService {
 	t.Helper()
 
-	config := archive.Config{Interval: time.Hour, Limits: archive.LimitsConfig{Concurrency: 1, MaxThreads: 1, RowGroupRows: 1000, QueryTimeout: time.Minute}}
+	config := archive.Config{Interval: time.Hour, Limits: archive.LimitsConfig{Concurrency: 1, MaxThreads: 1, RowGroupRows: 1000, QueryTimeout: time.Minute, QueryTimeoutPerGiB: time.Minute}}
 	config.Logs = archive.SignalConfig{Enabled: true, NamedCollection: "archive", Prefix: "fusescope", BackstopDays: 7, LateMinRows: 2, LateMaxHold: time.Hour}
 
 	return &exportService{
-		settings:     factory.NewScopedProviderSettings(instrumentationtest.New().ToProviderSettings(), "implarchive_test"),
-		store:        store,
-		config:       config,
-		holder:       "a",
-		partitions:   make(map[string]archivetypes.Partition),
-		firstSeen:    make(map[string][]archivetypes.Part),
-		staleIndexes: make(map[string]bool),
+		settings:       factory.NewScopedProviderSettings(instrumentationtest.New().ToProviderSettings(), "implarchive_test"),
+		telemetryStore: telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp),
+		store:          store,
+		config:         config,
+		holder:         "a",
+		partitions:     make(map[string]archivetypes.Partition),
+		firstSeen:      make(map[string][]archivetypes.Part),
 	}
 }
 
@@ -186,11 +254,11 @@ func asConn(conn cmock.ClickConnMockCommon) clickhouse.Conn {
 func expectParts(conn cmock.ClickConnMockCommon, written time.Time, names ...string) {
 	rows := make([][]any, 0, len(names))
 	for i, name := range names {
-		rows = append(rows, []any{"20260903-15-0", name, int64(i + 1), int64(i + 5), int64(1), uint64(10), written})
+		rows = append(rows, []any{"20260903-15-0", name, int64(i + 1), int64(i + 5), int64(1), uint64(10), uint64(2048), written})
 	}
 	conn.ExpectQuery("FROM system.parts").WithArgs(testLogsTable.Database, testLogsTable.Name).WillReturnRows(cmock.NewRows(partColumns, rows))
 }
 
-func expectReplicaPath(conn cmock.ClickConnMockCommon, path string) {
-	conn.ExpectQueryRow("FROM system.replicas").WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "zookeeper_path", Type: "String"}}, []any{path}))
+func expectReplica(conn cmock.ClickConnMockCommon, isReplica uint64, engine string, path string) {
+	conn.ExpectQueryRow("FROM system.clusters").WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "is_replica", Type: "UInt64"}, {Name: "engine", Type: "String"}, {Name: "zookeeper_path", Type: "String"}}, []any{isReplica, engine, path}))
 }
