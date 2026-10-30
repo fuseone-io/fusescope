@@ -11501,6 +11501,27 @@ export enum RumtypesArtifactKindDTO {
 	'source-map' = 'source-map',
 	'r8-mapping' = 'r8-mapping',
 }
+export interface RumtypesBundledSDKDTO {
+	/**
+	 * @type string
+	 * @description Subresource Integrity value of the script, e.g. sha384-….
+	 */
+	integrity: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @description Path of the script on this server, without the external path prefix.
+	 */
+	path: string;
+	/**
+	 * @type string
+	 */
+	version: string;
+}
+
 export interface RumtypesClientBreakdownDTO {
 	/**
 	 * @type number,null
@@ -11937,6 +11958,7 @@ export interface RumtypesSupportedSDKDTO {
 }
 
 export interface RumtypesGettableApplicationStatusDTO {
+	browserBundle: RumtypesBundledSDKDTO;
 	counts: RumtypesIngestCountsDTO;
 	/**
 	 * @type string,null
