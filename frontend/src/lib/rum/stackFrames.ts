@@ -212,3 +212,15 @@ export function componentFrameGroups(
 		),
 	);
 }
+
+/** The map that resolved a stack's first original frame, or "". */
+export function resolvingSourceMap(
+	stack: Pick<RumtypesErrorEventDTO, 'frames' | 'symbolicated'>,
+): string {
+	if (!stack.symbolicated) {
+		return '';
+	}
+	return (
+		stack.frames?.find((frame) => frame?.original)?.original?.sourceMap ?? ''
+	);
+}
