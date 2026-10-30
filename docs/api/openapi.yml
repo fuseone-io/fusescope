@@ -10110,6 +10110,25 @@ components:
       - source-map
       - r8-mapping
       type: string
+    RumtypesBundledSDK:
+      properties:
+        integrity:
+          description: Subresource Integrity value of the script, e.g. sha384-….
+          type: string
+        name:
+          type: string
+        path:
+          description: Path of the script on this server, without the external path
+            prefix.
+          type: string
+        version:
+          type: string
+      required:
+      - name
+      - version
+      - integrity
+      - path
+      type: object
     RumtypesClient:
       properties:
         browser:
@@ -10367,6 +10386,8 @@ components:
       type: object
     RumtypesGettableApplicationStatus:
       properties:
+        browserBundle:
+          $ref: '#/components/schemas/RumtypesBundledSDK'
         counts:
           $ref: '#/components/schemas/RumtypesIngestCounts'
         firstSeenAt:
@@ -10394,6 +10415,7 @@ components:
       - counts
       - sdk
       - supportedSdks
+      - browserBundle
       - rejections
       type: object
     RumtypesGettableCreatedApplication:
