@@ -41,6 +41,7 @@ pytest_plugins = [
     "fixtures.otelcollector",
     "fixtures.simulatorcontract",
     "fixtures.seaweedfs",
+    "fixtures.archive",
 ]
 
 
