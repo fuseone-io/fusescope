@@ -267,7 +267,8 @@ func (module *module) addErrorEvents(ctx context.Context, application *rumtypes.
 }
 
 // newErrorEvent symbolicates an event's stack trace: through the release's
-// source maps on the web, its R8 mapping on Android.
+// source maps on the web, with its React component stack, its R8 mapping on
+// Android.
 func (module *module) newErrorEvent(ctx context.Context, application *rumtypes.Application, info *resourceInfo, row *errorEventRow) (*rumtypes.ErrorEvent, error) {
 	event := &rumtypes.ErrorEvent{
 		ID: row.id, Timestamp: time.Unix(0, int64(row.timestamp)).UTC(), SessionID: row.sessionID, Route: row.route, Release: info.release, Client: info.client,
@@ -290,6 +291,14 @@ func (module *module) newErrorEvent(ctx context.Context, application *rumtypes.A
 		return nil, err
 	}
 	event.Frames, event.Symbolicated, event.MissingSourceMap = symbolication.Frames, symbolication.Symbolicated, symbolication.MissingSourceMap
+
+	if event.ComponentStack = rumtypes.NewComponentStack(row.componentStack); event.ComponentStack != nil {
+		symbolication, err := module.symbolicator.Symbolicate(ctx, application.ID, info.release, event.ComponentStack.Frames)
+		if err != nil {
+			return nil, err
+		}
+		event.ComponentStack.SetSymbolication(symbolication)
+	}
 	return event, nil
 }
 
