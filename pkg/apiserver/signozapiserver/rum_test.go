@@ -1,11 +1,16 @@
 package signozapiserver
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication/browsersdk"
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication"
 	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/coretypes"
@@ -55,6 +60,32 @@ func TestRUMRoutesAccess(t *testing.T) {
 			require.True(t, ok)
 			assert.Equal(t, testCase.verb, route.verb)
 			assert.Equal(t, testCase.roles, route.roles)
+		})
+	}
+}
+
+func TestRUMBrowserSDKRoutesArePublic(t *testing.T) {
+	router := mux.NewRouter()
+	require.NoError(t, addRUMBrowserSDKRoutes(router))
+
+	testCases := []struct {
+		name   string
+		method string
+		path   string
+		status int
+	}{
+		{name: "Script_Get", method: http.MethodGet, path: browsersdk.ScriptPath(browsersdk.Version()), status: http.StatusOK},
+		{name: "Script_Head", method: http.MethodHead, path: browsersdk.ScriptPath(browsersdk.Version()), status: http.StatusOK},
+		{name: "SourceMap_Get", method: http.MethodGet, path: browsersdk.ScriptPath(browsersdk.Version()) + ".map", status: http.StatusOK},
+		{name: "Script_UnknownVersion", method: http.MethodGet, path: browsersdk.ScriptPath("0.0.0"), status: http.StatusNotFound},
+		{name: "Script_Post", method: http.MethodPost, path: browsersdk.ScriptPath(browsersdk.Version()), status: http.StatusMethodNotAllowed},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, httptest.NewRequest(testCase.method, testCase.path, nil))
+			assert.Equal(t, testCase.status, recorder.Code)
 		})
 	}
 }

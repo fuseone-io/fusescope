@@ -35,6 +35,14 @@ type SupportedSDK struct {
 	MaxVersion string `json:"maxVersion" required:"true" description:"Exclusive."`
 }
 
+// BundledSDK is the browser bundle this server serves for script-tag installs.
+type BundledSDK struct {
+	Name      string `json:"name" required:"true"`
+	Version   string `json:"version" required:"true"`
+	Integrity string `json:"integrity" required:"true" description:"Subresource Integrity value of the script, e.g. sha384-…."`
+	Path      string `json:"path" required:"true" description:"Path of the script on this server, without the external path prefix."`
+}
+
 func (SDKSupport) Enum() []any {
 	return []any{SDKSupportSupported, SDKSupportOutdated, SDKSupportOther, SDKSupportUnknown}
 }
