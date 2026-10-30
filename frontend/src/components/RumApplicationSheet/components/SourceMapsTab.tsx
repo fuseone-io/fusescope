@@ -65,6 +65,7 @@ function SourceMapsTab({
 					</p>
 				)}
 				<ReleasesSection
+					android={android}
 					applicationId={application.id}
 					data={data}
 					loading={query.isLoading}
