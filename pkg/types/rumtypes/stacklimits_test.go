@@ -134,3 +134,43 @@ func TestSourceContextRadiusBounded(t *testing.T) {
 	require.NotNil(t, context)
 	assert.Len(t, context.Lines, 2*maxContextRadius+1)
 }
+
+func TestRetraceJVMStackTraceBounded(t *testing.T) {
+	mapping, err := ParseR8Mapping([]byte(readR8Fixture(t, "mapping.txt")))
+	require.NoError(t, err)
+	testCases := []struct {
+		name      string
+		stack     string
+		frames    int
+		truncated bool
+	}{
+		{name: "InlineExpanding_AtLimit", stack: "a.a: Cart is empty\n" + strings.Repeat("\tat a.b.a(SourceFile:6)\n", MaxStackFrames), frames: MaxStackFrames, truncated: true},
+		{name: "InlineExpanding_AcrossCauses", stack: "a.a: Cart is empty\n" + strings.Repeat("\tat a.b.a(SourceFile:6)\n", 90) + "Caused by: a.a: inner\n" + strings.Repeat("\tat a.b.a(SourceFile:6)\n", 90), frames: MaxStackFrames, truncated: true},
+		{name: "Normal_Untouched", stack: readR8Fixture(t, "crash.txt"), frames: 9},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			parsed := ParseJVMStackTrace(testCase.stack, "", "")
+			require.False(t, parsed.Truncated)
+			retraced, ok := RetraceJVMStackTrace(parsed, mapping, "/mapping.txt")
+			require.True(t, ok)
+			frames := 0
+			for _, exception := range retraced.Exceptions {
+				frames += len(exception.Frames)
+			}
+			assert.Equal(t, testCase.frames, frames)
+			assert.Equal(t, testCase.truncated, retraced.Truncated)
+		})
+	}
+}
+
+func TestComponentStackTruncatedBeforeTrim(t *testing.T) {
+	head := "\n    at Cart (https://shop.example.com/"
+	stack := head + strings.Repeat("a", MaxComponentStackBytes+1-len(head))
+	require.Len(t, stack, MaxComponentStackBytes+1)
+
+	parsed := NewComponentStack(stack)
+	require.NotNil(t, parsed)
+	assert.True(t, parsed.Truncated)
+	assert.Len(t, parsed.Frames, 1)
+}

@@ -25,7 +25,8 @@ type ComponentStack struct {
 // (at location)") and Gecko ("Name@location") lines within the size limits;
 // nil when stack is blank.
 func NewComponentStack(stack string) *ComponentStack {
-	stack, truncated := TruncateStack(strings.TrimSpace(stack), MaxComponentStackBytes)
+	stack, truncated := TruncateStack(stack, MaxComponentStackBytes)
+	stack = strings.TrimSpace(stack)
 	if stack == "" {
 		return nil
 	}

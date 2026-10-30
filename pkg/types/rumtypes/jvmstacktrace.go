@@ -168,7 +168,8 @@ func (frame StackFrame) OriginalFunction() string {
 
 // RetraceJVMStackTrace returns a copy of trace with types and frames mapped
 // back to the original code, and whether the mapping resolved anything.
-// Frames of classes outside the mapping are kept as they are.
+// Frames of classes outside the mapping are kept as they are. Inlined frames
+// expand the trace, which is cut again at MaxStackFrames.
 func RetraceJVMStackTrace(trace *JVMStackTrace, mapping *R8Mapping, mappingPath string) (*JVMStackTrace, bool) {
 	retraced := &JVMStackTrace{Exceptions: make([]*ErrorCause, 0, len(trace.Exceptions)), Truncated: trace.Truncated}
 	resolved := false
@@ -181,6 +182,7 @@ func RetraceJVMStackTrace(trace *JVMStackTrace, mapping *R8Mapping, mappingPath 
 		resolved = resolved || ok || framesResolved
 		retraced.Exceptions = append(retraced.Exceptions, &copied)
 	}
+	retraced.capFrames(MaxStackFrames)
 	return retraced, resolved
 }
 
@@ -326,4 +328,15 @@ func splitJVMFunction(function string) (string, string) {
 		return "", function
 	}
 	return function[:dot], function[dot+1:]
+}
+
+// capFrames keeps the first limit frames across the exceptions.
+func (trace *JVMStackTrace) capFrames(limit int) {
+	for _, exception := range trace.Exceptions {
+		if len(exception.Frames) > limit {
+			exception.Frames = exception.Frames[:limit]
+			trace.Truncated = true
+		}
+		limit -= len(exception.Frames)
+	}
 }
