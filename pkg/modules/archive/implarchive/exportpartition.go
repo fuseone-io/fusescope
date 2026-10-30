@@ -51,7 +51,6 @@ func (service *exportService) export(ctx context.Context, lease *archivetypes.Le
 	service.mu.Unlock()
 
 	service.settings.Logger().InfoContext(ctx, "archive partition exported", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID), slog.Int("parts", len(candidates)), slog.String("attempt_id", attempt.ID.StringValue()))
-	service.markIndexStale(job.table)
 	return nil
 }
 
@@ -61,13 +60,13 @@ func (service *exportService) publish(ctx context.Context, lease *archivetypes.L
 	location := archivetypes.ObjectLocation{Prefix: attempt.Prefix, Table: job.table.Name, Day: job.partition.Day, Shard: job.shard, PartitionID: job.partition.ID, AttemptID: attempt.ID.StringValue()}
 	for _, part := range parts {
 		statement := archivetypes.ExportStatement(job.table, job.mappings, collection, job.shard, part.Name, location.ObjectKey(part.Name))
-		if err := service.exec(ctx, queryID(location.AttemptID, "export"), func(ctx context.Context) error { return conn.Exec(ctx, statement) }); err != nil {
+		if err := service.exec(ctx, service.partTimeout(part), queryID(location.AttemptID, "export"), func(ctx context.Context) error { return conn.Exec(ctx, statement) }); err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't export part %s of %s", part.Name, job.table.Name)
 		}
 	}
 
 	var stats []archivetypes.ObjectStat
-	err := service.exec(ctx, queryID(location.AttemptID, "check"), func(ctx context.Context) error {
+	err := service.exec(ctx, service.config.Limits.QueryTimeout, queryID(location.AttemptID, "check"), func(ctx context.Context) error {
 		var err error
 		stats, err = statObjects(ctx, conn, collection, location.Dir())
 		return err
@@ -84,7 +83,7 @@ func (service *exportService) publish(ctx context.Context, lease *archivetypes.L
 	if err != nil {
 		return err
 	}
-	if err := service.exec(ctx, queryID(location.AttemptID, "manifest"), func(ctx context.Context) error {
+	if err := service.exec(ctx, service.config.Limits.QueryTimeout, queryID(location.AttemptID, "manifest"), func(ctx context.Context) error {
 		return writeBlob(ctx, conn, collection, location.ManifestKey(), manifest)
 	}); err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't write the manifest of archive attempt %s", attempt.ID)
@@ -115,61 +114,79 @@ func (service *exportService) holdLateParts(job exportJob, candidates []archivet
 	return candidates
 }
 
-// writeIndex writes the table's active objects under the key of the commit they reflect.
-// Of two writers, the one at the later epoch or sequence has the higher key; a key written
-// again holds the same snapshot, so it may be overwritten.
-func (service *exportService) writeIndex(ctx context.Context, conn clickhouse.Conn, lease *archivetypes.Lease, table archivetypes.Table) {
+// syncIndex writes the table's active objects under the key of the commit they reflect, unless
+// the bucket already has an index at the table's latest commit. Reading the bucket rather than
+// remembering writes covers a cycle that published and then lost its lease or crashed. Of two
+// writers, the one at the later epoch or sequence has the higher key; a key written again
+// holds the same snapshot, so it may be overwritten.
+func (service *exportService) syncIndex(ctx context.Context, conn clickhouse.Conn, lease *archivetypes.Lease, table archivetypes.Table) {
+	signalConfig := service.config.Logs
 	err := func() error {
 		snapshot, err := service.store.IndexSnapshot(ctx, table.Name)
 		if err != nil {
 			return err
 		}
+		written, err := service.writtenIndexSequence(ctx, conn, table)
+		if err != nil {
+			service.settings.Logger().WarnContext(ctx, "archive indexes not read back, writing the index", slog.String("table", table.Name), errors.Attr(err))
+		} else if written >= snapshot.Sequence {
+			return nil
+		}
+
 		encoded, err := json.Marshal(archivetypes.NewIndex(table.Name, lease.Epoch, snapshot))
 		if err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't encode the archive index of %s", table.Name)
 		}
 
-		settings := service.querySettings()
+		settings := service.querySettings(service.config.Limits.QueryTimeout)
 		settings["s3_truncate_on_insert"] = 1
 		ctx, cancel := withQuerySettings(ctx, settings, service.config.Limits.QueryTimeout, queryID(fmt.Sprintf("%d-%d", lease.Epoch, snapshot.Sequence), "index"))
 		defer cancel()
-		return writeBlob(ctx, conn, service.config.Logs.NamedCollection, archivetypes.IndexKey(service.config.Logs.Prefix, table.Name, lease.Epoch, snapshot.Sequence), encoded)
+		return writeBlob(ctx, conn, signalConfig.NamedCollection, archivetypes.IndexKey(signalConfig.Prefix, table.Name, lease.Epoch, snapshot.Sequence), encoded)
 	}()
-
-	service.mu.Lock()
-	defer service.mu.Unlock()
-	service.staleIndexes[table.Name] = err != nil
 	if err != nil {
 		service.settings.Logger().WarnContext(ctx, "archive index not written, retrying next cycle", slog.String("table", table.Name), errors.Attr(err))
 	}
 }
 
-func (service *exportService) markIndexStale(table archivetypes.Table) {
-	service.mu.Lock()
-	defer service.mu.Unlock()
-	service.staleIndexes[table.Name] = true
-}
-
-// writeStaleIndex writes the table's index once per cycle, when an export or an earlier write
-// left it stale.
-func (service *exportService) writeStaleIndex(ctx context.Context, conn clickhouse.Conn, lease *archivetypes.Lease, table archivetypes.Table) {
-	service.mu.Lock()
-	stale := service.staleIndexes[table.Name]
-	service.mu.Unlock()
-
-	if stale {
-		service.writeIndex(ctx, conn, lease, table)
+// writtenIndexSequence is the latest commit sequence the bucket has an index at, 0 when none.
+func (service *exportService) writtenIndexSequence(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table) (int64, error) {
+	var files []string
+	err := service.exec(ctx, service.config.Limits.QueryTimeout, queryID(table.Name, "indexes"), func(ctx context.Context) error {
+		var err error
+		files, err = listIndexes(ctx, conn, service.config.Logs.NamedCollection, service.config.Logs.Prefix, table.Name)
+		return err
+	})
+	if err != nil {
+		return 0, err
 	}
+
+	var latest int64
+	for _, file := range files {
+		if sequence, ok := archivetypes.IndexSequence(file); ok && sequence > latest {
+			latest = sequence
+		}
+	}
+	return latest, nil
 }
 
-// exec runs query with the archive limits, under the query timeout.
-func (service *exportService) exec(ctx context.Context, id string, query func(ctx context.Context) error) error {
-	ctx, cancel := withQuerySettings(ctx, service.querySettings(), service.config.Limits.QueryTimeout, id)
+// partTimeout grows with the part's size, as encoding and uploading a large merged part can
+// outlast query_timeout, but never past the cycle's deadline.
+func (service *exportService) partTimeout(part archivetypes.Part) time.Duration {
+	limits := service.config.Limits
+	startedGiB := (part.BytesOnDisk + 1<<30 - 1) >> 30
+	timeout := limits.QueryTimeout + time.Duration(startedGiB)*limits.QueryTimeoutPerGiB
+	return min(timeout, service.config.Logs.CycleTimeout())
+}
+
+// exec runs query with the archive limits, under timeout.
+func (service *exportService) exec(ctx context.Context, timeout time.Duration, id string, query func(ctx context.Context) error) error {
+	ctx, cancel := withQuerySettings(ctx, service.querySettings(timeout), timeout, id)
 	defer cancel()
 	return query(ctx)
 }
 
-func (service *exportService) querySettings() clickhouse.Settings {
+func (service *exportService) querySettings(timeout time.Duration) clickhouse.Settings {
 	limits := service.config.Limits
-	return querySettings(limits.MaxMemoryUsage, limits.MaxThreads, limits.RowGroupRows, limits.QueryTimeout)
+	return querySettings(limits.MaxMemoryUsage, limits.MaxThreads, limits.RowGroupRows, timeout)
 }

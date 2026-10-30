@@ -54,6 +54,10 @@ type LimitsConfig struct {
 	// Per query, as max_execution_time and a client deadline. Below the export cycle's
 	// deadline, a quarter of backstop_days.
 	QueryTimeout time.Duration `mapstructure:"query_timeout"`
+
+	// Added to query_timeout for each started GiB of a part's bytes_on_disk when it is
+	// exported, up to the export cycle's deadline.
+	QueryTimeoutPerGiB time.Duration `mapstructure:"query_timeout_per_gib"`
 }
 
 type SignalConfig struct {
@@ -91,7 +95,7 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		Interval:         time.Hour,
-		Limits:           LimitsConfig{Concurrency: 1, MaxMemoryUsage: 2 << 30, MaxThreads: 4, RowGroupRows: 100_000, QueryTimeout: time.Hour},
+		Limits:           LimitsConfig{Concurrency: 1, MaxMemoryUsage: 2 << 30, MaxThreads: 4, RowGroupRows: 100_000, QueryTimeout: time.Hour, QueryTimeoutPerGiB: 2 * time.Minute},
 		GCSupersededDays: 30,
 		Logs:             newSignalConfig(),
 		Traces:           newSignalConfig(),
@@ -111,6 +115,9 @@ func (c Config) Validate() error {
 	}
 	if c.Limits.QueryTimeout <= 0 {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.query_timeout must be positive")
+	}
+	if c.Limits.QueryTimeoutPerGiB < 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.query_timeout_per_gib must not be negative")
 	}
 	if c.GCSupersededDays < 0 {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.gc_superseded_days must not be negative")

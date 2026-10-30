@@ -2,11 +2,12 @@ package implarchive
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/ext"
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/types/archivetypes"
@@ -15,7 +16,7 @@ import (
 // activeParts returns the replica's active parts of table that hold rows, by partition ID. A
 // part is first seen when it was written, so a hold survives restarts and handovers.
 func activeParts(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table) (map[string][]archivetypes.Part, error) {
-	rows, err := conn.Query(ctx, "SELECT partition_id, name, min_block_number, max_block_number, toInt64(data_version), rows, modification_time FROM system.parts WHERE database = ? AND table = ? AND active AND rows > 0 ORDER BY partition_id, min_block_number", table.Database, table.Name)
+	rows, err := conn.Query(ctx, "SELECT partition_id, name, min_block_number, max_block_number, toInt64(data_version), rows, bytes_on_disk, modification_time FROM system.parts WHERE database = ? AND table = ? AND active AND rows > 0 ORDER BY partition_id, min_block_number", table.Database, table.Name)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the parts of %s.%s", table.Database, table.Name)
 	}
@@ -25,7 +26,7 @@ func activeParts(ctx context.Context, conn clickhouse.Conn, table archivetypes.T
 	for rows.Next() {
 		var partitionID string
 		var part archivetypes.Part
-		if err := rows.Scan(&partitionID, &part.Name, &part.Range.Min, &part.Range.Max, &part.DataVersion, &part.Rows, &part.FirstSeen); err != nil {
+		if err := rows.Scan(&partitionID, &part.Name, &part.Range.Min, &part.Range.Max, &part.DataVersion, &part.Rows, &part.BytesOnDisk, &part.FirstSeen); err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the parts of %s.%s", table.Database, table.Name)
 		}
 		parts[partitionID] = append(parts[partitionID], part)
@@ -99,29 +100,56 @@ func statObjects(ctx context.Context, conn clickhouse.Conn, namedCollection stri
 	return stats, rows.Err()
 }
 
-// replicaPath is the replica path of table on the server, "" when it isn't replicated.
-func replicaPath(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table) (string, error) {
-	var path string
-	err := conn.QueryRow(ctx, "SELECT zookeeper_path FROM system.replicas WHERE database = ? AND table = ?", table.Database, table.Name).Scan(&path)
-	if errors.Is(err, sql.ErrNoRows) {
-		return "", nil
-	}
+// replicaTable is what a server says about itself and its copy of a table: whether it is
+// the replica the cluster lists at (shard, replica), the table's engine, empty when the table
+// doesn't exist, and its replica path, empty when it isn't replicated.
+type replicaTable struct {
+	isReplica bool
+	engine    string
+	path      string
+}
+
+func inspectReplica(ctx context.Context, conn clickhouse.Conn, cluster string, shard int, replicaNum int, table archivetypes.Table) (replicaTable, error) {
+	var inspected replicaTable
+	var isReplica uint64
+	err := conn.QueryRow(ctx, "SELECT (SELECT count() FROM system.clusters WHERE cluster = ? AND shard_num = ? AND replica_num = ? AND is_local), (SELECT any(engine) FROM system.tables WHERE database = ? AND name = ?), (SELECT any(zookeeper_path) FROM system.replicas WHERE database = ? AND table = ?)",
+		cluster, shard, replicaNum, table.Database, table.Name, table.Database, table.Name).Scan(&isReplica, &inspected.engine, &inspected.path)
 	if err != nil {
-		return "", errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the replica path of %s.%s", table.Database, table.Name)
+		return inspected, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't inspect %s.%s on the replica", table.Database, table.Name)
+	}
+	inspected.isReplica = isReplica > 0
+
+	return inspected, nil
+}
+
+func listIndexes(ctx context.Context, conn clickhouse.Conn, namedCollection string, prefix string, table string) ([]string, error) {
+	rows, err := conn.Query(ctx, archivetypes.ListIndexesStatement(namedCollection, prefix, table))
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the archive indexes of %s", table)
+	}
+	defer rows.Close()
+
+	var files []string
+	for rows.Next() {
+		var file string
+		if err := rows.Scan(&file); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the archive indexes of %s", table)
+		}
+		files = append(files, file)
 	}
 
-	return path, nil
+	return files, rows.Err()
 }
 
 func writeBlob(ctx context.Context, conn clickhouse.Conn, namedCollection string, key string, content []byte) error {
-	batch, err := conn.PrepareBatch(ctx, archivetypes.WriteBlobStatement(namedCollection, key))
+	blob, err := ext.NewTable("blob", ext.Column("raw", "String"))
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't write %s", key)
 	}
-	if err := batch.Append(string(content)); err != nil {
+	if err := blob.Append(string(content)); err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't write %s", key)
 	}
-	if err := batch.Send(); err != nil {
+	if err := conn.Exec(clickhouse.Context(ctx, clickhouse.WithExternalTable(blob)), archivetypes.WriteBlobStatement(namedCollection, key)); err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't write %s", key)
 	}
 
@@ -137,7 +165,7 @@ func withQuerySettings(ctx context.Context, settings clickhouse.Settings, timeou
 
 func querySettings(maxMemoryUsage int64, maxThreads int, rowGroupRows int, timeout time.Duration) clickhouse.Settings {
 	settings := clickhouse.Settings{
-		"max_execution_time":                   int(timeout.Seconds()),
+		"max_execution_time":                   max(1, int(math.Ceil(timeout.Seconds()))),
 		"max_threads":                          maxThreads,
 		"output_format_parquet_row_group_size": rowGroupRows,
 		"s3_truncate_on_insert":                0,

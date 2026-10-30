@@ -64,12 +64,17 @@ func StatObjectsStatement(namedCollection string, dir string) string {
 		clickhousesql.Identifier(namedCollection), clickhousesql.StringLiteral(strings.TrimSuffix(dir, "/")+"/*.parquet"))
 }
 
-// WriteBlobStatement inserts one raw String row as the object at key. The content goes in
-// the data stream: as a literal it would be bound by max_query_size. format has no space
-// before '=', as clickhouse-go strips " FORMAT <word>" from batch inserts.
+// WriteBlobStatement writes the raw column of the external table blob, sent with the query,
+// as the object at key: as a literal the content would be bound by max_query_size.
 func WriteBlobStatement(namedCollection string, key string) string {
-	return fmt.Sprintf("INSERT INTO FUNCTION s3(%s, filename = %s, format='RawBLOB', structure = 'raw String')",
+	return fmt.Sprintf("INSERT INTO FUNCTION s3(%s, filename = %s, format = 'RawBLOB', structure = 'raw String') SELECT raw FROM blob",
 		clickhousesql.Identifier(namedCollection), clickhousesql.StringLiteral(key))
+}
+
+// ListIndexesStatement lists the table's index objects by file name, without reading them.
+func ListIndexesStatement(namedCollection string, prefix string, table string) string {
+	return fmt.Sprintf("SELECT _file FROM s3(%s, filename = %s, format = 'One')",
+		clickhousesql.Identifier(namedCollection), clickhousesql.StringLiteral(fmt.Sprintf("%s/%s/index/*.json", strings.TrimSuffix(prefix, "/"), table)))
 }
 
 // NewPublication pairs each exported part with its object. Every part must have an object

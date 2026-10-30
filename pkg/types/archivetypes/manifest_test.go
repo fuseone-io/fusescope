@@ -21,6 +21,28 @@ func TestKeys(t *testing.T) {
 	assert.Less(t, IndexKey("p", "t", 3, 9), IndexKey("p", "t", 3, 10))
 }
 
+func TestIndexSequence(t *testing.T) {
+	testCases := []struct {
+		name   string
+		file   string
+		want   int64
+		wantOK bool
+	}{
+		{name: "IndexKey", file: "00000000000000000003-00000000000000000012.json", want: 12, wantOK: true},
+		{name: "FullPath", file: "fusescope/logs_v2/index/00000000000000000003-00000000000000000012.json", want: 12, wantOK: true},
+		{name: "OtherObject_NotOK", file: "notes.json"},
+		{name: "NotANumber_NotOK", file: "00000000000000000003-abc.json"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			got, ok := IndexSequence(testCase.file)
+			assert.Equal(t, testCase.wantOK, ok)
+			assert.Equal(t, testCase.want, got)
+		})
+	}
+}
+
 func TestManifestEncode(t *testing.T) {
 	manifest := Manifest{
 		FormatVersion:   FormatVersion,

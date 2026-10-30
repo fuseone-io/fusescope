@@ -27,6 +27,7 @@ type Part struct {
 	Range       BlockRange
 	DataVersion int64
 	Rows        uint64
+	BytesOnDisk uint64
 	FirstSeen   time.Time
 }
 
