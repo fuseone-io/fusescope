@@ -61,14 +61,18 @@ type ErrorCause struct {
 // exception first, then its causes and suppressed exceptions in print order.
 type JVMStackTrace struct {
 	Exceptions []*ErrorCause
+	// Truncated is set when parsing stopped at MaxStackFrames frames or
+	// maxJVMExceptions exceptions.
+	Truncated bool
 }
 
 func (ErrorCauseRelation) Enum() []any {
 	return []any{ErrorCauseRelationCausedBy, ErrorCauseRelationSuppressed}
 }
 
-// ParseJVMStackTrace parses a JVM stack trace. A trace of frames only, as
-// for an ANR, takes the type and message given.
+// ParseJVMStackTrace parses a JVM stack trace up to MaxStackFrames frames
+// and maxJVMExceptions exceptions. A trace of frames only, as for an ANR,
+// takes the type and message given.
 func ParseJVMStackTrace(stacktrace string, exceptionType string, message string) *JVMStackTrace {
 	lines := strings.Split(strings.ReplaceAll(stacktrace, "\r\n", "\n"), "\n")
 	thrown := &ErrorCause{Type: exceptionType, Message: message, Frames: []StackFrame{}}
@@ -81,14 +85,23 @@ func ParseJVMStackTrace(stacktrace string, exceptionType string, message string)
 		lines = lines[first+1:]
 	}
 
-	current, inMessage := thrown, headed
+	current, inMessage, frames := thrown, headed, 0
 	for _, line := range lines {
 		if match := jvmFrame.FindStringSubmatch(line); match != nil && (match[1] != "" || !headed) {
+			if frames == MaxStackFrames {
+				trace.Truncated = true
+				break
+			}
+			frames++
 			current.Frames = append(current.Frames, newJVMStackFrame(match[2]+"."+match[3], match[4]))
 			inMessage = false
 			continue
 		}
 		if match := jvmCause.FindStringSubmatch(line); match != nil {
+			if len(trace.Exceptions) == maxJVMExceptions {
+				trace.Truncated = true
+				break
+			}
 			relation := ErrorCauseRelationCausedBy
 			if match[1] == "Suppressed" {
 				relation = ErrorCauseRelationSuppressed
@@ -157,7 +170,7 @@ func (frame StackFrame) OriginalFunction() string {
 // back to the original code, and whether the mapping resolved anything.
 // Frames of classes outside the mapping are kept as they are.
 func RetraceJVMStackTrace(trace *JVMStackTrace, mapping *R8Mapping, mappingPath string) (*JVMStackTrace, bool) {
-	retraced := &JVMStackTrace{Exceptions: make([]*ErrorCause, 0, len(trace.Exceptions))}
+	retraced := &JVMStackTrace{Exceptions: make([]*ErrorCause, 0, len(trace.Exceptions)), Truncated: trace.Truncated}
 	resolved := false
 	for _, exception := range trace.Exceptions {
 		copied := *exception

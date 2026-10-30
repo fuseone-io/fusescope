@@ -78,8 +78,9 @@ type ErrorEvent struct {
 	Type             string            `json:"type" required:"true"`
 	Message          string            `json:"message" required:"true"`
 	Source           string            `json:"source" required:"true"`
-	Stacktrace       string            `json:"stacktrace" required:"true" description:"exception.stacktrace as received."`
-	Frames           []StackFrame      `json:"frames" required:"true" description:"For a JVM trace, the thrown exception's."`
+	Stacktrace       string            `json:"stacktrace" required:"true" description:"exception.stacktrace as received, cut to 64 KiB."`
+	Frames           []StackFrame      `json:"frames" required:"true" description:"For a JVM trace, the thrown exception's. At most 200 across the trace."`
+	Truncated        bool              `json:"truncated" required:"true" description:"Whether the stack trace was cut to 64 KiB or its frames to 200."`
 	Causes           []*ErrorCause     `json:"causes" required:"true" description:"The causes and suppressed exceptions of a JVM trace, in print order; empty otherwise."`
 	Symbolicated     bool              `json:"symbolicated" required:"true" description:"Whether frames were mapped through an uploaded source map or R8 mapping; frames keep the minified position and carry the original one."`
 	MissingSourceMap *MissingSourceMap `json:"missingSourceMap" required:"true" nullable:"true" description:"Set when the event's release has no uploaded source maps and a frame points at a script file, inline scripts never having one; for Android, when the release has no R8 mapping."`

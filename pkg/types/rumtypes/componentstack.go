@@ -14,27 +14,35 @@ const AttributeReactComponentStack = "fusescope.rum.react.component_stack"
 var componentLocation = regexp.MustCompile(`:[0-9]+(?::[0-9]+)?$`)
 
 type ComponentStack struct {
-	Stack            string            `json:"stack" required:"true" description:"fusescope.rum.react.component_stack as received, trimmed of surrounding whitespace."`
-	Frames           []StackFrame      `json:"frames" required:"true" description:"One frame per component, innermost first; function is the component name React reported."`
+	Stack            string            `json:"stack" required:"true" description:"fusescope.rum.react.component_stack as received, trimmed of surrounding whitespace and cut to 8 KiB."`
+	Frames           []StackFrame      `json:"frames" required:"true" description:"One frame per component, innermost first, at most 50; function is the component name React reported."`
+	Truncated        bool              `json:"truncated" required:"true" description:"Whether the stack was cut to 8 KiB or its frames to 50."`
 	Symbolicated     bool              `json:"symbolicated" required:"true" description:"Whether frames were mapped through an uploaded source map."`
 	MissingSourceMap *MissingSourceMap `json:"missingSourceMap" required:"true" nullable:"true" description:"Set when the event's release has no uploaded source maps and a frame points at a script file."`
 }
 
 // NewComponentStack parses V8 ("at Name (location)"), React 16 ("in Name
-// (at location)") and Gecko ("Name@location") lines; nil when stack is blank.
+// (at location)") and Gecko ("Name@location") lines within the size limits;
+// nil when stack is blank.
 func NewComponentStack(stack string) *ComponentStack {
-	stack = strings.TrimSpace(stack)
+	stack, truncated := TruncateStack(strings.TrimSpace(stack), MaxComponentStackBytes)
 	if stack == "" {
 		return nil
 	}
 
 	frames := []StackFrame{}
-	for _, line := range strings.Split(stack, "\n") {
-		if frame, ok := parseComponentFrame(strings.TrimSpace(line)); ok {
-			frames = append(frames, frame)
+	for line := range strings.SplitSeq(stack, "\n") {
+		frame, ok := parseComponentFrame(strings.TrimSpace(line))
+		if !ok {
+			continue
 		}
+		if len(frames) == MaxComponentStackFrames {
+			truncated = true
+			break
+		}
+		frames = append(frames, frame)
 	}
-	return &ComponentStack{Stack: stack, Frames: frames}
+	return &ComponentStack{Stack: stack, Frames: frames, Truncated: truncated}
 }
 
 // SetSymbolication keeps the component names React reported: the source

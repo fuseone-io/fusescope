@@ -270,27 +270,30 @@ func (module *module) addErrorEvents(ctx context.Context, application *rumtypes.
 // source maps on the web, with its React component stack, its R8 mapping on
 // Android.
 func (module *module) newErrorEvent(ctx context.Context, application *rumtypes.Application, info *resourceInfo, row *errorEventRow) (*rumtypes.ErrorEvent, error) {
+	stacktrace, truncated := rumtypes.TruncateStack(row.stacktrace, rumtypes.MaxStackTraceBytes)
 	event := &rumtypes.ErrorEvent{
 		ID: row.id, Timestamp: time.Unix(0, int64(row.timestamp)).UTC(), SessionID: row.sessionID, Route: row.route, Release: info.release, Client: info.client,
-		Type: row.errorType, Message: row.message, Source: row.source, Stacktrace: row.stacktrace, Causes: []*rumtypes.ErrorCause{},
+		Type: row.errorType, Message: row.message, Source: row.source, Stacktrace: stacktrace, Causes: []*rumtypes.ErrorCause{},
 	}
 
 	if application.Platform == rumtypes.PlatformAndroid {
-		retrace, err := module.symbolicator.Retrace(ctx, application.ID, info.release, rumtypes.ParseJVMStackTrace(row.stacktrace, row.errorType, row.message))
+		retrace, err := module.symbolicator.Retrace(ctx, application.ID, info.release, rumtypes.ParseJVMStackTrace(stacktrace, row.errorType, row.message))
 		if err != nil {
 			return nil, err
 		}
 		thrown := retrace.Trace.Exceptions[0]
 		event.Type, event.Frames, event.Causes = thrown.Type, thrown.Frames, retrace.Trace.Exceptions[1:]
-		event.Symbolicated, event.MissingSourceMap = retrace.Retraced, retrace.MissingSourceMap
+		event.Symbolicated, event.MissingSourceMap, event.Truncated = retrace.Retraced, retrace.MissingSourceMap, truncated || retrace.Trace.Truncated
 		return event, nil
 	}
 
-	symbolication, err := module.symbolicator.Symbolicate(ctx, application.ID, info.release, rumtypes.ParseStackFrames(row.stacktrace))
+	frames, framesTruncated := rumtypes.ParseEventStackFrames(stacktrace)
+	symbolication, err := module.symbolicator.Symbolicate(ctx, application.ID, info.release, frames)
 	if err != nil {
 		return nil, err
 	}
 	event.Frames, event.Symbolicated, event.MissingSourceMap = symbolication.Frames, symbolication.Symbolicated, symbolication.MissingSourceMap
+	event.Truncated = truncated || framesTruncated
 
 	if event.ComponentStack = rumtypes.NewComponentStack(row.componentStack); event.ComponentStack != nil {
 		symbolication, err := module.symbolicator.Symbolicate(ctx, application.ID, info.release, event.ComponentStack.Frames)
