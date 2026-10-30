@@ -61,7 +61,7 @@ GROUPS: dict[str, dict[str, list[str]]] = {
     },
     "flags": {
         "shared": [],
-        "isolated": ["querier_json_body", "metricreduction", "querier_skip_resource_fingerprint", "clickhousecluster"],
+        "isolated": ["querier_json_body", "metricreduction", "querier_skip_resource_fingerprint", "clickhousecluster", "archivecluster"],
     },
     "rum": {
         "shared": [],
