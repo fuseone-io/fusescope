@@ -114,3 +114,24 @@ func TestModuleErrorEventBounded(t *testing.T) {
 		})
 	}
 }
+
+func TestModuleAndroidErrorEventRetraceBounded(t *testing.T) {
+	ctx := context.Background()
+	module, orgID := newTestModule(t)
+	id := createTestAndroidApplication(t, module, orgID)
+	_, err := module.UploadR8Mapping(ctx, orgID, id, "2.1.0", "", "ci@example.com", strings.NewReader(readR8Fixture(t, "mapping.txt")))
+	require.NoError(t, err)
+	application, err := module.Get(ctx, orgID, id)
+	require.NoError(t, err)
+
+	row := &errorEventRow{id: "e1", errorType: "a.a", stacktrace: "a.a: Cart is empty\n" + strings.Repeat("\tat a.b.a(SourceFile:6)\n", rumtypes.MaxStackFrames)}
+	event, err := module.newErrorEvent(ctx, application, &resourceInfo{release: "2.1.0"}, row)
+	require.NoError(t, err)
+	assert.True(t, event.Symbolicated)
+	assert.True(t, event.Truncated)
+	frames := len(event.Frames)
+	for _, cause := range event.Causes {
+		frames += len(cause.Frames)
+	}
+	assert.Equal(t, rumtypes.MaxStackFrames, frames)
+}
