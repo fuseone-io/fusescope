@@ -82,6 +82,13 @@ describe('Android errors', () => {
 			screen.findByTestId('rum-error-type'),
 		).resolves.toHaveTextContent('com.example.shop.CartException');
 		expect(screen.getByTestId('rum-error-kind')).toHaveTextContent('Crash');
+		expect(screen.getByTestId('rum-error-kpis')).toHaveTextContent('Top device');
+		expect(screen.getByTestId('rum-error-kpis')).toHaveTextContent(
+			'Google Pixel 9',
+		);
+		expect(screen.getByTestId('rum-error-kpis')).not.toHaveTextContent(
+			'Top browser',
+		);
 		expect(screen.getByTestId('rum-error-symbolicated')).toHaveTextContent(
 			'Retraced · /mapping.txt',
 		);

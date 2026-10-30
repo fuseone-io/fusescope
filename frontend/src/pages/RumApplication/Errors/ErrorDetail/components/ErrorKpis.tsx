@@ -5,22 +5,23 @@ import { formatAgo } from 'lib/rum/format';
 import { cn } from 'lib/utils';
 
 import { sessionShare } from '../../utils';
-import { topBrowser } from '../utils';
+import { topClient } from '../utils';
 
 interface ErrorKpisProps {
 	group: RumtypesGettableErrorGroupDTO;
+	jvm: boolean;
 	totalSessions?: number;
 }
 
 const releaseNote = (release: string): string =>
 	release ? `release ${release}` : 'no release';
 
-function ErrorKpis({ group, totalSessions }: ErrorKpisProps): JSX.Element {
+function ErrorKpis({ group, totalSessions, jvm }: ErrorKpisProps): JSX.Element {
 	const share =
 		totalSessions === undefined
 			? undefined
 			: sessionShare(group.sessions, totalSessions);
-	const browser = topBrowser(group.latestEvents ?? []);
+	const client = topClient(group.latestEvents ?? [], jvm);
 	const lastSeen = Date.parse(group.lastSeenAt);
 	const kpis = [
 		{
@@ -46,9 +47,9 @@ function ErrorKpis({ group, totalSessions }: ErrorKpisProps): JSX.Element {
 			note: releaseNote(group.lastSeenRelease),
 		},
 		{
-			label: 'Top browser',
-			value: browser?.label ?? '—',
-			note: browser?.share ?? '',
+			label: jvm ? 'Top device' : 'Top browser',
+			value: client?.label ?? '—',
+			note: client?.share ?? '',
 		},
 	];
 	return (

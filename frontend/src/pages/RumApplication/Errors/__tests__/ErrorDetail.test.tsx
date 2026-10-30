@@ -46,6 +46,10 @@ describe('ErrorDetail', () => {
 		expect(screen.getByTestId('rum-error-symbolicated')).toHaveTextContent(
 			'/assets/cart.9b1e07.js.map',
 		);
+		expect(screen.getByTestId('rum-error-kpis')).toHaveTextContent('Top browser');
+		expect(screen.getByTestId('rum-error-kpis')).not.toHaveTextContent(
+			'Top device',
+		);
 		const frames = screen.getAllByTestId('rum-error-frame');
 		expect(frames).toHaveLength(3);
 		expect(frames[0]).toHaveTextContent('updateQuantity');
