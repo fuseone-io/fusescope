@@ -11643,13 +11643,13 @@ export type RumtypesMissingSourceMapDTO = {
 export type RumtypesComponentStackDTO = {
 	/**
 	 * @type array,null
-	 * @description One frame per component, innermost first; function is the component name React reported.
+	 * @description One frame per component, innermost first, at most 50; function is the component name React reported.
 	 */
 	frames: (RumtypesStackFrameDTO | null)[] | null;
 	missingSourceMap: RumtypesMissingSourceMapDTO | null;
 	/**
 	 * @type string
-	 * @description fusescope.rum.react.component_stack as received, trimmed of surrounding whitespace.
+	 * @description fusescope.rum.react.component_stack as received, trimmed of surrounding whitespace and cut to 8 KiB.
 	 */
 	stack: string;
 	/**
@@ -11657,6 +11657,11 @@ export type RumtypesComponentStackDTO = {
 	 * @description Whether frames were mapped through an uploaded source map.
 	 */
 	symbolicated: boolean;
+	/**
+	 * @type boolean
+	 * @description Whether the stack was cut to 8 KiB or its frames to 50.
+	 */
+	truncated: boolean;
 } | null;
 
 export enum RumtypesErrorCauseRelationDTO {
@@ -11695,7 +11700,7 @@ export interface RumtypesErrorEventDTO {
 	componentStack: RumtypesComponentStackDTO | null;
 	/**
 	 * @type array,null
-	 * @description For a JVM trace, the thrown exception's.
+	 * @description For a JVM trace, the thrown exception's. At most 200 across the trace.
 	 */
 	frames: (RumtypesStackFrameDTO | null)[] | null;
 	/**
@@ -11725,7 +11730,7 @@ export interface RumtypesErrorEventDTO {
 	source: string;
 	/**
 	 * @type string
-	 * @description exception.stacktrace as received.
+	 * @description exception.stacktrace as received, cut to 64 KiB.
 	 */
 	stacktrace: string;
 	/**
@@ -11738,6 +11743,11 @@ export interface RumtypesErrorEventDTO {
 	 * @format date-time
 	 */
 	timestamp: string;
+	/**
+	 * @type boolean
+	 * @description Whether the stack trace was cut to 64 KiB or its frames to 200.
+	 */
+	truncated: boolean;
 	/**
 	 * @type string
 	 */
