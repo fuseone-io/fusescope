@@ -2,7 +2,7 @@
 
 - Status: proposed
 - Deciders: FuseOne maintainers. Storage, schema ownership, credentials and the allocation model span several PRs and three repos (backend, collector migrator, charts).
-- Related: [ADR 0001](0001-agpl-collector-dependency.md) (no collector imports), [ADR 0002](0002-long-term-archive.md) (lease, fenced commits).
+- Related: [ADR 0001](0001-agpl-collector-dependency.md) (no collector imports), [ADR 0002](0002-long-term-archive.md) (lease, fenced commits), [ADR 0009](https://github.com/fuseone-io/fusescope/pull/222) (Apache-2.0 `fusescope-collector` and its migrator, which owns new databases).
 
 ## Context
 
@@ -111,9 +111,9 @@ The FOCUS version written is recorded per load. Provider columns outside FOCUS a
 
 **Schema ownership: the migrator owns `fusescope_costs`** (resolved in review).
 
-Like every other ClickHouse schema, the cost tables are created and changed by the schema migrator in `fusescope-otel-collector` (AGPL-3.0). The backend issues no DDL.
+The cost tables are created and changed by the **Apache-2.0 schema migrator in `fusescope-collector`**, which owns every new database (ADR 0009); the AGPL fork's migrator is not changed. The backend issues no DDL.
 
-- **Migrator side.** `fusescope_costs` joins the migrator's database list as `signoz_meter` did, with its own `cost_migrations.go`: the database, the tables above with their `distributed_` tables, engines, keys and TTLs, and `schema_migrations_v2`. Migrations are numbered, additive, and tested like the meter migrations. They ship with a collector release, so cost schema versions follow collector versions.
+- **Migrator side.** `fusescope_costs` is one of the Apache migrator's databases, with its own migrations: the database, the tables above with their `distributed_` tables, engines, keys and TTLs, and `schema_migrations_v2`. Migrations are numbered, additive, and tested like the meter migrations. They ship with a `fusescope-collector` release, so cost schema versions follow its versions.
 - **Backend side.** The backend only writes rows (`INSERT`, `INSERT … SELECT FROM s3()`/`azureBlobStorage()`), runs the versioned-load swap (lightweight `DELETE` of superseded loads), and reads with its own SQL. It imports no collector package (ADR 0001); table and column names are constants written here, as for the other databases.
 - **Missing or older schema.** Each backend release declares the lowest cost migration id it needs. At startup and before each run, it reads `fusescope_costs.schema_migrations_v2` for that id with status `finished`. If the database or the migration is missing, cost is **disabled with a status**, "Cost needs schema migrator ≥ vX.Y; run the migrator", shown in Settings and the API, and the scheduler skips its work. Nothing else in the backend is affected, and the feature enables itself on the next check once the migrator has run.
 - **Order of releases.** A schema change is released in the migrator first; the backend release that uses it raises its required migration id. Columns are only added, so a newer schema never breaks an older backend.
@@ -217,7 +217,7 @@ The Cost Meter stays where it is and remains about FuseScope's own volume. The c
 - No OpenCost or Kubecost code. We read the public OpenCost specification and documentation for the model, which is not copyrightable as such, and write our own allocator.
 - FOCUS is CC-BY-4.0 [F2]; we implement its columns and attribute it in `NOTICE` and the docs.
 - New dependencies, each in its own PR and asked for first: `cloud.google.com/go/bigquery` (Apache-2.0) for the GCP source; the AWS and Azure SDK modules for STS and SAS (Apache-2.0, MIT).
-- No collector code is imported. The cost DDL lives in the migrator (AGPL-3.0) and the backend talks to the tables only through SQL, as for every other database.
+- No collector code is imported. The cost DDL lives in the Apache-2.0 migrator in `fusescope-collector` (ADR 0009) and the backend talks to the tables only through SQL, as for every other database.
 
 ## Roadmap
 
@@ -227,17 +227,17 @@ Effort is a rough estimate in engineer-weeks, per repo.
 
 | Phase | Scope | Repos (effort) | Exit criteria |
 |---|---|---|---|
-| **1 · Kubernetes from our metrics** | migrator: `fusescope_costs` database, `allocations` and `samples` tables; backend: schema check and disabled status, `cost` module skeleton, price sheet, allocator, mapping rules for k8s, `cost` query source, Kubernetes cost and a first explorer; chart adds node and pod labels | fusescope-otel-collector (1), fusescope (5–6), fusescope-charts (1) | on a kind cluster and an on-prem cluster, allocated + idle + shared equals node cost for every hour; namespace and service totals visible in the explorer |
-| **2 · AWS** | migrator: `line_items`; AWS source (FOCUS and CUR 2.0), STS and workload identity, loads and restatement, tag mapping, node bill matching, explorer drill-down | fusescope-otel-collector (0.5), fusescope (4–5), fusescope-charts (0.5) | a month of a real account matches its invoice total to the cent in `BilledCost`; a restated day is reloaded without duplicates |
-| **3 · GCP and Azure** | GCP source over the FOCUS view, Azure FOCUS export source; migrator columns only if the FOCUS mapping needs them | fusescope (3–4), fusescope-otel-collector (≤0.5) | same invoice match for one GCP and one Azure account |
+| **1 · Kubernetes from our metrics** | migrator: `fusescope_costs` database, `allocations` and `samples` tables; backend: schema check and disabled status, `cost` module skeleton, price sheet, allocator, mapping rules for k8s, `cost` query source, Kubernetes cost and a first explorer; chart adds node and pod labels | fusescope-collector (1), fusescope (5–6), fusescope-charts (1) | on a kind cluster and an on-prem cluster, allocated + idle + shared equals node cost for every hour; namespace and service totals visible in the explorer |
+| **2 · AWS** | migrator: `line_items`; AWS source (FOCUS and CUR 2.0), STS and workload identity, loads and restatement, tag mapping, node bill matching, explorer drill-down | fusescope-collector (0.5), fusescope (4–5), fusescope-charts (0.5) | a month of a real account matches its invoice total to the cent in `BilledCost`; a restated day is reloaded without duplicates |
+| **3 · GCP and Azure** | GCP source over the FOCUS view, Azure FOCUS export source; migrator columns only if the FOCUS mapping needs them | fusescope (3–4), fusescope-collector (≤0.5) | same invoice match for one GCP and one Azure account |
 | **4 · Unit economics, budgets, alerts** | cost card on the service page, cost per 1k requests, per-tenant split, budgets as threshold rules, cost anomalies on the anomaly rule of #13 | fusescope (3–4) | a budget alert fires on forecast in a test; the service page shows cost per 1k requests matching a hand computation |
-| **5 · Recommendations and more** | rightsizing, persistent volumes, GPUs, network egress, display currency; migrator columns for new cost components | fusescope (4), fusescope-otel-collector (0.5), fusescope-charts (1) | rightsizing suggestions on the demo cluster with estimated savings |
+| **5 · Recommendations and more** | rightsizing, persistent volumes, GPUs, network egress, display currency; migrator columns for new cost components | fusescope (4), fusescope-collector (0.5), fusescope-charts (1) | rightsizing suggestions on the demo cluster with estimated savings |
 
 ## Resolved decisions
 
 | # | Question | Decision |
 |---|---|---|
-| 1 | Who owns the cost schema | the collector's schema migrator, like every other ClickHouse schema; the backend loads and reads only, with no DDL and no collector imports (§3) |
+| 1 | Who owns the cost schema | the Apache-2.0 migrator in `fusescope-collector`, which owns new databases (ADR 0009); the backend loads and reads only, with no DDL and no collector imports (§3) |
 
 ## Open decisions
 
@@ -253,7 +253,7 @@ Effort is a rough estimate in engineer-weeks, per repo.
 ## Consequences
 
 - Cloud bills and Kubernetes cost sit beside telemetry, so cost per service and per request need no export and no second tool.
-- One schema owner for all ClickHouse data. Cost schema changes need a collector release before the backend can use them, and installs that skip the migrator see cost disabled until they run it.
+- The collector side owns all ClickHouse DDL, new databases in the Apache migrator (ADR 0009). Cost schema changes need a `fusescope-collector` release before the backend can use them, and installs that skip the migrator see cost disabled until they run it.
 - The `cost` source reuses the meter's query path; changes to `meterstatementbuilder` must keep both working.
 - Cost accuracy depends on providers' exports and on our chart labels. Price-sheet costs are estimates and are labelled as such.
 - New credentials to protect. Workload identity keeps most installs free of static secrets.
