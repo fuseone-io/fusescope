@@ -198,3 +198,38 @@ def test_sourcemaps_retrace_component_stack(
     assert frames == [("PriceTag", ("src/price.ts", 3)), ("div", None), ("Cart", ("src/index.ts", 8)), ("ErrorBoundary", None)]
     assert stack["frames"][0]["original"]["function"] == "PriceTag", "the component name is kept"
     assert detail["latestEvents"][0]["frames"][0]["original"]["function"] == "formatPrice"
+
+
+def test_sourcemaps_bounded_stacks(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    created = create_rum_application(signoz, token, {"name": f"bounded-{uuid.uuid4().hex[:8]}", "platform": "web", "environment": "production", "allowedOrigins": [RUM_ORIGIN]})
+    base = f"{RUM_APPLICATIONS}/{created['id']}"
+    _, api_key = create_service_account_with_key(signoz, token, f"ci-{uuid.uuid4().hex[:8]}", role="signoz-editor")
+    t0 = time.time_ns() - 300 * 1_000_000_000
+
+    stacktrace = "TypeError: price is undefined\n" + "    at e (https://shop.example.com/assets/main.js:1:41)\n" * 20_000
+    component_stack = "\n" + "    at Cart (https://shop.example.com/assets/main.js:1:131)\n" * 20_000
+    attributes = {"session.id": f"bounded-{uuid.uuid4().hex}", "fusescope.rum.view.route": "/cart", "exception.type": "TypeError", "exception.message": "price is undefined", "exception.stacktrace": stacktrace, "fusescope.rum.react.component_stack": component_stack}
+    send_rum(signoz, created["key"]["key"], {"service.name": "shop", "service.version": "2.0.0"}, events=[rum_event("exception", t0, attributes)])
+    response = upload_source_maps(signoz, created["id"], "2.0.0", {SIGNOZ_API_KEY_HEADER: api_key}, {"/assets/main.js.map": SOURCE_MAP})
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
+    params = {"start": t0 // 1_000_000 - 60_000, "end": t0 // 1_000_000 + 60_000}
+    listed = wait_for_rum_query(signoz, token, f"{base}/errors", params, lambda data: data["events"] == 1)
+    detail = wait_for_rum_query(signoz, token, f"{base}/errors/{listed['groups'][0]['fingerprint']}", params, lambda data: len(data["latestEvents"]) == 1)
+
+    event = detail["latestEvents"][0]
+    assert event["truncated"] is True
+    assert len(event["frames"]) == 200
+    assert len(event["stacktrace"].encode()) <= 64 * 1024
+    assert event["symbolicated"] is True
+
+    stack = event["componentStack"]
+    assert stack["truncated"] is True
+    assert len(stack["frames"]) == 50
+    assert len(stack["stack"].encode()) <= 8 * 1024
+    assert stack["frames"][0]["original"]["file"] == "src/index.ts"

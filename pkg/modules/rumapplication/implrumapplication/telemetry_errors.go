@@ -201,8 +201,8 @@ func newErrorEventsQuery(scope telemetryScope, keys []uint64) *sqlbuilder.Select
 		sqlbuilder.Escape(routeColumn)+" AS route",
 		errorMessageRaw+" AS message",
 		attribute(rumtypes.AttributeErrorSource)+" AS source",
-		errorStackExpr+" AS stacktrace",
-		componentStackExpr+" AS component_stack",
+		boundedExpr(errorStackExpr, rumtypes.MaxStackTraceBytes)+" AS stacktrace",
+		boundedExpr(componentStackExpr, rumtypes.MaxComponentStackBytes)+" AS component_stack",
 	)
 
 	sb := sqlbuilder.NewSelectBuilder()
@@ -250,6 +250,12 @@ func errorKeyExpr(scope telemetryScope) string {
 		return jvmErrorKeyHash
 	}
 	return errorKeyHash
+}
+
+// boundedExpr reads one byte past limit, so a longer value still shows as
+// truncated.
+func boundedExpr(expr string, limit int) string {
+	return "substring(" + expr + ", 1, " + literalInt(int64(limit)+1) + ")"
 }
 
 func isJVM(scope telemetryScope) bool {

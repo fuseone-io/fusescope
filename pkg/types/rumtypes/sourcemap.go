@@ -183,8 +183,9 @@ func (sourceMap *SourceMap) Lookup(line int, column int) (OriginalPosition, bool
 	return position, true
 }
 
-// Context returns the original lines of source within radius of line, or
-// nil when the map embeds no content for it.
+// Context returns the original lines of source within radius of line, the
+// radius capped at maxContextRadius, or nil when the map embeds no content
+// for it.
 func (sourceMap *SourceMap) Context(source string, line int, radius int) *SourceContext {
 	if radius < 0 {
 		return nil
@@ -198,6 +199,7 @@ func (sourceMap *SourceMap) Context(source string, line int, radius int) *Source
 		return nil
 	}
 
+	radius = min(radius, maxContextRadius)
 	first, last := max(line-radius, 1), min(line+radius, len(lines))
 	context := &SourceContext{StartLine: first, Lines: make([]string, 0, last-first+1)}
 	for _, text := range lines[first-1 : last] {

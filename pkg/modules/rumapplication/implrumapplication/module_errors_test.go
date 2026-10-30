@@ -2,6 +2,7 @@ package implrumapplication
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
@@ -60,6 +61,56 @@ func TestModuleWebErrorEventComponentStack(t *testing.T) {
 				}
 			}
 			assert.Equal(t, testCase.expected, event.ComponentStack)
+		})
+	}
+}
+
+func TestModuleErrorEventBounded(t *testing.T) {
+	ctx := context.Background()
+	module, orgID := newTestModule(t)
+	webID := createTestApplication(t, module, orgID, "")
+	_, err := module.UploadSourceMaps(ctx, orgID, webID, "1.8.0", "ci@example.com", newTestParts(nil, "/assets/main.js.map", readFixture(t, "main.js.map")))
+	require.NoError(t, err)
+	web, err := module.Get(ctx, orgID, webID)
+	require.NoError(t, err)
+	android, err := module.Get(ctx, orgID, createTestAndroidApplication(t, module, orgID))
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name        string
+		application *rumtypes.Application
+		row         *errorEventRow
+	}{
+		{
+			name: "Web_FiftyThousandLines", application: web,
+			row: &errorEventRow{id: "e1", errorType: "TypeError", stacktrace: "TypeError: x\n" + strings.Repeat("    at e (https://shop.example.com/assets/main.js:1:41)\n", 50_000), componentStack: strings.Repeat("    at Cart (https://shop.example.com/assets/main.js:1:131)\n", 50_000)},
+		},
+		{
+			name: "Web_HugeSingleLine", application: web,
+			row: &errorEventRow{id: "e2", errorType: "TypeError", stacktrace: "    at e (https://cart.example.com/" + strings.Repeat("a", 3<<20) + ".js:1:2)", componentStack: "    at Cart (https://cart.example.com/" + strings.Repeat("b", 3<<20)},
+		},
+		{
+			name: "Android_FiftyThousandFrames", application: android,
+			row: &errorEventRow{id: "e3", errorType: "a.a", stacktrace: "a.a: boom\n" + strings.Repeat("\tat a.b.c(Unknown Source:1)\n", 50_000)},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			event, err := module.newErrorEvent(ctx, testCase.application, &resourceInfo{release: "1.8.0"}, testCase.row)
+			require.NoError(t, err)
+			assert.True(t, event.Truncated)
+			assert.LessOrEqual(t, len(event.Stacktrace), rumtypes.MaxStackTraceBytes)
+			frames := len(event.Frames)
+			for _, cause := range event.Causes {
+				frames += len(cause.Frames)
+			}
+			assert.LessOrEqual(t, frames, rumtypes.MaxStackFrames)
+			if testCase.row.componentStack != "" {
+				require.NotNil(t, event.ComponentStack)
+				assert.True(t, event.ComponentStack.Truncated)
+				assert.LessOrEqual(t, len(event.ComponentStack.Frames), rumtypes.MaxComponentStackFrames)
+				assert.LessOrEqual(t, len(event.ComponentStack.Stack), rumtypes.MaxComponentStackBytes)
+			}
 		})
 	}
 }
