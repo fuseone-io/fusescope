@@ -2,7 +2,7 @@
 
 - Status: proposed
 - Deciders: FuseOne maintainers. The scheduler, runners, runner keys, data model, alerting and UI span several PRs and two repos.
-- Related: [ADR 0001](0001-agpl-collector-dependency.md) (no AGPL in the backend), [ADR 0002](0002-long-term-archive.md) (the lease this ADR reuses), [ADR 0003](0003-real-user-monitoring.md) (RUM gateway, keys, artifact store, data model).
+- Related: [ADR 0001](0001-agpl-collector-dependency.md) (no AGPL in the backend), [ADR 0002](0002-long-term-archive.md) (the lease this ADR reuses), [ADR 0003](0003-real-user-monitoring.md) (RUM gateway, keys, artifact store, data model), [ADR 0010](https://github.com/fuseone-io/fusescope/pull/223) (the collector is the single ingress; `fs_ing_` keys), [ADR 0009](https://github.com/fuseone-io/fusescope/pull/222) (Apache-2.0 `fusescope-collector`).
 
 ## Context
 
@@ -13,7 +13,7 @@ Code was read on `main` at `ef3cc1b09`. Licences and products were checked on 20
 ### What exists
 
 - **A distributed lease.** The archive (ADR 0002, PRs #160, #169, #172) runs one executor per signal across backend replicas: an `archive_lease` row (`signal`, `holder`, `epoch`, `expires_at`) and `runUnderLease` in `pkg/modules/archive/implarchive`, renewed every quarter of its 2-minute duration, whose context is cancelled when the lease is lost. The table is on `main`; the Go code is still on the open archive PRs.
-- **A telemetry gateway.** The RUM gateway (`pkg/modules/rumapplication`) authenticates hashed public keys (`rum_pub_…`, SHA-256), rate-limits, stamps attributes and forwards OTLP/HTTP to the collector (`rum.collector_endpoint`) using upstream `pdata`. It forwards traces and logs only.
+- **A telemetry gateway.** The RUM gateway (`pkg/modules/rumapplication`) authenticates hashed public keys (`rum_pub_…`, SHA-256), rate-limits, stamps attributes and forwards OTLP/HTTP to the collector (`rum.collector_endpoint`) using upstream `pdata`. It forwards traces and logs only. ADR 0010 moves it to the collector.
 - **An artifact store.** RUM source maps and R8 mappings live on the filesystem or object storage with metadata in the metastore (`sourcemapstorage.go`).
 - **Alert rules** evaluate threshold conditions over metrics, traces and logs with a `for` window; they need no change to read new metrics.
 - **No usable secret encryption.** `pkg/query-service/utils/encryption` is AES-CFB without authentication; it must not be reused for credentials.
@@ -74,16 +74,17 @@ Non-goals: load and performance testing at k6 scale (one virtual user per run, n
  │ scheduler (under lease)   │◀──────────────────────│ supervisor (Go)               │
  │  └─ writes due jobs ──┐   │   HTTPS, runner key   │  ├─ HTTP/TCP/DNS/SSL/gRPC     │
  │ job API ◀── queue ◀───┘   │                       │  └─ browser worker (Node,     │
- │ synthetics gateway ◀──────│───── OTLP ────────────│      Playwright) per run      │
- │  └─ OTLP → collector      │                       │  egress proxy + IP policy     │
- │ status evaluator          │                       └──────────────────────────────┘
- └───────────────────────────┘
+ │ status evaluator          │                       │      Playwright) per run      │
+ └───────────────────────────┘                       │  egress proxy + IP policy     │
+                                                     └──────────────┬───────────────┘
+ fusescope-collector (ADR 0009, 0010)                               │
+   ingestauth + run-token check ◀──── OTLP, runner key, run token ──┘
 ```
 
 - **Scheduler.** One backend replica schedules, under a lease named `synthetics/scheduler`. The lease table and `runUnderLease` move from `pkg/modules/archive` to a shared package so both modules use them; the archive keeps its lease names. Each tick (1 s) the scheduler writes a job for every check × location that is due. Due times are offset by a hash of the check id within the interval, as the Grafana agent does, so checks don't fire together.
 - **Queue in the metastore.** `synthetics_job` (check, location, trace id, due, deadline, status, claim holder and expiry) on SQLite and PostgreSQL. PostgreSQL claims with `FOR UPDATE SKIP LOCKED`; SQLite serialises writers. Completed jobs are pruned after a day; results live in ClickHouse. Design target for phase 1: 2 000 runs per minute per install, measured in its exit criteria.
 - **Missed runs are skipped, not queued.** A job unclaimed past its deadline (the interval, or twice the timeout if shorter) expires and counts as `skipped` for that location, never as a failure. A claim that isn't completed before its expiry is re-queued once.
-- **Runners pull.** A runner long-polls `POST /api/v1/synthetics/runner/jobs:claim` (outbound HTTPS only, as Datadog private locations do), runs the job, sends its telemetry to the gateway and completes it with its outcome. A runner serves one location; a location can have many runners, which share its queue.
+- **Runners pull.** A runner long-polls `POST /api/v1/synthetics/runner/jobs:claim` (outbound HTTPS only, as Datadog private locations do), runs the job, sends its telemetry to the collector and completes it with its outcome. A runner serves one location; a location can have many runners, which share its queue.
 - **Why the backend schedules** rather than runners scheduling themselves, as the Grafana agent does: alerts are evaluated in the backend, so runs without a backend help nobody; one schedule gives one place for limits, pause and on-demand runs; and runners stay stateless. The cost is that runs stop while every backend replica is down; an outage of the backend itself is for external monitoring.
 - **One runner binary.** `fusescope-runner` (Go, MIT, in this repo under `cmd/runner`) is a supervisor that holds the runner key, claims jobs, runs HTTP, TCP, DNS, SSL and gRPC checks in-process, and hands browser jobs to a worker. Two images, as the Grafana agent ships:
   - `fusescope-runner`: Go only, small.
@@ -93,13 +94,13 @@ Non-goals: load and performance testing at k6 scale (one virtual user per run, n
 
 ### 2. Runner keys
 
-- Scoped, write-only keys `syn_run_…`, stored hashed like RUM keys, rotatable with an overlap window.
-- A key belongs to one location. It can claim only that location's jobs, complete only jobs it claimed, and send telemetry only for runs it holds; the gateway checks each payload's run id against the claim.
+- Runner keys are **secret ingestion keys** (`fs_ing_…`, ADR 0010) bound to one location, with the `traces`, `metrics` and `logs` signals: stored hashed, rotatable with an overlap window, pushed to collectors over OpAMP like every ingestion key.
+- A key can claim only its location's jobs (checked by the backend's job API), complete only jobs it claimed, and send telemetry only for runs it holds: each claim returns a short-lived **run token** signed by the backend (run id, check, location, key id, the run's attributes, expiry), and the collector verifies it with a public key received over OpAMP.
 - Runners heartbeat on every claim. A location with no heartbeat for 3 intervals is `offline`, raises its own alert, and its checks show "no data" for it rather than failures.
 
 ### 3. Data model: every run is OTel data
 
-Results go through a synthetics gateway in the backend (`POST /synthetics/v1/{traces,metrics,logs}`), built like the RUM gateway and extended to metrics. It authenticates the runner key, sets resource and check attributes from the job (never from the runner), scrubs secrets and forwards to the collector. No schema change: spans, logs and metrics land in the existing tables.
+Results are sent as OTLP to the **collector**, the single ingress (ADR 0010); the backend has no synthetics ingest route. `ingestauth` authenticates the runner key, and a run-token check in `fusescope-collector` (Apache-2.0, ADR 0009) refuses a payload whose token is missing, expired or issued to another key, and sets resource and check attributes from the token (never from the runner). The embedded `local` runner sends to the collector's internal listener. No schema change: spans, logs and metrics land in the existing tables.
 
 | Concept | Signal | Content |
 |---|---|---|
@@ -154,7 +155,7 @@ Attributes: `fusescope.synthetics.check.id`, `.check.name`, `.check.type`, `.loc
 - Org-scoped secrets, referenced as `{{ secrets.name }}`, write-only through the API: never returned, logged or rendered.
 - Stored with AES-256-GCM under a key-encryption key from config (`synthetics.secrets.key`, with a key id so it can be rotated), not with the existing AES-CFB helper.
 - Resolved when a job is claimed and sent over TLS in the claim response; never stored in the job row. Private locations may register a public key, and then secrets are sealed to it (NaCl box, `x/crypto`) so only that location can read them.
-- The runner and the gateway replace every secret value with `***` in span attributes, logs, assertion output, HAR and error messages. Screenshots can't be scrubbed; Playwright's `mask` hides marked elements, and the docs say so.
+- The runner replaces every secret value with `***` before sending (the collector never holds secret values) in span attributes, logs, assertion output, HAR and error messages. Screenshots can't be scrubbed; Playwright's `mask` hides marked elements, and the docs say so.
 
 ### 9. UI: a "Synthetics" section
 
@@ -173,8 +174,9 @@ New screens get Claude Design boards before they are implemented.
 
 | Piece | Where it runs | Licence |
 |---|---|---|
-| Scheduler, job API, gateway, status evaluator, in-process probers | backend binary | MIT, our code; deps `cel-go`, `miekg/dns`, `grpc`, `pdata`, `x/crypto` (Apache-2.0, BSD-3-Clause), `pro-bing` (MIT, phase 4) |
+| Scheduler, job API, run tokens, status evaluator, in-process probers | backend binary | MIT, our code; deps `cel-go`, `miekg/dns`, `grpc`, `pdata`, `x/crypto` (Apache-2.0, BSD-3-Clause), `pro-bing` (MIT, phase 4) |
 | `fusescope-runner` | separate image | MIT, same Go packages |
+| Run-token check | `fusescope-collector` | Apache-2.0, our code (ADR 0009) |
 | Browser worker | `fusescope-runner-browser` image, separate process | our worker MIT; Playwright, web-vitals Apache-2.0; Node MIT; Chromium BSD-3-Clause with its bundled third-party licences, attributed in the image |
 | k6, xk6-browser, xk6-sm | nowhere | AGPL-3.0, learn-only |
 
@@ -186,7 +188,7 @@ Each phase ships behind a feature flag and ends with docs and an e2e test.
 
 | Phase | Scope | Repos | Exit criteria |
 |---|---|---|---|
-| **1 · HTTP checks and alerts** | shared lease package; scheduler and job queue; embedded `local` runner; HTTP checks with declarative and CEL assertions; retries; synthetics gateway (traces, metrics, logs); `traceparent` injection; check status and generated alert rule; secrets; Checks, Check detail and Run screens; SSRF dialer | `fusescope`, `fusescope-charts` | an HTTP check on SQLite and PostgreSQL fails, alerts within interval × (retries + 1) + `for`, and its run opens the backend trace; 2 000 runs/min sustained on one PostgreSQL install; SSRF tests cover redirects and DNS rebinding |
+| **1 · HTTP checks and alerts** | shared lease package; scheduler and job queue; embedded `local` runner; HTTP checks with declarative and CEL assertions; retries; run tokens and the collector run-token check (needs ADR 0010 `ingestauth`); `traceparent` injection; check status and generated alert rule; secrets; Checks, Check detail and Run screens; SSRF dialer | `fusescope`, `fusescope-collector`, `fusescope-charts` | an HTTP check on SQLite and PostgreSQL fails, alerts within interval × (retries + 1) + `for`, and its run opens the backend trace; 2 000 runs/min sustained on one PostgreSQL install; SSRF tests cover redirects and DNS rebinding |
 | **2 · Multistep and private locations** | multistep API checks with variables; `fusescope-runner` binary and image; locations, runner keys, heartbeats; Helm chart; sealed secrets for private locations; Locations screen | `fusescope`, `fusescope-charts` | a private runner in a kind cluster reaches a service the backend can't, with a key that can't claim another location's jobs |
 | **3 · Browser checks** | `fusescope-runner-browser` image; Playwright worker with steps, screenshots, HAR, trace, Web Vitals; egress proxy; RUM-shaped session; SDK hook for synthetic sessions; Browser run screen | `fusescope`, `fusescope-charts`, `fusescope-sdk` | a Playwright login check runs from a private location, links to the backend trace, and its session is hidden from RUM by default; image licence scan green |
 | **4 · Network checks** | TCP, DNS, SSL, gRPC health, ICMP; certificate expiry preset | `fusescope` | each type has golden tests against local servers and an alert preset |
@@ -206,7 +208,7 @@ Each phase ships behind a feature flag and ends with docs and an e2e test.
 
 ## Consequences
 
-- A new component to release and secure: runner images, a new key type and an internet-facing gateway with rate and size limits from the first release.
+- A new component to release and secure: runner images and run tokens. Runner keys and ingest limits are the collector's (ADR 0010), so the backend gains no internet-facing ingest path.
 - The backend issues outbound requests chosen by users, so the dialer policy is security-critical and gets its own tests and review.
 - Results reuse the traces, logs and metrics query engine, so dashboards, explorers and alert rules work on synthetic data without new query code.
 - Synthetic traffic reaches customers' services; it is marked with `user_agent.synthetic.type` and a `FuseScope-Synthetics` user agent so it can be filtered.
