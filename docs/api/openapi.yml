@@ -10180,8 +10180,8 @@ components:
       nullable: true
       properties:
         frames:
-          description: One frame per component, innermost first; function is the component
-            name React reported.
+          description: One frame per component, innermost first, at most 50; function
+            is the component name React reported.
           items:
             $ref: '#/components/schemas/RumtypesStackFrame'
           nullable: true
@@ -10190,14 +10190,18 @@ components:
           $ref: '#/components/schemas/RumtypesMissingSourceMap'
         stack:
           description: fusescope.rum.react.component_stack as received, trimmed of
-            surrounding whitespace.
+            surrounding whitespace and cut to 8 KiB.
           type: string
         symbolicated:
           description: Whether frames were mapped through an uploaded source map.
           type: boolean
+        truncated:
+          description: Whether the stack was cut to 8 KiB or its frames to 50.
+          type: boolean
       required:
       - stack
       - frames
+      - truncated
       - symbolicated
       - missingSourceMap
       type: object
@@ -10245,7 +10249,8 @@ components:
         componentStack:
           $ref: '#/components/schemas/RumtypesComponentStack'
         frames:
-          description: For a JVM trace, the thrown exception's.
+          description: For a JVM trace, the thrown exception's. At most 200 across
+            the trace.
           items:
             $ref: '#/components/schemas/RumtypesStackFrame'
           nullable: true
@@ -10265,7 +10270,7 @@ components:
         source:
           type: string
         stacktrace:
-          description: exception.stacktrace as received.
+          description: exception.stacktrace as received, cut to 64 KiB.
           type: string
         symbolicated:
           description: Whether frames were mapped through an uploaded source map or
@@ -10274,6 +10279,10 @@ components:
         timestamp:
           format: date-time
           type: string
+        truncated:
+          description: Whether the stack trace was cut to 64 KiB or its frames to
+            200.
+          type: boolean
         type:
           type: string
       required:
@@ -10288,6 +10297,7 @@ components:
       - source
       - stacktrace
       - frames
+      - truncated
       - causes
       - symbolicated
       - missingSourceMap
