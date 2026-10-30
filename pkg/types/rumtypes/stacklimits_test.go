@@ -317,3 +317,26 @@ func TestRetraceJVMStackTraceSyntheticFramesBudget(t *testing.T) {
 		})
 	}
 }
+
+func TestRetraceJVMStackTraceSyntheticFallbackTruncated(t *testing.T) {
+	builder := strings.Builder{}
+	builder.WriteString("# {\"id\":\"com.android.tools.r8.mapping\",\"version\":\"2.2\"}\n")
+	builder.WriteString("com.example.shop.Generated -> c:\n# {\"id\":\"com.android.tools.r8.synthesized\"}\n")
+	for i := range MaxStackFrames + 1 {
+		fmt.Fprintf(&builder, "    1:1:void step%d():4:4 -> a\n", i)
+	}
+	mapping, err := ParseR8Mapping([]byte(builder.String()))
+	require.NoError(t, err)
+	trace := ParseJVMStackTrace("a.a: boom\n\tat c.a(SourceFile:1)\n", "", "")
+
+	var before, after runtime.MemStats
+	runtime.GC()
+	runtime.ReadMemStats(&before)
+	retraced, ok := RetraceJVMStackTrace(trace, mapping, "/mapping.txt")
+	runtime.ReadMemStats(&after)
+
+	require.True(t, ok)
+	assert.Len(t, retraced.Exceptions[0].Frames, MaxStackFrames)
+	assert.True(t, retraced.Truncated)
+	assert.Less(t, after.TotalAlloc-before.TotalAlloc, uint64(1<<20))
+}

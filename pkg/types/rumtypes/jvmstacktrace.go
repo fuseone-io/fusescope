@@ -263,7 +263,7 @@ func NewJVMErrorFingerprint(trace *JVMStackTrace, source string) string {
 // Synthesized frames are dropped unless every frame is synthesized.
 func retraceJVMFrames(frames []StackFrame, exceptionType string, mapping *R8Mapping, mappingPath string, budget *retraceBudget) ([]StackFrame, bool, bool) {
 	kept, synthesized := make([]StackFrame, 0, min(len(frames), budget.frames)), []StackFrame{}
-	resolved, truncated, outlinePosition := false, false, 0
+	resolved, truncated, synthesizedOverflow, outlinePosition := false, false, false, 0
 	for i, frame := range frames {
 		if budget.frames <= 0 || budget.entries <= 0 {
 			truncated = true
@@ -307,6 +307,8 @@ func retraceJVMFrames(frames []StackFrame, exceptionType string, mapping *R8Mapp
 			if original.Synthesized {
 				if len(synthesized) < budget.frames {
 					synthesized = append(synthesized, copied)
+				} else {
+					synthesizedOverflow = true
 				}
 				return true
 			}
@@ -332,9 +334,11 @@ func retraceJVMFrames(frames []StackFrame, exceptionType string, mapping *R8Mapp
 	if len(kept) > 0 {
 		return kept, resolved, truncated
 	}
-	synthesized = synthesized[:min(len(synthesized), budget.frames)]
+	if len(synthesized) > budget.frames {
+		synthesized, synthesizedOverflow = synthesized[:budget.frames], true
+	}
 	budget.frames -= len(synthesized)
-	return synthesized, resolved, truncated
+	return synthesized, resolved, truncated || synthesizedOverflow
 }
 
 func parseJVMHeader(line string) (string, string) {
