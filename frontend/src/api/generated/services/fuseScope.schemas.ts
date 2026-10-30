@@ -11625,6 +11625,40 @@ export type RumtypesStackFrameDTO = {
 	original: RumtypesOriginalFrameDTO | null;
 } | null;
 
+/**
+ * @nullable
+ */
+export type RumtypesMissingSourceMapDTO = {
+	kind: RumtypesArtifactKindDTO;
+	/**
+	 * @type string
+	 * @description The event's service.version, empty when it has none.
+	 */
+	release: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type RumtypesComponentStackDTO = {
+	/**
+	 * @type array,null
+	 * @description One frame per component, innermost first; function is the component name React reported.
+	 */
+	frames: (RumtypesStackFrameDTO | null)[] | null;
+	missingSourceMap: RumtypesMissingSourceMapDTO | null;
+	/**
+	 * @type string
+	 * @description fusescope.rum.react.component_stack as received, trimmed of surrounding whitespace.
+	 */
+	stack: string;
+	/**
+	 * @type boolean
+	 * @description Whether frames were mapped through an uploaded source map.
+	 */
+	symbolicated: boolean;
+} | null;
+
 export enum RumtypesErrorCauseRelationDTO {
 	caused_by = 'caused_by',
 	suppressed = 'suppressed',
@@ -11651,18 +11685,6 @@ export interface RumtypesErrorCauseDTO {
 	type: string;
 }
 
-/**
- * @nullable
- */
-export type RumtypesMissingSourceMapDTO = {
-	kind: RumtypesArtifactKindDTO;
-	/**
-	 * @type string
-	 * @description The event's service.version, empty when it has none.
-	 */
-	release: string;
-} | null;
-
 export interface RumtypesErrorEventDTO {
 	/**
 	 * @type array,null
@@ -11670,6 +11692,7 @@ export interface RumtypesErrorEventDTO {
 	 */
 	causes: RumtypesErrorCauseDTO[] | null;
 	client: RumtypesClientDTO;
+	componentStack: RumtypesComponentStackDTO | null;
 	/**
 	 * @type array,null
 	 * @description For a JVM trace, the thrown exception's.
