@@ -11,3 +11,10 @@ pkg/grok
   Copyright The vjeantet/grok Authors.
   Licensed under the Apache License, Version 2.0 (pkg/grok/LICENSE).
   Files changed by FuseOne say so in their header.
+
+pkg/modules/rumapplication/browsersdk/snapshot
+  Browser bundle of @fusescope/browser, pinned in manifest.json and written by
+  `make rum-browser-sdk`. Copyright 2026 FuseOne. Includes OpenTelemetry
+  JavaScript (Copyright The OpenTelemetry Authors) and web-vitals (Copyright
+  Google LLC). Licensed under the Apache License, Version 2.0
+  (pkg/modules/rumapplication/browsersdk/snapshot/LICENSE, NOTICE).
