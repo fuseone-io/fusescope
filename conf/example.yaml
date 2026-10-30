@@ -598,6 +598,21 @@ rum:
     # How often the maps past their application's retention are deleted.
     cleanup_interval: 1h
 
+##################### Dashboard #####################
+dashboard:
+  public:
+    # In-memory, per-process limits on anonymous public dashboard requests.
+    # The client IP follows rum.ratelimit.trust_forwarded_for.
+    ratelimit:
+      # Token bucket shared by every visitor of one public link.
+      link:
+        rate: 20
+        burst: 200
+      # Token bucket per client IP, across all public links. The IP is kept in memory only.
+      client:
+        rate: 5
+        burst: 100
+
 ##################### Retention #####################
 retention:
   # Retention, in days, set on every organization whose signal has no retention set

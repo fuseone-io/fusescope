@@ -623,7 +623,7 @@ func New(
 	registryHandler := factory.NewHandler(registry)
 	subscriptionService := subscriptionCallback(zeus, licensing)
 
-	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, subscriptionService, registryHandler, alertmanager, prometheus, rulerInstance, statsAggregator, config.RUM)
+	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, subscriptionService, registryHandler, alertmanager, prometheus, rulerInstance, statsAggregator, config.RUM, config.Dashboard)
 
 	// Initialize the API server (after registry so it can access service health)
 	apiserverInstance, err := factory.NewProviderFromNamedMap(

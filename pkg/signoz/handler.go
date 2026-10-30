@@ -121,11 +121,12 @@ func NewHandlers(
 	rulerService ruler.Ruler,
 	statsAggregator statsreporter.Aggregator,
 	rumConfig rumapplication.Config,
+	dashboardConfig dashboard.Config,
 ) Handlers {
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
 		Apdex:                   implapdex.NewHandler(modules.Apdex),
-		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
+		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz, dashboardConfig.Public.RateLimit, rumConfig.RateLimit.TrustForwardedFor),
 		QuickFilter:             implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:             impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),
