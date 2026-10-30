@@ -1,18 +1,16 @@
-package implrumapplication
+package ratelimit
 
 import (
 	"sync"
 	"time"
-
-	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
 )
 
-const rateLimiterIdleTTL = 10 * time.Minute
+const idleTTL = 10 * time.Minute
 
-// rateLimiter is a token bucket per identity. Idle buckets are dropped on the
-// next call after rateLimiterIdleTTL, which bounds memory to active clients.
-type rateLimiter struct {
-	limit     rumapplication.LimitConfig
+// Limiter is an in-memory token bucket per identity. Idle buckets are dropped on
+// the next call after idleTTL, which bounds memory to active identities.
+type Limiter struct {
+	limit     Limit
 	mu        sync.Mutex
 	buckets   map[string]*tokenBucket
 	lastSweep time.Time
@@ -23,11 +21,11 @@ type tokenBucket struct {
 	last   time.Time
 }
 
-func newRateLimiter(limit rumapplication.LimitConfig) *rateLimiter {
-	return &rateLimiter{limit: limit, buckets: map[string]*tokenBucket{}}
+func NewLimiter(limit Limit) *Limiter {
+	return &Limiter{limit: limit, buckets: map[string]*tokenBucket{}}
 }
 
-func (limiter *rateLimiter) Allow(identity string, now time.Time) bool {
+func (limiter *Limiter) Allow(identity string, now time.Time) bool {
 	limiter.mu.Lock()
 	defer limiter.mu.Unlock()
 
@@ -53,13 +51,13 @@ func (limiter *rateLimiter) Allow(identity string, now time.Time) bool {
 	return true
 }
 
-func (limiter *rateLimiter) sweep(now time.Time) {
-	if now.Sub(limiter.lastSweep) < rateLimiterIdleTTL {
+func (limiter *Limiter) sweep(now time.Time) {
+	if now.Sub(limiter.lastSweep) < idleTTL {
 		return
 	}
 
 	for identity, bucket := range limiter.buckets {
-		if now.Sub(bucket.last) > rateLimiterIdleTTL {
+		if now.Sub(bucket.last) > idleTTL {
 			delete(limiter.buckets, identity)
 		}
 	}
