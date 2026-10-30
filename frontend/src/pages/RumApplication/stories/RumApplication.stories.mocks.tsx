@@ -49,6 +49,11 @@ export const rumApplicationMocks = defineStoryMocks({
 			description: 'On, the error’s release has no uploaded source maps.',
 			value: false,
 		}),
+		componentStack: toggleControl('React component stack', {
+			group: 'Frontend · errors',
+			description: 'On, the error’s latest event carries React’s component stack.',
+			value: true,
+		}),
 		noSourceMaps: toggleControl('No uploads', {
 			group: 'Frontend · errors',
 			description: 'On, the application has no uploaded source maps.',
@@ -83,6 +88,7 @@ export const rumApplicationMocks = defineStoryMocks({
 				ok(
 					rumErrorGroup(String(req.params.fingerprint), {
 						mapped: !values.sourceMapMissing,
+						componentStack: values.componentStack,
 					}),
 				),
 			),

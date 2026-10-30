@@ -199,6 +199,7 @@ export function rumAndroidErrorGroup({
 		missingSourceMap: mapped
 			? null
 			: { release: ANDROID_RELEASE, kind: RumtypesArtifactKindDTO['r8-mapping'] },
+		componentStack: null,
 	};
 	return {
 		...RUM_ANDROID_ERROR_GROUPS[0],

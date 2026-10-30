@@ -197,3 +197,18 @@ export function defaultStackMode(
 		? 'original'
 		: 'minified';
 }
+
+/**
+ * A component stack's frames grouped like a stack trace's; a component
+ * without a location is still the app's.
+ */
+export function componentFrameGroups(
+	frames: RumtypesErrorEventDTO['frames'],
+	mode: StackMode,
+): FrameGroup[] {
+	return groupFrames(
+		displayFrames(frames, mode).map((frame) =>
+			frame.file ? frame : { ...frame, inApp: true },
+		),
+	);
+}

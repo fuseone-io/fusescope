@@ -41,6 +41,7 @@ const event = (
 	causes: [],
 	symbolicated: false,
 	missingSourceMap: null,
+	componentStack: null,
 	...patch,
 });
 
