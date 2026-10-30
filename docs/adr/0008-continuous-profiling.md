@@ -1,6 +1,6 @@
 # 0008 · Continuous profiling
 
-- Status: proposed; revised 2026-10-30 after review (ingest and storage moved to the collector, open decisions resolved)
+- Status: proposed; revised 2026-10-30 after review (ingest and storage moved to the collector, open decisions resolved); revised again 2026-10-30: collector work goes to the Apache-2.0 `fusescope-collector` and its migrator ([ADR 0009](https://github.com/fuseone-io/fusescope/pull/222)), ingestion auth follows [ADR 0010](https://github.com/fuseone-io/fusescope/pull/223)
 - Issue: [#221](https://github.com/fuseone-io/fusescope/issues/221), which supersedes #20
 - Deciders: FuseOne maintainers. Collector receivers and exporter, the ClickHouse schema, symbolization and UI span several PRs and repos.
 
@@ -19,7 +19,7 @@ Facts the design rests on, checked 2026-10-30. Licences were read from each proj
   - Its Go code is Apache-2.0, but **`support/ebpf` (the in-kernel programs) is GPL-2.0**. It ships as a separate program, the collector distribution `otelcol-ebpf-profiler`.
   - `parca-agent` (Apache-2.0) is now built on a fork of it, sends OTLP with `--remote-store-format=otlp`, and uploads debug files through Parca's `DebuginfoService` (Apache-2.0 proto), which `--debuginfo-upload-disable` turns off.
 - **Grafana Pyroscope's server is AGPL-3.0, its protocol is not.** The `api/` Go module (`github.com/grafana/pyroscope/api`), with `push.v1.PusherService/Push` over Connect (labels plus raw pprof bytes per series), is Apache-2.0. The legacy `POST /ingest` (`name=app.cpu{k=v}`, `from`, `until`, `format=pprof|jfr|folded|lines`) is publicly documented. Pyroscope's language SDKs and Grafana Alloy, which scrapes `/debug/pprof` and pushes, are Apache-2.0. collector-contrib has **no** Pyroscope receiver.
-- **Our collector.** `fusescope-otel-collector` (AGPL-3.0) is on collector v0.144.0 and already includes contrib's `pprofreceiver`. It has ClickHouse exporters for logs, traces and metrics, none for profiles, and no ingestion auth: the chart exposes OTLP through an ingress with no authenticator. The collector already connects to the backend over OpAMP on an internal port (4320).
+- **Our collector.** `fusescope-otel-collector` (AGPL-3.0) is on collector v0.144.0 and already includes contrib's `pprofreceiver`. It has ClickHouse exporters for logs, traces and metrics, none for profiles, and no ingestion auth: the chart exposes OTLP through an ingress with no authenticator. [ADR 0009](https://github.com/fuseone-io/fusescope/pull/222) moves all new collector work to an Apache-2.0 OCB distribution, `fusescope-collector`, in front of this fork. The collector already connects to the backend over OpAMP on an internal port (4320).
 - **Prior art for ClickHouse storage.**
   - Coroot (Apache-2.0) keeps a `ReplacingMergeTree` of stacks keyed by `(ServiceName, Hash)`, with FNV-64a over the frame strings, and a `MergeTree` of samples `(ServiceName, Type, Start, End, Labels, StackHash, Value)`. Over 7 days for a few dozen services it holds 924 M samples in 6.19 GiB (≈ 7 B per sample) plus 932 MiB of stacks, and draws a 1-hour flame graph in 0.46 s.
   - collector-contrib's `clickhouseexporter` stores profiles denormalized (one row per sample with frame arrays) at development stability.
@@ -67,13 +67,13 @@ Non-goals for now: profile-based alerting, profiling of browsers and mobile apps
    otelcol-ebpf-profiler ──── OTLP profiles ──────────────┤
    parca-agent ────────────── OTLP profiles, debug files ─┤
                                                           ▼
- exposed      fusescope-otel-collector (AGPL)
+ exposed      fusescope-collector (Apache-2.0, ADR 0009)
               ingestauth → pyroscope / otlp / pprof / debuginfo receivers
               → clickhouseprofilesexporter
                    │ rows                       │ debug files, internal port
                    ▼                            ▼
  internal     ClickHouse signoz_profiles   ◄── SQL ──  backend (MIT): query API, UI,
-              (DDL: collector migrator)                read-time symbolizer, artifact store
+              (DDL: Apache migrator)                   read-time symbolizer, artifact store
                                                          │ ingestion keys over OpAMP → collector
                                                          └► debuginfod, outbound, off by default
 ```
@@ -86,7 +86,7 @@ All profile ingest terminates at the collector, behind ingestion auth (decision 
 
 | Surface | Collector component | Who sends it | Phase |
 |---|---|---|---|
-| `POST /ingest` (Pyroscope legacy: `format=pprof`, raw or multipart; `name=<service>.<type>{labels}`, `from`, `until`, `sampleRate`, `spyName`) and `POST /push.v1.PusherService/Push` (Connect) | **new `pyroscopereceiver`** in `fusescope-otel-collector`; converts with contrib `pkg/translator/pprof` | Pyroscope SDKs (Go, Python, Ruby, .NET, Node, Rust), Alloy `pyroscope.write` | 1 |
+| `POST /ingest` (Pyroscope legacy: `format=pprof`, raw or multipart; `name=<service>.<type>{labels}`, `from`, `until`, `sampleRate`, `spyName`) and `POST /push.v1.PusherService/Push` (Connect) | **new `pyroscopereceiver`** in `fusescope-collector`; converts with contrib `pkg/translator/pprof` | Pyroscope SDKs (Go, Python, Ruby, .NET, Node, Rust), Alloy `pyroscope.write` | 1 |
 | scrape of `/debug/pprof` | contrib `pprofreceiver` (`remote` mode), already in our collector | the collector itself, in cluster or as an agent | 1 |
 | OTLP/HTTP and OTLP/gRPC profiles | upstream `otlpreceiver` | `otelcol-ebpf-profiler`, `parca-agent --remote-store-format=otlp`, async-profiler OTLP, other collectors | 2 |
 | `parca.debuginfo.v1alpha1.DebuginfoService` | **new `debuginforeceiver`** (decision 4) | `parca-agent` | 2 |
@@ -94,13 +94,15 @@ All profile ingest terminates at the collector, behind ingestion auth (decision 
 
 - **Pyroscope compatibility is the main SDK path.** Customers keep Pyroscope's Apache-2.0 SDKs and Alloy, unchanged, and point them at our collector's URL. We never run, link or copy the AGPL Pyroscope server: the receiver is written by us from the public HTTP API docs, the Apache-2.0 `api/` protos and requests captured from the real SDKs, which also serve as the receiver's test clients. Writing it that way keeps the option of offering it to contrib, which has none.
 - **No Parca `ProfileStoreService`.** `parca-agent` already sends OTLP, so a second eBPF wire format buys nothing.
-- **OTLP profiles on a forward path.** We follow upstream's `v1development` with the collector version we pin; the collector moves past v0.144.0 for the current proto and `pprofreceiver` modes. When the signal becomes beta or stable we take the stable path with the upgrade that brings it (phase 6). The Pyroscope surfaces stay.
+- **OTLP profiles on a forward path.** We follow upstream's `v1development` with the collector version we pin; `fusescope-collector` starts on a current upstream release, with the current proto and `pprofreceiver` modes. When the signal becomes beta or stable we take the stable path with the upgrade that brings it (phase 6). The Pyroscope surfaces stay.
 - **Limits** per key in the receivers: request size (16 MiB, before and after gzip), samples per profile, and the collector's memory limiter; over a limit the response is 413 or 429, never a partial write.
 
 ### 2. Ingestion auth at the collector
 
-- **A new server authenticator extension, `ingestauth`**, in `fusescope-otel-collector`, attached to the profile receivers first and available to every other receiver. It accepts an **ingestion key** as `SigNoz-Api-Key`, `Authorization: Bearer <key>` (Pyroscope `AuthToken`, Alloy, parca-agent `--remote-store-bearer-token`, OTLP exporter headers) or the password of HTTP Basic (Pyroscope `BasicAuth`); gRPC reads the same values from metadata.
-- **Keys come from the backend over the internal OpAMP connection** the collector already opens (collector → backend, port 4320). The backend sends key hashes, their organisation, signals allowed, expiry and limits as part of the collector's remote config; the extension compares a SHA-256 of the presented key, in memory. A key revoked in the UI stops working at the next config push. The backend accepts no inbound traffic from the internet for this.
+Ingestion keys and `ingestauth` are specified for every signal by [ADR 0010](https://github.com/fuseone-io/fusescope/pull/223); this section is what profiling needs from them.
+
+- **A new server authenticator extension, `ingestauth`**, in `fusescope-collector`, attached to the profile receivers first and available to every other receiver. It accepts an **ingestion key** as `SigNoz-Api-Key`, `Authorization: Bearer <key>` (Pyroscope `AuthToken`, Alloy, parca-agent `--remote-store-bearer-token`, OTLP exporter headers) or the password of HTTP Basic (Pyroscope `BasicAuth`); gRPC reads the same values from metadata.
+- **Keys come from the backend over the internal OpAMP connection** the collector already opens (collector → backend, port 4320). The backend sends key hashes, their organisation, signals allowed, expiry and limits as an OpAMP custom message (ADR 0010); the extension compares a SHA-256 of the presented key, in memory. A key revoked in the UI stops working at the next config push. The backend accepts no inbound traffic from the internet for this.
 - **The key decides the organisation and the allowed signals**; the payload cannot. The extension stamps the key ID and organisation into client metadata, and the exporter writes them with each row.
 - **Ingestion keys need a community implementation.** Today the gateway is a no-op and returns 501. Keys are managed in the backend (metastore, SQLite and PostgreSQL, stored hashed) with `profiles` as a signal; the existing ingestion-key and ingestion-limit permissions apply.
 - **Until keys ship**, the chart can configure contrib's `bearertokenauth` or `basicauth` with a secret, so profile ingest is never unauthenticated on an exposed collector.
@@ -109,7 +111,7 @@ All profile ingest terminates at the collector, behind ingestion auth (decision 
 
 **Model.** A profile is split into a dictionary (mappings, functions, locations and stacks, deduplicated) and a fact table of samples. A sample row is one stack's value for one series in one profile window.
 
-**Tables** in a new database `signoz_profiles`, created by the **collector's migrator**, like every other telemetry table. No exception to the schema rule is needed.
+**Tables** in a new database `signoz_profiles`, created by the **Apache-2.0 migrator in `fusescope-collector`**, which owns new databases (ADR 0009). The backend still issues no DDL.
 
 | Table | Engine | Key | Holds |
 |---|---|---|---|
@@ -122,7 +124,7 @@ All profile ingest terminates at the collector, behind ingestion auth (decision 
 
 Plus `distributed_*` tables and replicated engines when a cluster is configured, as the migrator does for the other signals.
 
-- **A new `clickhouseprofilesexporter`** in `fusescope-otel-collector` writes them, batched like the existing exporters. contrib's `clickhouseexporter` profiles layout is denormalised and at development stability, so we don't use it.
+- **A new `clickhouseprofilesexporter`** in `fusescope-collector` writes them, batched like the existing exporters. contrib's `clickhouseexporter` profiles layout is denormalised and at development stability, so we don't use it.
 - **IDs are content hashes** (64-bit xxh3) computed in the exporter: a function from its fields, a location from its mapping and address or lines, a stack from its location IDs, a series from service, type and sorted labels. Identical rows collapse in the Replacing tables, and the exporter keeps an LRU of IDs it has written so dictionaries are not resent with every profile. Hashes are scoped by service; a collision costs a wrong frame in one service, not corruption.
 - **Samples** are aggregated within a profile by `(series, labels, stack)` before insert. `samples` is `PARTITION BY toDate(timestamp)`, with a bloom-filter index on `span_id` and `trace_id` and `ttl_only_drop_parts=1`.
 - **Labels.** Resource attributes (`service.name`, `service.version`, `deployment.environment.name`, `host.name`, `k8s.*`) and pprof sample labels go into `labels`. `span_id` and `trace_id` are lifted into columns, because their cardinality would explode series. A cap on distinct label keys and values per key protects the series table; labels beyond it are dropped and counted in the exporter's metrics.
@@ -229,7 +231,7 @@ The spread is the number of distinct stacks per window, which only a real worklo
 
 | Component | Licence | Where | How we use it |
 |---|---|---|---|
-| `pyroscopereceiver`, `debuginforeceiver`, `clickhouseprofilesexporter`, `ingestauth`, profiles migrations | AGPL-3.0 (ours) | collector | new code in `fusescope-otel-collector`, which runs as a separate program (ADR 0001) |
+| `pyroscopereceiver`, `debuginforeceiver`, `clickhouseprofilesexporter`, `ingestauth`, profiles migrations | Apache-2.0 (ours) | collector | new clean-room code in `fusescope-collector` (ADR 0009), never in the AGPL fork |
 | contrib `pprofreceiver`, `pkg/translator/pprof`, `bearertokenauth`, `basicauth`; `pdata/pprofile`; `otlpreceiver` | Apache-2.0 | collector | linked |
 | `github.com/grafana/pyroscope/api` | Apache-2.0 | collector | Push protos only |
 | Parca `proto/` (`DebuginfoService`) | Apache-2.0 | collector | generated stubs, attributed in `NOTICE` |
@@ -254,7 +256,7 @@ Each phase ships behind a feature flag and ends with docs and integration or e2e
 
 | Phase | Scope | Repos | Exit criteria |
 |---|---|---|---|
-| **1 · pprof MVP (Go)** | collector: upgrade past v0.144.0, profiles pipeline, `pyroscopereceiver` (pprof, Push), `pprofreceiver` recipes, `clickhouseprofilesexporter`, migrator tables, `ingestauth` with community ingestion keys over OpAMP (contrib bearer/basic auth until then); backend: descriptors and contract test, retention signal, query API, pprof export; UI: explorer | collector, backend, frontend, charts, docs | a Go service with the Pyroscope SDK and one scraped by the collector appear in the explorer; unauthenticated requests are refused; 1 h flame graph ≤ 1 s p95; storage per instance measured and this ADR amended |
+| **1 · pprof MVP (Go)** | collector (`fusescope-collector`, after ADR 0009 phases 0–1): profiles pipeline, `pyroscopereceiver` (pprof, Push), `pprofreceiver` recipes, `clickhouseprofilesexporter`, migrator tables, `ingestauth` with ingestion keys (ADR 0010 phases 1–2; contrib bearer/basic auth until then); backend: descriptors and contract test, retention signal, query API, pprof export; UI: explorer | collector, backend, frontend, charts, docs | a Go service with the Pyroscope SDK and one scraped by the collector appear in the explorer; unauthenticated requests are refused; 1 h flame graph ≤ 1 s p95; storage per instance measured and this ADR amended |
 | **2 · eBPF and symbols** | OTLP profiles from the eBPF agents; `debuginforeceiver` (`DebuginfoService` and CLI upload) streaming to the backend's internal endpoint; artifact store `debuginfo` kind; read-time symbolizer with `symbols`; debuginfod client, off by default; optional agent DaemonSet in the chart | collector, backend, charts, docs | `parca-agent` and `otelcol-ebpf-profiler` run unmodified on a kind cluster; a stripped C++ binary symbolizes from an upload, and libc from an internal debuginfod; overhead on the demo host ≤ 1 % |
 | **3 · Trace links** | `span_id`/`trace_id` filters; span *Profile* tab; code hotspots on the service page; Go guide with `otel-profiling-go`; licence and output check of the other runtimes' OTel integrations | backend, frontend, docs | from a HotROD trace, the span's CPU flame graph opens; hotspots per endpoint on the service page |
 | **4 · Compare** | diff API and diff flame graph; compare by range, labels and `service.version` | backend, frontend | a regression injected between two versions of a sample app is the top changed frame |
@@ -265,28 +267,25 @@ Each phase ships behind a feature flag and ends with docs and integration or e2e
 
 - Profiling works now with SDKs and agents people already use, through Pyroscope-compatible and OTLP receivers on the collector, without forking any of them.
 - The internet-facing surface stays the collector. Profiles, ingestion keys and debug files never need the backend exposed; the backend's only new outbound call is debuginfod, off by default.
-- Most of the new code is in the AGPL collector: two receivers, an exporter, an auth extension and migrations. Collector releases gate profiling changes, as they do for the other signals.
-- Ingestion keys arrive in the community build. Once `ingestauth` exists, other signals can opt in to it.
+- Most of the new code is in the Apache-2.0 collector (ADR 0009): two receivers, an exporter, an auth extension and migrations. Collector releases gate profiling changes, as they do for the other signals.
+- Ingestion keys arrive in the community build for every signal (ADR 0010).
 - The Pyroscope-compatible API is a contract we keep; SDK upgrades are covered by the homologation CI.
 - The artifact store grows from source maps to debug files, with larger files; its quota and object storage backend matter more.
-- Following `v1development` means OTLP profiles may break on upstream proto bumps until stable, and the collector must keep moving past v0.144.0.
+- Following `v1development` means OTLP profiles may break on upstream proto bumps until stable, and `fusescope-collector` must follow upstream releases.
 
 ## Resolved decisions
 
 | # | Question | Decision |
 |---|---|---|
-| 1 | Who receives and writes profiles, and who owns the schema | the **collector**: receivers, exporter and migrator; the backend only reads; no schema exception |
+| 1 | Who receives and writes profiles, and who owns the schema | the **collector**: receivers and exporter in `fusescope-collector`, schema in its Apache-2.0 migrator (ADR 0009); the backend only reads; no schema exception |
 | 2 | Pyroscope-compatible endpoints as the main SDK path | **yes**: Pyroscope's Apache-2.0 SDKs and Alloy, unchanged, pointed at our collector; the AGPL server is never run or linked |
-| 3 | Parca `DebuginfoService` | **yes, phase 2**, as a collector-side receiver that streams to the backend's internal endpoint |
+| 3 | Parca `DebuginfoService` | **yes, phase 2**, as a collector-side receiver that streams to the backend's internal endpoint (the debug-file route of ADR 0010's `artifactreceiver`) |
 | 4 | Public debuginfod | **off by default**; an admin can enable public servers or point to an internal one |
 | 5 | Flame graph component | **our own canvas component**; revisit `@grafana/flamegraph` if the frontend moves to React 19 |
 | 6 | Default retention | **7 days**, configurable |
 | 7 | eBPF agent in the chart | **optional DaemonSet, off by default**, upstream images |
-
-## Open questions
-
-- Whether ingestion keys over OpAMP (decision 2) are scoped to profiles first or enabled for every signal in the same release.
-- The RUM gateway ([ADR 0003](0003-real-user-monitoring.md)) is served by the backend on a public path. Under the rule that only the collector is exposed, it may move to the collector in a later ADR.
+| 8 | Ingestion keys for profiles only, or every signal | **every signal in the same release**, starting in `permissive` mode (ADR 0010) |
+| 9 | RUM gateway on a public backend path | **moves to the collector** (ADR 0010) |
 
 ## Sources
 
