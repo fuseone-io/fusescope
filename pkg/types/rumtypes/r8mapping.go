@@ -203,30 +203,34 @@ func (mapping *R8Mapping) RetraceField(class string, obfuscated string) (string,
 	return original, true
 }
 
-// LookupFrame returns at most limit original frames of an obfuscated one,
-// innermost first, and whether the chain had more; nil when the class is
-// not in the mapping. line is 0 when unknown. A line inside no range
-// resolves to the method name alone, with line 0. throwing is the type of
-// the exception when the frame is its first, for rewriteFrame rules, else "".
-func (mapping *R8Mapping) LookupFrame(class string, method string, line int, throwing string, limit int) ([]R8Frame, bool) {
+// LookupFrame calls yield with the original frames of an obfuscated one,
+// innermost first, until yield returns false; false when the class is not
+// in the mapping. line is 0 when unknown. A line inside no range resolves
+// to the method name alone, with line 0. throwing is the type of the
+// exception when the frame is its first, for rewriteFrame rules, else "".
+func (mapping *R8Mapping) LookupFrame(class string, method string, line int, throwing string, yield func(R8Frame) bool) bool {
 	mapped, ok := mapping.classes[class]
 	if !ok {
-		return nil, false
+		return false
 	}
 	chains := mapped.methods[method]
 	if len(chains) == 0 {
-		return []R8Frame{{Class: mapped.original, Method: method, File: mapping.sourceFile(mapped.original), Line: line}}, false
+		yield(R8Frame{Class: mapped.original, Method: method, File: mapping.sourceFile(mapped.original), Line: line})
+		return true
 	}
 
 	if chain := mapped.findChain(method, line, true); chain != nil {
-		return mapping.expand(mapped, method, chain, line, throwing, limit)
+		mapping.expand(mapped, method, chain, line, throwing, yield)
+		return true
 	}
 	if chain := mapped.findChain(method, line, false); chain != nil {
-		return mapping.expand(mapped, method, chain, line, throwing, limit)
+		mapping.expand(mapped, method, chain, line, throwing, yield)
+		return true
 	}
 	outer := mapping.frame(mapped, chains[0].entries[len(chains[0].entries)-1], 0)
 	outer.Synthesized = outer.Synthesized || mapped.isSynthesized(method, chains[0])
-	return []R8Frame{outer}, false
+	yield(outer)
+	return true
 }
 
 // OutlineCallsiteLine maps the position an outline frame reported to the
@@ -265,26 +269,24 @@ func (class *r8Class) findChain(obfuscated string, line int, ranged bool) *r8Cha
 	return found
 }
 
-// expand builds the chain's frames from its innermost kept one, at most
-// limit, so the work is bounded by limit rather than the inline depth.
-func (mapping *R8Mapping) expand(mapped *r8Class, obfuscated string, chain *r8Chain, line int, throwing string, limit int) ([]R8Frame, bool) {
+// expand yields the chain's frames one at a time from its innermost kept
+// one, so the caller bounds the work, not the inline depth.
+func (mapping *R8Mapping) expand(mapped *r8Class, obfuscated string, chain *r8Chain, line int, throwing string, yield func(R8Frame) bool) {
 	first, outer := 0, len(chain.entries)-1
 	if chain.rewriteRemove > 0 && throwing != "" && slices.Contains(chain.rewriteThrows, throwing) {
 		first = min(chain.rewriteRemove, outer)
 	}
-	last := min(outer, first+max(limit, 1)-1)
-
-	frames := make([]R8Frame, 0, last-first+1)
-	for i := first; i <= last; i++ {
+	for i := first; i <= outer; i++ {
 		frame := mapping.frame(mapped, chain.entries[i], chain.entries[i].originalLine(line))
 		frame.Inlined = i < outer
 		if i == outer {
 			frame.RewriteThrows, frame.RewriteRemove = chain.rewriteThrows, chain.rewriteRemove
 			frame.Synthesized = frame.Synthesized || mapped.isSynthesized(obfuscated, chain)
 		}
-		frames = append(frames, frame)
+		if !yield(frame) {
+			return
+		}
 	}
-	return frames, last < outer
 }
 
 func (mapping *R8Mapping) frame(mapped *r8Class, entry *r8Method, line int) R8Frame {
