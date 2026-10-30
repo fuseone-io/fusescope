@@ -52,7 +52,7 @@ skills, hooks): [`docs/contributing/claude-code.md`](docs/contributing/claude-co
 
 ## Toolchain
 
-- Go: `GOTOOLCHAIN=go1.25.14` (newer local Go versions break `bytedance/sonic`).
+- Go: `GOTOOLCHAIN=go1.26.10` (the `go.mod` version, as in CI).
 - Frontend: `npx pnpm@10 …` (the repo rejects pnpm 11). Node 22.
 - Integration/e2e: `cd tests && uv run pytest --basetemp=./tmp/ -vv --reuse …`
   (see [`docs/contributing/tests/`](docs/contributing/tests/)).

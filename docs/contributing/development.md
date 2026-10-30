@@ -6,7 +6,7 @@ This guide sets up a local FuseScope: ClickHouse, the collector, the backend and
 
 | Tool | Version | Notes |
 |---|---|---|
-| Go | 1.25.14 | Run Go commands with `GOTOOLCHAIN=go1.25.14`; newer Go versions break `bytedance/sonic` |
+| Go | 1.26.10 | Run Go commands with `GOTOOLCHAIN=go1.26.10` to match `go.mod` and CI |
 | Node | 22 ([`frontend/.nvmrc`](../../frontend/.nvmrc)) | nvm, mise or fnm |
 | pnpm | 10 | Always `npx pnpm@10 …`; the repo rejects pnpm 11 |
 | Docker | with BuildKit (`docker buildx`) | ClickHouse, PostgreSQL and the test containers |

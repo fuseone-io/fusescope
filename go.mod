@@ -1,6 +1,6 @@
 module github.com/fuseone-io/fusescope
 
-go 1.25.14
+go 1.26.10
 
 require (
 	dario.cat/mergo v1.0.2

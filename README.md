@@ -52,7 +52,7 @@ The full list — anomaly detection, custom roles, synthetics, SLOs, profiling a
 FuseScope needs ClickHouse and the [FuseScope OpenTelemetry collector](https://github.com/fuseone-io/fusescope-otel-collector). Deploy them with the [FuseScope Helm charts](https://github.com/fuseone-io/fusescope-charts), or build from source:
 
 ```bash
-# backend (Go 1.25)
+# backend (Go 1.26)
 make go-build-community        # → target/<os>-<arch>/fusescope
 
 # frontend (Node 22, pnpm 10)

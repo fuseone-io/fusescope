@@ -6,7 +6,7 @@ The repo ships its Claude Code setup in `.claude/`, so everyone gets the same ru
 
 1. Open the repo in Claude Code and accept the folder trust prompt. It offers to install the plugins declared in `.claude/settings.json`: `gopls-lsp`, `pyright-lsp` and `skill-creator` from the official marketplace.
 2. Install what the plugins and hooks call: `gopls` (`go install golang.org/x/tools/gopls@latest`), `pyright` (`npm i -g pyright`), `jq`, and `gh` (authenticated).
-3. Toolchain as in [CLAUDE.md](../../CLAUDE.md#toolchain): `GOTOOLCHAIN=go1.25.14`, Node 22, `npx pnpm@10`, `uv`.
+3. Toolchain as in [CLAUDE.md](../../CLAUDE.md#toolchain): `GOTOOLCHAIN=go1.26.10`, Node 22, `npx pnpm@10`, `uv`.
 
 ## What is in `.claude/`
 
