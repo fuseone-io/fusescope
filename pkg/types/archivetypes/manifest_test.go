@@ -16,7 +16,9 @@ func TestKeys(t *testing.T) {
 
 	assert.Equal(t, "fusescope/logs_v2/day=2026-09-03/shard=2/partition=20260903-15-0/attempt=0199d3c1/20260903-15-0_1_5_1.parquet", location.ObjectKey("20260903-15-0_1_5_1"))
 	assert.Equal(t, "fusescope/logs_v2/manifests/attempt=0199d3c1.json", location.ManifestKey())
-	assert.Equal(t, "fusescope/logs_v2/index/0199d3c9.json", IndexKey("fusescope", "logs_v2", "0199d3c9"))
+	assert.Equal(t, "fusescope/logs_v2/index/00000000000000000003-00000000000000000012.json", IndexKey("fusescope", "logs_v2", 3, 12))
+	assert.Less(t, IndexKey("p", "t", 3, 99), IndexKey("p", "t", 4, 1), "a later epoch sorts after every key of an earlier one")
+	assert.Less(t, IndexKey("p", "t", 3, 9), IndexKey("p", "t", 3, 10))
 }
 
 func TestManifestEncode(t *testing.T) {
