@@ -448,6 +448,7 @@ func (handler *handler) DeleteV2(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *handler) GetPublicDataV2(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Cache-Control", "no-store")
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -469,10 +470,15 @@ func (handler *handler) GetPublicDataV2(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if publicDashboard.ID != id {
+		render.Error(rw, errors.New(errors.TypeNotFound, dashboardtypes.ErrCodePublicDashboardNotFound, "public dashboard not found"))
+		return
+	}
 	render.Success(rw, http.StatusOK, dashboardtypes.NewPublicDashboardDataFromDashboardV2(dashboard, publicDashboard))
 }
 
 func (handler *handler) GetPublicWidgetQueryRangeV2(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Cache-Control", "no-store")
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 

@@ -641,7 +641,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			}
 
 			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}, []string{}), handler.OpenAPIDef{
+		}, []string{authtypes.SigNozAnonymousRoleName}), handler.OpenAPIDef{
 		ID:                  "GetPublicDashboardDataV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get public dashboard data (v2)",
@@ -654,7 +654,13 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourcePublicDashboard,
+		Verb:     coretypes.VerbRead,
+		Category: coretypes.ActionCategoryDataAccess,
+		ID:       coretypes.PathParam("id"),
+		Selector: coretypes.IDSelector,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -669,7 +675,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			}
 
 			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}, []string{}), handler.OpenAPIDef{
+		}, []string{authtypes.SigNozAnonymousRoleName}), handler.OpenAPIDef{
 		ID:                  "GetPublicDashboardPanelQueryRangeV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get query range result (v2)",
@@ -683,7 +689,13 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourcePublicDashboard,
+		Verb:     coretypes.VerbRead,
+		Category: coretypes.ActionCategoryDataAccess,
+		ID:       coretypes.PathParam("id"),
+		Selector: coretypes.IDSelector,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 

@@ -52,7 +52,7 @@ func TestNewHandlers(t *testing.T) {
 	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
 	systemDashboardRegistry, err := impldashboard.NewSystemDashboardRegistry()
 	require.NoError(t, err)
-	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser, tagModule, systemDashboardRegistry)
+	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser, tagModule, systemDashboardRegistry, nil)
 
 	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
 	require.NoError(t, err)

@@ -68,6 +68,7 @@ func newTestModule(t *testing.T, sqlStore sqlstore.SQLStore, definitions ...dash
 		queryparser.New(providerSettings),
 		impltag.NewModule(impltag.NewStore(sqlStore)),
 		registry,
+		nil,
 	).(*module)
 }
 
