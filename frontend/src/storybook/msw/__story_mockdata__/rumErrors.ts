@@ -5,6 +5,7 @@
 
 import type {
 	RumtypesAffectedSessionDTO,
+	RumtypesComponentStackDTO,
 	RumtypesErrorEventDTO,
 	RumtypesErrorGroupDTO,
 	RumtypesGettableErrorGroupDTO,
@@ -346,7 +347,69 @@ function affectedSessions(): RumtypesAffectedSessionDTO[] {
 	);
 }
 
-function events(mapped: boolean, release: string): RumtypesErrorEventDTO[] {
+const COMPONENT_STACK = [
+	'at CartLine (https://shop.example.com/assets/cart.9b1e07.js:1:4020)',
+	'    at Suspense',
+	'    at CartList (https://shop.example.com/assets/cart.9b1e07.js:1:6114)',
+	'    at RenderedRoute (https://shop.example.com/assets/vendor.c2d81f.js:2:40112)',
+	'    at ErrorBoundary (https://shop.example.com/assets/vendor.c2d81f.js:2:118730)',
+].join('\n');
+
+function componentStack(
+	mapped: boolean,
+	release: string,
+): RumtypesComponentStackDTO {
+	const frames: [RumtypesStackFrameDTO, string, number, number][] = [
+		[
+			minifiedFrame('CartLine', '/assets/cart.9b1e07.js', 4020),
+			'src/features/cart/CartLine.tsx',
+			18,
+			3,
+		],
+		[
+			{ function: 'Suspense', file: '', line: 0, column: 0, original: null },
+			'',
+			0,
+			0,
+		],
+		[
+			minifiedFrame('CartList', '/assets/cart.9b1e07.js', 6114),
+			'src/features/cart/CartList.tsx',
+			9,
+			3,
+		],
+		[
+			minifiedFrame('RenderedRoute', '/assets/vendor.c2d81f.js', 40112),
+			'node_modules/react-router/dist/index.js',
+			812,
+			3,
+		],
+		[
+			minifiedFrame('ErrorBoundary', '/assets/vendor.c2d81f.js', 118730),
+			'node_modules/@fusescope/browser-react/dist/index.js',
+			41,
+			3,
+		],
+	];
+	return {
+		stack: COMPONENT_STACK,
+		frames: frames.map(([frame, file, line, column]) =>
+			mapped && file && frame
+				? symbolicated(frame, frame.function, file, line, column)
+				: frame,
+		),
+		symbolicated: mapped,
+		missingSourceMap: mapped
+			? null
+			: { release, kind: RumtypesArtifactKindDTO['source-map'] },
+	};
+}
+
+function events(
+	mapped: boolean,
+	release: string,
+	withComponentStack: boolean,
+): RumtypesErrorEventDTO[] {
 	return SESSIONS.map(
 		([sessionId, minutes, eventRelease, browser, os], index) => {
 			const frames = httpFrames(mapped);
@@ -370,6 +433,8 @@ function events(mapped: boolean, release: string): RumtypesErrorEventDTO[] {
 							release: index === 0 ? release : eventRelease,
 							kind: RumtypesArtifactKindDTO['source-map'],
 						},
+				componentStack:
+					withComponentStack && index === 0 ? componentStack(mapped, release) : null,
 			};
 		},
 	);
@@ -445,19 +510,21 @@ function breadcrumbs(errorAt: number): RumtypesTimelineEventDTO[] {
 
 /**
  * The HttpError group of web-shop; `mapped` symbolicates its frames, else
- * `release` has no source maps.
+ * `release` has no source maps. With `componentStack`, its latest event
+ * carries React's component stack.
  */
 export function rumErrorGroup(
 	fingerprint: string,
 	{
 		mapped = true,
 		release = '1.8.0',
-	}: { mapped?: boolean; release?: string } = {},
+		componentStack: withComponentStack = false,
+	}: { mapped?: boolean; release?: string; componentStack?: boolean } = {},
 ): RumtypesGettableErrorGroupDTO {
 	const group =
 		RUM_ERROR_GROUPS.find((candidate) => candidate.fingerprint === fingerprint) ??
 		RUM_ERROR_GROUPS[2];
-	const latest = events(mapped, release);
+	const latest = events(mapped, release, withComponentStack);
 	const crumbs = breadcrumbs(Date.parse(latest[0].timestamp));
 	return {
 		...group,

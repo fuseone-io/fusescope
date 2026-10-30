@@ -10,6 +10,7 @@ import {
 	StackMode,
 } from 'lib/rum/stackFrames';
 
+import ComponentStack from './ComponentStack';
 import FrameList from './FrameList';
 import JvmCause from './JvmCause';
 import MinifiedStack from './MinifiedStack';
@@ -143,6 +144,15 @@ function StackTrace({
 				</>
 			) : (
 				<MinifiedStack event={event} jvm={jvm} />
+			)}
+			{event.componentStack && (
+				<ComponentStack
+					applicationId={applicationId}
+					stack={event.componentStack}
+					mode={canShowOriginal ? mode : 'original'}
+					missingShown={Boolean(missing)}
+					onOpenSourceMaps={onOpenSourceMaps}
+				/>
 			)}
 		</section>
 	);

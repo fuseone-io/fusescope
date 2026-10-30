@@ -17,12 +17,14 @@ import { ok, renderPage } from '../../__tests__/renderPage';
 const BASE = '*/api/v1/rum/applications/app-1';
 const PATH = `/frontend/applications/app-1/errors/${HTTP_ERROR}`;
 
-function serveGroup(mapped = true): URLSearchParams[] {
+function serveGroup(mapped = true, componentStack = false): URLSearchParams[] {
 	const requests: URLSearchParams[] = [];
 	server.use(
 		rest.get(`${BASE}/errors/:fingerprint`, (req, res, ctx) => {
 			requests.push(req.url.searchParams);
-			return res(ctx.json(ok(rumErrorGroup(HTTP_ERROR, { mapped }))));
+			return res(
+				ctx.json(ok(rumErrorGroup(HTTP_ERROR, { mapped, componentStack }))),
+			);
 		}),
 		rest.get(`${BASE}/errors`, (_req, res, ctx) =>
 			res(ctx.json(ok(rumErrorGroups()))),
@@ -92,6 +94,47 @@ describe('ErrorDetail', () => {
 		await expect(
 			screen.findByTestId('rum-app-sourcemaps'),
 		).resolves.toBeInTheDocument();
+	});
+
+	it('lists the React component stack with each component’s original location', async () => {
+		serveGroup(true, true);
+		renderPage(PATH);
+
+		const section = await screen.findByTestId('rum-error-component-stack');
+		expect(within(section).getByText('Component stack')).toBeInTheDocument();
+		const frames = within(section).getAllByTestId('rum-error-frame');
+		expect(frames).toHaveLength(3);
+		expect(frames[0]).toHaveTextContent('CartLine');
+		expect(frames[0]).toHaveTextContent('src/features/cart/CartLine.tsx:18:3');
+		expect(frames[1]).toHaveTextContent('Suspense');
+		expect(frames[2]).toHaveTextContent('src/features/cart/CartList.tsx:9:3');
+		expect(
+			within(section).getByTestId('rum-error-library-frames'),
+		).toHaveTextContent('Show 2 library frames');
+		expect(within(section).queryByTestId('rum-error-missing-map')).toBeNull();
+	});
+
+	it('shows the component stack’s raw locations and the stack trace’s notice without source maps', async () => {
+		serveGroup(false, true);
+		renderPage(PATH);
+
+		const section = await screen.findByTestId('rum-error-component-stack');
+		expect(screen.getAllByTestId('rum-error-missing-map')).toHaveLength(1);
+		const frames = within(section).getAllByTestId('rum-error-frame');
+		expect(frames[0]).toHaveTextContent(
+			'https://shop.example.com/assets/cart.9b1e07.js:1:4020',
+		);
+		expect(
+			within(section).getByText(/no source map for 1\.8\.0/),
+		).toBeInTheDocument();
+	});
+
+	it('has no component stack section when the event carries none', async () => {
+		serveGroup();
+		renderPage(PATH);
+
+		await screen.findByTestId('rum-error-stack');
+		expect(screen.queryByTestId('rum-error-component-stack')).toBeNull();
 	});
 
 	it('ends the breadcrumbs with the error and links its request and sessions', async () => {

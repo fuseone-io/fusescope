@@ -87,7 +87,10 @@ export const Empty: Story = {
 	},
 };
 
-/** The HttpError group, symbolicated: app frames with source, library frames folded. */
+/**
+ * The HttpError group, symbolicated: app frames with source, library frames
+ * folded, and React's component stack.
+ */
 export const Detail: Story = {
 	parameters: { signoz: { route: DETAIL } },
 	play: async ({ canvasElement }) => {
@@ -95,10 +98,17 @@ export const Detail: Story = {
 		await expect(
 			await canvas.findByTestId('rum-error-symbolicated', {}, WAIT),
 		).toBeInTheDocument();
-		await expect(canvas.getAllByTestId('rum-error-frame')).toHaveLength(3);
+		const original = canvas.getByRole('list', { name: 'Original stack trace' });
+		await expect(within(original).getAllByTestId('rum-error-frame')).toHaveLength(
+			3,
+		);
 		await expect(canvas.getByTestId('rum-error-frame-context')).toHaveTextContent(
 			'throw new HttpError',
 		);
+		const components = canvas.getByRole('list', { name: 'Component stack' });
+		await expect(
+			within(components).getAllByTestId('rum-error-frame'),
+		).toHaveLength(3);
 		await expect(canvas.getAllByTestId('rum-error-breadcrumb')).toHaveLength(8);
 		await expect(canvas.getByTestId('rum-error-request-trace')).toHaveAttribute(
 			'href',
