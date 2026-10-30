@@ -10176,6 +10176,31 @@ components:
       - pageLoads
       - lcpP75Ms
       type: object
+    RumtypesComponentStack:
+      nullable: true
+      properties:
+        frames:
+          description: One frame per component, innermost first; function is the component
+            name React reported.
+          items:
+            $ref: '#/components/schemas/RumtypesStackFrame'
+          nullable: true
+          type: array
+        missingSourceMap:
+          $ref: '#/components/schemas/RumtypesMissingSourceMap'
+        stack:
+          description: fusescope.rum.react.component_stack as received, trimmed of
+            surrounding whitespace.
+          type: string
+        symbolicated:
+          description: Whether frames were mapped through an uploaded source map.
+          type: boolean
+      required:
+      - stack
+      - frames
+      - symbolicated
+      - missingSourceMap
+      type: object
     RumtypesErrorCause:
       properties:
         frames:
@@ -10217,6 +10242,8 @@ components:
           type: array
         client:
           $ref: '#/components/schemas/RumtypesClient'
+        componentStack:
+          $ref: '#/components/schemas/RumtypesComponentStack'
         frames:
           description: For a JVM trace, the thrown exception's.
           items:
@@ -10264,6 +10291,7 @@ components:
       - causes
       - symbolicated
       - missingSourceMap
+      - componentStack
       type: object
     RumtypesErrorEventInfo:
       properties:
