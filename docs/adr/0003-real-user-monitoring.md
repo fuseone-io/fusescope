@@ -1,6 +1,6 @@
 # 0003 · Real User Monitoring (RUM)
 
-- Status: accepted (2026-10-21; open decisions resolved as recommended); amended 2026-10-21 with the phase 0 spike, reproducible from [`0003-experiments/`](0003-experiments/)
+- Status: accepted (2026-10-21; open decisions resolved as recommended); amended 2026-10-21 with the phase 0 spike, reproducible from [`0003-experiments/`](0003-experiments/); decisions 3, 4 and 6 amended by [ADR 0010](0010-single-ingress.md) (proposed)
 - Deciders: FuseOne maintainers. SDKs, ingestion, auth and storage span several PRs and repos.
 
 ## Context
@@ -86,6 +86,8 @@ We use standard semantic-convention names wherever they exist, including the exp
 
 ### 3. Ingestion: a RUM gateway in the backend
 
+> Amended by [ADR 0010](0010-single-ingress.md): the gateway moves to a `rumreceiver` in the Apache-2.0 collector (ADR 0009), with the same paths, keys and behaviour. Keys and policies stay in the metastore and reach the collector over OpAMP; symbolication stays in the backend. The backend routes are removed in the same release.
+
 Browsers and apps don't talk to the collector directly. The FuseScope backend exposes `POST /rum/v1/{traces,logs}`, which accepts OTLP/HTTP with JSON or protobuf bodies. It does the following, in order:
 
 1. Authenticates the **public application key** (decision 4).
@@ -105,6 +107,8 @@ The gateway uses upstream `go.opentelemetry.io/collector/pdata` (Apache-2.0), no
 
 ### 4. Authentication: public application keys
 
+> Amended by [ADR 0010](0010-single-ingress.md): `rum_pub_…` keys become the public kind of ingestion key, validated by the collector's `ingestauth` from a snapshot pushed over OpAMP.
+
 - Each RUM application gets a **public, write-only key** (`rum_pub_…`) that is safe to ship in a bundle.
 - The key only allows ingesting into that application, from its allowed origins (web) or bundle IDs (mobile), within its rate limit.
 - Keys can be rotated with an overlap window.
@@ -121,6 +125,8 @@ This is a new auth model, separate from user sessions, API keys and service acco
 - The sessions list aggregates spans once and reads platform and version from the resource table for the rows it returns. A version that read them from the span resource map, and ran the aggregation twice through a CTE, took 2.7 s.
 
 ### 6. Symbolication
+
+> Amended by [ADR 0010](0010-single-ingress.md): CI uploads go through the collector's `artifactreceiver` with a secret key limited to `artifacts`, which streams them to the backend's internal intake. Storage and read-time symbolication stay in the backend.
 
 - Customers upload artifacts per application and release: browser source maps, Android R8/ProGuard mappings, iOS dSYMs.
 - Artifacts are uploaded through an API or CLI, and through bundler and Gradle plugins later.
