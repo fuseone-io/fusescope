@@ -30,6 +30,9 @@ export type SheetTarget =
 
 export type SheetTab = 'settings' | 'key' | 'install' | 'sourcemaps';
 
+/** Where the script tag loads the browser bundle from. */
+export type ScriptSource = 'self' | 'fuseone' | 'jsdelivr';
+
 export interface SnippetInput {
 	applicationId: string;
 	environment: string;

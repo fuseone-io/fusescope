@@ -516,6 +516,13 @@ export function rumApplicationStatus(
 			? { name: SDK, version: '0.1.0', support: RumtypesSDKSupportDTO.supported }
 			: { name: '', version: '', support: RumtypesSDKSupportDTO.unknown },
 		supportedSdks: RUM_SUPPORTED_SDKS,
+		browserBundle: {
+			name: SDK,
+			version: '0.2.0-beta.1',
+			integrity:
+				'sha384-W9beoX1Dd3K5Qeu+f2RfXYn3RF/Z5NSY/TUye/4XmIr7RUnT23UwZSqyiY3UWDAs',
+			path: '/rum/v1/sdk/browser/0.2.0-beta.1/fusescope.min.js',
+		},
 		rejections: [
 			{
 				reason: RumtypesRejectionReasonDTO.origin_not_allowed,

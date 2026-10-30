@@ -45,6 +45,13 @@ const STATUS = {
 	counts: { sessions: 0, views: 0, errors: 0, vitals: 0 },
 	sdk: { name: '', version: '', support: 'unknown' },
 	supportedSdks: [],
+	browserBundle: {
+		name: '@fusescope/browser',
+		version: '0.2.0-beta.1',
+		integrity:
+			'sha384-W9beoX1Dd3K5Qeu+f2RfXYn3RF/Z5NSY/TUye/4XmIr7RUnT23UwZSqyiY3UWDAs',
+		path: '/rum/v1/sdk/browser/0.2.0-beta.1/fusescope.min.js',
+	},
 	rejections: [
 		{
 			reason: 'origin_not_allowed',
@@ -156,6 +163,47 @@ describe('RumApplicationSheet', () => {
 		expect(screen.getByTestId('rum-install-mapping')).toHaveTextContent(
 			'applicationId.set("app-1")',
 		);
+	});
+
+	it('offers a script tag served by this FuseScope or a CDN, with its integrity', async () => {
+		mockServer({});
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(
+			<RumApplicationSheet
+				target={{ mode: 'edit', applicationId: 'app-1' }}
+				initialTab="install"
+				onClose={jest.fn()}
+			/>,
+		);
+
+		await user.click(await screen.findByTestId('rum-install-method-script'));
+		const snippet = await screen.findByTestId('rum-install-script');
+		expect(snippet).toHaveTextContent(
+			/src="http:\/\/localhost[^"]*\/rum\/v1\/sdk\/browser\/0\.2\.0-beta\.1\/fusescope\.min\.js"/,
+		);
+		expect(snippet).toHaveTextContent(
+			'integrity="sha384-W9beoX1Dd3K5Qeu+f2RfXYn3RF/Z5NSY/TUye/4XmIr7RUnT23UwZSqyiY3UWDAs"',
+		);
+		expect(snippet).toHaveTextContent('crossorigin="anonymous"');
+		expect(snippet).toHaveTextContent("FuseScope.init({ applicationId: 'app-1',");
+		expect(screen.getByTestId('rum-install-script-copy')).toBeInTheDocument();
+		expect(screen.getByTestId('rum-install-origins-note')).toHaveTextContent(
+			/allowed origins/i,
+		);
+		expect(screen.queryByTestId('rum-install-command')).not.toBeInTheDocument();
+
+		await user.click(screen.getByTestId('rum-install-source-jsdelivr'));
+		expect(screen.getByTestId('rum-install-script')).toHaveTextContent(
+			'src="https://cdn.jsdelivr.net/npm/@fusescope/browser@0.2.0-beta.1/dist/fusescope.min.js"',
+		);
+		await user.click(screen.getByTestId('rum-install-source-fuseone'));
+		expect(screen.getByTestId('rum-install-script')).toHaveTextContent(
+			'src="https://cdn.fuseone.io/browser/0.2.0-beta.1/fusescope.min.js"',
+		);
+
+		await user.click(screen.getByTestId('rum-install-method-npm'));
+		expect(screen.getByTestId('rum-install-command')).toBeInTheDocument();
+		expect(screen.queryByTestId('rum-install-script')).not.toBeInTheDocument();
 	});
 
 	it('offers no origin to add for an Android application', async () => {

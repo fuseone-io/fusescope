@@ -1,6 +1,8 @@
 import { withDistTag } from 'lib/rum/distTag';
 
-import { SnippetInput } from '../types';
+import type { RumtypesBundledSDKDTO } from 'api/generated/services/fuseScope.schemas';
+
+import { ScriptSource, SnippetInput } from '../types';
 
 export const SDK_PACKAGE = '@fusescope/browser';
 
@@ -8,6 +10,7 @@ export const NPM_INSTALL_COMMAND = `npm install ${withDistTag(SDK_PACKAGE)}`;
 
 const VERSION_PLACEHOLDER = "version: '<your app version>'";
 const VERSION_COMMENT = '// your release, e.g. from package.json';
+const SCRIPT_VERSION_COMMENT = '// your release';
 
 const literal = (value: string): string =>
 	`'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
@@ -33,11 +36,7 @@ function privacyEntries({
 	return entries;
 }
 
-/**
- * The `init()` call for the npm package. Options left at the SDK's defaults
- * are omitted, so the snippet shows only what this application changes.
- */
-export function buildNpmSnippet(input: SnippetInput): string {
+function initOptions(input: SnippetInput): string[] {
 	const lines = [
 		`applicationId: ${literal(input.applicationId)}`,
 		`publicKey: ${literal(input.publicKey)}`,
@@ -62,11 +61,67 @@ export function buildNpmSnippet(input: SnippetInput): string {
 	if (privacy.length > 0) {
 		lines.push(`privacy: { ${privacy.join(', ')} }`);
 	}
-	return `import { init } from '${SDK_PACKAGE}';\n\ninit({\n${lines
+	return lines;
+}
+
+function initBody(
+	input: SnippetInput,
+	indent: string,
+	versionComment: string,
+): string {
+	return initOptions(input)
 		.map((line) =>
 			line === VERSION_PLACEHOLDER
-				? `  ${line}, ${VERSION_COMMENT}`
-				: `  ${line},`,
+				? `${indent}${line}, ${versionComment}`
+				: `${indent}${line},`,
 		)
-		.join('\n')}\n});\n`;
+		.join('\n');
+}
+
+/**
+ * The `init()` call for the npm package. Options left at the SDK's defaults
+ * are omitted, so the snippet shows only what this application changes.
+ */
+export function buildNpmSnippet(input: SnippetInput): string {
+	return `import { init } from '${SDK_PACKAGE}';\n\ninit({\n${initBody(
+		input,
+		'  ',
+		VERSION_COMMENT,
+	)}\n});\n`;
+}
+
+export const SCRIPT_SOURCES: { value: ScriptSource; label: string }[] = [
+	{ value: 'self', label: 'This FuseScope' },
+	{ value: 'fuseone', label: 'cdn.fuseone.io' },
+	{ value: 'jsdelivr', label: 'jsDelivr' },
+];
+
+/** Where the page loads the bundle from; every source serves the same file. */
+export function scriptSource(
+	source: ScriptSource,
+	bundle: RumtypesBundledSDKDTO,
+	endpoint: string,
+): string {
+	switch (source) {
+		case 'fuseone':
+			return `https://cdn.fuseone.io/browser/${bundle.version}/fusescope.min.js`;
+		case 'jsdelivr':
+			return `https://cdn.jsdelivr.net/npm/${SDK_PACKAGE}@${bundle.version}/dist/fusescope.min.js`;
+		default:
+			return `${endpoint}${bundle.path}`;
+	}
+}
+
+/** The bundle's script tag, then the same `init()` as the npm snippet. */
+export function buildScriptSnippet(
+	input: SnippetInput,
+	src: string,
+	integrity: string,
+): string {
+	// `</` inside the inline script would end it early.
+	const body = initBody(input, '    ', SCRIPT_VERSION_COMMENT).replace(
+		/<\//g,
+		'<\\/',
+	);
+	return `<script\n  src="${src}"\n  integrity="${integrity}"\n  crossorigin="anonymous"\n></script>\n<script>\n  FuseScope.init({\n${body}\n  });\n</script>\n`;
 }
