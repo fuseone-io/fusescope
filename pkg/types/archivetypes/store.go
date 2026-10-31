@@ -34,14 +34,14 @@ type Store interface {
 	// objects left with no published part.
 	Publish(ctx context.Context, lease *Lease, publication *Publication) error
 
-	// ListPublishedParts returns the published parts of a table's partition on one shard,
+	// ListPublishedParts returns the published parts of a partition under one shard pin,
 	// dropped from ClickHouse or not.
-	ListPublishedParts(ctx context.Context, table string, shard int, partitionID string) ([]*ArchivedPart, error)
+	ListPublishedParts(ctx context.Context, shard *Shard, partitionID string) ([]*ArchivedPart, error)
 
-	// PinShard records that shard of table holds the data at replicaPath, the first time. It
-	// returns an error with ErrCodeShardMismatch when the shard or the path is pinned to
+	// PinShard returns the pin of shard of table, recording it to replicaPath the first time.
+	// It returns an error with ErrCodeShardMismatch when the shard or the path is pinned to
 	// another.
-	PinShard(ctx context.Context, table string, shard int, replicaPath string) error
+	PinShard(ctx context.Context, table string, shard int, replicaPath string) (*Shard, error)
 
 	// ListActiveObjects returns the objects holding a table's published parts.
 	ListActiveObjects(ctx context.Context, table string) ([]*Object, error)

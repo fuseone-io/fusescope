@@ -14,7 +14,7 @@ import (
 )
 
 // ObjectLocation is where one attempt writes its objects and manifest. Table has no
-// database; Day is the partition's min_date.
+// database; Day is the first element of the partition key.
 type ObjectLocation struct {
 	Prefix      string
 	Table       string

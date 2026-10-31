@@ -39,19 +39,20 @@ type Attempt struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Signal          string `bun:"signal"`
-	Kind            string `bun:"kind"`
-	TableName       string `bun:"table_name"`
-	Shard           int    `bun:"shard"`
-	PartitionID     string `bun:"partition_id"`
-	Epoch           int64  `bun:"epoch"`
-	Status          string `bun:"status"`
-	NamedCollection string `bun:"named_collection"`
-	Prefix          string `bun:"prefix"`
-	FormatVersion   int    `bun:"format_version"`
-	ColumnMapping   string `bun:"column_mapping"`
-	ManifestKey     string `bun:"manifest_key"`
-	ManifestSHA256  string `bun:"manifest_sha256"`
+	Signal          string      `bun:"signal"`
+	Kind            string      `bun:"kind"`
+	TableName       string      `bun:"table_name"`
+	Shard           int         `bun:"shard"`
+	ShardID         valuer.UUID `bun:"shard_id"`
+	PartitionID     string      `bun:"partition_id"`
+	Epoch           int64       `bun:"epoch"`
+	Status          string      `bun:"status"`
+	NamedCollection string      `bun:"named_collection"`
+	Prefix          string      `bun:"prefix"`
+	FormatVersion   int         `bun:"format_version"`
+	ColumnMapping   string      `bun:"column_mapping"`
+	ManifestKey     string      `bun:"manifest_key"`
+	ManifestSHA256  string      `bun:"manifest_sha256"`
 }
 
 // Object is a file in the bucket, as checked at commit.
@@ -69,7 +70,8 @@ type Object struct {
 	Status          string      `bun:"status"`
 }
 
-// ArchivedPart is a published part and the object that holds its rows.
+// ArchivedPart is a published part and the object that holds its rows. Its range only
+// compares with parts of the same shard pin (ShardID).
 type ArchivedPart struct {
 	bun.BaseModel `bun:"table:archive_part,alias:archive_part"`
 
@@ -77,6 +79,7 @@ type ArchivedPart struct {
 	types.TimeAuditable
 	TableName   string      `bun:"table_name"`
 	Shard       int         `bun:"shard"`
+	ShardID     valuer.UUID `bun:"shard_id"`
 	PartitionID string      `bun:"partition_id"`
 	PartName    string      `bun:"part_name"`
 	MinBlock    int64       `bun:"min_block"`
@@ -102,15 +105,16 @@ type IndexSnapshot struct {
 	Objects  []*Object
 }
 
-func NewExportAttempt(lease *Lease, table string, shard int, partitionID string, namedCollection string, prefix string) *Attempt {
+func NewExportAttempt(lease *Lease, shard *Shard, partitionID string, namedCollection string, prefix string) *Attempt {
 	now := time.Now()
 	return &Attempt{
 		Identifiable:    types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable:   types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		Signal:          lease.Signal,
 		Kind:            AttemptKindExport,
-		TableName:       table,
-		Shard:           shard,
+		TableName:       shard.TableName,
+		Shard:           shard.Shard,
+		ShardID:         shard.ID,
 		PartitionID:     partitionID,
 		Epoch:           lease.Epoch,
 		Status:          AttemptStatusPending,
@@ -141,6 +145,7 @@ func NewArchivedPart(attempt *Attempt, object *Object, part Part) *ArchivedPart 
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		TableName:     attempt.TableName,
 		Shard:         attempt.Shard,
+		ShardID:       attempt.ShardID,
 		PartitionID:   attempt.PartitionID,
 		PartName:      part.Name,
 		MinBlock:      part.Range.Min,
@@ -195,7 +200,7 @@ func (publication *Publication) Validate() error {
 		objects[object.ID] = true
 	}
 	for _, part := range publication.Parts {
-		if part.AttemptID != attempt.ID || part.TableName != attempt.TableName || part.Shard != attempt.Shard || part.PartitionID != attempt.PartitionID || !objects[part.ObjectID] {
+		if part.AttemptID != attempt.ID || part.TableName != attempt.TableName || part.Shard != attempt.Shard || part.ShardID != attempt.ShardID || part.PartitionID != attempt.PartitionID || !objects[part.ObjectID] {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPublication, "part %s isn't of archive attempt %s on %s shard %d partition %s, or its object isn't published with it", part.PartName, attempt.ID, attempt.TableName, attempt.Shard, attempt.PartitionID)
 		}
 	}

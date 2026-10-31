@@ -102,18 +102,28 @@ func statObjects(ctx context.Context, conn clickhouse.Conn, namedCollection stri
 
 // replicaTable is what a server says about itself and its copy of a table: whether it is
 // the replica the cluster lists at (shard, replica), the table's engine, empty when the table
-// doesn't exist, and its replica path, empty when it isn't replicated.
+// doesn't exist, its UUID, and its replica path, empty when it isn't replicated.
 type replicaTable struct {
 	isReplica bool
 	engine    string
+	uuid      string
 	path      string
+}
+
+// identity names the table's data: its replica path, or its UUID when it isn't replicated.
+// Both change when the table is recreated.
+func (inspected replicaTable) identity() string {
+	if inspected.path != "" {
+		return inspected.path
+	}
+	return "uuid:" + inspected.uuid
 }
 
 func inspectReplica(ctx context.Context, conn clickhouse.Conn, cluster string, shard int, replicaNum int, table archivetypes.Table) (replicaTable, error) {
 	var inspected replicaTable
 	var isReplica uint64
-	err := conn.QueryRow(ctx, "SELECT (SELECT count() FROM system.clusters WHERE cluster = ? AND shard_num = ? AND replica_num = ? AND is_local), (SELECT any(engine) FROM system.tables WHERE database = ? AND name = ?), (SELECT any(zookeeper_path) FROM system.replicas WHERE database = ? AND table = ?)",
-		cluster, shard, replicaNum, table.Database, table.Name, table.Database, table.Name).Scan(&isReplica, &inspected.engine, &inspected.path)
+	err := conn.QueryRow(ctx, "SELECT (SELECT count() FROM system.clusters WHERE cluster = ? AND shard_num = ? AND replica_num = ? AND is_local), (SELECT any(engine) FROM system.tables WHERE database = ? AND name = ?), (SELECT any(toString(uuid)) FROM system.tables WHERE database = ? AND name = ?), (SELECT any(zookeeper_path) FROM system.replicas WHERE database = ? AND table = ?)",
+		cluster, shard, replicaNum, table.Database, table.Name, table.Database, table.Name, table.Database, table.Name).Scan(&isReplica, &inspected.engine, &inspected.uuid, &inspected.path)
 	if err != nil {
 		return inspected, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't inspect %s.%s on the replica", table.Database, table.Name)
 	}

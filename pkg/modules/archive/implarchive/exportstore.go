@@ -109,7 +109,7 @@ func (store *store) Publish(ctx context.Context, lease *archivetypes.Lease, publ
 	})
 }
 
-func (store *store) ListPublishedParts(ctx context.Context, table string, shard int, partitionID string) ([]*archivetypes.ArchivedPart, error) {
+func (store *store) ListPublishedParts(ctx context.Context, shard *archivetypes.Shard, partitionID string) ([]*archivetypes.ArchivedPart, error) {
 	parts := make([]*archivetypes.ArchivedPart, 0)
 
 	err := store.
@@ -117,14 +117,13 @@ func (store *store) ListPublishedParts(ctx context.Context, table string, shard 
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&parts).
-		Where("table_name = ?", table).
-		Where("shard = ?", shard).
+		Where("shard_id = ?", shard.ID).
 		Where("partition_id = ?", partitionID).
 		Where("status = ?", archivetypes.PartStatusPublished).
 		Order("min_block").
 		Scan(ctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the published parts of %s partition %s on shard %d", table, partitionID, shard)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the published parts of %s partition %s on shard %d", shard.TableName, partitionID, shard.Shard)
 	}
 
 	return parts, nil
@@ -204,8 +203,7 @@ func supersede(ctx context.Context, db bun.IDB, publication *archivetypes.Public
 	err := db.
 		NewSelect().
 		Model(&existing).
-		Where("table_name = ?", attempt.TableName).
-		Where("shard = ?", attempt.Shard).
+		Where("shard_id = ?", attempt.ShardID).
 		Where("partition_id = ?", attempt.PartitionID).
 		Where("status = ?", archivetypes.PartStatusPublished).
 		Where("attempt_id != ?", attempt.ID).
@@ -284,7 +282,7 @@ func oneRowAffected(result sql.Result, err error) (bool, error) {
 	return rows == 1, nil
 }
 
-func (store *store) PinShard(ctx context.Context, table string, shard int, replicaPath string) error {
+func (store *store) PinShard(ctx context.Context, table string, shard int, replicaPath string) (*archivetypes.Shard, error) {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -293,7 +291,7 @@ func (store *store) PinShard(ctx context.Context, table string, shard int, repli
 		On("CONFLICT DO NOTHING").
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't pin shard %d of %s", shard, table)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't pin shard %d of %s", shard, table)
 	}
 
 	var pinned []*archivetypes.Shard
@@ -308,13 +306,23 @@ func (store *store) PinShard(ctx context.Context, table string, shard int, repli
 		}).
 		Scan(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the pinned shards of %s", table)
-	}
-	for _, other := range pinned {
-		if other.Shard != shard || other.ReplicaPath != replicaPath {
-			return errors.Newf(errors.TypeInvalidInput, archivetypes.ErrCodeShardMismatch, "shard %d of %s holds %s, but shard %d was pinned to %s; remote_servers was reordered", shard, table, replicaPath, other.Shard, other.ReplicaPath)
-		}
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the pinned shards of %s", table)
 	}
 
-	return nil
+	var pin *archivetypes.Shard
+	for _, other := range pinned {
+		switch {
+		case other.Shard == shard && other.ReplicaPath == replicaPath:
+			pin = other
+		case other.Shard == shard:
+			return nil, errors.Newf(errors.TypeInvalidInput, archivetypes.ErrCodeShardMismatch, "shard %d of %s holds %s, but was pinned to %s; if the table was recreated or moved, re-pin it by deleting its archive_shard row (id %s)", shard, table, replicaPath, other.ReplicaPath, other.ID)
+		default:
+			return nil, errors.Newf(errors.TypeInvalidInput, archivetypes.ErrCodeShardMismatch, "shard %d of %s holds %s, which shard %d was pinned to; remote_servers was reordered", shard, table, replicaPath, other.Shard)
+		}
+	}
+	if pin == nil {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "shard %d of %s wasn't pinned", shard, table)
+	}
+
+	return pin, nil
 }

@@ -43,12 +43,12 @@ func TestSnapshotShard(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		replicas   func(t *testing.T) []cmock.ClickConnMockCommon
-		wantErr    bool
-		wantAddrs  []string
-		wantPath   string
-		replicated bool
+		name         string
+		replicas     func(t *testing.T) []cmock.ClickConnMockCommon
+		wantErr      bool
+		wantAddrs    []string
+		wantIdentity string
+		replicated   bool
 	}{
 		{
 			name: "ReplicaDown_LeftOut",
@@ -58,9 +58,9 @@ func TestSnapshotShard(t *testing.T) {
 				expectParts(up, written, "20260903-15-0_1_5_1")
 				return []cmock.ClickConnMockCommon{down(t), up}
 			},
-			wantAddrs:  []string{"ch-2:9000"},
-			wantPath:   "/clickhouse/tables/u/01",
-			replicated: true,
+			wantAddrs:    []string{"ch-2:9000"},
+			wantIdentity: "/clickhouse/tables/u/01",
+			replicated:   true,
 		},
 		{
 			name: "ConnectionReachesAnotherServer_LeftOut",
@@ -71,9 +71,9 @@ func TestSnapshotShard(t *testing.T) {
 				expectParts(up, written, "20260903-15-0_1_5_1")
 				return []cmock.ClickConnMockCommon{elsewhere, up}
 			},
-			wantAddrs:  []string{"ch-2:9000"},
-			wantPath:   "/clickhouse/tables/u/01",
-			replicated: true,
+			wantAddrs:    []string{"ch-2:9000"},
+			wantIdentity: "/clickhouse/tables/u/01",
+			replicated:   true,
 		},
 		{
 			name: "TableMissingOnAReplica_LeftOut",
@@ -84,9 +84,9 @@ func TestSnapshotShard(t *testing.T) {
 				expectParts(up, written, "20260903-15-0_1_5_1")
 				return []cmock.ClickConnMockCommon{fresh, up}
 			},
-			wantAddrs:  []string{"ch-2:9000"},
-			wantPath:   "/clickhouse/tables/u/01",
-			replicated: true,
+			wantAddrs:    []string{"ch-2:9000"},
+			wantIdentity: "/clickhouse/tables/u/01",
+			replicated:   true,
 		},
 		{
 			name: "ReplicasDisagreeOnPath_Error",
@@ -101,14 +101,15 @@ func TestSnapshotShard(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "NotReplicated_NoPath",
+			name: "NotReplicated_TableUUID",
 			replicas: func(t *testing.T) []cmock.ClickConnMockCommon {
 				up := newMockConn(t)
 				expectReplica(up, 1, "MergeTree", "")
 				expectParts(up, written, "20260903-15-0_1_5_1")
 				return []cmock.ClickConnMockCommon{up}
 			},
-			wantAddrs: []string{"ch-1:9000"},
+			wantAddrs:    []string{"ch-1:9000"},
+			wantIdentity: "uuid:6f1c1b9e-0000-4000-8000-000000000001",
 		},
 		{
 			name:     "NoReplicaAnswers_Error",
@@ -137,7 +138,7 @@ func TestSnapshotShard(t *testing.T) {
 				addrs = append(addrs, addr)
 			}
 			assert.ElementsMatch(t, testCase.wantAddrs, addrs, "a replica that isn't the expected server with the table is left out, so ranges only it holds stay uncovered")
-			assert.Equal(t, testCase.wantPath, snapshot.path)
+			assert.Equal(t, testCase.wantIdentity, snapshot.identity)
 			assert.Equal(t, testCase.replicated, snapshot.replicated)
 			assert.Equal(t, written, snapshot.parts[testCase.wantAddrs[0]]["20260903-15-0"][0].FirstSeen, "a part is first seen when it was written")
 		})
@@ -165,6 +166,9 @@ func TestExport(t *testing.T) {
 			lease, err := archiveStore.AcquireLease(ctx, "logs", "a", time.Now().Add(time.Minute))
 			require.NoError(t, err)
 
+			pin, err := archiveStore.PinShard(ctx, testLogsTable.Name, 1, "/clickhouse/tables/u/01")
+			require.NoError(t, err)
+
 			conn := newMockConn(t)
 			conn.ExpectExec("INSERT INTO FUNCTION s3")
 			conn.ExpectQuery("groupUniqArray").WillReturnRows(cmock.NewRows(statColumns, testCase.readBack))
@@ -178,12 +182,13 @@ func TestExport(t *testing.T) {
 				version:   "1001",
 				partition: archivetypes.Partition{ID: "20260903-15-0", Day: time.Date(2026, 9, 3, 0, 0, 0, 0, time.UTC), RetentionDays: 15},
 				shard:     1,
+				pin:       pin,
 				replicas:  map[string]replica{"ch-1:9000": {shard: 1, addr: "ch-1:9000", conn: asConn(conn)}},
 				snapshot:  map[string][]archivetypes.Part{"ch-1:9000": {part}},
 			}
 			err = service.export(ctx, lease, job)
 
-			published, listErr := archiveStore.ListPublishedParts(ctx, testLogsTable.Name, 1, job.partition.ID)
+			published, listErr := archiveStore.ListPublishedParts(ctx, pin, job.partition.ID)
 			require.NoError(t, listErr)
 			var attempts []*archivetypes.Attempt
 			require.NoError(t, archiveStore.(*store).sqlstore.BunDB().NewSelect().Model(&attempts).Scan(ctx))
@@ -260,5 +265,5 @@ func expectParts(conn cmock.ClickConnMockCommon, written time.Time, names ...str
 }
 
 func expectReplica(conn cmock.ClickConnMockCommon, isReplica uint64, engine string, path string) {
-	conn.ExpectQueryRow("FROM system.clusters").WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "is_replica", Type: "UInt64"}, {Name: "engine", Type: "String"}, {Name: "zookeeper_path", Type: "String"}}, []any{isReplica, engine, path}))
+	conn.ExpectQueryRow("FROM system.clusters").WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "is_replica", Type: "UInt64"}, {Name: "engine", Type: "String"}, {Name: "uuid", Type: "String"}, {Name: "zookeeper_path", Type: "String"}}, []any{isReplica, engine, "6f1c1b9e-0000-4000-8000-000000000001", path}))
 }

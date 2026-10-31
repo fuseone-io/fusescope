@@ -43,7 +43,25 @@ func TestJobs(t *testing.T) {
 
 		require.Len(t, jobs, 2)
 		assert.ElementsMatch(t, []int{1, 2}, []int{jobs[0].shard, jobs[1].shard})
-		assert.True(t, errors.Asc(archiveStore.PinShard(ctx, testLogsTable.Name, 1, "/clickhouse/tables/u/02"), archivetypes.ErrCodeShardMismatch), "each shard is pinned to its replica path")
+		_, err = archiveStore.PinShard(ctx, testLogsTable.Name, 1, "/clickhouse/tables/u/02")
+		assert.True(t, errors.Asc(err, archivetypes.ErrCodeShardMismatch), "each shard is pinned to its replica path")
+		assert.NotEqual(t, jobs[0].pin.ID, jobs[1].pin.ID)
+	})
+
+	t.Run("NotReplicatedOnOneServer_PinnedToTableUUID", func(t *testing.T) {
+		archiveStore := newTestStore(t)
+		service := newTestExportService(t, archiveStore)
+		conn := newMockConn(t)
+		expectReplica(conn, 1, "MergeTree", "")
+		expectParts(conn, written, "20260903-15-0_1_5_1")
+		expectColumnsAndVersion(conn, testLogsTable)
+		expectPartition(conn)
+
+		jobs, _, err := service.jobs(ctx, testLogsTable, map[int][]replica{1: {{shard: 1, replica: 1, addr: "ch-1:9000", conn: asConn(conn)}}})
+		require.NoError(t, err)
+
+		require.Len(t, jobs, 1)
+		assert.Equal(t, "uuid:6f1c1b9e-0000-4000-8000-000000000001", jobs[0].pin.ReplicaPath, "a recreated table gets a new UUID, so a new pin")
 	})
 
 	t.Run("NotReplicatedOnTwoShards_Error", func(t *testing.T) {
@@ -61,13 +79,14 @@ func TestJobs(t *testing.T) {
 
 	t.Run("ShardNumberNamesOtherData_ShardSkipped", func(t *testing.T) {
 		archiveStore := newTestStore(t)
-		require.NoError(t, archiveStore.PinShard(ctx, testLogsTable.Name, 1, "/clickhouse/tables/u/01"))
+		_, err := archiveStore.PinShard(ctx, testLogsTable.Name, 1, "/clickhouse/tables/u/01")
+		require.NoError(t, err)
 		service := newTestExportService(t, archiveStore)
 		conn := newMockConn(t)
 		expectReplica(conn, 1, "ReplicatedMergeTree", "/clickhouse/tables/u/02")
 		expectParts(conn, written, "20260903-15-0_1_5_1")
 
-		_, _, err := service.jobs(ctx, testLogsTable, map[int][]replica{1: {{shard: 1, replica: 1, addr: "ch-1:9000", conn: asConn(conn)}}})
+		_, _, err = service.jobs(ctx, testLogsTable, map[int][]replica{1: {{shard: 1, replica: 1, addr: "ch-1:9000", conn: asConn(conn)}}})
 		assert.Error(t, err)
 	})
 }

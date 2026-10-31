@@ -21,7 +21,7 @@ func (service *exportService) export(ctx context.Context, lease *archivetypes.Le
 		return nil
 	}
 
-	published, err := service.store.ListPublishedParts(ctx, job.table.Name, job.shard, job.partition.ID)
+	published, err := service.store.ListPublishedParts(ctx, job.pin, job.partition.ID)
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (service *exportService) export(ctx context.Context, lease *archivetypes.Le
 	}
 
 	signalConfig := service.config.Logs
-	attempt := archivetypes.NewExportAttempt(lease, job.table.Name, job.shard, job.partition.ID, signalConfig.NamedCollection, signalConfig.Prefix)
+	attempt := archivetypes.NewExportAttempt(lease, job.pin, job.partition.ID, signalConfig.NamedCollection, signalConfig.Prefix)
 	if err := service.store.CreateAttempt(ctx, attempt); err != nil {
 		return err
 	}
