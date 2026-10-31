@@ -260,3 +260,60 @@ func TestCloneableConcurrentSetGet(t *testing.T) {
 		assert.NotSame(t, cachedCloneable, cloneables[i])
 	}
 }
+
+func TestSetIfAbsent(t *testing.T) {
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
+	}})
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+	first := &CacheableB{Key: "first", Value: 1}
+
+	set, err := c.SetIfAbsent(context.Background(), orgID, "key", first, 10*time.Second)
+	require.NoError(t, err)
+	assert.True(t, set)
+
+	set, err = c.SetIfAbsent(context.Background(), orgID, "key", &CacheableB{Key: "second", Value: 2}, 10*time.Second)
+	require.NoError(t, err)
+	assert.False(t, set)
+
+	cached := new(CacheableB)
+	require.NoError(t, c.Get(context.Background(), orgID, "key", cached))
+	assert.Equal(t, first, cached)
+
+	set, err = c.SetIfAbsent(context.Background(), valuer.GenerateUUID(), "key", first, 10*time.Second)
+	require.NoError(t, err)
+	assert.True(t, set)
+}
+
+func TestSetIfAbsentConcurrent(t *testing.T) {
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
+	}})
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	winners := 0
+
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			set, err := c.SetIfAbsent(context.Background(), orgID, "key", &CacheableB{Key: fmt.Sprint(i), Value: i}, 10*time.Second)
+			assert.NoError(t, err)
+			if set {
+				mu.Lock()
+				winners++
+				mu.Unlock()
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	assert.Equal(t, 1, winners)
+}
