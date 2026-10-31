@@ -21,7 +21,7 @@ func TestKeys(t *testing.T) {
 	assert.Less(t, IndexKey("p", "t", 3, 9), IndexKey("p", "t", 3, 10))
 }
 
-func TestIndexSequence(t *testing.T) {
+func TestIndexFileSequence(t *testing.T) {
 	testCases := []struct {
 		name   string
 		file   string
@@ -36,7 +36,7 @@ func TestIndexSequence(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			got, ok := IndexSequence(testCase.file)
+			got, ok := IndexFileSequence(testCase.file)
 			assert.Equal(t, testCase.wantOK, ok)
 			assert.Equal(t, testCase.want, got)
 		})

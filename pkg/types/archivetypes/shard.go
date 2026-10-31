@@ -12,7 +12,9 @@ import (
 var ErrCodeShardMismatch = errors.MustNewCode("archive_shard_mismatch")
 
 // Shard pins a table's shard number, a position in remote_servers, to the replica path of
-// its data. Block numbers are per shard, so ranges only compare within one.
+// its data. Block numbers are per shard and restart with a recreated table, so ranges only
+// compare within one pin, by its ID. Deleting the row re-pins the shard: the next export pins
+// it anew, and the old pin's published ranges no longer cover its parts.
 type Shard struct {
 	bun.BaseModel `bun:"table:archive_shard,alias:archive_shard"`
 

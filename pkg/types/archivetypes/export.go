@@ -136,5 +136,5 @@ func NewIndex(table string, epoch int64, snapshot *IndexSnapshot) Index {
 	}
 	slices.SortFunc(entries, func(a, b IndexObject) int { return strings.Compare(a.Key, b.Key) })
 
-	return Index{Table: table, Epoch: epoch, Sequence: snapshot.Sequence, Objects: entries}
+	return Index{FormatVersion: FormatVersion, Table: table, Epoch: epoch, Sequence: snapshot.Sequence, Objects: entries}
 }

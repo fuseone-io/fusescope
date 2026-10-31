@@ -42,6 +42,7 @@ type exportJob struct {
 	version   string
 	partition archivetypes.Partition
 	shard     int
+	pin       *archivetypes.Shard
 	replicas  map[string]replica
 	snapshot  map[string][]archivetypes.Part
 }
@@ -197,7 +198,7 @@ func (service *exportService) jobs(ctx context.Context, table archivetypes.Table
 			for addr, parts := range shard.parts {
 				snapshot[addr] = parts[id]
 			}
-			jobs = append(jobs, exportJob{table: table, mappings: mappings, version: version, partition: partition, shard: shard.shard, replicas: shard.replicas, snapshot: snapshot})
+			jobs = append(jobs, exportJob{table: table, mappings: mappings, version: version, partition: partition, shard: shard.shard, pin: shard.pin, replicas: shard.replicas, snapshot: snapshot})
 		}
 	}
 
@@ -205,9 +206,9 @@ func (service *exportService) jobs(ctx context.Context, table archivetypes.Table
 	return jobs, conn, nil
 }
 
-// snapshotShards returns the snapshot of every shard that can be archived, each pinned to its
-// replica path. A table that isn't replicated has no path to tell its shards apart by, so it is
-// only archived on a single-server cluster.
+// snapshotShards returns the snapshot of every shard that can be archived, each pinned to the
+// identity of its data. A table that isn't replicated has no path to tell its shards apart by,
+// so it is only archived on a single-server cluster.
 func (service *exportService) snapshotShards(ctx context.Context, table archivetypes.Table, replicas map[int][]replica) ([]shardSnapshot, error) {
 	servers := 0
 	for _, shardReplicas := range replicas {
@@ -220,8 +221,8 @@ func (service *exportService) snapshotShards(ctx context.Context, table archivet
 		if err == nil && !snapshot.replicated && servers > 1 {
 			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "%s isn't replicated, so its shards can't be told apart; it can only be archived on a single-server cluster", table.Name)
 		}
-		if err == nil && snapshot.replicated {
-			err = service.store.PinShard(ctx, table.Name, shard, snapshot.path)
+		if err == nil {
+			snapshot.pin, err = service.store.PinShard(ctx, table.Name, shard, snapshot.identity)
 		}
 		if err != nil {
 			service.settings.Logger().WarnContext(ctx, "archive export skipped a shard", slog.String("table", table.Name), slog.Int("shard", shard), errors.Attr(err))
@@ -237,12 +238,13 @@ func (service *exportService) snapshotShards(ctx context.Context, table archivet
 }
 
 // shardSnapshot is the active parts of a table on the replicas of a shard that answered, and
-// the replica path they agree on.
+// the identity of the data they agree on.
 type shardSnapshot struct {
 	shard        int
 	firstAddr    string
 	replicated   bool
-	path         string
+	identity     string
+	pin          *archivetypes.Shard
 	replicas     map[string]replica
 	parts        map[string]map[string][]archivetypes.Part
 	partitionIDs map[string]string
@@ -262,9 +264,9 @@ func (service *exportService) snapshotShard(ctx context.Context, table archivety
 		}
 
 		if snapshot.firstAddr == "" {
-			snapshot.firstAddr, snapshot.path, snapshot.replicated = replica.addr, inspected.path, inspected.path != ""
-		} else if inspected.path != snapshot.path {
-			return snapshot, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "replicas of shard %d disagree on the replica path of %s: %q and %q", shard, table.Name, snapshot.path, inspected.path)
+			snapshot.firstAddr, snapshot.identity, snapshot.replicated = replica.addr, inspected.identity(), inspected.path != ""
+		} else if inspected.identity() != snapshot.identity {
+			return snapshot, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "replicas of shard %d disagree on the replica path of %s: %q and %q", shard, table.Name, snapshot.identity, inspected.identity())
 		}
 		snapshot.replicas[replica.addr], snapshot.parts[replica.addr] = replica, parts
 		for id := range parts {

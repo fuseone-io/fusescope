@@ -14,7 +14,7 @@ import (
 )
 
 // ObjectLocation is where one attempt writes its objects and manifest. Table has no
-// database; Day is the partition's min_date.
+// database; Day is the first element of the partition key.
 type ObjectLocation struct {
 	Prefix      string
 	Table       string
@@ -85,8 +85,8 @@ func IndexKey(prefix string, table string, epoch int64, sequence int64) string {
 	return fmt.Sprintf("%s/%s/index/%020d-%020d.json", strings.TrimSuffix(prefix, "/"), table, epoch, sequence)
 }
 
-// IndexSequence is the commit sequence an index object, by file name or key, was written at.
-func IndexSequence(file string) (int64, bool) {
+// IndexFileSequence is the commit sequence an index object, by file name or key, was written at.
+func IndexFileSequence(file string) (int64, bool) {
 	name := strings.TrimSuffix(path.Base(file), ".json")
 	_, sequence, ok := strings.Cut(name, "-")
 	if !ok {

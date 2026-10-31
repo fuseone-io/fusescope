@@ -112,7 +112,7 @@ func TestPublish(t *testing.T) {
 
 		mustPublish(t, store, lease, publication)
 
-		parts, err := store.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
+		parts, err := store.ListPublishedParts(ctx, testShardPin(t, store), "20260903-15-0")
 		require.NoError(t, err)
 		assert.ElementsMatch(t, []string{"p_1_3", "p_4_5"}, partNames(parts))
 
@@ -146,7 +146,7 @@ func TestPublishFencedByLease(t *testing.T) {
 		_, err = store.Publish(ctx, stale, publication)
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodeLeaseLost), err)
 
-		parts, err := store.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
+		parts, err := store.ListPublishedParts(ctx, testShardPin(t, store), "20260903-15-0")
 		require.NoError(t, err)
 		assert.Empty(t, parts, "a stale executor commits nothing")
 	})
@@ -194,7 +194,7 @@ func TestPublishHoldsOffATakeoverOnPostgreSQL(t *testing.T) {
 	require.NoError(t, result.err)
 	assert.Equal(t, int64(lease.Epoch+1), result.lease.Epoch, "the takeover moves the epoch once the commit ends")
 
-	parts, err := archiveStore.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
+	parts, err := archiveStore.ListPublishedParts(ctx, testShardPin(t, archiveStore), "20260903-15-0")
 	require.NoError(t, err)
 	assert.Equal(t, []string{"p_1_3"}, partNames(parts), "the commit under the old epoch stands")
 }
@@ -257,11 +257,11 @@ func TestPublishSupersedes(t *testing.T) {
 
 				mustPublish(t, store, lease, newTestPublication(t, store, lease, "20260903-15-0", testCase.newer))
 
-				parts, err := store.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
+				parts, err := store.ListPublishedParts(ctx, testShardPin(t, store), "20260903-15-0")
 				require.NoError(t, err)
 				assert.ElementsMatch(t, testCase.wantParts, partNames(parts))
 
-				other, err := store.ListPublishedParts(ctx, "logs_v2", 1, "20260904-15-0")
+				other, err := store.ListPublishedParts(ctx, testShardPin(t, store), "20260904-15-0")
 				require.NoError(t, err)
 				assert.Len(t, other, len(testCase.published), "other partitions are untouched")
 
@@ -297,7 +297,7 @@ func TestPublishKeepsOnePartPerRange(t *testing.T) {
 				mustPublish(t, store, lease, newTestPublicationOf(t, store, lease, "20260903-15-0", testCase.first))
 				mustPublish(t, store, lease, newTestPublicationOf(t, store, lease, "20260903-15-0", testCase.second))
 
-				parts, err := store.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
+				parts, err := store.ListPublishedParts(ctx, testShardPin(t, store), "20260903-15-0")
 				require.NoError(t, err)
 				assert.Equal(t, testCase.wantParts, partNames(parts))
 
@@ -314,7 +314,7 @@ func TestPublishKeepsObjectWithAPublishedPart(t *testing.T) {
 
 	forEachStore(t, func(t *testing.T, store archivetypes.Store) {
 		lease := acquireTestLease(t, store)
-		attempt := archivetypes.NewExportAttempt(lease, "logs_v2", 1, "20260903-15-0", "archive", "fusescope")
+		attempt := archivetypes.NewExportAttempt(lease, testShardPin(t, store), "20260903-15-0", "archive", "fusescope")
 		require.NoError(t, store.CreateAttempt(ctx, attempt))
 		require.NoError(t, attempt.SetFormat([]archivetypes.ColumnMapping{{Name: "timestamp", SourceType: "UInt64", ExportType: "Int64"}}, "k/manifest.json", "sha"))
 		object := archivetypes.NewObject(attempt, "k/compacted.parquet", 4096, "etag", 20)
@@ -416,6 +416,7 @@ func TestPublishValidatesThePublication(t *testing.T) {
 		{name: "NoColumnMapping", mutate: func(publication *archivetypes.Publication) { publication.Attempt.ColumnMapping = "" }},
 		{name: "PartOfAnotherPartition", mutate: func(publication *archivetypes.Publication) { publication.Parts[0].PartitionID = "20260904-15-0" }},
 		{name: "PartOfAnotherShard", mutate: func(publication *archivetypes.Publication) { publication.Parts[0].Shard = 2 }},
+		{name: "PartOfAnotherShardPin", mutate: func(publication *archivetypes.Publication) { publication.Parts[0].ShardID = valuer.GenerateUUID() }},
 		{name: "ObjectOfAnotherAttempt", mutate: func(publication *archivetypes.Publication) { publication.Objects[0].AttemptID = valuer.GenerateUUID() }},
 		{name: "PartWithoutItsObject", mutate: func(publication *archivetypes.Publication) { publication.Parts[0].ObjectID = valuer.GenerateUUID() }},
 		{name: "AttemptMovedToAnotherTable", mutate: func(publication *archivetypes.Publication) {
@@ -441,7 +442,7 @@ func TestPublishValidatesThePublication(t *testing.T) {
 				assert.True(t, errors.Ast(err, errors.TypeInvalidInput), err)
 
 				for _, partitionID := range []string{"20260903-15-0", "20260904-15-0"} {
-					parts, err := store.ListPublishedParts(ctx, publication.Attempt.TableName, publication.Attempt.Shard, partitionID)
+					parts, err := store.ListPublishedParts(ctx, testShardPin(t, store), partitionID)
 					require.NoError(t, err)
 					assert.Empty(t, parts)
 				}
@@ -527,7 +528,7 @@ func migrateTestStore(t *testing.T, store sqlstore.SQLStore, schema sqlschema.SQ
 	ctx := context.Background()
 
 	migrations := migrate.NewMigrations()
-	for _, migrationFactory := range []factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]{sqlmigration.NewAddArchiveFactory(store, schema), sqlmigration.NewAddArchiveBackstopTableFactory(schema), sqlmigration.NewAddArchiveIndexSequenceFactory(schema)} {
+	for _, migrationFactory := range []factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]{sqlmigration.NewAddArchiveFactory(store, schema), sqlmigration.NewAddArchiveBackstopTableFactory(schema), sqlmigration.NewAddArchiveIndexSequenceFactory(schema), sqlmigration.NewAddArchiveShardPinFactory(schema)} {
 		migration, err := migrationFactory.New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
 		require.NoError(t, err)
 		require.NoError(t, migration.Register(migrations))
@@ -594,7 +595,7 @@ func newTestPublication(t *testing.T, store archivetypes.Store, lease *archivety
 func newTestPublicationOf(t *testing.T, store archivetypes.Store, lease *archivetypes.Lease, partitionID string, parts ...archivetypes.Part) *archivetypes.Publication {
 	t.Helper()
 
-	attempt := archivetypes.NewExportAttempt(lease, "logs_v2", 1, partitionID, "archive", "fusescope")
+	attempt := archivetypes.NewExportAttempt(lease, testShardPin(t, store), partitionID, "archive", "fusescope")
 	require.NoError(t, store.CreateAttempt(context.Background(), attempt))
 	require.NoError(t, attempt.SetFormat([]archivetypes.ColumnMapping{{Name: "timestamp", SourceType: "UInt64", ExportType: "Int64"}}, "fusescope/logs_v2/manifests/attempt="+attempt.ID.StringValue()+".json", "sha"))
 
@@ -617,6 +618,14 @@ func moveTestPublication(publication *archivetypes.Publication, table string, sh
 	}
 }
 
+func testShardPin(t *testing.T, store archivetypes.Store) *archivetypes.Shard {
+	t.Helper()
+
+	pin, err := store.PinShard(context.Background(), "logs_v2", 1, "/clickhouse/tables/logs_v2/01")
+	require.NoError(t, err)
+	return pin
+}
+
 func testPart(blocks archivetypes.BlockRange) archivetypes.Part {
 	return archivetypes.Part{Name: fmt.Sprintf("p_%d_%d", blocks.Min, blocks.Max), Range: blocks, DataVersion: blocks.Min, Rows: 10}
 }
@@ -633,14 +642,55 @@ func TestPinShard(t *testing.T) {
 	ctx := context.Background()
 
 	forEachStore(t, func(t *testing.T, store archivetypes.Store) {
-		require.NoError(t, store.PinShard(ctx, "logs_v2", 1, "/clickhouse/tables/u/01"))
-		require.NoError(t, store.PinShard(ctx, "logs_v2", 1, "/clickhouse/tables/u/01"), "a pinned shard keeps its path")
-		require.NoError(t, store.PinShard(ctx, "logs_v2_resource", 1, "/clickhouse/tables/r/01"), "shards are pinned per table")
+		pin, err := store.PinShard(ctx, "logs_v2", 1, "/clickhouse/tables/u/01")
+		require.NoError(t, err)
+		again, err := store.PinShard(ctx, "logs_v2", 1, "/clickhouse/tables/u/01")
+		require.NoError(t, err)
+		assert.Equal(t, pin.ID, again.ID, "a pinned shard keeps its pin")
+		other, err := store.PinShard(ctx, "logs_v2_resource", 1, "/clickhouse/tables/r/01")
+		require.NoError(t, err)
+		assert.NotEqual(t, pin.ID, other.ID, "shards are pinned per table")
 
-		err := store.PinShard(ctx, "logs_v2", 1, "/clickhouse/tables/u/02")
+		_, err = store.PinShard(ctx, "logs_v2", 1, "/clickhouse/tables/u/02")
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodeShardMismatch), "the shard number now names other data: %v", err)
 
-		err = store.PinShard(ctx, "logs_v2", 2, "/clickhouse/tables/u/01")
+		_, err = store.PinShard(ctx, "logs_v2", 2, "/clickhouse/tables/u/01")
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodeShardMismatch), "the data moved to another shard number: %v", err)
+	})
+}
+
+func TestRepinnedShardStartsUncovered(t *testing.T) {
+	ctx := context.Background()
+
+	forEachStore(t, func(t *testing.T, archiveStore archivetypes.Store) {
+		lease := acquireTestLease(t, archiveStore)
+		_, err := archiveStore.Publish(ctx, lease, newTestPublication(t, archiveStore, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 5}))
+		require.NoError(t, err)
+		old := testShardPin(t, archiveStore)
+
+		_, err = archiveStore.(*store).sqlstore.BunDB().NewDelete().Model(new(archivetypes.Shard)).Where("id = ?", old.ID).Exec(ctx)
+		require.NoError(t, err)
+		pin, err := archiveStore.PinShard(ctx, "logs_v2", 1, "/clickhouse/tables/u/02")
+		require.NoError(t, err, "a deleted pin lets the shard be pinned to its new data")
+		assert.NotEqual(t, old.ID, pin.ID)
+
+		parts, err := archiveStore.ListPublishedParts(ctx, pin, "20260903-15-0")
+		require.NoError(t, err)
+		assert.Empty(t, parts, "the old data's ranges don't cover the new data's parts")
+
+		attempt := archivetypes.NewExportAttempt(lease, pin, "20260903-15-0", "archive", "fusescope")
+		require.NoError(t, archiveStore.CreateAttempt(ctx, attempt))
+		require.NoError(t, attempt.SetFormat([]archivetypes.ColumnMapping{{Name: "timestamp", SourceType: "UInt64", ExportType: "Int64"}}, "k/manifest.json", "sha"))
+		object := archivetypes.NewObject(attempt, "k/p_1_5.parquet", 1024, "etag", 10)
+		_, err = archiveStore.Publish(ctx, lease, &archivetypes.Publication{
+			Attempt: attempt,
+			Objects: []*archivetypes.Object{object},
+			Parts:   []*archivetypes.ArchivedPart{archivetypes.NewArchivedPart(attempt, object, testPart(archivetypes.BlockRange{Min: 1, Max: 5}))},
+		})
+		require.NoError(t, err, "the new data may reuse a published part name")
+
+		previous, err := archiveStore.ListPublishedParts(ctx, old, "20260903-15-0")
+		require.NoError(t, err)
+		assert.Equal(t, []string{"p_1_5"}, partNames(previous), "the old data's parts stay published")
 	})
 }

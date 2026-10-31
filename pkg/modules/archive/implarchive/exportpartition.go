@@ -21,7 +21,7 @@ func (service *exportService) export(ctx context.Context, lease *archivetypes.Le
 		return nil
 	}
 
-	published, err := service.store.ListPublishedParts(ctx, job.table.Name, job.shard, job.partition.ID)
+	published, err := service.store.ListPublishedParts(ctx, job.pin, job.partition.ID)
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (service *exportService) export(ctx context.Context, lease *archivetypes.Le
 	}
 
 	signalConfig := service.config.Logs
-	attempt := archivetypes.NewExportAttempt(lease, job.table.Name, job.shard, job.partition.ID, signalConfig.NamedCollection, signalConfig.Prefix)
+	attempt := archivetypes.NewExportAttempt(lease, job.pin, job.partition.ID, signalConfig.NamedCollection, signalConfig.Prefix)
 	if err := service.store.CreateAttempt(ctx, attempt); err != nil {
 		return err
 	}
@@ -92,7 +92,8 @@ func (service *exportService) publish(ctx context.Context, lease *archivetypes.L
 		return err
 	}
 
-	return service.store.Publish(ctx, lease, publication)
+	_, err = service.store.Publish(ctx, lease, publication)
+	return err
 }
 
 // holdLateParts returns the candidates to export now. A candidate is first seen when it was
@@ -163,7 +164,7 @@ func (service *exportService) writtenIndexSequence(ctx context.Context, conn cli
 
 	var latest int64
 	for _, file := range files {
-		if sequence, ok := archivetypes.IndexSequence(file); ok && sequence > latest {
+		if sequence, ok := archivetypes.IndexFileSequence(file); ok && sequence > latest {
 			latest = sequence
 		}
 	}

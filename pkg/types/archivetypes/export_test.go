@@ -119,5 +119,5 @@ func TestPublicationManifest(t *testing.T) {
 func TestNewIndex(t *testing.T) {
 	objects := []*Object{{ObjectKey: "b", Bytes: 2, ETag: "e2", Rows: 20}, {ObjectKey: "a", Bytes: 1, ETag: "e1", Rows: 10}}
 
-	assert.Equal(t, Index{Table: "logs_v2", Epoch: 3, Sequence: 12, Objects: []IndexObject{{Key: "a", Rows: 10, Bytes: 1, ETag: "e1"}, {Key: "b", Rows: 20, Bytes: 2, ETag: "e2"}}}, NewIndex("logs_v2", 3, &IndexSnapshot{Sequence: 12, Objects: objects}))
+	assert.Equal(t, Index{FormatVersion: FormatVersion, Table: "logs_v2", Epoch: 3, Sequence: 12, Objects: []IndexObject{{Key: "a", Rows: 10, Bytes: 1, ETag: "e1"}, {Key: "b", Rows: 20, Bytes: 2, ETag: "e2"}}}, NewIndex("logs_v2", 3, &IndexSnapshot{Sequence: 12, Objects: objects}))
 }
