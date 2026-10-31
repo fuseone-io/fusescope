@@ -10,7 +10,7 @@
 <!--If applicable, include screenshots or screen recordings that clearly show the behavior before the change and the result after the change. -->
 #### Screenshots / Screen Recordings
 
-<!--Anything reviewers should keep in mind while reviewing -->
+<!--Anything reviewers should keep in mind while reviewing. API contract changes: link the MCP and Terraform follow-ups (`.claude/rules/contract-sync.md`). -->
 #### Additional Information
 
 <!--Please delete paragraphs that you did not use before submitting.-->

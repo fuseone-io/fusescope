@@ -11,7 +11,7 @@ code and do not track upstream; useful upstream fixes are cherry-picked by hand.
 | `fuseone-io/fusescope-charts` | Helm charts | MIT |
 
 These rules apply repo-wide. Topic rules live in [`.claude/rules/`](.claude/rules/)
-(comments, Go, pytest, pull requests) and the frontend has its own
+(comments, Go, pytest, pull requests, contract sync) and the frontend has its own
 [`frontend/CLAUDE.md`](frontend/CLAUDE.md). Go architecture guides are in
 [`docs/contributing/go/`](docs/contributing/go/) — read the relevant one before
 adding a provider, module, handler or SQL. Claude Code setup (plugins, agents,
@@ -103,6 +103,13 @@ The repo conventions win over generic Go advice:
 - PRs follow [`.github/pull_request_template.md`](.github/pull_request_template.md)
   and the [`pull-requests`](.claude/rules/pull-requests.md) rule, and are merged
   only with CI green.
+
+## API contract
+
+Any change to the API contract (routes, payloads, OpenAPI spec, query/alert/
+dashboard schemas, auth, feature availability) is synced to
+`fusescope-mcp-server` and `terraform-provider-fusescope` and linked from the
+PR. See [`contract-sync`](.claude/rules/contract-sync.md).
 
 ## When to ask
 
