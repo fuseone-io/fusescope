@@ -691,3 +691,22 @@ def delete_keycloak_client(idp: types.TestContainerIDP, client_id: str) -> None:
             keycloak_client.delete_client(internal_client_id)
     except Exception:  # pylint: disable=broad-exception-caught
         pass  # Client doesn't exist or already deleted, that's fine
+
+
+def convert_saml_sp_metadata(idp: types.TestContainerIDP, metadata: bytes) -> dict:
+    """The client representation Keycloak would create when importing the SP metadata."""
+    base = idp.container.host_configs["6060"].base()
+    token = requests.post(
+        f"{base}/realms/master/protocol/openid-connect/token",
+        data={"grant_type": "password", "client_id": "admin-cli", "username": IDP_ROOT_USERNAME, "password": IDP_ROOT_PASSWORD},
+        timeout=5,
+    ).json()["access_token"]
+
+    response = requests.post(
+        f"{base}/admin/realms/master/client-description-converter",
+        data=metadata,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "text/plain"},
+        timeout=5,
+    )
+    response.raise_for_status()
+    return response.json()
