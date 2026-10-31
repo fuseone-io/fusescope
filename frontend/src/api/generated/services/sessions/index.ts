@@ -345,6 +345,92 @@ export const useCreateSessionBySAMLCallback = <
 	return useMutation(getCreateSessionBySAMLCallbackMutationOptions(options));
 };
 /**
+ * This endpoint returns the SAML service provider metadata (entity ID, assertion consumer service URL and signing certificate) as application/samlmetadata+xml, for identity providers to import
+ * @summary Get saml service provider metadata
+ */
+export const getSAMLServiceProviderMetadata = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v1/saml/metadata`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetSAMLServiceProviderMetadataQueryKey = () => {
+	return [`/api/v1/saml/metadata`] as const;
+};
+
+export const getGetSAMLServiceProviderMetadataQueryOptions = <
+	TData = Awaited<ReturnType<typeof getSAMLServiceProviderMetadata>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getSAMLServiceProviderMetadata>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetSAMLServiceProviderMetadataQueryKey();
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getSAMLServiceProviderMetadata>>
+	> = ({ signal }) => getSAMLServiceProviderMetadata(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getSAMLServiceProviderMetadata>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetSAMLServiceProviderMetadataQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getSAMLServiceProviderMetadata>>
+>;
+export type GetSAMLServiceProviderMetadataQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get saml service provider metadata
+ */
+
+export function useGetSAMLServiceProviderMetadata<
+	TData = Awaited<ReturnType<typeof getSAMLServiceProviderMetadata>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getSAMLServiceProviderMetadata>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetSAMLServiceProviderMetadataQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get saml service provider metadata
+ */
+export const invalidateGetSAMLServiceProviderMetadata = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetSAMLServiceProviderMetadataQueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
  * This endpoint deletes the session
  * @summary Delete session
  */
