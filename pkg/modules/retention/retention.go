@@ -23,3 +23,12 @@ type TTLSetter interface {
 	// ClickHouse TTL change applies to new parts only; existing parts expire as they merge.
 	SetDefaultTTL(ctx context.Context, orgID valuer.UUID, ttlType string, days int) error
 }
+
+// BackstopSetter is the TTL path of the archive (ADR 0002 §5).
+type BackstopSetter interface {
+	// ApplyArchiveBackstop gives the TTL of the signal's tables a backstop of days, keeping
+	// their move rules, and materializes it on existing parts. It returns once the mutations
+	// are done on every replica. With resume, an earlier apply of the same days was
+	// interrupted, so a MATERIALIZE TTL still pending is waited on instead of issuing another.
+	ApplyArchiveBackstop(ctx context.Context, signal string, days int, resume bool) error
+}

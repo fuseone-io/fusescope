@@ -223,18 +223,19 @@ Exported files follow a type contract compatible with Iceberg v2, fixed before p
 | ClickHouse type | Exported as | Note |
 |---|---|---|
 | `UInt8/16/32` | `Int32` / `Int64` | lossless widening |
-| `UInt64` | `Int64` | bit reinterpretation for hashes and IDs (`fingerprint`), `toInt64` for measures (`duration_nano`); the rule is recorded per column in the manifest so restores undo it |
+| `UInt64` | `Int64` | bit reinterpretation (`CAST`), also for measures (`duration_nano`), where it equals `toInt64` below 2^63; the rule is recorded per column (`uint64_rule: bits`), nested types included, so restores undo it |
 | `FixedString`, `LowCardinality`, `Enum` | `String` | |
 | `Bool` | `BOOLEAN` | the restriction is in ClickHouse's Iceberg writer, not the spec |
 | `UUID` | `String` | DuckDB misreads ClickHouse's byte order |
-| `Dynamic`, `Variant` | `String` | rejected by the Parquet writer |
+| `Dynamic`, `Variant` | `String` | rejected by the Parquet writer; the type discriminator is lost, so a restore brings the values back as `String` inside the column |
 | `JSON` | string with the Parquet JSON logical type | candidate for `variant` in Iceberg v3; custom encoder required |
 | `DateTime64(9)` | `TIMESTAMP(NANOS)` plus a `*_unix_nano Int64` column | the `Int64` column is the portable one in Iceberg v2 |
 | `Map(String, String)` | Parquet `MAP` | |
 
+- **Every file** also carries `_shard Int32` and `_part String` (§3); source columns with those names are refused.
 - **Format version.** Manifests carry a `format_version`. Release N restores segments written by format versions N and N-1, as Tempo keeps reading the previous block version. Older segments need a restore adapter, or fail as `incompatible`.
 - **Old schemas.** Segments are restored by the explicit column mapping stored in SQL at commit (§3), not by the manifest's copy. A migration that renames or retypes an archived column must ship a restore adapter.
-- **External readers** read through manifests, never by listing raw prefixes, because superseded objects (§3) stay in the bucket and duplicate rows. Each commit writes a new immutable index key per table listing the active objects, which the reader takes from the highest commit; a later Iceberg table can replace it. Superseded objects are deleted after `gc_superseded_days` (default 30) on buckets without Object Lock, and kept on WORM buckets.
+- **External readers** read through manifests, never by listing raw prefixes, because superseded objects (§3) stay in the bucket and duplicate rows. Each commit writes a new immutable index key per table listing the active objects, keyed by lease epoch then the table's commit sequence (not by any clock), which the reader takes from the highest key; a later Iceberg table can replace it. Superseded objects are deleted after `gc_superseded_days` (default 30) on buckets without Object Lock, and kept on WORM buckets.
 - **Acceptance.** DuckDB and pyarrow (or Trino) read every exported table with the types above.
 
 ### 9. Restoration

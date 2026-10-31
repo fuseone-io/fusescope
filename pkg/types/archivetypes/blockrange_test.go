@@ -167,17 +167,30 @@ func TestSelectForExportAndDrop(t *testing.T) {
 }
 
 func TestSuperseded(t *testing.T) {
-	published := []Part{
-		{Name: "p_0_2_1", Range: BlockRange{Min: 0, Max: 2}},
-		{Name: "p_5_5_0", Range: BlockRange{Min: 5, Max: 5}},
-		{Name: "p_7_7_0", Range: BlockRange{Min: 7, Max: 7}},
-	}
-	newlyPublished := []Part{
-		{Name: "p_0_3_2", Range: BlockRange{Min: 0, Max: 3}},
-		{Name: "p_5_5_0_9", Range: BlockRange{Min: 5, Max: 5}, DataVersion: 9},
+	testCases := []struct {
+		name           string
+		published      []Part
+		newlyPublished []Part
+		want           []string
+	}{
+		{
+			name:           "ContainedOrNewerVersion_Superseded",
+			published:      []Part{{Name: "p_0_2_1", Range: BlockRange{Min: 0, Max: 2}}, {Name: "p_5_5_0", Range: BlockRange{Min: 5, Max: 5}}, {Name: "p_7_7_0", Range: BlockRange{Min: 7, Max: 7}}},
+			newlyPublished: []Part{{Name: "p_0_3_2", Range: BlockRange{Min: 0, Max: 3}}, {Name: "p_5_5_0_9", Range: BlockRange{Min: 5, Max: 5}, DataVersion: 9}},
+			want:           []string{"p_0_2_1", "p_5_5_0"},
+		},
+		{
+			name:           "SameRangeOlderVersion_Kept",
+			published:      []Part{{Name: "p_1_3_0_7", Range: BlockRange{Min: 1, Max: 3}, DataVersion: 7}},
+			newlyPublished: []Part{{Name: "p_1_3_0", Range: BlockRange{Min: 1, Max: 3}}},
+		},
 	}
 
-	assert.Equal(t, []string{"p_0_2_1", "p_5_5_0"}, partNames(Superseded(published, newlyPublished)))
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, partNames(Superseded(testCase.published, testCase.newlyPublished)))
+		})
+	}
 }
 
 func TestMaximal(t *testing.T) {
