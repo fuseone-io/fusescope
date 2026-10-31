@@ -114,6 +114,23 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/saml/metadata", handler.New(provider.authzMiddleware.OpenAccess(provider.sessionHandler.GetSAMLServiceProviderMetadata), handler.OpenAPIDef{
+		ID:                  "GetSAMLServiceProviderMetadata",
+		Tags:                []string{"sessions"},
+		Summary:             "Get saml service provider metadata",
+		Description:         "This endpoint returns the SAML service provider metadata (entity ID, assertion consumer service URL and signing certificate) as application/samlmetadata+xml, for identity providers to import",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusForbidden},
+		Deprecated:          false,
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/complete/oidc", handler.New(provider.authzMiddleware.OpenAccess(provider.sessionHandler.CreateSessionByOIDCCallback), handler.OpenAPIDef{
 		ID:                  "CreateSessionByOIDCCallback",
 		Tags:                []string{"sessions"},

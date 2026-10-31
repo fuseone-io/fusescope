@@ -131,6 +131,15 @@ func (module *module) CreatePasswordAuthNSession(ctx context.Context, authNProvi
 	return module.tokenizer.CreateToken(ctx, identity, map[string]string{})
 }
 
+func (module *module) GetServiceProviderMetadata(ctx context.Context, authNProvider authtypes.AuthNProvider, siteURL *url.URL) ([]byte, error) {
+	metadataAuthN, err := getProvider[authn.ServiceProviderMetadataAuthN](authNProvider, module.authNs)
+	if err != nil {
+		return nil, err
+	}
+
+	return metadataAuthN.ServiceProviderMetadata(ctx, siteURL)
+}
+
 func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvider authtypes.AuthNProvider, values url.Values) (string, error) {
 	callbackAuthN, err := getProvider[authn.CallbackAuthN](authNProvider, module.authNs)
 	if err != nil {
