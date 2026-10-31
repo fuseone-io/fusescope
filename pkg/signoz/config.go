@@ -27,6 +27,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/archive"
 	"github.com/fuseone-io/fusescope/pkg/modules/authdomain"
 	"github.com/fuseone-io/fusescope/pkg/modules/cloudintegration"
+	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
 	"github.com/fuseone-io/fusescope/pkg/modules/inframonitoring"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer"
 	"github.com/fuseone-io/fusescope/pkg/modules/retention"
@@ -158,6 +159,9 @@ type Config struct {
 	// RUM config
 	RUM rumapplication.Config `mapstructure:"rum"`
 
+	// Dashboard config
+	Dashboard dashboard.Config `mapstructure:"dashboard"`
+
 	// Retention config
 	Retention retention.Config `mapstructure:"retention"`
 
@@ -201,6 +205,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		tracedetail.NewConfigFactory(),
 		authz.NewConfigFactory(),
 		rumapplication.NewConfigFactory(),
+		dashboard.NewConfigFactory(),
 		retention.NewConfigFactory(),
 		archive.NewConfigFactory(),
 	}

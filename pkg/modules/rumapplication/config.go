@@ -6,6 +6,7 @@ import (
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/ratelimit"
 )
 
 var ErrCodeInvalidConfig = errors.MustNewCode("rum_invalid_config")
@@ -67,12 +68,7 @@ type RateLimitConfig struct {
 	TrustForwardedFor bool `mapstructure:"trust_forwarded_for"`
 }
 
-type LimitConfig struct {
-	// Requests per second.
-	Rate float64 `mapstructure:"rate"`
-
-	Burst int `mapstructure:"burst"`
-}
+type LimitConfig = ratelimit.Limit
 
 func NewConfigFactory() factory.ConfigFactory {
 	return factory.NewConfigFactory(factory.MustNewName("rum"), newConfig)

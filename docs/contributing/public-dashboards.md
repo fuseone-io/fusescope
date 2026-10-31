@@ -6,6 +6,10 @@ The administrator controls whether anonymous visitors can change the time range.
 
 Unpublishing deletes the public configuration. Publishing again generates a new link; the old link stays revoked. Deleting the dashboard also removes its public configuration. Public responses use `Cache-Control: no-store`. Revocation prevents subsequent requests; it cannot erase data a visitor has already received or cancel a query already in flight.
 
+## Rate limits
+
+Anonymous dashboard and panel requests share two token buckets: one per public link (`dashboard.public.ratelimit.link`, default 20/s, burst 200) and one per client IP across all links (`dashboard.public.ratelimit.client`, default 5/s, burst 100). An exhausted bucket returns `429` with `Retry-After`, before the link is resolved. The client IP is the remote address, or the first `X-Forwarded-For` address when `rum.ratelimit.trust_forwarded_for` is enabled; enable it only behind a proxy that sets the header, otherwise every visitor behind the proxy shares one bucket. Buckets are in memory and per process, so each replica enforces its own limits.
+
 ## Audit logs
 
 The audit provider defaults to `noop`. To audit anonymous access, explicitly set `auditor.provider: log`. This enables auditing for all audited routes, not only public dashboards. The `log` provider uses the existing bounded batch queue and writes structured events through the server logger. Publishing, updating and revoking sharing are dashboard update events, distinguished by HTTP method and route. Anonymous dashboard and panel reads are public-dashboard read events, including failed requests that match a public route.

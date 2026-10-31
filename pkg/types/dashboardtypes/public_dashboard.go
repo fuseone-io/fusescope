@@ -19,6 +19,7 @@ var (
 	ErrCodePublicDashboardInvalidInput  = errors.MustNewCode("public_dashboard_invalid_input")
 	ErrCodePublicDashboardNotFound      = errors.MustNewCode("public_dashboard_not_found")
 	ErrCodePublicDashboardAlreadyExists = errors.MustNewCode("public_dashboard_already_exists")
+	ErrCodePublicDashboardRateLimited   = errors.MustNewCode("public_dashboard_rate_limited")
 )
 
 type StorablePublicDashboard struct {

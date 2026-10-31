@@ -103,6 +103,9 @@ type Handler interface {
 
 	GetPublicWidgetQueryRangeV2(http.ResponseWriter, *http.Request)
 
+	// CheckPublicRateLimit takes a token from the request's public link and client IP buckets, or returns a too-many-requests error.
+	CheckPublicRateLimit(*http.Request) error
+
 	UpdatePublic(http.ResponseWriter, *http.Request)
 
 	DeletePublic(http.ResponseWriter, *http.Request)

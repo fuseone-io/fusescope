@@ -1,16 +1,15 @@
 package implrumapplication
 
 import (
-	"net"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/http/render"
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
+	"github.com/fuseone-io/fusescope/pkg/ratelimit"
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
@@ -41,8 +40,8 @@ type gateway struct {
 	module        rumapplication.Module
 	config        rumapplication.Config
 	client        *http.Client
-	keyLimiter    *rateLimiter
-	clientLimiter *rateLimiter
+	keyLimiter    *ratelimit.Limiter
+	clientLimiter *ratelimit.Limiter
 	settings      factory.ScopedProviderSettings
 }
 
@@ -59,8 +58,8 @@ func NewGateway(module rumapplication.Module, config rumapplication.Config, prov
 		module:        module,
 		config:        config,
 		client:        &http.Client{Timeout: config.ForwardTimeout},
-		keyLimiter:    newRateLimiter(config.RateLimit.Key),
-		clientLimiter: newRateLimiter(config.RateLimit.Client),
+		keyLimiter:    ratelimit.NewLimiter(config.RateLimit.Key),
+		clientLimiter: ratelimit.NewLimiter(config.RateLimit.Client),
 		settings:      factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication"),
 	}
 }
@@ -139,7 +138,7 @@ func (gateway *gateway) observeKeyRejection(req *http.Request, application *rumt
 // accept rate-limits, decodes, processes and forwards an authenticated request.
 func (gateway *gateway) accept(req *http.Request, application *rumtypes.Application, keyID valuer.UUID, signal otlpSignal) ([]byte, otlpEncoding, *rejection) {
 	now := time.Now()
-	clientIdentity := keyID.StringValue() + "|" + gateway.clientIP(req)
+	clientIdentity := keyID.StringValue() + "|" + ratelimit.ClientIP(req, gateway.config.RateLimit.TrustForwardedFor)
 	if !gateway.keyLimiter.Allow(keyID.StringValue(), now) || !gateway.clientLimiter.Allow(clientIdentity, now) {
 		err := errors.Newf(errors.TypeTooManyRequests, ErrCodeRateLimited, "rate limit exceeded").WithRetryAfter(time.Second)
 		return nil, encodingProtobuf, &rejection{err: err, reason: rumtypes.RejectionReasonRateLimited}
@@ -203,21 +202,6 @@ func (gateway *gateway) preflight(rw http.ResponseWriter, req *http.Request) {
 	header.Set("Access-Control-Allow-Headers", allowedHeaders)
 	header.Set("Access-Control-Max-Age", strconv.Itoa(int(preflightMaxAge.Seconds())))
 	rw.WriteHeader(http.StatusNoContent)
-}
-
-func (gateway *gateway) clientIP(req *http.Request) string {
-	if gateway.config.RateLimit.TrustForwardedFor {
-		if forwarded := req.Header.Get("X-Forwarded-For"); forwarded != "" {
-			first, _, _ := strings.Cut(forwarded, ",")
-			return strings.TrimSpace(first)
-		}
-	}
-
-	host, _, err := net.SplitHostPort(req.RemoteAddr)
-	if err != nil {
-		return req.RemoteAddr
-	}
-	return host
 }
 
 func keyFromRequest(req *http.Request) string {
