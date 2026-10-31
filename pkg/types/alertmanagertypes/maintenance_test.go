@@ -1014,7 +1014,7 @@ func TestPostablePlannedMaintenance_ValidateScope(t *testing.T) {
 			}
 			if c.wantErr {
 				_, _, _, _, url, _ := errors.Unwrapb(err)
-				assert.Equal(t, "https://fuseone-io.github.io/fusescope-docs/alerts/routing-and-downtime/#planned-downtime", url)
+				assert.Equal(t, "https://docs.fusescope.fuseone.io/alerts/routing-and-downtime/#planned-downtime", url)
 			}
 		})
 	}

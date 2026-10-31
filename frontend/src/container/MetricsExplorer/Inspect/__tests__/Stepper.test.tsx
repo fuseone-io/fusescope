@@ -67,7 +67,7 @@ describe('Stepper', () => {
 
 		screen.getAllByRole('link').forEach((link) => {
 			expect(link.getAttribute('href')).toMatch(
-				/^https:\/\/fuseone-io\.github\.io\/fusescope-docs\//,
+				/^https:\/\/docs\.fusescope\.fuseone\.io\//,
 			);
 		});
 	});

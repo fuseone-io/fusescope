@@ -7,7 +7,7 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
   >
     <a
       class="tw:inline-flex tw:items-center tw:gap-1.5 tw:text-[13px] tw:text-primary tw:hover:underline"
-      href="https://fuseone-io.github.io/fusescope-docs/sending-data/log-pipelines/"
+      href="https://docs.fusescope.fuseone.io/sending-data/log-pipelines/"
       rel="noopener noreferrer"
       target="_blank"
     >
@@ -353,7 +353,7 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
         data-size="default"
         data-slot="button"
         data-variant="outline"
-        href="https://fuseone-io.github.io/fusescope-docs/sending-data/log-pipelines/"
+        href="https://docs.fusescope.fuseone.io/sending-data/log-pipelines/"
         rel="noopener noreferrer"
         target="_blank"
       >

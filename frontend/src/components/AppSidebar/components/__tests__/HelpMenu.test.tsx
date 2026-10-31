@@ -97,7 +97,7 @@ describe('HelpMenu', () => {
 	});
 
 	it.each([
-		['Documentation', 'https://fuseone-io.github.io/fusescope-docs'],
+		['Documentation', 'https://docs.fusescope.fuseone.io'],
 		['GitHub', 'https://github.com/fuseone-io/fusescope'],
 		[
 			'Report an issue',

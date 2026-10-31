@@ -18,9 +18,9 @@ import (
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
-var searchTroubleshootingGuideURL = "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/"
+var searchTroubleshootingGuideURL = "https://docs.fusescope.fuseone.io/querying/search-syntax/"
 
-const stringMatchingOperatorDocURL = "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#comparisons"
+const stringMatchingOperatorDocURL = "https://docs.fusescope.fuseone.io/querying/search-syntax/#comparisons"
 
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause.

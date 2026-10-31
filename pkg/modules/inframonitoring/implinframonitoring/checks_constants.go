@@ -16,7 +16,7 @@ const (
 
 // Documentation links emitted on missing entries: each component's section on
 // the Kubernetes page, host metrics included, since the k8s-infra chart runs them.
-const docLinkKubernetes = "https://fuseone-io.github.io/fusescope-docs/sending-data/kubernetes/"
+const docLinkKubernetes = "https://docs.fusescope.fuseone.io/sending-data/kubernetes/"
 
 const (
 	docLinkHostMetricsReceiver        = docLinkKubernetes + "#hostmetrics-receiver"

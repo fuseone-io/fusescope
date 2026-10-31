@@ -4,7 +4,7 @@ export const SIGNOZ_DOCS_URL = `${DOCS_BASE_URL}/docs`;
 
 export const FUSESCOPE_DOCS_URL =
 	process.env.FUSESCOPE_DOCS_URL ||
-	'https://fuseone-io.github.io/fusescope-docs';
+	'https://docs.fusescope.fuseone.io';
 
 /** `path` may start with `/`, `#` or `?`; omitted, it yields the docs root. */
 function joinDocsUrl(base: string, path = ''): string {

@@ -8,7 +8,7 @@ import {
 } from './mocks';
 
 const FUSESCOPE_SSO_DOCS =
-	'https://fuseone-io.github.io/fusescope-docs/configuration/sso/';
+	'https://docs.fusescope.fuseone.io/configuration/sso/';
 
 describe('SSO provider forms link to the FuseScope docs', () => {
 	it.each([

@@ -8,7 +8,7 @@ import {
 describe('docs urls', () => {
 	it('exposes the docs roots', () => {
 		expect(FUSESCOPE_DOCS_URL).toBe(
-			'https://fuseone-io.github.io/fusescope-docs',
+			'https://docs.fusescope.fuseone.io',
 		);
 		expect(SIGNOZ_DOCS_URL).toBe('https://signoz.io/docs');
 	});
@@ -35,14 +35,14 @@ describe('docs urls', () => {
 	});
 
 	it.each([
-		[undefined, 'https://fuseone-io.github.io/fusescope-docs'],
+		[undefined, 'https://docs.fusescope.fuseone.io'],
 		[
 			'/configuration/sso/',
-			'https://fuseone-io.github.io/fusescope-docs/configuration/sso/',
+			'https://docs.fusescope.fuseone.io/configuration/sso/',
 		],
 		[
 			'install/helm/#values',
-			'https://fuseone-io.github.io/fusescope-docs/install/helm/#values',
+			'https://docs.fusescope.fuseone.io/install/helm/#values',
 		],
 	])('fuseScopeDocsUrl(%p) is %p', (path, expected) => {
 		expect(fuseScopeDocsUrl(path)).toBe(expected);

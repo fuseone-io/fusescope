@@ -286,7 +286,7 @@ describe('CreateEdit Modal', () => {
 
 			expect(screen.getByRole('link', { name: 'docs' })).toHaveAttribute(
 				'href',
-				'https://fuseone-io.github.io/fusescope-docs/configuration/sso/',
+				'https://docs.fusescope.fuseone.io/configuration/sso/',
 			);
 		});
 	});
