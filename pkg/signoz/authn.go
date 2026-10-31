@@ -15,7 +15,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 )
 
-func NewAuthNs(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing, globalConfig global.Config, cache cache.Cache) (map[authtypes.AuthNProvider]authn.AuthN, error) {
+func NewAuthNs(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing, globalConfig global.Config, cache cache.Cache, authNConfig authn.Config) (map[authtypes.AuthNProvider]authn.AuthN, error) {
 	emailPasswordAuthN := emailpasswordauthn.New(store)
 
 	googleCallbackAuthN, err := googlecallbackauthn.New(ctx, store, providerSettings, globalConfig)
@@ -28,7 +28,7 @@ func NewAuthNs(ctx context.Context, providerSettings factory.ProviderSettings, s
 		return nil, err
 	}
 
-	samlCallbackAuthN, err := samlcallbackauthn.New(ctx, store, providerSettings, globalConfig, cache)
+	samlCallbackAuthN, err := samlcallbackauthn.New(ctx, store, providerSettings, globalConfig, cache, authNConfig.SAML)
 	if err != nil {
 		return nil, err
 	}

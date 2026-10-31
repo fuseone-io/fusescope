@@ -117,6 +117,21 @@ func (handler *handler) CreateSessionByOIDCCallback(rw http.ResponseWriter, req 
 	http.Redirect(rw, req, redirectURL, http.StatusSeeOther)
 }
 
+func (handler *handler) GetSAMLServiceProviderMetadata(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
+	metadata, err := handler.module.GetServiceProviderMetadata(ctx, authtypes.AuthNProviderSAML, handler.siteURL(req))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/samlmetadata+xml")
+	rw.WriteHeader(http.StatusOK)
+	_, _ = rw.Write(metadata)
+}
+
 func (handler *handler) RotateSession(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
 	defer cancel()
@@ -170,4 +185,22 @@ func (handler *handler) getRedirectURLFromErr(err error) string {
 		Path:     path.Join(handler.globalConfig.ExternalPath(), "/login"),
 		RawQuery: values.Encode(),
 	}).String()
+}
+
+// siteURL is global.external_url when set, otherwise the origin the request reached.
+func (handler *handler) siteURL(req *http.Request) *url.URL {
+	if externalURL := handler.globalConfig.ExternalURL; externalURL != nil && externalURL.Host != "" && externalURL.Host != "<unset>" {
+		return &url.URL{Scheme: externalURL.Scheme, Host: externalURL.Host}
+	}
+
+	scheme := "http"
+	if req.TLS != nil {
+		scheme = "https"
+	}
+
+	if proto := req.Header.Get("X-Forwarded-Proto"); proto == "http" || proto == "https" {
+		scheme = proto
+	}
+
+	return &url.URL{Scheme: scheme, Host: req.Host}
 }

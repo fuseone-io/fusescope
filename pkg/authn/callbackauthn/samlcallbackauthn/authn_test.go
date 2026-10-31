@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/fuseone-io/fusescope/pkg/authn"
 	"github.com/fuseone-io/fusescope/pkg/cache"
 	"github.com/fuseone-io/fusescope/pkg/cache/memorycache"
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -166,6 +167,12 @@ func newAuthDomain(t *testing.T, idp *fakeIdP, attributeMapping map[string]any) 
 		spec["attributeMapping"] = attributeMapping
 	}
 
+	return newAuthDomainFromSpec(t, spec)
+}
+
+func newAuthDomainFromSpec(t *testing.T, spec map[string]any) *authtypes.AuthDomain {
+	t.Helper()
+
 	data, err := json.Marshal(map[string]any{
 		"name":    testDomain,
 		"enabled": true,
@@ -194,10 +201,16 @@ func newTestCache(t *testing.T) cache.Cache {
 func newTestAuthN(t *testing.T, authDomain *authtypes.AuthDomain, globalConfig global.Config) *AuthN {
 	t.Helper()
 
+	return newTestAuthNWithConfig(t, authDomain, globalConfig, authn.SAMLConfig{})
+}
+
+func newTestAuthNWithConfig(t *testing.T, authDomain *authtypes.AuthDomain, globalConfig global.Config, samlConfig authn.SAMLConfig) *AuthN {
+	t.Helper()
+
 	store := authtypestest.NewMockAuthNStore(t)
 	store.EXPECT().GetAuthDomainFromID(mock.Anything, mock.Anything).Return(authDomain, nil).Maybe()
 
-	authN, err := New(context.Background(), store, instrumentationtest.New().ToProviderSettings(), globalConfig, newTestCache(t))
+	authN, err := New(context.Background(), store, instrumentationtest.New().ToProviderSettings(), globalConfig, newTestCache(t), samlConfig)
 	require.NoError(t, err)
 
 	return authN

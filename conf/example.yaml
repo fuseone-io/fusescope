@@ -479,6 +479,19 @@ authdomain:
   #         clientSecret: ${FUSESCOPE_OKTA_CLIENT_SECRET}
   #         scopes: [groups]
 
+##################### AuthN #####################
+authn:
+  saml:
+    # Service provider RSA key pair (PEM). When set, AuthnRequests are signed unless the
+    # auth domain sets insecureSkipAuthNRequestsSigned, and the certificate is published
+    # in the service provider metadata at /api/v1/saml/metadata. Give each part inline
+    # (e.g. SIGNOZ_AUTHN_SAML_SIGNING_KEY) or as a file, such as a mounted secret.
+    signing:
+      key: ""
+      key_file: ""
+      certificate: ""
+      certificate_file: ""
+
 ##################### Auditor #####################
 auditor:
   # Specifies the auditor provider to use.
