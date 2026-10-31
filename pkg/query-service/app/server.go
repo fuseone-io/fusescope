@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/modules/archive/implarchive"
 	"github.com/fuseone-io/fusescope/pkg/modules/retention/implretention"
 	"github.com/fuseone-io/fusescope/pkg/queryparser"
 
@@ -46,6 +47,11 @@ func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) 
 
 	retentionDefaults := implretention.NewDefaultsService(signoz.Instrumentation.ToProviderSettings(), reader, signoz.Modules.OrgGetter, config.Retention)
 	if err := signoz.Registry.Add(context.Background(), factory.NewNamedService(factory.MustNewName("retentiondefaults"), retentionDefaults)); err != nil {
+		return nil, err
+	}
+
+	archiveBackstop := implarchive.NewBackstopService(signoz.Instrumentation.ToProviderSettings(), reader, implarchive.NewStore(signoz.SQLStore), config.Archive)
+	if err := signoz.Registry.Add(context.Background(), factory.NewNamedService(factory.MustNewName("archivebackstop"), archiveBackstop)); err != nil {
 		return nil, err
 	}
 
