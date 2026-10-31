@@ -574,7 +574,7 @@ export interface InfraListResponseOptions {
 
 const LIST_WARNING: Querybuildertypesv5QueryWarnDataDTO = {
 	message: 'Some series were dropped to keep the query within limits.',
-	url: 'https://fuseone-io.github.io/fusescope-docs/querying/query-builder/',
+	url: 'https://docs.fusescope.fuseone.io/querying/query-builder/',
 	warnings: [
 		{ message: 'The metric k8s.pod.cpu.usage has partial data for this range.' },
 	],
@@ -850,7 +850,7 @@ const k8sComponents = (entity: K8sCategory): CheckComponents => {
 		missingAttributesMessage:
 			'Add `k8s.cluster.name` to the k8sattributes processor so rows can be grouped by cluster.',
 		documentationLink:
-			'https://fuseone-io.github.io/fusescope-docs/sending-data/kubernetes/',
+			'https://docs.fusescope.fuseone.io/sending-data/kubernetes/',
 	};
 };
 
@@ -875,7 +875,7 @@ const HOST_COMPONENTS: CheckComponents = {
 	missingAttributesMessage:
 		'Add the system detector to the resourcedetection processor so hosts report their OS type.',
 	documentationLink:
-		'https://fuseone-io.github.io/fusescope-docs/sending-data/kubernetes/',
+		'https://docs.fusescope.fuseone.io/sending-data/kubernetes/',
 };
 
 const EMPTY_CHECKS = {

@@ -13,13 +13,13 @@ import (
 const (
 	// FieldContextDataTypesDocURL documents how to disambiguate a key that resolves
 	// to multiple field context / data type combinations.
-	FieldContextDataTypesDocURL = "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#attribute-keys"
+	FieldContextDataTypesDocURL = "https://docs.fusescope.fuseone.io/querying/search-syntax/#attribute-keys"
 	// KeyNotFoundDocURL documents the "key not found" error.
-	KeyNotFoundDocURL = "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#attribute-keys"
+	KeyNotFoundDocURL = "https://docs.fusescope.fuseone.io/querying/search-syntax/#attribute-keys"
 
 	// Doc URLs for the has/hasAny/hasAll and hasToken "unsupported" errors.
-	functionBodyJSONSearchDocURL = "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#functions"
-	hasTokenFunctionDocURL       = "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#functions"
+	functionBodyJSONSearchDocURL = "https://docs.fusescope.fuseone.io/querying/search-syntax/#functions"
+	hasTokenFunctionDocURL       = "https://docs.fusescope.fuseone.io/querying/search-syntax/#functions"
 )
 
 // ResolveLogicalFields picks which logical fields a filter term builds conditions

@@ -48,8 +48,8 @@ const (
 
 	// Documentation URLs attached to function-call errors so the visitor can
 	// surface them to the user without knowing function-specific details.
-	hasTokenFunctionDocURL       = "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#functions"
-	functionBodyJSONSearchDocURL = "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#functions"
+	hasTokenFunctionDocURL       = "https://docs.fusescope.fuseone.io/querying/search-syntax/#functions"
+	functionBodyJSONSearchDocURL = "https://docs.fusescope.fuseone.io/querying/search-syntax/#functions"
 )
 
 var (

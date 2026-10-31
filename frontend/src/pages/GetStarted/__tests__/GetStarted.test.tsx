@@ -53,7 +53,7 @@ describe('GetStarted catalog', () => {
 		const hosts = screen.getByTestId('catalog-entry-hosts');
 		expect(hosts).toHaveAttribute(
 			'href',
-			'https://fuseone-io.github.io/fusescope-docs/sending-data/hosts/',
+			'https://docs.fusescope.fuseone.io/sending-data/hosts/',
 		);
 		expect(hosts).toHaveAttribute('target', '_blank');
 	});

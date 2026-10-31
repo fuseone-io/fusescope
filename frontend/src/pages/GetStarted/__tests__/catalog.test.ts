@@ -107,7 +107,7 @@ describe('catalogEntryLink', () => {
 			},
 			{
 				kind: 'docs',
-				href: 'https://fuseone-io.github.io/fusescope-docs/sending-data/hosts/',
+				href: 'https://docs.fusescope.fuseone.io/sending-data/hosts/',
 			},
 		],
 	])('opens %s', (_, value, expected) => {

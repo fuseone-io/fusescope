@@ -246,7 +246,7 @@ func requireMissingAttrs(t *testing.T, name string, got *inframonitoringtypes.Mi
 }
 
 func TestCheckSpecsLinkFuseScopeDocs(t *testing.T) {
-	const kubernetesDocs = "https://fuseone-io.github.io/fusescope-docs/sending-data/kubernetes/"
+	const kubernetesDocs = "https://docs.fusescope.fuseone.io/sending-data/kubernetes/"
 	wantByComponent := map[string]string{
 		componentNameHostMetricsReceiver:        kubernetesDocs + "#hostmetrics-receiver",
 		componentNameKubeletStatsReceiver:       kubernetesDocs + "#kubeletstats-receiver",

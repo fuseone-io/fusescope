@@ -169,7 +169,7 @@ func TestVisitKey(t *testing.T) {
 			},
 			expectedKeys:       []telemetrytypes.TelemetryFieldKey{},
 			expectedErrors:     []string{"key `unknown_key` not found"},
-			expectedMainErrURL: "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#attribute-keys",
+			expectedMainErrURL: "https://docs.fusescope.fuseone.io/querying/search-syntax/#attribute-keys",
 			expectedWarnings:   nil,
 			expectedMainWrnURL: "",
 		},
@@ -200,7 +200,7 @@ func TestVisitKey(t *testing.T) {
 			expectedErrors:     nil,
 			expectedMainErrURL: "",
 			expectedWarnings:   []string{"ambiguous"},
-			expectedMainWrnURL: "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#attribute-keys",
+			expectedMainWrnURL: "https://docs.fusescope.fuseone.io/querying/search-syntax/#attribute-keys",
 		},
 		// Context prefixed keys tests
 		{
@@ -351,7 +351,7 @@ func TestVisitKey(t *testing.T) {
 			ignoreNotFoundKeys: false,
 			expectedKeys:       []telemetrytypes.TelemetryFieldKey{},
 			expectedErrors:     []string{"key `unknown_key` not found"},
-			expectedMainErrURL: "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#attribute-keys",
+			expectedMainErrURL: "https://docs.fusescope.fuseone.io/querying/search-syntax/#attribute-keys",
 			expectedWarnings:   nil,
 			expectedMainWrnURL: "",
 		},
@@ -403,7 +403,7 @@ func TestVisitKey(t *testing.T) {
 			expectedErrors:     nil,
 			expectedMainErrURL: "",
 			expectedWarnings:   []string{"ambiguous"},
-			expectedMainWrnURL: "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#attribute-keys",
+			expectedMainWrnURL: "https://docs.fusescope.fuseone.io/querying/search-syntax/#attribute-keys",
 		},
 		{
 			name:    "Ambiguous key with different data types",
@@ -437,7 +437,7 @@ func TestVisitKey(t *testing.T) {
 			expectedErrors:     nil,
 			expectedMainErrURL: "",
 			expectedWarnings:   []string{"ambiguous"},
-			expectedMainWrnURL: "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#attribute-keys",
+			expectedMainWrnURL: "https://docs.fusescope.fuseone.io/querying/search-syntax/#attribute-keys",
 		},
 		// These 3 unit tests have both attibute.custom_field and custom_field in the map
 		{
@@ -536,7 +536,7 @@ func TestVisitKey(t *testing.T) {
 			expectedErrors:     nil,
 			expectedMainErrURL: "",
 			expectedWarnings:   []string{"ambiguous"},
-			expectedMainWrnURL: "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#attribute-keys",
+			expectedMainWrnURL: "https://docs.fusescope.fuseone.io/querying/search-syntax/#attribute-keys",
 		},
 		// Resource attribute ambiguity - resource context is preferred
 		{
@@ -566,7 +566,7 @@ func TestVisitKey(t *testing.T) {
 			expectedErrors:     nil,
 			expectedMainErrURL: "",
 			expectedWarnings:   []string{"ambiguous", "attribute.deployment.environment"},
-			expectedMainWrnURL: "https://fuseone-io.github.io/fusescope-docs/querying/search-syntax/#attribute-keys",
+			expectedMainWrnURL: "https://docs.fusescope.fuseone.io/querying/search-syntax/#attribute-keys",
 		},
 	}
 

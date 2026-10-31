@@ -16,11 +16,11 @@ describe('HomeOnboarding', () => {
 		expect(screen.getByTestId('home-path-app')).toBeInTheDocument();
 		expect(screen.getByTestId('home-path-kubernetes')).toHaveAttribute(
 			'href',
-			'https://fuseone-io.github.io/fusescope-docs/sending-data/kubernetes/',
+			'https://docs.fusescope.fuseone.io/sending-data/kubernetes/',
 		);
 		expect(screen.getByTestId('home-path-host')).toHaveAttribute(
 			'href',
-			'https://fuseone-io.github.io/fusescope-docs/sending-data/collector-vm/',
+			'https://docs.fusescope.fuseone.io/sending-data/collector-vm/',
 		);
 	});
 
