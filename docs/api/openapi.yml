@@ -18665,6 +18665,26 @@ paths:
       tags:
       - rum
       x-signoz-stability: alpha
+  /api/v1/saml/metadata:
+    get:
+      deprecated: false
+      description: This endpoint returns the SAML service provider metadata (entity
+        ID, assertion consumer service URL and signing certificate) as application/samlmetadata+xml,
+        for identity providers to import
+      operationId: GetSAMLServiceProviderMetadata
+      responses:
+        "200":
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Get saml service provider metadata
+      tags:
+      - sessions
+      x-signoz-stability: alpha
   /api/v1/service_account_roles:
     post:
       deprecated: false
