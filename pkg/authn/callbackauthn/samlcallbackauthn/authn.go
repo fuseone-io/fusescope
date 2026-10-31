@@ -10,12 +10,10 @@ import (
 	"encoding/pem"
 	"log/slog"
 	"net/url"
-	"path"
 	"strings"
 	"time"
 
 	saml2 "github.com/russellhaering/gosaml2"
-	dsig "github.com/russellhaering/goxmldsig"
 
 	"github.com/fuseone-io/fusescope/pkg/authn"
 	"github.com/fuseone-io/fusescope/pkg/cache"
@@ -39,19 +37,32 @@ type AuthN struct {
 	settings     factory.ScopedProviderSettings
 	globalConfig global.Config
 	cache        cache.Cache
+	signingKey   *saml2.KeyStore
 }
 
-func New(_ context.Context, store authtypes.AuthNStore, providerSettings factory.ProviderSettings, globalConfig global.Config, cache cache.Cache) (*AuthN, error) {
+func New(_ context.Context, store authtypes.AuthNStore, providerSettings factory.ProviderSettings, globalConfig global.Config, cache cache.Cache, samlConfig authn.SAMLConfig) (*AuthN, error) {
+	var signingKey *saml2.KeyStore
+	if samlConfig.Signing.IsConfigured() {
+		keyPair, err := samlConfig.Signing.KeyPair()
+		if err != nil {
+			return nil, err
+		}
+
+		signingKey = &saml2.KeyStore{Signer: keyPair.Signer, Cert: keyPair.Certificate.Raw}
+	}
+
 	return &AuthN{
 		store:        store,
 		settings:     factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/authn/callbackauthn/samlcallbackauthn"),
 		globalConfig: globalConfig,
 		cache:        cache,
+		signingKey:   signingKey,
 	}, nil
 }
 
-// LoginURL starts SP-initiated login with the HTTP-Redirect binding. Requests are
-// sent unsigned; the security of the exchange rests on the IdP-signed response.
+// LoginURL starts SP-initiated login with the HTTP-Redirect binding. The request is
+// signed in the query string (SigAlg, Signature) when a service provider key is
+// configured and the auth domain does not opt out.
 func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
 	samlConfig, err := authDomain.Config().SamlConfig()
 	if err != nil {
@@ -67,7 +78,7 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 		return "", err
 	}
 
-	doc, err := sp.BuildAuthRequestDocument()
+	doc, err := sp.BuildAuthRequestDocumentNoSig()
 	if err != nil {
 		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "saml: failed to build the authn request").WithAdditional(err.Error())
 	}
@@ -150,11 +161,6 @@ func (a *AuthN) validateAssertion(ctx context.Context, orgID valuer.UUID, assert
 
 	assertion := assertionInfo.Assertions[0]
 	key := "saml:assertion:" + assertion.ID
-	if err := a.cache.Get(ctx, orgID, key, new(consumedAssertion)); err == nil {
-		a.settings.Logger().WarnContext(ctx, "saml: replayed assertion", slog.String("assertion_id", assertion.ID))
-		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "saml: assertion was already used")
-	}
-
 	ttl := replayWindow
 	if assertion.Conditions != nil {
 		if notOnOrAfter, err := time.Parse(time.RFC3339, assertion.Conditions.NotOnOrAfter); err == nil && time.Until(notOnOrAfter) > 0 {
@@ -162,9 +168,15 @@ func (a *AuthN) validateAssertion(ctx context.Context, orgID valuer.UUID, assert
 		}
 	}
 
-	if err := a.cache.Set(ctx, orgID, key, &consumedAssertion{}, ttl); err != nil {
+	recorded, err := a.cache.SetIfAbsent(ctx, orgID, key, &consumedAssertion{}, ttl)
+	if err != nil {
 		a.settings.Logger().ErrorContext(ctx, "saml: failed to record assertion", errors.Attr(err))
 		return errors.New(errors.TypeInternal, errors.CodeInternal, "saml: failed to record assertion")
+	}
+
+	if !recorded {
+		a.settings.Logger().WarnContext(ctx, "saml: replayed assertion", slog.String("assertion_id", assertion.ID))
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "saml: assertion was already used")
 	}
 
 	return nil
@@ -222,27 +234,6 @@ func (a *AuthN) trustServiceProviderURL(ctx context.Context, requestURL *url.URL
 
 	a.settings.Logger().WarnContext(ctx, "saml: neither global.external_url nor global.allowed_origins is set, so the service provider identity comes from the relay state")
 	return nil
-}
-
-func (a *AuthN) serviceProvider(siteURL *url.URL, samlConfig authtypes.SamlConfig) (*saml2.SAMLServiceProvider, error) {
-	certificate, err := parseCertificate(samlConfig.Certificate)
-	if err != nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "saml: invalid identity provider certificate").WithAdditional(err.Error())
-	}
-
-	return &saml2.SAMLServiceProvider{
-		IdentityProviderSSOURL:     samlConfig.Location,
-		IdentityProviderSSOBinding: saml2.BindingHttpRedirect,
-		IdentityProviderIssuer:     samlConfig.EntityID,
-		ServiceProviderIssuer:      siteURL.Host,
-		AudienceURI:                siteURL.Host,
-		AssertionConsumerServiceURL: (&url.URL{
-			Scheme: siteURL.Scheme,
-			Host:   siteURL.Host,
-			Path:   path.Join(a.globalConfig.ExternalPath(), redirectPath),
-		}).String(),
-		IDPCertificateStore: &dsig.MemoryX509CertificateStore{Roots: []*x509.Certificate{certificate}},
-	}, nil
 }
 
 // parseCertificate accepts the base64 body of an X509Certificate element or a PEM block.

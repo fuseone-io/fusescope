@@ -20,6 +20,9 @@ type Module interface {
 	// Create a session for a user using callback authn providers.
 	CreateCallbackAuthNSession(ctx context.Context, authNProvider authtypes.AuthNProvider, values url.Values) (string, error)
 
+	// Get the service provider metadata an identity provider imports, for callback authn providers that publish one.
+	GetServiceProviderMetadata(ctx context.Context, authNProvider authtypes.AuthNProvider, siteURL *url.URL) ([]byte, error)
+
 	// Rotate a token.
 	RotateSession(ctx context.Context, accessToken string, refreshToken string) (*authtypes.Token, error)
 
@@ -45,6 +48,9 @@ type Handler interface {
 
 	// Create a session for a user using oidc callback.
 	CreateSessionByOIDCCallback(http.ResponseWriter, *http.Request)
+
+	// Get the saml service provider metadata.
+	GetSAMLServiceProviderMetadata(http.ResponseWriter, *http.Request)
 
 	// Rotate a token.
 	RotateSession(http.ResponseWriter, *http.Request)

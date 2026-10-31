@@ -26,3 +26,10 @@ type CallbackAuthN interface {
 	// Get provider info such as `relay state`
 	ProviderInfo(context.Context, *authtypes.AuthDomain) *authtypes.AuthNProviderInfo
 }
+
+// ServiceProviderMetadataAuthN is a callback authn whose identity providers can
+// import this service provider from published metadata.
+type ServiceProviderMetadataAuthN interface {
+	// Metadata document for the service provider reached at the site url.
+	ServiceProviderMetadata(context.Context, *url.URL) ([]byte, error)
+}
