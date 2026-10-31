@@ -40,6 +40,8 @@ pytest_plugins = [
     "fixtures.seed_golden_dataset",
     "fixtures.otelcollector",
     "fixtures.simulatorcontract",
+    "fixtures.seaweedfs",
+    "fixtures.archive",
 ]
 
 

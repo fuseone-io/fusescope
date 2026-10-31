@@ -45,10 +45,26 @@ CUSTOM_FUNCTION_CONFIG = """
 </functions>
 """
 
+# Lets tests create the named collections the archive writes through.
+USERS_CONFIG = f"""
+<clickhouse>
+    <users>
+        <{CLICKHOUSE_USERNAME}>
+            <named_collection_control>1</named_collection_control>
+        </{CLICKHOUSE_USERNAME}>
+    </users>
+</clickhouse>
+"""
+
 # Distributed inserts to a remote shard are async by default. We force
 # sycn at the profile level for deterministic tests.
-CLUSTER_USERS_CONFIG = """
+CLUSTER_USERS_CONFIG = f"""
 <clickhouse>
+    <users>
+        <{CLICKHOUSE_USERNAME}>
+            <named_collection_control>1</named_collection_control>
+        </{CLICKHOUSE_USERNAME}>
+    </users>
     <profiles>
         <default>
             <insert_distributed_sync>1</insert_distributed_sync>
@@ -236,6 +252,10 @@ def create_clickhouse(  # pylint: disable=too-many-arguments,too-many-positional
             custom_function_file_path,
             "/etc/clickhouse-server/custom-function.xml",
         )
+        users_config_file_path = os.path.join(tmp_dir, "users.xml")
+        with open(users_config_file_path, "w", encoding="utf-8") as f:
+            f.write(USERS_CONFIG)
+        container.with_volume_mapping(users_config_file_path, "/etc/clickhouse-server/users.d/integration.xml")
         container.with_network(network)
         container.start()
 

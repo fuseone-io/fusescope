@@ -55,6 +55,11 @@ func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) 
 		return nil, err
 	}
 
+	archiveRestore := implarchive.NewRestoreService(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore, implarchive.NewStore(signoz.SQLStore), config.Archive)
+	if err := signoz.Registry.Add(context.Background(), factory.NewNamedService(factory.MustNewName("archiverestore"), archiveRestore)); err != nil {
+		return nil, err
+	}
+
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		signoz.SQLStore,
 		integrationsController.GetPipelinesForInstalledIntegrations,

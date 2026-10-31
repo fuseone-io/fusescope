@@ -15,6 +15,7 @@ import (
 	"github.com/uptrace/bun/migrate"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 	"github.com/fuseone-io/fusescope/pkg/sqlmigration"
 	"github.com/fuseone-io/fusescope/pkg/sqlschema"
@@ -414,10 +415,12 @@ func migrateTestStore(t *testing.T, store sqlstore.SQLStore, schema sqlschema.SQ
 	t.Helper()
 	ctx := context.Background()
 
-	migration, err := sqlmigration.NewAddArchiveFactory(store, schema).New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
-	require.NoError(t, err)
 	migrations := migrate.NewMigrations()
-	require.NoError(t, migration.Register(migrations))
+	for _, migrationFactory := range []factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]{sqlmigration.NewAddArchiveFactory(store, schema), sqlmigration.NewAddArchiveRehydrationFactory(schema)} {
+		migration, err := migrationFactory.New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
+		require.NoError(t, err)
+		require.NoError(t, migration.Register(migrations))
+	}
 	for _, m := range migrations.Sorted() {
 		require.NoError(t, m.Up(ctx, store.BunDB()))
 	}
