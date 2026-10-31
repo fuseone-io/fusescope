@@ -153,6 +153,10 @@ jobs:
           sudo mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
           chromedriver -version
           google-chrome-stable --version
+      - name: disk
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
       # Restore-only: the cacheci workflow owns cache saves. Seeds the
       # BuildKit cache mounts so the in-test image build is incremental.
       - name: restore
@@ -177,6 +181,7 @@ jobs:
               tar -xf /restored/pnpm-store.tar -C /pnpm/store
           EOF
           docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
+          rm -rf "$RUNNER_TEMP/cacheci"
       - name: run
         run: |
           cd tests && \
