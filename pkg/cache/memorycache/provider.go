@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dgraph-io/ristretto/v2"
@@ -22,6 +23,9 @@ type provider struct {
 	cc       *ristretto.Cache[string, any]
 	config   cache.Config
 	settings factory.ScopedProviderSettings
+
+	// Serializes SetIfAbsent calls; Set does not take it.
+	setIfAbsentMu sync.Mutex
 }
 
 func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
@@ -143,6 +147,21 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 
 	provider.cc.Wait()
 	return nil
+}
+
+func (provider *provider) SetIfAbsent(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) (bool, error) {
+	provider.setIfAbsentMu.Lock()
+	defer provider.setIfAbsentMu.Unlock()
+
+	if _, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), cacheKey}, "::")); found {
+		return false, nil
+	}
+
+	if err := provider.Set(ctx, orgID, cacheKey, data, ttl); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable) error {

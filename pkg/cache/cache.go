@@ -13,6 +13,11 @@ type Cache interface {
 	// Set sets the cacheable entity in cache.
 	Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) error
 
+	// SetIfAbsent sets the cacheable entity only when the key is not cached, atomically
+	// for the cache's scope (per process for memory, shared for redis), and reports
+	// whether it was set.
+	SetIfAbsent(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) (bool, error)
+
 	// Get gets the cacheble entity in the dest entity passed.
 	Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable) error
 

@@ -13,6 +13,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/go-redis/redismock/v9"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type CacheableA struct {
@@ -57,4 +58,32 @@ func TestSet(t *testing.T) {
 
 	assert.NoError(t, cache.Set(context.Background(), orgID, "key", cacheable, 10*time.Second))
 	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSetIfAbsent(t *testing.T) {
+	testCases := []struct {
+		name    string
+		stored  bool
+		wantSet bool
+	}{
+		{name: "Absent_Set", stored: true, wantSet: true},
+		{name: "Present_NotSet", stored: false, wantSet: false},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			db, mock := redismock.NewClientMock()
+			providerSettings := instrumentationtest.New().ToProviderSettings()
+			cache := &provider{client: db, settings: factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/cache/rediscache")}
+
+			cacheable := &CacheableA{Key: "replay-key", Value: 2}
+			orgID := valuer.GenerateUUID()
+			mock.ExpectSetNX(strings.Join([]string{orgID.StringValue(), "key"}, "::"), cacheable, 5*time.Second).SetVal(testCase.stored)
+
+			set, err := cache.SetIfAbsent(context.Background(), orgID, "key", cacheable, 5*time.Second)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.wantSet, set)
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }
