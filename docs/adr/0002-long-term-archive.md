@@ -53,7 +53,7 @@ Constraints: no new imports from `fusescope-otel-collector` ([ADR 0001](0001-agp
 | Guarantee | Mechanism | Premises | When a premise fails |
 |---|---|---|---|
 | A row is never deleted by the archive job unless it is in a published archive segment | The job deletes only with `DROP PART <name>` of parts whose block range is covered by published segments (§4) | Part names and block ranges behave as in E5; no table mutations rewrite parts in place | A mutated part (new name, same range) is treated as changed and re-exported before its drop |
-| Late, in-progress and lagging-replica rows are archived in a later cycle | They live in parts with block ranges that no published segment covers (§3) | Block numbers are unique per shard and partition | None found in this design |
+| Late, in-progress and lagging-replica rows are archived in a later cycle | They live in parts with block ranges that no published segment covers (§3) | Block numbers are unique per shard and partition, and restart when a table is recreated; the job pins each shard to its table's replica path (its UUID when not replicated), and ranges only compare within one pin | A reordered `remote_servers` fails the pin, and the job refuses that shard until it is resolved. A recreated table fails it too; deleting the shard's `archive_shard` row re-pins it, and its new parts are exported without comparing against the old pin's ranges |
 | Data past retention is kept until archived, for at least `backstop_days` after insertion | The live TTL becomes ingestion-time based: `ingestion_column + retention + backstop`, and `MATERIALIZE TTL` applies it to existing parts. Every TTL writer goes through one builder that adds the backstop (§5) | The ingestion column exists and its clock is within minutes of real time | Tables without an ingestion column keep event-time TTL; late rows older than `retention + backstop` can expire before they are archived (§5, limitation) |
 | Every loss is recorded | Every cycle stores a part inventory; a part that vanishes without being archived or merged into an archived part is marked `lost`, with its row count (§6) | The job ran at least once while the part existed | Parts created and expired between two runs leave no trace; only the job's downtime window is recorded |
 | A restoration loads only what was committed | SQL state, not the bucket, says which objects to load and how; each object is checked against the size, ETag and row count recorded at commit (§9) | The metastore is not writable by whoever can write the bucket | A modified, partial or replaced object fails the restoration as `corrupt` |
@@ -130,7 +130,7 @@ Each cycle, per table, per shard, for every partition whose days are past its re
 4. **Manifest.** A new key, never overwritten, lists for each part its name, range, rows, object key, size and ETag, plus the source columns and types, the column mapping, the `format_version` and the migrator version. It is for external readers; restores don't trust it (§9).
 5. **Commit.** One SQL transaction, fenced by the lease epoch:
    - The objects are recorded in `archive_object (object_key, bytes, etag, rows, status)`.
-   - The parts become `published` in `archive_part (table, shard, partition_id, min_block, max_block, part_name, rows, object_key, attempt_id, status)`. A part refers to the object that holds it, so compaction (§11) can move it to another object without touching the cursor.
+   - The parts become `published` in `archive_part (table, shard, shard_id, partition_id, min_block, max_block, part_name, rows, object_key, attempt_id, status)`, where `shard_id` is the shard's pin. A part refers to the object that holds it, so compaction (§11) can move it to another object without touching the cursor.
    - The attempt's column mapping, `format_version` and the manifest's SHA-256 are stored in `archive_attempt`.
    - Any published part whose range is contained in a newly published part becomes `superseded`. That happens when exported parts merged with later rows before being dropped.
 
@@ -223,18 +223,19 @@ Exported files follow a type contract compatible with Iceberg v2, fixed before p
 | ClickHouse type | Exported as | Note |
 |---|---|---|
 | `UInt8/16/32` | `Int32` / `Int64` | lossless widening |
-| `UInt64` | `Int64` | bit reinterpretation for hashes and IDs (`fingerprint`), `toInt64` for measures (`duration_nano`); the rule is recorded per column in the manifest so restores undo it |
+| `UInt64` | `Int64` | bit reinterpretation (`CAST`), also for measures (`duration_nano`), where it equals `toInt64` below 2^63; the rule is recorded per column (`uint64_rule: bits`), nested types included, so restores undo it |
 | `FixedString`, `LowCardinality`, `Enum` | `String` | |
 | `Bool` | `BOOLEAN` | the restriction is in ClickHouse's Iceberg writer, not the spec |
 | `UUID` | `String` | DuckDB misreads ClickHouse's byte order |
-| `Dynamic`, `Variant` | `String` | rejected by the Parquet writer |
+| `Dynamic`, `Variant` | `String` | rejected by the Parquet writer; the type discriminator is lost, so a restore brings the values back as `String` inside the column |
 | `JSON` | string with the Parquet JSON logical type | candidate for `variant` in Iceberg v3; custom encoder required |
 | `DateTime64(9)` | `TIMESTAMP(NANOS)` plus a `*_unix_nano Int64` column | the `Int64` column is the portable one in Iceberg v2 |
 | `Map(String, String)` | Parquet `MAP` | |
 
+- **Every file** also carries `_shard Int32` and `_part String` (§3); source columns with those names are refused.
 - **Format version.** Manifests carry a `format_version`. Release N restores segments written by format versions N and N-1, as Tempo keeps reading the previous block version. Older segments need a restore adapter, or fail as `incompatible`.
 - **Old schemas.** Segments are restored by the explicit column mapping stored in SQL at commit (§3), not by the manifest's copy. A migration that renames or retypes an archived column must ship a restore adapter.
-- **External readers** read through manifests, never by listing raw prefixes, because superseded objects (§3) stay in the bucket and duplicate rows. Each commit writes a new immutable index key per table listing the active objects, which the reader takes from the highest commit; a later Iceberg table can replace it. Superseded objects are deleted after `gc_superseded_days` (default 30) on buckets without Object Lock, and kept on WORM buckets.
+- **External readers** read through manifests, never by listing raw prefixes, because superseded objects (§3) stay in the bucket and duplicate rows. Each commit writes a new immutable index key per table listing the active objects, keyed by lease epoch then the table's commit sequence (not by any clock), which the reader takes from the highest key; a later Iceberg table can replace it. Superseded objects are deleted after `gc_superseded_days` (default 30) on buckets without Object Lock, and kept on WORM buckets.
 - **Acceptance.** DuckDB and pyarrow (or Trino) read every exported table with the types above.
 
 ### 9. Restoration

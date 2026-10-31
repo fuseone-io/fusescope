@@ -1291,6 +1291,11 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 		}
 	}
 
+	backstopDays, err := r.archiveBackstopDays(ctx, retentiontypes.LogsTTL)
+	if err != nil {
+		return nil, err
+	}
+
 	multiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, false)
 	resourceMultiIfExpr := r.buildMultiIfExpression(params.TTLConditions, params.DefaultTTLDays, true)
 
@@ -1301,7 +1306,11 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
 	}
 
-	ttlStatements := customRetentionLogsTTLStatements(logsTTLTables{Logs: tableNames[0], Resource: tableNames[1], AttributeKeys: tableNames[2], ResourceKeys: tableNames[3]}, r.cluster, params.ColdStorageVolume, coldStorageDuration, maxRetentionTTL)
+	backstop, err := r.logsBackstop(ctx, backstopDays)
+	if err != nil {
+		return nil, err
+	}
+	ttlStatements := customRetentionLogsTTLStatements(r.logsTTLTables(), r.cluster, params.ColdStorageVolume, coldStorageDuration, maxRetentionTTL, backstop)
 
 	ttlPayload := make(map[string][]string)
 

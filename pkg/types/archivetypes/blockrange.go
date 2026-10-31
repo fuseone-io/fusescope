@@ -27,6 +27,7 @@ type Part struct {
 	Range       BlockRange
 	DataVersion int64
 	Rows        uint64
+	BytesOnDisk uint64
 	FirstSeen   time.Time
 }
 
@@ -127,11 +128,14 @@ func Archived(part Part, published []Part) bool {
 	return RangesOf(current).Covers(part.Range)
 }
 
-// Superseded returns the published parts whose range is contained in a newly published part.
+// Superseded returns the published parts whose range a newly published part contains. Of
+// equal ranges, only the same or a later data version supersedes, so a late copy of a part
+// doesn't bring back rows a mutation deleted. Data versions of different ranges don't
+// compare: an unmutated part's is its first block.
 func Superseded(published []Part, newlyPublished []Part) []Part {
 	return filterParts(published, func(part Part) bool {
 		return slices.ContainsFunc(newlyPublished, func(newer Part) bool {
-			return newer.Name != part.Name && newer.Range.Contains(part.Range)
+			return newer.Name != part.Name && newer.Range.Contains(part.Range) && (newer.Range != part.Range || newer.DataVersion >= part.DataVersion)
 		})
 	})
 }

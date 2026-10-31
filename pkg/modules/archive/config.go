@@ -50,6 +50,14 @@ type LimitsConfig struct {
 	MaxThreads int `mapstructure:"max_threads"`
 
 	RowGroupRows int `mapstructure:"row_group_rows"`
+
+	// Per query, as max_execution_time and a client deadline. Below the export cycle's
+	// deadline, a quarter of backstop_days.
+	QueryTimeout time.Duration `mapstructure:"query_timeout"`
+
+	// Added to query_timeout for each started GiB of a part's bytes_on_disk when it is
+	// exported, up to the export cycle's deadline.
+	QueryTimeoutPerGiB time.Duration `mapstructure:"query_timeout_per_gib"`
 }
 
 type SignalConfig struct {
@@ -87,7 +95,7 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		Interval:         time.Hour,
-		Limits:           LimitsConfig{Concurrency: 1, MaxMemoryUsage: 2 << 30, MaxThreads: 4, RowGroupRows: 100_000},
+		Limits:           LimitsConfig{Concurrency: 1, MaxMemoryUsage: 2 << 30, MaxThreads: 4, RowGroupRows: 100_000, QueryTimeout: time.Hour, QueryTimeoutPerGiB: 2 * time.Minute},
 		GCSupersededDays: 30,
 		Logs:             newSignalConfig(),
 		Traces:           newSignalConfig(),
@@ -105,6 +113,12 @@ func (c Config) Validate() error {
 	if c.Limits.MaxMemoryUsage < 0 {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.max_memory_usage must not be negative")
 	}
+	if c.Limits.QueryTimeout <= 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.query_timeout must be positive")
+	}
+	if c.Limits.QueryTimeoutPerGiB < 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.query_timeout_per_gib must not be negative")
+	}
 	if c.GCSupersededDays < 0 {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.gc_superseded_days must not be negative")
 	}
@@ -112,7 +126,20 @@ func (c Config) Validate() error {
 		return errors.New(errors.TypeUnsupported, ErrCodeInvalidConfig, "only archive.logs can be enabled for now")
 	}
 
-	return c.Logs.validate("archive.logs", c.Interval)
+	if err := c.Logs.validate("archive.logs", c.Interval); err != nil {
+		return err
+	}
+	if c.Logs.Enabled && c.Limits.QueryTimeout >= c.Logs.CycleTimeout() {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.query_timeout must be below a quarter of archive.logs.backstop_days")
+	}
+
+	return nil
+}
+
+// CycleTimeout bounds an export cycle well within the backstop, so a stuck one can't keep
+// the lease while the backstop runs out.
+func (c SignalConfig) CycleTimeout() time.Duration {
+	return time.Duration(c.BackstopDays) * 24 * time.Hour / 4
 }
 
 func newSignalConfig() SignalConfig {

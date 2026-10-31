@@ -48,6 +48,9 @@ packages:
       TTLSetter:
         config:
           filename: "ttlsetter.go"
+      BackstopSetter:
+        config:
+          filename: "backstopsetter.go"
     config:
       dir: '{{.InterfaceDir}}/retentiontest'
       structname: 'Mock{{.InterfaceName}}'

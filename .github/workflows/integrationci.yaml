@@ -62,6 +62,8 @@ jobs:
         suite:
           - alertmanager
           - alertmanagerrotation
+          - archive
+          - archivecluster
           - auditquerier
           - basepath
           - authdomainconfig

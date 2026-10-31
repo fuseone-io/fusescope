@@ -614,6 +614,13 @@ retention:
 
 ##################### Archive #####################
 # Long-term archive of telemetry to object storage, as Parquet (docs/adr/0002).
+# The backend connects to every replica of the telemetry store cluster directly,
+# at the host and port in system.clusters (the inter-server native port), with
+# the DSN's credentials, protocol and TLS: that port must speak the DSN's
+# protocol, and replicas in remote_servers must not be shared between shards. A
+# loopback replica is reached at the DSN. Tables must be replicated on clusters
+# of more than one server.
+# The ClickHouse user needs GRANT NAMED COLLECTION ON <named_collection>.
 archive:
   # How often the export cycle runs.
   interval: 1h
@@ -626,6 +633,13 @@ archive:
     # Per query; also max_insert_threads on restore.
     max_threads: 4
     row_group_rows: 100000
+    # Per query, as max_execution_time and a client deadline. Below a quarter of
+    # backstop_days, which bounds an export cycle.
+    query_timeout: 1h
+    # Added to query_timeout for each started GiB of a part's bytes_on_disk when
+    # it is exported, up to a quarter of backstop_days: 2m assumes at least
+    # ~8.5 MiB/s of compressed part read, encoded and uploaded.
+    query_timeout_per_gib: 2m
   # Superseded objects are deleted after this many days, except on Object Lock
   # buckets. 0 keeps them.
   gc_superseded_days: 30
