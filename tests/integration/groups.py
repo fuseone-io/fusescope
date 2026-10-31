@@ -24,7 +24,7 @@ SUITES_DIR = Path(__file__).parent / "tests"
 
 STACK_FIXTURE = re.compile(r'name="(signoz|clickhouse|keeper|migrator|sqlstore|postgres|sqlite|create_user_admin)"')
 
-WEBDRIVER_SUITES = {"basepath", "callbackauthn"}
+WEBDRIVER_SUITES = {"basepath", "callbackauthn", "samlsigning"}
 
 GROUPS: dict[str, dict[str, list[str]]] = {
     "inframonitoring": {
@@ -57,7 +57,7 @@ GROUPS: dict[str, dict[str, list[str]]] = {
     },
     "authn": {
         "shared": ["callbackauthn"],
-        "isolated": ["basepath", "passwordauthn"],
+        "isolated": ["basepath", "passwordauthn", "samlsigning"],
     },
     "flags": {
         "shared": [],
