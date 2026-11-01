@@ -1,3 +1,4 @@
+// throwaway
 package alertmanager
 
 import (
