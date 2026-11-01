@@ -55,7 +55,64 @@ jobs:
       - name: lint
         run: |
           make py-lint
+  # Shares the image as an artifact, not via a registry: pull_request_target
+  # runs fork code and must not hold a write token.
+  build:
+    if: |
+      !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-integrate' && github.event.label.name != 'safe-to-test') && (
+      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
+      )
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+      # Restore-only: the cacheci workflow owns cache saves. Seeds the
+      # BuildKit cache mounts so the image build is incremental.
+      - name: restore
+        id: restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/cacheci
+          key: tests-primary
+          restore-keys: |
+            tests-secondary
+      - name: inject
+        if: steps.restore.outputs.cache-matched-key != ''
+        run: |
+          cat > "$RUNNER_TEMP/inject.Dockerfile" <<'EOF'
+          FROM busybox:1.37
+          RUN --mount=type=cache,target=/root/.cache/go-build \
+              --mount=type=cache,target=/go/pkg/mod \
+              --mount=type=cache,target=/pnpm/store \
+              --mount=type=bind,target=/restored \
+              tar -xf /restored/go-build.tar -C /root/.cache/go-build && \
+              tar -xf /restored/go-mod.tar -C /go/pkg/mod && \
+              tar -xf /restored/pnpm-store.tar -C /pnpm/store
+          EOF
+          docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
+          rm -rf "$RUNNER_TEMP/cacheci"
+      - name: build
+        run: |
+          docker build \
+            --file cmd/community/Dockerfile.integration \
+            --tag fusescope-ci:integration \
+            --build-arg TARGETARCH=amd64 \
+            .
+      - name: save
+        run: |
+          docker save fusescope-ci:integration | zstd -T0 -o "$RUNNER_TEMP/image.tar.zst"
+          ls -lh "$RUNNER_TEMP/image.tar.zst"
+      - name: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: image
+          path: ${{ runner.temp }}/image.tar.zst
+          compression-level: 0
+          retention-days: 1
   test:
+    needs: build
     strategy:
       fail-fast: false
       matrix:
@@ -157,31 +214,15 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           df -h /
-      # Restore-only: the cacheci workflow owns cache saves. Seeds the
-      # BuildKit cache mounts so the in-test image build is incremental.
-      - name: restore
-        id: restore
-        uses: actions/cache/restore@v6
+      - name: load
+        uses: actions/download-artifact@v8
         with:
-          path: ${{ runner.temp }}/cacheci
-          key: tests-primary
-          restore-keys: |
-            tests-secondary
-      - name: inject
-        if: steps.restore.outputs.cache-matched-key != ''
+          name: image
+          path: ${{ runner.temp }}
+      - name: docker-load
         run: |
-          cat > "$RUNNER_TEMP/inject.Dockerfile" <<'EOF'
-          FROM busybox:1.37
-          RUN --mount=type=cache,target=/root/.cache/go-build \
-              --mount=type=cache,target=/go/pkg/mod \
-              --mount=type=cache,target=/pnpm/store \
-              --mount=type=bind,target=/restored \
-              tar -xf /restored/go-build.tar -C /root/.cache/go-build && \
-              tar -xf /restored/go-mod.tar -C /go/pkg/mod && \
-              tar -xf /restored/pnpm-store.tar -C /pnpm/store
-          EOF
-          docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
-          rm -rf "$RUNNER_TEMP/cacheci"
+          zstd -dc "$RUNNER_TEMP/image.tar.zst" | docker load
+          rm "$RUNNER_TEMP/image.tar.zst"
       - name: run
         run: |
           cd tests && \
@@ -192,4 +233,5 @@ jobs:
             --sqlite-mode ${{matrix.sqlite-mode}} \
             --postgres-version ${{matrix.postgres-version}} \
             --clickhouse-version ${{matrix.clickhouse-version}} \
-            --schema-migrator-version ${{matrix.schema-migrator-version}}
+            --schema-migrator-version ${{matrix.schema-migrator-version}} \
+            --signoz-image fusescope-ci:integration

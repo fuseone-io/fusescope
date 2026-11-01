@@ -74,62 +74,19 @@ jobs:
       - name: lint
         run: |
           cd tests/e2e && pnpm lint
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - chromium
-        shard: [1, 2, 3, 4]
+  # Shares the image as an artifact, not via a registry: pull_request_target
+  # runs fork code and must not hold a write token.
+  build:
     needs: changes
     if: |
       ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
     steps:
       - name: checkout
         uses: actions/checkout@v7
-      # Images bring-up-stack would otherwise pull, at the tests/conftest.py
-      # defaults. A stale tag only loses the head start.
-      - name: pull-images
-        id: pull-images
-        background: true
-        run: |
-          printf '%s\n' \
-            node:22-bookworm \
-            golang:1.26-bookworm \
-            python:3.13-slim \
-            postgres:15 \
-            clickhouse/clickhouse-server:25.12.5 \
-            clickhouse/clickhouse-keeper:25.12.5 \
-            ghcr.io/fuseone-io/fusescope-schema-migrator:0.145.0 \
-            wiremock/wiremock:2.35.1-1 \
-            | xargs -P 0 -n 1 docker pull -q
-      - name: python
-        uses: actions/setup-python@v7
-        with:
-          python-version: 3.13
-      - name: uv
-        uses: astral-sh/setup-uv@v10.3.0
-      - name: python-install
-        id: python-install
-        background: true
-        run: |
-          cd tests && uv sync
-      - name: node
-        uses: actions/setup-node@v7
-        with:
-          node-version: lts/*
-      - name: install-pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 10
-      - name: pnpm-install
-        run: |
-          cd tests/e2e && pnpm install --frozen-lockfile
       # Restore-only: the cacheci workflow owns cache saves. Seeds the
-      # BuildKit cache mounts so the in-test image build is incremental.
+      # BuildKit cache mounts so the image build is incremental.
       - name: restore
         id: restore
         uses: actions/cache/restore@v6
@@ -152,10 +109,91 @@ jobs:
               tar -xf /restored/pnpm-store.tar -C /pnpm/store
           EOF
           docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
+      - name: build
+        run: |
+          docker build \
+            --file cmd/community/Dockerfile.with-web.integration \
+            --tag fusescope-ci:with-web \
+            --build-arg TARGETARCH=amd64 \
+            .
+      - name: save
+        run: |
+          docker save fusescope-ci:with-web | zstd -T0 -o "$RUNNER_TEMP/image.tar.zst"
+          ls -lh "$RUNNER_TEMP/image.tar.zst"
+      - name: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: image
+          path: ${{ runner.temp }}/image.tar.zst
+          compression-level: 0
+          retention-days: 1
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - chromium
+        shard: [1, 2, 3, 4]
+    needs: [changes, build]
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && needs.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+      # Images bring-up-stack would otherwise pull, at the tests/conftest.py
+      # defaults. A stale tag only loses the head start.
+      - name: pull-images
+        id: pull-images
+        background: true
+        run: |
+          printf '%s\n' \
+            python:3.13-slim \
+            postgres:15 \
+            clickhouse/clickhouse-server:25.12.5 \
+            clickhouse/clickhouse-keeper:25.12.5 \
+            ghcr.io/fuseone-io/fusescope-schema-migrator:0.145.0 \
+            wiremock/wiremock:2.35.1-1 \
+            | xargs -P 0 -n 1 docker pull -q
+      - name: download-image
+        uses: actions/download-artifact@v8
+        with:
+          name: image
+          path: ${{ runner.temp }}
+      - name: load-image
+        id: load-image
+        background: true
+        run: |
+          zstd -dc "$RUNNER_TEMP/image.tar.zst" | docker load
+          rm "$RUNNER_TEMP/image.tar.zst"
+      - name: python
+        uses: actions/setup-python@v7
+        with:
+          python-version: 3.13
+      - name: uv
+        uses: astral-sh/setup-uv@v10.3.0
+      - name: python-install
+        id: python-install
+        background: true
+        run: |
+          cd tests && uv sync
+      - name: node
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: pnpm-install
+        run: |
+          cd tests/e2e && pnpm install --frozen-lockfile
       - name: wait-stack-deps
-        wait: [pull-images, python-install]
-      # Started after the pulls so its download overlaps the CPU-bound
-      # image build instead of competing for the network.
+        wait: [pull-images, load-image, python-install]
+      # Started after the pulls so its download does not compete with them
+      # for the network.
       - name: playwright-browsers
         id: playwright-browsers
         background: true
@@ -171,6 +209,7 @@ jobs:
             uv run pytest \
             --basetemp=./tmp/ \
             -vv --reuse --with-web \
+            --signoz-image fusescope-ci:with-web \
             e2e/bootstrap/setup.py::test_setup
       - name: wait-playwright-browsers
         wait: playwright-browsers
