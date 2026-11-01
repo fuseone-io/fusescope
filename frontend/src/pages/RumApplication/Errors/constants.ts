@@ -11,7 +11,12 @@ export const WEB_ERROR_SOURCES = [
 ] as const;
 
 /** `fusescope.rum.error.source` values the Android SDK and the gateway send. */
-export const ANDROID_ERROR_SOURCES = ['crash', 'anr', 'manual'] as const;
+export const ANDROID_ERROR_SOURCES = [
+	'crash',
+	'anr',
+	'native',
+	'manual',
+] as const;
 
 export const ERROR_SOURCES = [
 	'onerror',
@@ -19,6 +24,7 @@ export const ERROR_SOURCES = [
 	'manual',
 	'crash',
 	'anr',
+	'native',
 ] as const;
 
 /** Groups fetched at once, by event count; the filters run on them. */
