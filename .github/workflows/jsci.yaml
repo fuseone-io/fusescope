@@ -8,8 +8,6 @@ on:
       - "docs/brand/**"
       - "docs/contributing/**"
       - "docs/img/**"
-    branches:
-      - main
   pull_request_target:
     paths-ignore:
       - "**/*.md"
