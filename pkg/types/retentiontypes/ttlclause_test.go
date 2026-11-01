@@ -64,6 +64,20 @@ func TestTTLClauseStatement(t *testing.T) {
 			want:    "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
 		},
 		{
+			name:    "Backstop_WithIngestionAndColdStorage",
+			ttl:     TTLClause{Time: UnixNanoTime("timestamp"), Delete: IntervalDaysOf("_retention_days"), Ingestion: DateTimeOf("created_at"), Backstop: IntervalDays(7), Volume: "cold", MoveAfter: IntervalDaysOf("_retention_days_cold")},
+			table:   "signoz_logs.logs_v2",
+			cluster: "cluster",
+			want:    "ALTER TABLE signoz_logs.logs_v2 ON CLUSTER cluster MODIFY TTL greatest(toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days), toDateTime(created_at) + toIntervalDay(_retention_days) + toIntervalDay(7)) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME 'cold' SETTINGS materialize_ttl_after_modify=0",
+		},
+		{
+			name:    "Backstop_NoIngestionColumn",
+			ttl:     TTLClause{Time: ResourceBucketTime, Delete: IntervalDaysOf("_retention_days"), Backstop: IntervalDays(10)},
+			table:   "signoz_logs.logs_v2_resource",
+			cluster: "cluster",
+			want:    "ALTER TABLE signoz_logs.logs_v2_resource ON CLUSTER cluster MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) + toIntervalDay(10) DELETE SETTINGS materialize_ttl_after_modify=0",
+		},
+		{
 			name:    "VolumeWithQuote_Escaped",
 			ttl:     TTLClause{Time: UnixNanoTime("timestamp"), Delete: IntervalSeconds(60), Volume: "co'ld", MoveAfter: IntervalSeconds(30)},
 			table:   "signoz_logs.logs_v2",
@@ -75,6 +89,48 @@ func TestTTLClauseStatement(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			assert.Equal(t, testCase.want, testCase.ttl.Statement(testCase.table, testCase.cluster))
+		})
+	}
+}
+
+func TestColdStorageVolume(t *testing.T) {
+	testCases := []struct {
+		name  string
+		query string
+		want  string
+	}{
+		{name: "NoMoveRule_Empty", query: "CREATE TABLE signoz_logs.logs_v2 (`ts` UInt64) ENGINE = MergeTree TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) SETTINGS index_granularity = 8192", want: ""},
+		{name: "MoveRule_Volume", query: "CREATE TABLE signoz_logs.logs_v2 (`ts` UInt64) ENGINE = MergeTree TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days), toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME 'cold' SETTINGS storage_policy = 'tiered'", want: "cold"},
+		{name: "EscapedQuote_Unescaped", query: `CREATE TABLE t (a UInt8) ENGINE = MergeTree TTL a + toIntervalDay(1) TO VOLUME 'co\'ld' SETTINGS index_granularity = 8192`, want: "co'ld"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, ColdStorageVolume(testCase.query))
+		})
+	}
+}
+
+func TestValidateColdStorage(t *testing.T) {
+	testCases := []struct {
+		name    string
+		volume  string
+		days    int
+		wantErr bool
+	}{
+		{name: "NoColdStorage", volume: "", days: 0},
+		{name: "VolumeWithDays", volume: "cold", days: 7},
+		{name: "VolumeWithoutDays_Error", volume: "cold", days: 0, wantErr: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := ValidateColdStorage(testCase.volume, testCase.days)
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
 		})
 	}
 }

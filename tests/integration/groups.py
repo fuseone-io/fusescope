@@ -53,7 +53,7 @@ GROUPS: dict[str, dict[str, list[str]]] = {
     },
     "ttl": {
         "shared": [],
-        "isolated": ["ttl", "semconvfamilies"],
+        "isolated": ["ttl", "semconvfamilies", "archive"],
     },
     "authn": {
         "shared": ["callbackauthn"],
