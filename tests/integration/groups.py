@@ -22,7 +22,7 @@ WEBDRIVER_SUITES = {"basepath", "callbackauthn"}
 
 GROUPS: dict[str, dict[str, list[str]]] = {
     "inframonitoring": {
-        "shared": ["inframonitoring", "auditquerier", "ingestionkeys", "cloudintegrations"],
+        "shared": ["inframonitoring"],
         "isolated": [],
     },
     "alertmanager": {
@@ -34,7 +34,7 @@ GROUPS: dict[str, dict[str, list[str]]] = {
         "isolated": ["queriertraces", "rootuser"],
     },
     "ruler": {
-        "shared": ["ruler", "querierauthz", "role", "preference", "promote", "llmpricingrules", "spanmapper", "schemacontract", "quickfilter"],
+        "shared": ["ruler", "querierauthz", "role", "preference", "promote", "llmpricingrules", "spanmapper", "schemacontract", "quickfilter", "auditquerier", "ingestionkeys", "cloudintegrations"],
         "isolated": [],
     },
     "querier": {
