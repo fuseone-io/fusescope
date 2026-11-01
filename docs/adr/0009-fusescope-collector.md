@@ -1,6 +1,6 @@
 # 0009 · FuseScope collector: our own Apache-2.0 distribution
 
-- Status: proposed
+- Status: proposed; amended 2026-11-01: ClickHouse exporters are written before the storage gate (§2), naming (§1)
 - Issue: [#230](https://github.com/fuseone-io/fusescope/issues/230)
 - Deciders: FuseOne maintainers. A new repo, its licence, the chart topology and a multi-quarter migration off the AGPL fork.
 - Related: [ADR 0001](0001-agpl-collector-dependency.md) (backend links no collector code), [ADR 0003](0003-real-user-monitoring.md) (RUM), ADR 0007 (cost, [#207](https://github.com/fuseone-io/fusescope/pull/207)), ADR 0008 (profiling, [#214](https://github.com/fuseone-io/fusescope/pull/214)), ADR 0010 (single ingress), [fusescope-otel-collector#3](https://github.com/fuseone-io/fusescope-otel-collector/issues/3) (OTel upgrade).
@@ -24,8 +24,9 @@ Facts, from the fork's `go.mod`, component directories and config only (no sourc
 
 ## Decision
 
-### 1. A new repo, `fuseone-io/fusescope-collector`, Apache-2.0
+### 1. A new distribution, `fusescope-collector`, Apache-2.0
 
+- **Naming.** The product, binary and image are `fusescope-collector`; its repository is `fuseone-io/fusescope-collector-server`. Elsewhere in the ADRs, `fusescope-collector` means the distribution and `fusescope-collector-server` the repo.
 - An **OCB distribution** (`builder-config.yaml`) of upstream core and contrib at one pinned release, plus our own components under `receiver/`, `processor/`, `exporter/`, `extension/` and `connector/`, each its own Go module. Upgrading OTel is a version bump in the manifest and a fix-up of our components, not a rebase.
 - **Every new collector component is written there**, never in the fork: `ingestauth`, the RUM receiver, the artifact upload receiver (ADR 0010), `pyroscopereceiver`, `debuginforeceiver` and `clickhouseprofilesexporter` (ADR 0008), and anything later. The fork takes only security fixes and what keeps it running until it is retired.
 - **New databases get an Apache-2.0 migrator** (decided) in the same repo, starting with `signoz_profiles` (ADR 0008) and `fusescope_costs` (ADR 0007). It keeps the bookkeeping the backend already reads (`schema_migrations_v2` per database), so ADR 0007's schema check works unchanged. Existing databases stay with the fork's migrator until step 4.
@@ -37,7 +38,7 @@ The fork keeps writing ClickHouse while the new distribution takes over everythi
 
 1. **Ingress tier.** The new distribution is deployed in front of the fork and is the only collector exposed. It terminates OTLP, RUM and profile ingest, authenticates keys and applies limits (ADR 0010), and forwards OTLP/gRPC to the fork, which is internal only.
 2. **Replace SigNoz components one by one.** First by config: the fork already bundles contrib's tail sampling, transform and Kafka components, so pipelines switch to them before any code moves. Then processors move to the new tier, as contrib components or clean-room rewrites (table below), until the fork runs `otlp → batch → ClickHouse exporters` and nothing else.
-3. **Storage gate.** The ClickHouse exporters and the migrator move last, deliberately after `fusescope-engine` proves out or is dropped, so we never write ClickHouse exporters twice. If the engine wins, the new distribution gets an engine exporter and ClickHouse retires with the fork. If ClickHouse stays, the exporters and migrator are rewritten clean-room against the schema contract.
+3. **ClickHouse exporters early, storage decision later.** The ClickHouse exporters are rewritten clean-room against the schema contract now, not after the storage gate, so an existing SigNoz or FuseScope installation can leave the fork without migrating data. Traces and logs already write the same rows as the fork on every table of the parity suite (`fusescope-collector-server` `test/parity`); metrics follow. The storage gate decides the long-term store only: if `fusescope-engine` wins, the distribution adds an engine exporter, dual-writes during the migration, and keeps ClickHouse for installs that stay on it. The migrator for existing databases still moves last.
 4. **Retire the fork.** It shrinks to the migrator, or disappears. When nothing of it ships, ADR 0001 is amended (below).
 
 ### 3. Component inventory
@@ -58,7 +59,7 @@ The fork keeps writing ClickHouse while the new distribution takes over everythi
 | `signozspanmetricsprocessor` | APM metrics from spans | contrib `spanmetricsconnector` if the backend's APM queries read its output, else **rewrite** as a connector | 2 |
 | `signozmeterconnector` | ingest meter (`signoz.meter.*`) | contrib `countconnector`/`sumconnector` if they produce the meter series, else **rewrite** | 2 |
 | `clickhousesystemtablesreceiver` | ClickHouse query log scrape | **rewrite** (small) or drop; decided with users of it | 2 |
-| `clickhousetracesexporter`, `clickhouselogsexporter`, `signozclickhousemetrics`, `signozclickhousemeter`, `metadataexporter` | ClickHouse writes | **rewrite** or engine exporter, after the storage gate | 3 |
+| `clickhousetracesexporter`, `clickhouselogsexporter`, `signozclickhousemetrics`, `signozclickhousemeter`, `metadataexporter` | ClickHouse writes | **rewrite** clean-room (traces and logs done); engine exporter added after the storage gate | 2 |
 | schema migrator | DDL for existing databases | **rewrite** or engine migrations, after the storage gate | 3 |
 | `pkg/collectorsimulator` and the backend-only helpers | previews | drop: the backend has its own since ADR 0001 | 1 |
 
@@ -126,7 +127,7 @@ The main risk. Before any exporter rewrite ships:
 | Fork upstream `otelcol-contrib` wholesale | Same rebase problem on a larger tree, a much bigger image and attack surface, and hundreds of components we do not test. OCB gives a curated distribution without a fork. |
 | Grafana Alloy (Apache-2.0) | Single-vendor governance, its own config language and fleet management; no OpAMP; our pushed pipelines would need a second config model. |
 | Vector (MPL-2.0), Fluent Bit (Apache-2.0) | Not OTel collector components: no OTLP profiles, no OpAMP, logs-first, and our Go components would need porting. |
-| Rewrite everything at once | Puts schema parity, log pipelines and OpAMP at risk in one release, and may rewrite ClickHouse exporters the engine makes obsolete. |
+| Rewrite everything at once | Puts schema parity, log pipelines and OpAMP at risk in one release. |
 | New ingest logic in the backend (as RUM did) | Contradicts ADR 0010: the backend is not an ingest surface. |
 
 ## Consequences
@@ -134,7 +135,8 @@ The main risk. Before any exporter rewrite ships:
 - No new AGPL code from today. ADR 0008's collector components and ADR 0007's cost migrations land in the Apache repo instead of the fork; both ADRs are updated to say so.
 - OTel upgrades become routine; [fusescope-otel-collector#3](https://github.com/fuseone-io/fusescope-otel-collector/issues/3) is needed only for what still runs in the fork, since profiling starts on the new distribution.
 - Two collectors to build, release and operate until step 4, and one more network hop on ingest.
-- The fork may live for a long time if the storage gate stays open. It is frozen except for security fixes.
+- The fork shrinks to the migrator once its exporters and processors are replaced, whatever the storage gate decides. It is frozen except for security fixes.
+- ClickHouse exporters may coexist with an engine exporter for a long time if both stores stay supported.
 - `schemacontract`, `simulatorcontract` and the dual-write suite become the guard of the telemetry schema across collectors.
 
 ## Roadmap
@@ -143,16 +145,17 @@ Estimates in engineer-weeks, for one engineer familiar with the codebase.
 
 | Phase | Scope | Repos | Estimate | Exit criteria |
 |---|---|---|---|---|
-| **0 · Bootstrap** | repo, OCB manifest of the components we use, CI, release (images, SBOM, cosign, provenance), `NOTICE`, licence and fork-import guards; OpAMP supervisor spike against the backend | fusescope-collector, fusescope (docs) | 2 | a signed release image that forwards OTLP; the supervisor receives and applies a config pushed by our OpAMP server |
-| **1 · Ingress tier** | two-tier chart, Compose and devenv; health, memory limiter, size limits; contrib bearer/basic auth until `ingestauth` (ADR 0010) lands; `fusescope.collector.role`; integration suites parameterised by collector image | fusescope-collector, fusescope-charts, fusescope | 2–3 | the demo ingests through the new tier with the fork internal only; no ingest regression in the integration suites |
+| **0 · Bootstrap** | repo, OCB manifest of the components we use, CI, release (images, SBOM, cosign, provenance), `NOTICE`, licence and fork-import guards; OpAMP supervisor spike against the backend | fusescope-collector-server, fusescope (docs) | 2 | a signed release image that forwards OTLP; the supervisor receives and applies a config pushed by our OpAMP server |
+| **1 · Ingress tier** | two-tier chart, Compose and devenv; health, memory limiter, size limits; contrib bearer/basic auth until `ingestauth` (ADR 0010) lands; `fusescope.collector.role`; integration suites parameterised by collector image | fusescope-collector-server, fusescope-charts, fusescope | 2–3 | the demo ingests through the new tier with the fork internal only; no ingest regression in the integration suites |
 | **2a · Config swaps** | fork pipelines switch to the contrib tail sampling, transform, Kafka and Firehose components it already bundles; drop `httplogreceiver` or replace it | fusescope-charts, fusescope (pushed config) | 1–2 | demo and integration suites green on contrib components |
-| **2b · Processor rewrites** | logs pipeline, span mapper, logs normaliser, LLM pricing, span metrics, meter; contract tests per component; OpAMP role switch moves pushed features to the new tier | fusescope-collector, fusescope | 8–10 | `simulatorcontract` and APM, meter and LLM cost suites pass against the new tier; the fork runs only ClickHouse exporters |
-| **3 · Storage gate** | decision on `fusescope-engine`; then either an engine exporter, or clean-room ClickHouse exporters and migrator with the dual-write suite and a shadow run | fusescope-collector, fusescope | gate; then 10–14 (ClickHouse) | dual-write suite identical for every signal; a shadow week on the demo with no diff |
+| **2b · Processor rewrites** | logs pipeline, span mapper, logs normaliser, LLM pricing, span metrics, meter; contract tests per component; OpAMP role switch moves pushed features to the new tier | fusescope-collector-server, fusescope | 8–10 | `simulatorcontract` and APM, meter and LLM cost suites pass against the new tier; the fork runs only ClickHouse exporters |
+| **2c · ClickHouse exporters** | clean-room exporters for traces, logs, metrics and the ingest meter; parity suite against the fork on every table, in CI | fusescope-collector-server | traces and logs done; metrics 2–3 | parity identical for every signal |
+| **3 · Storage gate** | decision on `fusescope-engine`; then an engine exporter with dual-write, and the clean-room migrator for existing databases with a shadow run | fusescope-collector-server, fusescope | gate; then engine exporter and migrator | dual-write suite identical for every signal; a shadow week on the demo with no diff |
 | **4 · Retire the fork** | single-tier chart; archive `fusescope-otel-collector` or keep only the migrator; amend ADR 0001 | fusescope-charts, fusescope, fusescope-otel-collector | 1–2 | no AGPL image in the chart's default install |
 
 ## Open questions
 
 - Keep the `signoz*` component type names in pushed config, or rename them with a backend change and a compatibility period?
 - OpAMP: contrib supervisor (an extra process per pod) or an in-process client like the fork's?
-- Criteria and date for the storage gate: what `fusescope-engine` must show, and by when, before ClickHouse exporters are rewritten anyway.
+- Criteria and date for the storage gate: what `fusescope-engine` must show, and by when.
 - Which users depend on `clickhousesystemtablesreceiver` and `httplogreceiver`, and whether they can be dropped.
