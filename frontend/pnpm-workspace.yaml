@@ -45,14 +45,18 @@ overrides:
  #         orval >=8.20.0 and ts-jest >=29.4.11 already fixed on their side
  esbuild@>=0.27.3 <0.28.1: '>=0.28.1 <0.29.0'
  # via: @commitlint/cli > @commitlint/config-validator > ajv@8 (fast-uri ^3.0.1)
- # remove: blocked — ajv@8 caps fast-uri at ^3, and only 3.1.6 carries the fix
- fast-uri@<3.1.6: '>=3.1.6 <4'
+ # remove: blocked — ajv@8 caps fast-uri at ^3, and only 3.1.9 carries the fixes
+ fast-uri@<3.1.9: '>=3.1.9 <4'
  # via: direct dep posthog-js@1.298.0 (fflate ^0.4.8)
  # remove: blocked, posthog-js 1.430.2 (latest) is still on ^0.4.8
  fflate@<0.4.9: '>=0.4.9 <0.5'
  # via: axios@1.20.0 (follow-redirects ^1.16.0)
  # remove: blocked, the range is open so the floor is what pulls the fix
- follow-redirects@<1.16.1: '>=1.16.1 <2'
+ follow-redirects@<1.16.2: '>=1.16.2 <2'
+ # via: @sentry/bundler-plugin-core@5.3.0, vite-plugin-react-docgen-typescript (glob ^13)
+ # remove: bump the direct devDep and both consumers to glob ^14. Crosses a major
+ # because 13.x has no patched release
+ 'glob@>=13.0.0 <14.0.2': '>=14.0.2 <15'
  # via: ts-jest@29.4.9 (handlebars ^4.7.9)
  # remove: blocked, the range is open so the floor is what pulls the fix
  handlebars@<4.7.10: '>=4.7.10 <5'
@@ -73,6 +77,10 @@ overrides:
  # remove: bump typescript-plugin-css-modules once it floors less itself; image-size has
  #         no patched release at all, so dropping the dep is the only fix — less@4.5.0 did
  less@<4.5.0: '>=4.5.0 <5'
+ # via: eslint@10 > @eslint/config-array; eslint-plugin-sonarjs@4.0.2 (minimatch ^10.2.4)
+ # remove: blocked until eslint moves to minimatch ^11. Crosses a major because 10.x has
+ # no patched release; 11.x keeps the named-export API
+ 'minimatch@>=10.0.0 <11.0.1': '>=11.0.1 <12'
  # via: typedoc@0.28.19 (markdown-it ^14.1.1), pulled by orval
  # remove: blocked, the range is open so the floor is what pulls the fix
  markdown-it@<14.3.3: '>=14.3.3 <15'

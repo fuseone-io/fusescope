@@ -4,6 +4,10 @@ overrides:
  # via: eslint-plugin-playwright > eslint@10 > minimatch@10.2.5 (brace-expansion ^5.0.5)
  # remove: blocked — minimatch@10.2.6 (latest) only widens to ^5.0.8, still vulnerable
  'brace-expansion@>=5.0.0 <5.0.12': '>=5.0.12 <6'
+ # via: eslint-plugin-playwright > eslint@10 > @eslint/config-array (minimatch ^10.2.4)
+ # remove: blocked until eslint moves to minimatch ^11. Crosses a major because 10.x has
+ # no patched release; 11.x keeps the named-export API
+ 'minimatch@>=10.0.0 <11.0.1': '>=11.0.1 <12'
  # via: oxfmt@0.41.0 (tinypool 2.1.0 exact)
  # remove: bump oxfmt once it ships tinypool >=2.1.2
  tinypool@<2.1.2: '>=2.1.2 <3'
