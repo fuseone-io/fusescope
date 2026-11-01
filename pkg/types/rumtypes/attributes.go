@@ -30,8 +30,9 @@ const (
 
 // Error sources of Android events, in fusescope.rum.error.source.
 const (
-	ErrorSourceCrash = "crash"
-	ErrorSourceANR   = "anr"
+	ErrorSourceNative = "native"
+	ErrorSourceCrash  = "crash"
+	ErrorSourceANR    = "anr"
 	// ExceptionTypeLegacyANR is the ANR type SDK 0.1.0-beta.1 sends.
 	ExceptionTypeLegacyANR = "ApplicationNotResponding"
 	ANRMessage             = "Application Not Responding"

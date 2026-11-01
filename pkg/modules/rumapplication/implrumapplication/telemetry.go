@@ -291,7 +291,7 @@ func errorMessageExpr(message string) string {
 // jvmStackKeyExpr keeps the frame and cause lines of a JVM stack trace,
 // causes without their message, up to maxJVMKeyLines.
 func jvmStackKeyExpr(stacktrace string) string {
-	lines := fmt.Sprintf("arrayFilter(line -> match(line, %s), splitByChar(%s, %s))", literal(rumtypes.JVMStackFrameLinePattern), literal("\n"), stacktrace)
+	lines := fmt.Sprintf("arrayFilter(line -> match(line, %s), splitByChar(%s, %s))", literal(rumtypes.JVMStackFrameLinePattern+"|"+rumtypes.NativeStackFrameLinePattern), literal("\n"), boundedExpr(stacktrace, rumtypes.MaxStackTraceBytes))
 	causes := fmt.Sprintf("arrayMap(line -> replaceRegexpOne(line, %s, %s), %s)", literal(rumtypes.JVMCauseTypePattern), literal(`\1`), lines)
 	return fmt.Sprintf("arrayStringConcat(arraySlice(%s, 1, %d), %s)", causes, maxJVMKeyLines, literal("\n"))
 }
