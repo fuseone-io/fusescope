@@ -21,6 +21,45 @@ logger = setup_logger(__name__)
 CONFIG_CONTAINER_PATH = "/etc/fusescope/config.yaml"
 
 
+def build_signoz_image(pytestconfig: pytest.Config, zeus: types.TestContainerDocker) -> str:
+    with_web = pytestconfig.getoption("--with-web")
+
+    arch = platform.machine()
+    if arch == "x86_64":
+        arch = "amd64"
+
+    # Build the image
+    dockerfile_path = "cmd/community/Dockerfile.integration"
+    if with_web:
+        dockerfile_path = "cmd/community/Dockerfile.with-web.integration"
+
+    # Docker build context is the repo root — one up from pytest's
+    # rootdir (tests/).
+    context = pytestconfig.rootpath.parent
+
+    # The docker CLI is required: the Dockerfiles use BuildKit cache
+    # mounts, which docker-py does not support.
+    subprocess.run(
+        [
+            "docker",
+            "build",
+            "--file",
+            str(context / dockerfile_path),
+            "--tag",
+            "signoz:integration",
+            "--build-arg",
+            f"TARGETARCH={arch}",
+            "--build-arg",
+            f"ZEUSURL={zeus.container_configs['8080'].base()}",
+            str(context),
+        ],
+        check=True,
+        env=os.environ | {"DOCKER_BUILDKIT": "1"},
+    )
+
+    return "signoz:integration"
+
+
 def create_signoz(
     network: Network,
     zeus: types.TestContainerDocker,
@@ -46,39 +85,7 @@ def create_signoz(
 
         # Get the no-web flag
         with_web = pytestconfig.getoption("--with-web")
-
-        arch = platform.machine()
-        if arch == "x86_64":
-            arch = "amd64"
-
-        # Build the image
-        dockerfile_path = "cmd/community/Dockerfile.integration"
-        if with_web:
-            dockerfile_path = "cmd/community/Dockerfile.with-web.integration"
-
-        # Docker build context is the repo root — one up from pytest's
-        # rootdir (tests/).
-        context = pytestconfig.rootpath.parent
-
-        # The docker CLI is required: the Dockerfiles use BuildKit cache
-        # mounts, which docker-py does not support.
-        subprocess.run(
-            [
-                "docker",
-                "build",
-                "--file",
-                str(context / dockerfile_path),
-                "--tag",
-                "signoz:integration",
-                "--build-arg",
-                f"TARGETARCH={arch}",
-                "--build-arg",
-                f"ZEUSURL={zeus.container_configs['8080'].base()}",
-                str(context),
-            ],
-            check=True,
-            env=os.environ | {"DOCKER_BUILDKIT": "1"},
-        )
+        image = pytestconfig.getoption("--signoz-image") or build_signoz_image(pytestconfig, zeus)
 
         env = (
             {
@@ -107,7 +114,7 @@ def create_signoz(
         if env_overrides:
             env = env | env_overrides
 
-        container = DockerContainer("signoz:integration")
+        container = DockerContainer(image)
         for k, v in env.items():
             container.with_env(k, v)
         container.with_exposed_ports(8080)
