@@ -24,6 +24,20 @@ on:
       - checks_requested
 
 jobs:
+  changes:
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-24.04
+    outputs:
+      js: ${{ steps.changes.outputs.js }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+      - name: changes
+        id: changes
+        uses: ./.github/actions/changes
   tsc:
     if: |
       github.event_name == 'merge_group' ||
@@ -46,10 +60,8 @@ jobs:
       - name: tsc
         run: cd frontend && pnpm tsgo --noEmit
   test:
-    if: |
-      github.event_name == 'merge_group' ||
-      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    needs: changes
+    if: needs.changes.outputs.js == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
@@ -132,10 +144,8 @@ jobs:
           cd frontend && pnpm generate:api
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run pnpm generate:api in frontend/ locally and commit."; exit 1)
   storybook:
-    if: |
-      github.event_name == 'merge_group' ||
-      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    needs: changes
+    if: needs.changes.outputs.js == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     container:

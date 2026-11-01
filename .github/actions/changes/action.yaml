@@ -1,0 +1,32 @@
+name: changes
+description: Decides which CI jobs a pull request needs from the files it changes. Other events need everything.
+outputs:
+  go:
+    description: goci runs
+    value: ${{ steps.changes.outputs.go }}
+  js:
+    description: jsci test and storybook run
+    value: ${{ steps.changes.outputs.js }}
+  e2e:
+    description: e2eci runs
+    value: ${{ steps.changes.outputs.e2e }}
+  integration:
+    description: integrationci group selection for tests/integration/groups.py; empty runs none
+    value: ${{ steps.changes.outputs.integration }}
+runs:
+  using: composite
+  steps:
+    # Lists the files through the API and runs no pull request code, so it is
+    # safe under pull_request_target.
+    - name: changes
+      id: changes
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        EVENT: ${{ github.event_name }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
+        LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+      run: |
+        python3 -m unittest discover -s "$GITHUB_ACTION_PATH" -p '*_test.py'
+        python3 "$GITHUB_ACTION_PATH/changes.py"

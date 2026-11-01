@@ -7,8 +7,14 @@ package-scoped but live for the whole session, so a suite that overrides one,
 or changes state other suites read (TTL), must be isolated.
 
 Fails when a suite directory is in no group.
+
+The optional argument selects groups: `all` (the default), suite names, and
+`ui` for the suites that drive the web UI. A group runs whole when any of its
+suites is selected; an empty selection prints an empty matrix, and an unknown
+name (a removed suite) selects all.
 """
 
+import argparse
 import json
 import re
 import sys
@@ -78,7 +84,12 @@ def errors() -> list[str]:
     return found
 
 
-def matrix() -> list[dict]:
+def selected(group: dict[str, list[str]], selection: set[str]) -> bool:
+    suites = set(group["shared"] + group["isolated"])
+    return "all" in selection or bool(suites & selection) or ("ui" in selection and bool(suites & WEBDRIVER_SUITES))
+
+
+def matrix(selection: set[str]) -> list[dict]:
     return [
         {
             "name": name,
@@ -86,16 +97,22 @@ def matrix() -> list[dict]:
             "webdriver": bool(WEBDRIVER_SUITES & set(group["shared"] + group["isolated"])),
         }
         for name, group in GROUPS.items()
+        if selected(group, selection)
     ]
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("selection", nargs="?", default="all")
+    selection = set(parser.parse_args().selection.split())
+    if selection - {"all", "ui"} - {s for g in GROUPS.values() for s in g["shared"] + g["isolated"]}:
+        selection = {"all"}
     found = errors()
     for error in found:
         print(f"::error::{error}", file=sys.stderr)
     if found:
         return 1
-    print(json.dumps(matrix()))
+    print(json.dumps(matrix(selection)))
     return 0
 
 
