@@ -2,7 +2,6 @@ package implarchive
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"sort"
 	"strings"
@@ -28,16 +27,16 @@ type exportService struct {
 	store          archivetypes.Store
 	config         archive.Config
 	holder         string
+	metrics        *archiveMetrics
 	stopC          chan struct{}
 	healthyC       chan struct{}
 
 	mu         sync.Mutex
 	partitions map[string]archivetypes.Partition
-	firstSeen  map[string][]archivetypes.Part
 }
 
 // exportJob is one partition of one table on one shard, with the replicas of the shard that
-// answered when the cycle started.
+// answered when the cycle started and the partition's parts as inventoried then.
 type exportJob struct {
 	table     archivetypes.Table
 	mappings  []archivetypes.ColumnMapping
@@ -46,6 +45,8 @@ type exportJob struct {
 	shard     int
 	pin       *archivetypes.Shard
 	replicas  map[string]replica
+
+	inventoried []archivetypes.Part
 }
 
 // NewExportService runs the export cycle (ADR 0002 §3) every archive interval: partitions
@@ -57,17 +58,23 @@ func NewExportService(providerSettings factory.ProviderSettings, telemetryStore 
 		return nil, err
 	}
 
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/archive/implarchive")
+	metrics, err := newArchiveMetrics(settings.Meter())
+	if err != nil {
+		return nil, err
+	}
+
 	return &exportService{
-		settings:       factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/archive/implarchive"),
+		settings:       settings,
 		telemetryStore: telemetryStore,
 		dialer:         dialer,
 		store:          store,
 		config:         config,
 		holder:         newLeaseHolder(),
+		metrics:        metrics,
 		stopC:          make(chan struct{}),
 		healthyC:       make(chan struct{}),
 		partitions:     make(map[string]archivetypes.Partition),
-		firstSeen:      make(map[string][]archivetypes.Part),
 	}, nil
 }
 
@@ -150,6 +157,24 @@ func (service *exportService) cycle(ctx context.Context) error {
 }
 
 func (service *exportService) exportTables(ctx context.Context, lease *archivetypes.Lease) error {
+	cycle := archivetypes.NewCycle(lease)
+	if err := service.store.StartCycle(ctx, cycle); err != nil {
+		return err
+	}
+
+	err := service.runCycle(ctx, newCycleRun(lease, cycle))
+	status := archivetypes.CycleStatusDone
+	if err != nil {
+		status = archivetypes.CycleStatusFailed
+	}
+	if finishErr := service.store.FinishCycle(context.WithoutCancel(ctx), cycle, status, time.Now()); finishErr != nil {
+		service.settings.Logger().WarnContext(ctx, "archive cycle not recorded as finished", errors.Attr(finishErr))
+	}
+	return err
+}
+
+func (service *exportService) runCycle(ctx context.Context, run *cycleRun) error {
+	lease := run.lease
 	if abandoned, err := service.store.AbandonStaleAttempts(ctx, lease); err != nil {
 		service.settings.Logger().WarnContext(ctx, "archive attempts left pending by an earlier lease holder not abandoned", errors.Attr(err))
 	} else if abandoned > 0 {
@@ -165,12 +190,13 @@ func (service *exportService) exportTables(ctx context.Context, lease *archivety
 	group := new(errgroup.Group)
 	group.SetLimit(service.config.Limits.Concurrency)
 	for _, table := range archivetypes.LogsTables() {
-		jobs, conn, err := service.jobs(ctx, table, replicas)
+		jobs, conn, err := service.jobs(ctx, run, table, replicas)
 		if err != nil {
 			service.settings.Logger().WarnContext(ctx, "archive export skipped a table", slog.String("table", table.Name), errors.Attr(err))
 			continue
 		}
 		indexConns[table] = conn
+		service.metrics.recordUnarchived(ctx, table.Name, run.tally[table.Name])
 
 		for _, job := range jobs {
 			group.Go(func() error {
@@ -198,8 +224,8 @@ func (service *exportService) exportTables(ctx context.Context, lease *archivety
 }
 
 // jobs returns the table's partitions past retention on every shard that a replica answers
-// for, and a connection to one of them.
-func (service *exportService) jobs(ctx context.Context, table archivetypes.Table, replicas map[int][]replica) ([]exportJob, clickhouse.Conn, error) {
+// for, inventoried, and a connection to one of them.
+func (service *exportService) jobs(ctx context.Context, run *cycleRun, table archivetypes.Table, replicas map[int][]replica) ([]exportJob, clickhouse.Conn, error) {
 	shards, err := service.snapshotShards(ctx, table, replicas)
 	if err != nil {
 		return nil, nil, err
@@ -222,6 +248,7 @@ func (service *exportService) jobs(ctx context.Context, table archivetypes.Table
 	var jobs []exportJob
 	now := time.Now()
 	for _, shard := range shards {
+		var shardJobs []exportJob
 		for id, addr := range shard.partitionIDs {
 			partition, err := service.partition(ctx, shard.replicas[addr].conn, table, id)
 			if err != nil {
@@ -232,8 +259,10 @@ func (service *exportService) jobs(ctx context.Context, table archivetypes.Table
 				continue
 			}
 
-			jobs = append(jobs, exportJob{table: table, mappings: mappings, version: version, partition: partition, shard: shard.shard, pin: shard.pin, replicas: shard.replicas})
+			shardJobs = append(shardJobs, exportJob{table: table, mappings: mappings, version: version, partition: partition, shard: shard.shard, pin: shard.pin, replicas: shard.replicas})
 		}
+		service.takeInventory(ctx, run, shard, shardJobs)
+		jobs = append(jobs, shardJobs...)
 	}
 
 	sort.Slice(jobs, func(i, j int) bool { return jobs[i].partition.ID < jobs[j].partition.ID })
@@ -277,6 +306,7 @@ type shardSnapshot struct {
 	shard        int
 	firstAddr    string
 	replicated   bool
+	complete     bool
 	identity     string
 	pin          *archivetypes.Shard
 	replicas     map[string]replica
@@ -310,6 +340,7 @@ func (service *exportService) snapshotShard(ctx context.Context, table archivety
 	if snapshot.firstAddr == "" {
 		return snapshot, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no replica of shard %d answered", shard)
 	}
+	snapshot.complete = len(snapshot.replicas) == len(shardReplicas)
 
 	return snapshot, nil
 }
@@ -361,8 +392,4 @@ func sortedShards(replicas map[int][]replica) []int {
 	}
 	sort.Ints(shards)
 	return shards
-}
-
-func jobKey(job exportJob) string {
-	return fmt.Sprintf("%s.%s/%d/%s", job.table.Database, job.table.Name, job.shard, job.partition.ID)
 }
