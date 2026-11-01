@@ -6,6 +6,13 @@ export const STACK_WORDS = {
 		missing: 'no source map for',
 		upload: 'Upload this release’s source maps to see the original code',
 	},
+	native: {
+		resolved: 'Symbolicated',
+		raw: 'Native',
+		noMatch: 'library-relative addresses',
+		missing: 'no native symbols for',
+		upload: 'Native debug-symbol uploads are not available yet',
+	},
 	jvm: {
 		resolved: 'Retraced',
 		raw: 'Obfuscated',

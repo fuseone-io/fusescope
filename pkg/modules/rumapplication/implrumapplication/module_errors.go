@@ -138,6 +138,16 @@ func (module *module) errorFingerprints(ctx context.Context, id valuer.UUID, sco
 // jvmFingerprint groups a JVM key by its retraced trace, keeping the first
 // retraced trace's type and top frame for the group.
 func (module *module) jvmFingerprint(ctx context.Context, id valuer.UUID, row *errorKeyRow, groups map[string]*jvmErrorGroup) (string, error) {
+	if row.source == rumtypes.ErrorSourceNative {
+		trace := rumtypes.ParseNativeStackTrace(row.frameLine)
+		fingerprint := rumtypes.NewNativeErrorFingerprint(trace, row.exceptionType, row.normalizedMessage)
+		group := &jvmErrorGroup{exceptionType: row.exceptionType}
+		if frames := rumtypes.NativeTopInAppFrames(trace, 1); len(frames) > 0 {
+			group.topFrame = &frames[0]
+		}
+		groups[fingerprint] = group
+		return fingerprint, nil
+	}
 	retrace, err := module.symbolicator.Retrace(ctx, id, row.release, rumtypes.ParseJVMStackTrace(row.frameLine, row.exceptionType, row.normalizedMessage))
 	if err != nil {
 		return "", err
@@ -276,6 +286,11 @@ func (module *module) newErrorEvent(ctx context.Context, application *rumtypes.A
 		Type: row.errorType, Message: row.message, Source: row.source, Stacktrace: stacktrace, Causes: []*rumtypes.ErrorCause{},
 	}
 
+	if application.Platform == rumtypes.PlatformAndroid && row.source == rumtypes.ErrorSourceNative {
+		trace := rumtypes.ParseNativeStackTrace(stacktrace)
+		event.Frames, event.Truncated = trace.Frames, truncated || trace.Truncated
+		return event, nil
+	}
 	if application.Platform == rumtypes.PlatformAndroid {
 		retrace, err := module.symbolicator.Retrace(ctx, application.ID, info.release, rumtypes.ParseJVMStackTrace(stacktrace, row.errorType, row.message))
 		if err != nil {

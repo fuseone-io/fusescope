@@ -35,7 +35,12 @@ function StackTrace({
 	jvm,
 	onOpenSourceMaps,
 }: StackTraceProps): JSX.Element {
-	const words = jvm ? STACK_WORDS.jvm : STACK_WORDS.web;
+	const native = jvm && event.source === 'native';
+	const words = native
+		? STACK_WORDS.native
+		: jvm
+			? STACK_WORDS.jvm
+			: STACK_WORDS.web;
 	const { componentStack } = event;
 	const exceptionOriginal = defaultStackMode(event) === 'original';
 	const canShowOriginal =
@@ -74,26 +79,28 @@ function StackTrace({
 					/>
 				</div>
 				<div className="tw:flex tw:items-center tw:gap-1.5">
-					<SegmentedControl<StackMode>
-						label="Stack trace view"
-						size="sm"
-						options={[
-							{
-								value: 'original',
-								label: 'Original',
-								testId: 'rum-error-mode-original',
-								disabled: !canShowOriginal,
-								title: canShowOriginal ? undefined : words.upload,
-							},
-							{
-								value: 'minified',
-								label: words.raw,
-								testId: 'rum-error-mode-minified',
-							},
-						]}
-						value={mode}
-						onChange={setMode}
-					/>
+					{!native && (
+						<SegmentedControl<StackMode>
+							label="Stack trace view"
+							size="sm"
+							options={[
+								{
+									value: 'original',
+									label: 'Original',
+									testId: 'rum-error-mode-original',
+									disabled: !canShowOriginal,
+									title: canShowOriginal ? undefined : words.upload,
+								},
+								{
+									value: 'minified',
+									label: words.raw,
+									testId: 'rum-error-mode-minified',
+								},
+							]}
+							value={mode}
+							onChange={setMode}
+						/>
+					)}
 					<CopyButton value={event.stacktrace} label="Copy stack trace" iconOnly />
 				</div>
 			</div>
@@ -105,11 +112,11 @@ function StackTrace({
 					onOpenSourceMaps={onOpenSourceMaps}
 				/>
 			)}
-			{mode === 'original' && exceptionOriginal ? (
+			{native || (mode === 'original' && exceptionOriginal) ? (
 				<>
 					<FrameList
 						groups={groups}
-						label="Original stack trace"
+						label={native ? 'Native stack trace' : 'Original stack trace'}
 						openKey={firstApp}
 					/>
 					{causes.map((cause) => (

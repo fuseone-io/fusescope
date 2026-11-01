@@ -47,6 +47,44 @@ describe('Android errors', () => {
 		expect(rows[0]).toHaveTextContent('com.example.shop.Item.price · Item.kt:15');
 	});
 
+	it('shows native frames without offering an R8 mapping or obfuscated mode', async () => {
+		const group = rumAndroidErrorGroup({ mapped: false });
+		group.type = 'SIGSEGV';
+		group.source = 'native';
+		group.latestEvents = (group.latestEvents ?? []).map((event) => ({
+			...event,
+			type: 'SIGSEGV',
+			source: 'native',
+			missingSourceMap: null,
+			causes: [],
+			symbolicated: false,
+			stacktrace: '#00 pc 42 /data/app/libshop.so (checkout+8)',
+			frames: [
+				{
+					function: 'checkout+8 · pc 0x42',
+					file: '/data/app/libshop.so',
+					line: 0,
+					column: 0,
+					original: null,
+				},
+			],
+		}));
+		server.use(
+			rest.get(`${BASE}/errors/:fingerprint`, (_req, res, ctx) =>
+				res(ctx.json(ok(group))),
+			),
+		);
+		renderPage(`${PATH}/${ANDROID_CRASH}`, ANDROID_APP);
+		await expect(
+			screen.findByTestId('rum-error-kind'),
+		).resolves.toHaveTextContent('Native crash');
+		expect(screen.getByTestId('rum-error-stack')).toHaveTextContent(
+			'checkout+8 · pc 0x42',
+		);
+		expect(screen.queryByTestId('rum-error-missing-map')).toBeNull();
+		expect(screen.queryByTestId('rum-error-mode-minified')).toBeNull();
+	});
+
 	it('filters by the Android error sources', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		serve();
@@ -58,7 +96,7 @@ describe('Android errors', () => {
 			'ANR',
 		);
 		expect(screen.queryByTestId('rum-errors-source-onerror')).toBeNull();
-		expect(screen.queryByTestId('rum-errors-source-native')).toBeNull();
+		expect(screen.getByTestId('rum-errors-source-native')).toBeInTheDocument();
 
 		await user.click(screen.getByTestId('rum-errors-source-crash'));
 		expect(safeNavigateMock).toHaveBeenCalledWith(`${PATH}?source=crash`);
