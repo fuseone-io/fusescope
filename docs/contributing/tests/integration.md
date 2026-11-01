@@ -142,7 +142,7 @@ Each test suite follows these principles:
 1. **Organization**: Suites live under `tests/integration/tests/` in self-contained packages. Shared fixtures live in the top-level `tests/fixtures/` package so the e2e tree can reuse them.
 2. **Execution Order**: Files are prefixed with two-digit numbers (`01_`, `02_`, `03_`) to ensure sequential execution when tests depend on ordering.
 3. **Time Constraints**: Each suite should complete in under 10 minutes (setup takes ~4 mins).
-4. **CI groups**: `integrationci` runs suites in groups, one job per group and SQL store, defined in `tests/integration/groups.py`. Add a new suite to a group there, or CI fails. A group's `shared` suites run in one pytest session on one stack, so they must not depend on a fresh environment; a suite that overrides a stack fixture in its `conftest.py` (`signoz`, `clickhouse`, `migrator`, …) goes under `isolated` and gets its own session. `python integration/groups.py` checks the groups.
+4. **CI groups**: `integrationci` runs suites in groups, one job per group and SQL store, defined in `tests/integration/groups.py`. Add a new suite to a group there, or CI fails. A group's `shared` suites run in one pytest session on one stack, so they must not depend on a fresh environment; a suite that overrides a stack fixture in its `conftest.py` (`signoz`, `clickhouse`, `migrator`, …) goes under `isolated` and gets its own session. `python integration/groups.py` checks the groups; on PRs CI passes it the suites the diff affects and runs only their groups.
 
 ### Test Suite Design
 

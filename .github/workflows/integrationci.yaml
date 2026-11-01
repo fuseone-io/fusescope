@@ -28,13 +28,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  fmtlint:
+  changes:
     if: |
       !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-integrate' && github.event.label.name != 'safe-to-test') && (
       github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
       ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
       )
+    runs-on: ubuntu-24.04
+    outputs:
+      integration: ${{ steps.changes.outputs.integration }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+      - name: changes
+        id: changes
+        uses: ./.github/actions/changes
+  fmtlint:
+    needs: changes
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
@@ -58,12 +69,8 @@ jobs:
   # Shares the image as an artifact, not via a registry: pull_request_target
   # runs fork code and must not hold a write token.
   build:
-    if: |
-      !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-integrate' && github.event.label.name != 'safe-to-test') && (
-      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
-      )
+    needs: changes
+    if: needs.changes.outputs.integration != ''
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
@@ -112,12 +119,7 @@ jobs:
           compression-level: 0
           retention-days: 1
   groups:
-    if: |
-      !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-integrate' && github.event.label.name != 'safe-to-test') && (
-      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
-      )
+    needs: changes
     runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
@@ -126,8 +128,10 @@ jobs:
         uses: actions/checkout@v7
       - name: matrix
         id: matrix
+        env:
+          SELECTION: ${{ needs.changes.outputs.integration }}
         run: |
-          echo "matrix=$(python3 tests/integration/groups.py)" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(python3 tests/integration/groups.py "$SELECTION")" >> "$GITHUB_OUTPUT"
   test:
     name: test (${{ matrix.group.name }}, ${{ matrix.sqlstore-provider }})
     needs: [build, groups]
@@ -146,12 +150,7 @@ jobs:
           - 0.145.0
         postgres-version:
           - 15
-    if: |
-      !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-integrate' && github.event.label.name != 'safe-to-test') && (
-      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
-      )
+    if: needs.groups.outputs.matrix != '[]'
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
