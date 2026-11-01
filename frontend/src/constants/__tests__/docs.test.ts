@@ -7,9 +7,7 @@ import {
 
 describe('docs urls', () => {
 	it('exposes the docs roots', () => {
-		expect(FUSESCOPE_DOCS_URL).toBe(
-			'https://docs.fusescope.fuseone.io',
-		);
+		expect(FUSESCOPE_DOCS_URL).toBe('https://docs.fusescope.fuseone.io');
 		expect(SIGNOZ_DOCS_URL).toBe('https://signoz.io/docs');
 	});
 
