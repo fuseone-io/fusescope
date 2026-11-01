@@ -127,3 +127,9 @@ def pytest_addoption(parser: pytest.Parser):
         default="0.145.0",
         help="fusescope otel collector version",
     )
+    parser.addoption(
+        "--signoz-image",
+        action="store",
+        default=None,
+        help="Run this prebuilt FuseScope image instead of building one from the current sources. CI builds it once per run and passes it to every job: pytest --basetemp=./tmp/ -vv --signoz-image fusescope-ci:integration integration/tests/<suite>/",
+    )
