@@ -56,3 +56,8 @@ def test_export_archives_each_shard_from_its_own_replicas(  # pylint: disable=to
         assert keys, f"shard {shard} has no archived object: {index}"
         rows = conn.query(f"SELECT body, _shard FROM s3({archive_named_collection}, filename = '{{{','.join(keys)}}}', format = 'Parquet') ORDER BY body").result_rows
         assert rows == [(body, shard) for body in expected], f"shard {shard}'s objects hold exactly the rows on its replicas"
+
+    deadline = time.time() + 60
+    while any(node.query("SELECT count() FROM signoz_logs.logs_v2 WHERE body LIKE 'archived %'").result_rows[0][0] for node in clickhouse_node_conns):
+        assert time.time() < deadline, "archived parts were never dropped on every shard"
+        time.sleep(2)

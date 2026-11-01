@@ -13,10 +13,21 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/types/archivetypes"
 )
 
+const partsQuery = "SELECT partition_id, name, min_block_number, max_block_number, toInt64(data_version), rows, bytes_on_disk, modification_time FROM system.parts WHERE database = ? AND table = ? AND active AND rows > 0"
+
 // activeParts returns the replica's active parts of table that hold rows, by partition ID. A
 // part is first seen when it was written, so a hold survives restarts and handovers.
 func activeParts(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table) (map[string][]archivetypes.Part, error) {
-	rows, err := conn.Query(ctx, "SELECT partition_id, name, min_block_number, max_block_number, toInt64(data_version), rows, bytes_on_disk, modification_time FROM system.parts WHERE database = ? AND table = ? AND active AND rows > 0 ORDER BY partition_id, min_block_number", table.Database, table.Name)
+	return queryParts(ctx, conn, table, partsQuery+" ORDER BY partition_id, min_block_number", table.Database, table.Name)
+}
+
+func partitionActiveParts(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table, partitionID string) ([]archivetypes.Part, error) {
+	parts, err := queryParts(ctx, conn, table, partsQuery+" AND partition_id = ? ORDER BY min_block_number", table.Database, table.Name, partitionID)
+	return parts[partitionID], err
+}
+
+func queryParts(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table, query string, args ...any) (map[string][]archivetypes.Part, error) {
+	rows, err := conn.Query(ctx, query, args...)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the parts of %s.%s", table.Database, table.Name)
 	}

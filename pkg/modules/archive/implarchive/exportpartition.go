@@ -25,11 +25,17 @@ func (service *exportService) export(ctx context.Context, lease *archivetypes.Le
 	if err != nil {
 		return err
 	}
-	candidates := service.holdLateParts(job, archivetypes.SelectForExport(job.snapshot[chosen], archivetypes.PartsOf(published)), len(published) > 0)
-	if len(candidates) == 0 {
-		return nil
+	candidates := service.holdLateParts(archivetypes.SelectForExport(job.snapshot[chosen], archivetypes.PartsOf(published)), len(published) > 0)
+	if len(candidates) > 0 {
+		if err := service.exportCandidates(ctx, lease, job, chosen, candidates); err != nil {
+			return err
+		}
 	}
 
+	return service.dropArchived(ctx, job, job.replicas[chosen])
+}
+
+func (service *exportService) exportCandidates(ctx context.Context, lease *archivetypes.Lease, job exportJob, chosen string, candidates []archivetypes.Part) error {
 	signalConfig := service.config.Logs
 	attempt := archivetypes.NewExportAttempt(lease, job.pin, job.partition.ID, signalConfig.NamedCollection, signalConfig.Prefix)
 	if err := service.store.CreateAttempt(ctx, attempt); err != nil {
@@ -45,10 +51,6 @@ func (service *exportService) export(ctx context.Context, lease *archivetypes.Le
 		}
 		return err
 	}
-
-	service.mu.Lock()
-	delete(service.firstSeen, jobKey(job))
-	service.mu.Unlock()
 
 	service.settings.Logger().InfoContext(ctx, "archive partition exported", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID), slog.Int("parts", len(candidates)), slog.String("attempt_id", attempt.ID.StringValue()))
 	return nil
@@ -96,19 +98,10 @@ func (service *exportService) publish(ctx context.Context, lease *archivetypes.L
 }
 
 // holdLateParts returns the candidates to export now. A candidate is first seen when it was
-// written; a merge of held parts keeps the earliest time this backend saw, and after a restart
-// the hold of a merged part counts from the merge.
-func (service *exportService) holdLateParts(job exportJob, candidates []archivetypes.Part, partitionHasPublished bool) []archivetypes.Part {
-	now := time.Now()
-	key := jobKey(job)
-
-	service.mu.Lock()
-	candidates = archivetypes.InheritFirstSeen(service.firstSeen[key], candidates)
-	service.firstSeen[key] = candidates
-	service.mu.Unlock()
-
+// written, or, merged from inventoried parts, when the earliest of them was first seen.
+func (service *exportService) holdLateParts(candidates []archivetypes.Part, partitionHasPublished bool) []archivetypes.Part {
 	hold := archivetypes.LateHold{MinRows: service.config.Logs.LateMinRows, MaxHold: service.config.Logs.LateMaxHold}
-	if !hold.Ready(candidates, partitionHasPublished, now) {
+	if !hold.Ready(candidates, partitionHasPublished, time.Now()) {
 		return nil
 	}
 	return candidates

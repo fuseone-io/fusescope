@@ -55,20 +55,8 @@ func (store *store) Publish(ctx context.Context, lease *archivetypes.Lease, publ
 		attempt := publication.Attempt
 		now := time.Now().UTC()
 
-		// Taking the lease row first holds off a takeover until the commit ends.
-		fenced, err := db.
-			NewUpdate().
-			Model(new(archivetypes.Lease)).
-			Set("updated_at = ?", now).
-			Where("signal = ?", lease.Signal).
-			Where("holder = ?", lease.Holder).
-			Where("epoch = ?", lease.Epoch).
-			Where("expires_at > ?", now).
-			Exec(ctx)
-		if ok, err := oneRowAffected(fenced, err); err != nil {
-			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't check the archive lease of %s", lease.Signal)
-		} else if !ok {
-			return errors.Newf(errors.TypeForbidden, archivetypes.ErrCodeLeaseLost, "the archive lease of %s at epoch %d is lost", lease.Signal, lease.Epoch)
+		if err := fence(ctx, db, lease, now); err != nil {
+			return err
 		}
 
 		published, err := db.
@@ -266,6 +254,27 @@ func supersede(ctx context.Context, db bun.IDB, publication *archivetypes.Public
 		Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't mark the objects superseded by archive attempt %s", attempt.ID)
+	}
+
+	return nil
+}
+
+// fence takes the lease row first, which holds off a takeover until the transaction ends, and
+// fails with ErrCodeLeaseLost unless lease is still valid at its epoch.
+func fence(ctx context.Context, db bun.IDB, lease *archivetypes.Lease, now time.Time) error {
+	fenced, err := db.
+		NewUpdate().
+		Model(new(archivetypes.Lease)).
+		Set("updated_at = ?", now).
+		Where("signal = ?", lease.Signal).
+		Where("holder = ?", lease.Holder).
+		Where("epoch = ?", lease.Epoch).
+		Where("expires_at > ?", now).
+		Exec(ctx)
+	if ok, err := oneRowAffected(fenced, err); err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't check the archive lease of %s", lease.Signal)
+	} else if !ok {
+		return errors.Newf(errors.TypeForbidden, archivetypes.ErrCodeLeaseLost, "the archive lease of %s at epoch %d is lost", lease.Signal, lease.Epoch)
 	}
 
 	return nil
