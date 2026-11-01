@@ -69,7 +69,7 @@ def decide(files: list[str], labels: set[str]) -> tuple[Decision, dict[str, list
         decision.go = decision.js = decision.e2e = True
         decision.integration.add(ALL)
     if "go" in by_category:
-        decision.go = True
+        decision.go = decision.e2e = True
         decision.integration.add(ALL)
     if "frontend" in by_category:
         decision.js = decision.e2e = True
@@ -106,7 +106,7 @@ def summary(event: str, decision: Decision, by_category: dict[str, list[str]]) -
     lines += [
         f"- goci: {'run' if decision.go else 'skip (no Go, docs/api or infra change)'}",
         f"- jsci test, storybook: {'run' if decision.js else 'skip (no frontend, docs/api or infra change)'}",
-        f"- e2e: {'run' if decision.e2e else 'skip (no frontend, tests/e2e, docs/api or infra change)'}",
+        f"- e2e: {'run' if decision.e2e else 'skip (no Go, frontend, tests/e2e, docs/api or infra change)'}",
         f"- integration: groups for `{outputs['integration']}` (`ui`: suites that drive the web UI)" if outputs["integration"] else "- integration: skip (no Go, frontend, suite or infra change)",
     ]
     return "\n".join(lines) + "\n"

@@ -12,11 +12,11 @@ class DecideTest(unittest.TestCase):
         decision, _ = decide(files, set(labels))
         self.assertEqual(decision.outputs(), {"go": str(go).lower(), "js": str(js).lower(), "e2e": str(e2e).lower(), "integration": integration})
 
-    def test_go_only(self) -> None:
-        self.check([GO, "pkg/types/archivetypes/blockrange_test.go"], go=True, js=False, e2e=False, integration="all")
+    def test_go_only_runs_e2e(self) -> None:
+        self.check([GO, "pkg/types/archivetypes/blockrange_test.go"], go=True, js=False, e2e=True, integration="all")
 
     def test_go_embedded_files(self) -> None:
-        self.check(["pkg/query-service/app/integrations/catalog/snapshot/index.json", "templates/email/invite.gotmpl", "conf/example.yaml"], go=True, js=False, e2e=False, integration="all")
+        self.check(["pkg/query-service/app/integrations/catalog/snapshot/index.json", "templates/email/invite.gotmpl", "conf/example.yaml"], go=True, js=False, e2e=True, integration="all")
 
     def test_go_and_api(self) -> None:
         self.check([GO, API], go=True, js=True, e2e=True, integration="all")
@@ -37,7 +37,7 @@ class DecideTest(unittest.TestCase):
         self.check(["docs/adr/0010-collector-single-ingress.md", "frontend/README.md", "docs/brand/mark.svg"], go=False, js=False, e2e=False, integration="")
 
     def test_label_runs_e2e(self) -> None:
-        self.check([GO], go=True, js=False, e2e=True, integration="all", labels=frozenset({"safe-to-e2e"}))
+        self.check(["tests/integration/tests/rum/01_applications.py"], go=False, js=False, e2e=True, integration="rum", labels=frozenset({"safe-to-e2e"}))
 
     def test_infra_runs_everything(self) -> None:
         for path in [
