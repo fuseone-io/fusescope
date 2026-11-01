@@ -111,57 +111,30 @@ jobs:
           path: ${{ runner.temp }}/image.tar.zst
           compression-level: 0
           retention-days: 1
+  groups:
+    if: |
+      !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-integrate' && github.event.label.name != 'safe-to-test') && (
+      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
+      )
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+      - name: matrix
+        id: matrix
+        run: |
+          echo "matrix=$(python3 tests/integration/groups.py)" >> "$GITHUB_OUTPUT"
   test:
-    needs: build
+    name: test (${{ matrix.group.name }}, ${{ matrix.sqlstore-provider }})
+    needs: [build, groups]
     strategy:
       fail-fast: false
       matrix:
-        suite:
-          - alertmanager
-          - alertmanagerrotation
-          - auditquerier
-          - basepath
-          - authdomainconfig
-          - callbackauthn
-          - cloudintegrations
-          - dashboard
-          - ingestionkeys
-          - integrations
-          - inframonitoring
-          - llmpricingrules
-          - logspipelines
-          - onboarding
-          - passwordauthn
-          - preference
-          - quickfilter
-          - querierlogs
-          - queriertraces
-          - queriermetrics
-          - querierscalar
-          - queriercommon
-          - querierai
-          - rawexportdata
-          - promqlconformance
-          - promapiconformance
-          - promote
-          - querierauthz
-          - role
-          - rootuser
-          - rum
-          - ruler
-          - savedview
-          - schemacontract
-          - semconvfamilies
-          - serviceaccount
-          - simulatorcontract
-          - spanmapper
-          - tracedetail
-          - thirdpartyapi
-          - querier_json_body
-          - querier_skip_resource_fingerprint
-          - ttl
-          - clickhousecluster
-          - metricreduction
+        group: ${{ fromJSON(needs.groups.outputs.matrix) }}
         sqlstore-provider:
           - sqlite
           - postgres
@@ -193,7 +166,7 @@ jobs:
         run: |
           cd tests && uv sync
       - name: webdriver
-        if: matrix.suite == 'callbackauthn' || matrix.suite == 'basepath'
+        if: matrix.group.webdriver
         run: |
           wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
           echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list
@@ -224,14 +197,22 @@ jobs:
           zstd -dc "$RUNNER_TEMP/image.tar.zst" | docker load
           rm "$RUNNER_TEMP/image.tar.zst"
       - name: run
+        env:
+          RUNS: ${{ matrix.group.runs }}
         run: |
-          cd tests && \
+          cd tests
+          status=0
+          while read -ra suites; do
+            echo "pytest: ${suites[*]}"
             uv run pytest \
-            --basetemp=./tmp/ \
-            integration/tests/${{matrix.suite}} \
-            --sqlstore-provider ${{matrix.sqlstore-provider}} \
-            --sqlite-mode ${{matrix.sqlite-mode}} \
-            --postgres-version ${{matrix.postgres-version}} \
-            --clickhouse-version ${{matrix.clickhouse-version}} \
-            --schema-migrator-version ${{matrix.schema-migrator-version}} \
-            --signoz-image fusescope-ci:integration
+              --basetemp=./tmp/ \
+              "${suites[@]/#/integration/tests/}" \
+              --sqlstore-provider ${{matrix.sqlstore-provider}} \
+              --sqlite-mode ${{matrix.sqlite-mode}} \
+              --postgres-version ${{matrix.postgres-version}} \
+              --clickhouse-version ${{matrix.clickhouse-version}} \
+              --schema-migrator-version ${{matrix.schema-migrator-version}} \
+              --signoz-image fusescope-ci:integration \
+              || { status=1; echo "::error title=integration failed::${suites[*]}"; }
+          done <<< "$RUNS"
+          exit $status
