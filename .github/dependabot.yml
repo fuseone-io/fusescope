@@ -1,0 +1,84 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directories:
+      - /
+      - /scripts/promqltestcorpus
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      gomod-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directories:
+      - /frontend
+      - /tests/e2e
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: uv
+    directory: /tests
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      uv-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: docker
+    directory: /cmd/community
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      docker-minor-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Go and Node version moves update go.mod, pins and docs together, by hand.
+      - dependency-name: golang
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
