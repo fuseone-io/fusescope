@@ -49,4 +49,19 @@ type Store interface {
 	// IndexSnapshot returns a table's active objects with the number of commits they reflect,
 	// read together.
 	IndexSnapshot(ctx context.Context, table string) (*IndexSnapshot, error)
+
+	StartCycle(ctx context.Context, cycle *Cycle) error
+
+	FinishCycle(ctx context.Context, cycle *Cycle, status string, finishedAt time.Time) error
+
+	// ListInventory returns the last inventory of every partition under one shard pin.
+	ListInventory(ctx context.Context, shard *Shard) ([]*InventoryPart, error)
+
+	// RecordInventory replaces the inventory of a partition and records its lost parts, if
+	// lease is still valid at its epoch (ErrCodeLeaseLost otherwise).
+	RecordInventory(ctx context.Context, lease *Lease, inventory *Inventory) error
+
+	// MarkPartsDropped records as dropped from ClickHouse the archived parts of a partition
+	// whose range one of dropped contains.
+	MarkPartsDropped(ctx context.Context, shard *Shard, partitionID string, dropped BlockRanges, droppedAt time.Time) error
 }

@@ -152,11 +152,13 @@ func TestExport(t *testing.T) {
 	testCases := []struct {
 		name          string
 		readBack      [][]any
-		wantErr       bool
+		leaseLost     bool
+		wantErr       errors.Code
 		wantPublished bool
 	}{
-		{name: "EveryRowReadBack_Published", readBack: [][]any{{part.Name + ".parquet", uint64(1024), `"etag"`, uint64(10), []string{part.Name}}}, wantPublished: true},
-		{name: "RowsMissing_Abandoned", readBack: [][]any{{part.Name + ".parquet", uint64(1024), `"etag"`, uint64(9), []string{part.Name}}}, wantErr: true},
+		{name: "EveryRowReadBack_PublishedAndDropped", readBack: [][]any{{part.Name + ".parquet", uint64(1024), `"etag"`, uint64(10), []string{part.Name}}}, wantPublished: true},
+		{name: "RowsMissing_Abandoned", readBack: [][]any{{part.Name + ".parquet", uint64(1024), `"etag"`, uint64(9), []string{part.Name}}}, wantErr: archivetypes.ErrCodeObjectMismatch},
+		{name: "LeaseLostBeforeCommit_NothingDropped", readBack: [][]any{{part.Name + ".parquet", uint64(1024), `"etag"`, uint64(10), []string{part.Name}}}, leaseLost: true, wantErr: archivetypes.ErrCodeLeaseLost},
 	}
 
 	for _, testCase := range testCases {
@@ -172,8 +174,19 @@ func TestExport(t *testing.T) {
 			conn := newMockConn(t)
 			conn.ExpectExec("INSERT INTO FUNCTION s3")
 			conn.ExpectQuery("groupUniqArray").WillReturnRows(cmock.NewRows(statColumns, testCase.readBack))
-			if testCase.wantPublished {
+			if testCase.wantPublished || testCase.leaseLost {
 				conn.ExpectExec("SELECT raw FROM blob")
+			}
+			if testCase.wantPublished {
+				expectReplica(conn, 1, "ReplicatedMergeTree", "/clickhouse/tables/u/01")
+				expectPartitionParts(conn, "20260903-15-0", part)
+				conn.ExpectExec("ALTER TABLE `signoz_logs`.`logs_v2` DROP PART '20260903-15-0_1_5_1'")
+			}
+			if testCase.leaseLost {
+				_, err = archiveStore.AcquireLease(ctx, "logs", "a", time.Now())
+				require.NoError(t, err)
+				_, err = archiveStore.AcquireLease(ctx, "logs", "b", time.Now().Add(time.Minute))
+				require.NoError(t, err)
 			}
 
 			job := exportJob{
@@ -194,15 +207,16 @@ func TestExport(t *testing.T) {
 			require.NoError(t, archiveStore.(*store).sqlstore.BunDB().NewSelect().Model(&attempts).Scan(ctx))
 			require.Len(t, attempts, 1)
 
-			if testCase.wantErr {
-				assert.True(t, errors.Asc(err, archivetypes.ErrCodeObjectMismatch), err)
+			if testCase.wantErr != (errors.Code{}) {
+				assert.True(t, errors.Asc(err, testCase.wantErr), err)
 				assert.Empty(t, published)
-				assert.Equal(t, archivetypes.AttemptStatusAbandoned, attempts[0].Status, "an attempt that read back short is abandoned, its objects orphans")
+				assert.Equal(t, archivetypes.AttemptStatusAbandoned, attempts[0].Status, "an attempt that isn't published is abandoned, its objects orphans, and nothing is dropped")
 				return
 			}
 			require.NoError(t, err)
-			assert.Len(t, published, 1)
+			require.Len(t, published, 1)
 			assert.Equal(t, archivetypes.AttemptStatusPublished, attempts[0].Status)
+			assert.NotNil(t, published[0].DroppedAt, "a published part is dropped once committed")
 		})
 	}
 }
@@ -211,19 +225,16 @@ func TestHoldLateParts(t *testing.T) {
 	service := newTestExportService(t, newTestStore(t))
 	service.config.Logs.LateMinRows = 1_000
 	service.config.Logs.LateMaxHold = 24 * time.Hour
-	job := exportJob{table: testLogsTable, shard: 1, partition: archivetypes.Partition{ID: "20260903-15-0"}}
 	late := archivetypes.Part{Name: "20260903-15-0_6_6_0", Range: archivetypes.BlockRange{Min: 6, Max: 6}, Rows: 1}
 
 	written := late
 	written.FirstSeen = time.Now().Add(-time.Hour)
-	assert.Empty(t, service.holdLateParts(job, []archivetypes.Part{written}, true), "a late part written an hour ago is held")
+	assert.Empty(t, service.holdLateParts([]archivetypes.Part{written}, true), "a late part written an hour ago is held")
+	assert.Len(t, service.holdLateParts([]archivetypes.Part{written}, false), 1, "the first export of a partition is never held")
 
 	writtenLongAgo := late
 	writtenLongAgo.FirstSeen = time.Now().Add(-25 * time.Hour)
-	assert.Len(t, service.holdLateParts(job, []archivetypes.Part{writtenLongAgo}, true), 1, "the hold counts from when the part was written, not from when this backend saw it")
-
-	merged := archivetypes.Part{Name: "20260903-15-0_6_7_1", Range: archivetypes.BlockRange{Min: 6, Max: 7}, Rows: 2, FirstSeen: time.Now()}
-	assert.Len(t, service.holdLateParts(job, []archivetypes.Part{merged}, true), 1, "merging held parts keeps their earliest time")
+	assert.Len(t, service.holdLateParts([]archivetypes.Part{writtenLongAgo}, true), 1, "the hold counts from when the part was first seen")
 }
 
 func newTestExportService(t *testing.T, store archivetypes.Store) *exportService {
@@ -232,14 +243,18 @@ func newTestExportService(t *testing.T, store archivetypes.Store) *exportService
 	config := archive.Config{Interval: time.Hour, Limits: archive.LimitsConfig{Concurrency: 1, MaxThreads: 1, RowGroupRows: 1000, QueryTimeout: time.Minute, QueryTimeoutPerGiB: time.Minute}}
 	config.Logs = archive.SignalConfig{Enabled: true, NamedCollection: "archive", Prefix: "fusescope", BackstopDays: 7, LateMinRows: 2, LateMaxHold: time.Hour}
 
+	settings := factory.NewScopedProviderSettings(instrumentationtest.New().ToProviderSettings(), "implarchive_test")
+	metrics, err := newArchiveMetrics(settings.Meter())
+	require.NoError(t, err)
+
 	return &exportService{
-		settings:       factory.NewScopedProviderSettings(instrumentationtest.New().ToProviderSettings(), "implarchive_test"),
+		settings:       settings,
 		telemetryStore: telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp),
 		store:          store,
 		config:         config,
 		holder:         "a",
 		partitions:     make(map[string]archivetypes.Partition),
-		firstSeen:      make(map[string][]archivetypes.Part),
+		metrics:        metrics,
 	}
 }
 
@@ -262,6 +277,14 @@ func expectParts(conn cmock.ClickConnMockCommon, written time.Time, names ...str
 		rows = append(rows, []any{"20260903-15-0", name, int64(i + 1), int64(i + 5), int64(1), uint64(10), uint64(2048), written})
 	}
 	conn.ExpectQuery("FROM system.parts").WithArgs(testLogsTable.Database, testLogsTable.Name).WillReturnRows(cmock.NewRows(partColumns, rows))
+}
+
+func expectPartitionParts(conn cmock.ClickConnMockCommon, partitionID string, parts ...archivetypes.Part) {
+	rows := make([][]any, 0, len(parts))
+	for _, part := range parts {
+		rows = append(rows, []any{partitionID, part.Name, part.Range.Min, part.Range.Max, part.DataVersion, part.Rows, uint64(2048), time.Date(2026, 9, 4, 0, 0, 0, 0, time.UTC)})
+	}
+	conn.ExpectQuery("AND partition_id = ").WithArgs(testLogsTable.Database, testLogsTable.Name, partitionID).WillReturnRows(cmock.NewRows(partColumns, rows))
 }
 
 func expectReplica(conn cmock.ClickConnMockCommon, isReplica uint64, engine string, path string) {
