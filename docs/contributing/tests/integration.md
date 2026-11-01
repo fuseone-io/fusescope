@@ -68,7 +68,7 @@ uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild integration/tests/<suite>/
 
 ### Reusing the environment across suites
 
-`--reuse` also keeps state between suites: users, roles, dashboards and the SQL store written by one suite are still there when the next one starts, and a suite with its own SigNoz variant can leave that container running. A suite that passes alone can then fail after another one (for example, logins returning 500). CI runs every suite on a fresh environment without `--reuse`; do the same when checking several suites in a row, or run `make py-test-teardown` between them.
+`--reuse` also keeps state between suites: users, roles, dashboards and the SQL store written by one suite are still there when the next one starts, and a suite with its own SigNoz variant can leave that container running. A suite that passes alone can then fail after another one (for example, logins returning 500). CI runs without `--reuse`, isolated suites on a fresh environment each and the shared suites of a group on one environment (see CI groups below); do the same when checking several suites in a row, or run `make py-test-teardown` between them.
 
 ### Stopping the Test Environment
 
@@ -142,6 +142,7 @@ Each test suite follows these principles:
 1. **Organization**: Suites live under `tests/integration/tests/` in self-contained packages. Shared fixtures live in the top-level `tests/fixtures/` package so the e2e tree can reuse them.
 2. **Execution Order**: Files are prefixed with two-digit numbers (`01_`, `02_`, `03_`) to ensure sequential execution when tests depend on ordering.
 3. **Time Constraints**: Each suite should complete in under 10 minutes (setup takes ~4 mins).
+4. **CI groups**: `integrationci` runs suites in groups, one job per group and SQL store, defined in `tests/integration/groups.py`. Add a new suite to a group there, or CI fails. A group's `shared` suites run in one pytest session on one stack, so they must not depend on a fresh environment; a suite that overrides a stack fixture in its `conftest.py` (`signoz`, `clickhouse`, `migrator`, …) goes under `isolated` and gets its own session. `python integration/groups.py` checks the groups.
 
 ### Test Suite Design
 
