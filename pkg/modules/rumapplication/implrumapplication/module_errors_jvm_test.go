@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	cmock "github.com/SigNoz/clickhouse-go-mock"
+	cmock "github.com/fuseone-io/clickhouse-go-mock"
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

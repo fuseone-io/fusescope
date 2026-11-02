@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	cmock "github.com/SigNoz/clickhouse-go-mock"
+	cmock "github.com/fuseone-io/clickhouse-go-mock"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/flagger/flaggertest"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"

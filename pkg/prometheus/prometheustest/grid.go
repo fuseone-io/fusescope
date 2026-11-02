@@ -1,7 +1,7 @@
 package prometheustest
 
 import (
-	cmock "github.com/SigNoz/clickhouse-go-mock"
+	cmock "github.com/fuseone-io/clickhouse-go-mock"
 )
 
 // GridCols is the result shape of a transpiled unit statement.

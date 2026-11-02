@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	cmock "github.com/SigNoz/clickhouse-go-mock"
+	cmock "github.com/fuseone-io/clickhouse-go-mock"
 	"github.com/fuseone-io/fusescope/pkg/cache"
 	"github.com/fuseone-io/fusescope/pkg/cache/cachetest"
 	"github.com/fuseone-io/fusescope/pkg/flagger/flaggertest"

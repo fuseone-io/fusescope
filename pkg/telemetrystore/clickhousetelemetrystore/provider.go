@@ -2,6 +2,7 @@ package clickhousetelemetrystore
 
 import (
 	"context"
+	"io"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -230,6 +231,30 @@ func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) 
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
 	return castError(err)
+}
+
+func (p *provider) InsertFormat(ctx context.Context, format string, query string, data io.Reader) error {
+	event := telemetrystore.NewQueryEvent(query, nil)
+
+	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
+	err := p.clickHouseConn.InsertFormat(ctx, format, query, data)
+
+	event.Err = err
+	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+
+	return castError(err)
+}
+
+func (p *provider) QueryFormat(ctx context.Context, format string, query string, args ...any) (io.ReadCloser, error) {
+	event := telemetrystore.NewQueryEvent(query, args)
+
+	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
+	body, err := p.clickHouseConn.QueryFormat(ctx, format, query, args...)
+
+	event.Err = err
+	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+
+	return body, castError(err)
 }
 
 func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {

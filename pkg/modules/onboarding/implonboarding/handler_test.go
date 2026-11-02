@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	cmock "github.com/SigNoz/clickhouse-go-mock"
+	cmock "github.com/fuseone-io/clickhouse-go-mock"
 	"github.com/fuseone-io/fusescope/pkg/global"
 	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"

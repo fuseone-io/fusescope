@@ -1,7 +1,7 @@
 package spantypestest
 
 import (
-	cmock "github.com/SigNoz/clickhouse-go-mock"
+	cmock "github.com/fuseone-io/clickhouse-go-mock"
 	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 )
 
