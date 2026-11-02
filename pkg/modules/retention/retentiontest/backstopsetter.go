@@ -7,6 +7,7 @@ package retentiontest
 import (
 	"context"
 
+	"github.com/fuseone-io/fusescope/pkg/types/archivetypes"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -38,16 +39,16 @@ func (_m *MockBackstopSetter) EXPECT() *MockBackstopSetter_Expecter {
 }
 
 // ApplyArchiveBackstop provides a mock function for the type MockBackstopSetter
-func (_mock *MockBackstopSetter) ApplyArchiveBackstop(ctx context.Context, signal string, days int, resume bool) error {
-	ret := _mock.Called(ctx, signal, days, resume)
+func (_mock *MockBackstopSetter) ApplyArchiveBackstop(ctx context.Context, signal string, days int, progress archivetypes.BackstopProgress) error {
+	ret := _mock.Called(ctx, signal, days, progress)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApplyArchiveBackstop")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int, bool) error); ok {
-		r0 = returnFunc(ctx, signal, days, resume)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int, archivetypes.BackstopProgress) error); ok {
+		r0 = returnFunc(ctx, signal, days, progress)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,12 +64,12 @@ type MockBackstopSetter_ApplyArchiveBackstop_Call struct {
 //   - ctx context.Context
 //   - signal string
 //   - days int
-//   - resume bool
-func (_e *MockBackstopSetter_Expecter) ApplyArchiveBackstop(ctx interface{}, signal interface{}, days interface{}, resume interface{}) *MockBackstopSetter_ApplyArchiveBackstop_Call {
-	return &MockBackstopSetter_ApplyArchiveBackstop_Call{Call: _e.mock.On("ApplyArchiveBackstop", ctx, signal, days, resume)}
+//   - progress archivetypes.BackstopProgress
+func (_e *MockBackstopSetter_Expecter) ApplyArchiveBackstop(ctx interface{}, signal interface{}, days interface{}, progress interface{}) *MockBackstopSetter_ApplyArchiveBackstop_Call {
+	return &MockBackstopSetter_ApplyArchiveBackstop_Call{Call: _e.mock.On("ApplyArchiveBackstop", ctx, signal, days, progress)}
 }
 
-func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) Run(run func(ctx context.Context, signal string, days int, resume bool)) *MockBackstopSetter_ApplyArchiveBackstop_Call {
+func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) Run(run func(ctx context.Context, signal string, days int, progress archivetypes.BackstopProgress)) *MockBackstopSetter_ApplyArchiveBackstop_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -82,9 +83,9 @@ func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) Run(run func(ctx context
 		if args[2] != nil {
 			arg2 = args[2].(int)
 		}
-		var arg3 bool
+		var arg3 archivetypes.BackstopProgress
 		if args[3] != nil {
-			arg3 = args[3].(bool)
+			arg3 = args[3].(archivetypes.BackstopProgress)
 		}
 		run(
 			arg0,
@@ -101,7 +102,7 @@ func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) Return(err error) *MockB
 	return _c
 }
 
-func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) RunAndReturn(run func(ctx context.Context, signal string, days int, resume bool) error) *MockBackstopSetter_ApplyArchiveBackstop_Call {
+func (_c *MockBackstopSetter_ApplyArchiveBackstop_Call) RunAndReturn(run func(ctx context.Context, signal string, days int, progress archivetypes.BackstopProgress) error) *MockBackstopSetter_ApplyArchiveBackstop_Call {
 	_c.Call.Return(run)
 	return _c
 }
