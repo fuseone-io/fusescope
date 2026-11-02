@@ -85,6 +85,13 @@ func TestBackstopServiceReconcile(t *testing.T) {
 		require.NoError(t, service.reconcile(ctx))
 	})
 
+	t.Run("AppliedByAnotherBackendBeforeLease_NothingIssued", func(t *testing.T) {
+		store := newTestStore(t)
+		service, _ := newTestBackstopService(t, &applyingBeforeLeaseStore{Store: store, days: 7}, 7)
+
+		require.NoError(t, service.reconcile(ctx))
+	})
+
 	t.Run("ApplyFails_BackstopChanged_NotResumed", func(t *testing.T) {
 		store := newTestStore(t)
 		first, firstSetter := newTestBackstopService(t, store, 7)
@@ -192,3 +199,19 @@ func TestBackstopServiceDisabledWarnsAboutKeptBackstop(t *testing.T) {
 	}
 }
 
+// applyingBeforeLeaseStore is a store on which another backend applies the backstop of
+// days right before the lease is taken.
+type applyingBeforeLeaseStore struct {
+	archivetypes.Store
+	days int
+}
+
+func (store *applyingBeforeLeaseStore) AcquireLease(ctx context.Context, signal string, holder string, expiresAt time.Time) (*archivetypes.Lease, error) {
+	if err := store.SetBackstop(ctx, retentiontypes.LogsTTL, store.days); err != nil {
+		return nil, err
+	}
+	if err := store.MarkBackstopApplied(ctx, retentiontypes.LogsTTL, time.Now()); err != nil {
+		return nil, err
+	}
+	return store.Store.AcquireLease(ctx, signal, holder, expiresAt)
+}

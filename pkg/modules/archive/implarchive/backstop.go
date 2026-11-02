@@ -99,6 +99,12 @@ func (service *backstopService) reconcile(ctx context.Context) error {
 
 	// Several backends may run this service; one applies the backstop at a time.
 	return runUnderLease(ctx, service.store, service.settings.Logger(), archivetypes.BackstopLease(signal), service.holder, leaseDuration, func(ctx context.Context, _ *archivetypes.Lease) error {
+		// Another backend may have applied it before this one took the lease.
+		pending, err := service.backstopPending(ctx, signal, days)
+		if err != nil || !pending {
+			return err
+		}
+
 		if err := service.store.SetBackstop(ctx, signal, days); err != nil {
 			return err
 		}
