@@ -231,6 +231,13 @@ func TestExport(t *testing.T) {
 				exported := testCase.replicaParts[testCase.exportedBy]
 				expectReplica(exporter, 1, "ReplicatedMergeTree", pin.ReplicaPath)
 				expectPartitionParts(exporter, job.partition.ID, exported...)
+				listing := make([][]any, 0, len(testCase.wantPublished))
+				for _, name := range testCase.wantPublished {
+					listing = append(listing, []any{name + ".parquet", uint64(1024), `"etag"`})
+				}
+				for range min(len(testCase.readBacks), len(listing)) {
+					exporter.ExpectQuery("attempt=.*format = 'One'").WillReturnRows(cmock.NewRows(statColumns[:3], listing))
+				}
 				for _, name := range testCase.wantPublished {
 					exporter.ExpectExec("DROP PART '" + name + "'")
 				}

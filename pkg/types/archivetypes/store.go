@@ -72,4 +72,8 @@ type Store interface {
 	// MarkPartsDropped records as dropped from ClickHouse the archived parts of a partition
 	// whose range one of dropped contains.
 	MarkPartsDropped(ctx context.Context, shard *Shard, partitionID string, dropped BlockRanges, droppedAt time.Time) error
+
+	// ListUndroppedObjects returns the objects holding the published parts of a partition
+	// under one shard pin that aren't dropped from ClickHouse yet.
+	ListUndroppedObjects(ctx context.Context, shard *Shard, partitionID string) ([]*Object, error)
 }

@@ -117,3 +117,19 @@ func publishTest(t *testing.T, archiveStore archivetypes.Store, lease *archivety
 	_, err := archiveStore.Publish(context.Background(), lease, publication)
 	require.NoError(t, err)
 }
+
+func TestListUndroppedObjects(t *testing.T) {
+	forEachStore(t, func(t *testing.T, archiveStore archivetypes.Store) {
+		ctx := context.Background()
+		lease := acquireTestLease(t, archiveStore)
+		pin := testShardPin(t, archiveStore)
+		publishTest(t, archiveStore, lease, newTestPublication(t, archiveStore, lease, "a", archivetypes.BlockRange{Min: 1, Max: 2}, archivetypes.BlockRange{Min: 3, Max: 3}))
+		publishTest(t, archiveStore, lease, newTestPublication(t, archiveStore, lease, "b", archivetypes.BlockRange{Min: 1, Max: 2}))
+		require.NoError(t, archiveStore.MarkPartsDropped(ctx, pin, "a", archivetypes.NewBlockRanges(archivetypes.BlockRange{Min: 1, Max: 2}), time.Now()))
+
+		objects, err := archiveStore.ListUndroppedObjects(ctx, pin, "a")
+		require.NoError(t, err)
+		require.Len(t, objects, 1)
+		assert.Contains(t, objects[0].ObjectKey, "p_3_3")
+	})
+}

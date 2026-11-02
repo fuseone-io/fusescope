@@ -2,10 +2,14 @@ package implarchive
 
 import (
 	"context"
+	"path"
+	"regexp"
+	"slices"
 	"testing"
 
 	"github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,6 +31,7 @@ func TestDropArchived(t *testing.T) {
 		replicaPath string
 		rounds      [][]archivetypes.Part
 		dropErrs    map[string]error
+		changed     map[string][]any
 		wantDropped []string
 		wantErr     bool
 	}{
@@ -41,6 +46,23 @@ func TestDropArchived(t *testing.T) {
 			dropErrs:    map[string]error{"20260904-15-0_1_3_1": noSuchPart, "20260904-15-0_4_5_1": noSuchPart},
 			wantDropped: []string{"20260904-15-0_1_5_2"},
 		},
+		{
+			name:        "ObjectSizeChanged_PartKept",
+			rounds:      [][]archivetypes.Part{published},
+			changed:     map[string][]any{"20260904-15-0_1_3_1": {"20260904-15-0_1_3_1.parquet", uint64(512), `"etag"`}},
+			wantDropped: []string{"20260904-15-0_4_5_1"},
+		},
+		{
+			name:        "ObjectMissing_PartKept",
+			rounds:      [][]archivetypes.Part{published},
+			changed:     map[string][]any{"20260904-15-0_4_5_1": nil},
+			wantDropped: []string{"20260904-15-0_1_3_1"},
+		},
+		{
+			name:    "ObjectOfASourcePartChanged_MergeKept",
+			rounds:  [][]archivetypes.Part{{part("20260904-15-0_1_5_2", 1, 5, 1)}},
+			changed: map[string][]any{"20260904-15-0_4_5_1": {"20260904-15-0_4_5_1.parquet", uint64(1024), `"rewritten"`}},
+		},
 		{name: "ReplicaHoldsOtherData_NothingDropped", replicaPath: "/clickhouse/tables/recreated/01", rounds: [][]archivetypes.Part{{}}, wantErr: true},
 	}
 
@@ -50,7 +72,19 @@ func TestDropArchived(t *testing.T) {
 			service := newTestExportService(t, archiveStore)
 			lease := acquireTestLease(t, archiveStore)
 			pin := testShardPin(t, archiveStore)
-			publishTest(t, archiveStore, lease, newTestPublicationOf(t, archiveStore, lease, partitionID, published...))
+			publication := newTestPublicationOf(t, archiveStore, lease, partitionID, published...)
+			publishTest(t, archiveStore, lease, publication)
+			verified := slices.DeleteFunc(slices.Clone(published), func(p archivetypes.Part) bool { _, ok := testCase.changed[p.Name]; return ok })
+			var bucket [][]any
+			for _, p := range published {
+				row, ok := testCase.changed[p.Name]
+				if !ok {
+					row = []any{p.Name + ".parquet", uint64(1024), `"etag"`}
+				}
+				if row != nil {
+					bucket = append(bucket, row)
+				}
+			}
 
 			conn := newMockConn(t)
 			replicaPath := pin.ReplicaPath
@@ -63,7 +97,10 @@ func TestDropArchived(t *testing.T) {
 					break
 				}
 				expectPartitionParts(conn, partitionID, current...)
-				for _, selected := range archivetypes.SelectForDrop(current, published) {
+				if len(archivetypes.SelectForDrop(current, published)) > 0 {
+					expectObjects(conn, publication, bucket...)
+				}
+				for _, selected := range archivetypes.SelectForDrop(current, verified) {
 					expected := conn.ExpectExec("DROP PART '" + selected.Name + "'")
 					if dropErr, ok := testCase.dropErrs[selected.Name]; ok {
 						expected.WillReturnError(dropErr)
@@ -105,11 +142,13 @@ func TestDropArchivedStopsOnAFailedDrop(t *testing.T) {
 	pin := testShardPin(t, archiveStore)
 	first := archivetypes.Part{Name: "20260905-15-0_1_1_0", Range: archivetypes.BlockRange{Min: 1, Max: 1}, DataVersion: 1, Rows: 3}
 	second := archivetypes.Part{Name: "20260905-15-0_2_2_0", Range: archivetypes.BlockRange{Min: 2, Max: 2}, DataVersion: 2, Rows: 4}
-	publishTest(t, archiveStore, lease, newTestPublicationOf(t, archiveStore, lease, "20260905-15-0", first, second))
+	publication := newTestPublicationOf(t, archiveStore, lease, "20260905-15-0", first, second)
+	publishTest(t, archiveStore, lease, publication)
 
 	conn := newMockConn(t)
 	expectReplica(conn, 1, "ReplicatedMergeTree", pin.ReplicaPath)
 	expectPartitionParts(conn, "20260905-15-0", first, second)
+	expectObjects(conn, publication, []any{first.Name + ".parquet", uint64(1024), `"etag"`}, []any{second.Name + ".parquet", uint64(1024), `"etag"`})
 	conn.ExpectExec("DROP PART '20260905-15-0_1_1_0'")
 	conn.ExpectExec("DROP PART '20260905-15-0_2_2_0'").WillReturnError(&clickhouse.Exception{Code: int32(proto.ErrTimeoutExceeded), Message: "timeout"})
 
@@ -122,4 +161,9 @@ func TestDropArchivedStopsOnAFailedDrop(t *testing.T) {
 	require.Len(t, parts, 2)
 	assert.NotNil(t, parts[0].DroppedAt, "a part dropped before the failure is recorded")
 	assert.Nil(t, parts[1].DroppedAt)
+}
+
+func expectObjects(conn cmock.ClickConnMockCommon, publication *archivetypes.Publication, rows ...[]any) {
+	dir := path.Dir(publication.Objects[0].ObjectKey)
+	conn.ExpectQuery(regexp.QuoteMeta(dir+"/*.parquet") + ".*format = 'One'").WillReturnRows(cmock.NewRows(statColumns[:3], rows))
 }

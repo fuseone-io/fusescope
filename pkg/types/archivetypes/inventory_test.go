@@ -95,3 +95,30 @@ func TestDropPartStatement(t *testing.T) {
 
 	assert.Equal(t, "ALTER TABLE `signoz_logs`.`logs\\`v2` DROP PART 'a\\'_1_\\x240_1'", statement)
 }
+
+func TestMismatchedObjects(t *testing.T) {
+	published := &Object{ObjectKey: "fusescope/logs_v2/attempt=a/p_1_1_0.parquet", Bytes: 1024, ETag: "etag"}
+
+	testCases := []struct {
+		name         string
+		found        []ObjectStat
+		wantMismatch bool
+	}{
+		{name: "SameSizeAndQuotedETag_Verified", found: []ObjectStat{{File: published.ObjectKey, Bytes: 1024, ETag: `"etag"`}}},
+		{name: "SizeChanged_Mismatched", found: []ObjectStat{{File: published.ObjectKey, Bytes: 512, ETag: `"etag"`}}, wantMismatch: true},
+		{name: "ETagChanged_Mismatched", found: []ObjectStat{{File: published.ObjectKey, Bytes: 1024, ETag: `"other"`}}, wantMismatch: true},
+		{name: "ObjectMissing_Mismatched", found: []ObjectStat{{File: "fusescope/logs_v2/attempt=a/p_2_2_0.parquet", Bytes: 1024, ETag: "etag"}}, wantMismatch: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			mismatched := MismatchedObjects([]*Object{published}, testCase.found)
+			if testCase.wantMismatch {
+				require.Len(t, mismatched, 1)
+				assert.Equal(t, published, mismatched[0].Object)
+				return
+			}
+			assert.Empty(t, mismatched)
+		})
+	}
+}

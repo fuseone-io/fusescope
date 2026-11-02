@@ -3,6 +3,7 @@ package archivetypes
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
@@ -220,4 +221,40 @@ func Unarchived(partition Partition, candidates []Part, partitionHasPublished bo
 // never issues them.
 func DropPartStatement(table Table, part string) string {
 	return fmt.Sprintf("ALTER TABLE %s.%s DROP PART %s", clickhousesql.Identifier(table.Database), clickhousesql.Identifier(table.Name), clickhousesql.StringLiteral(part))
+}
+
+// ObjectMismatch is a published object the bucket no longer holds as published; Found is nil
+// when the object is gone.
+type ObjectMismatch struct {
+	Object *Object
+	Found  *ObjectStat
+}
+
+// ListObjectsStatement reads the size and ETag of every object under dir from the listing,
+// without reading the objects.
+func ListObjectsStatement(namedCollection string, dir string) string {
+	return fmt.Sprintf("SELECT _file, toUInt64(ifNull(_size, 0)), toString(ifNull(_etag, '')) FROM s3(%s, filename = %s, format = 'One')",
+		clickhousesql.Identifier(namedCollection), clickhousesql.StringLiteral(strings.TrimSuffix(dir, "/")+"/*.parquet"))
+}
+
+// MismatchedObjects returns the published objects that found, keyed by object key in File,
+// lacks or holds at another size or ETag.
+func MismatchedObjects(published []*Object, found []ObjectStat) []ObjectMismatch {
+	byKey := make(map[string]ObjectStat, len(found))
+	for _, stat := range found {
+		byKey[stat.File] = stat
+	}
+
+	var mismatched []ObjectMismatch
+	for _, object := range published {
+		stat, ok := byKey[object.ObjectKey]
+		if !ok {
+			mismatched = append(mismatched, ObjectMismatch{Object: object})
+			continue
+		}
+		if stat.Bytes != object.Bytes || strings.Trim(stat.ETag, `"`) != object.ETag {
+			mismatched = append(mismatched, ObjectMismatch{Object: object, Found: &stat})
+		}
+	}
+	return mismatched
 }

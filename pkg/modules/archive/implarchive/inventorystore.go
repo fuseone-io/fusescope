@@ -119,3 +119,25 @@ func (store *store) MarkPartsDropped(ctx context.Context, shard *archivetypes.Sh
 
 	return nil
 }
+
+func (store *store) ListUndroppedObjects(ctx context.Context, shard *archivetypes.Shard, partitionID string) ([]*archivetypes.Object, error) {
+	objects := make([]*archivetypes.Object, 0)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&objects).
+		Join("JOIN archive_part ON archive_part.object_id = archive_object.id").
+		Where("archive_part.shard_id = ?", shard.ID).
+		Where("archive_part.partition_id = ?", partitionID).
+		Where("archive_part.status = ?", archivetypes.PartStatusPublished).
+		Where("archive_part.dropped_at IS NULL").
+		Order("archive_object.object_key").
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the undropped archive objects of %s partition %s on shard %d", shard.TableName, partitionID, shard.Shard)
+	}
+
+	return objects, nil
+}

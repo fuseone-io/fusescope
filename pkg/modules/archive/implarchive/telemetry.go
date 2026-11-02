@@ -19,6 +19,7 @@ type archiveMetrics struct {
 	droppedRows          metric.Int64Counter
 	lostParts            metric.Int64Counter
 	lostRows             metric.Int64Counter
+	mismatchedObjects    metric.Int64Counter
 	unarchivedPartitions metric.Int64Gauge
 }
 
@@ -31,10 +32,11 @@ func newArchiveMetrics(meter metric.Meter) (*archiveMetrics, error) {
 	}
 
 	metrics := &archiveMetrics{
-		droppedParts: counter("signoz.archive.dropped.parts", "Archived parts dropped from ClickHouse, by table.", "{part}"),
-		droppedRows:  counter("signoz.archive.dropped.rows", "Rows of the archived parts dropped from ClickHouse, by table.", "{row}"),
-		lostParts:    counter("signoz.archive.lost.parts", "Inventoried parts that disappeared from ClickHouse without being archived, by table.", "{part}"),
-		lostRows:     counter("signoz.archive.lost.rows", "Rows of the inventoried parts that disappeared without being archived, by table.", "{row}"),
+		droppedParts:      counter("signoz.archive.dropped.parts", "Archived parts dropped from ClickHouse, by table.", "{part}"),
+		droppedRows:       counter("signoz.archive.dropped.rows", "Rows of the archived parts dropped from ClickHouse, by table.", "{row}"),
+		lostParts:         counter("signoz.archive.lost.parts", "Inventoried parts that disappeared from ClickHouse without being archived, by table.", "{part}"),
+		lostRows:          counter("signoz.archive.lost.rows", "Rows of the inventoried parts that disappeared without being archived, by table.", "{row}"),
+		mismatchedObjects: counter("signoz.archive.mismatched.objects", "Archived objects found missing or changed in the bucket before their parts' drop, by table.", "{object}"),
 	}
 
 	unarchived, err := meter.Int64Gauge(
@@ -51,6 +53,12 @@ func (metrics *archiveMetrics) recordDropped(ctx context.Context, table string, 
 	attrs := metric.WithAttributes(attrTable.String(table))
 	metrics.droppedParts.Add(ctx, int64(len(parts)), attrs)
 	metrics.droppedRows.Add(ctx, rowsOf(parts), attrs)
+}
+
+func (metrics *archiveMetrics) recordMismatched(ctx context.Context, table string, objects int) {
+	if objects > 0 {
+		metrics.mismatchedObjects.Add(ctx, int64(objects), metric.WithAttributes(attrTable.String(table)))
+	}
 }
 
 func (metrics *archiveMetrics) recordLost(ctx context.Context, table string, lost []*archivetypes.LostPart) {
