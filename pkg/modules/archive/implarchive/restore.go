@@ -36,6 +36,9 @@ type restorer struct {
 	logger         *slog.Logger
 }
 
+// throwIfErrorCode is ClickHouse's FUNCTION_THROW_IF_VALUE_IS_NON_ZERO.
+const throwIfErrorCode = 395
+
 var logsRestoreSet = restoreSet{
 	database: logstelemetryschema.DBName,
 	tables: []restoreTable{
@@ -200,19 +203,34 @@ func (restorer *restorer) insert(ctx context.Context, database string, table res
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeUnsupported, archivetypes.ErrCodeRehydrationIncompat, "couldn't map archived object %s to %s", part.Object.ObjectKey, table.local)
 	}
-	source, err := s3Source(part.Object.NamedCollection, part.Object.ObjectKey, "format = 'Parquet'")
+	statement, err := loadStatement(database, table, columns, expressions, rehydration, part.Object)
 	if err != nil {
 		return err
 	}
 
-	columns = append(columns, clickhousesql.Identifier(archivetypes.RehydrationIDColumn), clickhousesql.Identifier(archivetypes.ExpiresAtColumn))
-	expressions = append(expressions, "toUUID("+clickhousesql.StringLiteral(rehydration.ID.StringValue())+")", fmt.Sprintf("toDateTime(%d)", rehydration.ExpiresAt.Unix()))
-	statement := fmt.Sprintf("INSERT INTO %s.%s (%s) SELECT %s FROM %s", clickhousesql.Identifier(database), clickhousesql.Identifier(archivetypes.RehydratedTableName(table.distributed)), strings.Join(columns, ", "), strings.Join(expressions, ", "), source)
-
-	if err := restorer.telemetryStore.ClickhouseDB().Exec(clickhouse.Context(ctx, clickhouse.WithSettings(restorer.settings())), statement); err != nil {
+	err = restorer.telemetryStore.ClickhouseDB().Exec(clickhouse.Context(ctx, clickhouse.WithSettings(restorer.settings())), statement)
+	var exception *clickhouse.Exception
+	if errors.As(err, &exception) && exception.Code == throwIfErrorCode {
+		return errors.Wrapf(err, errors.TypeInvalidInput, archivetypes.ErrCodeRehydrationCorrupt, "archived object %s changed since its commit", part.Object.ObjectKey)
+	}
+	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't restore archived object %s", part.Object.ObjectKey)
 	}
 	return nil
+}
+
+// loadStatement checks the object's size and ETag on the rows it reads, so an object
+// replaced after verify fails the load instead of being restored.
+func loadStatement(database string, table restoreTable, columns []string, expressions []string, rehydration *archivetypes.Rehydration, object *archivetypes.Object) (string, error) {
+	source, err := s3Source(object.NamedCollection, object.ObjectKey, "format = 'Parquet'")
+	if err != nil {
+		return "", err
+	}
+
+	columns = append(columns, clickhousesql.Identifier(archivetypes.RehydrationIDColumn), clickhousesql.Identifier(archivetypes.ExpiresAtColumn))
+	expressions = append(expressions, "toUUID("+clickhousesql.StringLiteral(rehydration.ID.StringValue())+")", fmt.Sprintf("toDateTime(%d)", rehydration.ExpiresAt.Unix()))
+	check := fmt.Sprintf("throwIf(ifNull(_size, 0) != %d OR trimBoth(toString(_etag), %s) != %s, %s) = 0", object.Bytes, clickhousesql.StringLiteral(`"`), clickhousesql.StringLiteral(object.ETag), clickhousesql.StringLiteral("archived object "+object.ObjectKey+" changed since its commit"))
+	return fmt.Sprintf("INSERT INTO %s.%s (%s) SELECT %s FROM %s WHERE %s", clickhousesql.Identifier(database), clickhousesql.Identifier(archivetypes.RehydratedTableName(table.distributed)), strings.Join(columns, ", "), strings.Join(expressions, ", "), source, check), nil
 }
 
 func (restorer *restorer) settings() clickhouse.Settings {

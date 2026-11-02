@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/DATA-DOG/go-sqlmock"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,9 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/archive"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/telemetrystoretest"
+	"github.com/fuseone-io/fusescope/pkg/types"
 	"github.com/fuseone-io/fusescope/pkg/types/archivetypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 var (
@@ -58,6 +61,22 @@ func TestRestore(t *testing.T) {
 			expect: func(mock cmock.ClickConnMockCommon, published map[string]*archivetypes.Publication) {
 				mock.ExpectQueryRow(regexp.QuoteMeta(published["logs_v2"].Objects[1].ObjectKey)).WillReturnRow(cmock.NewRow(sizeEtagColumns(), []any{int64(1024), `"other"`}))
 				expectNoRehydratedTables(mock)
+			},
+			status: archivetypes.RehydrationStatusFailed,
+			reason: archivetypes.FailureCorrupt,
+		},
+		{
+			name: "ObjectReplacedDuringLoad_CorruptAndRowsDropped",
+			expect: func(mock cmock.ClickConnMockCommon, published map[string]*archivetypes.Publication) {
+				expectChecks(mock, published, "logs_v2", "etag", "sha")
+				expectChecks(mock, published, "logs_v2_resource", "etag", "sha")
+				expectLiveSchemas(mock)
+				for _, table := range []string{"rehydrated_logs_v2", "rehydrated_distributed_logs_v2", "rehydrated_logs_v2_resource", "rehydrated_distributed_logs_v2_resource"} {
+					mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS `signoz_logs`.`" + table + "`"))
+				}
+				expectDropPartitions(mock)
+				mock.ExpectExec(regexp.QuoteMeta("INSERT INTO `signoz_logs`.`rehydrated_distributed_logs_v2`")).WillReturnError(&clickhouse.Exception{Code: 395, Message: "changed since its commit"})
+				expectDropPartitions(mock)
 			},
 			status: archivetypes.RehydrationStatusFailed,
 			reason: archivetypes.FailureCorrupt,
@@ -124,6 +143,22 @@ func TestRestore(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLoadStatement(t *testing.T) {
+	rehydration := &archivetypes.Rehydration{Identifiable: types.Identifiable{ID: valuer.MustNewUUID("0b6a4a52-6d1c-4b8e-9f43-5f0c1d2e3a4b")}, ExpiresAt: time.Unix(1788000000, 0)}
+	object := &archivetypes.Object{NamedCollection: "archive", ObjectKey: "fusescope/logs_v2/day=2026-09-03/p_1_3.parquet", Bytes: 2048, ETag: "9b2cf535f27731c974343645a3985328"}
+
+	statement, err := loadStatement("signoz_logs", restoreTable{local: "logs_v2", distributed: "distributed_logs_v2"}, []string{"`body`"}, []string{"`body`"}, rehydration, object)
+	require.NoError(t, err)
+	assert.Equal(t, "INSERT INTO `signoz_logs`.`rehydrated_distributed_logs_v2` (`body`, `rehydration_id`, `expires_at`) "+
+		"SELECT `body`, toUUID('0b6a4a52-6d1c-4b8e-9f43-5f0c1d2e3a4b'), toDateTime(1788000000) "+
+		"FROM s3(`archive`, filename = 'fusescope/logs_v2/day=2026-09-03/p_1_3.parquet', format = 'Parquet') "+
+		"WHERE throwIf(ifNull(_size, 0) != 2048 OR trimBoth(toString(_etag), '\"') != '9b2cf535f27731c974343645a3985328', 'archived object fusescope/logs_v2/day=2026-09-03/p_1_3.parquet changed since its commit') = 0", statement)
+
+	object.ObjectKey = "fusescope/logs_v2/day=2026-09-03/*.parquet"
+	_, err = loadStatement("signoz_logs", restoreTable{local: "logs_v2", distributed: "distributed_logs_v2"}, []string{"`body`"}, []string{"`body`"}, rehydration, object)
+	assert.True(t, errors.Asc(err, archivetypes.ErrCodeRehydrationCorrupt), err)
 }
 
 func TestRestorePendingLoadsEveryRestoration(t *testing.T) {
