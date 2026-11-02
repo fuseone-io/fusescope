@@ -1,29 +1,7 @@
 import { fuseScopeDocsUrl } from 'constants/docs';
 import { DataSource } from 'types/common/queryBuilder';
 
-export const ALERT_INFO_LINKS = [
-	{
-		infoText: 'How to create Metrics-based alerts',
-		link: fuseScopeDocsUrl('/alerts/alert-rules/'),
-		leftIconVisible: false,
-		rightIconVisible: true,
-		dataSource: DataSource.METRICS,
-	},
-	{
-		infoText: 'How to create Log-based alerts',
-		link: fuseScopeDocsUrl('/alerts/alert-rules/'),
-		leftIconVisible: false,
-		rightIconVisible: true,
-		dataSource: DataSource.LOGS,
-	},
-	{
-		infoText: 'How to create Trace-based alerts',
-		link: fuseScopeDocsUrl('/alerts/alert-rules/'),
-		leftIconVisible: false,
-		rightIconVisible: true,
-		dataSource: DataSource.TRACES,
-	},
-];
+export const ALERT_RULES_DOCS_URL = fuseScopeDocsUrl('/alerts/alert-rules/');
 
 export const ALERT_CARDS = [
 	{

@@ -1,23 +1,17 @@
-import React, { useCallback, useState } from 'react';
-import { Divider } from '@signozhq/ui/divider';
-import { Plus, RefreshCw } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
+import React, { useCallback } from 'react';
+import { Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { Button } from 'components/ui/button';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { BookOpen, ListChecks, Plus, RefreshCw } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { DataSource } from 'types/common/queryBuilder';
 import { isModifierKeyPressed } from 'utils/app';
 
-import alertEmojiUrl from '@/assets/Icons/alert_emoji.svg';
-
-import AlertInfoCard from './AlertInfoCard';
-import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';
-import InfoLinkText from './InfoLinkText';
-
-import styles from './AlertsEmptyState.module.scss';
+import { ALERT_CARDS, ALERT_RULES_DOCS_URL } from './alertLinks';
+import SampleAlertCard from './SampleAlertCard';
 
 const alertLogEvents = (
 	title: string,
@@ -46,131 +40,94 @@ export function AlertsEmptyState({
 		user.role,
 	);
 
-	const [loading, setLoading] = useState(false);
-
 	const onClickNewAlertHandler = useCallback(
 		(e: React.MouseEvent) => {
-			setLoading(false);
 			safeNavigate(ROUTES.ALERTS_NEW, { newTab: isModifierKeyPressed(e) });
 		},
 		[safeNavigate],
 	);
 
 	return (
-		<div className={styles.alertListContainer}>
-			<div className={styles.alertListViewContent}>
-				<div>
-					<Typography.Title className={styles.title}>Alert Rules</Typography.Title>
-					<Typography.Text className={styles.subtitle}>
-						Create and manage alert rules for your resources.
-					</Typography.Text>
+		<div className="fs-ui tw:flex tw:w-full tw:flex-col tw:gap-6 tw:font-sans">
+			<section className="tw:flex tw:flex-col tw:items-center tw:gap-2 tw:rounded-lg tw:border tw:border-border tw:bg-surface-raised tw:px-6 tw:py-12 tw:text-center">
+				<span className="tw:flex tw:size-10 tw:items-center tw:justify-center tw:rounded-full tw:bg-surface-sunken tw:text-subtle-foreground">
+					<ListChecks aria-hidden="true" className="tw:size-5" />
+				</span>
+				<h2 className="tw:m-0 tw:text-base tw:font-semibold tw:text-foreground">
+					No alert rules yet
+				</h2>
+				<p className="tw:m-0 tw:max-w-md tw:text-[13px] tw:text-muted-foreground">
+					Alert rules watch your metrics, traces and logs, and notify your channels
+					when a condition is met.
+				</p>
+				<div className="tw:mt-2 tw:flex tw:flex-wrap tw:items-center tw:justify-center tw:gap-2">
+					<Tooltip
+						title={
+							addNewAlert ? undefined : 'You need permission to create alert rules'
+						}
+					>
+						<span>
+							<Button
+								size="sm"
+								onClick={onClickNewAlertHandler}
+								disabled={!addNewAlert}
+								data-testid="add-alert"
+							>
+								<Plus aria-hidden="true" />
+								New Alert Rule
+							</Button>
+						</span>
+					</Tooltip>
+					{onRefresh && (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={onRefresh}
+							data-testid="list-alerts-empty-refresh-button"
+						>
+							<RefreshCw aria-hidden="true" />
+							Refresh
+						</Button>
+					)}
+					<Button variant="ghost" size="sm" asChild>
+						<a
+							href={ALERT_RULES_DOCS_URL}
+							target="_blank"
+							rel="noopener noreferrer"
+							onClick={(): void =>
+								alertLogEvents('Alert: Tutorial doc link clicked', ALERT_RULES_DOCS_URL)
+							}
+						>
+							<BookOpen aria-hidden="true" />
+							Docs
+						</a>
+					</Button>
 				</div>
-				<section className={styles.emptyAlertInfoContainer}>
-					<div className={styles.alertContent}>
-						<section className={styles.heading}>
-							<img
-								src={alertEmojiUrl}
-								alt="alert-header"
-								style={{ height: '32px', width: '32px' }}
-							/>
-							<div>
-								<Typography.Text className={styles.emptyInfo}>
-									No Alert rules yet.{' '}
-								</Typography.Text>
-								<br />
-								<Typography.Text className={styles.emptyAlertAction}>
-									Create an Alert Rule to get started
-								</Typography.Text>
-							</div>
-						</section>
-						<div className={styles.actionContainer}>
-							<div className={styles.buttonGroup}>
-								<Button
-									size="md"
-									variant="solid"
-									color="primary"
-									onClick={onClickNewAlertHandler}
-									disabled={!addNewAlert}
-									disabledTooltip="You need permission to create alert rules"
-									loading={loading}
-									testId="add-alert"
-									prefix={<Plus size="md" />}
-									width="150px"
-								>
-									New Alert Rule
-								</Button>
-								{onRefresh && (
-									<Button
-										size="md"
-										variant="solid"
-										onClick={onRefresh}
-										prefix={<RefreshCw />}
-										color="secondary"
-										testId="list-alerts-empty-refresh-button"
-										width="150px"
-									>
-										Refresh
-									</Button>
-								)}
-							</div>
-							<InfoLinkText
-								infoText="Watch a tutorial on creating a sample alert"
-								link="https://youtu.be/xjxNIqiv4_M"
-								leftIconVisible
-								rightIconVisible
-								onClick={(): void =>
-									alertLogEvents(
-										'Alert: Video tutorial link clicked',
-										'https://youtu.be/xjxNIqiv4_M',
-									)
-								}
-							/>
-						</div>
+			</section>
 
-						{ALERT_INFO_LINKS.map((info) => {
-							const logEventTriggered = (): void =>
-								alertLogEvents(
-									'Alert: Tutorial doc link clicked',
-									info.link,
-									info.dataSource,
-								);
-							return (
-								<InfoLinkText
-									key={info.link}
-									infoText={info.infoText}
-									link={info.link}
-									leftIconVisible={info.leftIconVisible}
-									rightIconVisible={info.rightIconVisible}
-									onClick={logEventTriggered}
-								/>
-							);
-						})}
-					</div>
-				</section>
-				<div className={styles.getStartedText}>
-					<Divider className="get-started-text__divider">
-						<Typography.Text>Or get started with these sample alerts</Typography.Text>
-					</Divider>
-				</div>
-
-				{ALERT_CARDS.map((card) => {
-					const logEventTriggered = (): void =>
-						alertLogEvents(
-							'Alert: Sample alert link clicked',
-							card.link,
-							card.dataSource,
-						);
-					return (
-						<AlertInfoCard
-							key={card.link}
+			<section className="tw:flex tw:flex-col tw:gap-3">
+				<h3 className="tw:m-0 tw:text-xs tw:font-medium tw:tracking-wide tw:text-muted-foreground tw:uppercase">
+					Start from an example
+				</h3>
+				<div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2 tw:xl:grid-cols-4">
+					{ALERT_CARDS.map((card) => (
+						<SampleAlertCard
+							key={card.header}
 							header={card.header}
 							subheader={card.subheader}
+							dataSource={card.dataSource}
 							link={card.link}
-							onClick={logEventTriggered}
+							onClick={(): void =>
+								alertLogEvents(
+									'Alert: Sample alert link clicked',
+									card.link,
+									card.dataSource,
+								)
+							}
 						/>
-					);
-				})}
-			</div>
+					))}
+				</div>
+			</section>
 		</div>
 	);
 }

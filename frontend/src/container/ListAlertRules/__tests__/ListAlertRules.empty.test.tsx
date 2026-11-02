@@ -24,10 +24,8 @@ describe('ListAlertRules — empty states', () => {
 
 		renderListAlertRules();
 
-		await screen.findByText('No Alert rules yet.');
-		expect(
-			screen.getByText('Create an Alert Rule to get started'),
-		).toBeInTheDocument();
+		await screen.findByText('No alert rules yet');
+		expect(screen.getByText('Start from an example')).toBeInTheDocument();
 
 		// New Alert Rule button is visible and triggers safeNavigate to ALERTS_NEW.
 		await user.click(screen.getByTestId('add-alert'));
