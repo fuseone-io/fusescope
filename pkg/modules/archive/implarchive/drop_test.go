@@ -170,6 +170,46 @@ func TestDropArchivedStopsOnAFailedDrop(t *testing.T) {
 	assert.Nil(t, parts[1].DroppedAt)
 }
 
+func TestDropArchivedStopsOnceTheLeaseIsLost(t *testing.T) {
+	ctx, loseLease := context.WithCancel(context.Background())
+	defer loseLease()
+	archiveStore := newTestStore(t)
+	service := newTestExportService(t, archiveStore)
+	lease := acquireTestLease(t, archiveStore)
+	pin := testShardPin(t, archiveStore)
+	first := archivetypes.Part{Name: "20260906-15-0_1_1_0", Range: archivetypes.BlockRange{Min: 1, Max: 1}, DataVersion: 1, Rows: 3}
+	second := archivetypes.Part{Name: "20260906-15-0_2_2_0", Range: archivetypes.BlockRange{Min: 2, Max: 2}, DataVersion: 2, Rows: 4}
+	publication := newTestPublicationOf(t, archiveStore, lease, "20260906-15-0", first, second)
+	publishTest(t, archiveStore, lease, publication)
+
+	conn := newMockConn(t)
+	expectReplica(conn, 1, "ReplicatedMergeTree", pin.ReplicaPath)
+	expectPartitionParts(conn, "20260906-15-0", first, second)
+	expectObjects(conn, publication, []any{first.Name + ".parquet", uint64(1024), `"etag"`}, []any{second.Name + ".parquet", uint64(1024), `"etag"`})
+	conn.ExpectExec("DROP PART '20260906-15-0_1_1_0'")
+
+	job := exportJob{table: testLogsTable, partition: archivetypes.Partition{ID: "20260906-15-0"}, shard: 1, pin: pin}
+	err := service.dropArchived(ctx, job, replica{shard: 1, replica: 1, addr: "ch-1:9000", conn: losesLeaseOnExec{Conn: asConn(conn), loseLease: loseLease}})
+	assert.ErrorIs(t, err, context.Canceled)
+
+	parts, err := archiveStore.ListPublishedParts(context.Background(), pin, "20260906-15-0")
+	require.NoError(t, err)
+	require.Len(t, parts, 2)
+	assert.NotNil(t, parts[0].DroppedAt, "a part dropped before the lease was lost is recorded")
+	assert.Nil(t, parts[1].DroppedAt)
+}
+
+type losesLeaseOnExec struct {
+	clickhouse.Conn
+	loseLease context.CancelFunc
+}
+
+func (conn losesLeaseOnExec) Exec(ctx context.Context, query string, args ...any) error {
+	err := conn.Conn.Exec(ctx, query, args...)
+	conn.loseLease()
+	return err
+}
+
 func expectObjects(conn cmock.ClickConnMockCommon, publication *archivetypes.Publication, rows ...[]any) {
 	dir := path.Dir(publication.Objects[0].ObjectKey)
 	conn.ExpectQuery(regexp.QuoteMeta(dir+"/*.parquet") + ".*format = 'One'").WillReturnRows(cmock.NewRows(statColumns[:3], rows))

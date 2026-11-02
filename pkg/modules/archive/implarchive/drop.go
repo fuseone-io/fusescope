@@ -18,6 +18,8 @@ import (
 // part merged away under it.
 const maxDropRounds = 3
 
+const recordDroppedTimeout = 30 * time.Second
+
 // dropArchived drops, by name on replica, the partition's active parts whose rows are all in
 // published parts of the job's shard pin (ADR 0002 §4). The replica's parts and the published
 // parts are read right before, and the replica must still hold the pinned data, so a part
@@ -66,11 +68,15 @@ func (service *exportService) dropRound(ctx context.Context, job exportJob, repl
 }
 
 // dropParts drops parts in order, skipping a part that merged away or that a merge or
-// mutation holds.
+// mutation holds, and stops once the lease is lost.
 func (service *exportService) dropParts(ctx context.Context, job exportJob, replica replica, parts []archivetypes.Part) (bool, error) {
 	stale := false
 	var dropped []archivetypes.Part
 	for _, part := range parts {
+		if err := ctx.Err(); err != nil {
+			return false, errors.Join(err, service.recordDropped(ctx, job, dropped))
+		}
+
 		statement := archivetypes.DropPartStatement(job.table, part.Name)
 		err := service.exec(ctx, service.config.Limits.QueryTimeout, queryID(job.pin.ID.StringValue(), "drop"), func(ctx context.Context) error { return replica.conn.Exec(ctx, statement) })
 		if hasCode(err, proto.ErrNoSuchDataPart) {
@@ -145,6 +151,8 @@ func (service *exportService) recordDropped(ctx context.Context, job exportJob, 
 		return nil
 	}
 
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), recordDroppedTimeout)
+	defer cancel()
 	service.metrics.recordDropped(ctx, job.table.Name, dropped)
 	service.settings.Logger().InfoContext(ctx, "archived parts dropped", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID), slog.Int("parts", len(dropped)), slog.Int64("rows", rowsOf(dropped)))
 	return service.store.MarkPartsDropped(ctx, job.pin, job.partition.ID, archivetypes.RangesOf(dropped), time.Now())
