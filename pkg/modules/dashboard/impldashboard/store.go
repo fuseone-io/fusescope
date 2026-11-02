@@ -132,8 +132,8 @@ func (store *store) ListForUser(
 	q = q.
 		OrderExpr("is_pinned DESC").
 		OrderExpr(sortExpr + " " + strings.ToUpper(params.Order.StringValue())).
-		Limit(params.Limit).
-		Offset(params.Offset)
+		Limit(int64(params.Limit)).
+		Offset(int64(params.Offset))
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list dashboards")
@@ -194,8 +194,8 @@ func (store *store) ListV2(
 	}
 	q = q.
 		OrderExpr(sortExpr + " " + strings.ToUpper(params.Order.StringValue())).
-		Limit(params.Limit).
-		Offset(params.Offset)
+		Limit(int64(params.Limit)).
+		Offset(int64(params.Offset))
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list dashboards")

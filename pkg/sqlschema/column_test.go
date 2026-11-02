@@ -33,7 +33,7 @@ func TestColumnToDefinitionSQL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := Formatter{schema.NewNopFormatter()}
+			fmter := Formatter{schema.NewNopQueryGen()}
 			sql := testCase.column.ToDefinitionSQL(fmter)
 
 			assert.Equal(t, testCase.sql, string(sql))
@@ -109,7 +109,7 @@ func TestColumnToUpdateSQL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := Formatter{schema.NewNopFormatter()}
+			fmter := Formatter{schema.NewNopQueryGen()}
 			sql := testCase.column.ToUpdateSQL(fmter, testCase.tableName, testCase.value)
 
 			assert.Equal(t, testCase.sql, string(sql))

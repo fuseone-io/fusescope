@@ -39,7 +39,7 @@ func TestOperatorCreateTable(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := NewFormatter(schema.NewNopFormatter().Dialect())
+			fmter := NewFormatter(schema.NewNopQueryGen().Dialect())
 			operator := NewOperator(fmter, OperatorSupport{})
 
 			actuals := operator.CreateTable(testCase.table)
@@ -307,7 +307,7 @@ func TestOperatorAddColumn(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := NewFormatter(schema.NewNopFormatter().Dialect())
+			fmter := NewFormatter(schema.NewNopQueryGen().Dialect())
 
 			for support, expectedSQLs := range testCase.expected {
 				operator := NewOperator(fmter, support)
@@ -777,7 +777,7 @@ func TestOperatorDropConstraint(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := NewFormatter(schema.NewNopFormatter().Dialect())
+			fmter := NewFormatter(schema.NewNopQueryGen().Dialect())
 			operator := NewOperator(fmter, testCase.support)
 
 			actuals := operator.DropConstraint(testCase.table, testCase.uniqueConstraints, testCase.constraint)
@@ -1134,7 +1134,7 @@ func TestOperatorAlterTable(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := NewFormatter(schema.NewNopFormatter().Dialect())
+			fmter := NewFormatter(schema.NewNopQueryGen().Dialect())
 			for support, sqls := range testCase.expected {
 				operator := NewOperator(fmter, support)
 				clonedTable := testCase.table.Clone()
@@ -1235,7 +1235,7 @@ func TestOperatorDiffIndices(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := NewFormatter(schema.NewNopFormatter().Dialect())
+			fmter := NewFormatter(schema.NewNopQueryGen().Dialect())
 			operator := NewOperator(fmter, OperatorSupport{})
 
 			actuals := operator.DiffIndices(testCase.oldIndices, testCase.newIndices)

@@ -42,14 +42,14 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID, offset, limit i
 
 	count, err := query.
 		Order("created_at DESC").
-		Offset(offset).
-		Limit(limit).
+		Offset(int64(offset)).
+		Limit(int64(limit)).
 		ScanAndCount(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return rules, count, nil
+	return rules, int(count), nil
 }
 
 func (store *store) Get(ctx context.Context, orgID, id valuer.UUID) (*llmpricingruletypes.LLMPricingRule, error) {
