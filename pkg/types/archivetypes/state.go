@@ -102,6 +102,16 @@ type IndexSnapshot struct {
 	Objects  []*Object
 }
 
+// IndexSequence counts a table's commits; it only rises, whatever attempt rows are removed.
+type IndexSequence struct {
+	bun.BaseModel `bun:"table:archive_index_sequence,alias:archive_index_sequence"`
+
+	types.Identifiable
+	types.TimeAuditable
+	TableName string `bun:"table_name"`
+	Sequence  int64  `bun:"sequence"`
+}
+
 func NewExportAttempt(lease *Lease, table string, shard int, partitionID string, namedCollection string, prefix string) *Attempt {
 	now := time.Now()
 	return &Attempt{
@@ -116,6 +126,16 @@ func NewExportAttempt(lease *Lease, table string, shard int, partitionID string,
 		Status:          AttemptStatusPending,
 		NamedCollection: namedCollection,
 		Prefix:          prefix,
+	}
+}
+
+func NewIndexSequence(table string) *IndexSequence {
+	now := time.Now()
+	return &IndexSequence{
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
+		TableName:     table,
+		Sequence:      1,
 	}
 }
 

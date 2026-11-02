@@ -110,7 +110,7 @@ func TestPublish(t *testing.T) {
 		lease := acquireTestLease(t, store)
 		publication := newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3}, archivetypes.BlockRange{Min: 4, Max: 5})
 
-		require.NoError(t, store.Publish(ctx, lease, publication))
+		mustPublish(t, store, lease, publication)
 
 		parts, err := store.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
 		require.NoError(t, err)
@@ -120,7 +120,7 @@ func TestPublish(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, objects, 2)
 
-		err = store.Publish(ctx, lease, publication)
+		_, err = store.Publish(ctx, lease, publication)
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodeAttemptAlreadyPublished), "a retry after a lost commit reply is told the attempt is live: %v", err)
 	})
 }
@@ -138,7 +138,7 @@ func TestPublishFencedByLease(t *testing.T) {
 		_, err = store.AcquireLease(ctx, "logs", "b", time.Now().Add(time.Minute))
 		require.NoError(t, err)
 
-		err = store.Publish(ctx, stale, publication)
+		_, err = store.Publish(ctx, stale, publication)
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodeLeaseLost), err)
 
 		parts, err := store.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
@@ -157,7 +157,7 @@ func TestPublishFencedByLeaseExpiry(t *testing.T) {
 		expired, err := store.AcquireLease(ctx, "logs", "a", time.Now().Add(-time.Second))
 		require.NoError(t, err)
 
-		err = store.Publish(ctx, expired, publication)
+		_, err = store.Publish(ctx, expired, publication)
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodeLeaseLost), err)
 	})
 }
@@ -200,10 +200,10 @@ func TestPublishSupersedes(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			forEachStore(t, func(t *testing.T, store archivetypes.Store) {
 				lease := acquireTestLease(t, store)
-				require.NoError(t, store.Publish(ctx, lease, newTestPublication(t, store, lease, "20260903-15-0", testCase.published...)))
-				require.NoError(t, store.Publish(ctx, lease, newTestPublication(t, store, lease, "20260904-15-0", testCase.published...)))
+				mustPublish(t, store, lease, newTestPublication(t, store, lease, "20260903-15-0", testCase.published...))
+				mustPublish(t, store, lease, newTestPublication(t, store, lease, "20260904-15-0", testCase.published...))
 
-				require.NoError(t, store.Publish(ctx, lease, newTestPublication(t, store, lease, "20260903-15-0", testCase.newer)))
+				mustPublish(t, store, lease, newTestPublication(t, store, lease, "20260903-15-0", testCase.newer))
 
 				parts, err := store.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
 				require.NoError(t, err)
@@ -242,8 +242,8 @@ func TestPublishKeepsOnePartPerRange(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			forEachStore(t, func(t *testing.T, store archivetypes.Store) {
 				lease := acquireTestLease(t, store)
-				require.NoError(t, store.Publish(ctx, lease, newTestPublicationOf(t, store, lease, "20260903-15-0", testCase.first)))
-				require.NoError(t, store.Publish(ctx, lease, newTestPublicationOf(t, store, lease, "20260903-15-0", testCase.second)))
+				mustPublish(t, store, lease, newTestPublicationOf(t, store, lease, "20260903-15-0", testCase.first))
+				mustPublish(t, store, lease, newTestPublicationOf(t, store, lease, "20260903-15-0", testCase.second))
 
 				parts, err := store.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
 				require.NoError(t, err)
@@ -266,16 +266,16 @@ func TestPublishKeepsObjectWithAPublishedPart(t *testing.T) {
 		require.NoError(t, store.CreateAttempt(ctx, attempt))
 		require.NoError(t, attempt.SetFormat([]archivetypes.ColumnMapping{{Name: "timestamp", SourceType: "UInt64", ExportType: "Int64"}}, "k/manifest.json", "sha"))
 		object := archivetypes.NewObject(attempt, "k/compacted.parquet", 4096, "etag", 20)
-		require.NoError(t, store.Publish(ctx, lease, &archivetypes.Publication{
+		mustPublish(t, store, lease, &archivetypes.Publication{
 			Attempt: attempt,
 			Objects: []*archivetypes.Object{object},
 			Parts: []*archivetypes.ArchivedPart{
 				archivetypes.NewArchivedPart(attempt, object, testPart(archivetypes.BlockRange{Min: 1, Max: 2})),
 				archivetypes.NewArchivedPart(attempt, object, testPart(archivetypes.BlockRange{Min: 5, Max: 6})),
 			},
-		}))
+		})
 
-		require.NoError(t, store.Publish(ctx, lease, newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})))
+		mustPublish(t, store, lease, newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3}))
 
 		objects, err := store.ListActiveObjects(ctx, "logs_v2")
 		require.NoError(t, err)
@@ -292,11 +292,11 @@ func TestAbandonAttempt(t *testing.T) {
 
 		require.NoError(t, store.AbandonAttempt(ctx, publication.Attempt.ID))
 
-		err := store.Publish(ctx, lease, publication)
+		_, err := store.Publish(ctx, lease, publication)
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodeAttemptNotPending), err)
 
 		published := newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 4, Max: 5})
-		require.NoError(t, store.Publish(ctx, lease, published))
+		mustPublish(t, store, lease, published)
 		err = store.AbandonAttempt(ctx, published.Attempt.ID)
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodeAttemptNotPending), "abandoning a published attempt fails, so its objects aren't cleaned up: %v", err)
 	})
@@ -315,7 +315,7 @@ func TestPublishRefusesStaleOrForeignLeases(t *testing.T) {
 			require.NoError(t, err)
 			require.Greater(t, renewed.Epoch, old.Epoch)
 
-			err = store.Publish(ctx, renewed, publication)
+			_, err = store.Publish(ctx, renewed, publication)
 			assert.True(t, errors.Asc(err, archivetypes.ErrCodeLeaseLost), err)
 		})
 	})
@@ -328,7 +328,7 @@ func TestPublishRefusesStaleOrForeignLeases(t *testing.T) {
 			require.Equal(t, logs.Epoch, traces.Epoch)
 			publication := newTestPublication(t, store, logs, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})
 
-			err = store.Publish(ctx, traces, publication)
+			_, err = store.Publish(ctx, traces, publication)
 			assert.True(t, errors.Asc(err, archivetypes.ErrCodeLeaseLost), err)
 		})
 	})
@@ -339,10 +339,10 @@ func TestPublishRollsBackALateFailure(t *testing.T) {
 
 	forEachStore(t, func(t *testing.T, store archivetypes.Store) {
 		lease := acquireTestLease(t, store)
-		require.NoError(t, store.Publish(ctx, lease, newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})))
+		mustPublish(t, store, lease, newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3}))
 		again := newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})
 
-		err := store.Publish(ctx, lease, again)
+		_, err := store.Publish(ctx, lease, again)
 		assert.True(t, errors.Ast(err, errors.TypeAlreadyExists), err)
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodePartAlreadyPublished), err)
 
@@ -375,7 +375,7 @@ func TestPublishValidatesThePublication(t *testing.T) {
 				publication := newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})
 				testCase.mutate(publication)
 
-				err := store.Publish(ctx, lease, publication)
+				_, err := store.Publish(ctx, lease, publication)
 				assert.True(t, errors.Ast(err, errors.TypeInvalidInput), err)
 			})
 		})
@@ -392,14 +392,18 @@ func TestIndexSnapshot(t *testing.T) {
 		assert.Empty(t, snapshot.Objects)
 
 		lease := acquireTestLease(t, store)
-		require.NoError(t, store.Publish(ctx, lease, newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})))
-		require.NoError(t, store.Publish(ctx, lease, newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 6})))
+		first := newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})
+		assert.Equal(t, int64(1), mustPublish(t, store, lease, first))
+		assert.Equal(t, int64(2), mustPublish(t, store, lease, newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 6})))
 
 		snapshot, err = store.IndexSnapshot(ctx, "logs_v2")
 		require.NoError(t, err)
 		assert.Equal(t, int64(2), snapshot.Sequence, "each commit of the table moves the sequence")
 		require.Len(t, snapshot.Objects, 1)
 		assert.Contains(t, snapshot.Objects[0].ObjectKey, "p_1_6")
+
+		deleteAttempt(t, store, first.Attempt)
+		assert.Equal(t, int64(3), mustPublish(t, store, lease, newTestPublication(t, store, lease, "20260904-15-0", archivetypes.BlockRange{Min: 1, Max: 3})), "a cleaned-up attempt doesn't move the sequence back")
 
 		other, err := store.IndexSnapshot(ctx, "logs_v2_resource")
 		require.NoError(t, err)
@@ -455,7 +459,7 @@ func migrateTestStore(t *testing.T, store sqlstore.SQLStore, schema sqlschema.SQ
 	ctx := context.Background()
 
 	migrations := migrate.NewMigrations()
-	for _, migrationFactory := range []factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]{sqlmigration.NewAddArchiveFactory(store, schema), sqlmigration.NewAddArchiveBackstopTableFactory(schema)} {
+	for _, migrationFactory := range []factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]{sqlmigration.NewAddArchiveFactory(store, schema), sqlmigration.NewAddArchiveBackstopTableFactory(schema), sqlmigration.NewAddArchiveIndexSequenceFactory(schema)} {
 		migration, err := migrationFactory.New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
 		require.NoError(t, err)
 		require.NoError(t, migration.Register(migrations))
@@ -477,6 +481,27 @@ func forEachStore(t *testing.T, test func(t *testing.T, store archivetypes.Store
 		return
 	}
 	t.Run("PostgreSQL", func(t *testing.T) { test(t, newPostgresTestStore(t, dsn)) })
+}
+
+func mustPublish(t *testing.T, store archivetypes.Store, lease *archivetypes.Lease, publication *archivetypes.Publication) int64 {
+	t.Helper()
+
+	sequence, err := store.Publish(context.Background(), lease, publication)
+	require.NoError(t, err)
+	return sequence
+}
+
+func deleteAttempt(t *testing.T, archiveStore archivetypes.Store, attempt *archivetypes.Attempt) {
+	t.Helper()
+	ctx := context.Background()
+
+	db := archiveStore.(*store).sqlstore.BunDB()
+	_, err := db.NewDelete().Model(new(archivetypes.ArchivedPart)).Where("attempt_id = ?", attempt.ID).Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.NewDelete().Model(new(archivetypes.Object)).Where("attempt_id = ?", attempt.ID).Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.NewDelete().Model(attempt).WherePK().Exec(ctx)
+	require.NoError(t, err)
 }
 
 func acquireTestLease(t *testing.T, store archivetypes.Store) *archivetypes.Lease {

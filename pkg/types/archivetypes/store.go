@@ -33,8 +33,9 @@ type Store interface {
 	// when it is published already). A part name published before fails with
 	// ErrCodePartAlreadyPublished. A part of the partition that another part, new or
 	// published, contains at the same or a later data version becomes superseded, as do
-	// objects left with no published part.
-	Publish(ctx context.Context, lease *Lease, publication *Publication) error
+	// objects left with no published part. It returns the table's commit sequence after
+	// the commit.
+	Publish(ctx context.Context, lease *Lease, publication *Publication) (int64, error)
 
 	// ListPublishedParts returns the published parts of a table's partition on one shard,
 	// dropped from ClickHouse or not.
@@ -43,7 +44,7 @@ type Store interface {
 	// ListActiveObjects returns the objects holding a table's published parts.
 	ListActiveObjects(ctx context.Context, table string) ([]*Object, error)
 
-	// IndexSnapshot returns a table's active objects with the number of commits they reflect,
-	// read together.
+	// IndexSnapshot returns a table's active objects with the commit sequence they reflect,
+	// read in one snapshot.
 	IndexSnapshot(ctx context.Context, table string) (*IndexSnapshot, error)
 }

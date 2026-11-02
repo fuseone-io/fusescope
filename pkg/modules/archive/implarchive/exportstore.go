@@ -45,68 +45,35 @@ func (store *store) AbandonAttempt(ctx context.Context, id valuer.UUID) error {
 	return nil
 }
 
-func (store *store) Publish(ctx context.Context, lease *archivetypes.Lease, publication *archivetypes.Publication) error {
+func (store *store) Publish(ctx context.Context, lease *archivetypes.Lease, publication *archivetypes.Publication) (int64, error) {
 	if err := publication.Validate(); err != nil {
-		return err
+		return 0, err
 	}
 
-	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+	var sequence int64
+	err := store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		db := store.sqlstore.BunDBCtx(ctx)
-		attempt := publication.Attempt
 		now := time.Now().UTC()
 
-		// Taking the lease row first holds off a takeover until the commit ends.
-		fenced, err := db.
-			NewUpdate().
-			Model(new(archivetypes.Lease)).
-			Set("updated_at = ?", now).
-			Where("signal = ?", lease.Signal).
-			Where("holder = ?", lease.Holder).
-			Where("epoch = ?", lease.Epoch).
-			Where("expires_at > ?", now).
-			Exec(ctx)
-		if ok, err := oneRowAffected(fenced, err); err != nil {
-			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't check the archive lease of %s", lease.Signal)
-		} else if !ok {
-			return errors.Newf(errors.TypeForbidden, archivetypes.ErrCodeLeaseLost, "the archive lease of %s at epoch %d is lost", lease.Signal, lease.Epoch)
+		if err := fence(ctx, db, lease, now); err != nil {
+			return err
+		}
+		if err := store.record(ctx, db, lease, publication, now); err != nil {
+			return err
+		}
+		if err := supersede(ctx, db, publication, now); err != nil {
+			return err
 		}
 
-		published, err := db.
-			NewUpdate().
-			Model(new(archivetypes.Attempt)).
-			Set("status = ?", archivetypes.AttemptStatusPublished).
-			Set("format_version = ?", attempt.FormatVersion).
-			Set("column_mapping = ?", attempt.ColumnMapping).
-			Set("manifest_key = ?", attempt.ManifestKey).
-			Set("manifest_sha256 = ?", attempt.ManifestSHA256).
-			Set("updated_at = ?", now).
-			Where("id = ?", attempt.ID).
-			Where("signal = ?", lease.Signal).
-			Where("epoch = ?", lease.Epoch).
-			Where("status = ?", archivetypes.AttemptStatusPending).
-			Exec(ctx)
-		if ok, err := oneRowAffected(published, err); err != nil {
-			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't publish archive attempt %s", attempt.ID)
-		} else if !ok {
-			return notPublished(ctx, db, attempt.ID, lease)
-		}
-
-		if len(publication.Objects) > 0 {
-			if _, err := db.NewInsert().Model(&publication.Objects).Exec(ctx); err != nil {
-				return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record the objects of archive attempt %s", attempt.ID)
-			}
-		}
-		if len(publication.Parts) > 0 {
-			if _, err := db.NewInsert().Model(&publication.Parts).Exec(ctx); err != nil {
-				if wrapped := store.sqlstore.WrapAlreadyExistsErrf(err, archivetypes.ErrCodePartAlreadyPublished, "a part of archive attempt %s is published already", attempt.ID); wrapped != err {
-					return wrapped
-				}
-				return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record the parts of archive attempt %s", attempt.ID)
-			}
-		}
-
-		return supersede(ctx, db, publication, now)
+		var err error
+		sequence, err = nextIndexSequence(ctx, db, publication.Attempt.TableName)
+		return err
 	})
+	if err != nil {
+		return 0, err
+	}
+
+	return sequence, nil
 }
 
 func (store *store) ListPublishedParts(ctx context.Context, table string, shard int, partitionID string) ([]*archivetypes.ArchivedPart, error) {
@@ -152,19 +119,12 @@ func (store *store) ListActiveObjects(ctx context.Context, table string) ([]*arc
 
 func (store *store) IndexSnapshot(ctx context.Context, table string) (*archivetypes.IndexSnapshot, error) {
 	snapshot := new(archivetypes.IndexSnapshot)
-	err := store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		sequence, err := store.
-			sqlstore.
-			BunDBCtx(ctx).
-			NewSelect().
-			Model(new(archivetypes.Attempt)).
-			Where("table_name = ?", table).
-			Where("status = ?", archivetypes.AttemptStatusPublished).
-			Count(ctx)
+	err := store.sqlstore.RunInTxCtx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead, ReadOnly: true}, func(ctx context.Context) error {
+		var err error
+		snapshot.Sequence, err = indexSequence(ctx, store.sqlstore.BunDBCtx(ctx), table)
 		if err != nil {
-			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't count the archive commits of %s", table)
+			return err
 		}
-		snapshot.Sequence = int64(sequence)
 
 		snapshot.Objects, err = store.ListActiveObjects(ctx, table)
 		return err
@@ -174,6 +134,95 @@ func (store *store) IndexSnapshot(ctx context.Context, table string) (*archivety
 	}
 
 	return snapshot, nil
+}
+
+// fence takes the lease row first, which holds off a takeover until the commit ends.
+func fence(ctx context.Context, db bun.IDB, lease *archivetypes.Lease, now time.Time) error {
+	fenced, err := db.
+		NewUpdate().
+		Model(new(archivetypes.Lease)).
+		Set("updated_at = ?", now).
+		Where("signal = ?", lease.Signal).
+		Where("holder = ?", lease.Holder).
+		Where("epoch = ?", lease.Epoch).
+		Where("expires_at > ?", now).
+		Exec(ctx)
+	if ok, err := oneRowAffected(fenced, err); err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't check the archive lease of %s", lease.Signal)
+	} else if !ok {
+		return errors.Newf(errors.TypeForbidden, archivetypes.ErrCodeLeaseLost, "the archive lease of %s at epoch %d is lost", lease.Signal, lease.Epoch)
+	}
+
+	return nil
+}
+
+// record marks the attempt published and inserts its objects and parts.
+func (store *store) record(ctx context.Context, db bun.IDB, lease *archivetypes.Lease, publication *archivetypes.Publication, now time.Time) error {
+	attempt := publication.Attempt
+	published, err := db.
+		NewUpdate().
+		Model(new(archivetypes.Attempt)).
+		Set("status = ?", archivetypes.AttemptStatusPublished).
+		Set("format_version = ?", attempt.FormatVersion).
+		Set("column_mapping = ?", attempt.ColumnMapping).
+		Set("manifest_key = ?", attempt.ManifestKey).
+		Set("manifest_sha256 = ?", attempt.ManifestSHA256).
+		Set("updated_at = ?", now).
+		Where("id = ?", attempt.ID).
+		Where("signal = ?", lease.Signal).
+		Where("epoch = ?", lease.Epoch).
+		Where("status = ?", archivetypes.AttemptStatusPending).
+		Exec(ctx)
+	if ok, err := oneRowAffected(published, err); err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't publish archive attempt %s", attempt.ID)
+	} else if !ok {
+		return notPublished(ctx, db, attempt.ID, lease)
+	}
+
+	if len(publication.Objects) > 0 {
+		if _, err := db.NewInsert().Model(&publication.Objects).Exec(ctx); err != nil {
+			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record the objects of archive attempt %s", attempt.ID)
+		}
+	}
+	if len(publication.Parts) > 0 {
+		if _, err := db.NewInsert().Model(&publication.Parts).Exec(ctx); err != nil {
+			if wrapped := store.sqlstore.WrapAlreadyExistsErrf(err, archivetypes.ErrCodePartAlreadyPublished, "a part of archive attempt %s is published already", attempt.ID); wrapped != err {
+				return wrapped
+			}
+			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record the parts of archive attempt %s", attempt.ID)
+		}
+	}
+
+	return nil
+}
+
+func nextIndexSequence(ctx context.Context, db bun.IDB, table string) (int64, error) {
+	_, err := db.
+		NewInsert().
+		Model(archivetypes.NewIndexSequence(table)).
+		On("CONFLICT (table_name) DO UPDATE").
+		Set("sequence = archive_index_sequence.sequence + 1").
+		Set("updated_at = EXCLUDED.updated_at").
+		Exec(ctx)
+	if err != nil {
+		return 0, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't move the archive commit sequence of %s", table)
+	}
+
+	return indexSequence(ctx, db, table)
+}
+
+// indexSequence is 0 for a table with no commit.
+func indexSequence(ctx context.Context, db bun.IDB, table string) (int64, error) {
+	sequence := new(archivetypes.IndexSequence)
+	err := db.NewSelect().Model(sequence).Where("table_name = ?", table).Scan(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the archive commit sequence of %s", table)
+	}
+
+	return sequence.Sequence, nil
 }
 
 // notPublished tells why the attempt update matched no row: the attempt is published, or the
