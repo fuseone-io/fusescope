@@ -2,7 +2,7 @@
 
 - Status: proposed
 - Deciders: FuseOne maintainers. Storage, schema ownership, credentials and the allocation model span several PRs and three repos (backend, collector migrator, charts).
-- Related: [ADR 0001](0001-agpl-collector-dependency.md) (no collector imports), [ADR 0002](0002-long-term-archive.md) (lease, fenced commits), [ADR 0009](https://github.com/fuseone-io/fusescope/pull/222) (Apache-2.0 `fusescope-collector` and its migrator, which owns new databases).
+- Related: [ADR 0001](0001-agpl-collector-dependency.md) (no collector imports), [ADR 0002](0002-long-term-archive.md) (lease, fenced commits), [ADR 0009](0009-fusescope-collector.md) (Apache-2.0 `fusescope-collector` and its migrator, which owns new databases).
 
 ## Context
 
@@ -98,23 +98,26 @@ The FOCUS version written is recorded per load. Provider columns outside FOCUS a
 |---|---|---|---|
 | `line_items` | source grain (hourly or daily) | `ORDER BY (org_id, x_source_id, charge_period_start, service_category, x_service_name)`, `PARTITION BY toYYYYMM(billing_period_start)` | 25 months |
 | `allocations` | pod × hour | `ORDER BY (org_id, x_k8s_cluster, x_k8s_namespace, x_k8s_workload, pod, hour)`, monthly partitions | 90 days |
-| `samples`, `samples_agg_1d` | series × day | same columns, engine and keys as `signoz_meter.samples` | 25 months |
+| `samples`, `samples_agg_1d` | series × day | `signoz_meter.samples` columns plus `org_id`, `x_source_id` and `x_load_id`, which lead the `ORDER BY` of both tables; `samples_agg_1d` aggregates per load | 25 months |
 
 - `samples` holds **cost series**: `fusescope.cost.effective`, `fusescope.cost.billed`, `fusescope.cost.list`, as delta sums with labels `provider`, `billing_account`, `sub_account`, `service_category`, `provider_service`, `region`, `service.name`, `team`, `environment`, `k8s.cluster.name`, `k8s.namespace.name`, `charge_category`, `allocation`, `currency`. No resource id: per-resource drill-down reads `line_items`.
-- Because the series have the meter's shape, **the meter statement builder serves them as a new `cost` source** with another database. Query builder, dashboards, formulas across sources and threshold alerts work on cost without a new query engine.
+- Because the series have the meter's shape, **the meter statement builder serves them as a new `cost` source** with another database, adding `org_id = ?` and `x_load_id IN (…)` of the published loads to every query. Query builder, dashboards, formulas across sources and threshold alerts work on cost without a new query engine.
+- `fusescope.cost.forecast` is a daily series of the month-end projection (month to date plus a linear forecast over the days left), written by the series builder with each load, so forecast budgets are ordinary threshold rules (§8, §9).
 
 **Loads are published, not overwritten.**
 
-- A load writes rows with a new `x_load_id`, then publishes in one SQL transaction fenced by the lease epoch (`cost_load`: source, period, load id, rows, checksums, FOCUS version, status).
-- `line_items` and `allocations` queries read only published loads; the backend adds `x_load_id IN (…)` from the metastore.
-- After publishing, the period's series are rebuilt (delete the old points, insert the new) and the superseded load is removed with a lightweight `DELETE … WHERE x_load_id = …`. `DROP PARTITION` is never used (ADR 0002, E4). Between the two series statements a query can briefly under-count the period; alert rules evaluate over windows longer than that.
+- A load writes all its rows, `line_items` or `allocations` **and its series** in `samples`, under a new `x_load_id`, then publishes in one SQL transaction fenced by the lease epoch (`cost_load`: source, period, load id, rows, checksums, FOCUS version, status). Series are never rewritten in place.
+- Every query of `line_items`, `allocations`, `samples` and `samples_agg_1d` reads only published loads; the backend adds `x_load_id IN (…)` from the metastore. Publishing switches a period from one load to the next atomically, so a query never sees a period twice or not at all.
+- ClickHouse writes aren't fenced, and needn't be: a holder that lost its lease writes rows under its own load id, which it can't publish, so no reader ever sees them.
+- After publishing, the superseded load is removed from every table with a lightweight `DELETE … WHERE x_load_id = …`, issued on `samples_agg_1d` as well, since a materialized view doesn't carry deletes to its target. `DROP PARTITION` is never used (ADR 0002, E4).
+- **Unpublished loads are swept.** A load that wrote rows and then failed, crashed or lost its lease is never published or superseded; each run deletes the rows of loads that are not published and older than the run timeout, from every table, and marks them `abandoned` in `cost_load`.
 
 **Schema ownership: the migrator owns `fusescope_costs`** (resolved in review).
 
 The cost tables are created and changed by the **Apache-2.0 schema migrator in `fusescope-collector`**, which owns every new database (ADR 0009); the AGPL fork's migrator is not changed. The backend issues no DDL.
 
 - **Migrator side.** `fusescope_costs` is one of the Apache migrator's databases, with its own migrations: the database, the tables above with their `distributed_` tables, engines, keys and TTLs, and `schema_migrations_v2`. Migrations are numbered, additive, and tested like the meter migrations. They ship with a `fusescope-collector` release, so cost schema versions follow its versions.
-- **Backend side.** The backend only writes rows (`INSERT`, `INSERT … SELECT FROM s3()`/`azureBlobStorage()`), runs the versioned-load swap (lightweight `DELETE` of superseded loads), and reads with its own SQL. It imports no collector package (ADR 0001); table and column names are constants written here, as for the other databases.
+- **Backend side.** The backend only writes rows (`INSERT`, `INSERT … SELECT FROM s3()`/`azureBlobStorage()`), runs the versioned-load swap and the sweep (lightweight `DELETE` of superseded and abandoned loads), and reads with its own SQL. It imports no collector package (ADR 0001); table and column names are constants written here, as for the other databases.
 - **Missing or older schema.** Each backend release declares the lowest cost migration id it needs. At startup and before each run, it reads `fusescope_costs.schema_migrations_v2` for that id with status `finished`. If the database or the migration is missing, cost is **disabled with a status**, "Cost needs schema migrator ≥ vX.Y; run the migrator", shown in Settings and the API, and the scheduler skips its work. Nothing else in the backend is affected, and the feature enables itself on the next check once the migrator has run.
 - **Order of releases.** A schema change is released in the migrator first; the backend release that uses it raises its required migration id. Columns are only added, so a newer schema never breaks an older backend.
 - **Privileges.** The backend's ClickHouse user needs `INSERT`, `SELECT` and `ALTER DELETE` on `fusescope_costs.*`, plus the `S3` and `AZURE` source privileges for the table functions; the migrator keeps the DDL rights it already has.
@@ -142,10 +145,10 @@ Computed in ClickHouse from `signoz_metrics`, per cluster and hour:
 2. **Pod allocation.** For each pod on the node, `max(request, average usage)` of CPU cores and RAM bytes, times the unit price and the fraction of the hour it ran. Requests are summed over containers.
 3. **Overcommit.** When allocations exceed the node's allocatable capacity, they are scaled down to it, so a node's cost is never allocated twice.
 4. **Idle** is the node cost left over, written as an `idle` row per node. It is shown separately by default and can be shared over workloads by allocation.
-5. **Shared** namespaces and labels (default `kube-system`, the FuseScope agents, ingress) are redistributed over the remaining workloads by allocation and written as `shared` rows, so totals still match.
-6. **Reconciliation.** Allocated + idle equals the node cost, and the cluster's total equals what was billed for its nodes; any difference is reported as `unreconciled` on the cluster.
+5. **Shared** namespaces and labels (default `kube-system`, the FuseScope agents, ingress) are redistributed over the remaining workloads by allocation and written as `shared` rows on the receiving workloads. They **replace** the shared namespaces' own `allocated` rows, which are not written.
+6. **Reconciliation.** Per node and hour, `allocated + shared + idle` equals the node cost, and the cluster's total equals what was billed for its nodes; any difference is reported as `unreconciled` on the cluster.
 
-The chart adds node labels through `k8sattributes` (`from: node`): `node.kubernetes.io/instance-type`, set by the kubelet only on clouds, `topology.kubernetes.io/region` and `zone` [L1]; the capacity type from `karpenter.sh/capacity-type` (`spot`, `on-demand`, `reserved`) [L2], `eks.amazonaws.com/capacityType` (`ON_DEMAND`, `SPOT`) [L3] or the GKE and AKS equivalents; the provider id; and the pod labels used for mapping (`app.kubernetes.io/name`, `team`, configurable). On-prem nodes without an instance type are priced per node pool or label.
+The chart adds node labels through `k8sattributes` (`from: node`): `node.kubernetes.io/instance-type`, set by the kubelet only on clouds, `topology.kubernetes.io/region` and `zone` [L1]; the capacity type from `karpenter.sh/capacity-type` (`spot`, `on-demand`, `reserved`) [L2], `eks.amazonaws.com/capacityType` (`ON_DEMAND`, `SPOT`) [L3] or the GKE and AKS equivalents; the provider id; and the pod labels used for mapping (`app.kubernetes.io/instance`, `app.kubernetes.io/name`, `team`, configurable). On-prem nodes without an instance type are priced per node pool or label.
 
 Persistent volumes (`k8s.volume.capacity` × storage price, then bill-matched), GPUs (device requests or DCGM metrics) and network egress come later (phase 5).
 
@@ -153,17 +156,17 @@ Persistent volumes (`k8s.volume.capacity` × storage price, then bill-matched), 
 
 Rules map rows to `x_service_name`, `x_team` and `x_environment`, first match wins:
 
-1. **Kubernetes rows:** the pod's `resource.opentelemetry.io/service.name` annotation or `app.kubernetes.io/name` label (the order the OpenTelemetry Kubernetes conventions give for `service.name` [S1]), else the workload name; `team` from a pod or namespace label.
+1. **Kubernetes rows:** the pod's `resource.opentelemetry.io/service.name` annotation, then the `app.kubernetes.io/instance` label, then `app.kubernetes.io/name`, then the workload name: the order the OpenTelemetry Kubernetes conventions give for `service.name` [S1], so two releases of one chart stay two services and match the `service.name` `k8sattributes` sets on their telemetry; `team` from a pod or namespace label.
 2. **Cloud rows:** tag keys in priority order, e.g. `service`, `app`, `fusescope:service`; `team` from `team` or `owner`; account → team as a fallback.
 3. **Unmapped** rows keep `x_service_name = ''` and are listed in the UI as the top unmapped spend, with a suggested rule.
 
-Rules are applied at load time. Changing a rule re-applies it to open periods with a new load, and to closed ones on demand.
+Rules are applied at load time. Changing a rule re-applies it to open periods with a new load, and to closed ones on demand, within the allocator's horizon for Kubernetes rows (§7).
 
 ### 7. Scheduling and idempotency
 
 - Each source runs every 6 h (configurable), each cluster's allocator every hour, each under the archive's lease pattern with key `cost:<source id>` or `cost:k8s:<cluster>`. The lease is extracted to a shared package when the archive PRs merge.
 - A source loads every period whose export changed since the last published load: the open month, the previous month until its invoice is final, and any older period whose manifest or BigQuery partition changed (late credits and corrections), up to `cost.restatement_window` (default 3 months).
-- The allocator recomputes the last 48 h on each run, so late metrics are counted, and recomputes past periods when a price sheet changes or a node's billed cost arrives.
+- The allocator recomputes the last 48 h on each run, so late metrics are counted, and recomputes past periods when a price sheet changes or a node's billed cost arrives, **within its horizon**: the shorter of the `allocations` retention (90 days) and the `signoz_metrics` retention. A restated bill or price change older than that updates `line_items` and the cloud series but not the Kubernetes split, whose series keep their last load and are marked "allocated with prices as of <date>" in the UI.
 - Every run is a new load, so a re-run, a crash or a lost lease leaves the published data untouched.
 
 ### 8. Queries the UI needs
@@ -175,7 +178,7 @@ Rules are applied at load time. Changing a rule re-applies it to open periods wi
 | Workload, pod, idle and shared cost | `allocations` |
 | Cost per 1k requests | formula: `cost.effective` per `service.name` ÷ (request count from traces ÷ 1000), same day buckets |
 | Cost per tenant | a service's cost split by each tenant's share of its requests (`tenant.id` or a configured span attribute) |
-| Budget burn and forecast | `samples`, month to date plus a linear forecast |
+| Budget burn and forecast | `samples`: `fusescope.cost.effective` month to date, and `fusescope.cost.forecast` (§3) |
 
 Unit cost uses data we already have, so it needs no new pipeline. A request-weighted split is an estimate and is labelled so.
 
@@ -188,7 +191,7 @@ New screens get Claude Design boards before they are built.
 | **Cost explorer** (`/cost`) | totals, trend, group by any dimension, effective / billed / list switch, drill-down to line items or pods, unmapped spend, saved views |
 | **Service page** | a cost card: month-to-date cost, trend, cost per 1k requests, top cost components |
 | **Kubernetes** | cost per cluster, namespace and workload, idle and shared, from infra monitoring pages |
-| **Budgets** | budget per scope (any filter), monthly amount, thresholds on actual and forecast; each budget creates a threshold rule on the `cost` source |
+| **Budgets** | budget per scope (any filter), monthly amount, thresholds on actual and forecast; each budget creates threshold rules on the `cost` source, on `fusescope.cost.effective` month to date and on `fusescope.cost.forecast` |
 | **Settings** | sources, price sheets, mapping rules, freshness and errors |
 | **Recommendations** (phase 5) | rightsizing per workload: p95 usage vs request over 14 days, estimated monthly saving |
 
@@ -227,10 +230,10 @@ Effort is a rough estimate in engineer-weeks, per repo.
 
 | Phase | Scope | Repos (effort) | Exit criteria |
 |---|---|---|---|
-| **1 · Kubernetes from our metrics** | migrator: `fusescope_costs` database, `allocations` and `samples` tables; backend: schema check and disabled status, `cost` module skeleton, price sheet, allocator, mapping rules for k8s, `cost` query source, Kubernetes cost and a first explorer; chart adds node and pod labels | fusescope-collector-server (1), fusescope (5–6), fusescope-charts (1) | on a kind cluster and an on-prem cluster, allocated + idle + shared equals node cost for every hour; namespace and service totals visible in the explorer |
-| **2 · AWS** | migrator: `line_items`; AWS source (FOCUS and CUR 2.0), STS and workload identity, loads and restatement, tag mapping, node bill matching, explorer drill-down | fusescope-collector-server (0.5), fusescope (4–5), fusescope-charts (0.5) | a month of a real account matches its invoice total to the cent in `BilledCost`; a restated day is reloaded without duplicates |
+| **1 · Kubernetes from our metrics** | migrator: `fusescope_costs` database, `allocations` and `samples` tables; backend: schema check and disabled status, `cost` module skeleton, price sheet, allocator, mapping rules for k8s, `cost` query source, Kubernetes cost and a first explorer; chart adds node and pod labels | fusescope-collector-server (1), fusescope (5–6), fusescope-charts (1) | on a kind cluster and an on-prem cluster, `allocated + shared + idle` equals node cost for every node and hour, with no `allocated` rows left for shared namespaces; namespace and service totals visible in the explorer |
+| **2 · AWS** | migrator: `line_items`; AWS source (FOCUS and CUR 2.0), STS and workload identity, loads and restatement, tag mapping, node bill matching, explorer drill-down | fusescope-collector-server (0.5), fusescope (4–5), fusescope-charts (0.5) | a month of a real account matches its invoice total to the cent in `BilledCost`; a restated day is reloaded without duplicates in `samples` or `samples_agg_1d`, and a run killed before publishing leaves no rows after the sweep |
 | **3 · GCP and Azure** | GCP source over the FOCUS view, Azure FOCUS export source; migrator columns only if the FOCUS mapping needs them | fusescope (3–4), fusescope-collector-server (≤0.5) | same invoice match for one GCP and one Azure account |
-| **4 · Unit economics, budgets, alerts** | cost card on the service page, cost per 1k requests, per-tenant split, budgets as threshold rules, cost anomalies on the anomaly rule of #13 | fusescope (3–4) | a budget alert fires on forecast in a test; the service page shows cost per 1k requests matching a hand computation |
+| **4 · Unit economics, budgets, alerts** | cost card on the service page, cost per 1k requests, per-tenant split, budgets as threshold rules, cost anomalies on the anomaly rule of #13 | fusescope (3–4) | a budget alert on `fusescope.cost.forecast` fires in a test; the service page shows cost per 1k requests matching a hand computation |
 | **5 · Recommendations and more** | rightsizing, persistent volumes, GPUs, network egress, display currency; migrator columns for new cost components | fusescope (4), fusescope-collector-server (0.5), fusescope-charts (1) | rightsizing suggestions on the demo cluster with estimated savings |
 
 ## Resolved decisions
