@@ -84,7 +84,7 @@ function ReleaseFiles({
 			))}
 			<span className="tw:pt-1 tw:text-[11px] tw:text-subtle-foreground">
 				{android
-					? 'Matched by release and R8 map ID (pg_map_id); traces without a map ID use the release’s latest mapping.'
+					? 'Matched by release and R8 map ID (pg_map_id); traces without a matching map ID use the release’s latest mapping.'
 					: 'Matched by the bundle’s URL path; serving under a prefix still matches.'}
 			</span>
 		</div>

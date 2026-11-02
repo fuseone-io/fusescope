@@ -38,11 +38,11 @@ export function beforeError(at: string, errorAt: string): string {
 
 export function topClient(
 	events: RumtypesErrorEventDTO[],
-	jvm = false,
+	android = false,
 ): { label: string; share: string } | undefined {
 	const counts = new Map<string, number>();
 	events.forEach(({ client }) => {
-		const label = jvm
+		const label = android
 			? client.device
 			: client.browser
 				? [client.browser, client.browserVersion].filter(Boolean).join(' ')

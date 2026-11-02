@@ -127,6 +127,9 @@ describe('mapping upload snippets', () => {
 	it('posts the mapping as the raw body', () => {
 		const snippet = mappingCurlSnippet(TARGET);
 		expect(snippet).toContain(
+			"R8_MAP_ID=$(sed -n 's/^# pg_map_id: //p' app/build/outputs/mapping/release/mapping.txt)",
+		);
+		expect(snippet).toContain(
 			'/api/v1/rum/applications/app-1/mappings?release=2.1.0&map_id=$R8_MAP_ID',
 		);
 		expect(snippet).toContain('SigNoz-Api-Key: $FUSESCOPE_API_KEY');

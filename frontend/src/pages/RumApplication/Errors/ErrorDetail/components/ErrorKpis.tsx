@@ -9,19 +9,23 @@ import { topClient } from '../utils';
 
 interface ErrorKpisProps {
 	group: RumtypesGettableErrorGroupDTO;
-	jvm: boolean;
+	android: boolean;
 	totalSessions?: number;
 }
 
 const releaseNote = (release: string): string =>
 	release ? `release ${release}` : 'no release';
 
-function ErrorKpis({ group, totalSessions, jvm }: ErrorKpisProps): JSX.Element {
+function ErrorKpis({
+	group,
+	totalSessions,
+	android,
+}: ErrorKpisProps): JSX.Element {
 	const share =
 		totalSessions === undefined
 			? undefined
 			: sessionShare(group.sessions, totalSessions);
-	const client = topClient(group.latestEvents ?? [], jvm);
+	const client = topClient(group.latestEvents ?? [], android);
 	const lastSeen = Date.parse(group.lastSeenAt);
 	const kpis = [
 		{
@@ -47,7 +51,7 @@ function ErrorKpis({ group, totalSessions, jvm }: ErrorKpisProps): JSX.Element {
 			note: releaseNote(group.lastSeenRelease),
 		},
 		{
-			label: jvm ? 'Top device' : 'Top browser',
+			label: android ? 'Top device' : 'Top browser',
 			value: client?.label ?? '—',
 			note: client?.share ?? '',
 		},
