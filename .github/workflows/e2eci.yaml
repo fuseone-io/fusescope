@@ -51,6 +51,9 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
       - name: node
         uses: actions/setup-node@v7
         with:
@@ -79,6 +82,9 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
       # Restore-only: the cacheci workflow owns cache saves. Seeds the
       # BuildKit cache mounts so the image build is incremental.
       - name: restore
@@ -137,6 +143,9 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
       # Images bring-up-stack would otherwise pull, at the tests/conftest.py
       # defaults. A stale tag only loses the head start.
       - name: pull-images

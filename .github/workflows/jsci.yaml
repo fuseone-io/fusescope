@@ -47,6 +47,9 @@ jobs:
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
       - name: node-install
         uses: actions/setup-node@v7
         with:
@@ -66,6 +69,9 @@ jobs:
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
       - name: node-install
         uses: actions/setup-node@v7
         with:
@@ -87,6 +93,9 @@ jobs:
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
       - name: node-install
         uses: actions/setup-node@v7
         with:
@@ -108,6 +117,9 @@ jobs:
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
       - name: node-install
         uses: actions/setup-node@v7
         with:
@@ -129,6 +141,9 @@ jobs:
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
       - name: node-install
         uses: actions/setup-node@v7
         with:
@@ -157,6 +172,9 @@ jobs:
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -180,6 +198,9 @@ jobs:
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
       - name: node-install
         uses: actions/setup-node@v7
         with:
