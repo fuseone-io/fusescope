@@ -52,6 +52,7 @@ Managed in the backend, enforced in the collector. Built clean-room from this AD
 | Bound to | an organisation | a RUM application: its origins or package names, platform and PII policy |
 | Presented as | `Authorization: Bearer`, `signoz-ingestion-key`, `SigNoz-Api-Key`, Basic password (Pyroscope); gRPC metadata alike | `FuseScope-RUM-Key` or `?fusescope_rum_key=` |
 
+- **Kinds.** Besides general secret keys and public RUM keys, a `runner` kind holds synthetics runner keys (ADR 0006): the collector requires a run token on their payloads.
 - **Storage.** A new `ingestion_key` table on SQLite and PostgreSQL: org, name, kind, signals, expiry, status (`active`, `expiring`, `revoked`), rate limit, created and last-used. Only the SHA-256 of a key is stored, which is enough for 160 random bits; the key is shown once. RUM keys stay in `rum_application_key` and are published in the same snapshot.
 - **Rotation** with an overlap (1 h, 24 h, 7 d), as RUM keys do today; revocation is immediate in the backend.
 - **API and UI.** Settings → Ingestion keys, with the existing ingestion-key permissions; the community gateway implementation replaces the 501 no-op.
