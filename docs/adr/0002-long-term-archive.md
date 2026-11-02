@@ -17,7 +17,7 @@ Facts the design rests on. They were checked against the backend, migrator and e
   - **Merges** widen the block range of the part they produce (E5b).
   - **Late inserts** get new block numbers.
   - **In-progress inserts** commit later as their own parts. E7b and E7c did not observe one committing with a lower block number than parts already committed, but the window isn't proven absent, so correctness rests only on block-range arithmetic (§3), not on that order.
-- **`partition_id` is opaque.** With custom logs retention it is `YYYYMMDD-<retention>-<cold>`, not a day. The day comes from `system.parts.min_date`.
+- **`partition_id` is opaque.** With custom logs retention it is `YYYYMMDD-<retention>-<cold>`, not a day. The day and retention come from the partition key itself, `_partition_value`: `system.parts.min_date` is not set when the key is computed from a timestamp.
 - **Partition-level operations are unsafe on replicas.** `MOVE PARTITION` and `DROP PARTITION` on a `ReplicatedMergeTree` remove the partition's whole block range. Issued on a replica that hasn't fetched a committed part, they destroyed that part on every replica (E4).
 - **`DROP PART` by name is exact.** Issued on the same lagging replica, it removed only the named parts and left the unfetched one intact (E5). Concurrent inserts into the partition were untouched (E7a). Dropping a name a merge already replaced fails with `NO_SUCH_DATA_PART` and changes nothing (E7a2).
 - **Reads through a Distributed table pick a replica.** `_part IN (…)` through `distributed_*` returned 107 or 100 rows depending on which replica answered (E8).
@@ -53,7 +53,7 @@ Constraints: no new imports from `fusescope-otel-collector` ([ADR 0001](0001-agp
 | Guarantee | Mechanism | Premises | When a premise fails |
 |---|---|---|---|
 | A row is never deleted by the archive job unless it is in a published archive segment | The job deletes only with `DROP PART <name>` of parts whose block range is covered by published segments (§4) | Part names and block ranges behave as in E5; no table mutations rewrite parts in place | A mutated part (new name, same range) is treated as changed and re-exported before its drop |
-| Late, in-progress and lagging-replica rows are archived in a later cycle | They live in parts with block ranges that no published segment covers (§3) | Block numbers are unique per shard and partition | None found in this design |
+| Late, in-progress and lagging-replica rows are archived in a later cycle | They live in parts with block ranges that no published segment covers (§3) | Block numbers are unique per shard and partition, and restart when a table is recreated; the job pins each shard to its table's replica path (its UUID when not replicated), and ranges only compare within one pin | A reordered `remote_servers` fails the pin, and the job refuses that shard until it is resolved. A recreated table fails it too; deleting the shard's `archive_shard` row re-pins it, and its new parts are exported without comparing against the old pin's ranges |
 | Data past retention is kept until archived, for at least `backstop_days` after insertion | The live TTL becomes ingestion-time based: `ingestion_column + retention + backstop`, and `MATERIALIZE TTL` applies it to existing parts. Every TTL writer goes through one builder that adds the backstop (§5) | The ingestion column exists and its clock is within minutes of real time | Tables without an ingestion column keep event-time TTL; late rows older than `retention + backstop` can expire before they are archived (§5, limitation) |
 | Every loss is recorded | Every cycle stores a part inventory; a part that vanishes without being archived or merged into an archived part is marked `lost`, with its row count (§6) | The job ran at least once while the part existed | Parts created and expired between two runs leave no trace; only the job's downtime window is recorded |
 | A restoration loads only what was committed | SQL state, not the bucket, says which objects to load and how; each object is checked against the size, ETag and row count recorded at commit (§9) | The metastore is not writable by whoever can write the bucket | A modified, partial or replaced object fails the restoration as `corrupt` |
@@ -80,7 +80,8 @@ One policy per deployment, declared in the configuration file:
 ```yaml
 archive:
   limits:                # every export and restore query
-    concurrency: 1       # queries at once, cycle-wide
+    concurrency: 1       # partitions at once, cycle-wide; about the number of shards
+    max_attempt_bytes: 4294967296  # bytes on disk per attempt (commit)
     max_memory_usage: 2147483648   # bytes
     max_threads: 4       # also max_insert_threads on restore
     row_group_rows: 100000
@@ -121,26 +122,26 @@ The API and UI show its status. Objects, manifests and state carry no organizati
 
 Each cycle, per table, per shard, for every partition whose days are past its retention, at any age. For logs with custom retention, a partition's retention is its own `_retention_days`, read from its rows by `_partition_id`, not the global one.
 
-1. **Snapshot.** Read the active parts of the partition on every replica of the shard (`clusterAllReplicas(…, system.parts)`). Pick a replica whose active parts' block ranges cover the union of the ranges reported by all replicas. Coverage is by range, not by name: during a merge one replica can hold `1_5_1` while another still has `1_3_0` and `4_5_0`. If no replica covers the union, wait for replication, retry, and skip the partition this cycle if it is still not covered. Partitions are selected by `min_date` past retention, never by parsing `partition_id`.
+1. **Snapshot.** When the partition's job runs, read its active parts (`system.parts … AND partition_id = ?`) on every replica of the shard, connected to directly; a replica that doesn't answer is left out. Pick a replica whose active parts' block ranges cover the union of the ranges reported by all replicas. Coverage is by range, not by name: during a merge one replica can hold `1_5_1` while another still has `1_3_0` and `4_5_0`. If no replica covers the union, the partition is skipped until the next cycle. Partitions are selected by the day and retention in `_partition_value` past retention, never by parsing `partition_id`. `system.parts.rows` still counts rows a lightweight delete masked, which the export doesn't read, so a part with `has_lightweight_delete` is counted with `count() … WHERE _part = <name>` on the chosen replica, and left out when none remain.
 2. **Select.** Candidates are the snapshot parts whose block range is not already contained in the published ranges of that shard and partition.
    - **Late parts are held.** In a partition that already has published parts, candidates are exported only once they total `late_min_rows`, or `late_max_hold` after the inventory first saw them unexported. Meanwhile ClickHouse merges them, so a trickle of late rows becomes one object instead of one per cycle. The backstop still protects them; the first export of a partition is never held.
-3. **Export.** The selected parts go out in one attempt, read on the chosen replica with `WHERE _part IN (<names>)`. The job connects directly to that replica (host and port from `system.clusters`) with `use_hedged_requests = 0`, and runs the `INSERT INTO FUNCTION s3(…) SELECT` there. It never reads through `distributed_*` (E8). The backend therefore needs network access and credentials to every replica, on the secure port with TLS when the cluster uses it; the chart and external-ClickHouse docs say so.
-   - Objects are written to `…/<table>/day=YYYY-MM-DD/shard=<n>/partition=<id>/attempt=<id>/<part-name>.parquet` (Hive-style, `day` from `min_date`), without the truncate setting, so a collision is an error. Every file also carries `_shard` and `_part` columns, so external engines don't depend on the path.
-   - The rows read back from each object must equal the part's `rows`. Parts are immutable, so this compares a stable set. If a part merges away during the read, the counts differ and the attempt is abandoned.
+3. **Export.** The selected parts go out in attempts of at most `max_attempt_bytes` on disk (a larger part goes alone), one statement per part read on the chosen replica with `WHERE _part = <name>`. Each attempt commits (steps 4–5) before the next starts from a fresh snapshot, so a large partition is published over several attempts, and an export cut short by the cycle deadline, a lost lease or a restart resumes from what is published. Late parts are held only before the first attempt; parts a cut-short export left behind are therefore held next cycle like late parts, until `late_min_rows` or `late_max_hold`, within the backstop. The job connects directly to that replica (host and port from `system.clusters`) with `use_hedged_requests = 0`, and runs the `INSERT INTO FUNCTION s3(…) SELECT` there. It never reads through `distributed_*` (E8). The backend therefore needs network access and credentials to every replica, on the secure port with TLS when the cluster uses it; the chart and external-ClickHouse docs say so.
+   - Objects are written to `…/<table>/day=YYYY-MM-DD/shard=<n>/partition=<id>/attempt=<id>/<part-name>.parquet` (Hive-style, `day` from `_partition_value`), without the truncate setting, so a collision is an error. Every file also carries `_shard` and `_part` columns, so external engines don't depend on the path.
+   - The rows read back from each object must equal the part's `rows`. Parts are immutable, so this compares a stable set. If a part merges away during the read, the counts differ and the attempt is abandoned; the partition's earlier attempts stay published. A mismatch is logged as an error.
 4. **Manifest.** A new key, never overwritten, lists for each part its name, range, rows, object key, size and ETag, plus the source columns and types, the column mapping, the `format_version` and the migrator version. It is for external readers; restores don't trust it (§9).
 5. **Commit.** One SQL transaction, fenced by the lease epoch:
    - The objects are recorded in `archive_object (object_key, bytes, etag, rows, status)`.
-   - The parts become `published` in `archive_part (table, shard, partition_id, min_block, max_block, part_name, rows, object_key, attempt_id, status)`. A part refers to the object that holds it, so compaction (§11) can move it to another object without touching the cursor.
+   - The parts become `published` in `archive_part (table, shard, shard_id, partition_id, min_block, max_block, part_name, rows, object_key, attempt_id, status)`, where `shard_id` is the shard's pin. A part refers to the object that holds it, so compaction (§11) can move it to another object without touching the cursor.
    - The attempt's column mapping, `format_version` and the manifest's SHA-256 are stored in `archive_attempt`.
    - Any published part whose range is contained in a newly published part becomes `superseded`. That happens when exported parts merged with later rows before being dropped.
 
-**Load on ClickHouse.** Small installs have run out of memory before, so every export runs with the `archive.limits` settings (`max_memory_usage`, `max_threads`, `output_format_parquet_row_group_size`), one partition per query, and at most `concurrency` archive queries at a time across the cycle. Restores insert under the same limits.
+**Load on ClickHouse.** Small installs have run out of memory before, so every export runs with the `archive.limits` settings (`max_memory_usage`, `max_threads`, `output_format_parquet_row_group_size`), one part per query, and at most `concurrency` partitions exporting at a time across every shard and table of the cycle, each running one query at a time on one replica of its shard. Jobs are ordered by partition, so a `concurrency` of about the number of shards lets every shard export at once; each step adds one export query's memory and threads on a replica. Restores insert under the same limits.
 
 **Related tables.** `logs_v2` with `logs_v2_resource`, and the trace tables, are exported in the same cycle but committed per table. Restores take only partitions that are complete in every table of the set (§7).
 
 **Failures and leases** are handled as in the earlier revision:
 
-- An unpublished attempt leaves orphan objects, which are collected after 24 h. The bucket needs a lifecycle rule for incomplete multipart uploads.
+- An unpublished attempt leaves orphan objects, which are collected after 24 h. An attempt that fails is abandoned at once; one a crash or a lost lease left pending is abandoned by the next lease holder at the start of its cycle, since an earlier epoch can't commit. The bucket needs a lifecycle rule for incomplete multipart uploads.
 - Objects are never overwritten, so the archive works on buckets with S3 Object Lock (WORM), unlike Datadog's archive retries or Splunk DDSS. On such buckets, failing to delete an orphan is logged, not treated as an error.
 - A stale executor can't commit, and its queries are killed by `query_id`.
 
@@ -223,18 +224,19 @@ Exported files follow a type contract compatible with Iceberg v2, fixed before p
 | ClickHouse type | Exported as | Note |
 |---|---|---|
 | `UInt8/16/32` | `Int32` / `Int64` | lossless widening |
-| `UInt64` | `Int64` | bit reinterpretation for hashes and IDs (`fingerprint`), `toInt64` for measures (`duration_nano`); the rule is recorded per column in the manifest so restores undo it |
+| `UInt64` | `Int64` | bit reinterpretation (`CAST`), also for measures (`duration_nano`), where it equals `toInt64` below 2^63; the rule is recorded per column (`uint64_rule: bits`), nested types included, so restores undo it |
 | `FixedString`, `LowCardinality`, `Enum` | `String` | |
 | `Bool` | `BOOLEAN` | the restriction is in ClickHouse's Iceberg writer, not the spec |
 | `UUID` | `String` | DuckDB misreads ClickHouse's byte order |
-| `Dynamic`, `Variant` | `String` | rejected by the Parquet writer |
+| `Dynamic`, `Variant` | `String` | rejected by the Parquet writer; the type discriminator is lost, so a restore brings the values back as `String` inside the column |
 | `JSON` | string with the Parquet JSON logical type | candidate for `variant` in Iceberg v3; custom encoder required |
 | `DateTime64(9)` | `TIMESTAMP(NANOS)` plus a `*_unix_nano Int64` column | the `Int64` column is the portable one in Iceberg v2 |
 | `Map(String, String)` | Parquet `MAP` | |
 
+- **Every file** also carries `_shard Int32` and `_part String` (§3); source columns with those names are refused.
 - **Format version.** Manifests carry a `format_version`. Release N restores segments written by format versions N and N-1, as Tempo keeps reading the previous block version. Older segments need a restore adapter, or fail as `incompatible`.
 - **Old schemas.** Segments are restored by the explicit column mapping stored in SQL at commit (§3), not by the manifest's copy. A migration that renames or retypes an archived column must ship a restore adapter.
-- **External readers** read through manifests, never by listing raw prefixes, because superseded objects (§3) stay in the bucket and duplicate rows. Each commit writes a new immutable index key per table listing the active objects, which the reader takes from the highest commit; a later Iceberg table can replace it. Superseded objects are deleted after `gc_superseded_days` (default 30) on buckets without Object Lock, and kept on WORM buckets.
+- **External readers** read through manifests, never by listing raw prefixes, because superseded objects (§3) stay in the bucket and duplicate rows. Each commit writes a new immutable index key per table listing the active objects, keyed by lease epoch then the table's commit sequence (not by any clock), which the reader takes from the highest key; a later Iceberg table can replace it. Superseded objects are deleted after `gc_superseded_days` (default 30) on buckets without Object Lock, and kept on WORM buckets.
 - **Acceptance.** DuckDB and pyarrow (or Trino) read every exported table with the types above.
 
 ### 9. Restoration

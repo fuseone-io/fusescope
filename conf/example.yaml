@@ -642,18 +642,39 @@ retention:
 
 ##################### Archive #####################
 # Long-term archive of telemetry to object storage, as Parquet (docs/adr/0002).
+# The backend connects to every replica of the telemetry store cluster directly,
+# at the host and port in system.clusters (the inter-server native port), with
+# the DSN's credentials, protocol and TLS: that port must speak the DSN's
+# protocol, and replicas in remote_servers must not be shared between shards. A
+# loopback replica is reached at the DSN. Tables must be replicated on clusters
+# of more than one server.
+# The ClickHouse user needs GRANT NAMED COLLECTION ON <named_collection>.
 archive:
   # How often the export cycle runs.
   interval: 1h
   # Applied to every export and restore query.
   limits:
-    # Archive queries running at once, across the cycle.
+    # Partitions exported at once, across every shard and table of the cycle,
+    # each running one query at a time on one replica of its shard. Set it to
+    # about the number of shards so every shard exports at once; each adds one
+    # export query's memory and threads on a replica.
     concurrency: 1
+    # Bytes on disk of the parts an attempt exports before it commits: a larger
+    # partition is published over several attempts, and an interrupted export
+    # resumes from what is published. A larger part is exported alone.
+    max_attempt_bytes: 4294967296
     # Per query, in bytes. 0 leaves the server default.
     max_memory_usage: 2147483648
     # Per query; also max_insert_threads on restore.
     max_threads: 4
     row_group_rows: 100000
+    # Per query, as max_execution_time and a client deadline. Below a quarter of
+    # backstop_days, which bounds an export cycle.
+    query_timeout: 1h
+    # Added to query_timeout for each started GiB of a part's bytes_on_disk when
+    # it is exported, up to a quarter of backstop_days: 2m assumes at least
+    # ~8.5 MiB/s of compressed part read, encoded and uploaded.
+    query_timeout_per_gib: 2m
   # Superseded objects are deleted after this many days, except on Object Lock
   # buckets. 0 keeps them.
   gc_superseded_days: 30
@@ -664,7 +685,10 @@ archive:
     # Object key prefix: /-separated segments of A-Z, a-z, 0-9, '.', '_', '=' and '-'.
     prefix: ""
     # Days past retention that unarchived data is kept, counted from ingestion.
-    # 2–30, and at least twice the interval.
+    # 2–30, and at least twice the interval. A logs cold-storage rule set by the
+    # v1 retention API (/api/v1/settings/ttl) records no cold-storage days, so the
+    # backstop is refused until the retention is saved again through
+    # /api/v2/settings/ttl (the retention settings page).
     backstop_days: 7
     # Parts landing in an archived partition are exported once they total
     # late_min_rows, or late_max_hold after first seen (below half the backstop).

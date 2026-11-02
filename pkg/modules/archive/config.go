@@ -40,8 +40,15 @@ type Config struct {
 }
 
 type LimitsConfig struct {
-	// Archive queries running at once, across the cycle.
+	// Partitions exported at once, across every shard and table of the cycle, each running
+	// one archive query at a time on one replica of its shard. Around the number of shards
+	// lets each shard export at once.
 	Concurrency int `mapstructure:"concurrency"`
+
+	// Bytes on disk of the parts one attempt exports before it commits, so a large partition
+	// is published over several attempts and an interrupted one resumes where it stopped. A
+	// larger part is exported alone.
+	MaxAttemptBytes uint64 `mapstructure:"max_attempt_bytes"`
 
 	// Per query, in bytes. 0 leaves the server default.
 	MaxMemoryUsage int64 `mapstructure:"max_memory_usage"`
@@ -50,6 +57,14 @@ type LimitsConfig struct {
 	MaxThreads int `mapstructure:"max_threads"`
 
 	RowGroupRows int `mapstructure:"row_group_rows"`
+
+	// Per query, as max_execution_time and a client deadline. Below the export cycle's
+	// deadline, a quarter of backstop_days.
+	QueryTimeout time.Duration `mapstructure:"query_timeout"`
+
+	// Added to query_timeout for each started GiB of a part's bytes_on_disk when it is
+	// exported, up to the export cycle's deadline.
+	QueryTimeoutPerGiB time.Duration `mapstructure:"query_timeout_per_gib"`
 }
 
 type SignalConfig struct {
@@ -87,7 +102,7 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		Interval:         time.Hour,
-		Limits:           LimitsConfig{Concurrency: 1, MaxMemoryUsage: 2 << 30, MaxThreads: 4, RowGroupRows: 100_000},
+		Limits:           LimitsConfig{Concurrency: 1, MaxAttemptBytes: 4 << 30, MaxMemoryUsage: 2 << 30, MaxThreads: 4, RowGroupRows: 100_000, QueryTimeout: time.Hour, QueryTimeoutPerGiB: 2 * time.Minute},
 		GCSupersededDays: 30,
 		Logs:             newSignalConfig(),
 		Traces:           newSignalConfig(),
@@ -102,8 +117,17 @@ func (c Config) Validate() error {
 	if c.Limits.Concurrency < 1 || c.Limits.MaxThreads < 1 || c.Limits.RowGroupRows < 1 {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.concurrency, archive.limits.max_threads and archive.limits.row_group_rows must be positive")
 	}
+	if c.Limits.MaxAttemptBytes == 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.max_attempt_bytes must be positive")
+	}
 	if c.Limits.MaxMemoryUsage < 0 {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.max_memory_usage must not be negative")
+	}
+	if c.Limits.QueryTimeout <= 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.query_timeout must be positive")
+	}
+	if c.Limits.QueryTimeoutPerGiB < 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.query_timeout_per_gib must not be negative")
 	}
 	if c.GCSupersededDays < 0 {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.gc_superseded_days must not be negative")
@@ -112,7 +136,20 @@ func (c Config) Validate() error {
 		return errors.New(errors.TypeUnsupported, ErrCodeInvalidConfig, "only archive.logs can be enabled for now")
 	}
 
-	return c.Logs.validate("archive.logs", c.Interval)
+	if err := c.Logs.validate("archive.logs", c.Interval); err != nil {
+		return err
+	}
+	if c.Logs.Enabled && c.Limits.QueryTimeout >= c.Logs.CycleTimeout() {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.query_timeout must be below a quarter of archive.logs.backstop_days")
+	}
+
+	return nil
+}
+
+// CycleTimeout bounds an export cycle well within the backstop, so a stuck one can't keep
+// the lease while the backstop runs out.
+func (c SignalConfig) CycleTimeout() time.Duration {
+	return time.Duration(c.BackstopDays) * 24 * time.Hour / 4
 }
 
 func newSignalConfig() SignalConfig {
