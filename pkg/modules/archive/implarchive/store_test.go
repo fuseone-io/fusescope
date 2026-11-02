@@ -15,6 +15,7 @@ import (
 	"github.com/uptrace/bun/migrate"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 	"github.com/fuseone-io/fusescope/pkg/sqlmigration"
 	"github.com/fuseone-io/fusescope/pkg/sqlschema"
@@ -60,6 +61,45 @@ func TestAcquireLease(t *testing.T) {
 
 		_, err = store.AcquireLease(ctx, "logs", "a", valid)
 		assert.True(t, errors.Asc(err, archivetypes.ErrCodeLeaseHeld), err)
+	})
+}
+
+func TestBackstopTable(t *testing.T) {
+	ctx := context.Background()
+	modifiedAt := time.Date(2026, 11, 2, 10, 0, 0, 0, time.UTC)
+	materializedAt := modifiedAt.Add(time.Hour)
+
+	forEachStore(t, func(t *testing.T, store archivetypes.Store) {
+		_, err := store.GetBackstopTable(ctx, "logs", "signoz_logs.logs_v2")
+		assert.True(t, errors.Ast(err, errors.TypeNotFound), err)
+
+		progress := archivetypes.NewBackstopTable("logs", "signoz_logs.logs_v2", 7)
+		progress.ModifiedAt = &modifiedAt
+		require.NoError(t, store.SetBackstopTable(ctx, progress))
+
+		got, err := store.GetBackstopTable(ctx, "logs", "signoz_logs.logs_v2")
+		require.NoError(t, err)
+		assert.Equal(t, 7, got.BackstopDays)
+		require.NotNil(t, got.ModifiedAt)
+		assert.True(t, modifiedAt.Equal(*got.ModifiedAt))
+		assert.Nil(t, got.MaterializedAt)
+
+		got.MaterializedAt = &materializedAt
+		require.NoError(t, store.SetBackstopTable(ctx, got))
+		got, err = store.GetBackstopTable(ctx, "logs", "signoz_logs.logs_v2")
+		require.NoError(t, err)
+		require.NotNil(t, got.MaterializedAt)
+		assert.True(t, materializedAt.Equal(*got.MaterializedAt))
+
+		require.NoError(t, store.SetBackstopTable(ctx, archivetypes.NewBackstopTable("logs", "signoz_logs.logs_v2", 10)), "another backstop starts over")
+		got, err = store.GetBackstopTable(ctx, "logs", "signoz_logs.logs_v2")
+		require.NoError(t, err)
+		assert.Equal(t, 10, got.BackstopDays)
+		assert.Nil(t, got.ModifiedAt)
+		assert.Nil(t, got.MaterializedAt)
+
+		_, err = store.GetBackstopTable(ctx, "logs", "signoz_logs.logs_v2_resource")
+		assert.True(t, errors.Ast(err, errors.TypeNotFound), "progress is per table")
 	})
 }
 
@@ -110,10 +150,12 @@ func migrateTestStore(t *testing.T, store sqlstore.SQLStore, schema sqlschema.SQ
 	t.Helper()
 	ctx := context.Background()
 
-	migration, err := sqlmigration.NewAddArchiveFactory(store, schema).New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
-	require.NoError(t, err)
 	migrations := migrate.NewMigrations()
-	require.NoError(t, migration.Register(migrations))
+	for _, migrationFactory := range []factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]{sqlmigration.NewAddArchiveFactory(store, schema), sqlmigration.NewAddArchiveBackstopTableFactory(schema)} {
+		migration, err := migrationFactory.New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
+		require.NoError(t, err)
+		require.NoError(t, migration.Register(migrations))
+	}
 	for _, m := range migrations.Sorted() {
 		require.NoError(t, m.Up(ctx, store.BunDB()))
 	}

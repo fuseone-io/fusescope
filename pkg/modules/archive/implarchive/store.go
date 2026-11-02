@@ -69,6 +69,45 @@ func (store *store) MarkBackstopApplied(ctx context.Context, signal string, appl
 	return nil
 }
 
+func (store *store) GetBackstopTable(ctx context.Context, signal string, table string) (*archivetypes.BackstopTable, error) {
+	progress := new(archivetypes.BackstopTable)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(progress).
+		Where("signal = ?", signal).
+		Where("table_name = ?", table).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, archivetypes.ErrCodeBackstopTableNotFound, "%s has no archive backstop progress on %s", signal, table)
+	}
+
+	return progress, nil
+}
+
+func (store *store) SetBackstopTable(ctx context.Context, progress *archivetypes.BackstopTable) error {
+	progress.UpdatedAt = time.Now()
+
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(progress).
+		On("CONFLICT (signal, table_name) DO UPDATE").
+		Set("backstop_days = EXCLUDED.backstop_days").
+		Set("modified_at = EXCLUDED.modified_at").
+		Set("materialized_at = EXCLUDED.materialized_at").
+		Set("updated_at = EXCLUDED.updated_at").
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record the archive backstop progress of %s on %s", progress.Signal, progress.TableName)
+	}
+
+	return nil
+}
+
 func (store *store) AcquireLease(ctx context.Context, signal string, holder string, expiresAt time.Time) (*archivetypes.Lease, error) {
 	now := time.Now().UTC()
 

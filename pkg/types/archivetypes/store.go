@@ -6,6 +6,8 @@ import (
 )
 
 type Store interface {
+	BackstopProgress
+
 	// GetSignal returns an error of type TypeNotFound when the signal has no archive state.
 	GetSignal(ctx context.Context, signal string) (*Signal, error)
 
