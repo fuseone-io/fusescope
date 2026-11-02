@@ -231,3 +231,35 @@ func expectIndexes(conn cmock.ClickConnMockCommon, table archivetypes.Table, nam
 	}
 	conn.ExpectQuery(table.Name + `/index/\*\.json`).WillReturnRows(cmock.NewRows([]cmock.ColumnType{{Name: "_file", Type: "String"}}, rows))
 }
+
+func TestUnreachableReplicas(t *testing.T) {
+	ctx := context.Background()
+	service := newTestExportService(t, newTestStore(t))
+	service.telemetryStore.(*telemetrystoretest.Provider).Mock().ExpectQuery("FROM system.clusters").WithArgs("cluster").WillReturnRows(cmock.NewRows(
+		[]cmock.ColumnType{{Name: "shard_num", Type: "UInt32"}, {Name: "replica_num", Type: "UInt32"}, {Name: "host_name", Type: "String"}, {Name: "host_address", Type: "String"}, {Name: "port", Type: "UInt16"}},
+		[][]any{{uint32(1), uint32(1), "ch-1", "10.0.0.1", uint16(9440)}, {uint32(2), uint32(1), "ch-2", "10.0.0.2", uint16(9000)}},
+	))
+
+	conns := map[string]clickhouse.Conn{
+		"ch-1:9440": asConn(newMockConn(t)),
+		"ch-2:9000": pingFailingConn{Conn: asConn(newMockConn(t)), err: errors.New(errors.TypeInternal, errors.CodeInternal, "tls: first record does not look like a TLS handshake")},
+	}
+
+	var err error
+	service.dialer, err = newReplicaDialer("clickhouse://clickhouse-lb:9440?secure=true", 1)
+	require.NoError(t, err)
+	service.dialer.open = func(options *clickhouse.Options) (clickhouse.Conn, error) {
+		return conns[options.Addr[0]], nil
+	}
+
+	assert.Equal(t, []string{"ch-2:9000"}, service.unreachableReplicas(ctx), "a replica listed at a port that doesn't speak the DSN's protocol and TLS is reported at start")
+}
+
+type pingFailingConn struct {
+	clickhouse.Conn
+	err error
+}
+
+func (conn pingFailingConn) Ping(context.Context) error {
+	return conn.err
+}

@@ -19,6 +19,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const replicaCheckTimeout = time.Minute
+
 type exportService struct {
 	settings       factory.ScopedProviderSettings
 	telemetryStore telemetrystore.TelemetryStore
@@ -88,6 +90,8 @@ func (service *exportService) Start(ctx context.Context) error {
 		return nil
 	}
 
+	service.unreachableReplicas(ctx)
+
 	ticker := time.NewTicker(service.config.Interval)
 	defer ticker.Stop()
 
@@ -102,6 +106,31 @@ func (service *exportService) Start(ctx context.Context) error {
 		case <-ticker.C:
 		}
 	}
+}
+
+// unreachableReplicas pings every replica once and logs each that fails as an error: they are
+// dialed at the port system.clusters lists, with the DSN's protocol and TLS, so a mismatch
+// would otherwise show only as a warning every cycle.
+func (service *exportService) unreachableReplicas(ctx context.Context) []string {
+	ctx, cancel := context.WithTimeout(ctx, replicaCheckTimeout)
+	defer cancel()
+
+	replicas, err := service.dialer.replicas(ctx, service.telemetryStore.ClickhouseDB(), service.telemetryStore.Cluster())
+	if err != nil {
+		service.settings.Logger().WarnContext(ctx, "archive replicas not checked at start", errors.Attr(err))
+		return nil
+	}
+
+	var unreachable []string
+	for _, shard := range sortedShards(replicas) {
+		for _, replica := range replicas[shard] {
+			if err := replica.conn.Ping(ctx); err != nil {
+				unreachable = append(unreachable, replica.addr)
+				service.settings.Logger().ErrorContext(ctx, "archive replica unreachable with the telemetry store DSN's protocol and TLS at the port system.clusters lists", slog.String("replica", replica.addr), slog.String("dsn_protocol", service.dialer.options.Protocol.String()), slog.Bool("dsn_tls", service.dialer.options.TLS != nil), errors.Attr(err))
+			}
+		}
+	}
+	return unreachable
 }
 
 func (service *exportService) Healthy() <-chan struct{} {
