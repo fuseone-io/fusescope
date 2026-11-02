@@ -15,7 +15,11 @@ import (
 const abandonTimeout = 30 * time.Second
 
 func (service *exportService) export(ctx context.Context, lease *archivetypes.Lease, job exportJob) error {
-	chosen, ok := archivetypes.ChooseReplica(job.snapshot)
+	snapshot, err := service.partitionSnapshot(ctx, job)
+	if err != nil {
+		return err
+	}
+	chosen, ok := archivetypes.ChooseReplica(snapshot)
 	if !ok {
 		service.settings.Logger().InfoContext(ctx, "no replica holds every part of the partition yet, retrying next cycle", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID))
 		return nil
@@ -25,7 +29,7 @@ func (service *exportService) export(ctx context.Context, lease *archivetypes.Le
 	if err != nil {
 		return err
 	}
-	candidates := service.holdLateParts(job, archivetypes.SelectForExport(job.snapshot[chosen], archivetypes.PartsOf(published)), len(published) > 0)
+	candidates := service.holdLateParts(job, archivetypes.SelectForExport(snapshot[chosen], archivetypes.PartsOf(published)), len(published) > 0)
 	if len(candidates) == 0 {
 		return nil
 	}
@@ -52,6 +56,26 @@ func (service *exportService) export(ctx context.Context, lease *archivetypes.Le
 
 	service.settings.Logger().InfoContext(ctx, "archive partition exported", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID), slog.Int("parts", len(candidates)), slog.String("attempt_id", attempt.ID.StringValue()))
 	return nil
+}
+
+// partitionSnapshot reads the partition's parts on every replica of the job when it runs, as
+// merges and replication move on while earlier jobs of the cycle run. A replica that doesn't
+// answer is left out.
+func (service *exportService) partitionSnapshot(ctx context.Context, job exportJob) (map[string][]archivetypes.Part, error) {
+	snapshot := make(map[string][]archivetypes.Part, len(job.replicas))
+	for addr, replica := range job.replicas {
+		parts, err := partitionParts(ctx, replica.conn, job.table, job.partition.ID)
+		if err != nil {
+			service.settings.Logger().WarnContext(ctx, "archive export left a replica out of a partition", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID), slog.String("replica", addr), errors.Attr(err))
+			continue
+		}
+		snapshot[addr] = parts
+	}
+	if len(snapshot) == 0 {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no replica of shard %d answered for %s partition %s", job.shard, job.table.Name, job.partition.ID)
+	}
+
+	return snapshot, nil
 }
 
 // publish writes the parts, checks them back, writes the manifest and commits.

@@ -34,8 +34,8 @@ type exportService struct {
 	firstSeen  map[string][]archivetypes.Part
 }
 
-// exportJob is one partition of one table on one shard, with the parts every replica of
-// the shard holds in it.
+// exportJob is one partition of one table on one shard, with the replicas of the shard that
+// answered when the cycle started.
 type exportJob struct {
 	table     archivetypes.Table
 	mappings  []archivetypes.ColumnMapping
@@ -44,7 +44,6 @@ type exportJob struct {
 	shard     int
 	pin       *archivetypes.Shard
 	replicas  map[string]replica
-	snapshot  map[string][]archivetypes.Part
 }
 
 // NewExportService runs the export cycle (ADR 0002 §3) every archive interval: partitions
@@ -198,11 +197,7 @@ func (service *exportService) jobs(ctx context.Context, table archivetypes.Table
 				continue
 			}
 
-			snapshot := make(map[string][]archivetypes.Part, len(shard.parts))
-			for addr, parts := range shard.parts {
-				snapshot[addr] = parts[id]
-			}
-			jobs = append(jobs, exportJob{table: table, mappings: mappings, version: version, partition: partition, shard: shard.shard, pin: shard.pin, replicas: shard.replicas, snapshot: snapshot})
+			jobs = append(jobs, exportJob{table: table, mappings: mappings, version: version, partition: partition, shard: shard.shard, pin: shard.pin, replicas: shard.replicas})
 		}
 	}
 

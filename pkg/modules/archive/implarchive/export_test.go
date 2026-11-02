@@ -29,8 +29,8 @@ var (
 		{Name: "data_version", Type: "Int64"}, {Name: "rows", Type: "UInt64"}, {Name: "bytes_on_disk", Type: "UInt64"}, {Name: "modification_time", Type: "DateTime"},
 	}
 	// Rows masked by a lightweight delete are neither exported nor counted.
-	partsQuery  = `ifNull\(existing_rows_count, rows\) AS existing_rows.*FROM system\.parts.*AND existing_rows > 0`
-	statColumns = []cmock.ColumnType{
+	partsQueryPattern = `ifNull\(existing_rows_count, rows\) AS existing_rows.*FROM system\.parts.*AND existing_rows > 0`
+	statColumns       = []cmock.ColumnType{
 		{Name: "_file", Type: "String"}, {Name: "size", Type: "UInt64"}, {Name: "etag", Type: "String"}, {Name: "count", Type: "UInt64"}, {Name: "parts", Type: "Array(String)"},
 	}
 )
@@ -149,16 +149,25 @@ func TestSnapshotShard(t *testing.T) {
 
 func TestExport(t *testing.T) {
 	ctx := context.Background()
-	part := archivetypes.Part{Name: "20260903-15-0_1_5_1", Range: archivetypes.BlockRange{Min: 1, Max: 5}, DataVersion: 1, Rows: 10}
+	part := archivetypes.Part{Name: "20260903-15-0_1_5_1", Range: archivetypes.BlockRange{Min: 1, Max: 5}, DataVersion: 1, Rows: 10, BytesOnDisk: 2048}
+	merged := archivetypes.Part{Name: "20260903-15-0_1_6_2", Range: archivetypes.BlockRange{Min: 1, Max: 6}, DataVersion: 1, Rows: 12, BytesOnDisk: 2048}
+	behind := archivetypes.Part{Name: "20260903-15-0_1_3_0", Range: archivetypes.BlockRange{Min: 1, Max: 3}, DataVersion: 1, Rows: 6, BytesOnDisk: 2048}
+	readBackOf := func(part archivetypes.Part, rows uint64) [][]any {
+		return [][]any{{part.Name + ".parquet", uint64(1024), `"etag"`, rows, []string{part.Name}}}
+	}
 
 	testCases := []struct {
 		name          string
+		replicaParts  [][]archivetypes.Part
+		exportedBy    int
 		readBack      [][]any
 		wantErr       bool
-		wantPublished bool
+		wantPublished []string
 	}{
-		{name: "EveryRowReadBack_Published", readBack: [][]any{{part.Name + ".parquet", uint64(1024), `"etag"`, uint64(10), []string{part.Name}}}, wantPublished: true},
-		{name: "RowsMissing_Abandoned", readBack: [][]any{{part.Name + ".parquet", uint64(1024), `"etag"`, uint64(9), []string{part.Name}}}, wantErr: true},
+		{name: "EveryRowReadBack_Published", replicaParts: [][]archivetypes.Part{{part}}, readBack: readBackOf(part, 10), wantPublished: []string{part.Name}},
+		{name: "RowsMissing_Abandoned", replicaParts: [][]archivetypes.Part{{part}}, readBack: readBackOf(part, 9), wantErr: true},
+		{name: "MergedSinceTheCycleStarted_MergedPartExported", replicaParts: [][]archivetypes.Part{{merged}}, readBack: readBackOf(merged, 12), wantPublished: []string{merged.Name}},
+		{name: "ReplicaFallenBehind_OtherReplicaExports", replicaParts: [][]archivetypes.Part{{behind}, {part}}, exportedBy: 1, readBack: readBackOf(part, 10), wantPublished: []string{part.Name}},
 	}
 
 	for _, testCase := range testCases {
@@ -171,13 +180,6 @@ func TestExport(t *testing.T) {
 			pin, err := archiveStore.PinShard(ctx, testLogsTable.Name, 1, "/clickhouse/tables/u/01")
 			require.NoError(t, err)
 
-			conn := newMockConn(t)
-			conn.ExpectExec("INSERT INTO FUNCTION s3")
-			conn.ExpectQuery("groupUniqArray").WillReturnRows(cmock.NewRows(statColumns, testCase.readBack))
-			if testCase.wantPublished {
-				conn.ExpectExec("SELECT raw FROM blob")
-			}
-
 			job := exportJob{
 				table:     testLogsTable,
 				mappings:  []archivetypes.ColumnMapping{{Name: "body", SourceType: "String", ExportType: "String"}},
@@ -185,9 +187,23 @@ func TestExport(t *testing.T) {
 				partition: archivetypes.Partition{ID: "20260903-15-0", Day: time.Date(2026, 9, 3, 0, 0, 0, 0, time.UTC), RetentionDays: 15},
 				shard:     1,
 				pin:       pin,
-				replicas:  map[string]replica{"ch-1:9000": {shard: 1, addr: "ch-1:9000", conn: asConn(conn)}},
-				snapshot:  map[string][]archivetypes.Part{"ch-1:9000": {part}},
+				replicas:  map[string]replica{},
 			}
+			conns := make([]cmock.ClickConnMockCommon, len(testCase.replicaParts))
+			for i, parts := range testCase.replicaParts {
+				conns[i] = newMockConn(t)
+				addr := fmt.Sprintf("ch-%d:9000", i+1)
+				job.replicas[addr] = replica{shard: 1, replica: i + 1, addr: addr, conn: asConn(conns[i])}
+				expectPartitionParts(conns[i], job.partition.ID, parts...)
+			}
+
+			exporter := conns[testCase.exportedBy]
+			exporter.ExpectExec("INSERT INTO FUNCTION s3")
+			exporter.ExpectQuery("groupUniqArray").WillReturnRows(cmock.NewRows(statColumns, testCase.readBack))
+			if testCase.wantPublished != nil {
+				exporter.ExpectExec("SELECT raw FROM blob")
+			}
+
 			err = service.export(ctx, lease, job)
 
 			published, listErr := archiveStore.ListPublishedParts(ctx, pin, job.partition.ID)
@@ -203,7 +219,7 @@ func TestExport(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Len(t, published, 1)
+			assert.Equal(t, testCase.wantPublished, partNames(published), "the parts are read when the job runs, not when the cycle started")
 			assert.Equal(t, archivetypes.AttemptStatusPublished, attempts[0].Status)
 		})
 	}
@@ -263,7 +279,15 @@ func expectParts(conn cmock.ClickConnMockCommon, written time.Time, names ...str
 	for i, name := range names {
 		rows = append(rows, []any{"20260903-15-0", name, int64(i + 1), int64(i + 5), int64(1), uint64(10), uint64(2048), written})
 	}
-	conn.ExpectQuery(partsQuery).WithArgs(testLogsTable.Database, testLogsTable.Name).WillReturnRows(cmock.NewRows(partColumns, rows))
+	conn.ExpectQuery(partsQueryPattern).WithArgs(testLogsTable.Database, testLogsTable.Name).WillReturnRows(cmock.NewRows(partColumns, rows))
+}
+
+func expectPartitionParts(conn cmock.ClickConnMockCommon, partitionID string, parts ...archivetypes.Part) {
+	rows := make([][]any, 0, len(parts))
+	for _, part := range parts {
+		rows = append(rows, []any{partitionID, part.Name, part.Range.Min, part.Range.Max, part.DataVersion, part.Rows, part.BytesOnDisk, time.Date(2026, 9, 4, 0, 0, 0, 0, time.UTC)})
+	}
+	conn.ExpectQuery(partsQueryPattern+`.*AND partition_id = \?`).WithArgs(testLogsTable.Database, testLogsTable.Name, partitionID).WillReturnRows(cmock.NewRows(partColumns, rows))
 }
 
 func expectReplica(conn cmock.ClickConnMockCommon, isReplica uint64, engine string, path string) {
