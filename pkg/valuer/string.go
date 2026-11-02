@@ -3,7 +3,6 @@ package valuer
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"reflect"
 	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -51,7 +50,7 @@ func (enum String) Value() (driver.Value, error) {
 
 func (enum *String) Scan(val interface{}) error {
 	if enum == nil {
-		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "string: (nil \"%s\")", reflect.TypeOf(enum).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "string: (nil \"%T\")", enum)
 	}
 
 	if val == nil {
@@ -62,7 +61,7 @@ func (enum *String) Scan(val interface{}) error {
 
 	str, ok := val.(string)
 	if !ok {
-		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "string: (non-string \"%s\")", reflect.TypeOf(val).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "string: (non-string \"%T\")", val)
 	}
 
 	*enum = NewString(str)

@@ -3,7 +3,6 @@ package valuer
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"reflect"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/google/uuid"
@@ -98,7 +97,7 @@ func (enum UUID) Value() (driver.Value, error) {
 
 func (enum *UUID) Scan(val interface{}) error {
 	if enum == nil {
-		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (nil \"%s\")", reflect.TypeOf(enum).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (nil \"%T\")", enum)
 	}
 
 	if val == nil {
@@ -120,7 +119,7 @@ func (enum *UUID) Scan(val interface{}) error {
 		}
 		enumVal = _enumVal
 	default:
-		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (non-uuid \"%s\")", reflect.TypeOf(val).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (non-uuid \"%T\")", val)
 	}
 
 	*enum = enumVal
