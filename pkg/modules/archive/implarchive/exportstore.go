@@ -176,6 +176,9 @@ func (store *store) record(ctx context.Context, db bun.IDB, lease *archivetypes.
 		Where("id = ?", attempt.ID).
 		Where("signal = ?", lease.Signal).
 		Where("epoch = ?", lease.Epoch).
+		Where("table_name = ?", attempt.TableName).
+		Where("shard = ?", attempt.Shard).
+		Where("partition_id = ?", attempt.PartitionID).
 		Where("status = ?", archivetypes.AttemptStatusPending).
 		Exec(ctx)
 	if ok, err := oneRowAffected(published, err); err != nil {
@@ -230,8 +233,9 @@ func indexSequence(ctx context.Context, db bun.IDB, table string) (int64, error)
 	return sequence.Sequence, nil
 }
 
-// notPublished tells why the attempt update matched no row: the attempt is published, with
-// attempt's manifest (true) or another one, or the lease isn't the attempt's.
+// notPublished tells why the attempt update matched no row: it exports another partition, it
+// is published with attempt's manifest (true) or another one, or the lease isn't the
+// attempt's.
 func notPublished(ctx context.Context, db bun.IDB, attempt *archivetypes.Attempt, lease *archivetypes.Lease) (bool, error) {
 	stored := new(archivetypes.Attempt)
 	if err := db.NewSelect().Model(stored).Where("id = ?", attempt.ID).Scan(ctx); err != nil {
@@ -239,6 +243,8 @@ func notPublished(ctx context.Context, db bun.IDB, attempt *archivetypes.Attempt
 	}
 
 	switch {
+	case stored.TableName != attempt.TableName || stored.Shard != attempt.Shard || stored.PartitionID != attempt.PartitionID:
+		return false, errors.Newf(errors.TypeInvalidInput, archivetypes.ErrCodeInvalidPublication, "archive attempt %s exports %s shard %d partition %s, not %s shard %d partition %s", attempt.ID, stored.TableName, stored.Shard, stored.PartitionID, attempt.TableName, attempt.Shard, attempt.PartitionID)
 	case stored.Status == archivetypes.AttemptStatusPublished && stored.ManifestSHA256 == attempt.ManifestSHA256:
 		return true, nil
 	case stored.Status == archivetypes.AttemptStatusPublished:

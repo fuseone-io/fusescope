@@ -371,6 +371,15 @@ func TestPublishValidatesThePublication(t *testing.T) {
 		{name: "PartOfAnotherShard", mutate: func(publication *archivetypes.Publication) { publication.Parts[0].Shard = 2 }},
 		{name: "ObjectOfAnotherAttempt", mutate: func(publication *archivetypes.Publication) { publication.Objects[0].AttemptID = valuer.GenerateUUID() }},
 		{name: "PartWithoutItsObject", mutate: func(publication *archivetypes.Publication) { publication.Parts[0].ObjectID = valuer.GenerateUUID() }},
+		{name: "AttemptMovedToAnotherTable", mutate: func(publication *archivetypes.Publication) {
+			moveTestPublication(publication, "logs_v2_resource", 1, "20260903-15-0")
+		}},
+		{name: "AttemptMovedToAnotherShard", mutate: func(publication *archivetypes.Publication) {
+			moveTestPublication(publication, "logs_v2", 2, "20260903-15-0")
+		}},
+		{name: "AttemptMovedToAnotherPartition", mutate: func(publication *archivetypes.Publication) {
+			moveTestPublication(publication, "logs_v2", 1, "20260904-15-0")
+		}},
 	}
 
 	for _, testCase := range testCases {
@@ -381,7 +390,14 @@ func TestPublishValidatesThePublication(t *testing.T) {
 				testCase.mutate(publication)
 
 				_, err := store.Publish(ctx, lease, publication)
+				require.Error(t, err)
 				assert.True(t, errors.Ast(err, errors.TypeInvalidInput), err)
+
+				for _, partitionID := range []string{"20260903-15-0", "20260904-15-0"} {
+					parts, err := store.ListPublishedParts(ctx, publication.Attempt.TableName, publication.Attempt.Shard, partitionID)
+					require.NoError(t, err)
+					assert.Empty(t, parts)
+				}
 			})
 		})
 	}
@@ -544,6 +560,14 @@ func newTestPublicationOf(t *testing.T, store archivetypes.Store, lease *archive
 	}
 
 	return publication
+}
+
+// moveTestPublication points the publication at another partition than its stored attempt's.
+func moveTestPublication(publication *archivetypes.Publication, table string, shard int, partitionID string) {
+	publication.Attempt.TableName, publication.Attempt.Shard, publication.Attempt.PartitionID = table, shard, partitionID
+	for _, part := range publication.Parts {
+		part.TableName, part.Shard, part.PartitionID = table, shard, partitionID
+	}
 }
 
 func testPart(blocks archivetypes.BlockRange) archivetypes.Part {
