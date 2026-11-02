@@ -8,10 +8,11 @@ import (
 	"context"
 	"net/http"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagerserver"
 	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
-	"github.com/prometheus/alertmanager/config"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -238,7 +239,7 @@ func (_c *MockAlertmanager_CreateChannel_Call) RunAndReturn(run func(context1 co
 }
 
 // CreateInhibitRules provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) CreateInhibitRules(ctx context.Context, orgID valuer.UUID, rules []config.InhibitRule) error {
+func (_mock *MockAlertmanager) CreateInhibitRules(ctx context.Context, orgID valuer.UUID, rules []amcommoncfg.InhibitRule) error {
 	ret := _mock.Called(ctx, orgID, rules)
 
 	if len(ret) == 0 {
@@ -246,7 +247,7 @@ func (_mock *MockAlertmanager) CreateInhibitRules(ctx context.Context, orgID val
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID, []config.InhibitRule) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID, []amcommoncfg.InhibitRule) error); ok {
 		r0 = returnFunc(ctx, orgID, rules)
 	} else {
 		r0 = ret.Error(0)
@@ -262,12 +263,12 @@ type MockAlertmanager_CreateInhibitRules_Call struct {
 // CreateInhibitRules is a helper method to define mock.On call
 //   - ctx context.Context
 //   - orgID valuer.UUID
-//   - rules []config.InhibitRule
+//   - rules []amcommoncfg.InhibitRule
 func (_e *MockAlertmanager_Expecter) CreateInhibitRules(ctx any, orgID any, rules any) *MockAlertmanager_CreateInhibitRules_Call {
 	return &MockAlertmanager_CreateInhibitRules_Call{Call: _e.mock.On("CreateInhibitRules", ctx, orgID, rules)}
 }
 
-func (_c *MockAlertmanager_CreateInhibitRules_Call) Run(run func(ctx context.Context, orgID valuer.UUID, rules []config.InhibitRule)) *MockAlertmanager_CreateInhibitRules_Call {
+func (_c *MockAlertmanager_CreateInhibitRules_Call) Run(run func(ctx context.Context, orgID valuer.UUID, rules []amcommoncfg.InhibitRule)) *MockAlertmanager_CreateInhibitRules_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -277,9 +278,9 @@ func (_c *MockAlertmanager_CreateInhibitRules_Call) Run(run func(ctx context.Con
 		if args[1] != nil {
 			arg1 = args[1].(valuer.UUID)
 		}
-		var arg2 []config.InhibitRule
+		var arg2 []amcommoncfg.InhibitRule
 		if args[2] != nil {
-			arg2 = args[2].([]config.InhibitRule)
+			arg2 = args[2].([]amcommoncfg.InhibitRule)
 		}
 		run(
 			arg0,
@@ -295,7 +296,7 @@ func (_c *MockAlertmanager_CreateInhibitRules_Call) Return(err error) *MockAlert
 	return _c
 }
 
-func (_c *MockAlertmanager_CreateInhibitRules_Call) RunAndReturn(run func(ctx context.Context, orgID valuer.UUID, rules []config.InhibitRule) error) *MockAlertmanager_CreateInhibitRules_Call {
+func (_c *MockAlertmanager_CreateInhibitRules_Call) RunAndReturn(run func(ctx context.Context, orgID valuer.UUID, rules []amcommoncfg.InhibitRule) error) *MockAlertmanager_CreateInhibitRules_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
@@ -93,7 +95,7 @@ func (c ChannelJiraConfig) toUndefaultedReceiver(displayName string) (*Receiver,
 
 	jira := &JiraReceiverConfig{
 		// JiraReceiverConfig seeds no send_resolved of its own, so unset means off.
-		NotifierConfig:    config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, false)},
+		NotifierConfig:    amcommoncfg.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, false)},
 		Site:              c.Site,
 		Project:           c.Project,
 		IssueType:         c.IssueType,
@@ -191,7 +193,7 @@ const (
 // UnmarshalYAML would reset our defaults and drop sibling fields on the yaml
 // round-trip. Only Jira Cloud (v3/ADF) is supported, so api_url is derived from Site.
 type JiraReceiverConfig struct {
-	config.NotifierConfig `yaml:",inline"`
+	amcommoncfg.NotifierConfig `yaml:",inline"`
 
 	Site              string                      `json:"site,omitempty" yaml:"site,omitempty"`
 	Project           string                      `json:"project,omitempty" yaml:"project,omitempty"`

@@ -3,8 +3,9 @@ package alertmanagertypes
 import (
 	"net/url"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/errors"
-	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
 )
 
@@ -16,33 +17,33 @@ type ChannelSpec interface {
 // parseSecretURL and parseUpstreamURL wrap the two URL types upstream uses for
 // notifier endpoints. Callers holding an optional URL skip the call on an empty
 // string, so the field stays nil and is omitted rather than stored as an empty URL.
-func parseSecretURL(raw string) (*config.SecretURL, error) {
+func parseSecretURL(raw string) (*amcommoncfg.SecretURL, error) {
 	parsed, err := parseUpstreamURL(raw)
 	if err != nil {
 		return nil, err
 	}
 
-	return (*config.SecretURL)(parsed), nil
+	return (*amcommoncfg.SecretURL)(parsed), nil
 }
 
-func parseUpstreamURL(raw string) (*config.URL, error) {
+func parseUpstreamURL(raw string) (*amcommoncfg.URL, error) {
 	parsed, err := url.Parse(raw)
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "parse url %q", raw)
 	}
 
-	return &config.URL{URL: parsed}, nil
+	return &amcommoncfg.URL{URL: parsed}, nil
 }
 
-func formatSecretURL(secretURL *config.SecretURL) string {
+func formatSecretURL(secretURL *amcommoncfg.SecretURL) string {
 	if secretURL == nil {
 		return ""
 	}
 
-	return formatUpstreamURL((*config.URL)(secretURL))
+	return formatUpstreamURL((*amcommoncfg.URL)(secretURL))
 }
 
-func formatUpstreamURL(upstreamURL *config.URL) string {
+func formatUpstreamURL(upstreamURL *amcommoncfg.URL) string {
 	if upstreamURL == nil || upstreamURL.URL == nil {
 		return ""
 	}

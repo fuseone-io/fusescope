@@ -4,6 +4,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
 	commoncfg "github.com/prometheus/common/config"
 )
 
@@ -44,7 +45,7 @@ func (c ChannelGoogleChatConfig) toUndefaultedReceiver(displayName string) (*Rec
 	return &Receiver{
 		Receiver: &config.Receiver{Name: displayName},
 		GoogleChatConfigs: []*GoogleChatReceiverConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultGoogleChatReceiverConfig.VSendResolved)},
+			NotifierConfig: amcommoncfg.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultGoogleChatReceiverConfig.VSendResolved)},
 			WebhookURL:     webhookURL,
 			Title:          c.Title.StringValue(),
 			Text:           c.Text.StringValue(),
@@ -69,17 +70,17 @@ func newChannelGoogleChatConfigFromReceiver(name string, receiver *Receiver) (Ch
 }
 
 type GoogleChatReceiverConfig struct {
-	config.NotifierConfig `yaml:",inline" json:",inline"`
+	amcommoncfg.NotifierConfig `yaml:",inline" json:",inline"`
 
 	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty"`
 
-	WebhookURL *config.SecretURL `yaml:"webhook_url,omitempty" json:"webhook_url,omitempty"`
-	Title      string            `yaml:"title,omitempty" json:"title,omitempty"`
-	Text       string            `yaml:"text,omitempty" json:"text,omitempty"`
+	WebhookURL *amcommoncfg.SecretURL `yaml:"webhook_url,omitempty" json:"webhook_url,omitempty"`
+	Title      string                 `yaml:"title,omitempty" json:"title,omitempty"`
+	Text       string                 `yaml:"text,omitempty" json:"text,omitempty"`
 }
 
 var DefaultGoogleChatReceiverConfig = GoogleChatReceiverConfig{
-	NotifierConfig: config.NotifierConfig{
+	NotifierConfig: amcommoncfg.NotifierConfig{
 		VSendResolved: false,
 	},
 	Title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,

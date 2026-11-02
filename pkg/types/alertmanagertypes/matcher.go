@@ -4,6 +4,8 @@ import (
 	"slices"
 	"strings"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 )
@@ -76,7 +78,7 @@ func removeRuleIDFromRoute(route *config.Route, ruleID string) error {
 	return nil
 }
 
-func matcherContainsRuleID(matchers config.Matchers, ruleID string) bool {
+func matcherContainsRuleID(matchers amcommoncfg.Matchers, ruleID string) bool {
 	for _, matcher := range matchers {
 		if matcher.Matches(ruleID) {
 			return true

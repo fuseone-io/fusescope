@@ -8,6 +8,8 @@ import (
 	"sort"
 	"time"
 
+	amalert "github.com/prometheus/alertmanager/alert"
+
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/go-openapi/runtime/middleware"
 	v2 "github.com/prometheus/alertmanager/api/v2"
@@ -47,9 +49,9 @@ const (
 
 type DeprecatedGettableAlert struct {
 	*model.Alert
-	Status      types.AlertStatus `json:"status"`
-	Receivers   []string          `json:"receivers"`
-	Fingerprint string            `json:"fingerprint"`
+	Status      amalert.AlertStatus `json:"status"`
+	Receivers   []string            `json:"receivers"`
+	Fingerprint string              `json:"fingerprint"`
 }
 
 type DeprecatedGettableAlerts = []*DeprecatedGettableAlert
@@ -77,8 +79,8 @@ func NewDeprecatedGettableAlertsFromGettableAlerts(gettableAlerts GettableAlerts
 				EndsAt:       time.Time(*gettableAlert.EndsAt),
 				GeneratorURL: string(gettableAlert.GeneratorURL),
 			},
-			Status: types.AlertStatus{
-				State:       types.AlertState(*gettableAlert.Status.State),
+			Status: amalert.AlertStatus{
+				State:       amalert.AlertState(*gettableAlert.Status.State),
 				SilencedBy:  gettableAlert.Status.SilencedBy,
 				InhibitedBy: gettableAlert.Status.InhibitedBy,
 			},
@@ -168,7 +170,7 @@ func NewGettableAlertsParams(req *http.Request) (GettableAlertsParams, error) {
 func NewGettableAlertsFromAlertProvider(
 	alerts provider.Alerts,
 	cfg *Config,
-	getAlertStatusFunc func(model.Fingerprint) types.AlertStatus,
+	getAlertStatusFunc func(model.Fingerprint) amalert.AlertStatus,
 	setAlertStatusFunc func(model.LabelSet),
 	mutedByFunc func(model.LabelSet) []string,
 	params GettableAlertsParams,
@@ -233,7 +235,7 @@ func NewGettableAlertsFromAlertProvider(
 }
 
 func alertFilter(
-	getAlertStatusFunc func(model.Fingerprint) types.AlertStatus,
+	getAlertStatusFunc func(model.Fingerprint) amalert.AlertStatus,
 	setAlertStatusFunc func(model.LabelSet),
 	matchers []*labels.Matcher,
 	silenced bool,
@@ -251,7 +253,7 @@ func alertFilter(
 		// Get alert's current status after seeing if it is suppressed.
 		status := getAlertStatusFunc(a.Fingerprint())
 
-		if !active && status.State == types.AlertStateActive {
+		if !active && status.State == amalert.AlertStateActive {
 			return false
 		}
 

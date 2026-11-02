@@ -5,6 +5,8 @@ import (
 	"net/textproto"
 	"slices"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
@@ -53,7 +55,7 @@ func (c ChannelEmailConfig) toUndefaultedReceiver(displayName string) (*Receiver
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
 		EmailConfigs: []*config.EmailConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultEmailConfig.VSendResolved)},
+			NotifierConfig: amcommoncfg.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultEmailConfig.VSendResolved)},
 			To:             c.To,
 			HTML:           c.HTML.StringValue(),
 			Headers:        c.Headers,

@@ -3,7 +3,7 @@
 
 // Package jsmops delivers Jira Service Management Ops alerts by reusing the
 // Opsgenie notifier: JSM Ops is the ex-Opsgenie alert API, so we map the JSM
-// config onto config.OpsGenieConfig with APIURL pinned to the JSM native
+// config onto amopsgenie.OpsGenieConfig with APIURL pinned to the JSM native
 // integration-events gateway.
 package jsmops
 
@@ -11,9 +11,12 @@ import (
 	"log/slog"
 	"net/url"
 
+	amopsgenie "github.com/prometheus/alertmanager/notify/opsgenie"
+
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagernotify/opsgenie"
 	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/template"
 	commoncfg "github.com/prometheus/common/config"
 )
@@ -34,9 +37,9 @@ func New(c *alertmanagertypes.JSMOpsReceiverConfig, t *template.Template, l *slo
 	return opsgenie.New(conf, t, l, templater, advancedFeatures)
 }
 
-// toOpsGenieConfig maps the JSM config onto config.OpsGenieConfig with APIURL
+// toOpsGenieConfig maps the JSM config onto amopsgenie.OpsGenieConfig with APIURL
 // pinned to the JSM native gateway.
-func toOpsGenieConfig(c *alertmanagertypes.JSMOpsReceiverConfig) (*config.OpsGenieConfig, error) {
+func toOpsGenieConfig(c *alertmanagertypes.JSMOpsReceiverConfig) (*amopsgenie.OpsGenieConfig, error) {
 	apiURL, err := url.Parse(alertmanagertypes.JSMOpsAPIBaseURL)
 	if err != nil {
 		return nil, err
@@ -47,11 +50,11 @@ func toOpsGenieConfig(c *alertmanagertypes.JSMOpsReceiverConfig) (*config.OpsGen
 		httpConfig = &commoncfg.HTTPClientConfig{}
 	}
 
-	return &config.OpsGenieConfig{
+	return &amopsgenie.OpsGenieConfig{
 		NotifierConfig: c.NotifierConfig,
 		HTTPConfig:     httpConfig,
 		APIKey:         c.APIKey,
-		APIURL:         &config.URL{URL: apiURL},
+		APIURL:         &amcommoncfg.URL{URL: apiURL},
 		Message:        c.Message,
 		Description:    c.Description,
 		Priority:       c.Priority,

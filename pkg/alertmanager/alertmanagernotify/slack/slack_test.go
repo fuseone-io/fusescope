@@ -17,6 +17,8 @@ import (
 	"testing"
 	"time"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
 	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
@@ -62,7 +64,7 @@ func TestSlackRedactedURL(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.SlackConfig{
-			APIURL:     &config.SecretURL{URL: u},
+			APIURL:     &amcommoncfg.SecretURL{URL: u},
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -203,9 +205,9 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 			tmpl := test.CreateTmpl(t)
 			notifier, err := New(
 				&config.SlackConfig{
-					NotifierConfig: config.NotifierConfig{},
+					NotifierConfig: amcommoncfg.NotifierConfig{},
 					HTTPConfig:     &commoncfg.HTTPClientConfig{},
-					APIURL:         &config.SecretURL{URL: apiurl},
+					APIURL:         &amcommoncfg.SecretURL{URL: apiurl},
 					Channel:        "channelname",
 				},
 				tmpl,
@@ -263,9 +265,9 @@ func TestSlackTimeout(t *testing.T) {
 			tmpl := test.CreateTmpl(t)
 			notifier, err := New(
 				&config.SlackConfig{
-					NotifierConfig: config.NotifierConfig{},
+					NotifierConfig: amcommoncfg.NotifierConfig{},
 					HTTPConfig:     &commoncfg.HTTPClientConfig{},
-					APIURL:         &config.SecretURL{URL: u},
+					APIURL:         &amcommoncfg.SecretURL{URL: u},
 					Channel:        "channelname",
 					Timeout:        tt.timeout,
 				},
@@ -550,7 +552,7 @@ func TestSlackMessageField(t *testing.T) {
 	// 4. Configure Notifier with BOTH new and old fields
 	u, _ := url.Parse(server.URL)
 	conf := &config.SlackConfig{
-		APIURL:      &config.SecretURL{URL: u},
+		APIURL:      &amcommoncfg.SecretURL{URL: u},
 		MessageText: "My Top Level Message", // Your NEW field
 		Title:       "Old Attachment Title", // An OLD field
 		Channel:     "#test-channel",

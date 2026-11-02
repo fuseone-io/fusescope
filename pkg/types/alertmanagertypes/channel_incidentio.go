@@ -3,6 +3,8 @@ package alertmanagertypes
 import (
 	"strings"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
@@ -47,9 +49,9 @@ func (c ChannelIncidentIOConfig) toUndefaultedReceiver(displayName string) (*Rec
 	return &Receiver{
 		Receiver: &config.Receiver{Name: displayName},
 		IncidentIOConfigs: []*IncidentIOReceiverConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultIncidentIOReceiverConfig.VSendResolved)},
+			NotifierConfig: amcommoncfg.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultIncidentIOReceiverConfig.VSendResolved)},
 			URL:            c.URL,
-			Token:          config.Secret(c.Token),
+			Token:          commoncfg.Secret(c.Token),
 			Title:          c.Title.StringValue(),
 			Description:    c.Description.StringValue(),
 			Metadata:       c.Metadata,
@@ -100,14 +102,14 @@ const (
 // incident.io HTTP alert source. URL is the per-source alert events endpoint
 // and Token its secret, both copied from the source's setup page.
 type IncidentIOReceiverConfig struct {
-	config.NotifierConfig `yaml:",inline" json:",inline"`
+	amcommoncfg.NotifierConfig `yaml:",inline" json:",inline"`
 
 	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty"`
 
-	URL         string        `yaml:"url,omitempty" json:"url,omitempty"`
-	Token       config.Secret `yaml:"token,omitempty" json:"token,omitempty"`
-	Title       string        `yaml:"title,omitempty" json:"title,omitempty"`
-	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
+	URL         string           `yaml:"url,omitempty" json:"url,omitempty"`
+	Token       commoncfg.Secret `yaml:"token,omitempty" json:"token,omitempty"`
+	Title       string           `yaml:"title,omitempty" json:"title,omitempty"`
+	Description string           `yaml:"description,omitempty" json:"description,omitempty"`
 	// Metadata is merged into the event's metadata on top of the group's common
 	// labels (channel wins on key clash). Values are template-expanded.
 	Metadata map[string]string `yaml:"metadata,omitempty" json:"metadata,omitempty"`
@@ -117,7 +119,7 @@ type IncidentIOReceiverConfig struct {
 // by the yaml round-trip to the request value (false when omitted); the UI sends
 // it explicitly, defaulted on, so incident.io alerts resolve with the rule.
 var DefaultIncidentIOReceiverConfig = IncidentIOReceiverConfig{
-	NotifierConfig: config.NotifierConfig{
+	NotifierConfig: amcommoncfg.NotifierConfig{
 		VSendResolved: false,
 	},
 	Title:       DefaultIncidentIOTitleTemplate,

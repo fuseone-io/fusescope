@@ -13,11 +13,12 @@ import (
 	"os"
 	"strings"
 
+	amwebhook "github.com/prometheus/alertmanager/notify/webhook"
+
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -29,7 +30,7 @@ const (
 
 // Notifier implements a Notifier for generic webhooks.
 type Notifier struct {
-	conf      *config.WebhookConfig
+	conf      *amwebhook.WebhookConfig
 	tmpl      *template.Template
 	logger    *slog.Logger
 	client    *http.Client
@@ -38,7 +39,7 @@ type Notifier struct {
 }
 
 // New returns a new Webhook.
-func New(conf *config.WebhookConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(conf *amwebhook.WebhookConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*conf.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err

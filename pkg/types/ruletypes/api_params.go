@@ -8,7 +8,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/prometheus/alertmanager/config"
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/types"
@@ -160,7 +160,7 @@ func (r *PostableRule) GetRuleRouteRequest(ruleID string) ([]*alertmanagertypes.
 	return routeRequests, nil
 }
 
-func (r *PostableRule) GetInhibitRules(ruleID string) ([]config.InhibitRule, error) {
+func (r *PostableRule) GetInhibitRules(ruleID string) ([]amcommoncfg.InhibitRule, error) {
 	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
 		return nil, err
@@ -172,10 +172,10 @@ func (r *PostableRule) GetInhibitRules(ruleID string) ([]config.InhibitRule, err
 		}
 	}
 	receivers := threshold.GetRuleReceivers()
-	var inhibitRules []config.InhibitRule
+	var inhibitRules []amcommoncfg.InhibitRule
 	for i := 0; i < len(receivers)-1; i++ {
-		rule := config.InhibitRule{
-			SourceMatchers: config.Matchers{
+		rule := amcommoncfg.InhibitRule{
+			SourceMatchers: amcommoncfg.Matchers{
 				{
 					Name:  LabelThresholdName,
 					Value: receivers[i].Name,
@@ -185,7 +185,7 @@ func (r *PostableRule) GetInhibitRules(ruleID string) ([]config.InhibitRule, err
 					Value: ruleID,
 				},
 			},
-			TargetMatchers: config.Matchers{
+			TargetMatchers: amcommoncfg.Matchers{
 				{
 					Name:  LabelThresholdName,
 					Value: receivers[i+1].Name,

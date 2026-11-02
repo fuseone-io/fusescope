@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
@@ -141,50 +143,50 @@ func TestRemoveRuleIDFromRoute(t *testing.T) {
 func TestMatcherContainsRuleID(t *testing.T) {
 	testCases := []struct {
 		name     string
-		matchers func() config.Matchers
+		matchers func() amcommoncfg.Matchers
 		ruleID   string
 		expected bool
 	}{
 		{
 			name: "SimpleTrue",
-			matchers: func() config.Matchers {
+			matchers: func() amcommoncfg.Matchers {
 				matcher, err := labels.NewMatcher(labels.MatchRegexp, RuleIDMatcherName, strings.Join([]string{"-1", "1"}, ruleIDMatcherValueSep))
 				require.NoError(t, err)
 
-				return config.Matchers{matcher}
+				return amcommoncfg.Matchers{matcher}
 			},
 			ruleID:   "1",
 			expected: true,
 		},
 		{
 			name: "SimpleFalse",
-			matchers: func() config.Matchers {
+			matchers: func() amcommoncfg.Matchers {
 				matcher, err := labels.NewMatcher(labels.MatchRegexp, RuleIDMatcherName, strings.Join([]string{"-1", "1"}, ruleIDMatcherValueSep))
 				require.NoError(t, err)
 
-				return config.Matchers{matcher}
+				return amcommoncfg.Matchers{matcher}
 			},
 			ruleID:   "2",
 			expected: false,
 		},
 		{
 			name: "SameCharactersFalse",
-			matchers: func() config.Matchers {
+			matchers: func() amcommoncfg.Matchers {
 				matcher, err := labels.NewMatcher(labels.MatchRegexp, RuleIDMatcherName, strings.Join([]string{"-1", "1", "11", "12", "13", "111", "100"}, ruleIDMatcherValueSep))
 				require.NoError(t, err)
 
-				return config.Matchers{matcher}
+				return amcommoncfg.Matchers{matcher}
 			},
 			ruleID:   "10",
 			expected: false,
 		},
 		{
 			name: "SameCharactersTrue",
-			matchers: func() config.Matchers {
+			matchers: func() amcommoncfg.Matchers {
 				matcher, err := labels.NewMatcher(labels.MatchRegexp, RuleIDMatcherName, strings.Join([]string{"-1", "1", "11", "12", "13", "111"}, ruleIDMatcherValueSep))
 				require.NoError(t, err)
 
-				return config.Matchers{matcher}
+				return amcommoncfg.Matchers{matcher}
 			},
 			ruleID:   "11",
 			expected: true,

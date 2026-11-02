@@ -16,6 +16,10 @@ import (
 	"testing"
 	"time"
 
+	ammsteamsv2 "github.com/prometheus/alertmanager/notify/msteamsv2"
+
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
 	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
@@ -26,7 +30,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	test "github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -42,8 +45,8 @@ var testWebhookURL, _ = url.Parse("https://example.westeurope.logic.azure.com:44
 func TestMSTeamsV2Retry(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.MSTeamsV2Config{
-			WebhookURL: &config.SecretURL{URL: testWebhookURL},
+		&ammsteamsv2.MSTeamsV2Config{
+			WebhookURL: &amcommoncfg.SecretURL{URL: testWebhookURL},
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -78,8 +81,8 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpl := test.CreateTmpl(t)
 			notifier, err := New(
-				&config.MSTeamsV2Config{
-					WebhookURL: &config.SecretURL{URL: testWebhookURL},
+				&ammsteamsv2.MSTeamsV2Config{
+					WebhookURL: &amcommoncfg.SecretURL{URL: testWebhookURL},
 					HTTPConfig: &commoncfg.HTTPClientConfig{},
 				},
 				tmpl,
@@ -131,14 +134,14 @@ func TestMSTeamsV2Templating(t *testing.T) {
 
 	for _, tc := range []struct {
 		title     string
-		cfg       *config.MSTeamsV2Config
+		cfg       *ammsteamsv2.MSTeamsV2Config
 		titleLink string
 
 		errMsg string
 	}{
 		{
 			title: "full-blown message",
-			cfg: &config.MSTeamsV2Config{
+			cfg: &ammsteamsv2.MSTeamsV2Config{
 				Title: `{{ template "msteams.default.title" . }}`,
 				Text:  `{{ template "msteams.default.text" . }}`,
 			},
@@ -146,7 +149,7 @@ func TestMSTeamsV2Templating(t *testing.T) {
 		},
 		{
 			title: "title with templating errors",
-			cfg: &config.MSTeamsV2Config{
+			cfg: &ammsteamsv2.MSTeamsV2Config{
 				Title: "{{ ",
 			},
 			titleLink: `{{ template "msteamsv2.default.titleLink" . }}`,
@@ -154,7 +157,7 @@ func TestMSTeamsV2Templating(t *testing.T) {
 		},
 		{
 			title: "message with title link templating errors",
-			cfg: &config.MSTeamsV2Config{
+			cfg: &ammsteamsv2.MSTeamsV2Config{
 				Title: `{{ template "msteams.default.title" . }}`,
 				Text:  `{{ template "msteams.default.text" . }}`,
 			},
@@ -163,7 +166,7 @@ func TestMSTeamsV2Templating(t *testing.T) {
 		},
 	} {
 		t.Run(tc.title, func(t *testing.T) {
-			tc.cfg.WebhookURL = &config.SecretURL{URL: u}
+			tc.cfg.WebhookURL = &amcommoncfg.SecretURL{URL: u}
 			tc.cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
 			tmpl := test.CreateTmpl(t)
 			pd, err := New(tc.cfg, tmpl, tc.titleLink, promslog.NewNopLogger(), newTestTemplater(tmpl))
@@ -201,8 +204,8 @@ func TestMSTeamsV2RedactedURL(t *testing.T) {
 	secret := "secret"
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.MSTeamsV2Config{
-			WebhookURL: &config.SecretURL{URL: u},
+		&ammsteamsv2.MSTeamsV2Config{
+			WebhookURL: &amcommoncfg.SecretURL{URL: u},
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -219,8 +222,8 @@ func TestPrepareContent(t *testing.T) {
 	t.Run("default template - firing alerts", func(t *testing.T) {
 		tmpl := test.CreateTmpl(t)
 		notifier, err := New(
-			&config.MSTeamsV2Config{
-				WebhookURL: &config.SecretURL{URL: testWebhookURL},
+			&ammsteamsv2.MSTeamsV2Config{
+				WebhookURL: &amcommoncfg.SecretURL{URL: testWebhookURL},
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
 				Title:      "Alertname: {{ .CommonLabels.alertname }}",
 			},
@@ -262,8 +265,8 @@ func TestPrepareContent(t *testing.T) {
 	t.Run("custom template - per-alert color", func(t *testing.T) {
 		tmpl := test.CreateTmpl(t)
 		notifier, err := New(
-			&config.MSTeamsV2Config{
-				WebhookURL: &config.SecretURL{URL: testWebhookURL},
+			&ammsteamsv2.MSTeamsV2Config{
+				WebhookURL: &amcommoncfg.SecretURL{URL: testWebhookURL},
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
 			},
 			tmpl,
@@ -327,7 +330,7 @@ func TestMSTeamsV2ReadingURLFromFile(t *testing.T) {
 
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.MSTeamsV2Config{
+		&ammsteamsv2.MSTeamsV2Config{
 			WebhookURLFile: f.Name(),
 			HTTPConfig:     &commoncfg.HTTPClientConfig{},
 		},

@@ -8,6 +8,8 @@ import (
 	"slices"
 	"time"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"dario.cat/mergo"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/types"
@@ -303,7 +305,7 @@ func (c *Config) SetRouteConfig(routeConfig RouteConfig) error {
 	return nil
 }
 
-func (c *Config) AddInhibitRules(rules []config.InhibitRule) error {
+func (c *Config) AddInhibitRules(rules []amcommoncfg.InhibitRule) error {
 	if c.alertmanagerConfig == nil {
 		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "config is nil")
 	}
@@ -514,7 +516,7 @@ func (c *Config) DeleteRuleIDInhibitor(ruleID string) error {
 		return nil // already nil
 	}
 
-	var filteredRules []config.InhibitRule
+	var filteredRules []amcommoncfg.InhibitRule
 	for _, inhibitor := range c.alertmanagerConfig.InhibitRules {
 		sourceContainsRuleID := matcherContainsRuleID(inhibitor.SourceMatchers, ruleID)
 		targetContainsRuleID := matcherContainsRuleID(inhibitor.TargetMatchers, ruleID)

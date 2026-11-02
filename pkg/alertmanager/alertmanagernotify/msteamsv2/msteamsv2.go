@@ -15,13 +15,16 @@ import (
 	"slices"
 	"strings"
 
+	ammsteamsv2 "github.com/prometheus/alertmanager/notify/msteamsv2"
+
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -38,13 +41,13 @@ const (
 )
 
 type Notifier struct {
-	conf         *config.MSTeamsV2Config
+	conf         *ammsteamsv2.MSTeamsV2Config
 	titleLink    string
 	tmpl         *template.Template
 	logger       *slog.Logger
 	client       *http.Client
 	retrier      *notify.Retrier
-	webhookURL   *config.SecretURL
+	webhookURL   *amcommoncfg.SecretURL
 	postJSONFunc func(ctx context.Context, client *http.Client, url string, body io.Reader) (*http.Response, error)
 	templater    alertmanagertypes.Templater
 }
@@ -97,7 +100,7 @@ type teamsMessage struct {
 }
 
 // New returns a new notifier that uses the Microsoft Teams Power Platform connector.
-func New(c *config.MSTeamsV2Config, t *template.Template, titleLink string, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *ammsteamsv2.MSTeamsV2Config, t *template.Template, titleLink string, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
 )
 
 type ChannelSlackConfig struct {
@@ -99,7 +100,7 @@ func (c ChannelSlackConfig) toUndefaultedReceiver(displayName string) (*Receiver
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
 		SlackConfigs: []*config.SlackConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultSlackConfig.VSendResolved)},
+			NotifierConfig: amcommoncfg.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultSlackConfig.VSendResolved)},
 			APIURL:         apiURL,
 			Channel:        c.Channel,
 			Title:          c.Title.StringValue(),

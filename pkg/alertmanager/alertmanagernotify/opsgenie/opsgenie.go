@@ -16,6 +16,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	amopsgenie "github.com/prometheus/alertmanager/notify/opsgenie"
+
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/templating/markdownrenderer"
@@ -23,7 +25,6 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -43,7 +44,7 @@ const (
 
 // Notifier implements a Notifier for OpsGenie notifications.
 type Notifier struct {
-	conf      *config.OpsGenieConfig
+	conf      *amopsgenie.OpsGenieConfig
 	tmpl      *template.Template
 	logger    *slog.Logger
 	client    *http.Client
@@ -59,7 +60,7 @@ type Notifier struct {
 // New returns a new OpsGenie notifier. advancedFeatures enables the JSM Ops
 // enrichments (HTML default body + a note timeline per fire and on resolve);
 // pass false for plain OpsGenie.
-func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, advancedFeatures bool, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *amopsgenie.OpsGenieConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, advancedFeatures bool, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,9 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+	ampagerduty "github.com/prometheus/alertmanager/notify/pagerduty"
+	commoncfg "github.com/prometheus/common/config"
 )
 
 type ChannelPagerdutyConfig struct {
@@ -27,15 +30,15 @@ func (c *ChannelPagerdutyConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	fillSendResolved(&c.SendResolved, config.DefaultPagerdutyConfig.VSendResolved)
-	c.Description.SetIfUnset(config.DefaultPagerdutyConfig.Description)
-	c.Client.SetIfUnset(config.DefaultPagerdutyConfig.Client)
-	c.ClientURL.SetIfUnset(config.DefaultPagerdutyConfig.ClientURL)
+	fillSendResolved(&c.SendResolved, ampagerduty.DefaultPagerdutyConfig.VSendResolved)
+	c.Description.SetIfUnset(ampagerduty.DefaultPagerdutyConfig.Description)
+	c.Client.SetIfUnset(ampagerduty.DefaultPagerdutyConfig.Client)
+	c.ClientURL.SetIfUnset(ampagerduty.DefaultPagerdutyConfig.ClientURL)
 	c.Source.SetIfUnset(c.Client.StringValue())
 
 	if c.Details == nil {
-		c.Details = make(map[string]string, len(config.DefaultPagerdutyDetails))
-		for key, value := range config.DefaultPagerdutyDetails {
+		c.Details = make(map[string]string, len(ampagerduty.DefaultPagerdutyDetails))
+		for key, value := range ampagerduty.DefaultPagerdutyDetails {
 			if template, ok := value.(string); ok {
 				c.Details[key] = template
 			}
@@ -54,7 +57,7 @@ func (c ChannelPagerdutyConfig) Validate() error {
 }
 
 func (c ChannelPagerdutyConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
-	var eventsURL *config.URL
+	var eventsURL *amcommoncfg.URL
 	if c.URL != "" {
 		parsed, err := parseUpstreamURL(c.URL)
 		if err != nil {
@@ -65,9 +68,9 @@ func (c ChannelPagerdutyConfig) toUndefaultedReceiver(displayName string) (*Rece
 
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
-		PagerdutyConfigs: []*config.PagerdutyConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultPagerdutyConfig.VSendResolved)},
-			RoutingKey:     config.Secret(c.RoutingKey),
+		PagerdutyConfigs: []*ampagerduty.PagerdutyConfig{{
+			NotifierConfig: amcommoncfg.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, ampagerduty.DefaultPagerdutyConfig.VSendResolved)},
+			RoutingKey:     commoncfg.Secret(c.RoutingKey),
 			URL:            eventsURL,
 			Source:         c.Source.StringValue(),
 			Client:         c.Client.StringValue(),

@@ -19,6 +19,10 @@ import (
 	"time"
 	"unicode/utf8"
 
+	amopsgenie "github.com/prometheus/alertmanager/notify/opsgenie"
+
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
 	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
@@ -28,7 +32,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
 	"github.com/prometheus/alertmanager/template"
@@ -42,7 +45,7 @@ func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
 func TestOpsGenieRetry(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.OpsGenieConfig{
+		&amopsgenie.OpsGenieConfig{
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -66,9 +69,9 @@ func TestOpsGenieRedactedURL(t *testing.T) {
 	key := "key"
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.OpsGenieConfig{
-			APIURL:     &config.URL{URL: u},
-			APIKey:     config.Secret(key),
+		&amopsgenie.OpsGenieConfig{
+			APIURL:     &amcommoncfg.URL{URL: u},
+			APIKey:     commoncfg.Secret(key),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -94,8 +97,8 @@ func TestGettingOpsGegineApikeyFromFile(t *testing.T) {
 
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.OpsGenieConfig{
-			APIURL:     &config.URL{URL: u},
+		&amopsgenie.OpsGenieConfig{
+			APIURL:     &amcommoncfg.URL{URL: u},
 			APIKeyFile: f.Name(),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
@@ -117,21 +120,21 @@ func TestOpsGenie(t *testing.T) {
 
 	for _, tc := range []struct {
 		title string
-		cfg   *config.OpsGenieConfig
+		cfg   *amopsgenie.OpsGenieConfig
 
 		expectedEmptyAlertBody string
 		expectedBody           string
 	}{
 		{
 			title: "config without details",
-			cfg: &config.OpsGenieConfig{
-				NotifierConfig: config.NotifierConfig{
+			cfg: &amopsgenie.OpsGenieConfig{
+				NotifierConfig: amcommoncfg.NotifierConfig{
 					VSendResolved: true,
 				},
 				Message:     `{{ .CommonLabels.Message }}`,
 				Description: `{{ .CommonLabels.Description }}`,
 				Source:      `{{ .CommonLabels.Source }}`,
-				Responders: []config.OpsGenieConfigResponder{
+				Responders: []amopsgenie.OpsGenieConfigResponder{
 					{
 						Name: `{{ .CommonLabels.ResponderName1 }}`,
 						Type: `{{ .CommonLabels.ResponderType1 }}`,
@@ -147,7 +150,7 @@ func TestOpsGenie(t *testing.T) {
 				Entity:     `{{ .CommonLabels.Entity }}`,
 				Actions:    `{{ .CommonLabels.Actions }}`,
 				APIKey:     `{{ .ExternalURL }}`,
-				APIURL:     &config.URL{URL: u},
+				APIURL:     &amcommoncfg.URL{URL: u},
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
 			},
 			expectedEmptyAlertBody: `{"alias":"6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b","message":"","details":{},"source":""}
@@ -157,8 +160,8 @@ func TestOpsGenie(t *testing.T) {
 		},
 		{
 			title: "config with details",
-			cfg: &config.OpsGenieConfig{
-				NotifierConfig: config.NotifierConfig{
+			cfg: &amopsgenie.OpsGenieConfig{
+				NotifierConfig: amcommoncfg.NotifierConfig{
 					VSendResolved: true,
 				},
 				Message:     `{{ .CommonLabels.Message }}`,
@@ -167,7 +170,7 @@ func TestOpsGenie(t *testing.T) {
 				Details: map[string]string{
 					"Description": `adjusted {{ .CommonLabels.Description }}`,
 				},
-				Responders: []config.OpsGenieConfigResponder{
+				Responders: []amopsgenie.OpsGenieConfigResponder{
 					{
 						Name: `{{ .CommonLabels.ResponderName1 }}`,
 						Type: `{{ .CommonLabels.ResponderType1 }}`,
@@ -183,7 +186,7 @@ func TestOpsGenie(t *testing.T) {
 				Entity:     `{{ .CommonLabels.Entity }}`,
 				Actions:    `{{ .CommonLabels.Actions }}`,
 				APIKey:     `{{ .ExternalURL }}`,
-				APIURL:     &config.URL{URL: u},
+				APIURL:     &amcommoncfg.URL{URL: u},
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
 			},
 			expectedEmptyAlertBody: `{"alias":"6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b","message":"","details":{"Description":"adjusted "},"source":""}
@@ -193,8 +196,8 @@ func TestOpsGenie(t *testing.T) {
 		},
 		{
 			title: "config with multiple teams",
-			cfg: &config.OpsGenieConfig{
-				NotifierConfig: config.NotifierConfig{
+			cfg: &amopsgenie.OpsGenieConfig{
+				NotifierConfig: amcommoncfg.NotifierConfig{
 					VSendResolved: true,
 				},
 				Message:     `{{ .CommonLabels.Message }}`,
@@ -203,7 +206,7 @@ func TestOpsGenie(t *testing.T) {
 				Details: map[string]string{
 					"Description": `adjusted {{ .CommonLabels.Description }}`,
 				},
-				Responders: []config.OpsGenieConfigResponder{
+				Responders: []amopsgenie.OpsGenieConfigResponder{
 					{
 						Name: `{{ .CommonLabels.ResponderName3 }}`,
 						Type: `{{ .CommonLabels.ResponderType3 }}`,
@@ -213,7 +216,7 @@ func TestOpsGenie(t *testing.T) {
 				Note:       `{{ .CommonLabels.Note }}`,
 				Priority:   `{{ .CommonLabels.Priority }}`,
 				APIKey:     `{{ .ExternalURL }}`,
-				APIURL:     &config.URL{URL: u},
+				APIURL:     &amcommoncfg.URL{URL: u},
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
 			},
 			expectedEmptyAlertBody: `{"alias":"6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b","message":"","details":{"Description":"adjusted "},"source":""}
@@ -291,12 +294,12 @@ func TestOpsGenieWithUpdate(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	ctx := context.Background()
 	ctx = notify.WithGroupKey(ctx, "1")
-	opsGenieConfigWithUpdate := config.OpsGenieConfig{
+	opsGenieConfigWithUpdate := amopsgenie.OpsGenieConfig{
 		Message:      `{{ .CommonLabels.Message }}`,
 		Description:  `{{ .CommonLabels.Description }}`,
 		UpdateAlerts: true,
 		APIKey:       "test-api-key",
-		APIURL:       &config.URL{URL: u},
+		APIURL:       &amcommoncfg.URL{URL: u},
 		HTTPConfig:   &commoncfg.HTTPClientConfig{},
 	}
 	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), false)
@@ -339,13 +342,13 @@ func TestOpsGenieAdvancedFeatures(t *testing.T) {
 	key, _ := notify.ExtractGroupKey(ctx)
 	alias := key.Hash()
 
-	cfg := &config.OpsGenieConfig{
-		NotifierConfig: config.NotifierConfig{VSendResolved: true},
+	cfg := &amopsgenie.OpsGenieConfig{
+		NotifierConfig: amcommoncfg.NotifierConfig{VSendResolved: true},
 		Message:        `{{ .CommonLabels.Message }}`,
 		Description:    `{{ .CommonLabels.Description }}`,
 		UpdateAlerts:   true,
 		APIKey:         "k",
-		APIURL:         &config.URL{URL: u},
+		APIURL:         &amcommoncfg.URL{URL: u},
 		HTTPConfig:     &commoncfg.HTTPClientConfig{},
 	}
 	notifier, err := New(cfg, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), true)
@@ -416,11 +419,11 @@ func TestOpsGenieNotifyBestEffortNote(t *testing.T) {
 
 			u, err := url.Parse(srv.URL)
 			require.NoError(t, err)
-			notifier, err := New(&config.OpsGenieConfig{
+			notifier, err := New(&amopsgenie.OpsGenieConfig{
 				Message:     `{{ .CommonLabels.Message }}`,
 				Description: `{{ .CommonLabels.Description }}`,
 				APIKey:      "k",
-				APIURL:      &config.URL{URL: u},
+				APIURL:      &amcommoncfg.URL{URL: u},
 				HTTPConfig:  &commoncfg.HTTPClientConfig{},
 			}, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), true)
 			require.NoError(t, err)
@@ -442,9 +445,9 @@ func TestOpsGenieApiKeyFile(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	ctx := context.Background()
 	ctx = notify.WithGroupKey(ctx, "1")
-	opsGenieConfigWithUpdate := config.OpsGenieConfig{
+	opsGenieConfigWithUpdate := amopsgenie.OpsGenieConfig{
 		APIKeyFile: `./api_key_file`,
-		APIURL:     &config.URL{URL: u},
+		APIURL:     &amcommoncfg.URL{URL: u},
 		HTTPConfig: &commoncfg.HTTPClientConfig{},
 	}
 	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), false)
@@ -462,7 +465,7 @@ func TestPrepareContent(t *testing.T) {
 		logger := promslog.NewNopLogger()
 
 		notifier := &Notifier{
-			conf: &config.OpsGenieConfig{
+			conf: &amopsgenie.OpsGenieConfig{
 				Message:     `{{ .CommonLabels.Message }}`,
 				Description: `{{ .CommonLabels.Description }}`,
 			},
@@ -498,7 +501,7 @@ func TestPrepareContent(t *testing.T) {
 		logger := promslog.NewNopLogger()
 
 		notifier := &Notifier{
-			conf: &config.OpsGenieConfig{
+			conf: &amopsgenie.OpsGenieConfig{
 				Message:     `{{ .CommonLabels.Message }}`,
 				Description: `{{ .CommonLabels.Description }}`,
 			},
@@ -609,7 +612,7 @@ func TestBuildHTMLDescriptionOverflow(t *testing.T) {
 func TestPrepareContentDescriptionOverflow(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	notifier := &Notifier{
-		conf: &config.OpsGenieConfig{
+		conf: &amopsgenie.OpsGenieConfig{
 			Message:     `{{ .CommonLabels.alertname }}`,
 			Description: `{{ .CommonLabels.alertname }}`,
 		},

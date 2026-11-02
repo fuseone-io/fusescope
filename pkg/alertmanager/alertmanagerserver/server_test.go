@@ -10,6 +10,10 @@ import (
 	"testing"
 	"time"
 
+	amwebhook "github.com/prometheus/alertmanager/notify/webhook"
+
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/nfmanager/nfmanagertest"
@@ -77,10 +81,10 @@ func TestServerTestReceiverTypeWebhook(t *testing.T) {
 
 	err = server.TestReceiver(context.Background(), &alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "test-receiver",
-		WebhookConfigs: []*config.WebhookConfig{
+		WebhookConfigs: []*amwebhook.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL(webhookURL.String()),
+				URL:        amcommoncfg.SecretTemplateURL(webhookURL.String()),
 			},
 		},
 	}})
@@ -103,10 +107,10 @@ func TestServerPutAlerts(t *testing.T) {
 
 	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "test-receiver",
-		WebhookConfigs: []*config.WebhookConfig{
+		WebhookConfigs: []*amwebhook.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL("http://localhost/test-receiver"),
+				URL:        amcommoncfg.SecretTemplateURL("http://localhost/test-receiver"),
 			},
 		},
 	}}))
@@ -183,20 +187,20 @@ func TestServerTestAlert(t *testing.T) {
 
 	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "receiver-1",
-		WebhookConfigs: []*config.WebhookConfig{
+		WebhookConfigs: []*amwebhook.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL(webhook1URL.String()),
+				URL:        amcommoncfg.SecretTemplateURL(webhook1URL.String()),
 			},
 		},
 	}}))
 
 	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "receiver-2",
-		WebhookConfigs: []*config.WebhookConfig{
+		WebhookConfigs: []*amwebhook.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL(webhook2URL.String()),
+				URL:        amcommoncfg.SecretTemplateURL(webhook2URL.String()),
 			},
 		},
 	}}))
@@ -275,20 +279,20 @@ func TestServerTestAlertContinuesOnFailure(t *testing.T) {
 
 	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "working-receiver",
-		WebhookConfigs: []*config.WebhookConfig{
+		WebhookConfigs: []*amwebhook.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL(webhookURL.String()),
+				URL:        amcommoncfg.SecretTemplateURL(webhookURL.String()),
 			},
 		},
 	}}))
 
 	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "failing-receiver",
-		WebhookConfigs: []*config.WebhookConfig{
+		WebhookConfigs: []*amwebhook.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL("http://localhost:1/webhook"),
+				URL:        amcommoncfg.SecretTemplateURL("http://localhost:1/webhook"),
 			},
 		},
 	}}))

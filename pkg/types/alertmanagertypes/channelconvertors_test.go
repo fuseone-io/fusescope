@@ -4,8 +4,9 @@ import (
 	"reflect"
 	"testing"
 
+	amwebhook "github.com/prometheus/alertmanager/notify/webhook"
+
 	"github.com/fuseone-io/fusescope/pkg/valuer"
-	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -309,7 +310,7 @@ func TestPostableChannelToReceiverOmitsEmailTransportCredentials(t *testing.T) {
 func TestPostableChannelToReceiverRoundTripsWebhookAuthModes(t *testing.T) {
 	// The webhook notifier defaults send_resolved to true, so a spec that omits
 	// it reads back with that default rather than as unset.
-	sendResolved := config.DefaultWebhookConfig.VSendResolved
+	sendResolved := amwebhook.DefaultWebhookConfig.VSendResolved
 
 	testCases := []struct {
 		description       string
@@ -536,7 +537,7 @@ func TestDeriveChannelConfigRejectsUnrepresentableChannels(t *testing.T) {
 // The HTTP auth scheme is case-insensitive (RFC 7235) and Alertmanager sends
 // the stored spelling verbatim, so a hand-written receiver may carry any casing.
 func TestDeriveChannelConfigReadsWebhookBearerSchemeCaseInsensitively(t *testing.T) {
-	sendResolved := config.DefaultWebhookConfig.VSendResolved
+	sendResolved := amwebhook.DefaultWebhookConfig.VSendResolved
 
 	testCases := []struct {
 		name                string

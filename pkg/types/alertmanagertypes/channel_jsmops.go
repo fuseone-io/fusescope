@@ -4,6 +4,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
 	commoncfg "github.com/prometheus/common/config"
 )
 
@@ -45,8 +46,8 @@ func (c ChannelJSMOpsConfig) toUndefaultedReceiver(displayName string) (*Receive
 	return &Receiver{
 		Receiver: &config.Receiver{Name: displayName},
 		JSMOpsConfigs: []*JSMOpsReceiverConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultJSMOpsReceiverConfig.VSendResolved)},
-			APIKey:         config.Secret(c.APIKey),
+			NotifierConfig: amcommoncfg.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultJSMOpsReceiverConfig.VSendResolved)},
+			APIKey:         commoncfg.Secret(c.APIKey),
 			Message:        c.Message.StringValue(),
 			Description:    c.Description.StringValue(),
 			Priority:       c.Priority,
@@ -103,25 +104,25 @@ const (
 
 // JSMOpsReceiverConfig is the SigNoz Jira Service Management Ops receiver. It is
 // delivered by reusing the Opsgenie notifier (JSM Ops is the ex-Opsgenie alert
-// API): the notifier package maps these fields onto config.OpsGenieConfig with
+// API): the notifier package maps these fields onto amopsgenie.OpsGenieConfig with
 // APIURL pinned to JSMOpsAPIBaseURL.
 type JSMOpsReceiverConfig struct {
-	config.NotifierConfig `yaml:",inline" json:",inline"`
+	amcommoncfg.NotifierConfig `yaml:",inline" json:",inline"`
 
 	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty"`
 
-	APIKey      config.Secret `yaml:"api_key,omitempty" json:"api_key,omitempty"`
-	Message     string        `yaml:"message,omitempty" json:"message,omitempty"`
-	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
-	Priority    string        `yaml:"priority,omitempty" json:"priority,omitempty"`
-	Tags        string        `yaml:"tags,omitempty" json:"tags,omitempty"`
+	APIKey      commoncfg.Secret `yaml:"api_key,omitempty" json:"api_key,omitempty"`
+	Message     string           `yaml:"message,omitempty" json:"message,omitempty"`
+	Description string           `yaml:"description,omitempty" json:"description,omitempty"`
+	Priority    string           `yaml:"priority,omitempty" json:"priority,omitempty"`
+	Tags        string           `yaml:"tags,omitempty" json:"tags,omitempty"`
 }
 
 // send_resolved has no omitempty upstream, so a var default here is overwritten
 // by the yaml round-trip to the request value (false when omitted); the UI sends
 // it explicitly, defaulted on, so JSM alerts close on resolve.
 var DefaultJSMOpsReceiverConfig = JSMOpsReceiverConfig{
-	NotifierConfig: config.NotifierConfig{
+	NotifierConfig: amcommoncfg.NotifierConfig{
 		VSendResolved: false,
 	},
 	Message:     DefaultJSMOpsMessageTemplate,

@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
 	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
 	"github.com/fuseone-io/fusescope/pkg/types/ruletypes"
@@ -20,7 +22,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
 	"github.com/prometheus/alertmanager/template"
@@ -31,11 +32,11 @@ func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
 	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
 }
 
-func secretURLFromString(t *testing.T, rawURL string) *config.SecretURL {
+func secretURLFromString(t *testing.T, rawURL string) *amcommoncfg.SecretURL {
 	t.Helper()
 	parsed, err := url.Parse(rawURL)
 	require.NoError(t, err)
-	return &config.SecretURL{URL: parsed}
+	return &amcommoncfg.SecretURL{URL: parsed}
 }
 
 func newTestNotifier(t *testing.T, webhookURL, title, text string) *Notifier {
@@ -192,7 +193,7 @@ func TestGoogleChatRedactedURL(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	n, err := New(&alertmanagertypes.GoogleChatReceiverConfig{
 		HTTPConfig: &commoncfg.HTTPClientConfig{},
-		WebhookURL: &config.SecretURL{URL: u},
+		WebhookURL: &amcommoncfg.SecretURL{URL: u},
 		Title:      "alert", // non-empty so it reaches the POST (not the empty-text guard)
 	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl))
 	require.NoError(t, err)

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	ammsteamsv2 "github.com/prometheus/alertmanager/notify/msteamsv2"
+
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagerserver"
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
@@ -322,9 +324,9 @@ func (migration *addAlertmanager) msTeamsReceiverToMSTeamsV2Receiver(receiver co
 		return receiver
 	}
 
-	var msTeamsV2Configs []*config.MSTeamsV2Config
+	var msTeamsV2Configs []*ammsteamsv2.MSTeamsV2Config
 	for _, cfg := range receiver.MSTeamsConfigs {
-		msTeamsV2Configs = append(msTeamsV2Configs, &config.MSTeamsV2Config{
+		msTeamsV2Configs = append(msTeamsV2Configs, &ammsteamsv2.MSTeamsV2Config{
 			NotifierConfig: cfg.NotifierConfig,
 			HTTPConfig:     cfg.HTTPConfig,
 			WebhookURL:     cfg.WebhookURL,

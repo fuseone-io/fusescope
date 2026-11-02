@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +31,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 					SlackConfigs: []*config.SlackConfig{
 						{
 							Channel: "#alerts",
-							APIURL:  &config.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
+							APIURL:  &amcommoncfg.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
 						},
 					},
 				},
@@ -46,7 +48,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 					SlackConfigs: []*config.SlackConfig{
 						{
 							Channel: "#alerts",
-							APIURL:  &config.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
+							APIURL:  &amcommoncfg.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
 						},
 					},
 				},
@@ -71,7 +73,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 					SlackConfigs: []*config.SlackConfig{
 						{
 							Channel: "#alerts",
-							APIURL:  &config.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
+							APIURL:  &amcommoncfg.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
 						},
 					},
 				},
@@ -88,7 +90,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 					SlackConfigs: []*config.SlackConfig{
 						{
 							Channel: "#alerts",
-							APIURL:  &config.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
+							APIURL:  &amcommoncfg.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
 						},
 					},
 				},
@@ -148,7 +150,7 @@ func TestDeleteRuleIDMatcher(t *testing.T) {
 					SlackConfigs: []*config.SlackConfig{
 						{
 							Channel: "#alerts",
-							APIURL:  &config.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
+							APIURL:  &amcommoncfg.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
 						},
 					},
 				},
@@ -174,7 +176,7 @@ func TestDeleteRuleIDMatcher(t *testing.T) {
 					SlackConfigs: []*config.SlackConfig{
 						{
 							Channel: "#alerts",
-							APIURL:  &config.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
+							APIURL:  &amcommoncfg.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
 						},
 					},
 				},
@@ -490,7 +492,7 @@ func TestConfigPreservesGoogleChatConfigs(t *testing.T) {
 		Receiver: &config.Receiver{Name: "googlechat-receiver"},
 		GoogleChatConfigs: []*GoogleChatReceiverConfig{
 			{
-				WebhookURL: &config.SecretURL{URL: webhookURL},
+				WebhookURL: &amcommoncfg.SecretURL{URL: webhookURL},
 				Title:      "Alert",
 				Text:       "Body",
 			},

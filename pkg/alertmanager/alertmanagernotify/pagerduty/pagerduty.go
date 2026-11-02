@@ -15,6 +15,8 @@ import (
 	"os"
 	"strings"
 
+	ampagerduty "github.com/prometheus/alertmanager/notify/pagerduty"
+
 	"github.com/alecthomas/units"
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -22,7 +24,6 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -42,7 +43,7 @@ const (
 
 // Notifier implements a Notifier for PagerDuty notifications.
 type Notifier struct {
-	conf      *config.PagerdutyConfig
+	conf      *ampagerduty.PagerdutyConfig
 	tmpl      *template.Template
 	logger    *slog.Logger
 	apiV1     string // for tests.
@@ -52,7 +53,7 @@ type Notifier struct {
 }
 
 // New returns a new PagerDuty notifier.
-func New(c *config.PagerdutyConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *ampagerduty.PagerdutyConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err

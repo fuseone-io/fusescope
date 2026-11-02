@@ -16,6 +16,10 @@ import (
 	"testing"
 	"time"
 
+	amwebhook "github.com/prometheus/alertmanager/notify/webhook"
+
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
@@ -23,7 +27,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
 	"github.com/prometheus/alertmanager/types"
@@ -32,8 +35,8 @@ import (
 func TestWebhookRetry(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.WebhookConfig{
-			URL:        config.SecretTemplateURL("http://example.com"),
+		&amwebhook.WebhookConfig{
+			URL:        amcommoncfg.SecretTemplateURL("http://example.com"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -103,8 +106,8 @@ func TestWebhookRedactedURL(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	templater := alertmanagertemplate.New(tmpl, slog.Default())
 	notifier, err := New(
-		&config.WebhookConfig{
-			URL:        config.SecretTemplateURL(u.String()),
+		&amwebhook.WebhookConfig{
+			URL:        amcommoncfg.SecretTemplateURL(u.String()),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -127,7 +130,7 @@ func TestWebhookReadingURLFromFile(t *testing.T) {
 
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.WebhookConfig{
+		&amwebhook.WebhookConfig{
 			URLFile:    f.Name(),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
@@ -189,8 +192,8 @@ func TestWebhookURLTemplating(t *testing.T) {
 
 			tmpl := test.CreateTmpl(t)
 			notifier, err := New(
-				&config.WebhookConfig{
-					URL:        config.SecretTemplateURL(tc.url),
+				&amwebhook.WebhookConfig{
+					URL:        amcommoncfg.SecretTemplateURL(tc.url),
 					HTTPConfig: &commoncfg.HTTPClientConfig{},
 				},
 				tmpl,

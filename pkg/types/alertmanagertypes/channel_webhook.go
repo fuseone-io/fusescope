@@ -3,6 +3,10 @@ package alertmanagertypes
 import (
 	"strings"
 
+	amwebhook "github.com/prometheus/alertmanager/notify/webhook"
+
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
@@ -29,7 +33,7 @@ func (c *ChannelWebhookConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	fillSendResolved(&c.SendResolved, config.DefaultWebhookConfig.VSendResolved)
+	fillSendResolved(&c.SendResolved, amwebhook.DefaultWebhookConfig.VSendResolved)
 
 	return c.Validate()
 }
@@ -49,9 +53,9 @@ func (c ChannelWebhookConfig) Validate() error {
 }
 
 func (c ChannelWebhookConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
-	webhook := &config.WebhookConfig{
-		NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultWebhookConfig.VSendResolved)},
-		URL:            config.SecretTemplateURL(c.URL),
+	webhook := &amwebhook.WebhookConfig{
+		NotifierConfig: amcommoncfg.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, amwebhook.DefaultWebhookConfig.VSendResolved)},
+		URL:            amcommoncfg.SecretTemplateURL(c.URL),
 	}
 
 	// Seeded from upstream's default rather than a zero value: FollowRedirects
@@ -76,7 +80,7 @@ func (c ChannelWebhookConfig) toUndefaultedReceiver(displayName string) (*Receiv
 
 	return &Receiver{Receiver: &config.Receiver{
 		Name:           displayName,
-		WebhookConfigs: []*config.WebhookConfig{webhook},
+		WebhookConfigs: []*amwebhook.WebhookConfig{webhook},
 	}}, nil
 }
 

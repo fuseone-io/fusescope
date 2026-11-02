@@ -4,6 +4,8 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+	ammsteamsv2 "github.com/prometheus/alertmanager/notify/msteamsv2"
 )
 
 type ChannelMSTeamsConfig struct {
@@ -19,9 +21,9 @@ func (c *ChannelMSTeamsConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	fillSendResolved(&c.SendResolved, config.DefaultMSTeamsV2Config.VSendResolved)
-	c.Title.SetIfUnset(config.DefaultMSTeamsV2Config.Title)
-	c.Text.SetIfUnset(config.DefaultMSTeamsV2Config.Text)
+	fillSendResolved(&c.SendResolved, ammsteamsv2.DefaultMSTeamsV2Config.VSendResolved)
+	c.Title.SetIfUnset(ammsteamsv2.DefaultMSTeamsV2Config.Title)
+	c.Text.SetIfUnset(ammsteamsv2.DefaultMSTeamsV2Config.Text)
 
 	return c.Validate()
 }
@@ -42,8 +44,8 @@ func (c ChannelMSTeamsConfig) toUndefaultedReceiver(displayName string) (*Receiv
 
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
-		MSTeamsV2Configs: []*config.MSTeamsV2Config{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultMSTeamsV2Config.VSendResolved)},
+		MSTeamsV2Configs: []*ammsteamsv2.MSTeamsV2Config{{
+			NotifierConfig: amcommoncfg.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, ammsteamsv2.DefaultMSTeamsV2Config.VSendResolved)},
 			WebhookURL:     webhookURL,
 			Title:          c.Title.StringValue(),
 			Text:           c.Text.StringValue(),

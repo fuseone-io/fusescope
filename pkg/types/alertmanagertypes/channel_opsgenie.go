@@ -4,6 +4,9 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+	amopsgenie "github.com/prometheus/alertmanager/notify/opsgenie"
+	commoncfg "github.com/prometheus/common/config"
 )
 
 type ChannelOpsgenieConfig struct {
@@ -23,10 +26,10 @@ func (c *ChannelOpsgenieConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	fillSendResolved(&c.SendResolved, config.DefaultOpsGenieConfig.VSendResolved)
-	c.Message.SetIfUnset(config.DefaultOpsGenieConfig.Message)
-	c.Description.SetIfUnset(config.DefaultOpsGenieConfig.Description)
-	c.Source.SetIfUnset(config.DefaultOpsGenieConfig.Source)
+	fillSendResolved(&c.SendResolved, amopsgenie.DefaultOpsGenieConfig.VSendResolved)
+	c.Message.SetIfUnset(amopsgenie.DefaultOpsGenieConfig.Message)
+	c.Description.SetIfUnset(amopsgenie.DefaultOpsGenieConfig.Description)
+	c.Source.SetIfUnset(amopsgenie.DefaultOpsGenieConfig.Source)
 
 	return c.Validate()
 }
@@ -40,7 +43,7 @@ func (c ChannelOpsgenieConfig) Validate() error {
 }
 
 func (c ChannelOpsgenieConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
-	var apiURL *config.URL
+	var apiURL *amcommoncfg.URL
 	if c.APIURL != "" {
 		parsed, err := parseUpstreamURL(c.APIURL)
 		if err != nil {
@@ -51,9 +54,9 @@ func (c ChannelOpsgenieConfig) toUndefaultedReceiver(displayName string) (*Recei
 
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
-		OpsGenieConfigs: []*config.OpsGenieConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultOpsGenieConfig.VSendResolved)},
-			APIKey:         config.Secret(c.APIKey),
+		OpsGenieConfigs: []*amopsgenie.OpsGenieConfig{{
+			NotifierConfig: amcommoncfg.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, amopsgenie.DefaultOpsGenieConfig.VSendResolved)},
+			APIKey:         commoncfg.Secret(c.APIKey),
 			APIURL:         apiURL,
 			Message:        c.Message.StringValue(),
 			Description:    c.Description.StringValue(),

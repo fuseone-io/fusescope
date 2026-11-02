@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
@@ -235,8 +237,8 @@ func TestNewChannelFromReceiver(t *testing.T) {
 				SlackConfigs: []*config.SlackConfig{
 					{
 						Channel: "#alerts",
-						APIURL:  &config.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
-						NotifierConfig: config.NotifierConfig{
+						APIURL:  &amcommoncfg.SecretURL{URL: &url.URL{Scheme: "https", Host: "slack.com", Path: "/api/test"}},
+						NotifierConfig: amcommoncfg.NotifierConfig{
 							VSendResolved: true,
 						},
 					},
@@ -280,7 +282,7 @@ func TestNewChannelFromReceiverGoogleChat(t *testing.T) {
 		Receiver: &config.Receiver{Name: "googlechat-receiver"},
 		GoogleChatConfigs: []*GoogleChatReceiverConfig{
 			{
-				WebhookURL: &config.SecretURL{URL: webhookURL},
+				WebhookURL: &amcommoncfg.SecretURL{URL: webhookURL},
 				Title:      "Alert",
 				Text:       "Body",
 			},

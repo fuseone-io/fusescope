@@ -18,6 +18,10 @@ import (
 	"testing"
 	"time"
 
+	ampagerduty "github.com/prometheus/alertmanager/notify/pagerduty"
+
+	amcommoncfg "github.com/prometheus/alertmanager/config/common"
+
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagertemplate"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/types/alertmanagertypes"
@@ -28,7 +32,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
 	"github.com/prometheus/alertmanager/template"
@@ -42,8 +45,8 @@ func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
 func TestPagerDutyRetryV1(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.PagerdutyConfig{
-			ServiceKey: config.Secret("01234567890123456789012345678901"),
+		&ampagerduty.PagerdutyConfig{
+			ServiceKey: commoncfg.Secret("01234567890123456789012345678901"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -62,8 +65,8 @@ func TestPagerDutyRetryV1(t *testing.T) {
 func TestPagerDutyRetryV2(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.PagerdutyConfig{
-			RoutingKey: config.Secret("01234567890123456789012345678901"),
+		&ampagerduty.PagerdutyConfig{
+			RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -86,8 +89,8 @@ func TestPagerDutyRedactedURLV1(t *testing.T) {
 	key := "01234567890123456789012345678901"
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.PagerdutyConfig{
-			ServiceKey: config.Secret(key),
+		&ampagerduty.PagerdutyConfig{
+			ServiceKey: commoncfg.Secret(key),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -107,9 +110,9 @@ func TestPagerDutyRedactedURLV2(t *testing.T) {
 	key := "01234567890123456789012345678901"
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.PagerdutyConfig{
-			URL:        &config.URL{URL: u},
-			RoutingKey: config.Secret(key),
+		&ampagerduty.PagerdutyConfig{
+			URL:        &amcommoncfg.URL{URL: u},
+			RoutingKey: commoncfg.Secret(key),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -133,7 +136,7 @@ func TestPagerDutyV1ServiceKeyFromFile(t *testing.T) {
 
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.PagerdutyConfig{
+		&ampagerduty.PagerdutyConfig{
 			ServiceKeyFile: f.Name(),
 			HTTPConfig:     &commoncfg.HTTPClientConfig{},
 		},
@@ -159,8 +162,8 @@ func TestPagerDutyV2RoutingKeyFromFile(t *testing.T) {
 
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
-		&config.PagerdutyConfig{
-			URL:            &config.URL{URL: u},
+		&ampagerduty.PagerdutyConfig{
+			URL:            &amcommoncfg.URL{URL: u},
 			RoutingKeyFile: f.Name(),
 			HTTPConfig:     &commoncfg.HTTPClientConfig{},
 		},
@@ -187,23 +190,23 @@ func TestPagerDutyTemplating(t *testing.T) {
 
 	for _, tc := range []struct {
 		title string
-		cfg   *config.PagerdutyConfig
+		cfg   *ampagerduty.PagerdutyConfig
 
 		retry  bool
 		errMsg string
 	}{
 		{
 			title: "full-blown legacy message",
-			cfg: &config.PagerdutyConfig{
-				RoutingKey: config.Secret("01234567890123456789012345678901"),
-				Images: []config.PagerdutyImage{
+			cfg: &ampagerduty.PagerdutyConfig{
+				RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
+				Images: []ampagerduty.PagerdutyImage{
 					{
 						Src:  "{{ .Status }}",
 						Alt:  "{{ .Status }}",
 						Href: "{{ .Status }}",
 					},
 				},
-				Links: []config.PagerdutyLink{
+				Links: []ampagerduty.PagerdutyLink{
 					{
 						Href: "{{ .Status }}",
 						Text: "{{ .Status }}",
@@ -219,16 +222,16 @@ func TestPagerDutyTemplating(t *testing.T) {
 		},
 		{
 			title: "full-blown legacy message",
-			cfg: &config.PagerdutyConfig{
-				RoutingKey: config.Secret("01234567890123456789012345678901"),
-				Images: []config.PagerdutyImage{
+			cfg: &ampagerduty.PagerdutyConfig{
+				RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
+				Images: []ampagerduty.PagerdutyImage{
 					{
 						Src:  "{{ .Status }}",
 						Alt:  "{{ .Status }}",
 						Href: "{{ .Status }}",
 					},
 				},
-				Links: []config.PagerdutyLink{
+				Links: []ampagerduty.PagerdutyLink{
 					{
 						Href: "{{ .Status }}",
 						Text: "{{ .Status }}",
@@ -244,8 +247,8 @@ func TestPagerDutyTemplating(t *testing.T) {
 		},
 		{
 			title: "nested details",
-			cfg: &config.PagerdutyConfig{
-				RoutingKey: config.Secret("01234567890123456789012345678901"),
+			cfg: &ampagerduty.PagerdutyConfig{
+				RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
 				Details: map[string]any{
 					"a": map[string]any{
 						"b": map[string]any{
@@ -262,8 +265,8 @@ func TestPagerDutyTemplating(t *testing.T) {
 		},
 		{
 			title: "nested details with template error",
-			cfg: &config.PagerdutyConfig{
-				RoutingKey: config.Secret("01234567890123456789012345678901"),
+			cfg: &ampagerduty.PagerdutyConfig{
+				RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
 				Details: map[string]any{
 					"a": map[string]any{
 						"b": map[string]any{
@@ -278,8 +281,8 @@ func TestPagerDutyTemplating(t *testing.T) {
 		},
 		{
 			title: "details with templating errors",
-			cfg: &config.PagerdutyConfig{
-				RoutingKey: config.Secret("01234567890123456789012345678901"),
+			cfg: &ampagerduty.PagerdutyConfig{
+				RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
 				Details: map[string]any{
 					"firing":       `{{ .Alerts.Firing | toJson`,
 					"resolved":     `{{ .Alerts.Resolved | toJson }}`,
@@ -291,37 +294,37 @@ func TestPagerDutyTemplating(t *testing.T) {
 		},
 		{
 			title: "v2 message with templating errors",
-			cfg: &config.PagerdutyConfig{
-				RoutingKey: config.Secret("01234567890123456789012345678901"),
+			cfg: &ampagerduty.PagerdutyConfig{
+				RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
 				Severity:   "{{ ",
 			},
 			errMsg: "failed to template",
 		},
 		{
 			title: "v1 message with templating errors",
-			cfg: &config.PagerdutyConfig{
-				ServiceKey: config.Secret("01234567890123456789012345678901"),
+			cfg: &ampagerduty.PagerdutyConfig{
+				ServiceKey: commoncfg.Secret("01234567890123456789012345678901"),
 				Client:     "{{ ",
 			},
 			errMsg: "failed to template",
 		},
 		{
 			title: "routing key cannot be empty",
-			cfg: &config.PagerdutyConfig{
-				RoutingKey: config.Secret(`{{ "" }}`),
+			cfg: &ampagerduty.PagerdutyConfig{
+				RoutingKey: commoncfg.Secret(`{{ "" }}`),
 			},
 			errMsg: "routing key cannot be empty",
 		},
 		{
 			title: "service_key cannot be empty",
-			cfg: &config.PagerdutyConfig{
-				ServiceKey: config.Secret(`{{ "" }}`),
+			cfg: &ampagerduty.PagerdutyConfig{
+				ServiceKey: commoncfg.Secret(`{{ "" }}`),
 			},
 			errMsg: "service key cannot be empty",
 		},
 	} {
 		t.Run(tc.title, func(t *testing.T) {
-			tc.cfg.URL = &config.URL{URL: u}
+			tc.cfg.URL = &amcommoncfg.URL{URL: u}
 			tc.cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
 			tmpl := test.CreateTmpl(t)
 			pd, err := New(tc.cfg, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
@@ -416,8 +419,8 @@ func TestEventSizeEnforcement(t *testing.T) {
 
 	tmpl := test.CreateTmpl(t)
 	notifierV1, err := New(
-		&config.PagerdutyConfig{
-			ServiceKey: config.Secret("01234567890123456789012345678901"),
+		&ampagerduty.PagerdutyConfig{
+			ServiceKey: commoncfg.Secret("01234567890123456789012345678901"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -440,8 +443,8 @@ func TestEventSizeEnforcement(t *testing.T) {
 	}
 
 	notifierV2, err := New(
-		&config.PagerdutyConfig{
-			RoutingKey: config.Secret("01234567890123456789012345678901"),
+		&ampagerduty.PagerdutyConfig{
+			RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
 		tmpl,
@@ -465,7 +468,7 @@ func TestPagerDutyEmptySrcHref(t *testing.T) {
 		Links       []pagerDutyLink
 	}
 
-	images := []config.PagerdutyImage{
+	images := []ampagerduty.PagerdutyImage{
 		{
 			Src:  "",
 			Alt:  "Empty src",
@@ -483,7 +486,7 @@ func TestPagerDutyEmptySrcHref(t *testing.T) {
 		},
 	}
 
-	links := []config.PagerdutyLink{
+	links := []ampagerduty.PagerdutyLink{
 		{
 			Href: "",
 			Text: "Empty href",
@@ -554,10 +557,10 @@ func TestPagerDutyEmptySrcHref(t *testing.T) {
 	url, err := url.Parse(server.URL)
 	require.NoError(t, err)
 
-	pagerDutyConfig := config.PagerdutyConfig{
+	pagerDutyConfig := ampagerduty.PagerdutyConfig{
 		HTTPConfig: &commoncfg.HTTPClientConfig{},
-		RoutingKey: config.Secret("01234567890123456789012345678901"),
-		URL:        &config.URL{URL: url},
+		RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
+		URL:        &amcommoncfg.URL{URL: url},
 		Images:     images,
 		Links:      links,
 	}
@@ -623,10 +626,10 @@ func TestPagerDutyTimeout(t *testing.T) {
 			u, err := url.Parse(srv.URL)
 			require.NoError(t, err)
 
-			cfg := config.PagerdutyConfig{
+			cfg := ampagerduty.PagerdutyConfig{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				RoutingKey: config.Secret("01234567890123456789012345678901"),
-				URL:        &config.URL{URL: u},
+				RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
+				URL:        &amcommoncfg.URL{URL: u},
 				Timeout:    tt.timeout,
 			}
 
@@ -895,7 +898,7 @@ func TestRenderDetails(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			n := &Notifier{
-				conf: &config.PagerdutyConfig{
+				conf: &ampagerduty.PagerdutyConfig{
 					Details: tt.args.details,
 				},
 				tmpl: test.CreateTmpl(t),
@@ -922,8 +925,8 @@ func TestPrepareContent(t *testing.T) {
 	t.Run("default template uses go text template config for title", func(t *testing.T) {
 		tmpl := test.CreateTmpl(t)
 		notifier, err := New(
-			&config.PagerdutyConfig{
-				RoutingKey:  config.Secret("01234567890123456789012345678901"),
+			&ampagerduty.PagerdutyConfig{
+				RoutingKey:  commoncfg.Secret("01234567890123456789012345678901"),
 				HTTPConfig:  &commoncfg.HTTPClientConfig{},
 				Description: `{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})`,
 			},
@@ -953,8 +956,8 @@ func TestPrepareContent(t *testing.T) {
 	t.Run("custom template uses $variable annotation for title", func(t *testing.T) {
 		tmpl := test.CreateTmpl(t)
 		notifier, err := New(
-			&config.PagerdutyConfig{
-				RoutingKey: config.Secret("01234567890123456789012345678901"),
+			&ampagerduty.PagerdutyConfig{
+				RoutingKey: commoncfg.Secret("01234567890123456789012345678901"),
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
 			},
 			tmpl,
