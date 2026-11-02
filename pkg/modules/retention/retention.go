@@ -3,6 +3,7 @@ package retention
 import (
 	"context"
 
+	"github.com/fuseone-io/fusescope/pkg/types/archivetypes"
 	"github.com/fuseone-io/fusescope/pkg/types/retentiontypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
@@ -22,4 +23,14 @@ type TTLSetter interface {
 	// SetDefaultTTL sets the signal's retention to days the way the settings page does. The
 	// ClickHouse TTL change applies to new parts only; existing parts expire as they merge.
 	SetDefaultTTL(ctx context.Context, orgID valuer.UUID, ttlType string, days int) error
+}
+
+// BackstopSetter is the TTL path of the archive (ADR 0002 §5).
+type BackstopSetter interface {
+	// ApplyArchiveBackstop gives the TTL of the signal's tables a backstop of days, keeping
+	// their move rules, and materializes it on existing parts. It returns once the mutations
+	// are done on every replica. It records its progress per table in progress, and resumes
+	// from it: a table already done, or whose MATERIALIZE TTL is already issued, isn't
+	// rewritten again.
+	ApplyArchiveBackstop(ctx context.Context, signal string, days int, progress archivetypes.BackstopProgress) error
 }
