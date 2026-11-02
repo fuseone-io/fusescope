@@ -164,17 +164,19 @@ func TestExport(t *testing.T) {
 		exportedBy    int
 		existingRows  *uint64
 		readBacks     [][][]any
-		wantErr       bool
+		leaseLost     bool
+		wantErr       errors.Code
 		wantPublished []string
 	}{
 		{name: "EveryRowReadBack_Published", replicaParts: [][]archivetypes.Part{{part}}, readBacks: [][][]any{readBackOf(part, 10)}, wantPublished: []string{part.Name}},
-		{name: "RowsMissing_Abandoned", replicaParts: [][]archivetypes.Part{{part}}, readBacks: [][][]any{readBackOf(part, 9)}, wantErr: true, wantPublished: []string{}},
+		{name: "RowsMissing_Abandoned", replicaParts: [][]archivetypes.Part{{part}}, readBacks: [][][]any{readBackOf(part, 9)}, wantErr: archivetypes.ErrCodeObjectMismatch, wantPublished: []string{}},
+		{name: "LeaseLostBeforeCommit_NothingDropped", replicaParts: [][]archivetypes.Part{{part}}, readBacks: [][][]any{readBackOf(part, 10)}, leaseLost: true, wantErr: archivetypes.ErrCodeLeaseLost, wantPublished: []string{}},
 		{name: "MergedSinceTheCycleStarted_MergedPartExported", replicaParts: [][]archivetypes.Part{{merged}}, readBacks: [][][]any{readBackOf(merged, 12)}, wantPublished: []string{merged.Name}},
 		{name: "ReplicaFallenBehind_OtherReplicaExports", replicaParts: [][]archivetypes.Part{{behind}, {part}}, exportedBy: 1, readBacks: [][][]any{readBackOf(part, 10)}, wantPublished: []string{part.Name}},
 		{name: "PartsOverTheByteCap_OneCommitEach", replicaParts: [][]archivetypes.Part{{part, next}}, readBacks: [][][]any{readBackOf(part, 10), readBackOf(next, 7)}, wantPublished: []string{part.Name, next.Name}},
 		{name: "LightweightDelete_ExistingRowsCounted", replicaParts: [][]archivetypes.Part{{deleted}}, existingRows: ptr(uint64(9)), readBacks: [][][]any{readBackOf(deleted, 9)}, wantPublished: []string{deleted.Name}},
 		{name: "EveryRowDeleted_NotExported", replicaParts: [][]archivetypes.Part{{deleted}}, existingRows: ptr(uint64(0)), wantPublished: []string{}},
-		{name: "SecondAttemptFails_FirstStaysPublished", replicaParts: [][]archivetypes.Part{{part, next}}, readBacks: [][][]any{readBackOf(part, 10), readBackOf(next, 6)}, wantErr: true, wantPublished: []string{part.Name}},
+		{name: "SecondAttemptFails_FirstStaysPublished", replicaParts: [][]archivetypes.Part{{part, next}}, readBacks: [][][]any{readBackOf(part, 10), readBackOf(next, 6)}, wantErr: archivetypes.ErrCodeObjectMismatch, wantPublished: []string{part.Name}},
 	}
 
 	for _, testCase := range testCases {
@@ -213,13 +215,38 @@ func TestExport(t *testing.T) {
 					exporter.ExpectExec("INSERT INTO FUNCTION s3")
 				}
 				exporter.ExpectQuery("groupUniqArray").WillReturnRows(cmock.NewRows(statColumns, readBack))
-				if testCase.wantErr && i == len(testCase.readBacks)-1 {
+				last := i == len(testCase.readBacks)-1
+				if testCase.wantErr == archivetypes.ErrCodeObjectMismatch && last {
 					break
 				}
 				exporter.ExpectExec("SELECT raw FROM blob")
+				if testCase.wantErr != (errors.Code{}) && last {
+					break
+				}
 				for i, parts := range testCase.replicaParts {
 					expectPartitionParts(conns[i], job.partition.ID, parts...)
 				}
+			}
+			if testCase.wantErr == (errors.Code{}) {
+				exported := testCase.replicaParts[testCase.exportedBy]
+				expectReplica(exporter, 1, "ReplicatedMergeTree", pin.ReplicaPath)
+				expectPartitionParts(exporter, job.partition.ID, exported...)
+				listing := make([][]any, 0, len(testCase.wantPublished))
+				for _, name := range testCase.wantPublished {
+					listing = append(listing, []any{name + ".parquet", uint64(1024), `"etag"`})
+				}
+				for range min(len(testCase.readBacks), len(listing)) {
+					exporter.ExpectQuery("attempt=.*format = 'One'").WillReturnRows(cmock.NewRows(statColumns[:3], listing))
+				}
+				for _, name := range testCase.wantPublished {
+					exporter.ExpectExec("DROP PART '" + name + "'")
+				}
+			}
+			if testCase.leaseLost {
+				_, err = archiveStore.AcquireLease(ctx, "logs", "a", time.Now())
+				require.NoError(t, err)
+				_, err = archiveStore.AcquireLease(ctx, "logs", "b", time.Now().Add(time.Minute))
+				require.NoError(t, err)
 			}
 
 			err = service.export(ctx, lease, job)
@@ -238,14 +265,17 @@ func TestExport(t *testing.T) {
 			if testCase.existingRows != nil && len(published) > 0 {
 				assert.Equal(t, int64(*testCase.existingRows), published[0].Rows, "rows a lightweight delete masked are neither exported nor counted")
 			}
-			if testCase.wantErr {
-				assert.True(t, errors.Asc(err, archivetypes.ErrCodeObjectMismatch), err)
-				assert.Equal(t, 1, statuses[archivetypes.AttemptStatusAbandoned], "an attempt that read back short is abandoned, its objects orphans")
+			if testCase.wantErr != (errors.Code{}) {
+				assert.True(t, errors.Asc(err, testCase.wantErr), err)
+				assert.Equal(t, 1, statuses[archivetypes.AttemptStatusAbandoned], "an attempt that isn't published is abandoned, its objects orphans, and nothing is dropped")
 				assert.Equal(t, len(testCase.readBacks)-1, statuses[archivetypes.AttemptStatusPublished], "the attempts before it stay published")
 				return
 			}
 			require.NoError(t, err)
 			assert.Equal(t, len(testCase.readBacks), statuses[archivetypes.AttemptStatusPublished])
+			for _, archived := range published {
+				assert.NotNil(t, archived.DroppedAt, "a published part is dropped once the partition is exported")
+			}
 		})
 	}
 }
@@ -254,19 +284,16 @@ func TestHoldLateParts(t *testing.T) {
 	service := newTestExportService(t, newTestStore(t))
 	service.config.Logs.LateMinRows = 1_000
 	service.config.Logs.LateMaxHold = 24 * time.Hour
-	job := exportJob{table: testLogsTable, shard: 1, partition: archivetypes.Partition{ID: "20260903-15-0"}}
 	late := archivetypes.Part{Name: "20260903-15-0_6_6_0", Range: archivetypes.BlockRange{Min: 6, Max: 6}, Rows: 1}
 
 	written := late
 	written.FirstSeen = time.Now().Add(-time.Hour)
-	assert.Empty(t, service.holdLateParts(job, []archivetypes.Part{written}, true), "a late part written an hour ago is held")
+	assert.Empty(t, service.holdLateParts([]archivetypes.Part{written}, true), "a late part written an hour ago is held")
+	assert.Len(t, service.holdLateParts([]archivetypes.Part{written}, false), 1, "the first export of a partition is never held")
 
 	writtenLongAgo := late
 	writtenLongAgo.FirstSeen = time.Now().Add(-25 * time.Hour)
-	assert.Len(t, service.holdLateParts(job, []archivetypes.Part{writtenLongAgo}, true), 1, "the hold counts from when the part was written, not from when this backend saw it")
-
-	merged := archivetypes.Part{Name: "20260903-15-0_6_7_1", Range: archivetypes.BlockRange{Min: 6, Max: 7}, Rows: 2, FirstSeen: time.Now()}
-	assert.Len(t, service.holdLateParts(job, []archivetypes.Part{merged}, true), 1, "merging held parts keeps their earliest time")
+	assert.Len(t, service.holdLateParts([]archivetypes.Part{writtenLongAgo}, true), 1, "the hold counts from when the part was first seen")
 }
 
 func newTestExportService(t *testing.T, store archivetypes.Store) *exportService {
@@ -275,14 +302,18 @@ func newTestExportService(t *testing.T, store archivetypes.Store) *exportService
 	config := archive.Config{Interval: time.Hour, Limits: archive.LimitsConfig{Concurrency: 1, MaxThreads: 1, RowGroupRows: 1000, QueryTimeout: time.Minute, QueryTimeoutPerGiB: time.Minute, MaxAttemptBytes: 3000}}
 	config.Logs = archive.SignalConfig{Enabled: true, NamedCollection: "archive", Prefix: "fusescope", BackstopDays: 7, LateMinRows: 2, LateMaxHold: time.Hour}
 
+	settings := factory.NewScopedProviderSettings(instrumentationtest.New().ToProviderSettings(), "implarchive_test")
+	metrics, err := newArchiveMetrics(settings.Meter())
+	require.NoError(t, err)
+
 	return &exportService{
-		settings:       factory.NewScopedProviderSettings(instrumentationtest.New().ToProviderSettings(), "implarchive_test"),
+		settings:       settings,
 		telemetryStore: telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp),
 		store:          store,
 		config:         config,
 		holder:         "a",
 		partitions:     make(map[string]archivetypes.Partition),
-		firstSeen:      make(map[string][]archivetypes.Part),
+		metrics:        metrics,
 	}
 }
 

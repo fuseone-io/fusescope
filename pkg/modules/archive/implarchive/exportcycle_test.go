@@ -35,7 +35,7 @@ func TestJobs(t *testing.T) {
 		expectReplica(second, 1, "ReplicatedMergeTree", "/clickhouse/tables/u/02")
 		expectParts(second, written, "20260903-15-0_1_3_1")
 
-		jobs, _, err := service.jobs(ctx, testLogsTable, map[int][]replica{
+		jobs, _, err := service.jobs(ctx, newTestCycleRun(t, archiveStore), testLogsTable, map[int][]replica{
 			1: {{shard: 1, replica: 1, addr: "ch-1:9000", conn: asConn(first)}},
 			2: {{shard: 2, replica: 1, addr: "ch-2:9000", conn: asConn(second)}},
 		})
@@ -57,7 +57,7 @@ func TestJobs(t *testing.T) {
 		expectColumnsAndVersion(conn, testLogsTable)
 		expectPartition(conn)
 
-		jobs, _, err := service.jobs(ctx, testLogsTable, map[int][]replica{1: {{shard: 1, replica: 1, addr: "ch-1:9000", conn: asConn(conn)}}})
+		jobs, _, err := service.jobs(ctx, newTestCycleRun(t, archiveStore), testLogsTable, map[int][]replica{1: {{shard: 1, replica: 1, addr: "ch-1:9000", conn: asConn(conn)}}})
 		require.NoError(t, err)
 
 		require.Len(t, jobs, 1)
@@ -65,12 +65,13 @@ func TestJobs(t *testing.T) {
 	})
 
 	t.Run("NotReplicatedOnTwoShards_Error", func(t *testing.T) {
-		service := newTestExportService(t, newTestStore(t))
+		archiveStore := newTestStore(t)
+		service := newTestExportService(t, archiveStore)
 		first, second := newMockConn(t), newMockConn(t)
 		expectReplica(first, 1, "MergeTree", "")
 		expectParts(first, written, "20260903-15-0_1_5_1")
 
-		_, _, err := service.jobs(ctx, testLogsTable, map[int][]replica{
+		_, _, err := service.jobs(ctx, newTestCycleRun(t, archiveStore), testLogsTable, map[int][]replica{
 			1: {{shard: 1, replica: 1, addr: "ch-1:9000", conn: asConn(first)}},
 			2: {{shard: 2, replica: 1, addr: "ch-2:9000", conn: asConn(second)}},
 		})
@@ -86,7 +87,7 @@ func TestJobs(t *testing.T) {
 		expectReplica(conn, 1, "ReplicatedMergeTree", "/clickhouse/tables/u/02")
 		expectParts(conn, written, "20260903-15-0_1_5_1")
 
-		_, _, err = service.jobs(ctx, testLogsTable, map[int][]replica{1: {{shard: 1, replica: 1, addr: "ch-1:9000", conn: asConn(conn)}}})
+		_, _, err = service.jobs(ctx, newTestCycleRun(t, archiveStore), testLogsTable, map[int][]replica{1: {{shard: 1, replica: 1, addr: "ch-1:9000", conn: asConn(conn)}}})
 		assert.Error(t, err)
 	})
 }

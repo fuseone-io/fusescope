@@ -16,33 +16,32 @@ const abandonTimeout = 30 * time.Second
 
 // export commits the partition's candidates in attempts of at most max_attempt_bytes, reading
 // its parts again before each, until none is left: an interrupted export resumes from the
-// parts already published. Late parts are only held before the first attempt.
+// parts already published. Late parts are only held before the first attempt. The archived
+// parts are then dropped from the replica that holds them all.
 func (service *exportService) export(ctx context.Context, lease *archivetypes.Lease, job exportJob) error {
 	for first := true; ; first = false {
-		conn, candidates, err := service.candidates(ctx, job, first)
-		if err != nil || len(candidates) == 0 {
-			if err == nil && !first {
-				service.mu.Lock()
-				delete(service.firstSeen, jobKey(job))
-				service.mu.Unlock()
-			}
+		chosen, candidates, err := service.candidates(ctx, job, first)
+		if err != nil || chosen == nil {
 			return err
 		}
+		if len(candidates) == 0 {
+			return service.dropArchived(ctx, job, *chosen)
+		}
 
-		if err := service.exportAttempt(ctx, lease, job, conn, archivetypes.AttemptParts(candidates, service.config.Limits.MaxAttemptBytes)); err != nil {
+		if err := service.exportAttempt(ctx, lease, job, chosen.conn, archivetypes.AttemptParts(candidates, service.config.Limits.MaxAttemptBytes)); err != nil {
 			return err
 		}
 	}
 }
 
-// candidates returns the parts of the partition left to export, and a connection to a replica
-// that holds them all.
-func (service *exportService) candidates(ctx context.Context, job exportJob, holdLate bool) (clickhouse.Conn, []archivetypes.Part, error) {
+// candidates returns the parts of the partition left to export, and a replica that holds them
+// all, nil when none does.
+func (service *exportService) candidates(ctx context.Context, job exportJob, holdLate bool) (*replica, []archivetypes.Part, error) {
 	snapshot, err := service.partitionSnapshot(ctx, job)
 	if err != nil {
 		return nil, nil, err
 	}
-	chosen, ok := archivetypes.ChooseReplica(snapshot)
+	addr, ok := archivetypes.ChooseReplica(snapshot)
 	if !ok {
 		service.settings.Logger().InfoContext(ctx, "no replica holds every part of the partition yet, retrying next cycle", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID))
 		return nil, nil, nil
@@ -52,16 +51,16 @@ func (service *exportService) candidates(ctx context.Context, job exportJob, hol
 	if err != nil {
 		return nil, nil, err
 	}
-	conn := job.replicas[chosen].conn
-	candidates, err := service.countExistingRows(ctx, job.table, conn, archivetypes.SelectForExport(snapshot[chosen], archivetypes.PartsOf(published)))
+	chosen := job.replicas[addr]
+	candidates, err := service.countExistingRows(ctx, job.table, chosen.conn, archivetypes.SelectForExport(snapshot[addr], archivetypes.PartsOf(published)))
 	if err != nil {
 		return nil, nil, err
 	}
 	if holdLate {
-		candidates = service.holdLateParts(job, candidates, len(published) > 0)
+		candidates = service.holdLateParts(archivetypes.InheritFirstSeen(job.inventoried, candidates), len(published) > 0)
 	}
 
-	return conn, candidates, nil
+	return &chosen, candidates, nil
 }
 
 // countExistingRows sets the rows of parts with a lightweight delete to those an export reads
@@ -171,19 +170,10 @@ func (service *exportService) publish(ctx context.Context, lease *archivetypes.L
 }
 
 // holdLateParts returns the candidates to export now. A candidate is first seen when it was
-// written; a merge of held parts keeps the earliest time this backend saw, and after a restart
-// the hold of a merged part counts from the merge.
-func (service *exportService) holdLateParts(job exportJob, candidates []archivetypes.Part, partitionHasPublished bool) []archivetypes.Part {
-	now := time.Now()
-	key := jobKey(job)
-
-	service.mu.Lock()
-	candidates = archivetypes.InheritFirstSeen(service.firstSeen[key], candidates)
-	service.firstSeen[key] = candidates
-	service.mu.Unlock()
-
+// written, or, merged from inventoried parts, when the earliest of them was first seen.
+func (service *exportService) holdLateParts(candidates []archivetypes.Part, partitionHasPublished bool) []archivetypes.Part {
 	hold := archivetypes.LateHold{MinRows: service.config.Logs.LateMinRows, MaxHold: service.config.Logs.LateMaxHold}
-	if !hold.Ready(candidates, partitionHasPublished, now) {
+	if !hold.Ready(candidates, partitionHasPublished, time.Now()) {
 		return nil
 	}
 	return candidates
