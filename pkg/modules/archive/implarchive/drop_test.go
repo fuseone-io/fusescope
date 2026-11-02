@@ -25,6 +25,7 @@ func TestDropArchived(t *testing.T) {
 	}
 	published := []archivetypes.Part{part("20260904-15-0_1_3_1", 1, 3, 1), part("20260904-15-0_4_5_1", 4, 5, 4)}
 	noSuchPart := &clickhouse.Exception{Code: int32(proto.ErrNoSuchDataPart), Message: "no such part"}
+	locked := &clickhouse.Exception{Code: int32(proto.ErrPartIsTemporarilyLocked), Message: "part is locked"}
 
 	testCases := []struct {
 		name        string
@@ -62,6 +63,12 @@ func TestDropArchived(t *testing.T) {
 			name:    "ObjectOfASourcePartChanged_MergeKept",
 			rounds:  [][]archivetypes.Part{{part("20260904-15-0_1_5_2", 1, 5, 1)}},
 			changed: map[string][]any{"20260904-15-0_4_5_1": {"20260904-15-0_4_5_1.parquet", uint64(1024), `"rewritten"`}},
+		},
+		{
+			name:        "PartLocked_SkippedUntilTheNextCycle",
+			rounds:      [][]archivetypes.Part{published},
+			dropErrs:    map[string]error{"20260904-15-0_1_3_1": locked},
+			wantDropped: []string{"20260904-15-0_4_5_1"},
 		},
 		{name: "ReplicaHoldsOtherData_NothingDropped", replicaPath: "/clickhouse/tables/recreated/01", rounds: [][]archivetypes.Part{{}}, wantErr: true},
 	}

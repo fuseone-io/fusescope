@@ -65,15 +65,20 @@ func (service *exportService) dropRound(ctx context.Context, job exportJob, repl
 	return service.dropParts(ctx, job, replica, archivetypes.SelectForDrop(selected, archivetypes.PartsOf(verified)))
 }
 
-// dropParts drops parts in order, skipping a part that merged away.
+// dropParts drops parts in order, skipping a part that merged away or that a merge or
+// mutation holds.
 func (service *exportService) dropParts(ctx context.Context, job exportJob, replica replica, parts []archivetypes.Part) (bool, error) {
 	stale := false
 	var dropped []archivetypes.Part
 	for _, part := range parts {
 		statement := archivetypes.DropPartStatement(job.table, part.Name)
 		err := service.exec(ctx, service.config.Limits.QueryTimeout, queryID(job.pin.ID.StringValue(), "drop"), func(ctx context.Context) error { return replica.conn.Exec(ctx, statement) })
-		if noSuchPart(err) {
+		if hasCode(err, proto.ErrNoSuchDataPart) {
 			stale = true
+			continue
+		}
+		if hasCode(err, proto.ErrPartIsTemporarilyLocked) {
+			service.settings.Logger().InfoContext(ctx, "an archived part is locked by a merge or mutation, dropping it next cycle", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("part", part.Name))
 			continue
 		}
 		if err != nil {
@@ -145,9 +150,9 @@ func (service *exportService) recordDropped(ctx context.Context, job exportJob, 
 	return service.store.MarkPartsDropped(ctx, job.pin, job.partition.ID, archivetypes.RangesOf(dropped), time.Now())
 }
 
-func noSuchPart(err error) bool {
+func hasCode(err error, code proto.Error) bool {
 	var exception *clickhouse.Exception
-	return errors.As(err, &exception) && proto.Error(exception.Code) == proto.ErrNoSuchDataPart
+	return errors.As(err, &exception) && proto.Error(exception.Code) == code
 }
 
 func listObjects(ctx context.Context, conn clickhouse.Conn, namedCollection string, dir string) ([]archivetypes.ObjectStat, error) {
