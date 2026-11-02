@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 
 import { expect, test } from '../../fixtures/auth';
-import { authToken } from '../../helpers/common';
+import { authToken, seederUrl } from '../../helpers/common';
 import { deleteRumApplication } from '../../helpers/rum';
 
 const APPLICATIONS = '/api/v1/rum/applications';
@@ -27,9 +27,9 @@ test('TC-01 Android mappings and error details use Android labels and device dat
 			allowedPackageNames: ['com.example.shop'],
 		},
 	});
-	expect(created.ok()).toBeTruthy();
+	await expect(created).toBeOK();
 	const { data: app } = (await created.json()) as {
-		data: { id: string; key: { key: string } };
+		data: { id: string };
 	};
 	try {
 		const uploaded = await page.request.post(
@@ -39,7 +39,7 @@ test('TC-01 Android mappings and error details use Android labels and device dat
 				data: readFileSync(path.join(R8_FIXTURES, 'mapping.txt'), 'utf8'),
 			},
 		);
-		expect(uploaded.ok()).toBeTruthy();
+		await expect(uploaded).toBeOK();
 
 		await page.goto(`/frontend/applications/${app.id}?relativeTime=1h`);
 		await page.getByTestId('rum-overview-settings').click();
@@ -75,6 +75,8 @@ test('TC-01 Android mappings and error details use Android labels and device dat
 			'fusescope.rum.error.source': 'crash',
 		};
 		const resources = {
+			'fusescope.rum.application.id': app.id,
+			'fusescope.rum.platform': 'android',
 			'app.package.name': 'com.example.shop',
 			'service.name': 'android-copy',
 			'service.version': '1.8.0',
@@ -83,37 +85,18 @@ test('TC-01 Android mappings and error details use Android labels and device dat
 			'device.manufacturer': 'Google',
 			'device.model.name': 'Pixel 8',
 		};
-		const ingested = await page.request.post('/rum/v1/logs', {
-			headers: { 'FuseScope-RUM-Key': app.key.key },
-			data: {
-				resourceLogs: [
-					{
-						resource: {
-							attributes: Object.entries(resources).map(([key, value]) => ({
-								key,
-								value: { stringValue: value },
-							})),
-						},
-						scopeLogs: [
-							{
-								logRecords: [
-									{
-										timeUnixNano: String(BigInt(Date.now() - 60_000) * 1_000_000n),
-										severityText: 'ERROR',
-										body: { stringValue: 'Cart is empty' },
-										attributes: Object.entries(attributes).map(([key, value]) => ({
-											key,
-											value: { stringValue: value },
-										})),
-									},
-								],
-							},
-						],
-					},
-				],
-			},
+		const ingested = await page.request.post(`${seederUrl()}/telemetry/logs`, {
+			data: [
+				{
+					timestamp: new Date(Date.now() - 60_000).toISOString(),
+					body: 'Cart is empty',
+					severity_text: 'ERROR',
+					resources,
+					attributes,
+				},
+			],
 		});
-		expect(ingested.ok()).toBeTruthy();
+		await expect(ingested).toBeOK();
 		await expect
 			.poll(async () => {
 				const response = await page.request.get(
