@@ -42,8 +42,8 @@ func TestRestore(t *testing.T) {
 		{
 			name: "LoadsInBlockOrderAfterChecks",
 			expect: func(mock cmock.ClickConnMockCommon, published map[string]*archivetypes.Publication) {
-				expectChecks(mock, published, "logs_v2", "etag", "sha")
-				expectChecks(mock, published, "logs_v2_resource", "etag", "sha")
+				expectChecks(mock, published, "logs_v2", "sha")
+				expectChecks(mock, published, "logs_v2_resource", "sha")
 				expectLiveSchemas(mock)
 				for _, table := range []string{"`rehydrated_logs_v2` ON CLUSTER `cluster` (", "`rehydrated_distributed_logs_v2` ON CLUSTER `cluster` AS", "`rehydrated_logs_v2_resource` ON CLUSTER `cluster` (", "`rehydrated_distributed_logs_v2_resource` ON CLUSTER `cluster` AS"} {
 					mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS `signoz_logs`." + table))
@@ -68,8 +68,8 @@ func TestRestore(t *testing.T) {
 		{
 			name: "ObjectReplacedDuringLoad_CorruptAndRowsDropped",
 			expect: func(mock cmock.ClickConnMockCommon, published map[string]*archivetypes.Publication) {
-				expectChecks(mock, published, "logs_v2", "etag", "sha")
-				expectChecks(mock, published, "logs_v2_resource", "etag", "sha")
+				expectChecks(mock, published, "logs_v2", "sha")
+				expectChecks(mock, published, "logs_v2_resource", "sha")
 				expectLiveSchemas(mock)
 				for _, table := range []string{"rehydrated_logs_v2", "rehydrated_distributed_logs_v2", "rehydrated_logs_v2_resource", "rehydrated_distributed_logs_v2_resource"} {
 					mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS `signoz_logs`.`" + table + "`"))
@@ -93,7 +93,7 @@ func TestRestore(t *testing.T) {
 		{
 			name: "ManifestEdited_CorruptAndRetriedRowsDropped",
 			expect: func(mock cmock.ClickConnMockCommon, published map[string]*archivetypes.Publication) {
-				expectChecks(mock, published, "logs_v2", "etag", "edited")
+				expectChecks(mock, published, "logs_v2", "edited")
 				expectDropPartitions(mock)
 			},
 			status: archivetypes.RehydrationStatusFailed,
@@ -210,14 +210,14 @@ func publishTestTable(t *testing.T, store archivetypes.Store, lease *archivetype
 
 // expectChecks expects the object checks of table's parts in block order, its manifest
 // checked once after the first. A manifest sum other than "sha" ends the checks there.
-func expectChecks(mock cmock.ClickConnMockCommon, published map[string]*archivetypes.Publication, table string, etag string, sum string) {
+func expectChecks(mock cmock.ClickConnMockCommon, published map[string]*archivetypes.Publication, table string, sum string) {
 	publication := published[table]
 	objects := publication.Objects
 	if table == "logs_v2" {
 		objects = []*archivetypes.Object{objects[1], objects[0]}
 	}
 	for i, object := range objects {
-		mock.ExpectQueryRow(regexp.QuoteMeta("SELECT toInt64(ifNull(_size, 0)), toString(_etag) FROM s3(`archive`, filename = '" + object.ObjectKey + "', format = 'One')")).WillReturnRow(cmock.NewRow(sizeEtagColumns(), []any{int64(1024), `"` + etag + `"`}))
+		mock.ExpectQueryRow(regexp.QuoteMeta("SELECT toInt64(ifNull(_size, 0)), toString(_etag) FROM s3(`archive`, filename = '" + object.ObjectKey + "', format = 'One')")).WillReturnRow(cmock.NewRow(sizeEtagColumns(), []any{int64(1024), `"etag"`}))
 		if i == 0 {
 			mock.ExpectQueryRow(regexp.QuoteMeta("SELECT lower(hex(SHA256(raw))) FROM s3(`archive`, filename = '" + publication.Attempt.ManifestKey + "', format = 'RawBLOB'")).WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "sum", Type: "String"}}, []any{sum}))
 			if sum != "sha" {
