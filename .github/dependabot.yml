@@ -61,7 +61,10 @@ updates:
           - patch
 
   - package-ecosystem: docker
-    directory: /cmd/community
+    directories:
+      - /cmd/community
+      - /tests
+      - /deploy/demo/rum-sample
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
@@ -81,4 +84,8 @@ updates:
           - version-update:semver-major
       - dependency-name: node
         update-types:
+          - version-update:semver-major
+      - dependency-name: python
+        update-types:
+          - version-update:semver-minor
           - version-update:semver-major
