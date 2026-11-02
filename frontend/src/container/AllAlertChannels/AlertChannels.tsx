@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
+import ConfigListState from 'components/Alerts/ConfigSectionHeader/ConfigListState';
 import { Button } from 'components/ui/button';
 import {
 	Table,
@@ -17,7 +18,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { Channels } from 'types/api/channels/getAll';
-import { Pencil } from 'lucide-react';
+import { Pencil, Send } from 'lucide-react';
 
 import Delete from './Delete';
 
@@ -71,14 +72,13 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 					</TableRow>
 				))}
 				{allChannels.length === 0 && (
-					<TableRow>
-						<TableCell
-							colSpan={action ? 3 : 2}
-							className="tw:h-24 tw:text-center tw:text-muted-foreground"
-						>
-							No notification channels yet
-						</TableCell>
-					</TableRow>
+					<ConfigListState
+						colSpan={action ? 3 : 2}
+						icon={<Send />}
+						title="No notification channels yet"
+						description="Add a channel such as Slack, email or a webhook to receive alert notifications."
+						testId="alert-channels-empty"
+					/>
 				)}
 			</TableBody>
 		</Table>

@@ -157,7 +157,6 @@ export function PlannedDowntime(): JSX.Element {
 				}}
 				setEditMode={setEditMode}
 				searchValue={searchValue}
-				onCreate={openCreateForm}
 			/>
 			{isOpen && (
 				<PlannedDowntimeForm

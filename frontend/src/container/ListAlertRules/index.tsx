@@ -13,7 +13,6 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import AlertsHeaderActions from 'pages/AlertList/components/AlertsHeaderActions';
 import { Plus } from 'lucide-react';
 
 import TextToolTip from 'components/TextToolTip';
@@ -133,18 +132,6 @@ function ListAlertRules(): JSX.Element {
 
 	return (
 		<div className={styles.container}>
-			{!isEmptyNoRules && addNewAlert && (
-				<AlertsHeaderActions>
-					<Button
-						className="fs-ui tw:font-sans"
-						onClick={handleNewAlert}
-						data-testid="list-alerts-new-alert-button"
-					>
-						<Plus aria-hidden="true" />
-						New Alert
-					</Button>
-				</AlertsHeaderActions>
-			)}
 			{!isEmptyNoRules && (
 				<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
 					<ToolbarSearch
@@ -161,6 +148,16 @@ function ListAlertRules(): JSX.Element {
 						/>
 						<ColumnSelector columns={columns} storageKey="alert-rules-columns" />
 					</div>
+					{addNewAlert && (
+						<Button
+							className="fs-ui tw:ml-auto tw:font-sans"
+							onClick={handleNewAlert}
+							data-testid="list-alerts-new-alert-button"
+						>
+							<Plus aria-hidden="true" />
+							New Alert
+						</Button>
+					)}
 				</div>
 			)}
 

@@ -53,6 +53,7 @@ const ROUTES_WITH_HEADER_ACTIONS_ONLY = [
 	ROUTES.LOGS_EXPLORER,
 	ROUTES.LOGS_PIPELINES,
 	ROUTES.LOGS_SAVE_VIEWS,
+	ROUTES.LIST_ALL_ALERT,
 ];
 
 export function showsHeaderActionsOnly(pathname: string): boolean {

@@ -3,7 +3,6 @@ import { Tooltip } from 'antd';
 import ToolbarSearch from 'components/Alerts/ToolbarSearch/ToolbarSearch';
 import { Button } from 'components/ui/button';
 import { BookOpen, Plus } from 'lucide-react';
-import AlertsHeaderActions from 'pages/AlertList/components/AlertsHeaderActions';
 
 interface ConfigSectionHeaderProps {
 	title: string;
@@ -19,10 +18,7 @@ interface ConfigSectionHeaderProps {
 	docsUrl?: string;
 }
 
-/**
- * Title, description and search of a configuration list; its create button
- * goes to the Alerts header band.
- */
+/** Title, description, search and create button of a configuration list. */
 function ConfigSectionHeader({
 	title,
 	subtitle,
@@ -37,16 +33,6 @@ function ConfigSectionHeader({
 }: ConfigSectionHeaderProps): JSX.Element {
 	return (
 		<div className="fs-ui tw:flex tw:flex-col tw:gap-3 tw:font-sans">
-			<AlertsHeaderActions>
-				<Tooltip title={actionTooltip || undefined}>
-					<span>
-						<Button onClick={onAction} disabled={actionDisabled}>
-							<Plus aria-hidden="true" />
-							{actionLabel}
-						</Button>
-					</span>
-				</Tooltip>
-			</AlertsHeaderActions>
 			<div>
 				<h2 className="tw:m-0 tw:text-base tw:font-semibold tw:text-foreground">
 					{title}
@@ -60,14 +46,24 @@ function ConfigSectionHeader({
 					onChange={onSearch}
 					className="tw:max-w-[480px]"
 				/>
-				{docsUrl && (
-					<Button variant="ghost" size="sm" asChild>
-						<a href={docsUrl} target="_blank" rel="noopener noreferrer">
-							<BookOpen aria-hidden="true" />
-							Docs
-						</a>
-					</Button>
-				)}
+				<div className="tw:flex tw:items-center tw:gap-2">
+					{docsUrl && (
+						<Button variant="ghost" size="sm" asChild>
+							<a href={docsUrl} target="_blank" rel="noopener noreferrer">
+								<BookOpen aria-hidden="true" />
+								Docs
+							</a>
+						</Button>
+					)}
+					<Tooltip title={actionTooltip || undefined}>
+						<span>
+							<Button onClick={onAction} disabled={actionDisabled}>
+								<Plus aria-hidden="true" />
+								{actionLabel}
+							</Button>
+						</span>
+					</Tooltip>
+				</div>
 			</div>
 		</div>
 	);
