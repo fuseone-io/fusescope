@@ -112,6 +112,10 @@ describe('SourceMapsTab', () => {
 				'/api/v1/rum/applications/app-web-shop/mappings?release=1.8.0&map_id=$R8_MAP_ID',
 			),
 		);
+		expect(screen.getByTestId('rum-mappings-api')).toHaveTextContent(
+			"R8_MAP_ID=$(sed -n 's/^# pg_map_id: //p' app/build/outputs/mapping/release/mapping.txt)",
+		);
+		expect(screen.queryByText(/Set R8_MAP_ID/)).not.toBeInTheDocument();
 		const [latest] = await screen.findAllByTestId('rum-sourcemaps-release');
 		await user.click(within(latest).getByTestId('rum-sourcemaps-expand'));
 		const files = within(latest).getByTestId('rum-sourcemaps-files');
@@ -119,6 +123,7 @@ describe('SourceMapsTab', () => {
 		expect(files).toHaveTextContent('R8 map ID');
 		expect(files).not.toHaveTextContent('Matches bundle URL');
 		expect(files).toHaveTextContent('pg_map_id');
+		expect(files).toHaveTextContent('without a matching map ID');
 		const [mapping] = await within(files).findAllByTestId('rum-sourcemaps-file');
 		expect(mapping).toHaveTextContent('/mapping-7e4c1a9.txt');
 		expect(mapping).toHaveTextContent('7e4c1a9');

@@ -58,8 +58,8 @@ function MappingUploadInstructions({
 				<>
 					<span className={HINT}>
 						The raw <span className={MONO}>{MAPPING_FILE}</span> as the body, gzip
-						allowed. Set R8_MAP_ID to its pg_map_id header, or leave it empty if
-						absent. Uploading the same release and map ID replaces that mapping.
+						allowed. The map ID is read from the file’s pg_map_id header when present.
+						Uploading the same release and map ID replaces that mapping.
 					</span>
 					<SnippetBlock
 						code={mappingCurlSnippet(target)}

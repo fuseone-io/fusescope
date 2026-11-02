@@ -67,7 +67,7 @@ function ErrorDetailBody({
 				alertUrl={alertUrl}
 				sessionUrl={event ? sessionUrl(event.sessionId) : undefined}
 			/>
-			<ErrorKpis group={group} totalSessions={totalSessions} jvm={jvm} />
+			<ErrorKpis group={group} totalSessions={totalSessions} android={jvm} />
 			{event ? (
 				<>
 					<div className="tw:flex tw:flex-wrap tw:items-stretch">
