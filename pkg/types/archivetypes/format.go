@@ -62,7 +62,7 @@ func NewColumnMappings(columns []Column) ([]ColumnMapping, error) {
 		}
 
 		mapping := ColumnMapping{Name: column.Name, SourceType: column.Type, ExportType: exportType, UnixNano: isNanosecondTimestamp(column.Type)}
-		if containsType(column.Type, "UInt64") {
+		if exportsUInt64AsInt64(column.Type) {
 			mapping.UInt64Rule = UInt64RuleBits
 		}
 		if mapping.UnixNano && names[column.Name+unixNanoSuffix] {
@@ -151,19 +151,20 @@ func isNanosecondTimestamp(source string) bool {
 	return err == nil && name == "DateTime64" && len(args) > 0 && args[0] == "9"
 }
 
-// containsType reports whether source is the type name or nests it.
-func containsType(source string, name string) bool {
-	typeName, args, err := parseType(source)
+// exportsUInt64AsInt64 reports whether source holds a UInt64 that ExportType keeps as an
+// Int64, not inside a type exported as String.
+func exportsUInt64AsInt64(source string) bool {
+	name, args, err := parseType(source)
 	if err != nil {
 		return false
 	}
-	if typeName == name {
+	switch name {
+	case "UInt64":
 		return true
+	case "LowCardinality", "Nullable", "Array", "Map":
+		return slices.ContainsFunc(args, exportsUInt64AsInt64)
 	}
-	if typeName == "Enum8" || typeName == "Enum16" || typeName == "DateTime64" || typeName == "FixedString" || typeName == "Decimal" {
-		return false
-	}
-	return slices.ContainsFunc(args, func(arg string) bool { return containsType(arg, name) })
+	return false
 }
 
 // parseType splits a ClickHouse type into its name and top-level arguments, keeping quoted

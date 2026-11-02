@@ -78,6 +78,8 @@ func TestNewColumnMappings(t *testing.T) {
 		{Name: "events", Type: "Array(Map(LowCardinality(String), UInt64))"},
 		{Name: "odd`name", Type: "String"},
 		{Name: "payload", Type: "Dynamic"},
+		{Name: "choice", Type: "Variant(String, UInt64)"},
+		{Name: "choices", Type: "Array(Variant(String, UInt64))"},
 	})
 	require.NoError(t, err)
 
@@ -91,6 +93,8 @@ func TestNewColumnMappings(t *testing.T) {
 		{Name: "events", SourceType: "Array(Map(LowCardinality(String), UInt64))", ExportType: "Array(Map(String, Int64))", UInt64Rule: UInt64RuleBits},
 		{Name: "odd`name", SourceType: "String", ExportType: "String"},
 		{Name: "payload", SourceType: "Dynamic", ExportType: "String"},
+		{Name: "choice", SourceType: "Variant(String, UInt64)", ExportType: "String"},
+		{Name: "choices", SourceType: "Array(Variant(String, UInt64))", ExportType: "Array(String)"},
 	}, mappings)
 
 	assert.Equal(t, []string{
@@ -105,6 +109,8 @@ func TestNewColumnMappings(t *testing.T) {
 		"CAST(`events`, 'Array(Map(String, Int64))') AS `events`",
 		"`odd\\`name`",
 		"CAST(`payload`, 'String') AS `payload`",
+		"CAST(`choice`, 'String') AS `choice`",
+		"CAST(`choices`, 'Array(String)') AS `choices`",
 		"toInt32(2) AS `_shard`",
 		"_part AS `_part`",
 	}, ExportExpressions(mappings, 2))
