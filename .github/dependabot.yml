@@ -6,12 +6,44 @@ updates:
       - /scripts/promqltestcorpus
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 8
     commit-message:
       prefix: build
       include: scope
+    # A dependency joins the first group that matches it.
     groups:
+      gomod-otel:
+        patterns:
+          - go.opentelemetry.io/*
+          - github.com/open-telemetry/*
+        update-types:
+          - minor
+          - patch
+      gomod-prometheus:
+        patterns:
+          - github.com/prometheus/*
+          - github.com/prometheus-community/*
+        update-types:
+          - minor
+          - patch
+      gomod-storage:
+        patterns:
+          - github.com/ClickHouse/*
+          - github.com/uptrace/bun*
+          - github.com/jackc/*
+          - modernc.org/sqlite
+        update-types:
+          - minor
+          - patch
+      gomod-openfga:
+        patterns:
+          - github.com/openfga/*
+        update-types:
+          - minor
+          - patch
       gomod-minor-patch:
+        patterns:
+          - "*"
         update-types:
           - minor
           - patch
