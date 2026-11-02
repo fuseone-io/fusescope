@@ -22,6 +22,7 @@ services:
     container_name: clickhouse
     volumes:
       - ./fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
+      - ./fs/etc/clickhouse-server/config.d/system-logs.xml:/etc/clickhouse-server/config.d/system-logs.xml
       - ./fs/etc/clickhouse-server/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml
       - clickhouse-data:/var/lib/clickhouse/
       - clickhouse-user-scripts:/var/lib/clickhouse/user_scripts/
@@ -43,29 +44,11 @@ services:
     depends_on:
       init-clickhouse:
         condition: service_completed_successfully
-      zookeeper:
-        condition: service_healthy
     environment:
       - CLICKHOUSE_SKIP_USER_SETUP=1
     networks:
       - default
       - signoz-devenv
-  zookeeper:
-    image: signoz/zookeeper:3.7.1
-    container_name: zookeeper
-    volumes:
-      - zookeeper-data:/bitnami/zookeeper
-    ports:
-      - "127.0.0.1:2181:2181"
-    environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - curl -s -m 2 http://localhost:8080/commands/ruok | grep error | grep null
-      interval: 30s
-      timeout: 5s
-      retries: 3
   telemetrystore-migrator:
     image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
     container_name: telemetrystore-migrator
@@ -97,4 +80,3 @@ networks:
 volumes:
   clickhouse-data:
   clickhouse-user-scripts:
-  zookeeper-data:
