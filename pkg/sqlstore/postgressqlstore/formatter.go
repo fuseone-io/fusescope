@@ -8,11 +8,11 @@ import (
 )
 
 type formatter struct {
-	bunf schema.Formatter
+	bunf schema.QueryGen
 }
 
 func newFormatter(dialect schema.Dialect) sqlstore.SQLFormatter {
-	return &formatter{bunf: schema.NewFormatter(dialect)}
+	return &formatter{bunf: schema.NewQueryGen(dialect)}
 }
 
 func (f *formatter) JSONExtractString(column, path string) []byte {
@@ -35,7 +35,7 @@ func (f *formatter) JSONIsArray(column, path string) []byte {
 	var sql []byte
 	sql = append(sql, f.JSONType(column, path)...)
 	sql = append(sql, " = "...)
-	sql = schema.Append(f.bunf, sql, "array")
+	sql = f.bunf.Append(sql, "array")
 	return sql
 }
 
@@ -66,7 +66,7 @@ func (f *formatter) JSONArrayLiteral(values ...string) []byte {
 		if idx > 0 {
 			sql = append(sql, ", "...)
 		}
-		sql = schema.Append(f.bunf, sql, value)
+		sql = f.bunf.Append(sql, value)
 	}
 	sql = append(sql, ')')
 	return sql
@@ -116,7 +116,7 @@ func (f *formatter) extractPath(function, column string, segments []string) []by
 	sql = append(sql, f.TextToJsonColumn(column)...)
 	for _, segment := range segments {
 		sql = append(sql, ", "...)
-		sql = schema.Append(f.bunf, sql, segment)
+		sql = f.bunf.Append(sql, segment)
 	}
 	sql = append(sql, ')')
 	return sql

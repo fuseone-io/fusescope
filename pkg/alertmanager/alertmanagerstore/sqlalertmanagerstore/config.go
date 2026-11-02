@@ -192,8 +192,8 @@ func (store *config) ListChannels(ctx context.Context, orgID string, params *ale
 
 	q = q.
 		OrderExpr(params.Sort.ToColumn() + " " + strings.ToUpper(params.Order.StringValue())).
-		Limit(params.Limit).
-		Offset(params.Offset)
+		Limit(int64(params.Limit)).
+		Offset(int64(params.Offset))
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, 0, err

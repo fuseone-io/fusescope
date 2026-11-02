@@ -20,7 +20,7 @@ type Provider struct {
 
 func New(tables map[string]*sqlschema.Table, uniqueConstraints map[string][]*sqlschema.UniqueConstraint, indices map[string]sqlschema.Index) *Provider {
 	return &Provider{
-		Fmter:             sqlschema.NewFormatter(schema.NewNopFormatter().Dialect()),
+		Fmter:             sqlschema.NewFormatter(schema.NewNopQueryGen().Dialect()),
 		Tables:            tables,
 		UniqueConstraints: uniqueConstraints,
 		Indices:           indices,

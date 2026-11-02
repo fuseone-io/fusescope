@@ -47,7 +47,7 @@ func (r *Repo) GetConfigHistory(
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
 		OrderExpr("acv.created_at DESC, acv.version DESC").
-		Limit(limit).
+		Limit(int64(limit)).
 		Scan(ctx)
 
 	if err != nil {

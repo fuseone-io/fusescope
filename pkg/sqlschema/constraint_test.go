@@ -34,7 +34,7 @@ func TestPrimaryKeyConstraintToDefinitionSQL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := Formatter{schema.NewNopFormatter()}
+			fmter := Formatter{schema.NewNopQueryGen()}
 			sql := testCase.constraint.ToDefinitionSQL(fmter, testCase.tableName)
 
 			assert.Equal(t, testCase.sql, string(sql))
@@ -63,7 +63,7 @@ func TestForeignKeyConstraintToDefinitionSQL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := Formatter{schema.NewNopFormatter()}
+			fmter := Formatter{schema.NewNopQueryGen()}
 			sql := testCase.constraint.ToDefinitionSQL(fmter, testCase.tableName)
 
 			assert.Equal(t, testCase.sql, string(sql))

@@ -179,7 +179,7 @@ func TestIndexToCreateSQL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := Formatter{schema.NewNopFormatter()}
+			fmter := Formatter{schema.NewNopQueryGen()}
 			sql := testCase.index.ToCreateSQL(fmter)
 
 			assert.Equal(t, testCase.sql, string(sql))

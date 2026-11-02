@@ -121,7 +121,7 @@ func TestTableToCreateSQL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := Formatter{schema.NewNopFormatter()}
+			fmter := Formatter{schema.NewNopQueryGen()}
 			sql := testCase.table.ToCreateSQL(fmter)
 
 			assert.Equal(t, testCase.sql, string(sql))
@@ -166,7 +166,7 @@ func TestTableToCreateTempInsertDropAlterSQL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fmter := Formatter{schema.NewNopFormatter()}
+			fmter := Formatter{schema.NewNopQueryGen()}
 			sqls := testCase.table.ToCreateTempInsertDropAlterSQL(fmter)
 
 			for i, sql := range sqls {

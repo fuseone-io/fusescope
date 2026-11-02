@@ -83,7 +83,7 @@ func (store *store) CountApplications(ctx context.Context) (int, error) {
 	if err != nil {
 		return 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to count rum applications")
 	}
-	return count, nil
+	return int(count), nil
 }
 
 func (store *store) ListApplicationsInAllOrgs(ctx context.Context) ([]*rumtypes.StorableApplication, error) {

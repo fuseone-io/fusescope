@@ -1849,7 +1849,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 		Where("org_id = ?", orgID).
 		Group("transaction_id").
 		OrderExpr("MAX(created_at) DESC").
-		Limit(numberOfTransactionsStore).
+		Limit(int64(numberOfTransactionsStore)).
 		Scan(ctx, &limitTransactions)
 
 	if err != nil {

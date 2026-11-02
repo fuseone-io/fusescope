@@ -10,11 +10,11 @@ import (
 var _ SQLFormatter = (*Formatter)(nil)
 
 type Formatter struct {
-	bunf schema.Formatter
+	bunf schema.QueryGen
 }
 
 func NewFormatter(dialect schema.Dialect) Formatter {
-	return Formatter{bunf: schema.NewFormatter(dialect)}
+	return Formatter{bunf: schema.NewQueryGen(dialect)}
 }
 
 func (formatter Formatter) SQLDataTypeOf(dataType DataType) string {
@@ -49,5 +49,5 @@ func (formatter Formatter) AppendIdent(b []byte, ident string) []byte {
 }
 
 func (formatter Formatter) AppendValue(b []byte, v any) []byte {
-	return schema.Append(formatter.bunf, b, v)
+	return formatter.bunf.Append(b, v)
 }
