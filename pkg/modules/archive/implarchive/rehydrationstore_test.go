@@ -107,10 +107,12 @@ func TestListRestorableParts(t *testing.T) {
 	forEachStore(t, func(t *testing.T, store archivetypes.Store) {
 		lease := acquireTestLease(t, store)
 		publication := newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3}, archivetypes.BlockRange{Min: 4, Max: 5})
-		require.NoError(t, store.Publish(ctx, lease, publication))
+		_, err := store.Publish(ctx, lease, publication)
+		require.NoError(t, err)
 		merged := newTestPublication(t, store, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 5})
-		require.NoError(t, store.Publish(ctx, lease, merged))
-		require.NoError(t, store.CreateAttempt(ctx, archivetypes.NewExportAttempt(lease, "logs_v2", 1, "20260903-15-0", "archive", "fusescope")))
+		_, err = store.Publish(ctx, lease, merged)
+		require.NoError(t, err)
+		require.NoError(t, store.CreateAttempt(ctx, archivetypes.NewExportAttempt(lease, testShardPin(t, store), "20260903-15-0", "archive", "fusescope")))
 
 		parts, err := store.ListRestorableParts(ctx, "logs_v2", "2026-09-03")
 		require.NoError(t, err)

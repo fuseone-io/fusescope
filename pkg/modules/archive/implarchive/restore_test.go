@@ -188,7 +188,9 @@ func publishTestTable(t *testing.T, store archivetypes.Store, lease *archivetype
 	t.Helper()
 	ctx := context.Background()
 
-	attempt := archivetypes.NewExportAttempt(lease, table, 1, "20260903-15-0", "archive", "fusescope")
+	pin, err := store.PinShard(ctx, table, 1, "/clickhouse/tables/"+table+"/01")
+	require.NoError(t, err)
+	attempt := archivetypes.NewExportAttempt(lease, pin, "20260903-15-0", "archive", "fusescope")
 	require.NoError(t, store.CreateAttempt(ctx, attempt))
 	location := archivetypes.ObjectLocation{Prefix: "fusescope", Table: table, Day: time.Date(2026, 9, 3, 0, 0, 0, 0, time.UTC), Shard: 1, PartitionID: "20260903-15-0", AttemptID: attempt.ID.StringValue()}
 	mapping := archivetypes.ColumnMapping{Name: column, SourceType: "String", ExportType: "String"}
@@ -204,7 +206,8 @@ func publishTestTable(t *testing.T, store archivetypes.Store, lease *archivetype
 		publication.Objects = append(publication.Objects, object)
 		publication.Parts = append(publication.Parts, archivetypes.NewArchivedPart(attempt, object, part))
 	}
-	require.NoError(t, store.Publish(ctx, lease, publication))
+	_, err = store.Publish(ctx, lease, publication)
+	require.NoError(t, err)
 	return publication
 }
 
