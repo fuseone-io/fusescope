@@ -654,8 +654,15 @@ archive:
   interval: 1h
   # Applied to every export and restore query.
   limits:
-    # Archive queries running at once, across the cycle.
+    # Partitions exported at once, across every shard and table of the cycle,
+    # each running one query at a time on one replica of its shard. Set it to
+    # about the number of shards so every shard exports at once; each adds one
+    # export query's memory and threads on a replica.
     concurrency: 1
+    # Bytes on disk of the parts an attempt exports before it commits: a larger
+    # partition is published over several attempts, and an interrupted export
+    # resumes from what is published. A larger part is exported alone.
+    max_attempt_bytes: 4294967296
     # Per query, in bytes. 0 leaves the server default.
     max_memory_usage: 2147483648
     # Per query; also max_insert_threads on restore.

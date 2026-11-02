@@ -152,6 +152,7 @@ func TestExport(t *testing.T) {
 	part := archivetypes.Part{Name: "20260903-15-0_1_5_1", Range: archivetypes.BlockRange{Min: 1, Max: 5}, DataVersion: 1, Rows: 10, BytesOnDisk: 2048}
 	merged := archivetypes.Part{Name: "20260903-15-0_1_6_2", Range: archivetypes.BlockRange{Min: 1, Max: 6}, DataVersion: 1, Rows: 12, BytesOnDisk: 2048}
 	behind := archivetypes.Part{Name: "20260903-15-0_1_3_0", Range: archivetypes.BlockRange{Min: 1, Max: 3}, DataVersion: 1, Rows: 6, BytesOnDisk: 2048}
+	next := archivetypes.Part{Name: "20260903-15-0_6_8_1", Range: archivetypes.BlockRange{Min: 6, Max: 8}, DataVersion: 6, Rows: 7, BytesOnDisk: 2048}
 	readBackOf := func(part archivetypes.Part, rows uint64) [][]any {
 		return [][]any{{part.Name + ".parquet", uint64(1024), `"etag"`, rows, []string{part.Name}}}
 	}
@@ -160,14 +161,16 @@ func TestExport(t *testing.T) {
 		name          string
 		replicaParts  [][]archivetypes.Part
 		exportedBy    int
-		readBack      [][]any
+		readBacks     [][][]any
 		wantErr       bool
 		wantPublished []string
 	}{
-		{name: "EveryRowReadBack_Published", replicaParts: [][]archivetypes.Part{{part}}, readBack: readBackOf(part, 10), wantPublished: []string{part.Name}},
-		{name: "RowsMissing_Abandoned", replicaParts: [][]archivetypes.Part{{part}}, readBack: readBackOf(part, 9), wantErr: true},
-		{name: "MergedSinceTheCycleStarted_MergedPartExported", replicaParts: [][]archivetypes.Part{{merged}}, readBack: readBackOf(merged, 12), wantPublished: []string{merged.Name}},
-		{name: "ReplicaFallenBehind_OtherReplicaExports", replicaParts: [][]archivetypes.Part{{behind}, {part}}, exportedBy: 1, readBack: readBackOf(part, 10), wantPublished: []string{part.Name}},
+		{name: "EveryRowReadBack_Published", replicaParts: [][]archivetypes.Part{{part}}, readBacks: [][][]any{readBackOf(part, 10)}, wantPublished: []string{part.Name}},
+		{name: "RowsMissing_Abandoned", replicaParts: [][]archivetypes.Part{{part}}, readBacks: [][][]any{readBackOf(part, 9)}, wantErr: true, wantPublished: []string{}},
+		{name: "MergedSinceTheCycleStarted_MergedPartExported", replicaParts: [][]archivetypes.Part{{merged}}, readBacks: [][][]any{readBackOf(merged, 12)}, wantPublished: []string{merged.Name}},
+		{name: "ReplicaFallenBehind_OtherReplicaExports", replicaParts: [][]archivetypes.Part{{behind}, {part}}, exportedBy: 1, readBacks: [][][]any{readBackOf(part, 10)}, wantPublished: []string{part.Name}},
+		{name: "PartsOverTheByteCap_OneCommitEach", replicaParts: [][]archivetypes.Part{{part, next}}, readBacks: [][][]any{readBackOf(part, 10), readBackOf(next, 7)}, wantPublished: []string{part.Name, next.Name}},
+		{name: "SecondAttemptFails_FirstStaysPublished", replicaParts: [][]archivetypes.Part{{part, next}}, readBacks: [][][]any{readBackOf(part, 10), readBackOf(next, 6)}, wantErr: true, wantPublished: []string{part.Name}},
 	}
 
 	for _, testCase := range testCases {
@@ -198,10 +201,18 @@ func TestExport(t *testing.T) {
 			}
 
 			exporter := conns[testCase.exportedBy]
-			exporter.ExpectExec("INSERT INTO FUNCTION s3")
-			exporter.ExpectQuery("groupUniqArray").WillReturnRows(cmock.NewRows(statColumns, testCase.readBack))
-			if testCase.wantPublished != nil {
+			for i, readBack := range testCase.readBacks {
+				for range readBack {
+					exporter.ExpectExec("INSERT INTO FUNCTION s3")
+				}
+				exporter.ExpectQuery("groupUniqArray").WillReturnRows(cmock.NewRows(statColumns, readBack))
+				if testCase.wantErr && i == len(testCase.readBacks)-1 {
+					break
+				}
 				exporter.ExpectExec("SELECT raw FROM blob")
+				for i, parts := range testCase.replicaParts {
+					expectPartitionParts(conns[i], job.partition.ID, parts...)
+				}
 			}
 
 			err = service.export(ctx, lease, job)
@@ -210,17 +221,21 @@ func TestExport(t *testing.T) {
 			require.NoError(t, listErr)
 			var attempts []*archivetypes.Attempt
 			require.NoError(t, archiveStore.(*store).sqlstore.BunDB().NewSelect().Model(&attempts).Scan(ctx))
-			require.Len(t, attempts, 1)
+			require.Len(t, attempts, len(testCase.readBacks), "an attempt exports at most max_attempt_bytes")
+			statuses := map[string]int{}
+			for _, attempt := range attempts {
+				statuses[attempt.Status]++
+			}
 
+			assert.Equal(t, testCase.wantPublished, partNames(published), "the parts are read when the job runs, not when the cycle started")
 			if testCase.wantErr {
 				assert.True(t, errors.Asc(err, archivetypes.ErrCodeObjectMismatch), err)
-				assert.Empty(t, published)
-				assert.Equal(t, archivetypes.AttemptStatusAbandoned, attempts[0].Status, "an attempt that read back short is abandoned, its objects orphans")
+				assert.Equal(t, 1, statuses[archivetypes.AttemptStatusAbandoned], "an attempt that read back short is abandoned, its objects orphans")
+				assert.Equal(t, len(testCase.readBacks)-1, statuses[archivetypes.AttemptStatusPublished], "the attempts before it stay published")
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, testCase.wantPublished, partNames(published), "the parts are read when the job runs, not when the cycle started")
-			assert.Equal(t, archivetypes.AttemptStatusPublished, attempts[0].Status)
+			assert.Equal(t, map[string]int{archivetypes.AttemptStatusPublished: len(testCase.readBacks)}, statuses)
 		})
 	}
 }
@@ -247,7 +262,7 @@ func TestHoldLateParts(t *testing.T) {
 func newTestExportService(t *testing.T, store archivetypes.Store) *exportService {
 	t.Helper()
 
-	config := archive.Config{Interval: time.Hour, Limits: archive.LimitsConfig{Concurrency: 1, MaxThreads: 1, RowGroupRows: 1000, QueryTimeout: time.Minute, QueryTimeoutPerGiB: time.Minute}}
+	config := archive.Config{Interval: time.Hour, Limits: archive.LimitsConfig{Concurrency: 1, MaxThreads: 1, RowGroupRows: 1000, QueryTimeout: time.Minute, QueryTimeoutPerGiB: time.Minute, MaxAttemptBytes: 3000}}
 	config.Logs = archive.SignalConfig{Enabled: true, NamedCollection: "archive", Prefix: "fusescope", BackstopDays: 7, LateMinRows: 2, LateMaxHold: time.Hour}
 
 	return &exportService{

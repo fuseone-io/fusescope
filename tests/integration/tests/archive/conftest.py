@@ -18,7 +18,7 @@ def signoz_archive(  # pylint: disable=too-many-arguments,too-many-positional-ar
 ) -> types.SigNoz:
     """
     A second SigNoz on the same stores with the logs archive enabled, a 7-day backstop, a
-    short cycle interval and late parts held until they total two rows.
+    short cycle interval, late parts held until they total two rows and one part per attempt.
     """
     return create_signoz(
         network=network,
@@ -38,5 +38,6 @@ def signoz_archive(  # pylint: disable=too-many-arguments,too-many-positional-ar
             "SIGNOZ_ARCHIVE_LOGS_LATE__MIN__ROWS": "2",
             "SIGNOZ_ARCHIVE_LIMITS_MAX__THREADS": "2",
             "SIGNOZ_ARCHIVE_LIMITS_ROW__GROUP__ROWS": "1000",
+            "SIGNOZ_ARCHIVE_LIMITS_MAX__ATTEMPT__BYTES": "1",
         },
     )

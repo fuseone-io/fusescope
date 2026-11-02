@@ -40,8 +40,15 @@ type Config struct {
 }
 
 type LimitsConfig struct {
-	// Archive queries running at once, across the cycle.
+	// Partitions exported at once, across every shard and table of the cycle, each running
+	// one archive query at a time on one replica of its shard. Around the number of shards
+	// lets each shard export at once.
 	Concurrency int `mapstructure:"concurrency"`
+
+	// Bytes on disk of the parts one attempt exports before it commits, so a large partition
+	// is published over several attempts and an interrupted one resumes where it stopped. A
+	// larger part is exported alone.
+	MaxAttemptBytes uint64 `mapstructure:"max_attempt_bytes"`
 
 	// Per query, in bytes. 0 leaves the server default.
 	MaxMemoryUsage int64 `mapstructure:"max_memory_usage"`
@@ -95,7 +102,7 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		Interval:         time.Hour,
-		Limits:           LimitsConfig{Concurrency: 1, MaxMemoryUsage: 2 << 30, MaxThreads: 4, RowGroupRows: 100_000, QueryTimeout: time.Hour, QueryTimeoutPerGiB: 2 * time.Minute},
+		Limits:           LimitsConfig{Concurrency: 1, MaxAttemptBytes: 4 << 30, MaxMemoryUsage: 2 << 30, MaxThreads: 4, RowGroupRows: 100_000, QueryTimeout: time.Hour, QueryTimeoutPerGiB: 2 * time.Minute},
 		GCSupersededDays: 30,
 		Logs:             newSignalConfig(),
 		Traces:           newSignalConfig(),
@@ -109,6 +116,9 @@ func (c Config) Validate() error {
 	}
 	if c.Limits.Concurrency < 1 || c.Limits.MaxThreads < 1 || c.Limits.RowGroupRows < 1 {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.concurrency, archive.limits.max_threads and archive.limits.row_group_rows must be positive")
+	}
+	if c.Limits.MaxAttemptBytes == 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.max_attempt_bytes must be positive")
 	}
 	if c.Limits.MaxMemoryUsage < 0 {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "archive.limits.max_memory_usage must not be negative")

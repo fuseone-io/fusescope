@@ -77,6 +77,19 @@ func ListIndexesStatement(namedCollection string, prefix string, table string) s
 		clickhousesql.Identifier(namedCollection), clickhousesql.StringLiteral(fmt.Sprintf("%s/%s/index/*.json", strings.TrimSuffix(prefix, "/"), table)))
 }
 
+// AttemptParts returns the leading candidates whose bytes on disk fit in maxBytes, or the
+// first candidate alone when it is larger.
+func AttemptParts(candidates []Part, maxBytes uint64) []Part {
+	var bytes uint64
+	for i, part := range candidates {
+		bytes += part.BytesOnDisk
+		if bytes > maxBytes {
+			return candidates[:max(i, 1)]
+		}
+	}
+	return candidates
+}
+
 // NewPublication pairs each exported part with its object. Every part must have an object
 // holding exactly its rows, and no other object may be under the attempt: a part merged
 // away during the export reads back short.

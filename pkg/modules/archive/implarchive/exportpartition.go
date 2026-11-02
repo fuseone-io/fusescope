@@ -14,33 +14,60 @@ import (
 
 const abandonTimeout = 30 * time.Second
 
+// export commits the partition's candidates in attempts of at most max_attempt_bytes, reading
+// its parts again before each, until none is left: an interrupted export resumes from the
+// parts already published. Late parts are only held before the first attempt.
 func (service *exportService) export(ctx context.Context, lease *archivetypes.Lease, job exportJob) error {
+	for first := true; ; first = false {
+		conn, candidates, err := service.candidates(ctx, job, first)
+		if err != nil || len(candidates) == 0 {
+			if err == nil && !first {
+				service.mu.Lock()
+				delete(service.firstSeen, jobKey(job))
+				service.mu.Unlock()
+			}
+			return err
+		}
+
+		if err := service.exportAttempt(ctx, lease, job, conn, archivetypes.AttemptParts(candidates, service.config.Limits.MaxAttemptBytes)); err != nil {
+			return err
+		}
+	}
+}
+
+// candidates returns the parts of the partition left to export, and a connection to a replica
+// that holds them all.
+func (service *exportService) candidates(ctx context.Context, job exportJob, holdLate bool) (clickhouse.Conn, []archivetypes.Part, error) {
 	snapshot, err := service.partitionSnapshot(ctx, job)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	chosen, ok := archivetypes.ChooseReplica(snapshot)
 	if !ok {
 		service.settings.Logger().InfoContext(ctx, "no replica holds every part of the partition yet, retrying next cycle", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID))
-		return nil
+		return nil, nil, nil
 	}
 
 	published, err := service.store.ListPublishedParts(ctx, job.pin, job.partition.ID)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
-	candidates := service.holdLateParts(job, archivetypes.SelectForExport(snapshot[chosen], archivetypes.PartsOf(published)), len(published) > 0)
-	if len(candidates) == 0 {
-		return nil
+	candidates := archivetypes.SelectForExport(snapshot[chosen], archivetypes.PartsOf(published))
+	if holdLate {
+		candidates = service.holdLateParts(job, candidates, len(published) > 0)
 	}
 
+	return job.replicas[chosen].conn, candidates, nil
+}
+
+func (service *exportService) exportAttempt(ctx context.Context, lease *archivetypes.Lease, job exportJob, conn clickhouse.Conn, parts []archivetypes.Part) error {
 	signalConfig := service.config.Logs
 	attempt := archivetypes.NewExportAttempt(lease, job.pin, job.partition.ID, signalConfig.NamedCollection, signalConfig.Prefix)
 	if err := service.store.CreateAttempt(ctx, attempt); err != nil {
 		return err
 	}
 
-	if err := service.publish(ctx, lease, job, job.replicas[chosen].conn, attempt, candidates); err != nil {
+	if err := service.publish(ctx, lease, job, conn, attempt, parts); err != nil {
 		// The attempt is abandoned even when the cycle is stopping, so its objects are orphans.
 		abandonCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), abandonTimeout)
 		defer cancel()
@@ -50,11 +77,7 @@ func (service *exportService) export(ctx context.Context, lease *archivetypes.Le
 		return err
 	}
 
-	service.mu.Lock()
-	delete(service.firstSeen, jobKey(job))
-	service.mu.Unlock()
-
-	service.settings.Logger().InfoContext(ctx, "archive partition exported", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID), slog.Int("parts", len(candidates)), slog.String("attempt_id", attempt.ID.StringValue()))
+	service.settings.Logger().InfoContext(ctx, "archive parts exported", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID), slog.Int("parts", len(parts)), slog.String("attempt_id", attempt.ID.StringValue()))
 	return nil
 }
 

@@ -121,3 +121,31 @@ func TestNewIndex(t *testing.T) {
 
 	assert.Equal(t, Index{FormatVersion: FormatVersion, Table: "logs_v2", Epoch: 3, Sequence: 12, Objects: []IndexObject{{Key: "a", Rows: 10, Bytes: 1, ETag: "e1"}, {Key: "b", Rows: 20, Bytes: 2, ETag: "e2"}}}, NewIndex("logs_v2", 3, &IndexSnapshot{Sequence: 12, Objects: objects}))
 }
+
+func TestAttemptParts(t *testing.T) {
+	small := Part{Name: "p_1_1_0", BytesOnDisk: 1 << 30}
+	medium := Part{Name: "p_2_2_0", BytesOnDisk: 2 << 30}
+	large := Part{Name: "p_3_3_0", BytesOnDisk: 150 << 30}
+
+	testCases := []struct {
+		name       string
+		candidates []Part
+		want       []string
+	}{
+		{name: "AllBelowTheCap_OneAttempt", candidates: []Part{small, medium}, want: []string{small.Name, medium.Name}},
+		{name: "OverTheCap_StopsBeforeIt", candidates: []Part{medium, small, medium}, want: []string{medium.Name, small.Name}},
+		{name: "PartAboveTheCap_Alone", candidates: []Part{large, small}, want: []string{large.Name}},
+		{name: "PartAboveTheCapAfterOthers_Waits", candidates: []Part{small, large}, want: []string{small.Name}},
+		{name: "NoCandidates_Empty", want: []string{}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			names := []string{}
+			for _, part := range AttemptParts(testCase.candidates, 3<<30) {
+				names = append(names, part.Name)
+			}
+			assert.Equal(t, testCase.want, names)
+		})
+	}
+}

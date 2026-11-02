@@ -91,6 +91,7 @@ def test_export_archives_partitions_past_retention_and_holds_late_parts(
 
         bodies = conn.query(f"SELECT body FROM s3({archive_named_collection}, filename = '{{{','.join(late)}}}', format = 'Parquet') ORDER BY body").result_rows
         assert bodies == [("late one",), ("late two",)]
+        assert len({key.split("/attempt=")[1].split("/")[0] for key in late}) == 2, f"each part over max_attempt_bytes commits in an attempt of its own: {late}"
     finally:
         conn.query(f"SYSTEM START MERGES ON CLUSTER '{cluster}' signoz_logs.logs_v2")
 
