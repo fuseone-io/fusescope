@@ -152,6 +152,53 @@ func TestPublishFencedByLease(t *testing.T) {
 	})
 }
 
+func TestPublishHoldsOffATakeoverOnPostgreSQL(t *testing.T) {
+	dsn := os.Getenv(postgresDSNEnv)
+	if dsn == "" {
+		t.Skipf("set %s to run the two-connection test", postgresDSNEnv)
+	}
+	ctx := context.Background()
+	archiveStore := newPostgresTestStore(t, dsn)
+
+	lease, err := archiveStore.AcquireLease(ctx, "logs", "a", time.Now().Add(time.Second))
+	require.NoError(t, err)
+	publication := newTestPublication(t, archiveStore, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})
+
+	type takeover struct {
+		lease *archivetypes.Lease
+		err   error
+	}
+	tookOver := make(chan takeover, 1)
+	err = archiveStore.(*store).sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		if _, err := archiveStore.Publish(ctx, lease, publication); err != nil {
+			return err
+		}
+
+		time.Sleep(time.Until(lease.ExpiresAt) + 100*time.Millisecond)
+		go func() {
+			lease, err := archiveStore.AcquireLease(context.Background(), "logs", "b", time.Now().Add(time.Minute))
+			tookOver <- takeover{lease: lease, err: err}
+		}()
+
+		select {
+		case result := <-tookOver:
+			tookOver <- result
+			t.Error("a takeover doesn't wait for the commit in flight")
+		case <-time.After(500 * time.Millisecond):
+		}
+		return nil
+	})
+	require.NoError(t, err)
+
+	result := <-tookOver
+	require.NoError(t, result.err)
+	assert.Equal(t, int64(lease.Epoch+1), result.lease.Epoch, "the takeover moves the epoch once the commit ends")
+
+	parts, err := archiveStore.ListPublishedParts(ctx, "logs_v2", 1, "20260903-15-0")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"p_1_3"}, partNames(parts), "the commit under the old epoch stands")
+}
+
 func TestPublishFencedByLeaseExpiry(t *testing.T) {
 	ctx := context.Background()
 
