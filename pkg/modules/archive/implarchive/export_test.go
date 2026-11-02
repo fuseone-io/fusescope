@@ -28,6 +28,8 @@ var (
 		{Name: "partition_id", Type: "String"}, {Name: "name", Type: "String"}, {Name: "min_block_number", Type: "Int64"}, {Name: "max_block_number", Type: "Int64"},
 		{Name: "data_version", Type: "Int64"}, {Name: "rows", Type: "UInt64"}, {Name: "bytes_on_disk", Type: "UInt64"}, {Name: "modification_time", Type: "DateTime"},
 	}
+	// Rows masked by a lightweight delete are neither exported nor counted.
+	partsQuery  = `ifNull\(existing_rows_count, rows\) AS existing_rows.*FROM system\.parts.*AND existing_rows > 0`
 	statColumns = []cmock.ColumnType{
 		{Name: "_file", Type: "String"}, {Name: "size", Type: "UInt64"}, {Name: "etag", Type: "String"}, {Name: "count", Type: "UInt64"}, {Name: "parts", Type: "Array(String)"},
 	}
@@ -261,7 +263,7 @@ func expectParts(conn cmock.ClickConnMockCommon, written time.Time, names ...str
 	for i, name := range names {
 		rows = append(rows, []any{"20260903-15-0", name, int64(i + 1), int64(i + 5), int64(1), uint64(10), uint64(2048), written})
 	}
-	conn.ExpectQuery("FROM system.parts").WithArgs(testLogsTable.Database, testLogsTable.Name).WillReturnRows(cmock.NewRows(partColumns, rows))
+	conn.ExpectQuery(partsQuery).WithArgs(testLogsTable.Database, testLogsTable.Name).WillReturnRows(cmock.NewRows(partColumns, rows))
 }
 
 func expectReplica(conn cmock.ClickConnMockCommon, isReplica uint64, engine string, path string) {

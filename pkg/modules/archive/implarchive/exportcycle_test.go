@@ -108,7 +108,7 @@ func TestExportTables(t *testing.T) {
 	conn := newMockConn(t)
 	for _, table := range []archivetypes.Table{testLogsTable, testResourceTable} {
 		expectReplica(conn, 1, "ReplicatedMergeTree", "/clickhouse/tables/"+table.Name+"/01")
-		conn.ExpectQuery("FROM system.parts").WithArgs(table.Database, table.Name).WillReturnRows(cmock.NewRows(partColumns, nil))
+		conn.ExpectQuery(partsQuery).WithArgs(table.Database, table.Name).WillReturnRows(cmock.NewRows(partColumns, nil))
 		expectColumnsAndVersion(conn, table)
 	}
 	expectIndexes(conn, testLogsTable)

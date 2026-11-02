@@ -141,7 +141,11 @@ func (service *exportService) exportTables(ctx context.Context, lease *archivety
 		for _, job := range jobs {
 			group.Go(func() error {
 				if err := service.export(ctx, lease, job); err != nil && ctx.Err() == nil {
-					service.settings.Logger().WarnContext(ctx, "archive export of a partition failed", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID), errors.Attr(err))
+					level := slog.LevelWarn
+					if errors.Asc(err, archivetypes.ErrCodeObjectMismatch) {
+						level = slog.LevelError
+					}
+					service.settings.Logger().Log(ctx, level, "archive export of a partition failed", slog.String("table", job.table.Name), slog.Int("shard", job.shard), slog.String("partition_id", job.partition.ID), errors.Attr(err))
 				}
 				return nil
 			})

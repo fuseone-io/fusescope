@@ -14,9 +14,10 @@ import (
 )
 
 // activeParts returns the replica's active parts of table that hold rows, by partition ID. A
-// part is first seen when it was written, so a hold survives restarts and handovers.
+// part is first seen when it was written, so a hold survives restarts and handovers. Its rows
+// leave out those a lightweight delete masked, which an export doesn't read.
 func activeParts(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table) (map[string][]archivetypes.Part, error) {
-	rows, err := conn.Query(ctx, "SELECT partition_id, name, min_block_number, max_block_number, toInt64(data_version), rows, bytes_on_disk, modification_time FROM system.parts WHERE database = ? AND table = ? AND active AND rows > 0 ORDER BY partition_id, min_block_number", table.Database, table.Name)
+	rows, err := conn.Query(ctx, "SELECT partition_id, name, min_block_number, max_block_number, toInt64(data_version), ifNull(existing_rows_count, rows) AS existing_rows, bytes_on_disk, modification_time FROM system.parts WHERE database = ? AND table = ? AND active AND existing_rows > 0 ORDER BY partition_id, min_block_number", table.Database, table.Name)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't list the parts of %s.%s", table.Database, table.Name)
 	}

@@ -93,3 +93,38 @@ def test_export_archives_partitions_past_retention_and_holds_late_parts(
         assert bodies == [("late one",), ("late two",)]
     finally:
         conn.query(f"SYSTEM START MERGES ON CLUSTER '{cluster}' signoz_logs.logs_v2")
+
+
+def test_export_leaves_out_rows_a_lightweight_delete_masked(
+    signoz: types.SigNoz,
+    insert_logs: Callable[[list[Logs]], None],
+    archive_named_collection: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    conn = signoz.telemetrystore.conn
+    cluster = signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
+    request.getfixturevalue("signoz_archive")
+
+    old = datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=19)
+    insert_logs(
+        [
+            Logs(timestamp=old, body="kept", resources={"service.name": "archive-delete"}),
+            Logs(timestamp=old, body="deleted", resources={"service.name": "archive-delete"}),
+        ]
+    )
+    conn.query(f"DELETE FROM signoz_logs.logs_v2 ON CLUSTER '{cluster}' WHERE body = 'deleted' SETTINGS mutations_sync = 2")
+    old_day = f"day={old.date()}"
+
+    # Exported before the delete, the part is exported again at its new data version.
+    deadline = time.time() + 120
+    while time.time() < deadline:
+        index = latest_archive_index(conn, archive_named_collection, "fusescope", "logs_v2") or {"objects": []}
+        archived = [o for o in index["objects"] if old_day in o["key"]]
+        if archived and sum(o["rows"] for o in archived) == 1:
+            break
+        time.sleep(2)
+    else:
+        pytest.fail(f"the part with a lightweight delete was never archived with its remaining row: {index}")
+
+    bodies = conn.query(f"SELECT body FROM s3({archive_named_collection}, filename = '{{{','.join(o['key'] for o in archived)}}}', format = 'Parquet')").result_rows
+    assert bodies == [("kept",)]
