@@ -41,3 +41,8 @@ func NewLease(signal string, holder string, expiresAt time.Time) *Lease {
 func BackstopLease(signal string) string {
 	return signal + "/backstop"
 }
+
+// RestoreLease names the lease that loads a signal's restorations, one at a time.
+func RestoreLease(signal string) string {
+	return signal + "/restore"
+}

@@ -528,7 +528,7 @@ func migrateTestStore(t *testing.T, store sqlstore.SQLStore, schema sqlschema.SQ
 	ctx := context.Background()
 
 	migrations := migrate.NewMigrations()
-	for _, migrationFactory := range []factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]{sqlmigration.NewAddArchiveFactory(store, schema), sqlmigration.NewAddArchiveBackstopTableFactory(schema), sqlmigration.NewAddArchiveIndexSequenceFactory(schema), sqlmigration.NewAddArchiveShardPinFactory(schema)} {
+	for _, migrationFactory := range []factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]{sqlmigration.NewAddArchiveFactory(store, schema), sqlmigration.NewAddArchiveBackstopTableFactory(schema), sqlmigration.NewAddArchiveIndexSequenceFactory(schema), sqlmigration.NewAddArchiveShardPinFactory(schema), sqlmigration.NewAddArchiveRehydrationFactory(schema)} {
 		migration, err := migrationFactory.New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
 		require.NoError(t, err)
 		require.NoError(t, migration.Register(migrations))
