@@ -130,7 +130,7 @@ The snapshot maps every key to an org, and the org travels in auth data through 
 ## Relationship with other ADRs
 
 - **ADR 0003 (RUM).** Decision 3 (gateway in the backend) is replaced by §6; decision 4 (public keys) becomes the public kind of §2; decision 6 (uploads through the API) is replaced by §7. The reasons 0003 gave for the backend are answered: keys and policies still live in the metastore and reach the collector over OpAMP; the new code is Apache-2.0, not AGPL (ADR 0009); symbolication stays in the backend. 0003 carries an amendment note.
-- **ADR 0008 (profiling).** Its `ingestauth` is this one, and its open question is answered: keys cover every signal from the first release, in `permissive` mode. Its `debuginforeceiver` becomes the debug-file route of `artifactreceiver`.
+- **ADR 0008 (profiling).** Its `ingestauth` is this one, and its open question is answered: keys cover every signal from the first release; existing signals start `permissive`, and `profiles` starts `enforce` through the per-signal mode of §5. Its `debuginforeceiver` becomes the debug-file route of `artifactreceiver`.
 - **ADR 0007 (cost).** Billing exports are pulled by the backend, not ingested, so nothing moves. `fusescope.ingest.key_id` lets the ingest meter, and later cost showback, split usage per key and team.
 - **ADR 0006 (synthetics).** Runner results become ingest through the collector with a secret key scoped to the runner, instead of a backend gateway; 0006 is updated before it is accepted.
 - **[#182](https://github.com/fuseone-io/fusescope/issues/182)** (RUM roadmap) tracks the SDK endpoint changes; **[#178](https://github.com/fuseone-io/fusescope/issues/178)** covers the anonymous routes that stay on the backend.

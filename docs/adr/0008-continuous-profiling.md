@@ -145,7 +145,7 @@ Plus `distributed_*` tables and replicated engines when a cluster is configured,
 
 A build ID is a hash the linker writes into every ELF binary. Production binaries are usually *stripped*: their function names were removed to save space, and kept, if at all, in a separate debug file. Without that debug file the flame graph shows `libssl.so.3+0x3a8f0` instead of `SSL_read`.
 
-**Where it runs.** In the backend, **at read time**. Native frames are stored as build ID plus ELF file offset (decision 3), the address the debug file uses, so frames dedupe across processes despite ASLR. When a query returns stacks with such frames, the backend looks up the debug file for each build ID, resolves the addresses in a batch, and keeps the names in a **symbol index** per build ID: built once from the debug file (sorted address ranges to function, file and line), stored next to it in the artifact store, and held in an in-memory LRU. Nothing is written to ClickHouse. Stored samples never change, so a debug file uploaded later also fixes earlier profiles. Parsing uses Go's `debug/elf`, `debug/dwarf` and `debug/gosym` (BSD-3). Without any debug file, the frame keeps its `module+0xoffset` form and the UI lists the missing build IDs.
+**Where it runs.** In the backend, **at read time**. Native frames are stored as build ID plus ELF file offset (decision 3), the address the debug file uses, so frames dedupe across processes despite ASLR. When a query returns stacks with such frames, the backend looks up the debug file for each build ID, resolves the addresses in a batch, and keeps the names in a **symbol index** per build ID: built once from the debug file (sorted address ranges to function, file and line), stored next to it in the artifact store, and held in an in-memory LRU. Nothing is written to ClickHouse. Stored samples never change, so a debug file uploaded later also fixes earlier profiles: an upload, or a successful debuginfod fetch, for a build ID clears that build ID's cached misses at once. Parsing uses Go's `debug/elf`, `debug/dwarf` and `debug/gosym` (BSD-3). Without any debug file, the frame keeps its `module+0xoffset` form and the UI lists the missing build IDs.
 
 **Where debug files come from.** Two sources, tried in order:
 
@@ -160,7 +160,7 @@ A build ID is a hash the linker writes into every ELF binary. Production binarie
 
 ### 5. Query and UI
 
-**API.** One backend query module over `signoz_profiles`, SQL only:
+**API.** One backend query module over `signoz_profiles`. It reads with SQL; the backend then symbolizes native frames (decision 4), merges frames by function, and only then prunes and builds the top table, in that order:
 
 - `profile types` and `label names/values` for a service and range;
 - a **timeline**: the total value of a type over time, summed across series per bucket; for gauges, each series' last value in the bucket, then summed across series;
@@ -268,7 +268,7 @@ Each phase ships behind a feature flag and ends with docs and integration or e2e
 
 - Profiling works now with SDKs and agents people already use, through Pyroscope-compatible and OTLP receivers on the collector, without forking any of them.
 - The internet-facing surface stays the collector. Profiles, ingestion keys and debug files never need the backend exposed; the backend's only new outbound call is debuginfod, off by default.
-- Most of the new code is in the Apache-2.0 collector (ADR 0009): two receivers, an exporter, an auth extension and migrations. Collector releases gate profiling changes, as they do for the other signals.
+- Most of the new code is in the Apache-2.0 collector (ADR 0009): `pyroscopereceiver`, the `DebuginfoService` route of `artifactreceiver`, an exporter, an auth extension and migrations. Collector releases gate profiling changes, as they do for the other signals.
 - Ingestion keys arrive in the community build for every signal (ADR 0010).
 - The Pyroscope-compatible API is a contract we keep; SDK upgrades are covered by the homologation CI.
 - The artifact store grows from source maps to debug files, with larger files; its quota and object storage backend matter more.
