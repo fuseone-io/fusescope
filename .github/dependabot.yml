@@ -47,6 +47,11 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # Requires Go 1.27; we stay on Go 1.26 for now.
+      - dependency-name: github.com/perses/spec
+        versions:
+          - ">= 0.3.0"
 
   - package-ecosystem: npm
     directories:
