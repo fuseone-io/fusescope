@@ -20,8 +20,8 @@ skills, hooks): [`docs/contributing/claude-code.md`](docs/contributing/claude-co
 ## License posture (non-negotiable)
 
 - Source in this repo is **MIT**. Never add GPL/AGPL/LGPL/SSPL/BUSL/Commons-Clause/
-  Elastic License code or dependencies; new dependencies must be MIT, BSD, ISC or
-  Apache-2.0, or MPL-2.0 used unmodified: never vendored, copied or patched into our
+  Elastic License code or dependencies; new dependencies must be MIT, BSD, ISC,
+  Apache-2.0 or BlueOak-1.0.0, or MPL-2.0 used unmodified: never vendored, copied or patched into our
   files, attributed in `NOTICE`, source available from the public upstream module.
 - SigNoz's `ee/` and `cmd/enterprise/` trees are **proprietary** and were removed.
   Features that only existed there (PostgreSQL metastore, SSO, RBAC, …) are
