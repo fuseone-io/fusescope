@@ -29,7 +29,16 @@ test.describe('Alert details — actions', () => {
 			toggle.click(),
 		]);
 
-		await expect(page.getByText('Alert has been disabled.')).toBeVisible();
+		const disabledNotification = page
+			.locator('.ant-notification-notice')
+			.filter({ hasText: 'Alert has been disabled.' });
+		await expect(disabledNotification).toBeVisible();
+		await expect(toggle).not.toBeChecked();
+		// The notification covers the toggle; hovering it pauses its dismissal.
+		await disabledNotification
+			.getByRole('img', { name: 'close', exact: true })
+			.click();
+		await expect(disabledNotification).toBeHidden();
 
 		await Promise.all([
 			page.waitForResponse(
@@ -41,6 +50,7 @@ test.describe('Alert details — actions', () => {
 		]);
 
 		await expect(page.getByText('Alert has been enabled.')).toBeVisible();
+		await expect(toggle).toBeChecked();
 	});
 
 	test('TC-02 Duplicate creates a copy and navigates to overview', async ({
