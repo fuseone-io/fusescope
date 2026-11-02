@@ -51,7 +51,7 @@ func (migration *deleteOrphanUserRoles) Up(ctx context.Context, db *bun.DB) erro
 
 	_, err = tx.NewDelete().
 		Model(new(authtypes.UserRole)).
-		Where("user_id IN (?)", bun.In(deletedUserIDs)).
+		Where("user_id IN (?)", bun.List(deletedUserIDs)).
 		Exec(ctx)
 	if err != nil {
 		return err

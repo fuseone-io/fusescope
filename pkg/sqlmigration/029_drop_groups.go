@@ -127,7 +127,7 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 			NewUpdate().
 			Table("users").
 			Set("role = ?", role).
-			Where("id IN (?)", bun.In(userIDs)).
+			Where("id IN (?)", bun.List(userIDs)).
 			Exec(ctx); err != nil {
 			return err
 		}

@@ -22,7 +22,7 @@ func NewBunDB(settings factory.ScopedProviderSettings, sqldb *sql.DB, dialect sc
 	db := bun.NewDB(sqldb, dialect, opts...)
 
 	for _, hook := range hooks {
-		db.AddQueryHook(hook)
+		db = db.WithQueryHook(hook)
 	}
 
 	return &BunDB{db, settings}

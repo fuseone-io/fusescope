@@ -169,7 +169,7 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 	userMap := make(map[string]*oldUser68)
 	if len(userIDList) > 0 {
 		users := make([]*oldUser68, 0)
-		err = tx.NewSelect().Model(&users).Where("id IN (?)", bun.In(userIDList)).Scan(ctx)
+		err = tx.NewSelect().Model(&users).Where("id IN (?)", bun.List(userIDList)).Scan(ctx)
 		if err != nil && err != sql.ErrNoRows {
 			return err
 		}
@@ -195,7 +195,7 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 		}
 
 		roles := make([]*oldRole68, 0)
-		err = tx.NewSelect().Model(&roles).Where("org_id IN (?)", bun.In(orgIDList)).Scan(ctx)
+		err = tx.NewSelect().Model(&roles).Where("org_id IN (?)", bun.List(orgIDList)).Scan(ctx)
 		if err != nil && err != sql.ErrNoRows {
 			return err
 		}

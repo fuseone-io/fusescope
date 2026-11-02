@@ -292,7 +292,7 @@ func (store *store) GetDashboardByOrgsAndPublicID(ctx context.Context, orgIDs []
 		Join("JOIN public_dashboard").
 		JoinOn("public_dashboard.dashboard_id = dashboard.id").
 		Where("public_dashboard.id = ?", id).
-		Where("org_id IN (?)", bun.In(orgIDs)).
+		Where("org_id IN (?)", bun.List(orgIDs)).
 		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodePublicDashboardNotFound, "couldn't find dashboard with id %s ", id)

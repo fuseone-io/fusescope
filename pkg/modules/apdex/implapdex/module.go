@@ -34,7 +34,7 @@ func (module *module) Get(ctx context.Context, orgID string, services []string) 
 		NewSelect().
 		Model(&apdexSettings).
 		Where("org_id = ?", orgID).
-		Where("service_name IN (?)", bun.In(services)).
+		Where("service_name IN (?)", bun.List(services)).
 		Scan(ctx)
 	if err != nil {
 		return nil, module.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "apdex settings not found for services %v", services)
