@@ -55,7 +55,7 @@ jobs:
         with:
           python-version: 3.13
       - name: uv
-        uses: astral-sh/setup-uv@v10.3.0
+        uses: astral-sh/setup-uv@v10.3.3
       - name: install
         run: |
           cd tests && uv sync
@@ -160,7 +160,7 @@ jobs:
         with:
           python-version: 3.13
       - name: uv
-        uses: astral-sh/setup-uv@v10.3.0
+        uses: astral-sh/setup-uv@v10.3.3
       - name: install
         run: |
           cd tests && uv sync
