@@ -23,6 +23,10 @@ skills, hooks): [`docs/contributing/claude-code.md`](docs/contributing/claude-co
   Elastic License code or dependencies; new dependencies must be MIT, BSD, ISC,
   Apache-2.0 or BlueOak-1.0.0, or MPL-2.0 used unmodified: never vendored, copied or patched into our
   files, attributed in `NOTICE`, source available from the public upstream module.
+- Exception ([ADR 0006](docs/adr/0006-synthetic-monitoring.md)): the synthetics
+  runner images also ship unmodified third-party programs our code doesn't link
+  (base-image OS packages, Chromium and its bundled components such as LGPL
+  FFmpeg), with their notices and source offers. Nothing AGPL ships anywhere.
 - SigNoz's `ee/` and `cmd/enterprise/` trees are **proprietary** and were removed.
   Features that only existed there (PostgreSQL metastore, SSO, RBAC, …) are
   re-implemented **clean-room**: work from our interfaces, the MIT code and public

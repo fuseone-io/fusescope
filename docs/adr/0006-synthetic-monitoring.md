@@ -1,6 +1,6 @@
 # 0006 · Synthetic monitoring
 
-- Status: proposed
+- Status: accepted (2026-11-02)
 - Deciders: FuseOne maintainers. The scheduler, runners, runner keys, data model, alerting and UI span several PRs and two repos.
 - Related: [ADR 0001](0001-agpl-collector-dependency.md) (no AGPL in the backend), [ADR 0002](0002-long-term-archive.md) (the lease this ADR reuses), [ADR 0003](0003-real-user-monitoring.md) (RUM gateway, keys, artifact store, data model), [ADR 0010](0010-single-ingress.md) (the collector is the single ingress; `fs_ing_` keys), [ADR 0009](0009-fusescope-collector.md) (Apache-2.0 `fusescope-collector`).
 
