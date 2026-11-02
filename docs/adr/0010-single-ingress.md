@@ -85,6 +85,8 @@ A server authenticator extension in `fusescope-collector`, attached to every rec
 - The mode is set per listener in the chart. New installs: public listener `enforce`, internal listener `permissive`. Upgraded installs start `permissive`; `warn` becomes the upgrade default one release later, and `enforce` the release after, each announced in release notes.
 - The UI lists unauthenticated sources (service, host, count) from the collector's counters, so operators can issue keys before enforcing.
 
+- **Per signal.** A signal with no existing clients can start in `enforce` while the listener's other signals are still `permissive`; `ingestauth` applies the mode per signal. Profiles (ADR 0008) use this.
+
 ### 6. The RUM gateway moves to the collector
 
 A `rumreceiver` in `fusescope-collector` does what the backend gateway does today, with the same behaviour and tests, from the OpAMP snapshot:
