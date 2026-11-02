@@ -2,7 +2,7 @@
 
 - Status: proposed
 - Deciders: FuseOne maintainers. The scheduler, runners, runner keys, data model, alerting and UI span several PRs and two repos.
-- Related: [ADR 0001](0001-agpl-collector-dependency.md) (no AGPL in the backend), [ADR 0002](0002-long-term-archive.md) (the lease this ADR reuses), [ADR 0003](0003-real-user-monitoring.md) (RUM gateway, keys, artifact store, data model), [ADR 0010](https://github.com/fuseone-io/fusescope/pull/223) (the collector is the single ingress; `fs_ing_` keys), [ADR 0009](https://github.com/fuseone-io/fusescope/pull/222) (Apache-2.0 `fusescope-collector`).
+- Related: [ADR 0001](0001-agpl-collector-dependency.md) (no AGPL in the backend), [ADR 0002](0002-long-term-archive.md) (the lease this ADR reuses), [ADR 0003](0003-real-user-monitoring.md) (RUM gateway, keys, artifact store, data model), [ADR 0010](0010-single-ingress.md) (the collector is the single ingress; `fs_ing_` keys), [ADR 0009](0009-fusescope-collector.md) (Apache-2.0 `fusescope-collector`).
 
 ## Context
 
@@ -22,7 +22,7 @@ Code was read on `main` at `ef3cc1b09`. Licences and products were checked on 20
 
 ### Licences
 
-The backend is MIT and links nothing outside MIT, BSD, ISC and Apache-2.0. Verified from each project's `LICENSE` through the GitHub API:
+The backend is MIT; its dependencies follow `CLAUDE.md` (MIT, BSD, ISC, Apache-2.0, BlueOak-1.0.0, or MPL-2.0 used unmodified). Verified from each project's `LICENSE` through the GitHub API:
 
 | Project | Licence | What we may do |
 |---|---|---|
@@ -32,7 +32,7 @@ The backend is MIT and links nothing outside MIT, BSD, ISC and Apache-2.0. Verif
 | [OTel `httpcheckreceiver`](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/httpcheckreceiver) | Apache-2.0 | allowed; alpha, metrics only, configured statically in a collector |
 | [Playwright](https://github.com/microsoft/playwright) | Apache-2.0 | run in the browser runner image |
 | [goja](https://github.com/dop251/goja) / [sobek](https://github.com/grafana/sobek) (k6's fork) | MIT | allowed; not adopted (decision 5) |
-| [Artillery](https://github.com/artilleryio/artillery) | MPL-2.0 | not on our list; learn only |
+| [Artillery](https://github.com/artilleryio/artillery) | MPL-2.0 | allowed only unmodified; a Node load tool, learn only |
 | [Gatling](https://github.com/gatling/gatling) | Apache-2.0 (Enterprise is proprietary) | allowed, but a JVM load tool; learn only |
 | [Checkly](https://github.com/checkly) | CLI, Pulumi provider, Helm charts Apache-2.0; Go SDK, GitHub Action, Playwright helpers MIT; runtime and backend closed | study the monitoring-as-code model |
 | [Uptime Kuma](https://github.com/louislam/uptime-kuma) | MIT | prior art for monitor types, retries and status pages |
@@ -59,7 +59,7 @@ What the market converged on: declarative API checks with chained steps; browser
 
 - Scheduled HTTP, API, browser and network checks from managed and private locations, alerting through the existing alert rules.
 - Every run is OTel data in the existing tables and links to the backend trace and, for browser runs, to a RUM-shaped session.
-- Licence-clean: nothing AGPL, MPL or copyleft in the backend or the runner images.
+- Licence-clean: our code and direct dependencies follow `CLAUDE.md`, and nothing GPL or AGPL ships in the backend or the runner images. Chromium's bundled third-party code is attributed in the browser image (decision 10).
 - Safe on shared infrastructure: no tenant can reach internal networks or another tenant's secrets.
 
 Non-goals: load and performance testing at k6 scale (one virtual user per run, no ramping, no throughput metrics); mobile app tests; network path and traceroute visualisation; public status pages (later, separate decision); a test recorder (later).
@@ -81,10 +81,11 @@ Non-goals: load and performance testing at k6 scale (one virtual user per run, n
    ingestauth + run-token check ◀──── OTLP, runner key, run token ──┘
 ```
 
-- **Scheduler.** One backend replica schedules, under a lease named `synthetics/scheduler`. The lease table and `runUnderLease` move from `pkg/modules/archive` to a shared package so both modules use them; the archive keeps its lease names. Each tick (1 s) the scheduler writes a job for every check × location that is due. Due times are offset by a hash of the check id within the interval, as the Grafana agent does, so checks don't fire together.
+- **Scheduler.** One backend replica schedules, under a lease named `synthetics/scheduler`. The lease table and `runUnderLease` move from `pkg/modules/archive` to a shared package so both modules use them; the archive keeps its lease names. Each tick (1 s) the scheduler writes a job for every check × location that is due. Jobs are unique on `(check_id, location, due_at)` and written insert-or-ignore inside a transaction that first checks the lease epoch, as ADR 0002 fences its commits, so a failover tick from the old and the new holder writes one job. Due times are offset by a hash of the check id within the interval, as the Grafana agent does, so checks don't fire together.
 - **Queue in the metastore.** `synthetics_job` (check, location, trace id, due, deadline, status, claim holder and expiry) on SQLite and PostgreSQL. PostgreSQL claims with `FOR UPDATE SKIP LOCKED`; SQLite serialises writers. Completed jobs are pruned after a day; results live in ClickHouse. Design target for phase 1: 2 000 runs per minute per install, measured in its exit criteria.
-- **Missed runs are skipped, not queued.** A job unclaimed past its deadline (the interval, or twice the timeout if shorter) expires and counts as `skipped` for that location, never as a failure. A claim that isn't completed before its expiry is re-queued once.
+- **Missed runs are skipped, not queued.** A job unclaimed past its deadline (the interval, or twice the timeout if shorter) expires and counts as `skipped` for that location, never as a failure. A claim expires after the job's worst-case run, `timeout × (retries + 1) + retries × retry_delay`, plus 30 s; a runner renews it on each heartbeat while the run goes on (at least every 30 s). An expired claim is re-queued once, and completion is fenced by claim id, so a runner whose claim expired can't complete the job after another runner took it.
 - **Runners pull.** A runner long-polls `POST /api/v1/synthetics/runner/jobs:claim` (outbound HTTPS only, as Datadog private locations do), runs the job, sends its telemetry to the collector and completes it with its outcome. A runner serves one location; a location can have many runners, which share its queue.
+- **Status evaluator.** The evaluator (decision 7) runs every 10 s under the same `synthetics/scheduler` lease, so exactly one replica emits `fusescope.synthetics.check.status`.
 - **Why the backend schedules** rather than runners scheduling themselves, as the Grafana agent does: alerts are evaluated in the backend, so runs without a backend help nobody; one schedule gives one place for limits, pause and on-demand runs; and runners stay stateless. The cost is that runs stop while every backend replica is down; an outage of the backend itself is for external monitoring.
 - **One runner binary.** `fusescope-runner` (Go, MIT, in this repo under `cmd/runner`) is a supervisor that holds the runner key, claims jobs, runs HTTP, TCP, DNS, SSL and gRPC checks in-process, and hands browser jobs to a worker. Two images, as the Grafana agent ships:
   - `fusescope-runner`: Go only, small.
@@ -94,13 +95,13 @@ Non-goals: load and performance testing at k6 scale (one virtual user per run, n
 
 ### 2. Runner keys
 
-- Runner keys are **secret ingestion keys** (`fs_ing_…`, ADR 0010) bound to one location, with the `traces`, `metrics` and `logs` signals: stored hashed, rotatable with an overlap window, pushed to collectors over OpAMP like every ingestion key.
+- Runner keys are **secret ingestion keys** (`fs_ing_…`, ADR 0010) bound to one location, with the `traces`, `metrics`, `logs` and `artifacts` signals: stored hashed, rotatable with an overlap window, pushed to collectors over OpAMP like every ingestion key.
 - A key can claim only its location's jobs (checked by the backend's job API), complete only jobs it claimed, and send telemetry only for runs it holds: each claim returns a short-lived **run token** signed by the backend (run id, check, location, key id, the run's attributes, expiry), and the collector verifies it with a public key received over OpAMP.
-- Runners heartbeat on every claim. A location with no heartbeat for 3 intervals is `offline`, raises its own alert, and its checks show "no data" for it rather than failures.
+- Runners heartbeat every 30 s, independent of check intervals: each long-poll returns within 30 s and the runner calls again, and a running job renews its claim on the same timer. A location whose runners all missed 3 heartbeats (90 s) is `offline`, raises its own alert, and its checks show "no data" for it rather than failures.
 
 ### 3. Data model: every run is OTel data
 
-Results are sent as OTLP to the **collector**, the single ingress (ADR 0010); the backend has no synthetics ingest route. `ingestauth` authenticates the runner key, and a run-token check in `fusescope-collector` (Apache-2.0, ADR 0009) refuses a payload whose token is missing, expired or issued to another key, and sets resource and check attributes from the token (never from the runner). The embedded `local` runner sends to the collector's internal listener. No schema change: spans, logs and metrics land in the existing tables.
+Results are sent as OTLP to the **collector**, the single ingress (ADR 0010); the backend has no synthetics ingest route. `ingestauth` authenticates the runner key, and a run-token check in `fusescope-collector` (Apache-2.0, ADR 0009) refuses a payload whose token is missing, expired or issued to another key, and sets resource and check attributes from the token (never from the runner). The embedded `local` runner sends to the collector's internal listener (ADR 0010 §1) with an `fs_ing_` key of the location `local` that the backend creates, rotates and publishes over OpAMP like any other key, plus a run token per job, so its telemetry is accepted when that listener runs `enforce`. No schema change: spans, logs and metrics land in the existing tables.
 
 | Concept | Signal | Content |
 |---|---|---|
@@ -116,7 +117,7 @@ Results are sent as OTLP to the **collector**, the single ingress (ADR 0010); th
 Attributes: `fusescope.synthetics.check.id`, `.check.name`, `.check.type`, `.location`, `.run.id`, `.step.index`, `.step.name`, `.trigger` (`schedule` / `manual` / `ci`). Resource: `service.name` = `fusescope-synthetics`. Our names live under `fusescope.synthetics.*`, as RUM's under `fusescope.rum.*`; standard names are used where they exist. `check.id` and `location` are promoted to selected fields when the first check is created.
 
 - **RUM sessions of the tested app.** When the page runs `@fusescope/browser`, the runner sets `window.__FUSESCOPE_SYNTHETICS__ = { runId, checkId }`; the SDK then stamps `fusescope.synthetics.run.id` and `user_agent.synthetic.type` = `test`, and the RUM screens hide synthetic sessions by default with a link to the run.
-- **Artifacts** reuse the RUM artifact store under the kind `synthetics`, with their own retention (default 30 days) and size limits. HAR files drop `Authorization`, `Cookie` and `Set-Cookie` values.
+- **Artifacts** go through the collector's `artifactreceiver` (ADR 0010 §7) with the runner key and the run token, into the RUM artifact store under the kind `synthetics`, with their own retention (default 30 days) and size limits. HAR files drop `Authorization`, `Cookie` and `Set-Cookie` values.
 
 ### 4. Check types and assertions
 
@@ -146,7 +147,7 @@ Attributes: `fusescope.synthetics.check.id`, `.check.name`, `.check.type`, `.loc
 "Failing from N of M locations" needs a per-location result and then a count across locations, which a single threshold rule can't express. The backend therefore evaluates check status itself:
 
 - **Retries happen on the runner.** A failed run is retried in the same location up to `retries` times (default 1, max 3) after `retry_delay` (default 5 s); only the final attempt counts.
-- **Per check, the backend** keeps each location's latest final result (from job completions) and emits `fusescope.synthetics.check.status` = 0 when at least N of the M locations that reported within two intervals failed (default N = 1 with one location, otherwise 2). Skipped and offline locations don't count toward M.
+- **Per check, the backend** keeps each location's latest final result (from job completions) and emits `fusescope.synthetics.check.status` = 0 when at least N of the M locations that reported within two intervals failed. Skipped and offline locations don't count toward M, and N is capped at M: the effective threshold is `min(N, M)` (default N = 2), so a check whose other locations went offline still goes down when the remaining one fails. With M = 0 the status is not emitted and the check shows "no data".
 - **Alerts are ordinary threshold rules** on that metric with a `for` window ("down for 3 minutes"). Creating a check creates its rule, which the user can edit or delete; latency and certificate-expiry rules are optional presets on the per-location metrics.
 - **Notifications** carry links to the check, the failing run and its backend trace.
 
@@ -180,7 +181,7 @@ New screens get Claude Design boards before they are implemented.
 | Browser worker | `fusescope-runner-browser` image, separate process | our worker MIT; Playwright, web-vitals Apache-2.0; Node MIT; Chromium BSD-3-Clause with its bundled third-party licences, attributed in the image |
 | k6, xk6-browser, xk6-sm | nowhere | AGPL-3.0, learn-only |
 
-k6 is AGPL-3.0. Linking it would make the backend AGPL, and shipping it in a runner image, even as a separate binary as the Grafana agent does, would put an AGPL component in every private location we distribute and make us answer for its source offer. We don't need it: Playwright covers scripts and our probers cover the rest. We read k6's public docs for ideas (checks and thresholds, one-iteration-per-run, browser API shape) and copy nothing. Both images get an SBOM and a licence scan in CI that fails on GPL, AGPL, SSPL, BUSL and MPL.
+k6 is AGPL-3.0. Linking it would make the backend AGPL, and shipping it in a runner image, even as a separate binary as the Grafana agent does, would put an AGPL component in every private location we distribute and make us answer for its source offer. We don't need it: Playwright covers scripts and our probers cover the rest. We read k6's public docs for ideas (checks and thresholds, one-iteration-per-run, browser API shape) and copy nothing. Both images get an SBOM and a licence scan in CI over our code and direct dependencies that fails on anything outside the `CLAUDE.md` list (GPL, AGPL, LGPL, SSPL, BUSL, Commons-Clause, Elastic, modified MPL-2.0); Chromium's bundled third-party code is allowlisted as a whole and its notices ship in the image.
 
 ## Roadmap
 
@@ -188,7 +189,7 @@ Each phase ships behind a feature flag and ends with docs and an e2e test.
 
 | Phase | Scope | Repos | Exit criteria |
 |---|---|---|---|
-| **1 · HTTP checks and alerts** | shared lease package; scheduler and job queue; embedded `local` runner; HTTP checks with declarative and CEL assertions; retries; run tokens and the collector run-token check (needs ADR 0010 `ingestauth`); `traceparent` injection; check status and generated alert rule; secrets; Checks, Check detail and Run screens; SSRF dialer | `fusescope`, `fusescope-collector-server`, `fusescope-charts` | an HTTP check on SQLite and PostgreSQL fails, alerts within interval × (retries + 1) + `for`, and its run opens the backend trace; 2 000 runs/min sustained on one PostgreSQL install; SSRF tests cover redirects and DNS rebinding |
+| **1 · HTTP checks and alerts** | shared lease package; scheduler and job queue; embedded `local` runner; HTTP checks with declarative and CEL assertions; retries; run tokens and the collector run-token check (needs ADR 0010 `ingestauth`); `traceparent` injection; check status and generated alert rule; secrets; Checks, Check detail and Run screens; SSRF dialer | `fusescope`, `fusescope-collector-server`, `fusescope-charts` | an HTTP check on SQLite and PostgreSQL fails, alerts within interval + (retries + 1) × timeout + retries × retry_delay + status evaluation period + `for`, and its run opens the backend trace; 2 000 runs/min sustained on one PostgreSQL install; SSRF tests cover redirects and DNS rebinding |
 | **2 · Multistep and private locations** | multistep API checks with variables; `fusescope-runner` binary and image; locations, runner keys, heartbeats; Helm chart; sealed secrets for private locations; Locations screen | `fusescope`, `fusescope-charts` | a private runner in a kind cluster reaches a service the backend can't, with a key that can't claim another location's jobs |
 | **3 · Browser checks** | `fusescope-runner-browser` image; Playwright worker with steps, screenshots, HAR, trace, Web Vitals; egress proxy; RUM-shaped session; SDK hook for synthetic sessions; Browser run screen | `fusescope`, `fusescope-charts`, `fusescope-sdk` | a Playwright login check runs from a private location, links to the backend trace, and its session is hidden from RUM by default; image licence scan green |
 | **4 · Network checks** | TCP, DNS, SSL, gRPC health, ICMP; certificate expiry preset | `fusescope` | each type has golden tests against local servers and an alert preset |
@@ -199,7 +200,7 @@ Each phase ships behind a feature flag and ends with docs and an e2e test.
 | # | Question | Recommendation |
 |---|---|---|
 | 1 | New direct dependencies (`cel-go`, `miekg/dns` promoted from indirect; `pro-bing`; Playwright in the image) | accept with this ADR; each is MIT, BSD or Apache-2.0 |
-| 2 | Default "N of M" and retries | N = 2 of M when M ≥ 2, one retry after 5 s |
+| 2 | Default "N of M" and retries | N = 2, capped at M; one retry after 5 s |
 | 3 | Where the browser worker code lives | in this repo next to `cmd/runner`, so one release versions the supervisor and the worker |
 | 4 | Licence of the runner images | MIT for our code, like the backend; third-party licences in the image |
 | 5 | Minimum frequency on FuseScope Cloud | 60 s for API, 5 min for browser, until runner costs are measured |

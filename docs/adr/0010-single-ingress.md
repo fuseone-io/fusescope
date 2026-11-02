@@ -23,7 +23,7 @@ Code was read on `main` at `ef3cc1b09`, charts at `fusescope-charts` `main`.
 - **Symbol uploads** go to the backend's management API: `POST /api/v1/rum/applications/{id}/sourcemaps` and `/mappings` (R8), with an editor or admin credential. They are CI uploads.
 - **Ingestion keys** exist as a gateway interface, but the community build implements it with a no-op that returns 501.
 - **OpAMP.** Collectors connect to the backend's OpAMP server on an internal port (4320), which pushes log pipelines, span mapping and LLM pricing.
-- **Other ADRs point the same way.** ADR 0008 puts all profile and debug-file ingest on the collector behind an `ingestauth` extension fed over OpAMP, and leaves the RUM gateway as an open question. ADR 0006 proposes a synthetics gateway in the backend. ADR 0009 creates the Apache-2.0 collector where new ingest code goes.
+- **Other ADRs point the same way.** ADR 0008 puts all profile and debug-file ingest on the collector behind an `ingestauth` extension fed over OpAMP, and leaves the RUM gateway as an open question. ADR 0006 sends synthetics runner results through the collector. ADR 0009 creates the Apache-2.0 collector where new ingest code goes.
 
 Two front doors mean two places to rate-limit, two auth models, a backend that must be reachable from every browser and CI runner, and an API server that shares its process with untrusted, bursty traffic.
 
