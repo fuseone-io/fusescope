@@ -1,4 +1,4 @@
-FROM alpine:3.20.3
+FROM alpine:3.24.3
 LABEL maintainer="fuseone"
 LABEL org.opencontainers.image.source="https://github.com/fuseone-io/fusescope"
 WORKDIR /root
