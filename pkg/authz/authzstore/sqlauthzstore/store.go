@@ -90,7 +90,7 @@ func (store *store) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, 
 		NewSelect().
 		Model(&roles).
 		Where("org_id = ?", orgID).
-		Where("name IN (?)", bun.In(names)).
+		Where("name IN (?)", bun.List(names)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (store *store) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, id
 		NewSelect().
 		Model(&roles).
 		Where("org_id = ?", orgID).
-		Where("id IN (?)", bun.In(ids)).
+		Where("id IN (?)", bun.List(ids)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

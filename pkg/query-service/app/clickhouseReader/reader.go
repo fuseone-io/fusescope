@@ -1861,7 +1861,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 		BunDB().
 		NewDelete().
 		Model(new(retentiontypes.TTLSetting)).
-		Where("transaction_id NOT IN (?)", bun.In(limitTransactions)).
+		Where("transaction_id NOT IN (?)", bun.List(limitTransactions)).
 		Exec(ctx)
 	if err != nil {
 		r.logger.Error("Error in processing ttl_status delete sql query", errorsV2.Attr(err))

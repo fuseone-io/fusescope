@@ -56,7 +56,7 @@ func (r *InstalledIntegrationsSqliteRepo) get(
 
 	err := r.store.BunDBCtx(ctx).NewSelect().Model(&integrations).
 		Where("org_id = ?", orgId).
-		Where("type IN (?)", bun.In(typeValues)).
+		Where("type IN (?)", bun.List(typeValues)).
 		Scan(ctx)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(

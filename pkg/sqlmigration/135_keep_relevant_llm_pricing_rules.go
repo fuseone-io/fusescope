@@ -82,7 +82,7 @@ func (migration *keepRelevantLLMPricingRules) Up(ctx context.Context, db *bun.DB
 	if len(ids) > 0 {
 		if _, err := tx.NewDelete().
 			Model((*llmPricingRuleSyncedRow)(nil)).
-			Where("id IN (?)", bun.In(ids)).
+			Where("id IN (?)", bun.List(ids)).
 			Exec(ctx); err != nil {
 			return err
 		}

@@ -147,7 +147,7 @@ func (migration *updateCloudIntegrationUniqueIndex) Up(ctx context.Context, db *
 			TableExpr("cloud_integration").
 			Set("removed_at = ?", now).
 			Set("updated_at = ?", now).
-			Where("id IN (?)", bun.In(loserIDs)).
+			Where("id IN (?)", bun.List(loserIDs)).
 			Exec(ctx)
 		if err != nil {
 			return err

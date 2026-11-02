@@ -70,7 +70,7 @@ func (s *store) ListByResources(ctx context.Context, orgID valuer.UUID, kind cor
 		ColumnExpr("tag.*, tr.resource_id").
 		Join("JOIN tag_relation AS tr ON tr.tag_id = tag.id").
 		Where("tr.kind = ?", kind).
-		Where("tr.resource_id IN (?)", bun.In(resourceIDs)).
+		Where("tr.resource_id IN (?)", bun.List(resourceIDs)).
 		Where("tag.org_id = ?", orgID).
 		OrderExpr("tr.rank ASC").
 		Scan(ctx)
@@ -136,7 +136,7 @@ func (s *store) DeleteRelationsExcept(ctx context.Context, orgID valuer.UUID, ki
 		Column("id").
 		Where("org_id = ?", orgID)
 	if len(keepTagIDs) > 0 {
-		tagIDsToDelete = tagIDsToDelete.Where("id NOT IN (?)", bun.In(keepTagIDs))
+		tagIDsToDelete = tagIDsToDelete.Where("id NOT IN (?)", bun.List(keepTagIDs))
 	}
 	_, err := s.sqlstore.
 		BunDBCtx(ctx).

@@ -144,7 +144,7 @@ func (store *store) ListByOrgIDs(ctx context.Context, orgIDs []valuer.UUID) ([]*
 		JoinOn("users.id = auth_token.user_id").
 		Join("JOIN organizations").
 		JoinOn("organizations.id = users.org_id").
-		Where("organizations.id IN (?)", bun.In(orgIDs)).
+		Where("organizations.id IN (?)", bun.List(orgIDs)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

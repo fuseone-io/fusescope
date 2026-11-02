@@ -146,7 +146,7 @@ func (migration *addUserRole) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	var roles []roleRow
-	err = tx.NewSelect().TableExpr("role").ColumnExpr("id, name, org_id").Where("org_id IN (?)", bun.In(orgIDList)).Scan(ctx, &roles)
+	err = tx.NewSelect().TableExpr("role").ColumnExpr("id, name, org_id").Where("org_id IN (?)", bun.List(orgIDList)).Scan(ctx, &roles)
 	if err != nil {
 		return err
 	}

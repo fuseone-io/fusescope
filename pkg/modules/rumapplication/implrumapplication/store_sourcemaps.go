@@ -81,7 +81,7 @@ func (store *store) DeleteSourceMaps(ctx context.Context, orgID valuer.UUID, app
 		Model((*rumtypes.StorableSourceMap)(nil)).
 		Where("org_id = ?", orgID).
 		Where("application_id = ?", applicationID).
-		Where("id IN (?)", bun.In(ids)).
+		Where("id IN (?)", bun.List(ids)).
 		Exec(ctx)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to delete rum source maps")
@@ -98,7 +98,7 @@ func (store *store) SetSourceMapsLastUsedAt(ctx context.Context, ids []valuer.UU
 		NewUpdate().
 		Model((*rumtypes.StorableSourceMap)(nil)).
 		Set("last_used_at = ?", usedAt).
-		Where("id IN (?)", bun.In(ids)).
+		Where("id IN (?)", bun.List(ids)).
 		Exec(ctx)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to set rum source maps last used time")

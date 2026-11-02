@@ -450,7 +450,7 @@ func (store *store) CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UU
 		ColumnExpr("status").
 		ColumnExpr("COUNT(*) AS count").
 		Where("org_id = ?", orgID.StringValue()).
-		Where("status IN (?)", bun.In(statuses)).
+		Where("status IN (?)", bun.List(statuses)).
 		GroupExpr("status").
 		Scan(ctx, &results)
 	if err != nil {
@@ -495,7 +495,7 @@ func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.
 		NewSelect().
 		Model(&users).
 		Where("email = ?", email).
-		Where("org_id IN (?)", bun.In(orgIDs)).
+		Where("org_id IN (?)", bun.List(orgIDs)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -531,9 +531,9 @@ func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID 
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&users).
-		Where("email IN (?)", bun.In(emails)).
+		Where("email IN (?)", bun.List(emails)).
 		Where("org_id = ?", orgID).
-		Where("status in (?)", bun.In(statuses)).
+		Where("status in (?)", bun.List(statuses)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

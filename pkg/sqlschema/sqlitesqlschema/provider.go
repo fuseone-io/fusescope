@@ -57,7 +57,7 @@ func (provider *provider) GetTable(ctx context.Context, tableName sqlschema.Tabl
 	if err := provider.
 		sqlstore.
 		BunDB().
-		NewRaw("SELECT sql FROM sqlite_master WHERE type IN (?) AND tbl_name = ? AND sql IS NOT NULL", bun.In([]string{"table"}), string(tableName)).
+		NewRaw("SELECT sql FROM sqlite_master WHERE type IN (?) AND tbl_name = ? AND sql IS NOT NULL", bun.List([]string{"table"}), string(tableName)).
 		Scan(ctx, &sql); err != nil {
 		return nil, nil, provider.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "table (%s) not found", tableName)
 	}
