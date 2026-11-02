@@ -35,11 +35,6 @@ type backstopApplier struct {
 	clause       func(table string, volume string, coldStorageDays int, days int) retentiontypes.TTLClause
 }
 
-type backstopPlan struct {
-	progress *archivetypes.BackstopTable
-	clause   retentiontypes.TTLClause
-}
-
 // apply checks every table before rewriting any, so one that can't take the backstop
 // doesn't leave the others rewritten on every retry.
 func (applier *backstopApplier) apply(ctx context.Context) error {
@@ -53,8 +48,8 @@ func (applier *backstopApplier) apply(ctx context.Context) error {
 		return err
 	}
 
-	for _, plan := range plans {
-		if err := applier.applyTable(ctx, plan, hosts); err != nil {
+	for _, progress := range plans {
+		if err := applier.applyTable(ctx, progress, hosts); err != nil {
 			return err
 		}
 	}
@@ -62,8 +57,8 @@ func (applier *backstopApplier) apply(ctx context.Context) error {
 	return nil
 }
 
-func (applier *backstopApplier) plan(ctx context.Context) ([]backstopPlan, error) {
-	var plans []backstopPlan
+func (applier *backstopApplier) plan(ctx context.Context) ([]*archivetypes.BackstopTable, error) {
+	var plans []*archivetypes.BackstopTable
 	for _, table := range applier.tables {
 		progress, err := applier.tableProgress(ctx, table)
 		if err != nil {
@@ -73,12 +68,8 @@ func (applier *backstopApplier) plan(ctx context.Context) ([]backstopPlan, error
 			continue
 		}
 
-		volume, coldStorageDays, err := applier.cluster.coldStorage(ctx, table)
-		if err != nil {
+		if _, err := applier.tableClause(ctx, table); err != nil {
 			return nil, err
-		}
-		if err := retentiontypes.ValidateColdStorage(volume, coldStorageDays); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "couldn't give %s the archive backstop", table)
 		}
 
 		mutations, err := applier.cluster.mutations(ctx, table)
@@ -89,18 +80,22 @@ func (applier *backstopApplier) plan(ctx context.Context) ([]backstopPlan, error
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't give %s the archive backstop", table)
 		}
 
-		plans = append(plans, backstopPlan{progress: progress, clause: applier.clause(table, volume, coldStorageDays, applier.days)})
+		plans = append(plans, progress)
 	}
 
 	return plans, nil
 }
 
-func (applier *backstopApplier) applyTable(ctx context.Context, plan backstopPlan, hosts []string) error {
-	progress := plan.progress
+func (applier *backstopApplier) applyTable(ctx context.Context, progress *archivetypes.BackstopTable, hosts []string) error {
 	table := progress.TableName
 
 	if !progress.Modified(applier.days) {
-		if err := applier.cluster.exec(ctx, plan.clause.Statement(table, applier.clusterName)); err != nil {
+		// Read again: retention may have been saved while earlier tables materialized.
+		clause, err := applier.tableClause(ctx, table)
+		if err != nil {
+			return err
+		}
+		if err := applier.cluster.exec(ctx, clause.Statement(table, applier.clusterName)); err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't set the archive backstop on %s", table)
 		}
 		modifiedAt, err := applier.cluster.clusterNow(ctx)
@@ -140,6 +135,19 @@ func (applier *backstopApplier) applyTable(ctx context.Context, plan backstopPla
 	materializedAt := time.Now()
 	progress.MaterializedAt = &materializedAt
 	return applier.progress.SetBackstopTable(ctx, progress)
+}
+
+// tableClause is the backstop TTL of table, keeping its current move rule.
+func (applier *backstopApplier) tableClause(ctx context.Context, table string) (retentiontypes.TTLClause, error) {
+	volume, coldStorageDays, err := applier.cluster.coldStorage(ctx, table)
+	if err != nil {
+		return retentiontypes.TTLClause{}, err
+	}
+	if err := retentiontypes.ValidateColdStorage(volume, coldStorageDays); err != nil {
+		return retentiontypes.TTLClause{}, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "couldn't give %s the archive backstop", table)
+	}
+
+	return applier.clause(table, volume, coldStorageDays, applier.days), nil
 }
 
 // tableProgress is the progress of table towards the backstop of days, empty when it has

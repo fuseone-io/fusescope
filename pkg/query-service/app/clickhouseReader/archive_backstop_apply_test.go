@@ -77,6 +77,33 @@ func TestBackstopApplierApply(t *testing.T) {
 		assert.Empty(t, cluster.issued(), "every table is checked before any is rewritten")
 	})
 
+	t.Run("ColdStorageChangedAfterFirstTable_LogsGetsNewVolume", func(t *testing.T) {
+		cluster, progress := newFakeBackstopCluster(), newFakeBackstopProgress()
+		cluster.afterExec = func(kind string) {
+			if kind == "MATERIALIZE "+testResourceTable {
+				cluster.volumes[testLogsTable] = "archive"
+			}
+		}
+
+		require.NoError(t, newTestBackstopApplier(cluster, progress).apply(ctx))
+
+		require.Len(t, cluster.statements, 4)
+		assert.Contains(t, cluster.statements[2], "TO VOLUME 'archive'")
+	})
+
+	t.Run("ColdStorageBrokenAfterFirstTable_LogsNotRewritten", func(t *testing.T) {
+		cluster, progress := newFakeBackstopCluster(), newFakeBackstopProgress()
+		cluster.afterExec = func(kind string) {
+			if kind == "MATERIALIZE "+testResourceTable {
+				cluster.coldDays[testLogsTable] = 0
+			}
+		}
+
+		require.Error(t, newTestBackstopApplier(cluster, progress).apply(ctx))
+
+		assert.Equal(t, []string{"MODIFY " + testResourceTable, "MATERIALIZE " + testResourceTable}, cluster.issued())
+	})
+
 	t.Run("UnrelatedMutationStuck_NothingIssued", func(t *testing.T) {
 		cluster, progress := newFakeBackstopCluster(), newFakeBackstopProgress()
 		cluster.tableMutations[testLogsTable] = []retentiontypes.Mutation{{Host: "ch-1", ID: "0000000001", Command: "UPDATE x = 1 WHERE 1", CreateTime: cluster.clock.Add(-time.Hour), FailReason: "Cannot parse"}}
@@ -141,13 +168,14 @@ func newTestBackstopApplier(cluster *fakeBackstopCluster, progress *fakeBackstop
 		clusterName:  "cluster",
 		pollInterval: time.Millisecond,
 		clause: func(table string, volume string, coldStorageDays int, days int) retentiontypes.TTLClause {
-			return retentiontypes.TTLClause{Time: "timestamp", Delete: retentiontypes.IntervalDaysOf("_retention_days"), Backstop: retentiontypes.IntervalDays(days)}
+			return retentiontypes.TTLClause{Time: "timestamp", Delete: retentiontypes.IntervalDaysOf("_retention_days"), Backstop: retentiontypes.IntervalDays(days), Volume: volume, MoveAfter: retentiontypes.IntervalDays(coldStorageDays)}
 		},
 	}
 }
 
 type fakeBackstopCluster struct {
 	clock                   time.Time
+	volumes                 map[string]string
 	coldDays                map[string]int
 	tableMutations          map[string][]retentiontypes.Mutation
 	statements              []string
@@ -156,11 +184,13 @@ type fakeBackstopCluster struct {
 	pendingPolls            int
 	finishEarlierAfterPolls int
 	polls                   map[string]int
+	afterExec               func(kind string)
 }
 
 func newFakeBackstopCluster() *fakeBackstopCluster {
 	return &fakeBackstopCluster{
 		clock:          time.Date(2026, 11, 2, 10, 0, 0, 0, time.UTC),
+		volumes:        map[string]string{testLogsTable: "cold", testResourceTable: "cold"},
 		coldDays:       map[string]int{testLogsTable: 3, testResourceTable: 3},
 		tableMutations: map[string][]retentiontypes.Mutation{},
 		polls:          map[string]int{},
@@ -176,7 +206,7 @@ func (cluster *fakeBackstopCluster) issued() []string {
 }
 
 func (cluster *fakeBackstopCluster) coldStorage(_ context.Context, table string) (string, int, error) {
-	return "cold", cluster.coldDays[table], nil
+	return cluster.volumes[table], cluster.coldDays[table], nil
 }
 
 // mutations returns the mutations of table, then moves them along: an earlier MATERIALIZE
@@ -222,6 +252,9 @@ func (cluster *fakeBackstopCluster) exec(_ context.Context, statement string) er
 		for _, host := range testBackstopHosts {
 			cluster.tableMutations[table] = append(cluster.tableMutations[table], retentiontypes.Mutation{Host: host, ID: "own", Command: "MATERIALIZE TTL", CreateTime: cluster.clock, FailReason: cluster.materializeFailReason})
 		}
+	}
+	if cluster.afterExec != nil {
+		cluster.afterExec(kind)
 	}
 	return nil
 }
