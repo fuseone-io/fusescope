@@ -52,6 +52,10 @@ updates:
       - dependency-name: github.com/perses/spec
         versions:
           - ">= 0.3.0"
+      # 2.48 adds driver.Conn.InsertFormat, which SigNoz/clickhouse-go-mock lacks.
+      - dependency-name: github.com/ClickHouse/clickhouse-go/v2
+        versions:
+          - ">= 2.48.0"
 
   - package-ecosystem: npm
     directories:
