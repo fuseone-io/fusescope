@@ -50,10 +50,11 @@ type ManifestPart struct {
 // Index lists a table's active objects as of one commit. External readers take the index
 // with the highest key, since superseded objects stay in the bucket.
 type Index struct {
-	Table    string        `json:"table"`
-	Epoch    int64         `json:"epoch"`
-	Sequence int64         `json:"sequence"`
-	Objects  []IndexObject `json:"objects"`
+	FormatVersion int           `json:"format_version"`
+	Table         string        `json:"table"`
+	Epoch         int64         `json:"epoch"`
+	Sequence      int64         `json:"sequence"`
+	Objects       []IndexObject `json:"objects"`
 }
 
 type IndexObject struct {

@@ -55,3 +55,17 @@ func TestManifestEncode(t *testing.T) {
 		"parts": [{"name": "20260903-15-0_1_5_1", "min_block": 1, "max_block": 5, "data_version": 1, "rows": 10, "object_key": "k", "bytes": 2048, "etag": "e"}]
 	}`, string(encoded))
 }
+
+func TestIndexJSON(t *testing.T) {
+	index := Index{FormatVersion: FormatVersion, Table: "logs_v2", Epoch: 3, Sequence: 12, Objects: []IndexObject{{Key: "k", Rows: 10, Bytes: 2048, ETag: "e"}}}
+
+	encoded, err := json.Marshal(index)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{
+		"format_version": 1,
+		"table": "logs_v2",
+		"epoch": 3,
+		"sequence": 12,
+		"objects": [{"key": "k", "rows": 10, "bytes": 2048, "etag": "e"}]
+	}`, string(encoded))
+}
