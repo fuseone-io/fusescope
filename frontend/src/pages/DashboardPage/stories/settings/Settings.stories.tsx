@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -129,9 +129,13 @@ export const PublishedToast: Story = {
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement, 'Publish');
-		await userEvent.click(await screen.findByTestId('public-dashboard-publish'));
+		const publish = await screen.findByTestId('public-dashboard-publish');
+		await waitFor(() => expect(publish).toBeEnabled());
+		await userEvent.click(publish);
 		if (args.publicWrite === 'success') {
-			await screen.findByText('Dashboard published successfully');
+			await screen.findByText('Dashboard published successfully', undefined, {
+				timeout: 5000,
+			});
 		}
 	},
 };
