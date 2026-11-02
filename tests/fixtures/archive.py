@@ -63,7 +63,11 @@ def publish_day(signoz: types.SigNoz, named_collection: str, table: str, day: da
         size, etag = conn.query(f"SELECT _size, _etag FROM s3({named_collection}, filename = '{key}', format = 'One')").result_rows[0]
         objects.append({"id": str(uuid.uuid4()), "key": key, "bytes": size, "etag": etag.strip('"'), "rows": rows, "part": name, "min": min_block, "max": max_block, "version": data_version})
 
-    commit(signoz, named_collection, table, partition_id, attempt_id, mapping, manifest_key, hashlib.sha256(manifest).hexdigest(), objects)
+    identity = conn.query(
+        "SELECT if(path = '', 'uuid:' || uuid, path) FROM (SELECT (SELECT any(zookeeper_path) FROM system.replicas WHERE database = 'signoz_logs' AND table = {table:String}) AS path, (SELECT any(toString(uuid)) FROM system.tables WHERE database = 'signoz_logs' AND name = {table:String}) AS uuid)",
+        parameters={"table": table},
+    ).result_rows[0][0]
+    commit(signoz, named_collection, table, identity, partition_id, attempt_id, mapping, manifest_key, hashlib.sha256(manifest).hexdigest(), objects)
     return [o["key"] for o in objects]
 
 
@@ -75,15 +79,20 @@ def column_mapping(name: str, source: str) -> dict:
     return mapping
 
 
-def commit(signoz: types.SigNoz, named_collection: str, table: str, partition_id: str, attempt_id: str, mapping: list, manifest_key: str, manifest_sha256: str, objects: list) -> None:  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def commit(signoz: types.SigNoz, named_collection: str, table: str, replica_path: str, partition_id: str, attempt_id: str, mapping: list, manifest_key: str, manifest_sha256: str, objects: list) -> None:  # pylint: disable=too-many-arguments,too-many-positional-arguments
     now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
     with signoz.sqlstore.conn.begin() as tx:
         tx.execute(
+            sql.text("INSERT INTO archive_shard (id, table_name, shard, replica_path, created_at, updated_at) VALUES (:id, :table, 1, :path, :now, :now) ON CONFLICT DO NOTHING"),
+            {"id": str(uuid.uuid4()), "table": table, "path": replica_path, "now": now},
+        )
+        shard_id = tx.execute(sql.text("SELECT id FROM archive_shard WHERE table_name = :table AND shard = 1 AND replica_path = :path"), {"table": table, "path": replica_path}).scalar_one()
+        tx.execute(
             sql.text(
-                "INSERT INTO archive_attempt (id, signal, kind, table_name, shard, partition_id, epoch, status, named_collection, prefix, format_version, column_mapping, manifest_key, manifest_sha256, created_at, updated_at) "
-                "VALUES (:id, 'logs', 'export', :table, 1, :partition, 1, 'published', :collection, :prefix, 1, :mapping, :manifest_key, :sha, :now, :now)"
+                "INSERT INTO archive_attempt (id, signal, kind, table_name, shard, shard_id, partition_id, epoch, status, named_collection, prefix, format_version, column_mapping, manifest_key, manifest_sha256, created_at, updated_at) "
+                "VALUES (:id, 'logs', 'export', :table, 1, :shard_id, :partition, 1, 'published', :collection, :prefix, 1, :mapping, :manifest_key, :sha, :now, :now)"
             ),
-            {"id": attempt_id, "table": table, "partition": partition_id, "collection": named_collection, "prefix": RESTORE_PREFIX, "mapping": json.dumps(mapping), "manifest_key": manifest_key, "sha": manifest_sha256, "now": now},
+            {"id": attempt_id, "table": table, "shard_id": shard_id, "partition": partition_id, "collection": named_collection, "prefix": RESTORE_PREFIX, "mapping": json.dumps(mapping), "manifest_key": manifest_key, "sha": manifest_sha256, "now": now},
         )
         for o in objects:
             tx.execute(
@@ -91,8 +100,11 @@ def commit(signoz: types.SigNoz, named_collection: str, table: str, partition_id
                 {"id": o["id"], "attempt": attempt_id, "collection": named_collection, "key": o["key"], "bytes": o["bytes"], "etag": o["etag"], "rows": o["rows"], "now": now},
             )
             tx.execute(
-                sql.text("INSERT INTO archive_part (id, table_name, shard, partition_id, part_name, min_block, max_block, data_version, rows, object_id, attempt_id, status, created_at, updated_at) VALUES (:id, :table, 1, :partition, :part, :min, :max, :version, :rows, :object, :attempt, 'published', :now, :now)"),
-                {"id": str(uuid.uuid4()), "table": table, "partition": partition_id, "part": o["part"], "min": o["min"], "max": o["max"], "version": o["version"], "rows": o["rows"], "object": o["id"], "attempt": attempt_id, "now": now},
+                sql.text(
+                    "INSERT INTO archive_part (id, table_name, shard, shard_id, partition_id, part_name, min_block, max_block, data_version, rows, object_id, attempt_id, status, created_at, updated_at) "
+                    "VALUES (:id, :table, 1, :shard_id, :partition, :part, :min, :max, :version, :rows, :object, :attempt, 'published', :now, :now)"
+                ),
+                {"id": str(uuid.uuid4()), "table": table, "shard_id": shard_id, "partition": partition_id, "part": o["part"], "min": o["min"], "max": o["max"], "version": o["version"], "rows": o["rows"], "object": o["id"], "attempt": attempt_id, "now": now},
             )
 
 
