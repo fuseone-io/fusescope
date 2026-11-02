@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -128,12 +129,12 @@ func (attempt *Attempt) ColumnMappings() ([]ColumnMapping, error) {
 	return mappings, nil
 }
 
-// RestorePlan selects, per shard and partition of each table, the maximal published parts
-// in block order. Every table of the set must have parts in the range.
+// RestorePlan selects, per shard pin and partition of each table, the maximal published
+// parts in block order. Every table of the set must have parts in the range.
 func RestorePlan(tables []string, parts []RestorablePart) (map[string][]RestorablePart, error) {
 	type partition struct {
-		shard int
-		id    string
+		pin string
+		id  string
 	}
 
 	plan := make(map[string][]RestorablePart, len(tables))
@@ -141,7 +142,7 @@ func RestorePlan(tables []string, parts []RestorablePart) (map[string][]Restorab
 		byPartition := map[partition][]RestorablePart{}
 		for _, part := range parts {
 			if part.Part.TableName == table {
-				key := partition{shard: part.Part.Shard, id: part.Part.PartitionID}
+				key := partition{pin: shardPin(part.Part), id: part.Part.PartitionID}
 				byPartition[key] = append(byPartition[key], part)
 			}
 		}
@@ -164,6 +165,9 @@ func RestorePlan(tables []string, parts []RestorablePart) (map[string][]Restorab
 			a, b := plan[table][i].Part, plan[table][j].Part
 			if a.Shard != b.Shard {
 				return a.Shard < b.Shard
+			}
+			if shardPin(a) != shardPin(b) {
+				return shardPin(a) < shardPin(b)
 			}
 			if a.PartitionID != b.PartitionID {
 				return a.PartitionID < b.PartitionID
@@ -203,6 +207,11 @@ func RestoreExpressions(mappings []ColumnMapping, target []SchemaColumn) ([]stri
 	}
 
 	return columns, expressions, nil
+}
+
+// shardPin is the identity a part's block numbers are unique within.
+func shardPin(part *ArchivedPart) string {
+	return strconv.Itoa(part.Shard)
 }
 
 func archivedParts(parts []RestorablePart) []*ArchivedPart {
