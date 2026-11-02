@@ -4,7 +4,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strconv"
 
@@ -78,7 +77,7 @@ func (name DisplayName) Value() (driver.Value, error) {
 
 func (name *DisplayName) Scan(val any) error {
 	if name == nil {
-		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "display name: (nil \"%s\")", reflect.TypeOf(name).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "display name: (nil \"%T\")", name)
 	}
 
 	if val == nil {
@@ -88,7 +87,7 @@ func (name *DisplayName) Scan(val any) error {
 
 	str, ok := val.(string)
 	if !ok {
-		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "display name: (non-string \"%s\")", reflect.TypeOf(val).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "display name: (non-string \"%T\")", val)
 	}
 
 	*name = NewDisplayName(str)

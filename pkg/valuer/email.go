@@ -3,7 +3,6 @@ package valuer
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"reflect"
 	"regexp"
 	"strings"
 
@@ -77,12 +76,12 @@ func (enum Email) Value() (driver.Value, error) {
 
 func (enum *Email) Scan(val interface{}) error {
 	if enum == nil {
-		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "email: (nil \"%s\")", reflect.TypeOf(enum).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "email: (nil \"%T\")", enum)
 	}
 
 	str, ok := val.(string)
 	if !ok {
-		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "email: (non-string \"%s\")", reflect.TypeOf(val).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "email: (non-string \"%T\")", val)
 	}
 
 	var err error

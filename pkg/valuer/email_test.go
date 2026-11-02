@@ -37,3 +37,30 @@ func TestNewEmail(t *testing.T) {
 		})
 	}
 }
+
+func TestEmailScan(t *testing.T) {
+	testCases := []struct {
+		name string
+		val  any
+		want Email
+		pass bool
+	}{
+		{name: "String", val: "scan@test.com", want: Email{val: "scan@test.com"}, pass: true},
+		{name: "Null", val: nil, pass: false},
+		{name: "NonString", val: 42, pass: false},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var got Email
+			err := got.Scan(testCase.val)
+			if !testCase.pass {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.want, got)
+		})
+	}
+}
