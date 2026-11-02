@@ -14,7 +14,6 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { Plus } from 'lucide-react';
-import AlertsHeaderActions from 'pages/AlertList/components/AlertsHeaderActions';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
@@ -64,7 +63,16 @@ function AlertChannels(): JSX.Element {
 
 	return (
 		<div className="tw:flex tw:w-full tw:flex-col tw:gap-3">
-			<AlertsHeaderActions>
+			<div className="fs-ui tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2 tw:font-sans">
+				<div className="tw:flex tw:min-w-0 tw:items-center tw:gap-2">
+					<p className="tw:min-w-0 tw:truncate tw:text-[13px] tw:text-muted-foreground">
+						{t('sending_channels_note')}
+					</p>
+					<TextToolTip
+						text={t('tooltip_notification_channels')}
+						url={fuseScopeDocsUrl('/alerts/notification-channels/')}
+					/>
+				</div>
 				<Tooltip
 					title={
 						!addNewChannelPermission
@@ -83,15 +91,6 @@ function AlertChannels(): JSX.Element {
 						</Button>
 					</span>
 				</Tooltip>
-			</AlertsHeaderActions>
-			<div className="fs-ui tw:flex tw:flex-wrap tw:items-center tw:gap-2 tw:font-sans">
-				<p className="tw:min-w-0 tw:truncate tw:text-[13px] tw:text-muted-foreground">
-					{t('sending_channels_note')}
-				</p>
-				<TextToolTip
-					text={t('tooltip_notification_channels')}
-					url={fuseScopeDocsUrl('/alerts/notification-channels/')}
-				/>
 			</div>
 
 			<ContentPanel

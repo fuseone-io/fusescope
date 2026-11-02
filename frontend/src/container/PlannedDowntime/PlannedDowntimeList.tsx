@@ -11,7 +11,6 @@ import ConfigListSkeleton from 'components/Alerts/ConfigSectionHeader/ConfigList
 import ConfigListState from 'components/Alerts/ConfigSectionHeader/ConfigListState';
 import ContentPanel from 'components/PageTemplate/components/ContentPanel';
 import TablePagination from 'components/PageTemplate/components/TablePagination';
-import { Button } from 'components/ui/button';
 import {
 	Table,
 	TableBody,
@@ -21,7 +20,7 @@ import {
 } from 'components/ui/table';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
-import { CalendarClock, Plus, Search } from 'lucide-react';
+import { CalendarClock, Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 import { showErrorNotification } from 'utils/error';
@@ -50,7 +49,6 @@ export function PlannedDowntimeList({
 	handleDeleteDowntime,
 	setEditMode,
 	searchValue,
-	onCreate,
 }: {
 	downtimeSchedules: UseQueryResult<
 		ListDowntimeSchedules200,
@@ -64,7 +62,6 @@ export function PlannedDowntimeList({
 	handleDeleteDowntime: (id: string, name: string) => void;
 	setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	searchValue: string | number;
-	onCreate?: () => void;
 }): JSX.Element {
 	const { notifications } = useNotifications();
 	const { user } = useAppContext();
@@ -129,14 +126,6 @@ export function PlannedDowntimeList({
 				title="No planned downtime yet"
 				description="Schedule a window to silence alerts during maintenance or deploys."
 				testId="planned-downtime-empty"
-				action={
-					isCrudEnabled && onCreate ? (
-						<Button variant="outline" size="sm" onClick={onCreate}>
-							<Plus aria-hidden="true" />
-							New downtime
-						</Button>
-					) : undefined
-				}
 			/>
 		);
 

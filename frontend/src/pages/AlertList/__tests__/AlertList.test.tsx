@@ -32,12 +32,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 }));
 
 // Mock components
-jest.mock('components/HeaderRightSection/HeaderRightSection', () => ({
-	__esModule: true,
-	default: function MockHeaderRightSection(): JSX.Element {
-		return <div>Header Right Section</div>;
-	},
-}));
 jest.mock('pages/AlertDetails', () => ({
 	__esModule: true,
 	default: function MockAlertDetails(): JSX.Element {

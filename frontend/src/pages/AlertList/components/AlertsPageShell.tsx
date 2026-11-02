@@ -1,16 +1,7 @@
-import { ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
-import {
-	showsGlobalTimePicker,
-	showsHeaderActionsOnly,
-} from 'components/AppHeader/utils';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import CompactPageHeader from 'components/PageTemplate/components/CompactPageHeader';
 import { PageTab } from 'components/PageTemplate/types';
 import { Bell } from 'lucide-react';
 import { Tabs as TabsPrimitive } from 'radix-ui';
-
-import { useAlertsHeaderActionsSlot } from './useAlertsHeaderActionsSlot';
 
 /** Stretches the active panel so tables below can size their pages to it. */
 export const FILL_TAB_PANEL =
@@ -23,7 +14,6 @@ interface AlertsPageShellProps {
 	tabs: PageTab[];
 	activeTab: string;
 	onTabChange: (tab: string) => void;
-	actions?: ReactNode;
 	testId?: string;
 }
 
@@ -36,14 +26,8 @@ function AlertsPageShell({
 	tabs,
 	activeTab,
 	onTabChange,
-	actions,
 	testId = 'alerts-page',
 }: AlertsPageShellProps): JSX.Element {
-	const { pathname } = useLocation();
-	const setActionsSlot = useAlertsHeaderActionsSlot((s) => s.setSlot);
-	const showHeaderRightSection =
-		!showsGlobalTimePicker(pathname) && !showsHeaderActionsOnly(pathname);
-
 	return (
 		<TabsPrimitive.Root
 			value={activeTab}
@@ -52,27 +36,7 @@ function AlertsPageShell({
 			className="tw:flex tw:w-full tw:flex-1 tw:flex-col tw:bg-background tw:text-foreground"
 		>
 			<div className="tw:flex tw:flex-none tw:flex-col tw:gap-2 tw:border-b tw:border-border tw:bg-surface-raised tw:px-4 tw:pt-4 tw:md:px-6">
-				<CompactPageHeader
-					icon={<Bell />}
-					title="Alerts"
-					actions={
-						<>
-							<div
-								ref={setActionsSlot}
-								data-testid="alerts-header-actions"
-								className="fs-ui tw:flex tw:items-center tw:gap-2 tw:font-sans tw:empty:hidden"
-							/>
-							{actions}
-							{showHeaderRightSection && (
-								<HeaderRightSection
-									enableAnnouncements={false}
-									enableShare
-									enableFeedback
-								/>
-							)}
-						</>
-					}
-				/>
+				<CompactPageHeader icon={<Bell />} title="Alerts" />
 				<TabsPrimitive.List
 					aria-label="Alerts sections"
 					className="fs-ui tw:flex tw:gap-6 tw:overflow-x-auto tw:overflow-y-hidden tw:font-sans"

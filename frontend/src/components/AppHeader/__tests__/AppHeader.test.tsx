@@ -364,6 +364,7 @@ describe('AppHeader', () => {
 			ROUTES.LOGS_EXPLORER,
 			ROUTES.LOGS_PIPELINES,
 			ROUTES.LOGS_SAVE_VIEWS,
+			ROUTES.LIST_ALL_ALERT,
 		])('shows the page actions without a global picker on %s', (route) => {
 			renderHeader(route);
 

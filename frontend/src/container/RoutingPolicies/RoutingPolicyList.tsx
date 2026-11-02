@@ -12,9 +12,7 @@ import {
 	TableRow,
 } from 'components/ui/table';
 import { fuseScopeDocsUrl } from 'constants/docs';
-import { Plus, RotateCw, Route, Search, TriangleAlert } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
-import { USER_ROLES } from 'types/roles';
+import { RotateCw, Route, Search, TriangleAlert } from 'lucide-react';
 
 import { ROUTING_POLICY_COLUMN_COUNT } from './constants';
 import RoutingPolicyListItem from './RoutingPolicyListItem';
@@ -33,7 +31,6 @@ function RoutingPolicyList({
 	handleDeleteModalOpen,
 	hasSearchTerm,
 }: RoutingPolicyListProps): JSX.Element {
-	const { user } = useAppContext();
 	const [page, setPage] = useState(1);
 
 	const showLoading = isRoutingPoliciesLoading || isRoutingPoliciesFetching;
@@ -87,18 +84,6 @@ function RoutingPolicyList({
 							Learn more
 						</a>
 					</>
-				}
-				action={
-					user?.role === USER_ROLES.VIEWER ? undefined : (
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={(): void => handlePolicyDetailsModalOpen('create', null)}
-						>
-							<Plus aria-hidden="true" />
-							New routing policy
-						</Button>
-					)
 				}
 			/>
 		);
