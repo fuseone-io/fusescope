@@ -52,6 +52,55 @@ func TestRehydrationLifecycle(t *testing.T) {
 	})
 }
 
+func TestCreateRehydration_Overlap(t *testing.T) {
+	ctx := context.Background()
+	day := time.Date(2026, 9, 3, 0, 0, 0, 0, time.UTC)
+
+	testCases := []struct {
+		name    string
+		status  string
+		expired bool
+		signal  string
+		day     time.Time
+		refused bool
+	}{
+		{name: "Pending_SameDay_Refused", status: archivetypes.RehydrationStatusPending, signal: "logs", day: day, refused: true},
+		{name: "Loading_SameDay_Refused", status: archivetypes.RehydrationStatusLoading, signal: "logs", day: day.Add(6 * time.Hour), refused: true},
+		{name: "Ready_SameDay_Refused", status: archivetypes.RehydrationStatusReady, signal: "logs", day: day, refused: true},
+		{name: "Failed_SameDay_Created", status: archivetypes.RehydrationStatusFailed, signal: "logs", day: day},
+		{name: "ReadyExpired_SameDay_Created", status: archivetypes.RehydrationStatusReady, expired: true, signal: "logs", day: day},
+		{name: "Ready_NextDay_Created", status: archivetypes.RehydrationStatusReady, signal: "logs", day: day.Add(24 * time.Hour)},
+		{name: "Ready_OtherSignal_Created", status: archivetypes.RehydrationStatusReady, signal: "traces", day: day},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			forEachStore(t, func(t *testing.T, store archivetypes.Store) {
+				existing, err := archivetypes.NewRehydration("logs", day, time.Hour, "admin@example.com")
+				require.NoError(t, err)
+				if testCase.expired {
+					existing.ExpiresAt = time.Now().UTC().Add(-time.Minute)
+				}
+				require.NoError(t, store.CreateRehydration(ctx, existing))
+				existing.Status = testCase.status
+				require.NoError(t, store.UpdateRehydration(ctx, existing))
+
+				another, err := archivetypes.NewRehydration(testCase.signal, testCase.day, time.Hour, "other@example.com")
+				require.NoError(t, err)
+				err = store.CreateRehydration(ctx, another)
+				if !testCase.refused {
+					assert.NoError(t, err)
+					return
+				}
+				assert.True(t, errors.Asc(err, archivetypes.ErrCodeRehydrationExists), err)
+				assert.Contains(t, err.Error(), existing.ID.StringValue())
+				_, err = store.GetRehydration(ctx, another.ID)
+				assert.True(t, errors.Ast(err, errors.TypeNotFound), err)
+			})
+		})
+	}
+}
+
 func TestListRestorableParts(t *testing.T) {
 	ctx := context.Background()
 

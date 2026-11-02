@@ -11,17 +11,34 @@ import (
 )
 
 func (store *store) CreateRehydration(ctx context.Context, rehydration *archivetypes.Rehydration) error {
-	_, err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewInsert().
-		Model(rehydration).
-		Exec(ctx)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record restoration %s", rehydration.ID)
-	}
+	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		db := store.sqlstore.BunDBCtx(ctx)
 
-	return nil
+		var existing []*archivetypes.Rehydration
+		err := db.
+			NewSelect().
+			Model(&existing).
+			Where("signal = ?", rehydration.Signal).
+			Where("range_start < ? AND range_end > ?", rehydration.End, rehydration.Start).
+			WhereGroup(" AND ", func(query *bun.SelectQuery) *bun.SelectQuery {
+				return query.
+					Where("status IN (?)", bun.In([]string{archivetypes.RehydrationStatusPending, archivetypes.RehydrationStatusLoading})).
+					WhereOr("status = ? AND expires_at > ?", archivetypes.RehydrationStatusReady, time.Now().UTC())
+			}).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't check the restorations overlapping %s", rehydration.ID)
+		}
+		if len(existing) > 0 {
+			return errors.Newf(errors.TypeAlreadyExists, archivetypes.ErrCodeRehydrationExists, "restoration %s already covers %s from %s to %s", existing[0].ID, rehydration.Signal, existing[0].Start.Format(time.DateOnly), existing[0].End.Format(time.DateOnly))
+		}
+
+		if _, err := db.NewInsert().Model(rehydration).Exec(ctx); err != nil {
+			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record restoration %s", rehydration.ID)
+		}
+		return nil
+	})
 }
 
 func (store *store) GetRehydration(ctx context.Context, id valuer.UUID) (*archivetypes.Rehydration, error) {

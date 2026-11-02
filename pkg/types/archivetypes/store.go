@@ -58,6 +58,9 @@ type Store interface {
 	// read in one snapshot.
 	IndexSnapshot(ctx context.Context, table string) (*IndexSnapshot, error)
 
+	// CreateRehydration returns an error with ErrCodeRehydrationExists, naming it, when a
+	// pending, loading or unexpired ready restoration of the signal overlaps the range: its
+	// rows would be read twice.
 	CreateRehydration(ctx context.Context, rehydration *Rehydration) error
 
 	// GetRehydration returns an error with ErrCodeRehydrationNotFound when id doesn't exist.

@@ -32,6 +32,7 @@ const (
 
 var (
 	ErrCodeRehydrationNotFound   = errors.MustNewCode("archive_rehydration_not_found")
+	ErrCodeRehydrationExists     = errors.MustNewCode("archive_rehydration_exists")
 	ErrCodeRehydrationCorrupt    = errors.MustNewCode("archive_rehydration_corrupt")
 	ErrCodeRehydrationIncompat   = errors.MustNewCode("archive_rehydration_incompatible")
 	ErrCodeRehydrationIncomplete = errors.MustNewCode("archive_rehydration_incomplete")
