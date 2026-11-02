@@ -23,7 +23,7 @@ Code was read on `main` at `ef3cc1b09`, charts at `fusescope-charts` `main`.
 - **Symbol uploads** go to the backend's management API: `POST /api/v1/rum/applications/{id}/sourcemaps` and `/mappings` (R8), with an editor or admin credential. They are CI uploads.
 - **Ingestion keys** exist as a gateway interface, but the community build implements it with a no-op that returns 501.
 - **OpAMP.** Collectors connect to the backend's OpAMP server on an internal port (4320), which pushes log pipelines, span mapping and LLM pricing.
-- **Other ADRs point the same way.** ADR 0008 puts all profile and debug-file ingest on the collector behind an `ingestauth` extension fed over OpAMP, and leaves the RUM gateway as an open question. ADR 0006 sends synthetics runner results through the collector. ADR 0009 creates the Apache-2.0 collector where new ingest code goes.
+- **Other ADRs point the same way.** ADR 0008 puts all profile and debug-file ingest on the collector behind an `ingestauth` extension fed over OpAMP, and moves the RUM gateway to the collector too. ADR 0006 sends synthetics runner results through the collector. ADR 0009 creates the Apache-2.0 collector where new ingest code goes.
 
 Two front doors mean two places to rate-limit, two auth models, a backend that must be reachable from every browser and CI runner, and an API server that shares its process with untrusted, bursty traffic.
 
@@ -68,7 +68,7 @@ Managed in the backend, enforced in the collector. Built clean-room from this AD
 
 A server authenticator extension in `fusescope-collector`, attached to every receiver on the public listener.
 
-- **No per-request backend call.** It hashes the presented key and looks it up in memory; a request with a key of the wrong kind, a signal it does not allow or an expired key is refused.
+- **No per-request backend call.** It hashes the presented key and looks it up in memory; a request with a key of the wrong kind or an expired key is refused. A server authenticator sees only headers, not the signal, so a signal the key doesn't allow is refused by `ingestauth`'s processor in each pipeline, which knows its signal.
 - **It stamps `fusescope.ingest.key_id`** on every resource, overwriting any value the client sent, and puts the org in the request's auth data for processors and exporters. The payload never decides the org.
 - **Per-key rate limits.** A token bucket per key in each replica. The backend knows how many ingress replicas are connected and sends each one its share of a key's limit. Over the limit: 429 with `Retry-After`, which OTLP exporters retry. Size limits stay per receiver.
 - **Lost OpAMP connection.** The snapshot is cached on disk (hashes only) and keeps being used, so a backend outage never stops ingest. Its age is exported as a metric and shown in the UI. An optional `max_staleness` makes the collector refuse keyed requests with 503 past it; it has no default and stays off unless an operator sets it, so a revocation made during an outage takes effect when the connection returns.
@@ -85,7 +85,7 @@ A server authenticator extension in `fusescope-collector`, attached to every rec
 - The mode is set per listener in the chart. New installs: public listener `enforce`, internal listener `permissive`. Upgraded installs start `permissive`; `warn` becomes the upgrade default one release later, and `enforce` the release after, each announced in release notes.
 - The UI lists unauthenticated sources (service, host, count) from the collector's counters, so operators can issue keys before enforcing.
 
-- **Per signal.** A signal with no existing clients can start in `enforce` while the listener's other signals are still `permissive`; `ingestauth` applies the mode per signal. Profiles (ADR 0008) use this.
+- **Per listener.** The mode is set per listener, since an authenticator can't tell signals apart. A new signal with no existing clients gets its own listener and can start in `enforce` while the shared OTLP listener is still `permissive`. Profiles (ADR 0008) use this.
 
 ### 6. The RUM gateway moves to the collector
 
@@ -130,7 +130,7 @@ The snapshot maps every key to an org, and the org travels in auth data through 
 ## Relationship with other ADRs
 
 - **ADR 0003 (RUM).** Decision 3 (gateway in the backend) is replaced by §6; decision 4 (public keys) becomes the public kind of §2; decision 6 (uploads through the API) is replaced by §7. The reasons 0003 gave for the backend are answered: keys and policies still live in the metastore and reach the collector over OpAMP; the new code is Apache-2.0, not AGPL (ADR 0009); symbolication stays in the backend. 0003 carries an amendment note.
-- **ADR 0008 (profiling).** Its `ingestauth` is this one, and its open question is answered: keys cover every signal from the first release; existing signals start `permissive`, and `profiles` starts `enforce` through the per-signal mode of §5. Its `debuginforeceiver` becomes the debug-file route of `artifactreceiver`.
+- **ADR 0008 (profiling).** Its `ingestauth` is this one. Profiles get their own listener, `enforce` from the start (§5); `profilesreceiver` serves Parca's `DebuginfoService` there and streams debug files to the intake of §7 with `artifactreceiver`'s code.
 - **ADR 0007 (cost).** Billing exports are pulled by the backend, not ingested, so nothing moves. `fusescope.ingest.key_id` lets the ingest meter, and later cost showback, split usage per key and team.
 - **ADR 0006 (synthetics).** Runner results become ingest through the collector with a secret key scoped to the runner, instead of a backend gateway; 0006 is updated before it is accepted.
 - **[#182](https://github.com/fuseone-io/fusescope/issues/182)** (RUM roadmap) tracks the SDK endpoint changes; **[#178](https://github.com/fuseone-io/fusescope/issues/178)** covers the anonymous routes that stay on the backend.
