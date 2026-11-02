@@ -120,8 +120,13 @@ func TestPublish(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, objects, 2)
 
+		sequence, err := store.Publish(ctx, lease, publication)
+		require.NoError(t, err, "a retry after a lost commit reply succeeds")
+		assert.Equal(t, int64(1), sequence, "a retry commits nothing again")
+
+		publication.Attempt.ManifestSHA256 = "other"
 		_, err = store.Publish(ctx, lease, publication)
-		assert.True(t, errors.Asc(err, archivetypes.ErrCodeAttemptAlreadyPublished), "a retry after a lost commit reply is told the attempt is live: %v", err)
+		assert.True(t, errors.Asc(err, archivetypes.ErrCodeAttemptAlreadyPublished), "another manifest is told the attempt is published: %v", err)
 	})
 }
 

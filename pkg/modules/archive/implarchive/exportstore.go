@@ -58,14 +58,18 @@ func (store *store) Publish(ctx context.Context, lease *archivetypes.Lease, publ
 		if err := fence(ctx, db, lease, now); err != nil {
 			return err
 		}
-		if err := store.record(ctx, db, lease, publication, now); err != nil {
+		republished, err := store.record(ctx, db, lease, publication, now)
+		if err != nil {
+			return err
+		}
+		if republished {
+			sequence, err = indexSequence(ctx, db, publication.Attempt.TableName)
 			return err
 		}
 		if err := supersede(ctx, db, publication, now); err != nil {
 			return err
 		}
 
-		var err error
 		sequence, err = nextIndexSequence(ctx, db, publication.Attempt.TableName)
 		return err
 	})
@@ -156,8 +160,9 @@ func fence(ctx context.Context, db bun.IDB, lease *archivetypes.Lease, now time.
 	return nil
 }
 
-// record marks the attempt published and inserts its objects and parts.
-func (store *store) record(ctx context.Context, db bun.IDB, lease *archivetypes.Lease, publication *archivetypes.Publication, now time.Time) error {
+// record marks the attempt published and inserts its objects and parts. It reports an attempt
+// that an earlier call published with the same manifest, so a retry commits nothing again.
+func (store *store) record(ctx context.Context, db bun.IDB, lease *archivetypes.Lease, publication *archivetypes.Publication, now time.Time) (bool, error) {
 	attempt := publication.Attempt
 	published, err := db.
 		NewUpdate().
@@ -174,26 +179,26 @@ func (store *store) record(ctx context.Context, db bun.IDB, lease *archivetypes.
 		Where("status = ?", archivetypes.AttemptStatusPending).
 		Exec(ctx)
 	if ok, err := oneRowAffected(published, err); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't publish archive attempt %s", attempt.ID)
+		return false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't publish archive attempt %s", attempt.ID)
 	} else if !ok {
-		return notPublished(ctx, db, attempt.ID, lease)
+		return notPublished(ctx, db, attempt, lease)
 	}
 
 	if len(publication.Objects) > 0 {
 		if _, err := db.NewInsert().Model(&publication.Objects).Exec(ctx); err != nil {
-			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record the objects of archive attempt %s", attempt.ID)
+			return false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record the objects of archive attempt %s", attempt.ID)
 		}
 	}
 	if len(publication.Parts) > 0 {
 		if _, err := db.NewInsert().Model(&publication.Parts).Exec(ctx); err != nil {
 			if wrapped := store.sqlstore.WrapAlreadyExistsErrf(err, archivetypes.ErrCodePartAlreadyPublished, "a part of archive attempt %s is published already", attempt.ID); wrapped != err {
-				return wrapped
+				return false, wrapped
 			}
-			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record the parts of archive attempt %s", attempt.ID)
+			return false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't record the parts of archive attempt %s", attempt.ID)
 		}
 	}
 
-	return nil
+	return false, nil
 }
 
 func nextIndexSequence(ctx context.Context, db bun.IDB, table string) (int64, error) {
@@ -225,21 +230,23 @@ func indexSequence(ctx context.Context, db bun.IDB, table string) (int64, error)
 	return sequence.Sequence, nil
 }
 
-// notPublished tells why the attempt update matched no row: the attempt is published, or the
-// lease isn't the attempt's.
-func notPublished(ctx context.Context, db bun.IDB, id valuer.UUID, lease *archivetypes.Lease) error {
-	attempt := new(archivetypes.Attempt)
-	if err := db.NewSelect().Model(attempt).Where("id = ?", id).Scan(ctx); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read archive attempt %s", id)
+// notPublished tells why the attempt update matched no row: the attempt is published, with
+// attempt's manifest (true) or another one, or the lease isn't the attempt's.
+func notPublished(ctx context.Context, db bun.IDB, attempt *archivetypes.Attempt, lease *archivetypes.Lease) (bool, error) {
+	stored := new(archivetypes.Attempt)
+	if err := db.NewSelect().Model(stored).Where("id = ?", attempt.ID).Scan(ctx); err != nil {
+		return false, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read archive attempt %s", attempt.ID)
 	}
 
 	switch {
-	case attempt.Status == archivetypes.AttemptStatusPublished:
-		return errors.Newf(errors.TypeAlreadyExists, archivetypes.ErrCodeAttemptAlreadyPublished, "archive attempt %s is published already", id)
-	case attempt.Signal != lease.Signal || attempt.Epoch != lease.Epoch:
-		return errors.Newf(errors.TypeForbidden, archivetypes.ErrCodeLeaseLost, "archive attempt %s was made under the %s lease at epoch %d, not the %s lease at epoch %d", id, attempt.Signal, attempt.Epoch, lease.Signal, lease.Epoch)
+	case stored.Status == archivetypes.AttemptStatusPublished && stored.ManifestSHA256 == attempt.ManifestSHA256:
+		return true, nil
+	case stored.Status == archivetypes.AttemptStatusPublished:
+		return false, errors.Newf(errors.TypeAlreadyExists, archivetypes.ErrCodeAttemptAlreadyPublished, "archive attempt %s is published already with another manifest", attempt.ID)
+	case stored.Signal != lease.Signal || stored.Epoch != lease.Epoch:
+		return false, errors.Newf(errors.TypeForbidden, archivetypes.ErrCodeLeaseLost, "archive attempt %s was made under the %s lease at epoch %d, not the %s lease at epoch %d", attempt.ID, stored.Signal, stored.Epoch, lease.Signal, lease.Epoch)
 	default:
-		return errors.Newf(errors.TypeInvalidInput, archivetypes.ErrCodeAttemptNotPending, "archive attempt %s is %s", id, attempt.Status)
+		return false, errors.Newf(errors.TypeInvalidInput, archivetypes.ErrCodeAttemptNotPending, "archive attempt %s is %s", attempt.ID, stored.Status)
 	}
 }
 

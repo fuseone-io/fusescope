@@ -29,8 +29,9 @@ type Store interface {
 	AbandonAttempt(ctx context.Context, id valuer.UUID) error
 
 	// Publish commits publication if lease is still valid at its epoch and is the attempt's
-	// (ErrCodeLeaseLost otherwise), and its attempt is pending (ErrCodeAttemptAlreadyPublished
-	// when it is published already). A part name published before fails with
+	// (ErrCodeLeaseLost otherwise), and its attempt is pending. A retry of a published attempt
+	// with the same manifest commits nothing and succeeds; with another manifest it fails with
+	// ErrCodeAttemptAlreadyPublished. A part name published before fails with
 	// ErrCodePartAlreadyPublished. A part of the partition that another part, new or
 	// published, contains at the same or a later data version becomes superseded, as do
 	// objects left with no published part. It returns the table's commit sequence after
