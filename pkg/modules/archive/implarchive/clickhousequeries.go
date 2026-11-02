@@ -13,11 +13,10 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/types/archivetypes"
 )
 
-const partsQuery = "SELECT partition_id, name, min_block_number, max_block_number, toInt64(data_version), ifNull(existing_rows_count, rows) AS existing_rows, bytes_on_disk, modification_time FROM system.parts WHERE database = ? AND table = ? AND active AND existing_rows > 0"
+const partsQuery = "SELECT partition_id, name, min_block_number, max_block_number, toInt64(data_version), rows, bytes_on_disk, modification_time, has_lightweight_delete FROM system.parts WHERE database = ? AND table = ? AND active AND rows > 0"
 
 // activeParts returns the replica's active parts of table that hold rows, by partition ID. A
-// part is first seen when it was written, so a hold survives restarts and handovers. Its rows
-// leave out those a lightweight delete masked, which an export doesn't read.
+// part is first seen when it was written, so a hold survives restarts and handovers.
 func activeParts(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table) (map[string][]archivetypes.Part, error) {
 	return queryParts(ctx, conn, table, partsQuery+" ORDER BY partition_id, min_block_number", table.Database, table.Name)
 }
@@ -39,13 +38,27 @@ func queryParts(ctx context.Context, conn clickhouse.Conn, table archivetypes.Ta
 	for rows.Next() {
 		var partitionID string
 		var part archivetypes.Part
-		if err := rows.Scan(&partitionID, &part.Name, &part.Range.Min, &part.Range.Max, &part.DataVersion, &part.Rows, &part.BytesOnDisk, &part.FirstSeen); err != nil {
+		var lightweightDeleted uint8
+		if err := rows.Scan(&partitionID, &part.Name, &part.Range.Min, &part.Range.Max, &part.DataVersion, &part.Rows, &part.BytesOnDisk, &part.FirstSeen, &lightweightDeleted); err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the parts of %s.%s", table.Database, table.Name)
 		}
+		part.LightweightDeleted = lightweightDeleted > 0
 		parts[partitionID] = append(parts[partitionID], part)
 	}
 
 	return parts, rows.Err()
+}
+
+// existingRows counts the rows of part a SELECT reads, without those a lightweight delete
+// masked: system.parts doesn't tell them apart.
+func existingRows(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table, part string) (uint64, error) {
+	var rows uint64
+	query := fmt.Sprintf("SELECT count() FROM %s.%s WHERE _part = ?", clickhousesql.Identifier(table.Database), clickhousesql.Identifier(table.Name))
+	if err := conn.QueryRow(ctx, query, part).Scan(&rows); err != nil {
+		return 0, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't count the rows of part %s of %s.%s", part, table.Database, table.Name)
+	}
+
+	return rows, nil
 }
 
 func readPartition(ctx context.Context, conn clickhouse.Conn, table archivetypes.Table, partitionID string) (archivetypes.Partition, error) {

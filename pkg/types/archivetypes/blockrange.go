@@ -21,14 +21,16 @@ type BlockRange struct {
 type BlockRanges []BlockRange
 
 // Part is a part of one partition on one shard. DataVersion is system.parts.data_version:
-// the part's min block until a mutation, ours included, rewrites it.
+// the part's min block until a mutation, ours included, rewrites it. Rows of a part with
+// LightweightDeleted still count the rows its lightweight delete masked.
 type Part struct {
-	Name        string
-	Range       BlockRange
-	DataVersion int64
-	Rows        uint64
-	BytesOnDisk uint64
-	FirstSeen   time.Time
+	Name               string
+	Range              BlockRange
+	DataVersion        int64
+	Rows               uint64
+	BytesOnDisk        uint64
+	FirstSeen          time.Time
+	LightweightDeleted bool
 }
 
 // LateHold delays exporting parts that land in a partition already archived, so ClickHouse

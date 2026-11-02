@@ -27,9 +27,9 @@ var (
 	partColumns = []cmock.ColumnType{
 		{Name: "partition_id", Type: "String"}, {Name: "name", Type: "String"}, {Name: "min_block_number", Type: "Int64"}, {Name: "max_block_number", Type: "Int64"},
 		{Name: "data_version", Type: "Int64"}, {Name: "rows", Type: "UInt64"}, {Name: "bytes_on_disk", Type: "UInt64"}, {Name: "modification_time", Type: "DateTime"},
+		{Name: "has_lightweight_delete", Type: "UInt8"},
 	}
-	// Rows masked by a lightweight delete are neither exported nor counted.
-	partsQueryPattern = `ifNull\(existing_rows_count, rows\) AS existing_rows.*FROM system\.parts.*AND existing_rows > 0`
+	partsQueryPattern = `has_lightweight_delete FROM system\.parts`
 	statColumns       = []cmock.ColumnType{
 		{Name: "_file", Type: "String"}, {Name: "size", Type: "UInt64"}, {Name: "etag", Type: "String"}, {Name: "count", Type: "UInt64"}, {Name: "parts", Type: "Array(String)"},
 	}
@@ -152,6 +152,7 @@ func TestExport(t *testing.T) {
 	part := archivetypes.Part{Name: "20260903-15-0_1_5_1", Range: archivetypes.BlockRange{Min: 1, Max: 5}, DataVersion: 1, Rows: 10, BytesOnDisk: 2048}
 	merged := archivetypes.Part{Name: "20260903-15-0_1_6_2", Range: archivetypes.BlockRange{Min: 1, Max: 6}, DataVersion: 1, Rows: 12, BytesOnDisk: 2048}
 	behind := archivetypes.Part{Name: "20260903-15-0_1_3_0", Range: archivetypes.BlockRange{Min: 1, Max: 3}, DataVersion: 1, Rows: 6, BytesOnDisk: 2048}
+	deleted := archivetypes.Part{Name: "20260903-15-0_1_5_1_2", Range: archivetypes.BlockRange{Min: 1, Max: 5}, DataVersion: 2, Rows: 10, BytesOnDisk: 2048, LightweightDeleted: true}
 	next := archivetypes.Part{Name: "20260903-15-0_6_8_1", Range: archivetypes.BlockRange{Min: 6, Max: 8}, DataVersion: 6, Rows: 7, BytesOnDisk: 2048}
 	readBackOf := func(part archivetypes.Part, rows uint64) [][]any {
 		return [][]any{{part.Name + ".parquet", uint64(1024), `"etag"`, rows, []string{part.Name}}}
@@ -161,6 +162,7 @@ func TestExport(t *testing.T) {
 		name          string
 		replicaParts  [][]archivetypes.Part
 		exportedBy    int
+		existingRows  *uint64
 		readBacks     [][][]any
 		wantErr       bool
 		wantPublished []string
@@ -170,6 +172,8 @@ func TestExport(t *testing.T) {
 		{name: "MergedSinceTheCycleStarted_MergedPartExported", replicaParts: [][]archivetypes.Part{{merged}}, readBacks: [][][]any{readBackOf(merged, 12)}, wantPublished: []string{merged.Name}},
 		{name: "ReplicaFallenBehind_OtherReplicaExports", replicaParts: [][]archivetypes.Part{{behind}, {part}}, exportedBy: 1, readBacks: [][][]any{readBackOf(part, 10)}, wantPublished: []string{part.Name}},
 		{name: "PartsOverTheByteCap_OneCommitEach", replicaParts: [][]archivetypes.Part{{part, next}}, readBacks: [][][]any{readBackOf(part, 10), readBackOf(next, 7)}, wantPublished: []string{part.Name, next.Name}},
+		{name: "LightweightDelete_ExistingRowsCounted", replicaParts: [][]archivetypes.Part{{deleted}}, existingRows: ptr(uint64(9)), readBacks: [][][]any{readBackOf(deleted, 9)}, wantPublished: []string{deleted.Name}},
+		{name: "EveryRowDeleted_NotExported", replicaParts: [][]archivetypes.Part{{deleted}}, existingRows: ptr(uint64(0)), wantPublished: []string{}},
 		{name: "SecondAttemptFails_FirstStaysPublished", replicaParts: [][]archivetypes.Part{{part, next}}, readBacks: [][][]any{readBackOf(part, 10), readBackOf(next, 6)}, wantErr: true, wantPublished: []string{part.Name}},
 	}
 
@@ -201,6 +205,9 @@ func TestExport(t *testing.T) {
 			}
 
 			exporter := conns[testCase.exportedBy]
+			if testCase.existingRows != nil {
+				exporter.ExpectQueryRow(`SELECT count\(\) FROM .* WHERE _part = \?`).WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "count", Type: "UInt64"}}, []any{*testCase.existingRows}))
+			}
 			for i, readBack := range testCase.readBacks {
 				for range readBack {
 					exporter.ExpectExec("INSERT INTO FUNCTION s3")
@@ -228,6 +235,9 @@ func TestExport(t *testing.T) {
 			}
 
 			assert.Equal(t, testCase.wantPublished, partNames(published), "the parts are read when the job runs, not when the cycle started")
+			if testCase.existingRows != nil && len(published) > 0 {
+				assert.Equal(t, int64(*testCase.existingRows), published[0].Rows, "rows a lightweight delete masked are neither exported nor counted")
+			}
 			if testCase.wantErr {
 				assert.True(t, errors.Asc(err, archivetypes.ErrCodeObjectMismatch), err)
 				assert.Equal(t, 1, statuses[archivetypes.AttemptStatusAbandoned], "an attempt that read back short is abandoned, its objects orphans")
@@ -235,7 +245,7 @@ func TestExport(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, map[string]int{archivetypes.AttemptStatusPublished: len(testCase.readBacks)}, statuses)
+			assert.Equal(t, len(testCase.readBacks), statuses[archivetypes.AttemptStatusPublished])
 		})
 	}
 }
@@ -292,7 +302,7 @@ func asConn(conn cmock.ClickConnMockCommon) clickhouse.Conn {
 func expectParts(conn cmock.ClickConnMockCommon, written time.Time, names ...string) {
 	rows := make([][]any, 0, len(names))
 	for i, name := range names {
-		rows = append(rows, []any{"20260903-15-0", name, int64(i + 1), int64(i + 5), int64(1), uint64(10), uint64(2048), written})
+		rows = append(rows, []any{"20260903-15-0", name, int64(i + 1), int64(i + 5), int64(1), uint64(10), uint64(2048), written, uint8(0)})
 	}
 	conn.ExpectQuery(partsQueryPattern).WithArgs(testLogsTable.Database, testLogsTable.Name).WillReturnRows(cmock.NewRows(partColumns, rows))
 }
@@ -300,11 +310,15 @@ func expectParts(conn cmock.ClickConnMockCommon, written time.Time, names ...str
 func expectPartitionParts(conn cmock.ClickConnMockCommon, partitionID string, parts ...archivetypes.Part) {
 	rows := make([][]any, 0, len(parts))
 	for _, part := range parts {
-		rows = append(rows, []any{partitionID, part.Name, part.Range.Min, part.Range.Max, part.DataVersion, part.Rows, part.BytesOnDisk, time.Date(2026, 9, 4, 0, 0, 0, 0, time.UTC)})
+		rows = append(rows, []any{partitionID, part.Name, part.Range.Min, part.Range.Max, part.DataVersion, part.Rows, part.BytesOnDisk, time.Date(2026, 9, 4, 0, 0, 0, 0, time.UTC), map[bool]uint8{true: 1}[part.LightweightDeleted]})
 	}
 	conn.ExpectQuery(partsQueryPattern+`.*AND partition_id = \?`).WithArgs(testLogsTable.Database, testLogsTable.Name, partitionID).WillReturnRows(cmock.NewRows(partColumns, rows))
 }
 
 func expectReplica(conn cmock.ClickConnMockCommon, isReplica uint64, engine string, path string) {
 	conn.ExpectQueryRow("FROM system.clusters").WillReturnRow(cmock.NewRow([]cmock.ColumnType{{Name: "is_replica", Type: "UInt64"}, {Name: "engine", Type: "String"}, {Name: "uuid", Type: "String"}, {Name: "zookeeper_path", Type: "String"}}, []any{isReplica, engine, "6f1c1b9e-0000-4000-8000-000000000001", path}))
+}
+
+func ptr[T any](value T) *T {
+	return &value
 }

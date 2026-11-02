@@ -52,12 +52,39 @@ func (service *exportService) candidates(ctx context.Context, job exportJob, hol
 	if err != nil {
 		return nil, nil, err
 	}
-	candidates := archivetypes.SelectForExport(snapshot[chosen], archivetypes.PartsOf(published))
+	conn := job.replicas[chosen].conn
+	candidates, err := service.countExistingRows(ctx, job.table, conn, archivetypes.SelectForExport(snapshot[chosen], archivetypes.PartsOf(published)))
+	if err != nil {
+		return nil, nil, err
+	}
 	if holdLate {
 		candidates = service.holdLateParts(job, candidates, len(published) > 0)
 	}
 
-	return job.replicas[chosen].conn, candidates, nil
+	return conn, candidates, nil
+}
+
+// countExistingRows sets the rows of parts with a lightweight delete to those an export reads
+// back, and leaves out parts left without any.
+func (service *exportService) countExistingRows(ctx context.Context, table archivetypes.Table, conn clickhouse.Conn, parts []archivetypes.Part) ([]archivetypes.Part, error) {
+	counted := make([]archivetypes.Part, 0, len(parts))
+	for _, part := range parts {
+		if part.LightweightDeleted {
+			err := service.exec(ctx, service.config.Limits.QueryTimeout, queryID(part.Name, "count"), func(ctx context.Context) error {
+				var err error
+				part.Rows, err = existingRows(ctx, conn, table, part.Name)
+				return err
+			})
+			if err != nil {
+				return nil, err
+			}
+		}
+		if part.Rows > 0 {
+			counted = append(counted, part)
+		}
+	}
+
+	return counted, nil
 }
 
 func (service *exportService) exportAttempt(ctx context.Context, lease *archivetypes.Lease, job exportJob, conn clickhouse.Conn, parts []archivetypes.Part) error {
