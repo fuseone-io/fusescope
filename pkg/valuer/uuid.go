@@ -102,7 +102,7 @@ func (enum *UUID) Scan(val interface{}) error {
 	}
 
 	if val == nil {
-		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (nil \"%s\")", reflect.TypeOf(val).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (null)")
 	}
 
 	var enumVal UUID
