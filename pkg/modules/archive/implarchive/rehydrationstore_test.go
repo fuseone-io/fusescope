@@ -129,3 +129,31 @@ func TestListRestorableParts(t *testing.T) {
 		}
 	})
 }
+
+func TestListRestorableParts_RepinnedShard(t *testing.T) {
+	ctx := context.Background()
+
+	forEachStore(t, func(t *testing.T, archiveStore archivetypes.Store) {
+		lease := acquireTestLease(t, archiveStore)
+		old := newTestPublication(t, archiveStore, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 10})
+		_, err := archiveStore.Publish(ctx, lease, old)
+		require.NoError(t, err)
+		_, err = archiveStore.(*store).sqlstore.BunDBCtx(ctx).NewDelete().TableExpr("archive_shard").Where("table_name = ?", "logs_v2").Exec(ctx)
+		require.NoError(t, err)
+		recreated := newTestPublication(t, archiveStore, lease, "20260903-15-0", archivetypes.BlockRange{Min: 1, Max: 3})
+		_, err = archiveStore.Publish(ctx, lease, recreated)
+		require.NoError(t, err)
+		require.NotEqual(t, old.Attempt.ShardID, recreated.Attempt.ShardID)
+
+		parts, err := archiveStore.ListRestorableParts(ctx, "logs_v2", "2026-09-03")
+		require.NoError(t, err)
+		plan, err := archivetypes.RestorePlan([]string{"logs_v2"}, parts)
+		require.NoError(t, err)
+
+		objects := map[string]string{}
+		for _, part := range plan["logs_v2"] {
+			objects[part.Part.PartName] = part.Object.ObjectKey
+		}
+		assert.Equal(t, map[string]string{"p_1_10": old.Objects[0].ObjectKey, "p_1_3": recreated.Objects[0].ObjectKey}, objects, "the recreated table's parts are restored with the old one's")
+	})
+}

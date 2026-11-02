@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -118,8 +119,14 @@ func TestRestoreExpressions(t *testing.T) {
 }
 
 func TestRestorePlan(t *testing.T) {
+	pins := map[int]valuer.UUID{1: valuer.MustNewUUID("11111111-1111-4111-8111-111111111111"), 2: valuer.MustNewUUID("22222222-2222-4222-8222-222222222222")}
+	repinned := valuer.MustNewUUID("33333333-3333-4333-8333-333333333333")
 	part := func(table string, shard int, partition string, name string, min int64, max int64) RestorablePart {
-		return RestorablePart{Part: &ArchivedPart{TableName: table, Shard: shard, PartitionID: partition, PartName: name, MinBlock: min, MaxBlock: max, DataVersion: min}, Object: &Object{ObjectKey: name}, Attempt: &Attempt{}}
+		return RestorablePart{Part: &ArchivedPart{TableName: table, Shard: shard, ShardID: pins[shard], PartitionID: partition, PartName: name, MinBlock: min, MaxBlock: max, DataVersion: min}, Object: &Object{ObjectKey: name}, Attempt: &Attempt{}}
+	}
+	onRepinnedShard := func(part RestorablePart) RestorablePart {
+		part.Part.ShardID = repinned
+		return part
 	}
 	names := func(parts []RestorablePart) []string {
 		var names []string
@@ -157,6 +164,21 @@ func TestRestorePlan(t *testing.T) {
 			name:    "ResourceTableMissing_Incomplete",
 			parts:   []RestorablePart{part("logs_v2", 1, "p", "p_1_1", 1, 1)},
 			failure: FailureIncomplete,
+		},
+		{
+			name:     "RepinnedShard_ContainedRange_Kept",
+			parts:    []RestorablePart{part("logs_v2", 1, "p", "old_1_10", 1, 10), onRepinnedShard(part("logs_v2", 1, "p", "new_1_3", 1, 3)), part("logs_v2_resource", 1, "r", "r_1_1", 1, 1)},
+			expected: map[string][]string{"logs_v2": {"old_1_10", "new_1_3"}, "logs_v2_resource": {"r_1_1"}},
+		},
+		{
+			name:     "RepinnedShard_OverlappingRange_Kept",
+			parts:    []RestorablePart{part("logs_v2", 1, "p", "old_1_10", 1, 10), onRepinnedShard(part("logs_v2", 1, "p", "new_5_12", 5, 12)), part("logs_v2_resource", 1, "r", "r_1_1", 1, 1)},
+			expected: map[string][]string{"logs_v2": {"old_1_10", "new_5_12"}, "logs_v2_resource": {"r_1_1"}},
+		},
+		{
+			name:     "RepinnedShard_SamePartName_Kept",
+			parts:    []RestorablePart{onRepinnedShard(part("logs_v2", 1, "p", "p_1_3", 1, 3)), part("logs_v2", 1, "p", "p_1_3", 1, 3), part("logs_v2_resource", 1, "r", "r_1_1", 1, 1)},
+			expected: map[string][]string{"logs_v2": {"p_1_3", "p_1_3"}, "logs_v2_resource": {"r_1_1"}},
 		},
 		{
 			name:    "OverlappingParts_Corrupt",

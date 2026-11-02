@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -211,7 +210,7 @@ func RestoreExpressions(mappings []ColumnMapping, target []SchemaColumn) ([]stri
 
 // shardPin is the identity a part's block numbers are unique within.
 func shardPin(part *ArchivedPart) string {
-	return strconv.Itoa(part.Shard)
+	return part.ShardID.StringValue()
 }
 
 func archivedParts(parts []RestorablePart) []*ArchivedPart {
