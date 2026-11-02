@@ -664,7 +664,10 @@ archive:
     # Object key prefix: /-separated segments of A-Z, a-z, 0-9, '.', '_', '=' and '-'.
     prefix: ""
     # Days past retention that unarchived data is kept, counted from ingestion.
-    # 2–30, and at least twice the interval.
+    # 2–30, and at least twice the interval. A logs cold-storage rule set by the
+    # v1 retention API (/api/v1/settings/ttl) records no cold-storage days, so the
+    # backstop is refused until the retention is saved again through
+    # /api/v2/settings/ttl (the retention settings page).
     backstop_days: 7
     # Parts landing in an archived partition are exported once they total
     # late_min_rows, or late_max_hold after first seen (below half the backstop).

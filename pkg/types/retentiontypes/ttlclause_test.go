@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTTLClauseStatement(t *testing.T) {
@@ -127,7 +128,8 @@ func TestValidateColdStorage(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			err := ValidateColdStorage(testCase.volume, testCase.days)
 			if testCase.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "/api/v2/settings/ttl", "the error says how to record the days")
 				return
 			}
 			assert.NoError(t, err)

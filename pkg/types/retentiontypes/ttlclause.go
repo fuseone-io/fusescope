@@ -57,10 +57,10 @@ func ColdStorageVolume(createTableQuery string) string {
 }
 
 // ValidateColdStorage refuses a move rule without cold-storage days: rows would move as soon
-// as the TTL is materialized.
+// as the TTL is materialized. A move rule set by the v1 retention API records no days.
 func ValidateColdStorage(volume string, days int) error {
 	if volume != "" && days == 0 {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the TTL moves rows to volume %s without cold-storage days; set them in the retention settings", volume)
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the TTL moves rows to volume %s without cold-storage days, as the v1 retention API sets it; save the retention with its cold-storage days again from the retention settings page (POST /api/v2/settings/ttl) to record them", volume)
 	}
 	return nil
 }
