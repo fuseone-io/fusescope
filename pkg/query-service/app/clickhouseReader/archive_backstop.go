@@ -17,8 +17,9 @@ import (
 const mutationPollInterval = 5 * time.Second
 
 // ApplyArchiveBackstop rewrites the TTL of the logs tables with a backstop of days, keeping
-// their move rules, then materializes it on existing parts one table at a time.
-func (r *ClickHouseReader) ApplyArchiveBackstop(ctx context.Context, signal string, days int, resume bool) error {
+// their move rules, then materializes it on existing parts one table at a time, the small
+// resource table first.
+func (r *ClickHouseReader) ApplyArchiveBackstop(ctx context.Context, signal string, days int, progress archivetypes.BackstopProgress) error {
 	if signal != retentiontypes.LogsTTL {
 		return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "the archive backstop is only supported for logs, not %s", signal)
 	}
@@ -36,64 +37,21 @@ func (r *ClickHouseReader) ApplyArchiveBackstop(ctx context.Context, signal stri
 		return err
 	}
 
-	hosts, err := r.clusterHosts(ctx)
-	if err != nil {
-		return err
-	}
-
 	tables := r.logsTTLTables()
-	for _, table := range []string{tables.Logs, tables.Resource} {
-		if err := r.applyTableBackstop(ctx, tables, table, backstop, hosts, resume); err != nil {
-			return err
-		}
+	applier := &backstopApplier{
+		cluster:      r,
+		progress:     progress,
+		signal:       signal,
+		days:         days,
+		tables:       []string{tables.Resource, tables.Logs},
+		clusterName:  r.cluster,
+		pollInterval: mutationPollInterval,
+		clause: func(table string, volume string, coldStorageDays int, _ int) retentiontypes.TTLClause {
+			return customRetentionLogsTTLClauses(tables, volume, coldStorageDays, backstop)[table]
+		},
 	}
 
-	return nil
-}
-
-// applyTableBackstop issues a MATERIALIZE TTL only once none is pending on table, so retries
-// don't queue full rewrites. With resume, a pending one is the interrupted apply's own and
-// materializes this backstop.
-func (r *ClickHouseReader) applyTableBackstop(ctx context.Context, tables logsTTLTables, table string, backstop logsBackstop, hosts []string, resume bool) error {
-	volume, err := r.coldStorageVolume(ctx, table)
-	if err != nil {
-		return err
-	}
-	coldStorageDays, err := r.coldStorageDays(ctx, table)
-	if err != nil {
-		return err
-	}
-	if err := retentiontypes.ValidateColdStorage(volume, coldStorageDays); err != nil {
-		return errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "couldn't give %s the archive backstop", table)
-	}
-
-	mutations, err := r.mutations(ctx, table)
-	if err != nil {
-		return err
-	}
-	if err := retentiontypes.FailingMutation(mutations); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't give %s the archive backstop", table)
-	}
-	pending := retentiontypes.MaterializeTTLPending(mutations)
-	if pending {
-		if mutations, err = r.waitForPendingMaterializeTTL(ctx, table); err != nil {
-			return err
-		}
-	}
-
-	clause := customRetentionLogsTTLClauses(tables, volume, coldStorageDays, backstop)[table]
-	if err := r.db.Exec(ctx, clause.Statement(table, r.cluster)); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't set the archive backstop on %s", table)
-	}
-	if pending && resume {
-		return nil
-	}
-
-	if err := r.db.Exec(ctx, fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MATERIALIZE TTL", table, r.cluster)); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't materialize the TTL of %s", table)
-	}
-
-	return r.waitForMaterializeTTL(ctx, table, hosts, mutations)
+	return applier.apply(ctx)
 }
 
 // logsBackstop is the backstop of days for the logs tables. The logs table's ingestion
@@ -139,6 +97,19 @@ func (r *ClickHouseReader) archiveBackstopDays(ctx context.Context, signal strin
 	}
 
 	return state.BackstopDays, nil
+}
+
+func (r *ClickHouseReader) coldStorage(ctx context.Context, table string) (string, int, error) {
+	volume, err := r.coldStorageVolume(ctx, table)
+	if err != nil {
+		return "", 0, err
+	}
+	days, err := r.coldStorageDays(ctx, table)
+	if err != nil {
+		return "", 0, err
+	}
+
+	return volume, days, nil
 }
 
 func (r *ClickHouseReader) coldStorageVolume(ctx context.Context, table string) (string, error) {
@@ -188,7 +159,7 @@ func (r *ClickHouseReader) hasColumn(ctx context.Context, table string, column s
 
 func (r *ClickHouseReader) mutations(ctx context.Context, table string) ([]retentiontypes.Mutation, error) {
 	database, name := splitTableName(table)
-	query := fmt.Sprintf("SELECT hostName(), mutation_id, command, is_done, latest_fail_reason FROM clusterAllReplicas(%s, system.mutations) WHERE database = ? AND table = ?", clickhousesql.StringLiteral(r.cluster))
+	query := fmt.Sprintf("SELECT hostName(), mutation_id, command, create_time, is_done, latest_fail_reason FROM clusterAllReplicas(%s, system.mutations) WHERE database = ? AND table = ?", clickhousesql.StringLiteral(r.cluster))
 
 	rows, err := r.db.Query(ctx, query, database, name)
 	if err != nil {
@@ -200,7 +171,7 @@ func (r *ClickHouseReader) mutations(ctx context.Context, table string) ([]reten
 	for rows.Next() {
 		var mutation retentiontypes.Mutation
 		var done uint8
-		if err := rows.Scan(&mutation.Host, &mutation.ID, &mutation.Command, &done, &mutation.FailReason); err != nil {
+		if err := rows.Scan(&mutation.Host, &mutation.ID, &mutation.Command, &mutation.CreateTime, &done, &mutation.FailReason); err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the mutations of %s", table)
 		}
 		mutation.Done = done == 1
@@ -229,49 +200,17 @@ func (r *ClickHouseReader) clusterHosts(ctx context.Context) ([]string, error) {
 	return hosts, rows.Err()
 }
 
-// waitForMaterializeTTL waits for the MATERIALIZE TTL issued after before was read, on every
-// host.
-func (r *ClickHouseReader) waitForMaterializeTTL(ctx context.Context, table string, hosts []string, before []retentiontypes.Mutation) error {
-	_, err := r.pollMutations(ctx, table, func(after []retentiontypes.Mutation) (bool, error) {
-		return retentiontypes.MaterializeTTLDone(hosts, before, after)
-	})
-	return err
-}
-
-// waitForPendingMaterializeTTL waits until no MATERIALIZE TTL is pending on table, and
-// returns its mutations then.
-func (r *ClickHouseReader) waitForPendingMaterializeTTL(ctx context.Context, table string) ([]retentiontypes.Mutation, error) {
-	return r.pollMutations(ctx, table, func(mutations []retentiontypes.Mutation) (bool, error) {
-		if err := retentiontypes.FailingMutation(mutations); err != nil {
-			return false, err
-		}
-		return !retentiontypes.MaterializeTTLPending(mutations), nil
-	})
-}
-
-func (r *ClickHouseReader) pollMutations(ctx context.Context, table string, done func([]retentiontypes.Mutation) (bool, error)) ([]retentiontypes.Mutation, error) {
-	ticker := time.NewTicker(mutationPollInterval)
-	defer ticker.Stop()
-
-	for {
-		mutations, err := r.mutations(ctx, table)
-		if err != nil {
-			return nil, err
-		}
-		ok, err := done(mutations)
-		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't materialize the TTL of %s", table)
-		}
-		if ok {
-			return mutations, nil
-		}
-
-		select {
-		case <-ctx.Done():
-			return nil, errors.Wrapf(ctx.Err(), errors.TypeInternal, errors.CodeInternal, "stopped waiting for the TTL of %s to materialize", table)
-		case <-ticker.C:
-		}
+func (r *ClickHouseReader) clusterNow(ctx context.Context) (time.Time, error) {
+	var now time.Time
+	if err := r.db.QueryRow(ctx, fmt.Sprintf("SELECT min(now()) FROM clusterAllReplicas(%s, system.one)", clickhousesql.StringLiteral(r.cluster))).Scan(&now); err != nil {
+		return time.Time{}, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't read the clock of cluster %s", r.cluster)
 	}
+
+	return now, nil
+}
+
+func (r *ClickHouseReader) exec(ctx context.Context, statement string) error {
+	return r.db.Exec(ctx, statement)
 }
 
 func splitTableName(table string) (string, string) {

@@ -3,6 +3,7 @@ package retention
 import (
 	"context"
 
+	"github.com/fuseone-io/fusescope/pkg/types/archivetypes"
 	"github.com/fuseone-io/fusescope/pkg/types/retentiontypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
@@ -28,7 +29,8 @@ type TTLSetter interface {
 type BackstopSetter interface {
 	// ApplyArchiveBackstop gives the TTL of the signal's tables a backstop of days, keeping
 	// their move rules, and materializes it on existing parts. It returns once the mutations
-	// are done on every replica. With resume, an earlier apply of the same days was
-	// interrupted, so a MATERIALIZE TTL still pending is waited on instead of issuing another.
-	ApplyArchiveBackstop(ctx context.Context, signal string, days int, resume bool) error
+	// are done on every replica. It records its progress per table in progress, and resumes
+	// from it: a table already done, or whose MATERIALIZE TTL is already issued, isn't
+	// rewritten again.
+	ApplyArchiveBackstop(ctx context.Context, signal string, days int, progress archivetypes.BackstopProgress) error
 }

@@ -92,21 +92,17 @@ func (service *backstopService) reconcile(ctx context.Context) error {
 	signal := retentiontypes.LogsTTL
 	days := service.config.Logs.BackstopDays
 
-	state, err := service.store.GetSignal(ctx, signal)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+	pending, err := service.backstopPending(ctx, signal, days)
+	if err != nil || !pending {
 		return err
 	}
-	if !state.BackstopPending(days) {
-		return nil
-	}
-	resume := state.BackstopInterrupted(days)
 
 	// Several backends may run this service; one applies the backstop at a time.
 	return runUnderLease(ctx, service.store, service.settings.Logger(), archivetypes.BackstopLease(signal), service.holder, leaseDuration, func(ctx context.Context, _ *archivetypes.Lease) error {
 		if err := service.store.SetBackstop(ctx, signal, days); err != nil {
 			return err
 		}
-		if err := service.setter.ApplyArchiveBackstop(ctx, signal, days, resume); err != nil {
+		if err := service.setter.ApplyArchiveBackstop(ctx, signal, days, service.store); err != nil {
 			return err
 		}
 		if err := service.store.MarkBackstopApplied(ctx, signal, time.Now()); err != nil {
@@ -116,6 +112,14 @@ func (service *backstopService) reconcile(ctx context.Context) error {
 		service.settings.Logger().InfoContext(ctx, "archive backstop applied", slog.String("signal", signal), slog.Int("backstop_days", days))
 		return nil
 	})
+}
+
+func (service *backstopService) backstopPending(ctx context.Context, signal string, days int) (bool, error) {
+	state, err := service.store.GetSignal(ctx, signal)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return false, err
+	}
+	return state.BackstopPending(days), nil
 }
 
 // warnBackstopKept reports a backstop that the logs TTL keeps while the archive is disabled,

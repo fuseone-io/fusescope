@@ -35,7 +35,7 @@ func TestBackstopServiceReconcile(t *testing.T) {
 	t.Run("FirstEnable_AppliedAndRecorded", func(t *testing.T) {
 		store := newTestStore(t)
 		service, setter := newTestBackstopService(t, store, 7)
-		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(nil).Once()
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, store).Return(nil).Once()
 
 		require.NoError(t, service.reconcile(ctx))
 
@@ -49,7 +49,7 @@ func TestBackstopServiceReconcile(t *testing.T) {
 	t.Run("AlreadyApplied_NothingIssued", func(t *testing.T) {
 		store := newTestStore(t)
 		service, setter := newTestBackstopService(t, store, 7)
-		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(nil).Once()
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, store).Return(nil).Once()
 
 		require.NoError(t, service.reconcile(ctx))
 		require.NoError(t, service.reconcile(ctx))
@@ -58,11 +58,11 @@ func TestBackstopServiceReconcile(t *testing.T) {
 	t.Run("BackstopChanged_AppliedAgain", func(t *testing.T) {
 		store := newTestStore(t)
 		first, firstSetter := newTestBackstopService(t, store, 7)
-		firstSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(nil).Once()
+		firstSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, store).Return(nil).Once()
 		require.NoError(t, first.reconcile(ctx))
 
 		second, secondSetter := newTestBackstopService(t, store, 10)
-		secondSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 10, false).Return(nil).Once()
+		secondSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 10, store).Return(nil).Once()
 		require.NoError(t, second.reconcile(ctx))
 
 		state, err := store.GetSignal(ctx, retentiontypes.LogsTTL)
@@ -73,7 +73,7 @@ func TestBackstopServiceReconcile(t *testing.T) {
 	t.Run("ApplyFails_RecordedAsPendingAndRetried", func(t *testing.T) {
 		store := newTestStore(t)
 		service, setter := newTestBackstopService(t, store, 7)
-		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(errors.New(errors.TypeInternal, errors.CodeInternal, "clickhouse down")).Once()
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, store).Return(errors.New(errors.TypeInternal, errors.CodeInternal, "clickhouse down")).Once()
 
 		assert.Error(t, service.reconcile(ctx))
 
@@ -81,18 +81,18 @@ func TestBackstopServiceReconcile(t *testing.T) {
 		require.NoError(t, err, "the backstop is recorded before it is applied, so every TTL writer carries it meanwhile")
 		assert.Nil(t, state.AppliedAt)
 
-		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, true).Return(nil).Once()
-		require.NoError(t, service.reconcile(ctx), "the retry resumes the interrupted apply instead of starting another")
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, store).Return(nil).Once()
+		require.NoError(t, service.reconcile(ctx))
 	})
 
 	t.Run("ApplyFails_BackstopChanged_NotResumed", func(t *testing.T) {
 		store := newTestStore(t)
 		first, firstSetter := newTestBackstopService(t, store, 7)
-		firstSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(errors.New(errors.TypeInternal, errors.CodeInternal, "clickhouse down")).Once()
+		firstSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, store).Return(errors.New(errors.TypeInternal, errors.CodeInternal, "clickhouse down")).Once()
 		assert.Error(t, first.reconcile(ctx))
 
 		second, secondSetter := newTestBackstopService(t, store, 10)
-		secondSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 10, false).Return(nil).Once()
+		secondSetter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 10, store).Return(nil).Once()
 		require.NoError(t, second.reconcile(ctx))
 	})
 
@@ -113,7 +113,7 @@ func TestBackstopServiceReconcile(t *testing.T) {
 		service, setter := newTestBackstopService(t, store, 7)
 		_, err := store.AcquireLease(ctx, retentiontypes.LogsTTL, "exporter", time.Now().Add(time.Minute))
 		require.NoError(t, err)
-		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).Return(nil).Once()
+		setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, store).Return(nil).Once()
 
 		require.NoError(t, service.reconcile(ctx))
 	})
@@ -133,7 +133,7 @@ func TestBackstopServiceReconcile(t *testing.T) {
 func TestBackstopServiceStopCancelsApply(t *testing.T) {
 	service, setter := newTestBackstopService(t, newTestStore(t), 7)
 	applying := make(chan struct{})
-	setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, false).RunAndReturn(func(ctx context.Context, _ string, _ int, _ bool) error {
+	setter.EXPECT().ApplyArchiveBackstop(mock.Anything, retentiontypes.LogsTTL, 7, mock.Anything).RunAndReturn(func(ctx context.Context, _ string, _ int, _ archivetypes.BackstopProgress) error {
 		close(applying)
 		<-ctx.Done()
 		return ctx.Err()
@@ -191,3 +191,4 @@ func TestBackstopServiceDisabledWarnsAboutKeptBackstop(t *testing.T) {
 		})
 	}
 }
+
