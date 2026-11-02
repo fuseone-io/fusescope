@@ -121,6 +121,12 @@ func (service *exportService) cycle(ctx context.Context) error {
 }
 
 func (service *exportService) exportTables(ctx context.Context, lease *archivetypes.Lease) error {
+	if abandoned, err := service.store.AbandonStaleAttempts(ctx, lease); err != nil {
+		service.settings.Logger().WarnContext(ctx, "archive attempts left pending by an earlier lease holder not abandoned", errors.Attr(err))
+	} else if abandoned > 0 {
+		service.settings.Logger().InfoContext(ctx, "archive attempts left pending by an earlier lease holder abandoned", slog.Int64("attempts", abandoned))
+	}
+
 	replicas, err := service.dialer.replicas(ctx, service.telemetryStore.ClickhouseDB(), service.telemetryStore.Cluster())
 	if err != nil {
 		return err

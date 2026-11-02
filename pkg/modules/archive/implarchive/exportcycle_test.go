@@ -98,6 +98,9 @@ func TestExportTables(t *testing.T) {
 	require.NoError(t, err)
 	_, err = archiveStore.Publish(ctx, lease, newTestPublicationOf(t, archiveStore, lease, "20260903-15-0", exportedPart))
 	require.NoError(t, err)
+	crashed := archivetypes.NewExportAttempt(lease, testShardPin(t, archiveStore), "20260903-15-0", "archive", "fusescope")
+	crashed.Epoch = lease.Epoch - 1
+	require.NoError(t, archiveStore.CreateAttempt(ctx, crashed))
 
 	service := newTestExportService(t, archiveStore)
 	service.telemetryStore.(*telemetrystoretest.Provider).Mock().ExpectQuery("FROM system.clusters").WithArgs("cluster").WillReturnRows(cmock.NewRows(
@@ -125,6 +128,7 @@ func TestExportTables(t *testing.T) {
 
 	require.NoError(t, service.exportTables(ctx, lease))
 	assert.Equal(t, []string{"ch-1:9000"}, dialed, "replicas are dialed at their cluster address, never through the DSN's load balancer")
+	assert.Equal(t, archivetypes.AttemptStatusAbandoned, attemptStatuses(t, archiveStore)[crashed.ID], "the lease holder abandons the attempts a crash left pending")
 }
 
 func TestSyncIndex(t *testing.T) {
