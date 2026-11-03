@@ -25,6 +25,7 @@ var (
 	ErrCodeApplicationInvalidInput  = errors.MustNewCode("rum_application_invalid_input")
 	ErrCodeApplicationNotFound      = errors.MustNewCode("rum_application_not_found")
 	ErrCodeApplicationAlreadyExists = errors.MustNewCode("rum_application_already_exists")
+	ErrCodeApplicationLimit         = errors.MustNewCode("rum_application_limit")
 )
 
 var (

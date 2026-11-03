@@ -15,8 +15,8 @@ type Store interface {
 	CountApplications(ctx context.Context) (int, error)
 	// ListApplicationsInAllOrgs loads only the id, org_id and data columns.
 	ListApplicationsInAllOrgs(ctx context.Context) ([]*StorableApplication, error)
-	// ListAllApplications loads every application of every organization, ordered by id.
-	ListAllApplications(ctx context.Context) ([]*StorableApplication, error)
+	// ListAllApplications loads at most limit applications of every organization, ordered by id.
+	ListAllApplications(ctx context.Context, limit int) ([]*StorableApplication, error)
 	UpdateApplication(ctx context.Context, application *StorableApplication) error
 	DeleteApplication(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 	SetFirstSeenAt(ctx context.Context, id valuer.UUID, seenAt time.Time) error
@@ -25,8 +25,11 @@ type Store interface {
 	GetKey(ctx context.Context, orgID valuer.UUID, applicationID valuer.UUID, id valuer.UUID) (*ApplicationKey, error)
 	GetKeyByHash(ctx context.Context, hash string) (*ApplicationKey, error)
 	ListKeys(ctx context.Context, orgID valuer.UUID, applicationID valuer.UUID) ([]*ApplicationKey, error)
-	// ListUnrevokedKeys loads the keys of every organization that are not revoked, ordered by id.
-	ListUnrevokedKeys(ctx context.Context) ([]*ApplicationKey, error)
+	// ListUsableKeys loads at most limit keys of every organization usable at the given time, ordered by id.
+	ListUsableKeys(ctx context.Context, at time.Time, limit int) ([]*ApplicationKey, error)
+	// TouchIngestPolicy records, in the caller's transaction, a change of the
+	// collectors' ingest policy content; it serialises such changes.
+	TouchIngestPolicy(ctx context.Context) error
 	UpdateKey(ctx context.Context, key *ApplicationKey) error
 	SetKeyLastUsedAt(ctx context.Context, id valuer.UUID, usedAt time.Time) error
 

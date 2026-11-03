@@ -18,6 +18,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/sqlstore/sqlitesqlstore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/telemetrystoretest"
+	"github.com/fuseone-io/fusescope/pkg/types/ingesttypes"
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +48,7 @@ func newTestModuleWithConfig(t *testing.T, matchRegexp bool, configure func(*rum
 	})
 	require.NoError(t, err)
 
-	for _, model := range []any{(*rumtypes.StorableApplication)(nil), (*rumtypes.ApplicationKey)(nil), (*rumtypes.StorableSourceMap)(nil)} {
+	for _, model := range []any{(*rumtypes.StorableApplication)(nil), (*rumtypes.ApplicationKey)(nil), (*rumtypes.StorableSourceMap)(nil), (*ingesttypes.StorableRevision)(nil)} {
 		_, err := sqlStore.BunDB().NewCreateTable().Model(model).IfNotExists().Exec(ctx)
 		require.NoError(t, err)
 	}

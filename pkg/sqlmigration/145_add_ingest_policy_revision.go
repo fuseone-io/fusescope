@@ -11,8 +11,9 @@ import (
 
 // addIngestPolicyRevision holds the revision of the collectors' ingest
 // policy (ADR 0010 §10): one row for the deployment, with the durable,
-// monotonic version and the hash of the content it was issued for. The
-// policy spans every organization, so the row has no org_id.
+// monotonic version, the hash of the content it was issued for, the
+// generation of changes and the floor of the time key expiry is decided
+// at. The policy spans every organization, so the row has no org_id.
 type addIngestPolicyRevision struct {
 	sqlschema sqlschema.SQLSchema
 }
@@ -43,6 +44,9 @@ func (migration *addIngestPolicyRevision) Up(ctx context.Context, db *bun.DB) er
 			{Name: "version", DataType: sqlschema.DataTypeBigInt, Nullable: false},
 			{Name: "content_sha256", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "issued_at", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "generation", DataType: sqlschema.DataTypeBigInt, Nullable: false, Default: "0"},
+			{Name: "revised_generation", DataType: sqlschema.DataTypeBigInt, Nullable: false, Default: "0"},
+			{Name: "effective_floor", DataType: sqlschema.DataTypeText, Nullable: false, Default: "''"},
 			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 		},

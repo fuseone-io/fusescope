@@ -37,6 +37,12 @@ func TestAddIngestPolicyRevision(t *testing.T) {
 
 	_, err = store.BunDB().ExecContext(ctx, `INSERT INTO ingest_policy_revision (id, version, content_sha256, issued_at, created_at, updated_at) VALUES ('ingest_policy', 9223372036854775807, 'abc', '2026-11-03T12:00:00Z', current_timestamp, current_timestamp)`)
 	require.NoError(t, err, "a version up to the largest int64")
+	var generation, revised int64
+	var floor string
+	require.NoError(t, store.BunDB().NewRaw(`SELECT generation, revised_generation, effective_floor FROM ingest_policy_revision`).Scan(ctx, &generation, &revised, &floor))
+	assert.Zero(t, generation, "a new row has seen no change")
+	assert.Zero(t, revised)
+	assert.Empty(t, floor)
 	_, err = store.BunDB().ExecContext(ctx, `INSERT INTO ingest_policy_revision (id, version, content_sha256, issued_at, created_at, updated_at) VALUES ('ingest_policy', 1, 'def', '2026-11-03T12:00:00Z', current_timestamp, current_timestamp)`)
 	assert.Error(t, err, "one row per id")
 }

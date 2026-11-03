@@ -33,6 +33,17 @@ type Config struct {
 	RateLimit RateLimitConfig `mapstructure:"ratelimit"`
 
 	SourceMaps SourceMapsConfig `mapstructure:"sourcemaps"`
+
+	IngestPolicy IngestPolicyConfig `mapstructure:"ingest_policy"`
+}
+
+// IngestPolicyConfig is the policy published to the ingress collectors
+// over OpAMP (ADR 0010 §3).
+type IngestPolicyConfig struct {
+	// File of the tokens, one per line, that ingress collectors present as
+	// `Authorization: Bearer` on the OpAMP connection. Unset, no policy is
+	// published.
+	TokenFile string `mapstructure:"token_file"`
 }
 
 type SourceMapsConfig struct {

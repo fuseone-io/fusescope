@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
@@ -73,6 +74,9 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 	if err := application.Validate(); err != nil {
 		return nil, err
 	}
+	if err := validateForIngest(application); err != nil {
+		return nil, err
+	}
 
 	storable, err := rumtypes.NewStorableApplication(application)
 	if err != nil {
@@ -85,6 +89,17 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		// The touch serialises creations, so the count holds until commit.
+		if err := module.store.TouchIngestPolicy(ctx); err != nil {
+			return err
+		}
+		count, err := module.store.CountApplications(ctx)
+		if err != nil {
+			return err
+		}
+		if count >= ingestpolicy.MaxApplications {
+			return errors.Newf(errors.TypeForbidden, rumtypes.ErrCodeApplicationLimit, "a deployment holds at most %d rum applications", ingestpolicy.MaxApplications)
+		}
 		if err := module.store.CreateApplication(ctx, storable); err != nil {
 			return err
 		}
@@ -114,13 +129,22 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	if err := application.Update(updatable); err != nil {
 		return nil, err
 	}
+	if err := validateForIngest(application); err != nil {
+		return nil, err
+	}
 
 	storable, err := rumtypes.NewStorableApplication(application)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := module.store.UpdateApplication(ctx, storable); err != nil {
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.TouchIngestPolicy(ctx); err != nil {
+			return err
+		}
+		return module.store.UpdateApplication(ctx, storable)
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -133,7 +157,13 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	if err != nil {
 		return err
 	}
-	if err := module.store.DeleteApplication(ctx, orgID, id); err != nil {
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.TouchIngestPolicy(ctx); err != nil {
+			return err
+		}
+		return module.store.DeleteApplication(ctx, orgID, id)
+	})
+	if err != nil {
 		return err
 	}
 	module.deleteSourceMapContent(ctx, sourceMaps)
