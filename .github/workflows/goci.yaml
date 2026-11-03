@@ -42,6 +42,23 @@ jobs:
     needs: changes
     if: needs.changes.outputs.go == 'true'
     runs-on: ubuntu-24.04
+    # Go tests that must hold on PostgreSQL as on SQLite run against this
+    # database; without FUSESCOPE_TEST_POSTGRES_DSN they skip.
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: fusescope_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      FUSESCOPE_TEST_POSTGRES_DSN: postgres://postgres:test@localhost:5432/fusescope_test?sslmode=disable
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
