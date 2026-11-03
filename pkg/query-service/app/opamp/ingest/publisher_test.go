@@ -17,6 +17,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore/sqlitesqlstore"
+	"github.com/fuseone-io/fusescope/pkg/types/ingesttypes"
 )
 
 const (
@@ -33,7 +34,7 @@ func newTestStore(t *testing.T) sqlstore.SQLStore {
 		Sqlite:     sqlstore.SqliteConfig{Path: filepath.Join(t.TempDir(), "ingest.db"), Mode: "wal", BusyTimeout: 5 * time.Second, TransactionMode: "deferred"},
 	})
 	require.NoError(t, err)
-	_, err = store.BunDB().NewCreateTable().Model((*revision)(nil)).IfNotExists().Exec(ctx)
+	_, err = store.BunDB().NewCreateTable().Model((*ingesttypes.StorableRevision)(nil)).IfNotExists().Exec(ctx)
 	require.NoError(t, err)
 	return store
 }
@@ -76,7 +77,9 @@ func testContent(keys int) *rumapplication.IngestContent {
 	return c
 }
 
-func at(t time.Time) func() time.Time { return func() time.Time { return t } }
+func at(t time.Time) func(context.Context) (time.Time, error) {
+	return func(context.Context) (time.Time, error) { return t, nil }
+}
 
 func TestPublisherRevise(t *testing.T) {
 	ctx := context.Background()
@@ -84,11 +87,11 @@ func TestPublisherRevise(t *testing.T) {
 	source := &fakeSource{}
 	source.set(1)
 	first := NewPublisher(store, source, slogDiscard())
-	first.now = at(time.Date(2026, 11, 3, 12, 0, 0, 0, time.UTC))
+	first.clock = at(time.Date(2026, 11, 3, 12, 0, 0, 0, time.UTC))
 
-	version, err := first.PublishedVersion(ctx)
+	state, err := first.State(ctx)
 	require.NoError(t, err)
-	assert.Zero(t, version, "nothing published yet")
+	assert.Zero(t, state.Version, "nothing published yet")
 
 	changed, err := first.Revise(ctx)
 	require.NoError(t, err)
@@ -103,13 +106,13 @@ func TestPublisherRevise(t *testing.T) {
 
 	// The same content later, and from another replica, is the same version
 	// and the same bytes: the collector refuses equal versions that differ.
-	first.now = at(time.Date(2026, 11, 3, 13, 0, 0, 0, time.UTC))
+	first.clock = at(time.Date(2026, 11, 3, 13, 0, 0, 0, time.UTC))
 	changed, err = first.Revise(ctx)
 	require.NoError(t, err)
 	assert.False(t, changed)
 	assert.Equal(t, v1, first.Current())
 	replica := NewPublisher(store, source, slogDiscard())
-	replica.now = at(time.Date(2026, 11, 3, 14, 0, 0, 0, time.UTC))
+	replica.clock = at(time.Date(2026, 11, 3, 14, 0, 0, 0, time.UTC))
 	_, err = replica.Revise(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, v1.Data, replica.Current().Data)
@@ -122,10 +125,11 @@ func TestPublisherRevise(t *testing.T) {
 	assert.Equal(t, uint64(2), v2.Version)
 	policy, err = ingestpolicy.Parse(v2.Data)
 	require.NoError(t, err)
-	assert.Equal(t, "2026-11-03T13:00:00Z", policy.IssuedAt, "issued when the content changed")
-	version, err = replica.PublishedVersion(ctx)
+	assert.Equal(t, "2026-11-03T14:00:00Z", policy.IssuedAt, "issued when the content changed, at the effective time, which never goes back")
+	state, err = replica.State(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, uint64(2), version, "other replicas see the new version")
+	assert.Equal(t, uint64(2), state.Version, "other replicas see the new version")
+	assert.False(t, state.Pending)
 }
 
 func TestPublisherRefusesUnpublishable(t *testing.T) {
@@ -147,9 +151,9 @@ func TestPublisherRefusesUnpublishable(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), string(ingestpolicy.CodeDuplicateVerifier))
 	assert.Equal(t, held, publisher.Current(), "the published snapshot stays in force")
-	version, err := publisher.PublishedVersion(ctx)
+	state, err := publisher.State(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, uint64(1), version, "no version is spent on content never published")
+	assert.Equal(t, uint64(1), state.Version, "no version is spent on content never published")
 
 	source.mu.Lock()
 	source.content, source.err = nil, assertError("database down")
@@ -199,3 +203,49 @@ func slogDiscard() *slog.Logger { return slog.New(slog.DiscardHandler) }
 type assertError string
 
 func (e assertError) Error() string { return string(e) }
+
+// expiringSource holds one key that expires at expiry, as the RUM module
+// decides it: usable only before.
+type expiringSource struct{ expiry time.Time }
+
+func (e expiringSource) IngestPolicyContent(_ context.Context, now time.Time) (*rumapplication.IngestContent, error) {
+	c := testContent(2)
+	if !now.Before(e.expiry) {
+		c.Keys = c.Keys[:1]
+	}
+	return c, nil
+}
+
+// Two replicas whose clocks sit on either side of a key's expiry agree on
+// one version: the one behind decides at the floor the other left.
+func TestPublisherClockSkew(t *testing.T) {
+	ctx := context.Background()
+	store := newTestStore(t)
+	expiry := time.Date(2026, 11, 3, 12, 0, 0, 0, time.UTC)
+	source := expiringSource{expiry: expiry}
+	ahead := NewPublisher(store, source, slogDiscard())
+	ahead.clock = at(expiry.Add(time.Minute))
+	behind := NewPublisher(store, source, slogDiscard())
+	behind.clock = at(expiry.Add(-time.Minute))
+
+	_, err := ahead.Revise(ctx)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), ahead.Current().Version)
+	for range 5 {
+		_, err = behind.Revise(ctx)
+		require.NoError(t, err)
+		_, err = ahead.Revise(ctx)
+		require.NoError(t, err)
+	}
+	assert.Equal(t, uint64(1), behind.Current().Version, "no flapping between replicas")
+	policy, err := ingestpolicy.Parse(behind.Current().Data)
+	require.NoError(t, err)
+	assert.Len(t, policy.Keys, 1, "the expired key never comes back")
+}
+
+func TestPublisherDatabaseClock(t *testing.T) {
+	publisher := NewPublisher(newTestStore(t), &fakeSource{}, slogDiscard())
+	now, err := publisher.databaseNow(context.Background())
+	require.NoError(t, err)
+	assert.WithinDuration(t, time.Now(), now, time.Minute)
+}

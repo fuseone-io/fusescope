@@ -114,11 +114,20 @@ func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) 
 	)
 
 	logger := signoz.Instrumentation.Logger()
-	publisher := ingest.NewPublisher(signoz.SQLStore, signoz.Modules.RUMApplication, logger)
-	hub := ingest.NewHub(publisher, logger)
-	s.ingest = ingest.NewService(publisher, hub, logger)
-	signoz.Modules.RUMApplication.OnChange(s.ingest.Changed)
-	s.opampServer.WithIngest(hub)
+	if tokenFile := config.RUM.IngestPolicy.TokenFile; tokenFile != "" {
+		tokens, err := ingest.LoadTokens(tokenFile)
+		if err != nil {
+			return nil, err
+		}
+		publisher := ingest.NewPublisher(signoz.SQLStore, signoz.Modules.RUMApplication, logger)
+		hub := ingest.NewHub(publisher, logger)
+		s.ingest = ingest.NewService(publisher, hub, logger)
+		signoz.Modules.RUMApplication.OnChange(s.ingest.Changed)
+		s.opampServer.WithIngest(hub, tokens)
+		logger.Warn("ingest policy published over OpAMP; its tokens travel unencrypted unless the OpAMP port is behind TLS")
+	} else {
+		logger.Info("ingest policy not published: rum.ingest_policy.token_file is not set")
+	}
 
 	return s, nil
 }
@@ -131,9 +140,11 @@ func (s *Server) Start(ctx context.Context) error {
 		return err
 	}
 
-	ingestCtx, stop := context.WithCancel(context.Background())
-	s.stopIngest = stop
-	go s.ingest.Run(ingestCtx)
+	if s.ingest != nil {
+		ingestCtx, stop := context.WithCancel(context.Background())
+		s.stopIngest = stop
+		go s.ingest.Run(ingestCtx)
+	}
 
 	return nil
 }
