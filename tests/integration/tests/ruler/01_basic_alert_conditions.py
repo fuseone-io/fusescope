@@ -14,10 +14,12 @@ from fixtures.alerts import (
 from fixtures.fs import get_testdata_file_path
 from fixtures.logger import setup_logger
 
-# Alert test cases use a 30-second wait time to verify expected alert firing.
 # Alert data is set up to trigger on the first rule manager evaluation.
 # With a 15-second eval frequency for most rules, plus alertmanager's
-# group_wait and group_interval delays, alerts should fire well within 30 seconds.
+# group_wait and group_interval delays, alerts usually fire within 30 seconds.
+# A lost first delivery is only re-sent after the ruler's 1-minute resend
+# delay, so cases wait long enough for one resend.
+ALERT_WAIT_SECONDS = 90
 TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     types.AlertTestCase(
         name="test_threshold_above_at_least_once",
@@ -31,7 +33,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -53,7 +55,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -75,7 +77,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -105,7 +107,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -127,7 +129,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -149,7 +151,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -171,7 +173,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -194,7 +196,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -216,7 +218,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -238,7 +240,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -260,7 +262,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -282,7 +284,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -304,7 +306,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -326,7 +328,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -348,7 +350,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -370,7 +372,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -392,7 +394,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -414,7 +416,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -436,7 +438,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -458,7 +460,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -484,7 +486,7 @@ TEST_RULES_UNIT_CONVERSION = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -506,7 +508,7 @@ TEST_RULES_UNIT_CONVERSION = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -532,7 +534,7 @@ TEST_RULES_MISCELLANEOUS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=30,
+            wait_time_seconds=ALERT_WAIT_SECONDS,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
