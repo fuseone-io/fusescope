@@ -142,7 +142,7 @@ func (agents *Agents) RecommendLatestConfigToAll(
 
 		newRemoteConfig := &protobufs.AgentRemoteConfig{
 			Config: &protobufs.AgentConfigMap{
-				ConfigMap: map[string]*protobufs.AgentConfigFile{
+				ConfigMap: map[string]*protobufs.AgentConfigObject{
 					CollectorConfigFilename: {
 						Body:        newConfig,
 						ContentType: "application/x-yaml",
