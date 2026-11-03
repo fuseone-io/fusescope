@@ -19,7 +19,7 @@ require (
 	github.com/dustin/go-humanize v1.1.0
 	github.com/emersion/go-smtp v0.25.0
 	github.com/evanphx/json-patch/v5 v5.9.11
-	github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy v0.0.0-20261103192948-19f0f72e7345
+	github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy v0.1.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-openapi/runtime v0.33.4
 	github.com/go-openapi/strfmt v0.27.4
