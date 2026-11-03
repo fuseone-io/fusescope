@@ -47,6 +47,7 @@ func (migration *addIngestPolicyRevision) Up(ctx context.Context, db *bun.DB) er
 			{Name: "issued_at", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "generation", DataType: sqlschema.DataTypeBigInt, Nullable: false, Default: "0"},
 			{Name: "revised_generation", DataType: sqlschema.DataTypeBigInt, Nullable: false, Default: "0"},
+			{Name: "changed_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
 			{Name: "effective_floor", DataType: sqlschema.DataTypeText, Nullable: false, Default: "''"},
 			{Name: "producer", DataType: sqlschema.DataTypeBigInt, Nullable: false, Default: "0"},
 			{Name: "data", DataType: sqlschema.DataTypeText, Nullable: false, Default: "''"},

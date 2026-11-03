@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/fuseone-io/fusescope/pkg/sqlstore"
 	"github.com/fuseone-io/fusescope/pkg/types/ingesttypes"
 )
 
@@ -363,4 +364,69 @@ func TestServiceRetriesFailedRevision(t *testing.T) {
 	source.err = nil
 	source.mu.Unlock()
 	eventually(t, conn, []uint64{1})
+}
+
+// A rollback leaves only the older producer: the newer one published and
+// stopped. A revocation recorded then reaches the agents within the 10 s
+// of ADR 0010 §3, with the production poll and grace, not after the
+// newer producer's lease.
+func TestServiceRevocationAfterRollback(t *testing.T) {
+	forEachStore(t, func(t *testing.T, newStore func(*testing.T) sqlstore.SQLStore) {
+		ctx := context.Background()
+		store := newStore(t)
+		source := &fakeSource{}
+		source.set(2)
+		newer := NewPublisher(store, source, slogDiscard())
+		newer.producer = Producer + 1
+		_, err := newer.Revise(ctx)
+		require.NoError(t, err)
+
+		older := NewPublisher(store, source, slogDiscard())
+		hub := NewHub(older, slogDiscard())
+		startService(t, NewService(older, hub, slogDiscard()))
+		conn := &fakeConn{}
+		hub.Observe("agent", conn, describe(RoleIngress, ingestpolicy.Capability))
+		eventually(t, conn, []uint64{1})
+		assert.Equal(t, newer.Current().Data, conn.data[0], "it follows the newer producer's bytes")
+
+		revoked := time.Now()
+		require.NoError(t, store.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+			source.set(1) // a key revoked
+			return ingesttypes.Touch(ctx, store.BunDBCtx(ctx), time.Now())
+		}))
+		require.Eventually(t, func() bool { return len(conn.versions()) == 2 }, 10*time.Second, 10*time.Millisecond, "the revocation waited for the lease")
+		t.Logf("revocation published after %v", time.Since(revoked).Round(100*time.Millisecond))
+		policy, err := ingestpolicy.Parse(conn.data[1])
+		require.NoError(t, err)
+		assert.Len(t, policy.Keys, 1)
+	})
+}
+
+// With the newer producer running, it revises a recorded change within the
+// grace, so the older one never takes over and no version is spent twice.
+func TestServiceNoFailoverWhileNewerRuns(t *testing.T) {
+	ctx := context.Background()
+	store := newTestStore(t)
+	newerSource, olderSource := &fakeSource{}, &fakeSource{}
+	newerSource.set(2)
+	olderSource.set(5) // a different build of the content
+	newer := NewPublisher(store, newerSource, slogDiscard())
+	newer.producer = Producer + 1
+	older := NewPublisher(store, olderSource, slogDiscard())
+	_, err := newer.Revise(ctx) // the newer release is already serving
+	require.NoError(t, err)
+	startService(t, NewService(newer, NewHub(newer, slogDiscard()), slogDiscard()))
+	startService(t, NewService(older, NewHub(older, slogDiscard()), slogDiscard()))
+	require.Eventually(t, func() bool { c := older.Current(); return c != nil && c.Version == 1 }, 5*time.Second, 10*time.Millisecond)
+
+	require.NoError(t, store.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		newerSource.set(1)
+		return ingesttypes.Touch(ctx, store.BunDBCtx(ctx), time.Now())
+	}))
+	require.Eventually(t, func() bool { c := older.Current(); return c != nil && c.Version == 2 }, 10*time.Second, 10*time.Millisecond)
+	time.Sleep(2 * failoverGrace)
+	row := new(ingesttypes.StorableRevision)
+	require.NoError(t, store.BunDB().NewSelect().Model(row).ExcludeColumn("data").Where("id = ?", ingesttypes.RevisionID).Scan(ctx))
+	assert.Equal(t, int64(Producer+1), row.Producer, "the older producer never took over")
+	assert.Equal(t, int64(2), row.Version)
 }

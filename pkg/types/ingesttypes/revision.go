@@ -26,6 +26,9 @@ type StorableRevision struct {
 	// generation the last revision read.
 	Generation        int64 `bun:"generation"`
 	RevisedGeneration int64 `bun:"revised_generation"`
+	// ChangedAt is when the last change was recorded, at the database's
+	// clock, so how long a change has waited is measured on one clock.
+	ChangedAt *time.Time `bun:"changed_at,nullzero"`
 	// EffectiveFloor is the latest time a revision decided key expiry at,
 	// RFC 3339 with nanoseconds; the time used never goes back, so a
 	// replica behind another cannot bring an expired key back.
@@ -47,6 +50,7 @@ func Touch(ctx context.Context, db bun.IDB, now time.Time) error {
 	result, err := db.NewUpdate().
 		Model((*StorableRevision)(nil)).
 		Set("generation = generation + 1").
+		Set("changed_at = CURRENT_TIMESTAMP").
 		Set("updated_at = ?", now).
 		Where("id = ?", RevisionID).
 		Exec(ctx)
@@ -65,6 +69,7 @@ func Touch(ctx context.Context, db bun.IDB, now time.Time) error {
 	_, err = db.NewUpdate().
 		Model((*StorableRevision)(nil)).
 		Set("generation = generation + 1").
+		Set("changed_at = CURRENT_TIMESTAMP").
 		Set("updated_at = ?", now).
 		Where("id = ?", RevisionID).
 		Exec(ctx)
