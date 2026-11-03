@@ -73,6 +73,12 @@ func (c *fakeConn) Send(ctx context.Context, msg *protobufs.ServerToAgent) error
 	return nil
 }
 
+func (c *fakeConn) policies() [][]byte {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([][]byte(nil), c.data...)
+}
+
 func (c *fakeConn) versions() []uint64 {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -429,4 +435,90 @@ func TestServiceNoFailoverWhileNewerRuns(t *testing.T) {
 	require.NoError(t, store.BunDB().NewSelect().Model(row).ExcludeColumn("data").Where("id = ?", ingesttypes.RevisionID).Scan(ctx))
 	assert.Equal(t, int64(Producer+1), row.Producer, "the older producer never took over")
 	assert.Equal(t, int64(2), row.Version)
+}
+
+func changedAt(t *testing.T, store sqlstore.SQLStore) time.Time {
+	t.Helper()
+	row := new(ingesttypes.StorableRevision)
+	require.NoError(t, store.BunDB().NewSelect().Model(row).ExcludeColumn("data").Where("id = ?", ingesttypes.RevisionID).Scan(context.Background()))
+	require.NotNil(t, row.ChangedAt)
+	return *row.ChangedAt
+}
+
+// A change keeps the time of the oldest one no revision has read; only a
+// change after a revision starts it again.
+func TestTouchKeepsOldestPendingChange(t *testing.T) {
+	forEachStore(t, func(t *testing.T, newStore func(*testing.T) sqlstore.SQLStore) {
+		ctx := context.Background()
+		store := newStore(t)
+		publisher := NewPublisher(store, &fakeSource{content: testContent(1)}, slogDiscard())
+		_, err := publisher.Revise(ctx)
+		require.NoError(t, err)
+
+		require.NoError(t, ingesttypes.Touch(ctx, store.BunDB(), time.Now()))
+		first := changedAt(t, store)
+		time.Sleep(1100 * time.Millisecond) // SQLite's clock has whole seconds
+		require.NoError(t, ingesttypes.Touch(ctx, store.BunDB(), time.Now()))
+		assert.Equal(t, first, changedAt(t, store), "a later change does not hide the first")
+
+		_, err = publisher.Revise(ctx)
+		require.NoError(t, err)
+		require.NoError(t, ingesttypes.Touch(ctx, store.BunDB(), time.Now()))
+		assert.True(t, changedAt(t, store).After(first), "after a revision the next change starts the wait")
+	})
+}
+
+// Changes every half second after a rollback: the first, a revocation,
+// still goes out within 10 s, the stream cannot postpone the failover.
+func TestServiceRevocationUnderChangeStream(t *testing.T) {
+	forEachStore(t, func(t *testing.T, newStore func(*testing.T) sqlstore.SQLStore) {
+		ctx := context.Background()
+		store := newStore(t)
+		source := &fakeSource{}
+		source.set(3)
+		newer := NewPublisher(store, source, slogDiscard())
+		newer.producer = Producer + 1
+		_, err := newer.Revise(ctx)
+		require.NoError(t, err)
+
+		older := NewPublisher(store, source, slogDiscard())
+		hub := NewHub(older, slogDiscard())
+		startService(t, NewService(older, hub, slogDiscard()))
+		conn := &fakeConn{}
+		hub.Observe("agent", conn, describe(RoleIngress, ingestpolicy.Capability))
+		eventually(t, conn, []uint64{1})
+
+		touch := func(keys int) {
+			assert.NoError(t, store.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+				source.set(keys)
+				return ingesttypes.Touch(ctx, store.BunDBCtx(ctx), time.Now())
+			}))
+		}
+		revoked := time.Now()
+		touch(2) // the revocation
+		stop := make(chan struct{})
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			for i := 0; ; i++ {
+				select {
+				case <-stop:
+					return
+				case <-time.After(500 * time.Millisecond):
+					touch(2) // metadata changes that keep the revocation in
+				}
+			}
+		}()
+		defer func() { close(stop); <-done }()
+		require.Eventually(t, func() bool {
+			for _, data := range conn.policies()[1:] {
+				policy, err := ingestpolicy.Parse(data)
+				if err == nil && len(policy.Keys) == 2 {
+					return true
+				}
+			}
+			return false
+		}, 10*time.Second, 10*time.Millisecond, "the change stream postponed the revocation")
+		t.Logf("revocation published after %v", time.Since(revoked).Round(100*time.Millisecond))
+	})
 }

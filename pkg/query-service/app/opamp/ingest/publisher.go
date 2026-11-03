@@ -293,12 +293,7 @@ func (publisher *Publisher) effectiveTime(ctx context.Context, row *ingesttypes.
 }
 
 func (publisher *Publisher) databaseNow(ctx context.Context) (time.Time, error) {
-	var now time.Time
-	err := publisher.store.BunDBCtx(ctx).
-		NewSelect().
-		ColumnExpr("CURRENT_TIMESTAMP").
-		Scan(ctx, &now)
-	return now, err
+	return ingesttypes.DatabaseNow(ctx, publisher.store.BunDBCtx(ctx))
 }
 
 // State reads the revision row without locking: another replica may have
