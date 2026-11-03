@@ -31,7 +31,7 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/huandu/go-sqlbuilder v1.39.1
-	github.com/jackc/pgx/v5 v5.11.0
+	github.com/jackc/pgx/v5 v5.12.0
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12
 	github.com/knadh/koanf v1.5.0
 	github.com/knadh/koanf/v2 v2.4.1
@@ -90,7 +90,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.37.2
-	modernc.org/sqlite v1.61.0
+	modernc.org/sqlite v1.61.1
 )
 
 require (
@@ -137,7 +137,7 @@ require (
 	github.com/huandu/go-clone v1.7.3 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/jackc/puddle/v2 v2.2.3 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
