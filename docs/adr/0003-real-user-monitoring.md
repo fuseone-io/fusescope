@@ -1,6 +1,6 @@
 # 0003 · Real User Monitoring (RUM)
 
-- Status: accepted (2026-10-21; open decisions resolved as recommended); amended 2026-10-21 with the phase 0 spike, reproducible from [`0003-experiments/`](0003-experiments/); decisions 3, 4 and 6 amended by [ADR 0010](0010-single-ingress.md) (proposed)
+- Status: accepted (2026-10-21; open decisions resolved as recommended); amended 2026-10-21 with the phase 0 spike, reproducible from [`0003-experiments/`](0003-experiments/); decisions 3, 4 and 6 amended by [ADR 0010](0010-single-ingress.md) (accepted)
 - Deciders: FuseOne maintainers. SDKs, ingestion, auth and storage span several PRs and repos.
 
 ## Context

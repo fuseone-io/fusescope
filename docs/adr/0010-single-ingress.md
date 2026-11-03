@@ -1,6 +1,6 @@
 # 0010 · The collector is the single ingress
 
-- Status: proposed
+- Status: accepted (2026-11-03), with the amendments of [§10](#10-amendments-on-acceptance) agreed with `fusescope-collector-server` ADR 0006 ([fuseone-io/fusescope-collector-server#41](https://github.com/fuseone-io/fusescope-collector-server/pull/41))
 - Issue: [#236](https://github.com/fuseone-io/fusescope/issues/236)
 - Deciders: FuseOne maintainers. A new auth model for ingest, a move of the RUM gateway, and changes to the backend, the collector, the SDKs and the chart.
 - Depends on: ADR 0009 ([#222](https://github.com/fuseone-io/fusescope/pull/222)), FuseScope collector distribution; every component here lives in `fusescope-collector` (Apache-2.0).
@@ -50,7 +50,7 @@ Managed in the backend, enforced in the collector. Built clean-room from this AD
 | For | servers, agents, collectors, CI | browsers and mobile apps; safe to ship in a bundle |
 | Signals | any of `traces`, `metrics`, `logs`, `profiles`, `artifacts` | RUM traces and logs, on the RUM routes only |
 | Bound to | an organisation | a RUM application: its origins or package names, platform and PII policy |
-| Presented as | `Authorization: Bearer`, `signoz-ingestion-key`, `SigNoz-Api-Key`, Basic password (Pyroscope); gRPC metadata alike | `FuseScope-RUM-Key` or `?fusescope_rum_key=` |
+| Presented as | `Authorization: Bearer`, `signoz-ingestion-key`, `SigNoz-Api-Key`, Basic password (Pyroscope); gRPC metadata alike | `FuseScope-RUM-Key` header only (§10) |
 
 - **Kinds.** Besides general secret keys and public RUM keys, a `runner` kind holds synthetics runner keys (ADR 0006): the collector requires a run token on their payloads.
 - **Storage.** A new `ingestion_key` table on SQLite and PostgreSQL: org, name, kind, signals, expiry, status (`active`, `expiring`, `revoked`), rate limit, created and last-used. Only the SHA-256 of a key is stored, which is enough for 160 random bits; the key is shown once. RUM keys stay in `rum_application_key` and are published in the same snapshot.
@@ -59,7 +59,7 @@ Managed in the backend, enforced in the collector. Built clean-room from this AD
 
 ### 3. Distribution over OpAMP
 
-- The backend sends each collector of the `ingress` role (ADR 0009 §5) a **snapshot**: a version, and for each usable key its hash, ID, org, kind, signals, expiry and limit, plus the RUM applications' origins, package names, platform and PII policy.
+- The backend sends each collector of the `ingress` role (ADR 0009 §5) a **snapshot**: a schema version, a monotonic revision, and for each usable key its hash, ID, org, kind, signals, expiry and limit, plus the RUM applications' org, name, environment, origins, package names, platform and PII policy (§10). The snapshot is the collector's authority for ingest authentication and identity.
 - It travels as an **OpAMP custom message** (`io.fuseone.fusescope.ingest.v1`), not in the remote config YAML, so a key change does not reload pipelines and no hash lands in the effective config the collector reports.
 - A change in the backend pushes a full snapshot at once; a collector whose version is behind on its heartbeat gets one too, and every 5 minutes regardless. At 10 000 keys a snapshot is about 2 MB; deltas come only if that becomes a problem.
 - **Latency.** Rotation and revocation reach every connected collector within 10 s p95. That is the bound on how long a revoked key keeps working.
@@ -72,7 +72,7 @@ A server authenticator extension in `fusescope-collector`, attached to every rec
 - **It stamps `fusescope.ingest.key_id`** on every resource, overwriting any value the client sent, and puts the org in the request's auth data for processors and exporters. The payload never decides the org.
 - **Per-key rate limits.** A token bucket per key in each replica. The backend knows how many ingress replicas are connected and sends each one its share of a key's limit. Over the limit: 429 with `Retry-After`, which OTLP exporters retry. Size limits stay per receiver.
 - **Lost OpAMP connection.** The snapshot is cached on disk (hashes only) and keeps being used, so a backend outage never stops ingest. Its age is exported as a metric and shown in the UI. An optional `max_staleness` makes the collector refuse keyed requests with 503 past it; it has no default and stays off unless an operator sets it, so a revocation made during an outage takes effect when the connection returns.
-- **Cold start without a snapshot.** In `enforce` mode, 503 with `Retry-After`; in the other modes, accept.
+- **Cold start without a snapshot.** 503 with `Retry-After` in every mode: the collector fails closed and is not ready until a valid snapshot arrives (§10).
 
 ### 5. Rollout: permissive → warn → enforce
 
@@ -89,14 +89,14 @@ A server authenticator extension in `fusescope-collector`, attached to every rec
 
 A `rumreceiver` in `fusescope-collector` does what the backend gateway does today, with the same behaviour and tests, from the OpAMP snapshot:
 
-- `POST /rum/v1/{traces,logs}`, same paths, headers, query parameter, encodings and body limits;
+- `POST /rum/v1/{traces,logs}`, same paths, header, encodings and body limits; the `fusescope_rum_key` query parameter is removed (§10);
 - CORS preflight and origin or package-name allowlist per application; per-key and per-client-IP buckets;
 - PII scrubbing, stamping, `event.name` copy, Android normalisation; then into the collector's own pipelines, with no extra hop.
 
 The backend gateway is our MIT code, so it is moved, not rewritten; it keeps its MIT notice in the Apache repo.
 
 - **Setup status.** The receiver reports per application and key, every minute over OpAMP: last seen, SDK versions and refusals by reason. The backend aggregates across replicas, so the status no longer depends on which backend replica answered.
-- **Browser bundle.** The receiver also serves `/rum/v1/sdk/browser/{version}/fusescope.min.js` and its map, embedded at build time, so an install that exposes only the collector can still serve the snippet. The CDN stays the default in the docs.
+- **Browser bundle.** Deferred (§10): the CDN serves it at first. Later the receiver may serve `/rum/v1/sdk/browser/{version}/fusescope.min.js` and its map, embedded at build time, so an install that exposes only the collector can still serve the snippet.
 - **Mobile.** The Android SDK and its package-name rules are unchanged; only the base URL moves.
 
 ### 7. Symbol and artifact uploads go through the collector
@@ -125,6 +125,19 @@ There are no customers or users yet, so there is no compatibility period: RUM mo
 
 The snapshot maps every key to an org, and the org travels in auth data through the pipeline. Today one org writes to one ClickHouse, so the org is not stored. When `fusescope-engine` arrives with tenant-native storage, the writer authenticates per org with a tenant token delivered over OpAMP; ingestion keys never reach storage.
 
+### 10. Amendments on acceptance
+
+Agreed with the collector's ADR 0006 and its RUM spec (`docs/spec/rum.md` in `fusescope-collector-server`, [#41](https://github.com/fuseone-io/fusescope-collector-server/pull/41)). They replace what §§2–4 and §6 said before.
+
+- **Fail closed without a snapshot.** A collector with no valid snapshot, received or cached, refuses all ingest with 503 and `Retry-After`, in `permissive` and `warn` as in `enforce`, and reports not ready. This replaces §4's acceptance without a snapshot in the other modes. The backend publishes snapshots before any collector runs `ingestauth` or `rumreceiver`, and the chart routes `/rum/v1` to a collector only once it holds a valid snapshot.
+- **The snapshot is the identity authority, not a restriction.** It can add keys, widen origins and signals, set a key's org and the application name and environment the collector stamps. A compromised backend can therefore authorise keys and change which org data is attributed to. It still cannot change the collector's listeners, pipelines, destinations or outbound credentials, so it cannot redirect telemetry to another endpoint.
+- **Strict, versioned snapshot.** JSON with a `schemaVersion` (1) and a monotonic, durable `version`; the collector rejects a lower version, a same version with different content, an unknown schema version or field, duplicate IDs or hashes, dangling references and a key whose org differs from its application's.
+- **`name` and `environment`** of each RUM application are in the snapshot, with validated sizes: the collector stamps `service.name` and `deployment.environment.name` from them, as the backend gateway does.
+- **Header-only RUM key.** The `?fusescope_rum_key=` query parameter is removed: there are no users yet, and `@fusescope/browser` sends the `FuseScope-RUM-Key` header through the OpenTelemetry fetch exporter with `keepalive`. A key in a URL ends up in proxy and load-balancer logs.
+- **Setup status reports** carry a `reportSequence`; the backend persists `(agentID, reportSequence)` before acknowledging it, and the collector repeats first-seen and last-used values until that acknowledgement arrives. Unknown keys are counted globally, never attributed to an application.
+- **Client IP behind proxies.** The backend's rate limiter takes the leftmost `X-Forwarded-For` address from any peer when `trust_forwarded_for` is set (`pkg/ratelimit/ratelimit.go:16-31`). The collector trusts `X-Forwarded-For` only from configured proxy CIDRs; the backend's limiter, which still guards other anonymous routes (#178), must move to the same trusted-proxies rule. Noted here only; no backend code changes with this ADR.
+- **Open questions answered.** Per-key limits stay a per-replica share for now; the browser bundle stays on the CDN, with no bundle serving in the collector's first release.
+
 ## Relationship with other ADRs
 
 - **ADR 0003 (RUM).** Decision 3 (gateway in the backend) is replaced by §6; decision 4 (public keys) becomes the public kind of §2; decision 6 (uploads through the API) is replaced by §7. The reasons 0003 gave for the backend are answered: keys and policies still live in the metastore and reach the collector over OpAMP; the new code is Apache-2.0, not AGPL (ADR 0009); symbolication stays in the backend. 0003 carries an amendment note.
@@ -149,7 +162,7 @@ Estimates in engineer-weeks. Phases 2–5 need ADR 0009 phases 0–1.
 |---|---|---|---|---|
 | **1 · Keys in the backend** | `ingestion_key` table (SQLite, PostgreSQL), API, Settings UI, permissions; community gateway implementation; OpAMP snapshot custom message, role targeting, heartbeat version | fusescope | 3 | keys created, rotated and revoked from the UI; a test agent receives each change within 10 s |
 | **2 · `ingestauth`** | extension on every public receiver; disk cache; per-key buckets with replica shares; `fusescope.ingest.key_id`; modes and counters; chart listeners and modes | fusescope-collector-server, fusescope-charts | 3 | unknown keys refused in `enforce`; ingest continues with the backend down; revocation p95 ≤ 10 s on the demo |
-| **3 · RUM in the collector** | `rumreceiver` moved from the backend gateway with its tests; status over OpAMP; bundle serving; chart routes `/rum/v1/*` to it; backend `/rum/v1/{traces,logs}` and `signoz.rum.*` removed in the same release | fusescope-collector-server, fusescope, fusescope-charts | 3 | the RUM e2e suite passes against the collector route; the backend has no RUM ingest route |
+| **3 · RUM in the collector** | `rumreceiver` moved from the backend gateway with its tests; status over OpAMP; chart routes `/rum/v1/*` to it once the collector holds a valid snapshot; backend `/rum/v1/{traces,logs}` and `signoz.rum.*` removed in the same release | fusescope-collector-server, fusescope, fusescope-charts | 3 | the RUM e2e suite passes against the collector route; the backend has no RUM ingest route |
 | **4 · Uploads in the collector** | `artifactreceiver` (source maps, R8, debug files); internal intake with collector credentials; CLI and Gradle plugin defaults | fusescope-collector-server, fusescope, fusescope-sdk, fusescope-sdk-android | 2–3 | a CI upload with an `artifacts` key retraces a crash; the backend upload routes are not on the public router |
 | **5 · Cut-over** | SDK and docs endpoint defaults; `warn` then `enforce` defaults; ADR 0003 amendment finalised | fusescope, fusescope-sdk, fusescope-sdk-android, fusescope-charts, fusescope-docs | 1 | a default install exposes only the collector for ingest |
 
@@ -159,10 +172,11 @@ Estimates in engineer-weeks. Phases 2–5 need ADR 0009 phases 0–1.
 |---|---|---|
 | 1 | Compatibility period for the backend RUM and upload routes | **none**: no customers yet, so the routes move to the collector in one release (§8) |
 | 2 | Behaviour when OpAMP is lost | keep accepting with **cached keys**; `max_staleness` stays an optional knob with **no default** (§4) |
+| 3 | Per-key limits | a **per-replica share** of the key's limit for now (§4, §10) |
+| 4 | Browser bundle from the collector | **CDN first**, no bundle serving in the first release (§10) |
+| 5 | Cold start without a snapshot | **fail closed** in every mode (§10) |
 
 ## Open questions
 
 - Should the internal listener stay `permissive` by default for in-cluster agents, or require keys too?
 - Merge `rum_application_key` into `ingestion_key`, or keep both tables behind one snapshot?
-- Per-key limits as a share per replica, or a shared counter (for example Redis) when replicas are many and traffic uneven?
-- Should the collector serve the browser bundle, or should self-hosted installs rely on the CDN and their own hosting?

@@ -1,6 +1,6 @@
 # 0009 · FuseScope collector: our own Apache-2.0 distribution
 
-- Status: proposed; amended 2026-11-01: ClickHouse exporters are written before the storage gate (§2), naming (§1)
+- Status: accepted (2026-11-03); amended 2026-11-01: ClickHouse exporters are written before the storage gate (§2), naming (§1)
 - Issue: [#230](https://github.com/fuseone-io/fusescope/issues/230)
 - Deciders: FuseOne maintainers. A new repo, its licence, the chart topology and a multi-quarter migration off the AGPL fork.
 - Related: [ADR 0001](0001-agpl-collector-dependency.md) (backend links no collector code), [ADR 0003](0003-real-user-monitoring.md) (RUM), ADR 0007 (cost, [#207](https://github.com/fuseone-io/fusescope/pull/207)), ADR 0008 (profiling, [#214](https://github.com/fuseone-io/fusescope/pull/214)), ADR 0010 (single ingress), [fusescope-otel-collector#3](https://github.com/fuseone-io/fusescope-otel-collector/issues/3) (OTel upgrade).
