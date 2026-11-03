@@ -2,7 +2,10 @@ package ingest
 
 import (
 	"context"
+	"fmt"
+
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -17,11 +20,19 @@ import (
 // fakeConn records the policies sent to it; with gate set, each send
 // waits for it.
 type fakeConn struct {
-	mu    sync.Mutex
-	sent  []uint64
-	data  [][]byte
-	gate  chan struct{}
-	fails int
+	mu           sync.Mutex
+	sent         []uint64
+	data         [][]byte
+	gate         chan struct{}
+	fails        int
+	disconnected atomic.Bool
+	inFlight     *atomic.Int32
+	maxInFlight  *atomic.Int32
+}
+
+func (c *fakeConn) Disconnect() error {
+	c.disconnected.Store(true)
+	return nil
 }
 
 func (c *fakeConn) Send(ctx context.Context, msg *protobufs.ServerToAgent) error {
@@ -32,6 +43,16 @@ func (c *fakeConn) Send(ctx context.Context, msg *protobufs.ServerToAgent) error
 		return assertError("connection reset")
 	}
 	c.mu.Unlock()
+	if c.inFlight != nil {
+		n := c.inFlight.Add(1)
+		defer c.inFlight.Add(-1)
+		for {
+			m := c.maxInFlight.Load()
+			if n <= m || c.maxInFlight.CompareAndSwap(m, n) {
+				break
+			}
+		}
+	}
 	if c.gate != nil {
 		select {
 		case <-c.gate:
@@ -241,13 +262,58 @@ func TestServiceResendsRegardless(t *testing.T) {
 	}
 }
 
-// A send that fails is retried with backoff, with no other trigger.
-func TestHubRetriesFailedSend(t *testing.T) {
+// A failed write leaves the WebSocket unusable: the agent is disconnected,
+// and its reconnection gets the policy at once.
+func TestHubDisconnectsOnFailedSend(t *testing.T) {
 	hub, _, _ := newTestHub(t)
-	hub.sendBackoff = 5 * time.Millisecond
-	conn := &fakeConn{fails: 3}
-	hub.Observe("agent", conn, describe(RoleIngress, ingestpolicy.Capability))
-	eventually(t, conn, []uint64{1})
+	broken := &fakeConn{fails: 1}
+	hub.Observe("agent", broken, describe(RoleIngress, ingestpolicy.Capability))
+	require.Eventually(t, broken.disconnected.Load, 5*time.Second, time.Millisecond)
+	hub.Remove(broken)
+
+	again := &fakeConn{}
+	hub.Observe("agent", again, describe(RoleIngress, ingestpolicy.Capability))
+	eventually(t, again, []uint64{1})
+}
+
+func TestHubBoundsAgents(t *testing.T) {
+	hub, _, _ := newTestHub(t)
+	hub.maxAgents = 3
+	conns := make([]*fakeConn, 5)
+	for i := range conns {
+		conns[i] = &fakeConn{}
+		hub.Observe(fmt.Sprintf("agent-%d", i), conns[i], describe(RoleIngress, ingestpolicy.Capability))
+	}
+	for i := range 3 {
+		eventually(t, conns[i], []uint64{1})
+	}
+	never(t, conns[3], nil)
+	never(t, conns[4], nil)
+
+	hub.Remove(conns[0])
+	hub.Observe("agent-4", conns[4], describe(RoleIngress, ingestpolicy.Capability))
+	eventually(t, conns[4], []uint64{1})
+}
+
+// At most maxSends policies are encoded and written at once, whatever the
+// number of agents.
+func TestHubBoundsConcurrentSends(t *testing.T) {
+	hub, _, _ := newTestHub(t)
+	gate := make(chan struct{})
+	var inFlight, peak atomic.Int32
+	conns := make([]*fakeConn, 3*maxSends)
+	for i := range conns {
+		conns[i] = &fakeConn{gate: gate, inFlight: &inFlight, maxInFlight: &peak}
+		hub.Observe(fmt.Sprintf("agent-%d", i), conns[i], describe(RoleIngress, ingestpolicy.Capability))
+	}
+	require.Eventually(t, func() bool { return inFlight.Load() == maxSends }, 5*time.Second, time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
+	assert.Equal(t, int32(maxSends), peak.Load())
+	close(gate)
+	for _, conn := range conns {
+		eventually(t, conn, []uint64{1})
+	}
+	assert.Equal(t, int32(maxSends), peak.Load())
 }
 
 func startService(t *testing.T, service *Service) {

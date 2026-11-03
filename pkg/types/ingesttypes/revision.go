@@ -29,9 +29,14 @@ type StorableRevision struct {
 	// EffectiveFloor is the latest time a revision decided key expiry at,
 	// RFC 3339 with nanoseconds; the time used never goes back, so a
 	// replica behind another cannot bring an expired key back.
-	EffectiveFloor string    `bun:"effective_floor"`
-	CreatedAt      time.Time `bun:"created_at"`
-	UpdatedAt      time.Time `bun:"updated_at"`
+	EffectiveFloor string `bun:"effective_floor"`
+	// Producer is the version of the code that issued the revision; an
+	// older one does not overwrite it (pkg/query-service/app/opamp/ingest).
+	Producer int64 `bun:"producer"`
+	// Data is the policy message as published, sent by every replica.
+	Data      string    `bun:"data"`
+	CreatedAt time.Time `bun:"created_at"`
+	UpdatedAt time.Time `bun:"updated_at"`
 }
 
 // Touch records a change of the content in the caller's transaction. It

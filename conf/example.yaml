@@ -611,8 +611,9 @@ rum:
     # How often the maps past their application's retention are deleted.
     cleanup_interval: 1h
   ingest_policy:
-    # File of the tokens, one per line, that ingress collectors present on the
-    # OpAMP connection to receive the ingest policy. Unset, it is not published.
+    # File of the tokens, one per line (32 to 256 characters), that ingress
+    # collectors present on the OpAMP connection to receive the ingest policy.
+    # Unset, it is not published. Enable it only with TLS on the OpAMP port.
     token_file: ""
 
 ##################### Dashboard #####################

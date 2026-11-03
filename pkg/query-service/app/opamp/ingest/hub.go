@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy"
@@ -25,17 +26,21 @@ const (
 
 	pollEvery   = 5 * time.Second
 	resendEvery = 5 * time.Minute
+	// sendTimeout is the write deadline of one policy, up to 24 MiB; a
+	// peer that cannot take it in time is disconnected.
 	sendTimeout = time.Minute
-	// A failed send is retried from sendBackoff, doubling to
-	// maxSendBackoff, until it succeeds or the connection closes.
-	sendBackoff    = time.Second
-	maxSendBackoff = 30 * time.Second
+	// maxAgents bounds the ingress agents held, each with a sender;
+	// maxSends bounds the sends in flight, each encoding its own copy of
+	// the policy.
+	maxAgents = 256
+	maxSends  = 4
 )
 
-// Connection sends to one agent; opamp-go's server connections serialise
-// their writes.
+// Connection is an agent's connection. opamp-go's serialises its writes
+// but ignores Send's context, so the hub bounds a write by closing it.
 type Connection interface {
 	Send(ctx context.Context, msg *protobufs.ServerToAgent) error
+	Disconnect() error
 }
 
 // Hub sends the current snapshot to every connected ingress agent that
@@ -46,7 +51,10 @@ type Hub struct {
 	publisher *Publisher
 	logger    *slog.Logger
 
-	sendBackoff time.Duration
+	sendTimeout time.Duration
+	maxAgents   int
+	sends       chan struct{}
+	refusedLog  atomic.Int64
 
 	mu     sync.Mutex
 	agents map[string]*agentState
@@ -66,7 +74,11 @@ type peer struct {
 }
 
 func NewHub(publisher *Publisher, logger *slog.Logger) *Hub {
-	return &Hub{publisher: publisher, logger: logger, sendBackoff: sendBackoff, agents: map[string]*agentState{}}
+	return &Hub{
+		publisher: publisher, logger: logger,
+		sendTimeout: sendTimeout, maxAgents: maxAgents, sends: make(chan struct{}, maxSends),
+		agents: map[string]*agentState{},
+	}
 }
 
 // Observe takes an agent's message. The description and the custom
@@ -77,6 +89,10 @@ func (hub *Hub) Observe(agentID string, conn Connection, msg *protobufs.AgentToS
 	defer hub.mu.Unlock()
 	state, ok := hub.agents[agentID]
 	if !ok {
+		if len(hub.agents) >= hub.maxAgents {
+			hub.refused(agentID)
+			return
+		}
 		state = &agentState{}
 		hub.agents[agentID] = state
 	}
@@ -143,6 +159,16 @@ func (hub *Hub) Close() {
 	}
 }
 
+// refused logs, at most once a minute, an agent over maxAgents.
+func (hub *Hub) refused(agentID string) {
+	now := time.Now().UnixNano()
+	last := hub.refusedLog.Load()
+	if now-last < int64(time.Minute) || !hub.refusedLog.CompareAndSwap(last, now) {
+		return
+	}
+	hub.logger.Warn("ingest policy agents at their bound; further agents get no policy", slog.String("agent_id", agentID), slog.Int("max_agents", hub.maxAgents))
+}
+
 func (hub *Hub) start(agentID string, state *agentState) {
 	p := &peer{wake: make(chan struct{}, 1), stop: make(chan struct{})}
 	state.peer = p
@@ -162,40 +188,61 @@ func wake(p *peer) {
 	}
 }
 
+// send is an agent's sender. A failed write leaves a WebSocket unusable,
+// so the agent is disconnected; its reconnection is the retry, since a new
+// connection gets the policy at once.
 func (hub *Hub) send(agentID string, uid []byte, conn Connection, p *peer) {
-	var retry <-chan time.Time
-	backoff := hub.sendBackoff
 	for {
 		select {
 		case <-p.stop:
 			return
 		case <-p.wake:
-		case <-retry:
 		}
-		retry = nil
 		snapshot := hub.publisher.Current()
 		if snapshot == nil {
 			continue
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
-		err := conn.Send(ctx, &protobufs.ServerToAgent{
-			InstanceUid: uid,
-			CustomMessage: &protobufs.CustomMessage{
-				Capability: ingestpolicy.Capability,
-				Type:       ingestpolicy.TypePolicy,
-				Data:       snapshot.Data,
-			},
-		})
-		cancel()
-		if err != nil {
-			hub.logger.Warn("ingest policy not sent; retrying", slog.String("agent_id", agentID), slog.Uint64("version", snapshot.Version), slog.Duration("after", backoff), errors.Attr(err))
-			retry = time.After(backoff)
-			backoff = min(2*backoff, maxSendBackoff)
-			continue
+		select {
+		case hub.sends <- struct{}{}:
+		case <-p.stop:
+			return
 		}
-		backoff = hub.sendBackoff
+		err := hub.sendOne(conn, uid, snapshot)
+		<-hub.sends
+		if err != nil {
+			hub.logger.Warn("ingest policy not sent; disconnecting the agent, which reconnects and gets it again", slog.String("agent_id", agentID), slog.Uint64("version", snapshot.Version), errors.Attr(err))
+			_ = conn.Disconnect()
+			return
+		}
 		hub.logger.Debug("ingest policy sent", "agent_id", agentID, "version", snapshot.Version, "bytes", len(snapshot.Data))
 	}
+}
+
+// sendOne writes one policy within sendTimeout. The WebSocket library sets
+// its own write deadline on every frame, so a deadline on the network
+// connection would not hold; past the timeout the connection is closed
+// instead, which ends the blocked write.
+func (hub *Hub) sendOne(conn Connection, uid []byte, snapshot *Snapshot) error {
+	ctx, cancel := context.WithTimeout(context.Background(), hub.sendTimeout)
+	defer cancel()
+	var expired atomic.Bool
+	watchdog := time.AfterFunc(hub.sendTimeout, func() {
+		expired.Store(true)
+		_ = conn.Disconnect()
+	})
+	err := conn.Send(ctx, &protobufs.ServerToAgent{
+		InstanceUid: uid,
+		CustomMessage: &protobufs.CustomMessage{
+			Capability: ingestpolicy.Capability,
+			Type:       ingestpolicy.TypePolicy,
+			Data:       snapshot.Data,
+		},
+	})
+	watchdog.Stop()
+	if err == nil && expired.Load() {
+		err = errors.Newf(errors.TypeTimeout, errors.CodeInternal, "ingest policy write past %s", hub.sendTimeout)
+	}
+	return err
 }
 
 func role(description *protobufs.AgentDescription) string {

@@ -15,8 +15,10 @@ var ErrCodeInvalidTokens = errors.MustNewCode("ingest_policy_invalid_tokens")
 
 const (
 	// MinTokenLength keeps a token out of guessing range: 32 characters of
-	// any reasonable alphabet are well over 128 bits.
+	// any reasonable alphabet are well over 128 bits. MaxTokenLength is the
+	// collector's bound too (fusescope-collector-server docs/spec/opamp.md §8).
 	MinTokenLength = 32
+	MaxTokenLength = 256
 	maxTokenFile   = 64 << 10
 )
 
@@ -49,8 +51,8 @@ func LoadTokens(path string) (*Tokens, error) {
 			continue
 		}
 		// The line number only: a token is never logged.
-		if len(token) < MinTokenLength || strings.ContainsAny(token, " \t") {
-			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidTokens, "ingest policy token on line %d must be at least %d characters with no spaces", number+1, MinTokenLength)
+		if len(token) < MinTokenLength || len(token) > MaxTokenLength || strings.ContainsAny(token, " \t") {
+			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidTokens, "ingest policy token on line %d must be %d to %d characters with no spaces", number+1, MinTokenLength, MaxTokenLength)
 		}
 		tokens.digests = append(tokens.digests, sha256.Sum256([]byte(token)))
 	}
@@ -65,6 +67,9 @@ func LoadTokens(path string) (*Tokens, error) {
 func (tokens *Tokens) Verify(authorization string) bool {
 	scheme, token, ok := strings.Cut(authorization, " ")
 	if !ok || !strings.EqualFold(scheme, "Bearer") || token == "" {
+		return false
+	}
+	if len(token) > MaxTokenLength {
 		return false
 	}
 	digest := sha256.Sum256([]byte(token))

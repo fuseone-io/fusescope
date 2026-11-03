@@ -41,6 +41,7 @@ func TestLoadTokens(t *testing.T) {
 		"bearer only":    {"Bearer ", false},
 		"comment":        {"Bearer # rotation: B replaces A", false},
 		"trailing space": {"Bearer " + tokenA + " ", false},
+		"over the bound": {"Bearer " + strings.Repeat("a", MaxTokenLength+1), false},
 	} {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, testCase.ok, tokens.Verify(testCase.header))
@@ -53,6 +54,7 @@ func TestLoadTokensRefuses(t *testing.T) {
 		"empty":         "",
 		"comments only": "# none\n\n",
 		"short":         "short-token\n",
+		"long":          strings.Repeat("a", MaxTokenLength+1) + "\n",
 		"inner space":   "ingest token aaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
 		"too large":     strings.Repeat(tokenA+"\n", maxTokenFile/len(tokenA)+1),
 	} {
