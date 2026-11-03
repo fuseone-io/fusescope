@@ -27,6 +27,9 @@ type Store interface {
 	ListKeys(ctx context.Context, orgID valuer.UUID, applicationID valuer.UUID) ([]*ApplicationKey, error)
 	// ListUsableKeys loads at most limit keys of every organization usable at the given time, ordered by id.
 	ListUsableKeys(ctx context.Context, at time.Time, limit int) ([]*ApplicationKey, error)
+	// CountUsableKeys counts, per application, the keys usable at the given
+	// time and those of them expiring (in a rotation overlap).
+	CountUsableKeys(ctx context.Context, at time.Time) (map[valuer.UUID]KeyCounts, error)
 	// TouchIngestPolicy records, in the caller's transaction, a change of the
 	// collectors' ingest policy content; it serialises such changes.
 	TouchIngestPolicy(ctx context.Context) error

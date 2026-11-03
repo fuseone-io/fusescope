@@ -46,6 +46,9 @@ func (module *module) CreateKey(ctx context.Context, orgID valuer.UUID, applicat
 				return errors.Newf(errors.TypeAlreadyExists, rumtypes.ErrCodeKeyConflict, "rum application %s already has a key, rotate it instead", applicationID.StringValue())
 			}
 		}
+		if err := module.checkIngestBudget(ctx, ingestChange{keysOf: applicationID, usable: 1}); err != nil {
+			return err
+		}
 
 		return module.store.CreateKey(ctx, key)
 	})
@@ -84,6 +87,10 @@ func (module *module) RotateKey(ctx context.Context, orgID valuer.UUID, applicat
 		}
 
 		if err := current.Expire(now, overlap); err != nil {
+			return err
+		}
+		// The current key enters its overlap and a new one is usable.
+		if err := module.checkIngestBudget(ctx, ingestChange{keysOf: applicationID, usable: 1, expiring: 1}); err != nil {
 			return err
 		}
 		if err := module.store.UpdateKey(ctx, current); err != nil {

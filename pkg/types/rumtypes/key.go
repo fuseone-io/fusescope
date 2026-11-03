@@ -213,3 +213,10 @@ func NewGettableApplicationKeys(keys []*ApplicationKey, now time.Time) []*Gettab
 func NewGettableCreatedApplicationKey(key *ApplicationKey, plaintext string, now time.Time) *GettableCreatedApplicationKey {
 	return &GettableCreatedApplicationKey{GettableApplicationKey: *NewGettableApplicationKey(key, now), Key: plaintext}
 }
+
+// KeyCounts are an application's usable keys, and how many of them are in
+// a rotation overlap.
+type KeyCounts struct {
+	Usable   int
+	Expiring int
+}

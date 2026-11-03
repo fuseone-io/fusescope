@@ -247,7 +247,7 @@ func TestModuleIngestBudget(t *testing.T) {
 	big := func(name string) *rumtypes.Application {
 		return rumtypes.NewApplication(orgID, "admin@example.com", newTestPostable(t, originsPostable(name, 50)))
 	}
-	size := ingestBudget(big("app-00000"))
+	size := ingestBudget(big("app-00000"), rumtypes.KeyCounts{Usable: 1})
 	n := (ingestpolicy.MaxSize - ingestEnvelope) / size
 	now := time.Now()
 	applications := make([]*rumtypes.StorableApplication, 0, n)
@@ -298,4 +298,69 @@ func TestModuleIngestBudget(t *testing.T) {
 	assert.LessOrEqual(t, len(data), ingestpolicy.MaxSize, "what is held still publishes")
 	_, err = ingestpolicy.Parse(data)
 	require.NoError(t, err)
+}
+
+// budgetTotal is the policy's room as checkIngestBudget counts it.
+func budgetTotal(t *testing.T, module *module) int {
+	t.Helper()
+	ctx := context.Background()
+	storables, err := module.store.ListAllApplications(ctx, ingestpolicy.MaxApplications+1)
+	require.NoError(t, err)
+	counts, err := module.store.CountUsableKeys(ctx, time.Now())
+	require.NoError(t, err)
+	total := ingestEnvelope
+	for _, storable := range storables {
+		application, err := rumtypes.NewApplicationFromStorable(storable)
+		require.NoError(t, err)
+		total += ingestBudget(application, counts[storable.ID])
+	}
+	return total
+}
+
+func encodedPolicySize(t *testing.T, module *module) int {
+	t.Helper()
+	content, err := module.IngestPolicyContent(context.Background(), time.Now())
+	require.NoError(t, err)
+	data, err := json.Marshal(&ingestpolicy.Policy{SchemaVersion: 1, Version: 1, IssuedAt: "2026-11-03T12:00:00Z", Keys: content.Keys, RUMApplications: content.Applications})
+	require.NoError(t, err)
+	return len(data)
+}
+
+// An earlier release could leave two active keys on an application, which
+// the two-key assumption would undercount: the budget counts the keys
+// actually usable, so a rotation of that state is weighed, and the room it
+// reserves is never below the policy's real size.
+func TestModuleIngestBudgetCountsUsableKeys(t *testing.T) {
+	ctx := context.Background()
+	module, orgID := newTestModule(t)
+	created, err := module.Create(ctx, orgID, "admin@example.com", newTestPostable(t, originsPostable("legacy", 50)))
+	require.NoError(t, err)
+	extra, _, err := rumtypes.NewApplicationKey(orgID, created.ID, time.Now())
+	require.NoError(t, err)
+	_, err = module.store.(*store).sqlstore.BunDB().NewInsert().Model(extra).Exec(ctx)
+	require.NoError(t, err, "two active keys, as concurrent CreateKey calls could leave")
+
+	counts, err := module.store.CountUsableKeys(ctx, time.Now())
+	require.NoError(t, err)
+	assert.Equal(t, rumtypes.KeyCounts{Usable: 2}, counts[created.ID])
+	assert.LessOrEqual(t, encodedPolicySize(t, module), budgetTotal(t, module))
+
+	// The legacy state's room is over the cap: a rotation, which adds a
+	// key, is refused even though that room already counts it.
+	module.ingestMaxSize = budgetTotal(t, module) - 1
+	_, err = module.RotateKey(ctx, orgID, created.ID, created.Key.ID, rumtypes.KeyOverlapOneDay)
+	require.Error(t, err, "the rotation adds a key past the cap")
+	assert.True(t, errors.Asc(err, rumtypes.ErrCodeApplicationLimit), "%v", err)
+
+	module.ingestMaxSize = ingestpolicy.MaxSize
+	_, err = module.RotateKey(ctx, orgID, created.ID, created.Key.ID, rumtypes.KeyOverlapOneDay)
+	require.NoError(t, err)
+	counts, err = module.store.CountUsableKeys(ctx, time.Now())
+	require.NoError(t, err)
+	assert.Equal(t, rumtypes.KeyCounts{Usable: 3, Expiring: 1}, counts[created.ID])
+	assert.LessOrEqual(t, encodedPolicySize(t, module), budgetTotal(t, module), "the room covers the real size")
+
+	// A revocation shrinks the room and is never weighed.
+	module.ingestMaxSize = 0
+	require.NoError(t, module.RevokeKey(ctx, orgID, created.ID, extra.ID))
 }

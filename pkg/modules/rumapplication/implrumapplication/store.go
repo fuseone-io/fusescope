@@ -260,6 +260,35 @@ func (store *store) ListUsableKeys(ctx context.Context, at time.Time, limit int)
 	return keys, nil
 }
 
+func (store *store) CountUsableKeys(ctx context.Context, at time.Time) (map[valuer.UUID]rumtypes.KeyCounts, error) {
+	rows := make([]struct {
+		ApplicationID valuer.UUID `bun:"application_id"`
+		Usable        int         `bun:"usable"`
+		Expiring      int         `bun:"expiring"`
+	}, 0)
+	err := store.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model((*rumtypes.ApplicationKey)(nil)).
+		Column("application_id").
+		ColumnExpr("COUNT(*) AS usable").
+		ColumnExpr("SUM(CASE WHEN expires_at IS NULL THEN 0 ELSE 1 END) AS expiring").
+		Where("revoked_at IS NULL").
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("expires_at IS NULL").WhereOr("expires_at > ?", at.UTC())
+		}).
+		Group("application_id").
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to count rum application keys")
+	}
+	counts := make(map[valuer.UUID]rumtypes.KeyCounts, len(rows))
+	for _, row := range rows {
+		counts[row.ApplicationID] = rumtypes.KeyCounts{Usable: row.Usable, Expiring: row.Expiring}
+	}
+	return counts, nil
+}
+
 func (store *store) TouchIngestPolicy(ctx context.Context) error {
 	if err := ingesttypes.Touch(ctx, store.sqlstore.BunDBCtx(ctx), time.Now()); err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to record the ingest policy change")
