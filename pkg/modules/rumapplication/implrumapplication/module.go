@@ -29,6 +29,9 @@ type module struct {
 
 	listenersMu sync.Mutex
 	listeners   []func()
+
+	// ingestMaxSize is the ingest policy's cap, ingestpolicy.MaxSize.
+	ingestMaxSize int
 }
 
 type originCache struct {
@@ -50,6 +53,8 @@ func NewModule(store rumtypes.Store, telemetryStore telemetrystore.TelemetryStor
 		monitor:      newMonitor(),
 		settings:     settings,
 		config:       config,
+
+		ingestMaxSize: ingestpolicy.MaxSize,
 	}
 }
 
@@ -100,6 +105,9 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 		if count >= ingestpolicy.MaxApplications {
 			return errors.Newf(errors.TypeForbidden, rumtypes.ErrCodeApplicationLimit, "a deployment holds at most %d rum applications", ingestpolicy.MaxApplications)
 		}
+		if err := module.checkIngestBudget(ctx, valuer.UUID{}, application); err != nil {
+			return err
+		}
 		if err := module.store.CreateApplication(ctx, storable); err != nil {
 			return err
 		}
@@ -140,6 +148,9 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if err := module.store.TouchIngestPolicy(ctx); err != nil {
+			return err
+		}
+		if err := module.checkIngestBudget(ctx, application.ID, application); err != nil {
 			return err
 		}
 		return module.store.UpdateApplication(ctx, storable)

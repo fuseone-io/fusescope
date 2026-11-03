@@ -2,6 +2,7 @@ package implrumapplication
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"slices"
 	"strings"
@@ -147,4 +148,64 @@ func nonNil(values []string) []string {
 		return []string{}
 	}
 	return values
+}
+
+const (
+	// keysPerApplication is the most usable keys an application has: the
+	// active one and one in its rotation overlap (CreateKey, RotateKey).
+	keysPerApplication = 2
+	// ingestEnvelope bounds the policy's fields around its two lists.
+	ingestEnvelope = 1 << 10
+)
+
+// maxIngestKeySize is the largest key of the policy, encoded, with its comma.
+var maxIngestKeySize = func() int {
+	uuid := "00000000-0000-0000-0000-000000000000"
+	expiresAt := "2006-01-02T15:04:05Z"
+	data, _ := json.Marshal(ingestpolicy.Key{
+		ID: uuid, SHA256: strings.Repeat("0", 64), OrgID: uuid, Kind: ingestpolicy.KindPublic,
+		Signals: ingestSignals, ExpiresAt: &expiresAt, ApplicationID: &uuid,
+	})
+	return len(data) + 1
+}()
+
+// ingestBudget is what an application can take of the policy: itself and
+// its keys at their largest.
+func ingestBudget(application *rumtypes.Application) int {
+	platform, ok := ingestPlatforms[application.Platform]
+	if !ok {
+		return 0
+	}
+	data, _ := json.Marshal(newIngestApplication(application, platform))
+	return len(data) + 1 + keysPerApplication*maxIngestKeySize
+}
+
+// checkIngestBudget refuses a creation or an update that would grow the
+// policy past its 24 MiB cap (rum.md §11.2), so no change can leave it
+// unpublishable and revocations stuck. replaced is the application next
+// replaces, zero for a creation. It runs after TouchIngestPolicy, which
+// serialises changes, so the total holds until commit. A change that does
+// not grow the policy is never refused.
+func (module *module) checkIngestBudget(ctx context.Context, replaced valuer.UUID, next *rumtypes.Application) error {
+	storables, err := module.store.ListAllApplications(ctx, ingestpolicy.MaxApplications+1)
+	if err != nil {
+		return err
+	}
+	before, after := ingestEnvelope, ingestEnvelope
+	for _, storable := range storables {
+		application, err := rumtypes.NewApplicationFromStorable(storable)
+		if err != nil {
+			continue // left out of the policy too
+		}
+		size := ingestBudget(application)
+		before += size
+		if storable.ID != replaced {
+			after += size
+		}
+	}
+	after += ingestBudget(next)
+	if after > module.ingestMaxSize && after > before {
+		return errors.Newf(errors.TypeForbidden, rumtypes.ErrCodeApplicationLimit, "the collectors' ingest policy would exceed %d bytes; remove origins, allowlists or applications first", module.ingestMaxSize)
+	}
+	return nil
 }
