@@ -15,6 +15,8 @@ type Store interface {
 	CountApplications(ctx context.Context) (int, error)
 	// ListApplicationsInAllOrgs loads only the id, org_id and data columns.
 	ListApplicationsInAllOrgs(ctx context.Context) ([]*StorableApplication, error)
+	// ListAllApplications loads every application of every organization, ordered by id.
+	ListAllApplications(ctx context.Context) ([]*StorableApplication, error)
 	UpdateApplication(ctx context.Context, application *StorableApplication) error
 	DeleteApplication(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 	SetFirstSeenAt(ctx context.Context, id valuer.UUID, seenAt time.Time) error
@@ -23,6 +25,8 @@ type Store interface {
 	GetKey(ctx context.Context, orgID valuer.UUID, applicationID valuer.UUID, id valuer.UUID) (*ApplicationKey, error)
 	GetKeyByHash(ctx context.Context, hash string) (*ApplicationKey, error)
 	ListKeys(ctx context.Context, orgID valuer.UUID, applicationID valuer.UUID) ([]*ApplicationKey, error)
+	// ListUnrevokedKeys loads the keys of every organization that are not revoked, ordered by id.
+	ListUnrevokedKeys(ctx context.Context) ([]*ApplicationKey, error)
 	UpdateKey(ctx context.Context, key *ApplicationKey) error
 	SetKeyLastUsedAt(ctx context.Context, id valuer.UUID, usedAt time.Time) error
 
