@@ -199,7 +199,8 @@ type ingestChange struct {
 
 // checkIngestBudget refuses a change that would grow the policy past its
 // 24 MiB cap (rum.md §11.2), so no change can leave it unpublishable and
-// revocations stuck. It counts the keys actually usable. It runs after
+// revocations stuck. It counts the keys actually usable, at the time the
+// revisions decide at. It runs after
 // TouchIngestPolicy, which serialises changes, so the total holds until
 // commit. A change that adds a key always fits the cap, even within room a
 // state left by an earlier release already reserves; an update that does
@@ -210,7 +211,14 @@ func (module *module) checkIngestBudget(ctx context.Context, change ingestChange
 	if err != nil {
 		return err
 	}
-	counts, err := module.store.CountUsableKeys(ctx, time.Now())
+	// Keys are counted at the database's clock: a revision decides at it,
+	// or at a floor past it, so it never holds a key not counted here,
+	// whatever this process's clock says.
+	now, err := module.store.DatabaseNow(ctx)
+	if err != nil {
+		return err
+	}
+	counts, err := module.store.CountUsableKeys(ctx, now)
 	if err != nil {
 		return err
 	}

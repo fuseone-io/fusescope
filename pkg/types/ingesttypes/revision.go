@@ -26,8 +26,9 @@ type StorableRevision struct {
 	// generation the last revision read.
 	Generation        int64 `bun:"generation"`
 	RevisedGeneration int64 `bun:"revised_generation"`
-	// ChangedAt is when the last change was recorded, at the database's
-	// clock, so how long a change has waited is measured on one clock.
+	// ChangedAt is when the oldest change no revision has read was
+	// recorded, at the database's clock: later changes leave it, so a
+	// stream of changes cannot hide how long the first has waited.
 	ChangedAt *time.Time `bun:"changed_at,nullzero"`
 	// EffectiveFloor is the latest time a revision decided key expiry at,
 	// RFC 3339 with nanoseconds; the time used never goes back, so a
@@ -42,6 +43,17 @@ type StorableRevision struct {
 	UpdatedAt time.Time `bun:"updated_at"`
 }
 
+// pendingSince keeps the time of the oldest unread change: SET reads the
+// row as it was, so a change finding every earlier one read starts it.
+const pendingSince = "changed_at = CASE WHEN generation = revised_generation OR changed_at IS NULL THEN CURRENT_TIMESTAMP ELSE changed_at END"
+
+// DatabaseNow is the database's clock, one for every replica.
+func DatabaseNow(ctx context.Context, db bun.IDB) (time.Time, error) {
+	var now time.Time
+	err := db.NewSelect().ColumnExpr("CURRENT_TIMESTAMP").Scan(ctx, &now)
+	return now.UTC(), err
+}
+
 // Touch records a change of the content in the caller's transaction. It
 // locks the revision row, creating it, so changes and revisions are
 // serialised: a check made after it, such as a capacity count, holds until
@@ -50,7 +62,7 @@ func Touch(ctx context.Context, db bun.IDB, now time.Time) error {
 	result, err := db.NewUpdate().
 		Model((*StorableRevision)(nil)).
 		Set("generation = generation + 1").
-		Set("changed_at = CURRENT_TIMESTAMP").
+		Set(pendingSince).
 		Set("updated_at = ?", now).
 		Where("id = ?", RevisionID).
 		Exec(ctx)
@@ -69,7 +81,7 @@ func Touch(ctx context.Context, db bun.IDB, now time.Time) error {
 	_, err = db.NewUpdate().
 		Model((*StorableRevision)(nil)).
 		Set("generation = generation + 1").
-		Set("changed_at = CURRENT_TIMESTAMP").
+		Set(pendingSince).
 		Set("updated_at = ?", now).
 		Where("id = ?", RevisionID).
 		Exec(ctx)

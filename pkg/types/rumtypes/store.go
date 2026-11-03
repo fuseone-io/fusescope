@@ -30,6 +30,9 @@ type Store interface {
 	// CountUsableKeys counts, per application, the keys usable at the given
 	// time and those of them expiring (in a rotation overlap).
 	CountUsableKeys(ctx context.Context, at time.Time) (map[valuer.UUID]KeyCounts, error)
+	// DatabaseNow is the database's clock, which the ingest policy decides
+	// key expiry at.
+	DatabaseNow(ctx context.Context) (time.Time, error)
 	// TouchIngestPolicy records, in the caller's transaction, a change of the
 	// collectors' ingest policy content; it serialises such changes.
 	TouchIngestPolicy(ctx context.Context) error

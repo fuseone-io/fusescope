@@ -289,6 +289,14 @@ func (store *store) CountUsableKeys(ctx context.Context, at time.Time) (map[valu
 	return counts, nil
 }
 
+func (store *store) DatabaseNow(ctx context.Context) (time.Time, error) {
+	now, err := ingesttypes.DatabaseNow(ctx, store.sqlstore.BunDBCtx(ctx))
+	if err != nil {
+		return time.Time{}, errors.WrapInternalf(err, errors.CodeInternal, "failed to read the database clock")
+	}
+	return now, nil
+}
+
 func (store *store) TouchIngestPolicy(ctx context.Context) error {
 	if err := ingesttypes.Touch(ctx, store.sqlstore.BunDBCtx(ctx), time.Now()); err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to record the ingest policy change")
