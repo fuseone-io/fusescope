@@ -30,6 +30,9 @@ func (module *module) CreateKey(ctx context.Context, orgID valuer.UUID, applicat
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.TouchIngestPolicy(ctx); err != nil {
+			return err
+		}
 		if _, err := module.store.GetApplication(ctx, orgID, applicationID); err != nil {
 			return err
 		}
@@ -62,6 +65,9 @@ func (module *module) RotateKey(ctx context.Context, orgID valuer.UUID, applicat
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.TouchIngestPolicy(ctx); err != nil {
+			return err
+		}
 		current, err := module.store.GetKey(ctx, orgID, applicationID, keyID)
 		if err != nil {
 			return err
@@ -100,7 +106,15 @@ func (module *module) RevokeKey(ctx context.Context, orgID valuer.UUID, applicat
 	}
 
 	key.Revoke(time.Now())
-	if err := module.store.UpdateKey(ctx, key); err != nil {
+	// The revocation and its record for the publisher commit together, so
+	// every replica sees it at its next poll even if this one stops now.
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.TouchIngestPolicy(ctx); err != nil {
+			return err
+		}
+		return module.store.UpdateKey(ctx, key)
+	})
+	if err != nil {
 		return err
 	}
 

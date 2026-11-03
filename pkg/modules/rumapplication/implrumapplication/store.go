@@ -4,8 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/uptrace/bun"
+
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/types/ingesttypes"
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
@@ -100,13 +103,14 @@ func (store *store) ListApplicationsInAllOrgs(ctx context.Context) ([]*rumtypes.
 	return applications, nil
 }
 
-func (store *store) ListAllApplications(ctx context.Context) ([]*rumtypes.StorableApplication, error) {
+func (store *store) ListAllApplications(ctx context.Context, limit int) ([]*rumtypes.StorableApplication, error) {
 	applications := make([]*rumtypes.StorableApplication, 0)
 	err := store.sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&applications).
 		Order("id ASC").
+		Limit(int64(limit)).
 		Scan(ctx)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list rum applications")
@@ -237,19 +241,30 @@ func (store *store) ListKeys(ctx context.Context, orgID valuer.UUID, application
 	return keys, nil
 }
 
-func (store *store) ListUnrevokedKeys(ctx context.Context) ([]*rumtypes.ApplicationKey, error) {
+func (store *store) ListUsableKeys(ctx context.Context, at time.Time, limit int) ([]*rumtypes.ApplicationKey, error) {
 	keys := make([]*rumtypes.ApplicationKey, 0)
 	err := store.sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&keys).
 		Where("revoked_at IS NULL").
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("expires_at IS NULL").WhereOr("expires_at > ?", at.UTC())
+		}).
 		Order("id ASC").
+		Limit(int64(limit)).
 		Scan(ctx)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list rum application keys")
 	}
 	return keys, nil
+}
+
+func (store *store) TouchIngestPolicy(ctx context.Context) error {
+	if err := ingesttypes.Touch(ctx, store.sqlstore.BunDBCtx(ctx), time.Now()); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to record the ingest policy change")
+	}
+	return nil
 }
 
 func (store *store) UpdateKey(ctx context.Context, key *rumtypes.ApplicationKey) error {

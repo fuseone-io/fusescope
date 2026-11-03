@@ -25,13 +25,17 @@ var ingestPlatforms = map[rumtypes.Platform]string{
 var ingestSignals = []string{"traces", "logs"}
 
 func (module *module) IngestPolicyContent(ctx context.Context, now time.Time) (*rumapplication.IngestContent, error) {
-	storables, err := module.store.ListAllApplications(ctx)
+	// One more than the bounds tells an overflow from a full policy.
+	storables, err := module.store.ListAllApplications(ctx, ingestpolicy.MaxApplications+1)
 	if err != nil {
 		return nil, err
 	}
-	keys, err := module.store.ListUnrevokedKeys(ctx)
+	keys, err := module.store.ListUsableKeys(ctx, now, ingestpolicy.MaxKeys+1)
 	if err != nil {
 		return nil, err
+	}
+	if len(storables) > ingestpolicy.MaxApplications || len(keys) > ingestpolicy.MaxKeys {
+		return nil, errors.Newf(errors.TypeInternal, rumtypes.ErrCodeApplicationLimit, "rum applications or keys over the ingest policy bounds (%d, %d)", ingestpolicy.MaxApplications, ingestpolicy.MaxKeys)
 	}
 	byApplication := map[valuer.UUID][]ingestpolicy.Key{}
 	for _, key := range keys {
@@ -66,6 +70,21 @@ func (module *module) IngestPolicyContent(ctx context.Context, now time.Time) (*
 	}
 	slices.SortFunc(content.Keys, func(a, b ingestpolicy.Key) int { return strings.Compare(a.ID, b.ID) })
 	return content, nil
+}
+
+// validateForIngest refuses an application the collector would reject, so
+// a normal change never leaves one out of the policy.
+func validateForIngest(application *rumtypes.Application) error {
+	platform, ok := ingestPlatforms[application.Platform]
+	if !ok {
+		return nil
+	}
+	err := validateIngestEntry(newIngestApplication(application, platform), nil)
+	var rejection *ingestpolicy.RejectionError
+	if errors.As(err, &rejection) {
+		return errors.NewInvalidInputf(rumtypes.ErrCodeApplicationInvalidInput, "the collector would refuse this application: %s at %s", rejection.Code, rejection.Path)
+	}
+	return err
 }
 
 // validateIngestEntry checks one application and its keys as the collector
