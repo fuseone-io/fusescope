@@ -30,7 +30,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
-	github.com/huandu/go-sqlbuilder v1.44.1
+	github.com/huandu/go-sqlbuilder v1.39.1
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12
 	github.com/knadh/koanf v1.5.0
@@ -41,7 +41,7 @@ require (
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20
 	github.com/openfga/language/pkg/go v0.3.2
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/perses/spec v0.2.0
+	github.com/perses/spec v0.1.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/alertmanager v0.31.1
 	github.com/prometheus/client_golang v1.24.0
