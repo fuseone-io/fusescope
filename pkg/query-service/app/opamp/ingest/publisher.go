@@ -53,12 +53,24 @@ type Publisher struct {
 	source Source
 	logger *slog.Logger
 	// clock is the database's: one clock for every replica.
-	clock   func(ctx context.Context) (time.Time, error)
-	current atomic.Pointer[Snapshot]
+	clock    func(ctx context.Context) (time.Time, error)
+	producer int64
+	current  atomic.Pointer[Snapshot]
 }
 
+// Producer is the version of how this code builds the policy: its content
+// and its encoding. Bump it with any change of either, so a replica of an
+// older release, during a rolling update, follows the newer one's
+// revisions instead of overwriting them with its own.
+const Producer = 1
+
+// producerLease is how long a newer producer may go without revising
+// before an older one takes over, after a rollback: the newer one revises
+// at least every resendEvery while it runs.
+const producerLease = 2 * resendEvery
+
 func NewPublisher(store sqlstore.SQLStore, source Source, logger *slog.Logger) *Publisher {
-	publisher := &Publisher{store: store, source: source, logger: logger}
+	publisher := &Publisher{store: store, source: source, logger: logger, producer: Producer}
 	publisher.clock = publisher.databaseNow
 	return publisher
 }
@@ -76,7 +88,8 @@ func (publisher *Publisher) Current() *Snapshot { return publisher.current.Load(
 // Revise rebuilds the snapshot from the database and returns whether its
 // version changed. Content the collector would reject, or over the 24 MiB
 // cap, is not published: the version is not bumped and the current
-// snapshot stays in force.
+// snapshot stays in force. A revision of a newer producer is followed, not
+// rebuilt: its bytes, stored with it, are what this replica sends.
 func (publisher *Publisher) Revise(ctx context.Context) (bool, error) {
 	var next *Snapshot
 	err := publisher.store.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
@@ -86,6 +99,10 @@ func (publisher *Publisher) Revise(ctx context.Context) (bool, error) {
 		}
 		now, err := publisher.effectiveTime(ctx, row)
 		if err != nil {
+			return err
+		}
+		if row.Producer > publisher.producer && !leaseExpired(row, now) {
+			next, err = publisher.follow(ctx, row)
 			return err
 		}
 		ingestContent, err := publisher.source.IngestPolicyContent(ctx, now)
@@ -99,37 +116,70 @@ func (publisher *Publisher) Revise(ctx context.Context) (bool, error) {
 		}
 		sum := sha256.Sum256(encoded)
 		contentSHA := hex.EncodeToString(sum[:])
-		if contentSHA != row.ContentSHA256 {
+		columns := []string{"revised_generation", "effective_floor", "updated_at"}
+		if contentSHA != row.ContentSHA256 || row.Producer != publisher.producer {
 			if row.Version == math.MaxInt64 {
 				return errors.Newf(errors.TypeInternal, ErrCodeExhausted, "ingest policy version exhausted")
 			}
 			row.Version++
 			row.ContentSHA256 = contentSHA
 			row.IssuedAt = now.Format(time.RFC3339)
-		}
-		data, err := encode(row, body)
-		if err != nil {
+			row.Producer = publisher.producer
+			data, err := encode(row, body)
+			if err != nil {
+				return err
+			}
+			row.Data = string(data)
+			columns = append(columns, "version", "content_sha256", "issued_at", "producer", "data")
+			next = &Snapshot{Version: uint64(row.Version), Data: data}
+		} else if next, err = publisher.follow(ctx, row); err != nil {
 			return err
 		}
 		row.RevisedGeneration = row.Generation
 		row.EffectiveFloor = now.Format(time.RFC3339Nano)
 		row.UpdatedAt = now
-		if _, err := publisher.store.BunDBCtx(ctx).
+		_, err = publisher.store.BunDBCtx(ctx).
 			NewUpdate().
 			Model(row).
-			Column("version", "content_sha256", "issued_at", "revised_generation", "effective_floor", "updated_at").
+			Column(columns...).
 			WherePK().
-			Exec(ctx); err != nil {
-			return err
-		}
-		next = &Snapshot{Version: uint64(row.Version), Data: data}
-		return nil
+			Exec(ctx)
+		return err
 	})
 	if err != nil {
 		return false, err
 	}
 	previous := publisher.current.Swap(next)
 	return previous == nil || previous.Version != next.Version, nil
+}
+
+// follow is the snapshot the row holds, read only if this replica does
+// not hold that version already.
+func (publisher *Publisher) follow(ctx context.Context, row *ingesttypes.StorableRevision) (*Snapshot, error) {
+	if current := publisher.current.Load(); current != nil && current.Version == uint64(row.Version) {
+		return current, nil
+	}
+	var data string
+	err := publisher.store.BunDBCtx(ctx).
+		NewSelect().
+		Model((*ingesttypes.StorableRevision)(nil)).
+		Column("data").
+		Where("id = ?", ingesttypes.RevisionID).
+		Scan(ctx, &data)
+	if err != nil {
+		return nil, err
+	}
+	if data == "" {
+		return nil, errors.Newf(errors.TypeInternal, ErrCodeUnpublishable, "ingest policy version %d has no published data", row.Version)
+	}
+	return &Snapshot{Version: uint64(row.Version), Data: []byte(data)}, nil
+}
+
+// leaseExpired reports whether the row's producer stopped revising: the
+// effective floor is the time of its last revision.
+func leaseExpired(row *ingesttypes.StorableRevision, now time.Time) bool {
+	floor, err := time.Parse(time.RFC3339Nano, row.EffectiveFloor)
+	return err != nil || now.Sub(floor) > producerLease
 }
 
 // encode is the policy message of a revision, checked as the collector
@@ -191,8 +241,10 @@ func (publisher *Publisher) lockRevision(ctx context.Context) (*ingesttypes.Stor
 		}
 	}
 	row := new(ingesttypes.StorableRevision)
+	// The data, up to 24 MiB, is read only when it is sent.
 	if err := db.NewSelect().
 		Model(row).
+		ExcludeColumn("data").
 		Where("id = ?", ingesttypes.RevisionID).
 		Scan(ctx); err != nil {
 		return nil, err
