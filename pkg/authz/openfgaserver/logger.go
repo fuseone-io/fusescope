@@ -6,7 +6,8 @@ import (
 
 	"github.com/fuseone-io/fusescope/pkg/instrumentation"
 	pkgopenfgalogger "github.com/openfga/openfga/pkg/logger"
-	"go.uber.org/zap" //nolint:depguard
+	"go.uber.org/zap"         //nolint:depguard
+	"go.uber.org/zap/zapcore" //nolint:depguard
 )
 
 var _ pkgopenfgalogger.Logger = (*openfgaLogger)(nil)
@@ -18,6 +19,20 @@ type openfgaLogger struct {
 
 func NewLogger(logger *slog.Logger) *openfgaLogger {
 	return &openfgaLogger{slog: logger, convertor: instrumentation.NewZapToSlogConverter()}
+}
+
+func (logger *openfgaLogger) Level() zapcore.Level {
+	ctx := context.Background()
+	switch {
+	case logger.slog.Enabled(ctx, slog.LevelDebug):
+		return zapcore.DebugLevel
+	case logger.slog.Enabled(ctx, slog.LevelInfo):
+		return zapcore.InfoLevel
+	case logger.slog.Enabled(ctx, slog.LevelWarn):
+		return zapcore.WarnLevel
+	default:
+		return zapcore.ErrorLevel
+	}
 }
 
 func (logger *openfgaLogger) With(fields ...zap.Field) pkgopenfgalogger.Logger {
