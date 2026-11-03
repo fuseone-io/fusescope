@@ -12,6 +12,7 @@ import (
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/opamp/ingest"
 	model "github.com/fuseone-io/fusescope/pkg/query-service/app/opamp/model"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
@@ -24,6 +25,7 @@ type Server struct {
 	logger *slog.Logger
 
 	agentConfigProvider AgentConfigProvider
+	ingest              *ingest.Hub
 
 	// cleanups to be run when stopping the server
 	cleanups []func()
@@ -51,9 +53,17 @@ func InitializeServer(
 	return opAmpServer
 }
 
+// WithIngest sends the ingest policy to ingress collectors (ADR 0010 §3).
+func (srv *Server) WithIngest(hub *ingest.Hub) {
+	srv.ingest = hub
+}
+
 func (srv *Server) Start(listener string) error {
 	settings := server.StartSettings{
 		Settings: server.Settings{
+			// The largest ingest policy fits; nothing larger is read from an
+			// unauthenticated connection.
+			MaxMessageSize: ingest.MaxMessageSize,
 			Callbacks: types.Callbacks{
 				OnConnecting: func(request *http.Request) types.ConnectionResponse {
 					return types.ConnectionResponse{
@@ -93,6 +103,9 @@ func (srv *Server) Stop() {
 
 func (srv *Server) onDisconnect(conn types.Connection) {
 	srv.agents.RemoveConnection(conn)
+	if srv.ingest != nil {
+		srv.ingest.Remove(conn)
+	}
 }
 
 // When the agent sends the message for the first time, then we need to know the orgID
@@ -142,6 +155,10 @@ func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *pr
 			"agent_id", agent.AgentID,
 			"status", agent.Status,
 		)
+	}
+
+	if srv.ingest != nil {
+		srv.ingest.Observe(agent.AgentID, conn, msg)
 	}
 
 	response := &protobufs.ServerToAgent{
