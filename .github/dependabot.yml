@@ -48,10 +48,14 @@ updates:
           - minor
           - patch
     ignore:
-      # Requires Go 1.27; we stay on Go 1.26 for now.
+      # v0.2 adds dashboard fields to adopt (#295); v0.3 also requires Go 1.27.
       - dependency-name: github.com/perses/spec
         versions:
-          - ">= 0.3.0"
+          - ">= 0.2.0"
+      # v1.40+ renders case-insensitive filters as ILIKE (#294).
+      - dependency-name: github.com/huandu/go-sqlbuilder
+        versions:
+          - ">= 1.40.0"
       # v2.50 breaks the logs field-keys query (#291).
       - dependency-name: github.com/ClickHouse/clickhouse-go/v2
         versions:
