@@ -24,7 +24,7 @@ const (
 	// the largest policy and a margin for the envelope.
 	MaxMessageSize = ingestpolicy.MaxSize + 1<<20
 
-	pollEvery   = 5 * time.Second
+	pollEvery   = 2 * time.Second
 	resendEvery = 5 * time.Minute
 	// sendTimeout is the write deadline of one policy, up to 24 MiB; a
 	// peer that cannot take it in time is disconnected.

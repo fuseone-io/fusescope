@@ -53,9 +53,10 @@ type Publisher struct {
 	source Source
 	logger *slog.Logger
 	// clock is the database's: one clock for every replica.
-	clock    func(ctx context.Context) (time.Time, error)
-	producer int64
-	current  atomic.Pointer[Snapshot]
+	clock         func(ctx context.Context) (time.Time, error)
+	producer      int64
+	failoverGrace time.Duration
+	current       atomic.Pointer[Snapshot]
 }
 
 // Producer is the version of how this code builds the policy: its content
@@ -69,8 +70,14 @@ const Producer = 1
 // at least every resendEvery while it runs.
 const producerLease = 2 * resendEvery
 
+// failoverGrace is how long a recorded change may wait for the newer
+// producer before an older one revises it itself: twice the poll, which a
+// running newer producer beats, and with the older one's next poll well
+// within the 10 s revocation bound of ADR 0010 §3.
+const failoverGrace = 2 * pollEvery
+
 func NewPublisher(store sqlstore.SQLStore, source Source, logger *slog.Logger) *Publisher {
-	publisher := &Publisher{store: store, source: source, logger: logger, producer: Producer}
+	publisher := &Publisher{store: store, source: source, logger: logger, producer: Producer, failoverGrace: failoverGrace}
 	publisher.clock = publisher.databaseNow
 	return publisher
 }
@@ -101,7 +108,7 @@ func (publisher *Publisher) Revise(ctx context.Context) (bool, error) {
 		if err != nil {
 			return err
 		}
-		if row.Producer > publisher.producer && !leaseExpired(row, now) {
+		if row.Producer > publisher.producer && !leaseExpired(row, now) && !publisher.changeWaiting(ctx, row) {
 			next, err = publisher.follow(ctx, row)
 			return err
 		}
@@ -173,6 +180,17 @@ func (publisher *Publisher) follow(ctx context.Context, row *ingesttypes.Storabl
 		return nil, errors.Newf(errors.TypeInternal, ErrCodeUnpublishable, "ingest policy version %d has no published data", row.Version)
 	}
 	return &Snapshot{Version: uint64(row.Version), Data: []byte(data)}, nil
+}
+
+// changeWaiting reports whether a recorded change has waited longer than
+// failoverGrace for a revision, at the database's clock: the newer
+// producer is gone, and a revocation must not wait for its lease.
+func (publisher *Publisher) changeWaiting(ctx context.Context, row *ingesttypes.StorableRevision) bool {
+	if row.Generation == row.RevisedGeneration || row.ChangedAt == nil {
+		return false
+	}
+	now, err := publisher.databaseNow(ctx)
+	return err == nil && now.Sub(*row.ChangedAt) >= publisher.failoverGrace
 }
 
 // leaseExpired reports whether the row's producer stopped revising: the
