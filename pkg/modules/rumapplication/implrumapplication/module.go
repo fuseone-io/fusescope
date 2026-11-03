@@ -25,6 +25,9 @@ type module struct {
 	settings     factory.ScopedProviderSettings
 	config       rumapplication.Config
 	origins      originCache
+
+	listenersMu sync.Mutex
+	listeners   []func()
 }
 
 type originCache struct {
@@ -219,4 +222,17 @@ func (module *module) changed() {
 	module.origins.mu.Lock()
 	module.origins.applications = nil
 	module.origins.mu.Unlock()
+
+	module.listenersMu.Lock()
+	listeners := module.listeners
+	module.listenersMu.Unlock()
+	for _, listener := range listeners {
+		listener()
+	}
+}
+
+func (module *module) OnChange(f func()) {
+	module.listenersMu.Lock()
+	defer module.listenersMu.Unlock()
+	module.listeners = append(module.listeners, f)
 }

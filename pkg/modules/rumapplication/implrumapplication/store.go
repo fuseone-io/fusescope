@@ -100,6 +100,20 @@ func (store *store) ListApplicationsInAllOrgs(ctx context.Context) ([]*rumtypes.
 	return applications, nil
 }
 
+func (store *store) ListAllApplications(ctx context.Context) ([]*rumtypes.StorableApplication, error) {
+	applications := make([]*rumtypes.StorableApplication, 0)
+	err := store.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&applications).
+		Order("id ASC").
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list rum applications")
+	}
+	return applications, nil
+}
+
 func (store *store) UpdateApplication(ctx context.Context, application *rumtypes.StorableApplication) error {
 	result, err := store.sqlstore.
 		BunDBCtx(ctx).
@@ -216,6 +230,21 @@ func (store *store) ListKeys(ctx context.Context, orgID valuer.UUID, application
 		Where("org_id = ?", orgID).
 		Where("application_id = ?", applicationID).
 		Order("created_at DESC").
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list rum application keys")
+	}
+	return keys, nil
+}
+
+func (store *store) ListUnrevokedKeys(ctx context.Context) ([]*rumtypes.ApplicationKey, error) {
+	keys := make([]*rumtypes.ApplicationKey, 0)
+	err := store.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&keys).
+		Where("revoked_at IS NULL").
+		Order("id ASC").
 		Scan(ctx)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list rum application keys")

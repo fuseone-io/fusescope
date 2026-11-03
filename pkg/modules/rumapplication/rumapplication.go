@@ -6,10 +6,21 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy"
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/types/rumtypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
+
+// IngestContent is the RUM part of the collector's ingest policy
+// (fusescope-collector-server docs/spec/rum.md §11.1), ordered by id.
+// Skipped counts the applications left out: platforms policy v1 lacks, and
+// applications, with their keys, that the collector would reject.
+type IngestContent struct {
+	Keys         []ingestpolicy.Key
+	Applications []ingestpolicy.RUMApplication
+	Skipped      int
+}
 
 type Module interface {
 	List(ctx context.Context, orgID valuer.UUID) ([]*rumtypes.Application, error)
@@ -48,6 +59,13 @@ type Module interface {
 
 	// PromoteFields materializes the RUM attributes in the traces and logs tables. It is idempotent.
 	PromoteFields(ctx context.Context) error
+
+	// IngestPolicyContent is what the collector's ingest policy carries of
+	// RUM: the applications of every organization and their usable keys.
+	IngestPolicyContent(ctx context.Context, now time.Time) (*IngestContent, error)
+	// OnChange registers f, called after every change of an application or
+	// key. f must not block.
+	OnChange(f func())
 
 	// HasApplications reports whether any organization has an application.
 	HasApplications(ctx context.Context) (bool, error)
