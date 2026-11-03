@@ -60,6 +60,12 @@ updates:
       - dependency-name: github.com/ClickHouse/clickhouse-go/v2
         versions:
           - ">= 2.48.0"
+      # The log pipeline simulator must match the deployed collector's pdata
+      # (simulatorcontract integration suite).
+      - dependency-name: go.opentelemetry.io/collector*
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
       # Needs the alertmanager v0.34 migration (#290).
       - dependency-name: github.com/prometheus/alertmanager
         versions:
