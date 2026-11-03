@@ -364,3 +364,44 @@ func TestModuleIngestBudgetCountsUsableKeys(t *testing.T) {
 	module.ingestMaxSize = 0
 	require.NoError(t, module.RevokeKey(ctx, orgID, created.ID, extra.ID))
 }
+
+// clockStore reports a database clock of its own and records the time the
+// keys are counted at.
+type clockStore struct {
+	rumtypes.Store
+	now       time.Time
+	countedAt time.Time
+}
+
+func (s *clockStore) DatabaseNow(context.Context) (time.Time, error) { return s.now, nil }
+func (s *clockStore) CountUsableKeys(ctx context.Context, at time.Time) (map[valuer.UUID]rumtypes.KeyCounts, error) {
+	s.countedAt = at
+	return s.Store.CountUsableKeys(ctx, at)
+}
+
+// The budget counts keys at the database's clock, which the revisions
+// decide at too, not at this process's: a process clock ahead would drop
+// keys the policy still holds and undercount it.
+func TestModuleIngestBudgetAtDatabaseClock(t *testing.T) {
+	ctx := context.Background()
+	module, orgID := newTestModule(t)
+	behind := time.Now().Add(-2 * time.Hour).UTC().Truncate(time.Second)
+	clocked := &clockStore{Store: module.store, now: behind}
+	module.store = clocked
+
+	created, err := module.Create(ctx, orgID, "admin@example.com", newTestPostable(t, `{"name":"shop","platform":"web","environment":"production"}`))
+	require.NoError(t, err)
+	assert.Equal(t, behind, clocked.countedAt)
+
+	// A key expired by this process's clock but not by the database's is
+	// counted, as a revision at the database's clock would publish it.
+	expired, _, err := rumtypes.NewApplicationKey(orgID, created.ID, behind)
+	require.NoError(t, err)
+	past := time.Now().Add(-time.Hour)
+	expired.ExpiresAt = &past
+	_, err = module.store.(*clockStore).Store.(*store).sqlstore.BunDB().NewInsert().Model(expired).Exec(ctx)
+	require.NoError(t, err)
+	counts, err := module.store.CountUsableKeys(ctx, clocked.now)
+	require.NoError(t, err)
+	assert.Equal(t, rumtypes.KeyCounts{Usable: 2, Expiring: 1}, counts[created.ID])
+}
