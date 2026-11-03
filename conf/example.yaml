@@ -610,6 +610,10 @@ rum:
     context_lines: 5
     # How often the maps past their application's retention are deleted.
     cleanup_interval: 1h
+  ingest_policy:
+    # File of the tokens, one per line, that ingress collectors present on the
+    # OpAMP connection to receive the ingest policy. Unset, it is not published.
+    token_file: ""
 
 ##################### Dashboard #####################
 dashboard:

@@ -10,18 +10,28 @@ import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/fuseone-io/fusescope/pkg/types/ingesttypes"
 )
 
 // fakeConn records the policies sent to it; with gate set, each send
 // waits for it.
 type fakeConn struct {
-	mu   sync.Mutex
-	sent []uint64
-	data [][]byte
-	gate chan struct{}
+	mu    sync.Mutex
+	sent  []uint64
+	data  [][]byte
+	gate  chan struct{}
+	fails int
 }
 
 func (c *fakeConn) Send(ctx context.Context, msg *protobufs.ServerToAgent) error {
+	c.mu.Lock()
+	if c.fails > 0 {
+		c.fails--
+		c.mu.Unlock()
+		return assertError("connection reset")
+	}
+	c.mu.Unlock()
 	if c.gate != nil {
 		select {
 		case <-c.gate:
@@ -229,4 +239,62 @@ func TestServiceResendsRegardless(t *testing.T) {
 	for _, v := range conn.versions() {
 		assert.Equal(t, uint64(1), v, "unchanged content keeps its version")
 	}
+}
+
+// A send that fails is retried with backoff, with no other trigger.
+func TestHubRetriesFailedSend(t *testing.T) {
+	hub, _, _ := newTestHub(t)
+	hub.sendBackoff = 5 * time.Millisecond
+	conn := &fakeConn{fails: 3}
+	hub.Observe("agent", conn, describe(RoleIngress, ingestpolicy.Capability))
+	eventually(t, conn, []uint64{1})
+}
+
+func startService(t *testing.T, service *Service) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() { service.Run(ctx); close(done) }()
+	t.Cleanup(func() { cancel(); <-done })
+}
+
+// A change committed by a replica that stopped before revising reaches
+// the agents at the next poll of any replica: it is recorded in the
+// database, not only in the stopped replica's memory.
+func TestServiceRevisesChangeOfStoppedReplica(t *testing.T) {
+	source := &fakeSource{}
+	source.set(1)
+	store := newTestStore(t)
+	publisher := NewPublisher(store, source, slogDiscard())
+	hub := NewHub(publisher, slogDiscard())
+	service := NewService(publisher, hub, slogDiscard())
+	service.pollEvery, service.resendEvery = 10*time.Millisecond, time.Hour
+	startService(t, service)
+
+	conn := &fakeConn{}
+	hub.Observe("agent", conn, describe(RoleIngress, ingestpolicy.Capability))
+	eventually(t, conn, []uint64{1})
+
+	source.set(2)
+	require.NoError(t, ingesttypes.Touch(context.Background(), store.BunDB(), time.Now()))
+	eventually(t, conn, []uint64{1, 2})
+}
+
+// A failed revision is retried with backoff, not only at the next change.
+func TestServiceRetriesFailedRevision(t *testing.T) {
+	source := &fakeSource{err: assertError("database down")}
+	source.content = testContent(1)
+	publisher := NewPublisher(newTestStore(t), source, slogDiscard())
+	hub := NewHub(publisher, slogDiscard())
+	service := NewService(publisher, hub, slogDiscard())
+	service.pollEvery, service.resendEvery = time.Hour, time.Hour
+	startService(t, service)
+
+	conn := &fakeConn{}
+	hub.Observe("agent", conn, describe(RoleIngress, ingestpolicy.Capability))
+	time.Sleep(100 * time.Millisecond)
+	source.mu.Lock()
+	source.err = nil
+	source.mu.Unlock()
+	eventually(t, conn, []uint64{1})
 }

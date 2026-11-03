@@ -26,6 +26,10 @@ const (
 	pollEvery   = 5 * time.Second
 	resendEvery = 5 * time.Minute
 	sendTimeout = time.Minute
+	// A failed send is retried from sendBackoff, doubling to
+	// maxSendBackoff, until it succeeds or the connection closes.
+	sendBackoff    = time.Second
+	maxSendBackoff = 30 * time.Second
 )
 
 // Connection sends to one agent; opamp-go's server connections serialise
@@ -42,9 +46,10 @@ type Hub struct {
 	publisher *Publisher
 	logger    *slog.Logger
 
+	sendBackoff time.Duration
+
 	mu     sync.Mutex
 	agents map[string]*agentState
-	done   chan struct{}
 }
 
 type agentState struct {
@@ -61,7 +66,7 @@ type peer struct {
 }
 
 func NewHub(publisher *Publisher, logger *slog.Logger) *Hub {
-	return &Hub{publisher: publisher, logger: logger, agents: map[string]*agentState{}, done: make(chan struct{})}
+	return &Hub{publisher: publisher, logger: logger, sendBackoff: sendBackoff, agents: map[string]*agentState{}}
 }
 
 // Observe takes an agent's message. The description and the custom
@@ -158,12 +163,16 @@ func wake(p *peer) {
 }
 
 func (hub *Hub) send(agentID string, uid []byte, conn Connection, p *peer) {
+	var retry <-chan time.Time
+	backoff := hub.sendBackoff
 	for {
 		select {
 		case <-p.stop:
 			return
 		case <-p.wake:
+		case <-retry:
 		}
+		retry = nil
 		snapshot := hub.publisher.Current()
 		if snapshot == nil {
 			continue
@@ -179,9 +188,12 @@ func (hub *Hub) send(agentID string, uid []byte, conn Connection, p *peer) {
 		})
 		cancel()
 		if err != nil {
-			hub.logger.Warn("ingest policy not sent", slog.String("agent_id", agentID), slog.Uint64("version", snapshot.Version), errors.Attr(err))
+			hub.logger.Warn("ingest policy not sent; retrying", slog.String("agent_id", agentID), slog.Uint64("version", snapshot.Version), slog.Duration("after", backoff), errors.Attr(err))
+			retry = time.After(backoff)
+			backoff = min(2*backoff, maxSendBackoff)
 			continue
 		}
+		backoff = hub.sendBackoff
 		hub.logger.Debug("ingest policy sent", "agent_id", agentID, "version", snapshot.Version, "bytes", len(snapshot.Data))
 	}
 }

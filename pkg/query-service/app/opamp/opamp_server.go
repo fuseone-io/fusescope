@@ -26,6 +26,7 @@ type Server struct {
 
 	agentConfigProvider AgentConfigProvider
 	ingest              *ingest.Hub
+	ingestTokens        *ingest.Tokens
 
 	// cleanups to be run when stopping the server
 	cleanups []func()
@@ -53,9 +54,11 @@ func InitializeServer(
 	return opAmpServer
 }
 
-// WithIngest sends the ingest policy to ingress collectors (ADR 0010 §3).
-func (srv *Server) WithIngest(hub *ingest.Hub) {
-	srv.ingest = hub
+// WithIngest sends the ingest policy to the ingress collectors that
+// authenticate with one of tokens (ADR 0010 §3). Without it, no connection
+// receives the policy.
+func (srv *Server) WithIngest(hub *ingest.Hub, tokens *ingest.Tokens) {
+	srv.ingest, srv.ingestTokens = hub, tokens
 }
 
 func (srv *Server) Start(listener string) error {
@@ -66,10 +69,16 @@ func (srv *Server) Start(listener string) error {
 			MaxMessageSize: ingest.MaxMessageSize,
 			Callbacks: types.Callbacks{
 				OnConnecting: func(request *http.Request) types.ConnectionResponse {
+					// Every connection is still accepted for remote
+					// configuration; only an authenticated one may receive
+					// the ingest policy, decided once, at the handshake.
+					authenticated := srv.authenticateIngest(request)
 					return types.ConnectionResponse{
 						Accept: true,
 						ConnectionCallbacks: types.ConnectionCallbacks{
-							OnMessage:         srv.OnMessage,
+							OnMessage: func(ctx context.Context, conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
+								return srv.onMessage(ctx, conn, msg, authenticated)
+							},
 							OnConnectionClose: srv.onDisconnect,
 						},
 					}
@@ -101,6 +110,21 @@ func (srv *Server) Stop() {
 	_ = srv.server.Stop(context.Background())
 }
 
+func (srv *Server) authenticateIngest(request *http.Request) bool {
+	if srv.ingest == nil {
+		return false
+	}
+	authorization := request.Header.Get("Authorization")
+	if authorization == "" {
+		return false
+	}
+	if srv.ingestTokens.Verify(authorization) {
+		return true
+	}
+	srv.logger.Warn("OpAMP connection presented an unknown ingest token; it will not receive the ingest policy", "remote_addr", request.RemoteAddr)
+	return false
+}
+
 func (srv *Server) onDisconnect(conn types.Connection) {
 	srv.agents.RemoveConnection(conn)
 	if srv.ingest != nil {
@@ -114,6 +138,10 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 // orgID from the context
 // note :- there can only be 50 agents in the db for a given orgID, we don't have a check in-memory but we delete from the db after insert.
 func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
+	return srv.onMessage(ctx, conn, msg, false)
+}
+
+func (srv *Server) onMessage(ctx context.Context, conn types.Connection, msg *protobufs.AgentToServer, ingestAuthenticated bool) *protobufs.ServerToAgent {
 	agentID, _ := valuer.NewUUIDFromBytes(msg.GetInstanceUid())
 
 	// find the orgID, if nothing is found keep it empty.
@@ -157,7 +185,7 @@ func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *pr
 		)
 	}
 
-	if srv.ingest != nil {
+	if srv.ingest != nil && ingestAuthenticated {
 		srv.ingest.Observe(agent.AgentID, conn, msg)
 	}
 
