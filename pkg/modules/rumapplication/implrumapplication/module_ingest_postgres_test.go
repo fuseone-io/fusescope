@@ -63,6 +63,13 @@ func TestModuleIngestPolicyOnPostgres(t *testing.T) {
 	rotated, err := module.RotateKey(ctx, orgID, created.ID, created.Key.ID, rumtypes.KeyOverlapOneHour)
 	require.NoError(t, err)
 
+	counts, err := module.store.CountUsableKeys(ctx, time.Now())
+	require.NoError(t, err)
+	assert.Equal(t, rumtypes.KeyCounts{Usable: 2, Expiring: 1}, counts[created.ID])
+	counts, err = module.store.CountUsableKeys(ctx, time.Now().Add(2*time.Hour))
+	require.NoError(t, err)
+	assert.Equal(t, rumtypes.KeyCounts{Usable: 1}, counts[created.ID])
+
 	content, err := module.IngestPolicyContent(ctx, time.Now())
 	require.NoError(t, err)
 	assert.Len(t, content.Keys, 2)

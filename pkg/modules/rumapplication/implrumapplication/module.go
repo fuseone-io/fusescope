@@ -105,7 +105,7 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 		if count >= ingestpolicy.MaxApplications {
 			return errors.Newf(errors.TypeForbidden, rumtypes.ErrCodeApplicationLimit, "a deployment holds at most %d rum applications", ingestpolicy.MaxApplications)
 		}
-		if err := module.checkIngestBudget(ctx, valuer.UUID{}, application); err != nil {
+		if err := module.checkIngestBudget(ctx, ingestChange{application: application, keysOf: application.ID, usable: 1}); err != nil {
 			return err
 		}
 		if err := module.store.CreateApplication(ctx, storable); err != nil {
@@ -150,7 +150,7 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 		if err := module.store.TouchIngestPolicy(ctx); err != nil {
 			return err
 		}
-		if err := module.checkIngestBudget(ctx, application.ID, application); err != nil {
+		if err := module.checkIngestBudget(ctx, ingestChange{application: application}); err != nil {
 			return err
 		}
 		return module.store.UpdateApplication(ctx, storable)

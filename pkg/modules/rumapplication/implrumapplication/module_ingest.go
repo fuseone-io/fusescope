@@ -150,13 +150,8 @@ func nonNil(values []string) []string {
 	return values
 }
 
-const (
-	// keysPerApplication is the most usable keys an application has: the
-	// active one and one in its rotation overlap (CreateKey, RotateKey).
-	keysPerApplication = 2
-	// ingestEnvelope bounds the policy's fields around its two lists.
-	ingestEnvelope = 1 << 10
-)
+// ingestEnvelope bounds the policy's fields around its two lists.
+const ingestEnvelope = 1 << 10
 
 // maxIngestKeySize is the largest key of the policy, encoded, with its comma.
 var maxIngestKeySize = func() int {
@@ -169,43 +164,79 @@ var maxIngestKeySize = func() int {
 	return len(data) + 1
 }()
 
+// keyReserve is the room an application's keys can take: those usable now,
+// and one more while no rotation is under way, which would add one
+// (RotateKey refuses while a key is expiring; CreateKey while one is
+// usable). It holds for any state, so also for one an earlier release
+// left, such as two active keys.
+func keyReserve(counts rumtypes.KeyCounts) int {
+	keys := counts.Usable
+	if counts.Expiring == 0 {
+		keys++
+	}
+	return keys * maxIngestKeySize
+}
+
 // ingestBudget is what an application can take of the policy: itself and
-// its keys at their largest.
-func ingestBudget(application *rumtypes.Application) int {
+// the room of its keys; nothing for a platform the policy lacks.
+func ingestBudget(application *rumtypes.Application, counts rumtypes.KeyCounts) int {
 	platform, ok := ingestPlatforms[application.Platform]
 	if !ok {
 		return 0
 	}
 	data, _ := json.Marshal(newIngestApplication(application, platform))
-	return len(data) + 1 + keysPerApplication*maxIngestKeySize
+	return len(data) + 1 + keyReserve(counts)
 }
 
-// checkIngestBudget refuses a creation or an update that would grow the
-// policy past its 24 MiB cap (rum.md §11.2), so no change can leave it
-// unpublishable and revocations stuck. replaced is the application next
-// replaces, zero for a creation. It runs after TouchIngestPolicy, which
-// serialises changes, so the total holds until commit. A change that does
-// not grow the policy is never refused.
-func (module *module) checkIngestBudget(ctx context.Context, replaced valuer.UUID, next *rumtypes.Application) error {
+// ingestChange is a change checkIngestBudget weighs: an application
+// created or updated, and keys added to one.
+type ingestChange struct {
+	application *rumtypes.Application
+	keysOf      valuer.UUID
+	usable      int
+	expiring    int
+}
+
+// checkIngestBudget refuses a change that would grow the policy past its
+// 24 MiB cap (rum.md §11.2), so no change can leave it unpublishable and
+// revocations stuck. It counts the keys actually usable. It runs after
+// TouchIngestPolicy, which serialises changes, so the total holds until
+// commit. A change that adds a key always fits the cap, even within room a
+// state left by an earlier release already reserves; an update that does
+// not grow the policy is never refused; a revocation or a deletion is
+// never checked.
+func (module *module) checkIngestBudget(ctx context.Context, change ingestChange) error {
 	storables, err := module.store.ListAllApplications(ctx, ingestpolicy.MaxApplications+1)
 	if err != nil {
 		return err
 	}
+	counts, err := module.store.CountUsableKeys(ctx, time.Now())
+	if err != nil {
+		return err
+	}
 	before, after := ingestEnvelope, ingestEnvelope
+	present := false
 	for _, storable := range storables {
 		application, err := rumtypes.NewApplicationFromStorable(storable)
 		if err != nil {
 			continue // left out of the policy too
 		}
-		size := ingestBudget(application)
-		before += size
-		if storable.ID != replaced {
-			after += size
+		keys := counts[storable.ID]
+		before += ingestBudget(application, keys)
+		if change.application != nil && change.application.ID == storable.ID {
+			application, present = change.application, true
 		}
+		if change.keysOf == storable.ID {
+			keys.Usable += change.usable
+			keys.Expiring += change.expiring
+		}
+		after += ingestBudget(application, keys)
 	}
-	after += ingestBudget(next)
-	if after > module.ingestMaxSize && after > before {
-		return errors.Newf(errors.TypeForbidden, rumtypes.ErrCodeApplicationLimit, "the collectors' ingest policy would exceed %d bytes; remove origins, allowlists or applications first", module.ingestMaxSize)
+	if change.application != nil && !present {
+		after += ingestBudget(change.application, rumtypes.KeyCounts{Usable: change.usable, Expiring: change.expiring})
+	}
+	if after > module.ingestMaxSize && (change.usable > 0 || after > before) {
+		return errors.Newf(errors.TypeForbidden, rumtypes.ErrCodeApplicationLimit, "the collectors' ingest policy would exceed %d bytes; remove origins, allowlists, keys or applications first", module.ingestMaxSize)
 	}
 	return nil
 }
