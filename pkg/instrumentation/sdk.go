@@ -10,7 +10,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
-	contribsdkconfig "go.opentelemetry.io/contrib/config"
+	"go.opentelemetry.io/contrib/otelconf"
 	"go.opentelemetry.io/otel"
 	sdkmetric "go.opentelemetry.io/otel/metric"
 	sdkmetricnoop "go.opentelemetry.io/otel/metric/noop"
@@ -25,7 +25,7 @@ var _ Instrumentation = (*SDK)(nil)
 // SDK holds the core components for application instrumentation.
 type SDK struct {
 	logger                    *slog.Logger
-	sdk                       contribsdkconfig.SDK
+	sdk                       otelconf.SDK
 	meterProvider             sdkmetric.MeterProvider
 	prometheusRegistry        *prometheus.Registry
 	meterProviderShutdownFunc func(context.Context) error
@@ -61,22 +61,19 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 	// contribsdkconfig merges this resource with sdkresource.Default().
 	// The merge fails if the schema URLs are different.
 	sch := sdkresource.Default().SchemaURL()
-	configResource := contribsdkconfig.Resource{
-		Attributes: mergeAttributes(cfg.Resource.Attributes, resource),
-		Detectors:  nil,
+	configResource := otelconf.Resource{
+		Attributes: resourceAttributes(mergeAttributes(cfg.Resource.Attributes, resource)),
 		SchemaUrl:  &sch,
 	}
 
 	prometheusRegistry := prometheus.NewRegistry()
 	prometheusRegistry.MustRegister(collectors.NewBuildInfoCollector())
 
-	var tracerProvider *contribsdkconfig.TracerProvider
+	var tracerProvider *otelconf.TracerProvider
 	if cfg.Traces.Enabled {
-		tracerProvider = &contribsdkconfig.TracerProvider{
-			Processors: []contribsdkconfig.SpanProcessor{
-				{Batch: &cfg.Traces.Processors.Batch},
-			},
-			Sampler: &cfg.Traces.Sampler,
+		tracerProvider, err = cfg.Traces.tracerProvider()
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -84,13 +81,7 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 	var meterProvider sdkmetric.MeterProvider
 	var meterProviderShutdownFunc func(context.Context) error
 	if cfg.Metrics.Enabled {
-		meterProviderConfig := &contribsdkconfig.MeterProvider{
-			Readers: []contribsdkconfig.MetricReader{
-				{Pull: &cfg.Metrics.Readers.Pull},
-			},
-		}
-
-		meterProvider, meterProviderShutdownFunc, err = meterProviderWithCustomRegistry(ctx, meterProviderConfig, resource, prometheusRegistry)
+		meterProvider, meterProviderShutdownFunc, err = meterProviderWithCustomRegistry(ctx, cfg.Metrics.Readers, resource, prometheusRegistry)
 		if err != nil {
 			return nil, err
 		}
@@ -99,9 +90,9 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 		meterProviderShutdownFunc = func(context.Context) error { return nil }
 	}
 
-	sdk, err := contribsdkconfig.NewSDK(
-		contribsdkconfig.WithContext(ctx),
-		contribsdkconfig.WithOpenTelemetryConfiguration(contribsdkconfig.OpenTelemetryConfiguration{
+	sdk, err := otelconf.NewSDK(
+		otelconf.WithContext(ctx),
+		otelconf.WithOpenTelemetryConfiguration(otelconf.OpenTelemetryConfiguration{
 			TracerProvider: tracerProvider,
 			Resource:       &configResource,
 		}),

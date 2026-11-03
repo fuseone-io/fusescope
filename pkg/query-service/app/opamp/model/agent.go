@@ -321,11 +321,11 @@ func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool 
 
 	cfg := protobufs.AgentRemoteConfig{
 		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{},
+			ConfigMap: map[string]*protobufs.AgentConfigObject{},
 		},
 	}
 
-	cfg.Config.ConfigMap[CollectorConfigFilename] = &protobufs.AgentConfigFile{
+	cfg.Config.ConfigMap[CollectorConfigFilename] = &protobufs.AgentConfigObject{
 		Body:        recommendedConfig,
 		ContentType: "application/x-yaml",
 	}
@@ -384,7 +384,7 @@ func isEqualConfigSet(c1, c2 *protobufs.AgentConfigMap) bool {
 	return true
 }
 
-func isEqualConfigFile(f1, f2 *protobufs.AgentConfigFile) bool {
+func isEqualConfigFile(f1, f2 *protobufs.AgentConfigObject) bool {
 	if f1 == f2 {
 		return true
 	}

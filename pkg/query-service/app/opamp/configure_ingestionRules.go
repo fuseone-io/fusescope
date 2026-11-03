@@ -109,7 +109,7 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 	agent.SendToAgent(&protobufs.ServerToAgent{
 		RemoteConfig: &protobufs.AgentRemoteConfig{
 			Config: &protobufs.AgentConfigMap{
-				ConfigMap: map[string]*protobufs.AgentConfigFile{
+				ConfigMap: map[string]*protobufs.AgentConfigObject{
 					"collector.yaml": {
 						Body:        configR,
 						ContentType: "application/x-yaml",

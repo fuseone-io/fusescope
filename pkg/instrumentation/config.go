@@ -4,7 +4,6 @@ import (
 	"log/slog"
 
 	"github.com/fuseone-io/fusescope/pkg/factory"
-	contribsdkconfig "go.opentelemetry.io/contrib/config"
 )
 
 // Config holds the configuration for all instrumentation components.
@@ -17,7 +16,7 @@ type Config struct {
 
 // Resource defines the configuration for OpenTelemetry resource attributes.
 type Resource struct {
-	Attributes contribsdkconfig.Attributes `mapstructure:"attributes"`
+	Attributes map[string]any `mapstructure:"attributes"`
 }
 
 // LogsConfig holds the configuration for the logging component.
@@ -27,13 +26,60 @@ type LogsConfig struct {
 
 // TracesConfig holds the configuration for the tracing component.
 type TracesConfig struct {
-	Enabled    bool                     `mapstructure:"enabled"`
-	Processors TracesProcessors         `mapstructure:"processors"`
-	Sampler    contribsdkconfig.Sampler `mapstructure:"sampler"`
+	Enabled    bool             `mapstructure:"enabled"`
+	Processors TracesProcessors `mapstructure:"processors"`
+	Sampler    Sampler          `mapstructure:"sampler"`
 }
 
 type TracesProcessors struct {
-	Batch contribsdkconfig.BatchSpanProcessor `mapstructure:"batch"`
+	Batch BatchSpanProcessor `mapstructure:"batch"`
+}
+
+// BatchSpanProcessor times are in milliseconds.
+type BatchSpanProcessor struct {
+	ExportTimeout      *int         `mapstructure:"export_timeout"`
+	Exporter           SpanExporter `mapstructure:"exporter"`
+	MaxExportBatchSize *int         `mapstructure:"max_export_batch_size"`
+	MaxQueueSize       *int         `mapstructure:"max_queue_size"`
+	ScheduleDelay      *int         `mapstructure:"schedule_delay"`
+}
+
+type SpanExporter struct {
+	Console map[string]any `mapstructure:"console"`
+	OTLP    *OTLPExporter  `mapstructure:"otlp"`
+}
+
+// OTLPExporter's Protocol is "grpc" (the default when empty) or "http/protobuf";
+// Timeout is in milliseconds.
+type OTLPExporter struct {
+	Protocol          string            `mapstructure:"protocol"`
+	Endpoint          string            `mapstructure:"endpoint"`
+	Headers           map[string]string `mapstructure:"headers"`
+	Compression       *string           `mapstructure:"compression"`
+	Timeout           *int              `mapstructure:"timeout"`
+	Insecure          *bool             `mapstructure:"insecure"`
+	Certificate       *string           `mapstructure:"certificate"`
+	ClientCertificate *string           `mapstructure:"client_certificate"`
+	ClientKey         *string           `mapstructure:"client_key"`
+}
+
+type Sampler struct {
+	AlwaysOff         map[string]any            `mapstructure:"always_off"`
+	AlwaysOn          map[string]any            `mapstructure:"always_on"`
+	ParentBased       *ParentBasedSampler       `mapstructure:"parent_based"`
+	TraceIDRatioBased *TraceIDRatioBasedSampler `mapstructure:"trace_id_ratio_based"`
+}
+
+type ParentBasedSampler struct {
+	Root                   *Sampler `mapstructure:"root"`
+	RemoteParentSampled    *Sampler `mapstructure:"remote_parent_sampled"`
+	RemoteParentNotSampled *Sampler `mapstructure:"remote_parent_not_sampled"`
+	LocalParentSampled     *Sampler `mapstructure:"local_parent_sampled"`
+	LocalParentNotSampled  *Sampler `mapstructure:"local_parent_not_sampled"`
+}
+
+type TraceIDRatioBasedSampler struct {
+	Ratio *float64 `mapstructure:"ratio"`
 }
 
 // MetricsConfig holds the configuration for the metrics component.
@@ -43,7 +89,29 @@ type MetricsConfig struct {
 }
 
 type MetricsReaders struct {
-	Pull contribsdkconfig.PullMetricReader `mapstructure:"pull"`
+	Pull PullMetricReader `mapstructure:"pull"`
+}
+
+type PullMetricReader struct {
+	Exporter MetricExporter `mapstructure:"exporter"`
+}
+
+type MetricExporter struct {
+	Prometheus *PrometheusExporter `mapstructure:"prometheus"`
+}
+
+type PrometheusExporter struct {
+	Host                       *string         `mapstructure:"host"`
+	Port                       *int            `mapstructure:"port"`
+	WithResourceConstantLabels *IncludeExclude `mapstructure:"with_resource_constant_labels"`
+	WithoutScopeInfo           *bool           `mapstructure:"without_scope_info"`
+	WithoutTypeSuffix          *bool           `mapstructure:"without_type_suffix"`
+	WithoutUnits               *bool           `mapstructure:"without_units"`
+}
+
+type IncludeExclude struct {
+	Included []string `mapstructure:"included"`
+	Excluded []string `mapstructure:"excluded"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -64,9 +132,9 @@ func newConfig() factory.Config {
 		Metrics: MetricsConfig{
 			Enabled: true,
 			Readers: MetricsReaders{
-				Pull: contribsdkconfig.PullMetricReader{
-					Exporter: contribsdkconfig.MetricExporter{
-						Prometheus: &contribsdkconfig.Prometheus{
+				Pull: PullMetricReader{
+					Exporter: MetricExporter{
+						Prometheus: &PrometheusExporter{
 							Host: &host,
 							Port: &port,
 						},

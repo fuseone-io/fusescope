@@ -44,7 +44,7 @@ func mergeAttributes(input map[string]any, resource *sdkresource.Resource) map[s
 
 	kvs := resource.Attributes()
 	for _, kv := range kvs {
-		output[string(kv.Key)] = kv.Value
+		output[string(kv.Key)] = kv.Value.AsInterface()
 	}
 
 	return output
