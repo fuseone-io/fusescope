@@ -52,10 +52,17 @@ updates:
       - dependency-name: github.com/perses/spec
         versions:
           - ">= 0.3.0"
-      # 2.48 adds driver.Conn.InsertFormat, which SigNoz/clickhouse-go-mock lacks.
+      # v2.50 breaks the logs field-keys query (#291).
       - dependency-name: github.com/ClickHouse/clickhouse-go/v2
         versions:
           - ">= 2.48.0"
+      # Needs the alertmanager v0.34 migration (#290).
+      - dependency-name: github.com/prometheus/alertmanager
+        versions:
+          - ">= 0.32.0"
+      - dependency-name: github.com/prometheus/prometheus
+        versions:
+          - ">= 0.312.0"
 
   - package-ecosystem: npm
     directories:
