@@ -201,7 +201,8 @@ jobs:
         id: playwright-browsers
         background: true
         run: |
-          docker create --name pw mcr.microsoft.com/playwright:v1.57.0-noble
+          version=$(node -p "require('./tests/e2e/package.json').devDependencies['@playwright/test']")
+          docker create --name pw "mcr.microsoft.com/playwright:v${version}-noble"
           docker cp pw:/ms-playwright "$RUNNER_TEMP/ms-playwright"
           docker rm pw
           echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/ms-playwright" >> "$GITHUB_ENV"
