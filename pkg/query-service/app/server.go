@@ -13,6 +13,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations"
 	"github.com/fuseone-io/fusescope/pkg/query-service/app/logparsingpipeline"
 	"github.com/fuseone-io/fusescope/pkg/query-service/app/opamp"
+	"github.com/fuseone-io/fusescope/pkg/query-service/app/opamp/ingest"
 	opAmpModel "github.com/fuseone-io/fusescope/pkg/query-service/app/opamp/model"
 	"github.com/fuseone-io/fusescope/pkg/signoz"
 
@@ -24,6 +25,8 @@ import (
 // Server runs auxiliary servers (opamp) alongside the signoz apiserver
 type Server struct {
 	opampServer *opamp.Server
+	ingest      *ingest.Service
+	stopIngest  context.CancelFunc
 }
 
 // NewServer creates and initializes Server
@@ -110,6 +113,13 @@ func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) 
 		signoz.Instrumentation,
 	)
 
+	logger := signoz.Instrumentation.Logger()
+	publisher := ingest.NewPublisher(signoz.SQLStore, signoz.Modules.RUMApplication, logger)
+	hub := ingest.NewHub(publisher, logger)
+	s.ingest = ingest.NewService(publisher, hub, logger)
+	signoz.Modules.RUMApplication.OnChange(s.ingest.Changed)
+	s.opampServer.WithIngest(hub)
+
 	return s, nil
 }
 
@@ -121,10 +131,17 @@ func (s *Server) Start(ctx context.Context) error {
 		return err
 	}
 
+	ingestCtx, stop := context.WithCancel(context.Background())
+	s.stopIngest = stop
+	go s.ingest.Run(ingestCtx)
+
 	return nil
 }
 
 func (s *Server) Stop(ctx context.Context) error {
+	if s.stopIngest != nil {
+		s.stopIngest()
+	}
 	s.opampServer.Stop()
 
 	return nil
