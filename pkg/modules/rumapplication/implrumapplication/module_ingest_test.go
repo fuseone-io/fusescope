@@ -226,3 +226,76 @@ func TestModuleIngestPolicyContentAt(t *testing.T) {
 	require.Len(t, content.Keys, 1, "the expired key is left out at a later time")
 	assert.Equal(t, rotated.ID.StringValue(), content.Keys[0].ID)
 }
+
+func originsPostable(name string, n int) string {
+	origins := make([]string, n)
+	for i := range origins {
+		origins[i] = fmt.Sprintf(`"https://%s-origin-%02d.a-rather-long-subdomain.example.com"`, name, i)
+	}
+	return fmt.Sprintf(`{"name":%q,"platform":"web","environment":"production","allowedOrigins":[%s]}`, name, strings.Join(origins, ","))
+}
+
+// Valid applications with 50 origins each fill the 24 MiB cap with far
+// fewer than 10 000 of them. A change that would grow the policy past it
+// is refused; one that shrinks it, a revocation or a deletion never is,
+// and what is held still publishes.
+func TestModuleIngestBudget(t *testing.T) {
+	ctx := context.Background()
+	module, orgID := newTestModule(t)
+	db := module.store.(*store).sqlstore.BunDB()
+
+	big := func(name string) *rumtypes.Application {
+		return rumtypes.NewApplication(orgID, "admin@example.com", newTestPostable(t, originsPostable(name, 50)))
+	}
+	size := ingestBudget(big("app-00000"))
+	n := (ingestpolicy.MaxSize - ingestEnvelope) / size
+	now := time.Now()
+	applications := make([]*rumtypes.StorableApplication, 0, n)
+	keys := make([]*rumtypes.ApplicationKey, 0, n)
+	for i := range n {
+		application := big(fmt.Sprintf("app-%05d", i))
+		require.NoError(t, application.Validate())
+		storable, err := rumtypes.NewStorableApplication(application)
+		require.NoError(t, err)
+		applications = append(applications, storable)
+		key, _, err := rumtypes.NewApplicationKey(orgID, application.ID, now)
+		require.NoError(t, err)
+		keys = append(keys, key)
+	}
+	_, err := db.NewInsert().Model(&applications).Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.NewInsert().Model(&keys).Exec(ctx)
+	require.NoError(t, err)
+	t.Logf("%d applications of %d bytes at most fill the cap", n, size)
+
+	_, err = module.Create(ctx, orgID, "admin@example.com", newTestPostable(t, originsPostable("one-more", 50)))
+	require.Error(t, err)
+	assert.True(t, errors.Asc(err, rumtypes.ErrCodeApplicationLimit), "%v", err)
+
+	// With the cap at exactly what is held, any growth is refused.
+	first, err := module.Get(ctx, orgID, applications[0].ID)
+	require.NoError(t, err)
+	module.ingestMaxSize = ingestEnvelope + n*size
+	grow := &rumtypes.UpdatableApplication{Name: first.Name, Environment: "production-eu", AllowedOrigins: first.AllowedOrigins, AllowedPackageNames: []string{}, TracePropagationURLs: []string{}, SampleRate: 1, PIIPolicy: first.PIIPolicy}
+	_, err = module.Update(ctx, orgID, first.ID, grow)
+	require.Error(t, err, "growing past the cap is refused")
+	assert.True(t, errors.Asc(err, rumtypes.ErrCodeApplicationLimit), "%v", err)
+
+	shrink := &rumtypes.UpdatableApplication{Name: first.Name, Environment: "production", AllowedOrigins: []string{}, AllowedPackageNames: []string{}, TracePropagationURLs: []string{}, SampleRate: 1, PIIPolicy: rumtypes.NewDefaultPIIPolicy()}
+	_, err = module.Update(ctx, orgID, first.ID, shrink)
+	require.NoError(t, err, "shrinking is never refused")
+	module.ingestMaxSize = ingestpolicy.MaxSize
+	_, err = module.Create(ctx, orgID, "admin@example.com", newTestPostable(t, `{"name":"small","platform":"web","environment":"production"}`))
+	require.NoError(t, err, "the room freed is usable")
+
+	require.NoError(t, module.RevokeKey(ctx, orgID, applications[1].ID, keys[1].ID), "a revocation is never refused")
+	require.NoError(t, module.Delete(ctx, orgID, applications[2].ID), "a deletion is never refused")
+
+	content, err := module.IngestPolicyContent(ctx, time.Now())
+	require.NoError(t, err)
+	data, err := json.Marshal(&ingestpolicy.Policy{SchemaVersion: 1, Version: 1, IssuedAt: "2026-11-03T12:00:00Z", Keys: content.Keys, RUMApplications: content.Applications})
+	require.NoError(t, err)
+	assert.LessOrEqual(t, len(data), ingestpolicy.MaxSize, "what is held still publishes")
+	_, err = ingestpolicy.Parse(data)
+	require.NoError(t, err)
+}
