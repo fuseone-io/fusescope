@@ -34,8 +34,10 @@ func newTestStore(t *testing.T) sqlstore.SQLStore {
 		Sqlite:     sqlstore.SqliteConfig{Path: filepath.Join(t.TempDir(), "ingest.db"), Mode: "wal", BusyTimeout: 5 * time.Second, TransactionMode: "deferred"},
 	})
 	require.NoError(t, err)
-	_, err = store.BunDB().NewCreateTable().Model((*ingesttypes.StorableRevision)(nil)).IfNotExists().Exec(ctx)
-	require.NoError(t, err)
+	for _, model := range []any{(*ingesttypes.StorableRevision)(nil), (*ingesttypes.StorableReportAgent)(nil), (*ingesttypes.StorableReportApplication)(nil)} {
+		_, err = store.BunDB().NewCreateTable().Model(model).IfNotExists().Exec(ctx)
+		require.NoError(t, err)
+	}
 	return store
 }
 

@@ -42,7 +42,7 @@ type Config struct {
 type IngestPolicyConfig struct {
 	// File of the tokens, one per line, that ingress collectors present as
 	// `Authorization: Bearer` on the OpAMP connection. Unset, no policy is
-	// published.
+	// published and no ingest report is read.
 	TokenFile string `mapstructure:"token_file"`
 }
 

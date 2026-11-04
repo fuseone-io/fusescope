@@ -24,6 +24,7 @@ type fakeConn struct {
 	mu           sync.Mutex
 	sent         []uint64
 	data         [][]byte
+	acks         []uint64
 	gate         chan struct{}
 	fails        int
 	disconnected atomic.Bool
@@ -62,6 +63,16 @@ func (c *fakeConn) Send(ctx context.Context, msg *protobufs.ServerToAgent) error
 		}
 	}
 	m := msg.GetCustomMessage()
+	if m.GetCapability() == ingestpolicy.Capability && m.GetType() == ingestpolicy.TypeReportAck {
+		seq, err := ingestpolicy.ParseReportAck(m.GetData())
+		if err != nil {
+			panic("not a reportAck")
+		}
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		c.acks = append(c.acks, seq)
+		return nil
+	}
 	policy, err := ingestpolicy.Parse(m.GetData())
 	if err != nil || m.GetCapability() != ingestpolicy.Capability || m.GetType() != ingestpolicy.TypePolicy {
 		panic("not a policy message")
@@ -77,6 +88,12 @@ func (c *fakeConn) policies() [][]byte {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return append([][]byte(nil), c.data...)
+}
+
+func (c *fakeConn) acknowledged() []uint64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([]uint64(nil), c.acks...)
 }
 
 func (c *fakeConn) versions() []uint64 {
@@ -521,4 +538,39 @@ func TestServiceRevocationUnderChangeStream(t *testing.T) {
 		}, 10*time.Second, 10*time.Millisecond, "the change stream postponed the revocation")
 		t.Logf("revocation published after %v", time.Since(revoked).Round(100*time.Millisecond))
 	})
+}
+
+// The retrier's acknowledgements go through the agent's sender, only to an
+// eligible agent; one waiting is replaced by a newer one.
+func TestHubAck(t *testing.T) {
+	hub, _, _ := newTestHub(t)
+	conn := &fakeConn{}
+	hub.Ack("agent", 1)
+	hub.Observe("agent", conn, describe(RoleIngress, ingestpolicy.Capability))
+	eventually(t, conn, []uint64{1})
+	assert.Empty(t, conn.acknowledged(), "nothing waits from before the agent was eligible")
+
+	hub.Ack("agent", 7)
+	require.Eventually(t, func() bool { return assert.ObjectsAreEqual([]uint64{7}, conn.acknowledged()) }, 5*time.Second, time.Millisecond)
+
+	gate := make(chan struct{})
+	conn.mu.Lock()
+	conn.gate = gate
+	conn.mu.Unlock()
+	hub.Ack("agent", 8) // taken by the sender, which blocks on the gate
+	require.Eventually(t, func() bool {
+		hub.mu.Lock()
+		defer hub.mu.Unlock()
+		return len(hub.agents["agent"].peer.ack) == 0
+	}, 5*time.Second, time.Millisecond)
+	hub.Ack("agent", 9)
+	hub.Ack("agent", 10)
+	close(gate)
+	require.Eventually(t, func() bool { return assert.ObjectsAreEqual([]uint64{7, 8, 10}, conn.acknowledged()) }, 5*time.Second, time.Millisecond)
+
+	other := &fakeConn{}
+	hub.Observe("writer", other, describe("writer", ingestpolicy.Capability))
+	hub.Ack("writer", 3)
+	time.Sleep(50 * time.Millisecond)
+	assert.Empty(t, other.acknowledged(), "not to an agent that gets no policy")
 }

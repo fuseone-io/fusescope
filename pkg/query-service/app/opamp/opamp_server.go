@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server"
 	"github.com/open-telemetry/opamp-go/server/types"
@@ -26,6 +27,7 @@ type Server struct {
 
 	agentConfigProvider AgentConfigProvider
 	ingest              *ingest.Hub
+	ingestReports       *ingest.Reports
 	ingestTokens        *ingest.Tokens
 
 	// cleanups to be run when stopping the server
@@ -55,10 +57,11 @@ func InitializeServer(
 }
 
 // WithIngest sends the ingest policy to the ingress collectors that
-// authenticate with one of tokens (ADR 0010 §3). Without it, no connection
-// receives the policy.
-func (srv *Server) WithIngest(hub *ingest.Hub, tokens *ingest.Tokens) {
-	srv.ingest, srv.ingestTokens = hub, tokens
+// authenticate with one of tokens, and takes their ingest reports (ADR 0010
+// §3, §6). Without it, no connection receives the policy or is read a
+// report.
+func (srv *Server) WithIngest(hub *ingest.Hub, reports *ingest.Reports, tokens *ingest.Tokens) {
+	srv.ingest, srv.ingestReports, srv.ingestTokens = hub, reports, tokens
 }
 
 func (srv *Server) Start(listener string) error {
@@ -142,7 +145,7 @@ func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *pr
 }
 
 func (srv *Server) onMessage(ctx context.Context, conn types.Connection, msg *protobufs.AgentToServer, ingestAuthenticated bool) *protobufs.ServerToAgent {
-	agentID, _ := valuer.NewUUIDFromBytes(msg.GetInstanceUid())
+	agentID, uidErr := valuer.NewUUIDFromBytes(msg.GetInstanceUid())
 
 	// find the orgID, if nothing is found keep it empty.
 	// the find or create agent will return an error if orgID is empty
@@ -196,7 +199,24 @@ func (srv *Server) onMessage(ctx context.Context, conn types.Connection, msg *pr
 
 	agent.UpdateStatus(msg, response, srv.agentConfigProvider)
 
+	if page, ok := reportPage(msg, ingestAuthenticated && srv.ingestReports != nil, uidErr == nil && !agentID.IsZero()); ok {
+		if ack := srv.ingestReports.Receive(agent.AgentID, conn, page); ack != nil && response.CustomMessage == nil {
+			response.CustomMessage = ack
+		}
+	}
+
 	return response
+}
+
+// reportPage is the ingest report page msg carries, read only from an
+// authenticated connection and, since a report is kept per agent, from an
+// agent with a UID of its own.
+func reportPage(msg *protobufs.AgentToServer, authenticated, ownUID bool) ([]byte, bool) {
+	custom := msg.GetCustomMessage()
+	if !authenticated || !ownUID || custom.GetCapability() != ingestpolicy.Capability || custom.GetType() != ingestpolicy.TypeReport {
+		return nil, false
+	}
+	return custom.GetData(), true
 }
 
 // global var methods to support singleton pattern. we want to discourage

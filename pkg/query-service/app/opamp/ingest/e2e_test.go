@@ -106,6 +106,13 @@ func connect(t *testing.T, addr, authorization, uid string) <-chan []byte {
 // handshake gate in front of hub.
 func startOpAMP(t *testing.T, hub *Hub, tokens *Tokens) string {
 	t.Helper()
+	return startOpAMPWithReports(t, hub, nil, tokens)
+}
+
+// startOpAMPWithReports also answers report pages as the backend's server
+// does.
+func startOpAMPWithReports(t *testing.T, hub *Hub, reports *Reports, tokens *Tokens) string {
+	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 	addr := listener.Addr().String()
@@ -120,10 +127,14 @@ func startOpAMP(t *testing.T, hub *Hub, tokens *Tokens) string {
 					authenticated := tokens.Verify(request.Header.Get("Authorization"))
 					return servertypes.ConnectionResponse{Accept: true, ConnectionCallbacks: servertypes.ConnectionCallbacks{
 						OnMessage: func(_ context.Context, conn servertypes.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
+							response := &protobufs.ServerToAgent{InstanceUid: msg.GetInstanceUid()}
 							if authenticated {
 								hub.Observe(string(msg.GetInstanceUid()), conn, msg)
+								if m := msg.GetCustomMessage(); reports != nil && m.GetCapability() == ingestpolicy.Capability && m.GetType() == ingestpolicy.TypeReport {
+									response.CustomMessage = reports.Receive(string(msg.GetInstanceUid()), conn, m.GetData())
+								}
 							}
-							return &protobufs.ServerToAgent{InstanceUid: msg.GetInstanceUid()}
+							return response
 						},
 						OnConnectionClose: func(conn servertypes.Connection) { hub.Remove(conn) },
 					}}

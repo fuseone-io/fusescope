@@ -289,6 +289,8 @@ github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy v0.1.0 h1:EYk9BkCrqLtBtGsjgR+/6O2myr8Gn3fMyZR3z+x32vM=
 github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy v0.1.0/go.mod h1:GIWlAUgFSBz9EH3DYobIeuNqk54IVUmLZsh8cyJcNao=
+github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestreport v0.1.0 h1:5VBCpTs6koR6q9gHZcc0bW/awrcJdINXBMqd2s4vS1Q=
+github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestreport v0.1.0/go.mod h1:7k4XYMff/GgqsPLWjmLxoRuf3QGtMRBVarg/f4d1F9M=
 github.com/fxamacker/cbor/v2 v2.9.4 h1:xwjVlxEMR3S605oUlgBjKLTTeGFciYPGYCtF/35LKGo=
 github.com/fxamacker/cbor/v2 v2.9.4/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gabriel-vasile/mimetype v1.4.16 h1:5izNFuvA37st1dDRAcA7TtmngBmRgiIPDmTtiEvjx1E=

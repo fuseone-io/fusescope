@@ -26,6 +26,7 @@ import (
 type Server struct {
 	opampServer *opamp.Server
 	ingest      *ingest.Service
+	reports     *ingest.Reports
 	stopIngest  context.CancelFunc
 }
 
@@ -122,8 +123,9 @@ func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) 
 		publisher := ingest.NewPublisher(signoz.SQLStore, signoz.Modules.RUMApplication, logger)
 		hub := ingest.NewHub(publisher, logger)
 		s.ingest = ingest.NewService(publisher, hub, logger)
+		s.reports = ingest.NewReports(ingest.NewReportStore(signoz.SQLStore, signoz.Modules.RUMApplication), hub, publisher, logger)
 		signoz.Modules.RUMApplication.OnChange(s.ingest.Changed)
-		s.opampServer.WithIngest(hub, tokens)
+		s.opampServer.WithIngest(hub, s.reports, tokens)
 		logger.Warn("ingest policy published over OpAMP; its tokens travel unencrypted unless the OpAMP port is behind TLS")
 	} else {
 		logger.Info("ingest policy not published: rum.ingest_policy.token_file is not set")
@@ -144,6 +146,7 @@ func (s *Server) Start(ctx context.Context) error {
 		ingestCtx, stop := context.WithCancel(context.Background())
 		s.stopIngest = stop
 		go s.ingest.Run(ingestCtx)
+		go s.reports.Run(ingestCtx)
 	}
 
 	return nil
