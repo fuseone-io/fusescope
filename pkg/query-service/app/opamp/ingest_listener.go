@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"io"
 	"log"
+	"math"
 	"net"
 	"net/http"
 	"strings"
@@ -111,14 +112,20 @@ func (l *limitedListener) Accept() (net.Conn, error) {
 		<-l.slots
 		return nil, err
 	}
-	var c *idleConn
-	c = newIdleConn(conn, l.idle, func() {
+	c := &idleConn{Conn: conn, idle: l.idle}
+	c.release = func() {
 		l.mu.Lock()
 		delete(l.conns, c)
 		l.mu.Unlock()
 		<-l.slots
-	})
+	}
+	// Its timer and its registration under one lock: a close by the timer
+	// waits for the lock in release and always finds it registered, and
+	// closeAll never sees it without its timer, which is armed only once
+	// assigned.
 	l.mu.Lock()
+	c.timer = time.AfterFunc(time.Duration(math.MaxInt64), func() { _ = c.Close() })
+	c.timer.Reset(c.idle)
 	l.conns[c] = struct{}{}
 	l.mu.Unlock()
 	return c, nil
@@ -151,12 +158,6 @@ type idleConn struct {
 	timer   *time.Timer
 	release func()
 	closed  sync.Once
-}
-
-func newIdleConn(conn net.Conn, idle time.Duration, release func()) *idleConn {
-	c := &idleConn{Conn: conn, idle: idle, release: release}
-	c.timer = time.AfterFunc(idle, func() { _ = c.Close() })
-	return c
 }
 
 func (c *idleConn) Read(b []byte) (int, error) {
