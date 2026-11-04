@@ -645,6 +645,12 @@ dashboard:
         rate: 5
         burst: 100
 
+##################### Onboarding #####################
+onboarding:
+  # Base URL of the collector OTLP/HTTP receiver the backend checks it can reach
+  # for the onboarding screen; unset, none is checked.
+  collector_endpoint: ""
+
 ##################### Retention #####################
 retention:
   # Retention, in days, set on every organization whose signal has no retention set

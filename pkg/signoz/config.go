@@ -31,6 +31,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
 	"github.com/fuseone-io/fusescope/pkg/modules/inframonitoring"
 	"github.com/fuseone-io/fusescope/pkg/modules/metricsexplorer"
+	"github.com/fuseone-io/fusescope/pkg/modules/onboarding"
 	"github.com/fuseone-io/fusescope/pkg/modules/retention"
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
 	"github.com/fuseone-io/fusescope/pkg/modules/serviceaccount"
@@ -166,6 +167,9 @@ type Config struct {
 	// Dashboard config
 	Dashboard dashboard.Config `mapstructure:"dashboard"`
 
+	// Onboarding config
+	Onboarding onboarding.Config `mapstructure:"onboarding"`
+
 	// Retention config
 	Retention retention.Config `mapstructure:"retention"`
 
@@ -211,6 +215,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		authz.NewConfigFactory(),
 		rumapplication.NewConfigFactory(),
 		dashboard.NewConfigFactory(),
+		onboarding.NewConfigFactory(),
 		retention.NewConfigFactory(),
 		archive.NewConfigFactory(),
 	}
