@@ -25,6 +25,9 @@ const (
 	// listener, from their accept, in handshake or not: twice the hub's
 	// ingress agents, for reconnections.
 	maxIngestConnections = 512
+	// maxIngestHeaderBytes bounds what a connection may send before its
+	// token is checked; a collector's handshake takes well under 1 KiB.
+	maxIngestHeaderBytes = 16 << 10
 )
 
 // ingestLimits are the bounds of the ingest listener, overridable in tests.
@@ -49,7 +52,7 @@ func startIngestListener(listen string, tlsConfig *tls.Config, handler server.HT
 	if err != nil {
 		return nil, err
 	}
-	listener := &limitedListener{Listener: tcp, slots: make(chan struct{}, limits.connections), done: make(chan struct{}), idle: limits.idle}
+	listener := &limitedListener{Listener: tcp, slots: make(chan struct{}, limits.connections), done: make(chan struct{}), idle: limits.idle, conns: map[*idleConn]struct{}{}}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/opamp", func(w http.ResponseWriter, r *http.Request) {
 		// Ingress collectors use the WebSocket transport, which the hub
@@ -66,6 +69,7 @@ func startIngestListener(listen string, tlsConfig *tls.Config, handler server.HT
 		ConnContext:       connContext,
 		ReadHeaderTimeout: limits.handshake, // also the TLS handshake's
 		IdleTimeout:       limits.handshake,
+		MaxHeaderBytes:    maxIngestHeaderBytes,
 		// A failed handshake is the client's; it is not logged per attempt.
 		ErrorLog: log.New(io.Discard, "", 0),
 	}
@@ -75,8 +79,12 @@ func startIngestListener(listen string, tlsConfig *tls.Config, handler server.HT
 
 func (l *ingestListener) Addr() net.Addr { return l.listener.Addr() }
 
+// Stop closes the listener and every connection it accepted: Shutdown
+// leaves the WebSockets, which the HTTP server handed over, open.
 func (l *ingestListener) Stop(ctx context.Context) error {
-	return l.http.Shutdown(ctx)
+	err := l.http.Shutdown(ctx)
+	l.listener.(*limitedListener).closeAll()
+	return err
 }
 
 // limitedListener holds at most cap(slots) connections; Accept waits for a
@@ -87,6 +95,9 @@ type limitedListener struct {
 	done  chan struct{}
 	once  sync.Once
 	idle  time.Duration
+
+	mu    sync.Mutex
+	conns map[*idleConn]struct{}
 }
 
 func (l *limitedListener) Accept() (net.Conn, error) {
@@ -100,7 +111,30 @@ func (l *limitedListener) Accept() (net.Conn, error) {
 		<-l.slots
 		return nil, err
 	}
-	return newIdleConn(conn, l.idle, func() { <-l.slots }), nil
+	var c *idleConn
+	c = newIdleConn(conn, l.idle, func() {
+		l.mu.Lock()
+		delete(l.conns, c)
+		l.mu.Unlock()
+		<-l.slots
+	})
+	l.mu.Lock()
+	l.conns[c] = struct{}{}
+	l.mu.Unlock()
+	return c, nil
+}
+
+// closeAll closes every connection accepted and still open.
+func (l *limitedListener) closeAll() {
+	l.mu.Lock()
+	conns := make([]*idleConn, 0, len(l.conns))
+	for c := range l.conns {
+		conns = append(conns, c)
+	}
+	l.mu.Unlock()
+	for _, c := range conns {
+		_ = c.Close()
+	}
 }
 
 func (l *limitedListener) Close() error {
