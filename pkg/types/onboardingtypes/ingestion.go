@@ -40,7 +40,7 @@ type Ingestion struct {
 }
 
 type CollectorHealth struct {
-	Endpoint  string `json:"endpoint" required:"true" description:"rum.collector_endpoint."`
+	Endpoint  string `json:"endpoint" required:"true" description:"onboarding.collector_endpoint."`
 	Reachable bool   `json:"reachable" required:"true" description:"True when the OTLP/HTTP receiver answered."`
 }
 

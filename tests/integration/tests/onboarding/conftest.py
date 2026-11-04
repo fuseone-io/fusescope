@@ -17,7 +17,7 @@ def signoz_onboarding(  # pylint: disable=too-many-arguments,too-many-positional
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
-    """global.ingestion_url is configured, and the RUM gateway gives the backend a collector to probe."""
+    """global.ingestion_url is configured, and onboarding.collector_endpoint gives the backend a collector to probe."""
     return create_signoz(
         network=network,
         zeus=zeus,
@@ -29,8 +29,7 @@ def signoz_onboarding(  # pylint: disable=too-many-arguments,too-many-positional
         cache_key="signoz_onboarding",
         env_overrides={
             "SIGNOZ_GLOBAL_INGESTION__URL": "https://ingest.fusescope.test",
-            "SIGNOZ_RUM_ENABLED": True,
-            "SIGNOZ_RUM_COLLECTOR__ENDPOINT": otel_collector.container_configs["4318"].base(),
+            "SIGNOZ_ONBOARDING_COLLECTOR__ENDPOINT": otel_collector.container_configs["4318"].base(),
         },
     )
 
@@ -45,7 +44,7 @@ def signoz_derived(  # pylint: disable=too-many-arguments,too-many-positional-ar
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
-    """A second SigNoz on the same stores with no global.ingestion_url, so the endpoints are derived, and no RUM gateway, so no collector to probe."""
+    """A second SigNoz on the same stores with no global.ingestion_url, so the endpoints are derived, and no collector to probe."""
     return create_signoz(
         network=network,
         zeus=zeus,
@@ -58,7 +57,6 @@ def signoz_derived(  # pylint: disable=too-many-arguments,too-many-positional-ar
         env_overrides={
             "SIGNOZ_GLOBAL_INGESTION__URL": "<unset>",
             "SIGNOZ_GLOBAL_EXTERNAL__URL": "https://fusescope.example.com",
-            "SIGNOZ_RUM_ENABLED": False,
         },
     )
 
