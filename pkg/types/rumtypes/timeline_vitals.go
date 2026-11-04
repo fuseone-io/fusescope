@@ -17,7 +17,7 @@ func NewTimelineVitalName(eventName string, value string) (TimelineVitalName, bo
 	}
 	if eventName == EventNameWebVital {
 		name, ok := NewVitalName(value)
-		return TimelineVitalName{String: name.String}, ok
+		return TimelineVitalName(name), ok
 	}
 	return TimelineVitalName{}, false
 }
