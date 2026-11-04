@@ -576,3 +576,65 @@ func (slowCount) AfterQuery(_ context.Context, event *bun.QueryEvent) {
 		time.Sleep(50 * time.Millisecond)
 	}
 }
+
+// The admission row is permanent: pruning never deletes it, even when its
+// last admission is older than the agents' retention, and pruning that runs
+// with the first admissions after it does not break their serialisation.
+func TestReportStoreAdmissionRowSurvivesPrune(t *testing.T) {
+	forEachStore(t, func(t *testing.T, newStore func(*testing.T) sqlstore.SQLStore) {
+		ctx := context.Background()
+		db := newStore(t)
+		store := NewReportStore(db, &fakeUsage{})
+		_, err := store.ApplyIfGreater(ctx, "first", testReport(1))
+		require.NoError(t, err)
+		old := time.Now().Add(-2 * agentRetention)
+		_, err = db.BunDB().NewUpdate().Model((*ingesttypes.StorableReportAgent)(nil)).Set("updated_at = ?", old).Where("agent_id = ?", admissionRow).Exec(ctx)
+		require.NoError(t, err)
+		require.NoError(t, store.Prune(ctx))
+		exists, err := db.BunDB().NewSelect().Model((*ingesttypes.StorableReportAgent)(nil)).Where("agent_id = ?", admissionRow).Exists(ctx)
+		require.NoError(t, err)
+		require.True(t, exists, "pruning keeps the admission row")
+
+		now := time.Now().UTC()
+		filler := make([]ingesttypes.StorableReportAgent, newAgents-2)
+		for i := range filler {
+			filler[i] = ingesttypes.StorableReportAgent{AgentID: fmt.Sprintf("filler-%d", i), CreatedAt: now, UpdatedAt: now}
+		}
+		_, err = db.BunDB().NewInsert().Model(&filler).Exec(ctx)
+		require.NoError(t, err)
+		_, err = db.BunDB().NewUpdate().Model((*ingesttypes.StorableReportAgent)(nil)).Set("updated_at = ?", old).Where("agent_id = ?", admissionRow).Exec(ctx)
+		require.NoError(t, err)
+		db.BunDB().AddQueryHook(slowCount{}) //nolint:staticcheck // WithQueryHook returns a copy; the store holds this DB
+
+		stop := make(chan struct{})
+		pruned := make(chan struct{})
+		go func() {
+			defer close(pruned)
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+					_ = store.Prune(ctx)
+				}
+			}
+		}()
+		var wg sync.WaitGroup
+		for i := range 20 {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_, err := store.ApplyIfGreater(ctx, fmt.Sprintf("new-%d", i), testReport(1))
+				if err != nil && !errors.Is(err, errNewAgentLimit) {
+					t.Errorf("agent %d: %v", i, err)
+				}
+			}()
+		}
+		wg.Wait()
+		close(stop)
+		<-pruned
+		recent, err := db.BunDB().NewSelect().Model((*ingesttypes.StorableReportAgent)(nil)).Where("created_at > ?", now.Add(-newAgentWindow)).Count(ctx)
+		require.NoError(t, err)
+		assert.EqualValues(t, newAgents, recent, "exactly the bound, never past it")
+	})
+}
