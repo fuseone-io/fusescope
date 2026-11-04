@@ -5,14 +5,15 @@ from http import HTTPStatus
 import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, create_active_user
-from fixtures.rum import RUM_APPLICATIONS, RUM_KEY_HEADER, create_rum_application
-from fixtures.types import Operation, SigNoz
+from fixtures.rum import REPORT_WAIT_SECONDS, RUM_APPLICATIONS, RUM_KEY_HEADER, create_rum_application, post_rum_until, wait_for_rum_query
+from fixtures.types import FuseScopeCollector, Operation, SigNoz
 
 TRACE = '{"resourceSpans":[]}'
 
 
 def test_key_rotation(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -20,7 +21,6 @@ def test_key_rotation(
     headers = {"Authorization": f"Bearer {token}"}
     created = create_rum_application(signoz, token, {"name": f"keys-{uuid.uuid4().hex[:8]}", "platform": "web", "environment": "production"})
     keys_url = signoz.self.host_configs["8080"].get(f"{RUM_APPLICATIONS}/{created['id']}/keys")
-    traces_url = signoz.self.host_configs["8080"].get("/rum/v1/traces")
     first = created["key"]
 
     response = requests.post(keys_url, headers=headers, timeout=5)
@@ -44,8 +44,7 @@ def test_key_rotation(
     assert all("key" not in key for key in listed.values())
 
     for plaintext in (first["key"], second["key"]):
-        response = requests.post(traces_url, data=TRACE, headers={RUM_KEY_HEADER: plaintext, "Content-Type": "application/json"}, timeout=10)
-        assert response.status_code == HTTPStatus.OK, response.text
+        post_rum_until(fusescope_collector, "traces", TRACE, {RUM_KEY_HEADER: plaintext, "Content-Type": "application/json"}, HTTPStatus.OK)
 
     response = requests.post(f"{keys_url}/{second['id']}/rotate", json={"overlap": "24h"}, headers=headers, timeout=5)
     assert response.status_code == HTTPStatus.CONFLICT, "one rotation at a time"
@@ -53,8 +52,7 @@ def test_key_rotation(
     response = requests.delete(f"{keys_url}/{first['id']}", headers=headers, timeout=5)
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-    response = requests.post(traces_url, data=TRACE, headers={RUM_KEY_HEADER: first["key"], "Content-Type": "application/json"}, timeout=10)
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    post_rum_until(fusescope_collector, "traces", TRACE, {RUM_KEY_HEADER: first["key"], "Content-Type": "application/json"}, HTTPStatus.UNAUTHORIZED)
 
     response = requests.get(keys_url, headers=headers, timeout=5)
     assert [key["id"] for key in response.json()["data"]] == [second["id"]]
@@ -62,9 +60,7 @@ def test_key_rotation(
     response = requests.post(f"{keys_url}/{second['id']}/rotate", json={"overlap": "7d"}, headers=headers, timeout=5)
     assert response.status_code == HTTPStatus.CREATED, response.text
 
-    response = requests.get(signoz.self.host_configs["8080"].get(f"{RUM_APPLICATIONS}/{created['id']}/status"), headers=headers, timeout=5)
-    assert response.status_code == HTTPStatus.OK, response.text
-    assert {"reason": "bad_key", "count": 1} == {key: value for key, value in response.json()["data"]["rejections"][0].items() if key in ("reason", "count")}
+    wait_for_rum_query(signoz, token, f"{RUM_APPLICATIONS}/{created['id']}/keys", {}, lambda data: any(key["id"] == second["id"] and key["lastUsedAt"] for key in data), attempts=REPORT_WAIT_SECONDS)
 
 
 def test_viewer_cannot_see_or_manage_keys(

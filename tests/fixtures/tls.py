@@ -1,6 +1,7 @@
 import contextlib
 import datetime
 import hashlib
+import ipaddress
 import os
 import uuid
 from pathlib import Path
@@ -66,6 +67,11 @@ def tls(
             .not_valid_before(now - datetime.timedelta(days=1))
             .not_valid_after(now + datetime.timedelta(days=3650))
             .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+            .add_extension(
+                x509.KeyUsage(digital_signature=False, key_encipherment=False, content_commitment=False, data_encipherment=False, key_agreement=False, key_cert_sign=True, crl_sign=True, encipher_only=False, decipher_only=False),
+                critical=True,
+            )
+            .add_extension(x509.SubjectKeyIdentifier.from_public_key(ca_key.public_key()), critical=False)
             .sign(ca_key, hashes.SHA256())
         )
 
@@ -93,7 +99,15 @@ def tls(
         return types.TLS.from_cache(cache)
 
     def stale(tls: types.TLS) -> bool:
-        return not (Path(tls.ca_cert_path).is_file() and Path(tls.ca_key_path).is_file())
+        if not (Path(tls.ca_cert_path).is_file() and Path(tls.ca_key_path).is_file()):
+            return True
+        # Python's strict X.509 verification needs the CA's key usage, which older CAs lack.
+        ca_cert = x509.load_pem_x509_certificate(Path(tls.ca_cert_path).read_bytes())
+        try:
+            ca_cert.extensions.get_extension_for_class(x509.KeyUsage)
+        except x509.ExtensionNotFound:
+            return True
+        return False
 
     return reuse.wrap(
         request,
@@ -107,13 +121,19 @@ def tls(
     )
 
 
-def issue_server_keystore(tls: types.TLS, directory: Path, *hostnames: str) -> Path:
-    """Write a PKCS12 keystore (keystore.p12, password KEYSTORE_PASSWORD) into
-    directory, holding a certificate for the hostnames (SANs, CN is the first)
-    issued by the integration CA. Mount it into a mock container that must
-    serve TLS as those hostnames."""
+def issue_leaf(tls: types.TLS, *hostnames: str) -> tuple[x509.Certificate, rsa.RSAPrivateKey, x509.Certificate]:
+    """A server certificate for the hostnames (SANs, CN is the first; IP
+    addresses become IP SANs) issued by the integration CA, with its key and
+    the CA certificate."""
     ca_cert = x509.load_pem_x509_certificate(Path(tls.ca_cert_path).read_bytes())
     ca_key = serialization.load_pem_private_key(Path(tls.ca_key_path).read_bytes(), password=None)
+
+    sans: list[x509.GeneralName] = []
+    for hostname in hostnames:
+        try:
+            sans.append(x509.IPAddress(ipaddress.ip_address(hostname)))
+        except ValueError:
+            sans.append(x509.DNSName(hostname))
 
     now = datetime.datetime.now(datetime.UTC)
     leaf_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -125,10 +145,25 @@ def issue_server_keystore(tls: types.TLS, directory: Path, *hostnames: str) -> P
         .serial_number(x509.random_serial_number())
         .not_valid_before(now - datetime.timedelta(days=1))
         .not_valid_after(now + datetime.timedelta(days=3650))
-        .add_extension(x509.SubjectAlternativeName([x509.DNSName(hostname) for hostname in hostnames]), critical=False)
+        .add_extension(x509.SubjectAlternativeName(sans), critical=False)
+        .add_extension(x509.AuthorityKeyIdentifier.from_issuer_public_key(ca_cert.public_key()), critical=False)
+        .add_extension(x509.SubjectKeyIdentifier.from_public_key(leaf_key.public_key()), critical=False)
+        .add_extension(
+            x509.KeyUsage(digital_signature=True, key_encipherment=True, content_commitment=False, data_encipherment=False, key_agreement=False, key_cert_sign=False, crl_sign=False, encipher_only=False, decipher_only=False),
+            critical=True,
+        )
         .add_extension(x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), critical=False)
         .sign(ca_key, hashes.SHA256())
     )
+    return leaf_cert, leaf_key, ca_cert
+
+
+def issue_server_keystore(tls: types.TLS, directory: Path, *hostnames: str) -> Path:
+    """Write a PKCS12 keystore (keystore.p12, password KEYSTORE_PASSWORD) into
+    directory, holding a certificate for the hostnames (SANs, CN is the first)
+    issued by the integration CA. Mount it into a mock container that must
+    serve TLS as those hostnames."""
+    leaf_cert, leaf_key, ca_cert = issue_leaf(tls, *hostnames)
 
     keystore_path = directory / "keystore.p12"
     keystore_path.write_bytes(
@@ -142,3 +177,17 @@ def issue_server_keystore(tls: types.TLS, directory: Path, *hostnames: str) -> P
     )
 
     return keystore_path
+
+
+def issue_server_certificate(tls: types.TLS, *hostnames: str) -> tuple[bytes, bytes]:
+    """PEM certificate and unencrypted PKCS8 key for the hostnames, issued by
+    the integration CA."""
+    leaf_cert, leaf_key, _ = issue_leaf(tls, *hostnames)
+    return (
+        leaf_cert.public_bytes(serialization.Encoding.PEM),
+        leaf_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        ),
+    )

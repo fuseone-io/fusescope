@@ -115,6 +115,21 @@ class TestContainerIDP:
 
 
 @dataclass
+class FuseScopeCollector:
+    """The FuseScope collector serving RUM over TLS; ca_cert_path verifies it."""
+
+    __test__ = False
+    self: TestContainerDocker
+    ca_cert_path: str
+
+    def __cache__(self) -> dict:
+        return self.self.__cache__()
+
+    def __log__(self) -> str:
+        return f"FuseScopeCollector(self={self.self.__log__()}, ca_cert_path={self.ca_cert_path})"
+
+
+@dataclass
 class SigNoz:
     __test__ = False
     self: TestContainerDocker

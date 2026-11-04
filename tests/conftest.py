@@ -39,6 +39,7 @@ pytest_plugins = [
     "fixtures.savedview",
     "fixtures.seed_golden_dataset",
     "fixtures.otelcollector",
+    "fixtures.fusescopecollector",
     "fixtures.simulatorcontract",
 ]
 
@@ -126,6 +127,12 @@ def pytest_addoption(parser: pytest.Parser):
         action="store",
         default="0.145.0",
         help="fusescope otel collector version",
+    )
+    parser.addoption(
+        "--fusescope-collector-version",
+        action="store",
+        default="sha-92c555fae01f",
+        help="ghcr.io/fuseone-io/fusescope-collector tag, the collector that receives RUM",
     )
     parser.addoption(
         "--signoz-image",
