@@ -55,7 +55,7 @@ const (
 
 // admissionRow is the record whose lock admits new agents one at a time.
 // It is no agent's: agents are UUIDs. Created at the epoch, it is never
-// counted as new.
+// counted as new, and pruning never deletes it.
 const admissionRow = "new-agent-admission"
 
 // earliestReported is the earliest time a report may carry; an earlier one
@@ -265,7 +265,7 @@ func (s *ReportStore) Invalidate(ctx context.Context, agent string, seq uint64) 
 
 // Prune deletes window values older than the status window, so origins and
 // SDK strings are kept no longer (§10.3), and records of agents silent for
-// agentRetention.
+// agentRetention, never the admission row.
 func (s *ReportStore) Prune(ctx context.Context) error {
 	db := s.store.BunDBCtx(ctx)
 	now, err := ingesttypes.DatabaseNow(ctx, db)
@@ -273,7 +273,7 @@ func (s *ReportStore) Prune(ctx context.Context) error {
 		_, err = db.NewDelete().Model((*ingesttypes.StorableReportApplication)(nil)).Where("reported_at < ?", now.Add(-rumtypes.StatusWindow)).Exec(ctx)
 	}
 	if err == nil {
-		_, err = db.NewDelete().Model((*ingesttypes.StorableReportAgent)(nil)).Where("updated_at < ?", now.Add(-agentRetention)).Exec(ctx)
+		_, err = db.NewDelete().Model((*ingesttypes.StorableReportAgent)(nil)).Where("updated_at < ?", now.Add(-agentRetention)).Where("agent_id <> ?", admissionRow).Exec(ctx)
 	}
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to prune ingest reports")
@@ -316,14 +316,20 @@ func (s *ReportStore) raise(ctx context.Context, agent string, now time.Time, up
 // counts, at read committed, the records the ones before it committed.
 func (s *ReportStore) create(ctx context.Context, agent string, now time.Time) (bool, error) {
 	db := s.store.BunDBCtx(ctx)
-	if _, err := db.NewInsert().
+	// One upsert creates the row or locks it: DO NOTHING would leave an
+	// existing row unlocked.
+	res, err := db.NewInsert().
 		Model(&ingesttypes.StorableReportAgent{AgentID: admissionRow, CreatedAt: time.Unix(0, 0).UTC(), UpdatedAt: now}).
-		On("CONFLICT (agent_id) DO NOTHING").
-		Exec(ctx); err != nil {
+		On("CONFLICT (agent_id) DO UPDATE").
+		Set("updated_at = EXCLUDED.updated_at").
+		Exec(ctx)
+	if err != nil {
 		return false, err
 	}
-	if _, err := db.NewUpdate().Model((*ingesttypes.StorableReportAgent)(nil)).Set("updated_at = ?", now).Where("agent_id = ?", admissionRow).Exec(ctx); err != nil {
+	if rows, err := res.RowsAffected(); err != nil {
 		return false, err
+	} else if rows != 1 {
+		return false, errors.Newf(errors.TypeInternal, errors.CodeInternal, "the new agent admission row was not locked (%d rows)", rows)
 	}
 	recent, err := db.NewSelect().Model((*ingesttypes.StorableReportAgent)(nil)).Where("created_at > ?", now.Add(-newAgentWindow)).Count(ctx)
 	if err != nil {
