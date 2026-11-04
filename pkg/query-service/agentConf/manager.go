@@ -3,6 +3,7 @@ package agentConf
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -99,65 +100,82 @@ func (m *Manager) notifyConfigUpdateSubscribers() {
 }
 
 // Implements opamp.AgentConfigProvider
-func (m *Manager) RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte) (
-	recommendedConfYaml []byte,
-	// Opaque id of the recommended config, used for reporting deployment status updates
-	configId string,
-	err error,
-) {
-	recommendation := currentConfYaml
-	settingVersionsUsed := []string{}
+func (m *Manager) RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte) (*opamptypes.ConfigRecommendation, error) {
+	recommendation := &opamptypes.ConfigRecommendation{Config: currentConfYaml}
+	ids := []string{}
 
 	for _, feature := range m.agentFeatures {
-		featureType := opamptypes.NewElementType(string(feature.AgentFeatureType()))
-		latestConfig, err := GetLatestVersion(context.Background(), orgId, featureType)
-		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-			return nil, "", err
+		featureType := string(feature.AgentFeatureType())
+		elementType := opamptypes.NewElementType(featureType)
+		versioned := elementType.StringValue() != ""
+
+		var latestConfig *opamptypes.AgentConfigVersion
+		if versioned {
+			var err error
+			latestConfig, err = GetLatestVersion(context.Background(), orgId, elementType)
+			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+				return nil, err
+			}
 		}
 
-		updatedConf, serializedSettingsUsed, err := feature.RecommendAgentConfig(orgId, recommendation, latestConfig)
+		updatedConf, serializedSettingsUsed, err := feature.RecommendAgentConfig(orgId, recommendation.Config, latestConfig)
 		if err != nil {
-			return nil, "", errors.WithAdditionalf(err, "agent config recommendation for %s failed", featureType)
+			return nil, errors.WithAdditionalf(err, "agent config recommendation for %s failed", featureType)
 		}
-		recommendation = updatedConf
+		recommendation.Config = updatedConf
 
 		// It is possible for a feature to recommend collector config
 		// before any user created config versions exist.
 		//
 		// For example, log pipeline config for installed integrations will
 		// have to be recommended even if the user hasn't created any pipelines yet
-		configVersion := -1
-		if latestConfig != nil {
-			configVersion = latestConfig.Version
+		part := opamptypes.FeatureRecommendation{Version: -1, Settings: serializedSettingsUsed}
+		if versioned {
+			part.ElementType = elementType
+			if latestConfig != nil {
+				part.Version = latestConfig.Version
+			}
+			// Formats as `{<type>}:<version>`: stored hashes and agents'
+			// reports carry exactly this.
+			part.ID = fmt.Sprintf("%s:%d", elementType, part.Version)
+		} else {
+			// Not versioned: the digest of its settings stands for the version.
+			digest := sha256.Sum256([]byte(serializedSettingsUsed))
+			part.ID = featureType + ":" + hex.EncodeToString(digest[:])
 		}
-		configId := fmt.Sprintf("%s:%d", featureType, configVersion)
-
-		settingVersionsUsed = append(settingVersionsUsed, configId)
-
-		_ = m.updateDeployStatus(
-			context.Background(),
-			orgId,
-			featureType,
-			configVersion,
-			opamptypes.DeployInitiated.StringValue(),
-			"Deployment has started",
-			configId,
-			serializedSettingsUsed,
-		)
-
+		recommendation.Features = append(recommendation.Features, part)
+		ids = append(ids, part.ID)
 	}
 
-	if len(settingVersionsUsed) > 0 {
-		configId = strings.Join(settingVersionsUsed, ",")
-
+	if len(ids) > 0 {
+		recommendation.ID = strings.Join(ids, ",")
 	} else {
 		// Do not return an empty configId even if no recommendations were made
 		hash := sha256.New()
-		hash.Write(recommendation)
-		configId = string(hash.Sum(nil))
+		hash.Write(recommendation.Config)
+		recommendation.ID = string(hash.Sum(nil))
 	}
 
-	return recommendation, configId, nil
+	return recommendation, nil
+}
+
+// Implements opamp.AgentConfigProvider
+func (m *Manager) ReportConfigDeploymentInitiated(orgId valuer.UUID, recommendation *opamptypes.ConfigRecommendation) {
+	for _, part := range recommendation.Features {
+		if part.ElementType.StringValue() == "" {
+			continue // no version row to update
+		}
+		_ = m.updateDeployStatus(
+			context.Background(),
+			orgId,
+			part.ElementType,
+			part.Version,
+			opamptypes.DeployInitiated.StringValue(),
+			"Deployment has started",
+			part.ID,
+			part.Settings,
+		)
+	}
 }
 
 // Implements opamp.AgentConfigProvider

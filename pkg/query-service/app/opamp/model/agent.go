@@ -5,10 +5,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"log/slog"
+	"reflect"
 	"sync"
 	"time"
 
 	"google.golang.org/protobuf/proto"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
@@ -22,7 +24,13 @@ import (
 type Agent struct {
 	opamptypes.StorableAgent
 	remoteConfig *protobufs.AgentRemoteConfig
-	Status       *protobufs.AgentToServer
+	// What remoteConfig was recommended from, recorded once it is pushed.
+	recommendation *opamptypes.ConfigRecommendation
+	Status         *protobufs.AgentToServer
+
+	// Set when the agent reconnected with a config already applied: its
+	// effective config is compared with the recommendation once reported.
+	reconcilePending bool
 
 	// can this agent be load balancer
 	CanLB bool
@@ -118,8 +126,8 @@ func ExtractLbFlag(agentDescr *protobufs.AgentDescription) bool {
 // recompute and push a new RemoteConfig.
 //
 // On reconnect this always returns false: handleFirstStatus pre-copies
-// AgentDescription into agent.Status so no diff is detected, avoiding a
-// redundant config recompute.
+// AgentDescription into agent.Status so no diff is detected, and sets
+// reconcilePending, which pushes only if the effective config differs.
 func (agent *Agent) agentDescriptionChanged(newStatus *protobufs.AgentToServer) bool {
 	// nil AgentDescription means no change per OpAMP protocol.
 	if newStatus.AgentDescription == nil {
@@ -174,6 +182,9 @@ func (agent *Agent) handleFirstStatus(newStatus *protobufs.AgentToServer, config
 	// Since the server's connection is restarted;
 	// copy the agent description; so no change is detected by agentDescriptionChanged
 	agent.Status.AgentDescription = newStatus.AgentDescription
+	// Settings may have changed while it was away: processStatusUpdate
+	// compares its effective config with the recommendation (#261).
+	agent.reconcilePending = true
 
 	// Server reconnected while the agent was already running.
 	// Reconcile deployment status with DB; DB is the source of truth.
@@ -274,7 +285,12 @@ func (agent *Agent) processStatusUpdate(
 	agent.updateEffectiveConfig(newStatus, response)
 
 	configChanged := false
+	if agent.reconcilePending && !agentDescrChanged && newStatus.EffectiveConfig != nil && newStatus.EffectiveConfig.ConfigMap != nil {
+		agent.reconcilePending = false
+		configChanged = agent.reconcileRemoteConfig(configProvider)
+	}
 	if agentDescrChanged {
+		agent.reconcilePending = false
 		// Agent description is changed, but effective config is missing, force request agent to send Config
 		//
 		// Note: ideally this flag should be sent along side ErrorResponse;
@@ -301,39 +317,78 @@ func (agent *Agent) processStatusUpdate(
 		// The new status resulted in a change in the config of the Agent or the Agent
 		// does not have this config (hash is different). Send the new config the Agent.
 		response.RemoteConfig = agent.remoteConfig
-		agent.SendToAgent(response)
-
-		ListenToConfigUpdate(
-			agent.OrgID,
-			agent.AgentID,
-			string(response.RemoteConfig.ConfigHash),
-			configProvider.ReportConfigDeploymentStatus,
-		)
+		if err := agent.pushRemoteConfig(response, configProvider); err != nil {
+			agent.logger.Error("could not push config to agent", "agent_id", agent.AgentID, errors.Attr(err))
+		}
 	}
 }
 
+// reconcileRemoteConfig sets the recommendation as the agent's remote config
+// if it differs from the agent's effective config, and reports whether it did.
+func (agent *Agent) reconcileRemoteConfig(configProvider AgentConfigProvider) bool {
+	recommendation, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
+	if err != nil {
+		agent.logger.Error("could not generate config recommendation for agent", "agent_id", agent.AgentID, errors.Attr(err))
+		return false
+	}
+	if sameConfig(recommendation.Config, []byte(agent.Config)) {
+		return false
+	}
+	agent.remoteConfig = newRemoteConfig(recommendation)
+	agent.recommendation = recommendation
+	return true
+}
+
+// pushRemoteConfig sends msg, which carries agent.remoteConfig, and only
+// once it is sent records the deployment as started and listens for the
+// agent's status. The caller holds agent.mux.
+func (agent *Agent) pushRemoteConfig(msg *protobufs.ServerToAgent, configProvider AgentConfigProvider) error {
+	if err := agent.SendToAgent(msg); err != nil {
+		return err
+	}
+	if agent.recommendation != nil {
+		configProvider.ReportConfigDeploymentInitiated(agent.OrgID, agent.recommendation)
+	}
+	ListenToConfigUpdate(
+		agent.OrgID,
+		agent.AgentID,
+		string(msg.RemoteConfig.ConfigHash),
+		configProvider.ReportConfigDeploymentStatus,
+	)
+	return nil
+}
+
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
-	recommendedConfig, confId, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
+	recommendation, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
 	if err != nil {
 		agent.logger.Error("could not generate config recommendation for agent", "agent_id", agent.AgentID, errors.Attr(err))
 		return false
 	}
 
-	cfg := protobufs.AgentRemoteConfig{
+	cfg := newRemoteConfig(recommendation)
+	configChanged := !isEqualRemoteConfig(agent.remoteConfig, cfg)
+
+	agent.remoteConfig = cfg
+	agent.recommendation = recommendation
+
+	return configChanged
+}
+
+// newRemoteConfig is the remote config message for a recommendation.
+func newRemoteConfig(recommendation *opamptypes.ConfigRecommendation) *protobufs.AgentRemoteConfig {
+	cfg := &protobufs.AgentRemoteConfig{
 		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigObject{},
+			ConfigMap: map[string]*protobufs.AgentConfigObject{
+				CollectorConfigFilename: {
+					Body:        recommendation.Config,
+					ContentType: "application/x-yaml",
+				},
+			},
 		},
 	}
 
-	cfg.Config.ConfigMap[CollectorConfigFilename] = &protobufs.AgentConfigObject{
-		Body:        recommendedConfig,
-		ContentType: "application/x-yaml",
-	}
-
-	if len(confId) < 1 {
+	if len(recommendation.ID) < 1 {
 		// Should never happen. Handle gracefully if it does by some chance.
-		agent.logger.Error("config provider recommended a config with empty conf_id, using content hash for config_id")
-
 		hash := sha256.New()
 		for k, v := range cfg.Config.ConfigMap {
 			hash.Write([]byte(k))
@@ -342,14 +397,20 @@ func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool 
 		}
 		cfg.ConfigHash = hash.Sum(nil)
 	} else {
-		cfg.ConfigHash = []byte(confId)
+		cfg.ConfigHash = []byte(recommendation.ID)
 	}
+	return cfg
+}
 
-	configChanged := !isEqualRemoteConfig(agent.remoteConfig, &cfg)
-
-	agent.remoteConfig = &cfg
-
-	return configChanged
+// sameConfig reports whether two collector configs are the same YAML
+// document, whatever their formatting; bytes are compared when either does
+// not parse.
+func sameConfig(a, b []byte) bool {
+	var docA, docB any
+	if yaml.Unmarshal(a, &docA) != nil || yaml.Unmarshal(b, &docB) != nil {
+		return bytes.Equal(a, b)
+	}
+	return reflect.DeepEqual(docA, docB)
 }
 
 func isEqualRemoteConfig(c1, c2 *protobufs.AgentRemoteConfig) bool {
@@ -394,9 +455,15 @@ func isEqualConfigFile(f1, f2 *protobufs.AgentConfigObject) bool {
 	return bytes.Equal(f1.Body, f2.Body) && f1.ContentType == f2.ContentType
 }
 
-func (agent *Agent) SendToAgent(msg *protobufs.ServerToAgent) {
+// sendTimeout bounds one message to an agent, so a slow agent cannot hold
+// up a push to the others.
+const sendTimeout = 10 * time.Second
+
+func (agent *Agent) SendToAgent(msg *protobufs.ServerToAgent) error {
 	agent.connMutex.Lock()
 	defer agent.connMutex.Unlock()
 
-	_ = agent.conn.Send(context.Background(), msg)
+	ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
+	defer cancel()
+	return agent.conn.Send(ctx, msg)
 }

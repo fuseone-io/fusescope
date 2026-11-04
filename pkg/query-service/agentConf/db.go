@@ -100,7 +100,7 @@ func (r *Repo) GetLatestVersion(
 		ColumnExpr(`COALESCE((SELECT display_name FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
-		Where("version = (SELECT MAX(version) FROM agent_config_version WHERE acv.element_type = ?)", typ).
+		Where("version = (SELECT MAX(version) FROM agent_config_version WHERE element_type = ? AND org_id = ?)", typ, orgId).
 		Scan(ctx)
 
 	if err != nil {
