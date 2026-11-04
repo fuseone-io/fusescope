@@ -214,12 +214,18 @@ func (b *syncBuffer) String() string {
 
 func newReportFixture(t *testing.T, db sqlstore.SQLStore) *reportFixture {
 	t.Helper()
+	return newReportFixtureLogging(t, db, func(h slog.Handler) slog.Handler { return h })
+}
+
+// newReportFixtureLogging logs through wrap's handler.
+func newReportFixtureLogging(t *testing.T, db sqlstore.SQLStore, wrap func(slog.Handler) slog.Handler) *reportFixture {
+	t.Helper()
 	tokens, err := LoadTokens(writeTokens(t, tokenA+"\n"))
 	require.NoError(t, err)
 	source := &fakeSource{}
 	source.set(1)
 	f := &reportFixture{db: db, usage: &fakeUsage{}, log: &syncBuffer{}}
-	logger := slog.New(slog.NewJSONHandler(f.log, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	logger := slog.New(wrap(slog.NewJSONHandler(f.log, &slog.HandlerOptions{Level: slog.LevelDebug})))
 	f.publisher = NewPublisher(db, source, logger)
 	_, err = f.publisher.Revise(context.Background())
 	require.NoError(t, err)
@@ -337,4 +343,102 @@ func TestReportLogsNoContent(t *testing.T) {
 	assert.NotContains(t, f.log.String(), marker)
 	assert.NotContains(t, f.log.String(), "generatedAt")
 	assert.Contains(t, f.log.String(), `"reason":"invalid"`)
+}
+
+func (f *reportFixture) heldPolicies() int {
+	f.reports.mu.Lock()
+	defer f.reports.mu.Unlock()
+	return len(f.reports.policies)
+}
+
+// A report invalidated by its content keeps nothing of it: its policy,
+// which may be a page of text, is not held for the retrier.
+func TestReportInvalidHoldsNoPolicy(t *testing.T) {
+	f := newReportFixture(t, newTestStore(t))
+	agent := dialAgent(t, f.addr, "Bearer "+tokenA, "0123456789abcdef")
+	current := receive(t, agent.policies, "policy")
+
+	f.report(t, agent, 1, ingestreport.PolicyReport{Version: current, Status: "rejected", Error: strings.Repeat("M", 200<<10)})
+	require.Eventually(t, func() bool {
+		record, err := f.reports.store.Record(context.Background(), "0123456789abcdef")
+		return err == nil && record.Invalidated == 1
+	}, 10*time.Second, 10*time.Millisecond, "the report is invalidated")
+	nothing(t, agent.acks, "ack of an invalid report")
+	assert.Zero(t, f.heldPolicies())
+}
+
+// blockingHandler blocks the log line msg until released, after saying so.
+type blockingHandler struct {
+	slog.Handler
+	msg     string
+	entered chan struct{}
+	release chan struct{}
+	once    *sync.Once
+}
+
+func (h blockingHandler) Handle(ctx context.Context, r slog.Record) error {
+	if r.Message == h.msg {
+		h.once.Do(func() { close(h.entered) })
+		<-h.release
+	}
+	return h.Handler.Handle(ctx, r)
+}
+
+func (h blockingHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	h.Handler = h.Handler.WithAttrs(attrs)
+	return h
+}
+
+// The retrier may commit a sequence while the page that failed its first
+// commit is still being handled; its policy is held from before that commit,
+// so a collector behind still gets the policy, and nothing stays held.
+func TestReportRetrierWinsTheRace(t *testing.T) {
+	for _, policy := range []func(current uint64) ingestreport.PolicyReport{
+		func(current uint64) ingestreport.PolicyReport {
+			return ingestreport.PolicyReport{Version: current - 1, Status: "ok"}
+		},
+		func(current uint64) ingestreport.PolicyReport {
+			return ingestreport.PolicyReport{Version: current, Status: "rejected", Error: "persist_error"}
+		},
+	} {
+		block := blockingHandler{msg: "ingest report not applied yet", entered: make(chan struct{}), release: make(chan struct{}), once: &sync.Once{}}
+		f := newReportFixtureLogging(t, newTestStore(t), func(h slog.Handler) slog.Handler { block.Handler = h; return block })
+		agent := dialAgent(t, f.addr, "Bearer "+tokenA, "0123456789abcdef")
+		current := receive(t, agent.policies, "policy")
+
+		f.usage.mu.Lock()
+		f.usage.err = errors.New("down")
+		f.usage.mu.Unlock()
+		f.report(t, agent, 1, policy(current))
+		select {
+		case <-block.entered:
+		case <-time.After(10 * time.Second):
+			t.Fatal("the first commit did not fail")
+		}
+		f.usage.mu.Lock()
+		f.usage.err = nil
+		f.usage.mu.Unlock()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		go f.reports.Run(ctx)
+		assert.Equal(t, uint64(1), receive(t, agent.acks, "ack from the retrier"))
+		assert.Equal(t, current, receive(t, agent.policies, "policy sent again"))
+		close(block.release)
+		require.Eventually(t, func() bool { return f.heldPolicies() == 0 }, 5*time.Second, 10*time.Millisecond)
+		cancel()
+	}
+}
+
+func TestReportPoliciesExpire(t *testing.T) {
+	f := newReportFixture(t, newTestStore(t))
+	f.reports.awaiting("agent", 1, ingestreport.PolicyReport{Status: "ok"})
+	f.reports.expirePolicies(time.Now())
+	assert.Equal(t, 1, f.heldPolicies())
+	f.reports.expirePolicies(time.Now().Add(ingestreport.CommitDeadline + retryEvery + time.Second))
+	assert.Zero(t, f.heldPolicies(), "a sequence the retrier invalidated at its deadline leaves")
+	f.reports.awaiting("agent", 2, ingestreport.PolicyReport{Status: "ok"})
+	f.reports.forget("agent", 1)
+	assert.Equal(t, 1, f.heldPolicies(), "only the sequence held is forgotten")
+	f.reports.forget("agent", 2)
+	assert.Zero(t, f.heldPolicies())
 }
