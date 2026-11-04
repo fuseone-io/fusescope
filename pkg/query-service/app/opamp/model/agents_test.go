@@ -51,13 +51,18 @@ func (c *recordingConn) count() int {
 // records the deployments started.
 type fixedConfigProvider struct {
 	config string
+	id     string // log_pipelines:1 when empty
 
 	mu        sync.Mutex
 	initiated []string
 }
 
 func (p *fixedConfigProvider) RecommendAgentConfig(valuer.UUID, []byte) (*opamptypes.ConfigRecommendation, error) {
-	return &opamptypes.ConfigRecommendation{Config: []byte(p.config), ID: "log_pipelines:1"}, nil
+	id := p.id
+	if id == "" {
+		id = "log_pipelines:1"
+	}
+	return &opamptypes.ConfigRecommendation{Config: []byte(p.config), ID: id}, nil
 }
 func (p *fixedConfigProvider) ReportConfigDeploymentInitiated(_ valuer.UUID, recommendation *opamptypes.ConfigRecommendation) error {
 	p.mu.Lock()
@@ -285,10 +290,10 @@ func (p *flakyProvider) RecommendAgentConfig(org valuer.UUID, conf []byte) (*opa
 func (p *flakyProvider) ReportConfigDeploymentInitiated(org valuer.UUID, recommendation *opamptypes.ConfigRecommendation) error {
 	if p.initiatedFailures > 0 {
 		p.initiatedFailures--
-		p.events = append(p.events, "initiated failed")
+		p.events = append(p.events, "initiated failed "+recommendation.ID)
 		return errors.New("database unavailable")
 	}
-	p.events = append(p.events, "initiated")
+	p.events = append(p.events, "initiated "+recommendation.ID)
 	return p.fixedConfigProvider.ReportConfigDeploymentInitiated(org, recommendation)
 }
 func (p *flakyProvider) ReportConfigDeploymentStatus(_ valuer.UUID, _ string, configID string, err error) {
@@ -342,8 +347,72 @@ func TestDeploymentInitiatedIsRetriedBeforeTheAck(t *testing.T) {
 	assert.Equal(t, []string{
 		// The reconnect reconciles the status of what the agent already applied.
 		"status " + orgID.String() + "log_pipelines:0 ok=true",
-		"initiated failed",
-		"initiated",
+		"initiated failed log_pipelines:1",
+		"initiated log_pipelines:1",
 		"status " + orgID.String() + "log_pipelines:1 ok=true",
 	}, provider.events)
+}
+
+// Review of #318: while recording the deployment keeps failing, the agent's
+// ack is neither handled nor stored, and its full state is asked for, so
+// the ack comes again once the deployment is recorded.
+func TestAckWaitsForTheDeploymentToBeRecorded(t *testing.T) {
+	conn := &recordingConn{}
+	orgID := valuer.GenerateUUID()
+	agent := New(nil, slog.Default(), orgID, "agent-ack", conn)
+	provider := &flakyProvider{fixedConfigProvider: fixedConfigProvider{config: "receivers: {otlp: {}}\n"}, initiatedFailures: 2}
+
+	agent.UpdateStatus(reconnectStatus(7, "receivers: {}\n", "log_pipelines:0"), &protobufs.ServerToAgent{}, provider)
+	require.Equal(t, 1, conn.count(), "the config is pushed")
+
+	response := &protobufs.ServerToAgent{}
+	agent.UpdateStatus(reconnectStatus(8, "", "log_pipelines:1"), response, provider)
+	assert.NotZero(t, response.Flags&uint64(protobufs.ServerToAgentFlags_ServerToAgentFlags_ReportFullState), "the agent is asked for its full state")
+
+	agent.UpdateStatus(reconnectStatus(9, "", "log_pipelines:1"), &protobufs.ServerToAgent{}, provider)
+	assert.Equal(t, []string{
+		"status " + orgID.String() + "log_pipelines:0 ok=true",
+		"initiated failed log_pipelines:1",
+		"initiated failed log_pipelines:1",
+		"initiated log_pipelines:1",
+		"status " + orgID.String() + "log_pipelines:1 ok=true",
+	}, provider.events)
+}
+
+// Review of #318: a second push before the agent's next status cleared the
+// first one's unrecorded deployment.
+func TestUnrecordedDeploymentSurvivesTheNextPush(t *testing.T) {
+	testCases := []struct {
+		name              string
+		initiatedFailures int
+		wantPushes        int
+		wantEvents        []string
+	}{
+		{
+			name: "recorded before the next push", initiatedFailures: 1, wantPushes: 2,
+			wantEvents: []string{"initiated failed log_pipelines:1", "initiated log_pipelines:1", "initiated log_pipelines:2"},
+		},
+		{
+			name: "still failing: the next push waits", initiatedFailures: 2, wantPushes: 1,
+			wantEvents: []string{"initiated failed log_pipelines:1", "initiated failed log_pipelines:1"},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			agents, conns := newTestAgents(t, map[string]string{"agent": "receivers: {}\n"})
+			provider := &flakyProvider{fixedConfigProvider: fixedConfigProvider{config: "receivers: {otlp: {}}\n"}, initiatedFailures: tc.initiatedFailures}
+
+			require.Error(t, agents.RecommendLatestConfigToAll(provider))
+			provider.config, provider.id = "receivers: {otlp: {}, zipkin: {}}\n", "log_pipelines:2"
+			err := agents.RecommendLatestConfigToAll(provider)
+			if tc.wantPushes == 1 {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, tc.wantPushes, conns["agent"].count())
+			assert.Equal(t, tc.wantEvents, provider.events)
+		})
+	}
 }
