@@ -429,16 +429,48 @@ func TestReportRetrierWinsTheRace(t *testing.T) {
 	}
 }
 
+// A held policy outlives every attempt that may still commit its sequence:
+// one started at the commit deadline runs for a store call's deadline, and
+// the retrier returns it at its next pass.
 func TestReportPoliciesExpire(t *testing.T) {
 	f := newReportFixture(t, newTestStore(t))
-	f.reports.awaiting("agent", 1, ingestreport.PolicyReport{Status: "ok"})
-	f.reports.expirePolicies(time.Now())
-	assert.Equal(t, 1, f.heldPolicies())
-	f.reports.expirePolicies(time.Now().Add(ingestreport.CommitDeadline + retryEvery + time.Second))
-	assert.Zero(t, f.heldPolicies(), "a sequence the retrier invalidated at its deadline leaves")
-	f.reports.awaiting("agent", 2, ingestreport.PolicyReport{Status: "ok"})
-	f.reports.forget("agent", 1)
-	assert.Equal(t, 1, f.heldPolicies(), "only the sequence held is forgotten")
-	f.reports.forget("agent", 2)
+	agent := dialAgent(t, f.addr, "Bearer "+tokenA, "0123456789abcdef")
+	current := receive(t, agent.policies, "policy")
+	const id = "0123456789abcdef"
+
+	f.reports.awaiting(id, 1, ingestreport.PolicyReport{Version: current - 1, Status: "ok"})
+	registered := time.Now()
+	f.reports.expirePolicies(registered.Add(ingestreport.CommitDeadline + retryEvery + time.Second))
+	assert.Equal(t, 1, f.heldPolicies(), "past the commit deadline an attempt may still be running")
+	f.reports.expirePolicies(registered.Add(ingestreport.CommitDeadline + ingestreport.StoreCallTimeout))
+	f.reports.committed([]ingestreport.Committed{{Agent: id, Seq: 1}})
+	assert.Equal(t, uint64(1), receive(t, agent.acks, "ack"))
+	assert.Equal(t, current, receive(t, agent.policies, "policy of an attempt that finished at the store call's deadline"))
 	assert.Zero(t, f.heldPolicies())
+
+	f.reports.awaiting(id, 2, ingestreport.PolicyReport{Status: "ok"})
+	f.reports.expirePolicies(time.Now().Add(policyHold + time.Second))
+	assert.Zero(t, f.heldPolicies(), "a sequence no attempt can commit any more leaves")
+
+	f.reports.awaiting(id, 3, ingestreport.PolicyReport{Status: "ok"})
+	f.reports.forget(id, 2)
+	assert.Equal(t, 1, f.heldPolicies(), "only the sequence held is forgotten")
+	f.reports.forget(id, 3)
+	assert.Zero(t, f.heldPolicies())
+}
+
+// Only success and an invalidation end a sequence; "not awaiting commit" is
+// also what Commit answers while the retrier holds the attempt.
+func TestAwaitsRetry(t *testing.T) {
+	assert.False(t, awaitsRetry(nil))
+	assert.False(t, awaitsRetry(ingestreport.ErrInvalidSequence))
+	assert.False(t, awaitsRetry(fmt.Errorf("commit: %w", ingestreport.ErrInvalidSequence)))
+	for _, err := range []error{
+		ingestreport.ErrBusy,
+		errors.New("commit: store unavailable"),
+		errors.New("sequence 1 of agent is not awaiting commit"),
+		errNewAgentLimit,
+	} {
+		assert.True(t, awaitsRetry(err), err.Error())
+	}
 }

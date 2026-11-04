@@ -136,24 +136,28 @@ func (reports *Reports) forget(agentID string, seq uint64) {
 	}
 }
 
-// expirePolicies drops the policies of sequences past the commit deadline,
-// which the retrier invalidates without returning them.
+// policyHold is how long a held policy can still be needed: an attempt
+// may start up to the commit deadline and run for a store call's deadline,
+// and the retrier returns it at its next pass.
+const policyHold = ingestreport.CommitDeadline + ingestreport.StoreCallTimeout + retryEvery
+
+// expirePolicies drops the policies of sequences no attempt can commit any
+// more, which the retrier invalidates without returning them.
 func (reports *Reports) expirePolicies(now time.Time) {
 	reports.mu.Lock()
 	defer reports.mu.Unlock()
 	maps.DeleteFunc(reports.policies, func(_ string, held reportedPolicy) bool {
-		return now.Sub(held.at) > ingestreport.CommitDeadline+retryEvery
+		return now.Sub(held.at) > policyHold
 	})
 }
 
-// awaitsRetry reports whether a sequence whose Commit returned err still
-// awaits a commit by the retrier: a busy budget or a failed store call
-// keeps it; success, an invalidation or any other answer ends it.
+// awaitsRetry reports whether a sequence whose Commit returned err may still
+// be committed by the retrier. Only success and an invalidation are known
+// to end it; any other answer (a busy budget, a failed store call, or "not
+// awaiting commit", which is also the answer while the retrier holds the
+// attempt) keeps its policy until it commits or expires.
 func awaitsRetry(err error) bool {
-	if err == nil || errors.Is(err, ingestreport.ErrInvalidSequence) {
-		return false
-	}
-	return errors.Is(err, ingestreport.ErrBusy) || strings.HasPrefix(err.Error(), "commit:")
+	return err != nil && !errors.Is(err, ingestreport.ErrInvalidSequence)
 }
 
 // committed acknowledges the sequences the retrier committed and checks
