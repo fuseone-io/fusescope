@@ -12204,12 +12204,13 @@ export interface RumtypesViewEventDTO {
 	spanId: string;
 }
 
-export enum RumtypesVitalNameDTO {
+export enum RumtypesTimelineVitalNameDTO {
 	lcp = 'lcp',
 	inp = 'inp',
 	cls = 'cls',
 	fcp = 'fcp',
 	ttfb = 'ttfb',
+	app_start = 'app_start',
 }
 export enum RumtypesVitalRatingDTO {
 	good = 'good',
@@ -12217,7 +12218,7 @@ export enum RumtypesVitalRatingDTO {
 	poor = 'poor',
 }
 export interface RumtypesVitalEventDTO {
-	name: RumtypesVitalNameDTO;
+	name: RumtypesTimelineVitalNameDTO;
 	rating: RumtypesVitalRatingDTO;
 	/**
 	 * @type number
@@ -12760,6 +12761,13 @@ export interface RumtypesReleaseMarkerDTO {
 	release: string;
 }
 
+export enum RumtypesVitalNameDTO {
+	lcp = 'lcp',
+	inp = 'inp',
+	cls = 'cls',
+	fcp = 'fcp',
+	ttfb = 'ttfb',
+}
 export interface RumtypesVitalSeriesPointDTO {
 	/**
 	 * @type number
