@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"maps"
 	"strconv"
 	"strings"
 	"sync"
@@ -36,7 +37,10 @@ type Reports struct {
 	logger    *slog.Logger
 
 	// policies holds the policy reported by sequences awaiting a commit by
-	// the retrier, checked once it commits them.
+	// the retrier, checked once it commits them: registered before the first
+	// commit, so the retrier never commits one unregistered, and only for a
+	// valid report, whose policy is a few bounded fields. Each leaves at its
+	// sequence's commit or terminal failure, or past the commit deadline.
 	mu       sync.Mutex
 	policies map[string]reportedPolicy
 }
@@ -44,6 +48,7 @@ type Reports struct {
 type reportedPolicy struct {
 	seq    uint64
 	policy ingestreport.PolicyReport
+	at     time.Time
 }
 
 func NewReports(store *ReportStore, hub *Hub, publisher *Publisher, logger *slog.Logger) *Reports {
@@ -74,9 +79,15 @@ func (reports *Reports) Receive(agentID string, conn Connection, page []byte) *p
 	case report == nil:
 		return nil // more pages to come
 	}
-	if err := reports.assembler.Commit(agentID, report.ReportSequence); err != nil {
-		reports.logger.Warn("ingest report not applied yet", slog.String("agent_id", agentID), slog.Uint64("report_sequence", report.ReportSequence), slog.String("reason", refusal(err)))
+	if validReport(report) {
 		reports.awaiting(agentID, report.ReportSequence, report.Policy)
+	}
+	err = reports.assembler.Commit(agentID, report.ReportSequence)
+	if !awaitsRetry(err) {
+		reports.forget(agentID, report.ReportSequence)
+	}
+	if err != nil {
+		reports.logger.Warn("ingest report not applied yet", slog.String("agent_id", agentID), slog.Uint64("report_sequence", report.ReportSequence), slog.String("reason", refusal(err)))
 		return nil
 	}
 	reports.checkPolicy(agentID, report.Policy)
@@ -95,6 +106,7 @@ func (reports *Reports) Run(ctx context.Context) {
 			return
 		case <-retry.C:
 			reports.committed(reports.assembler.Retry())
+			reports.expirePolicies(time.Now())
 		case <-prune.C:
 			pruneCtx, cancel := context.WithTimeout(ctx, ingestreport.StoreCallTimeout)
 			if err := reports.store.Prune(pruneCtx); err != nil && ctx.Err() == nil {
@@ -111,8 +123,37 @@ func (reports *Reports) awaiting(agentID string, seq uint64, policy ingestreport
 	reports.mu.Lock()
 	defer reports.mu.Unlock()
 	if _, ok := reports.policies[agentID]; ok || len(reports.policies) < ingestreport.MaxAssemblies {
-		reports.policies[agentID] = reportedPolicy{seq: seq, policy: policy}
+		reports.policies[agentID] = reportedPolicy{seq: seq, policy: policy, at: time.Now()}
 	}
+}
+
+// forget drops the policy of seq, whose sequence no longer awaits a commit.
+func (reports *Reports) forget(agentID string, seq uint64) {
+	reports.mu.Lock()
+	defer reports.mu.Unlock()
+	if held, ok := reports.policies[agentID]; ok && held.seq == seq {
+		delete(reports.policies, agentID)
+	}
+}
+
+// expirePolicies drops the policies of sequences past the commit deadline,
+// which the retrier invalidates without returning them.
+func (reports *Reports) expirePolicies(now time.Time) {
+	reports.mu.Lock()
+	defer reports.mu.Unlock()
+	maps.DeleteFunc(reports.policies, func(_ string, held reportedPolicy) bool {
+		return now.Sub(held.at) > ingestreport.CommitDeadline+retryEvery
+	})
+}
+
+// awaitsRetry reports whether a sequence whose Commit returned err still
+// awaits a commit by the retrier: a busy budget or a failed store call
+// keeps it; success, an invalidation or any other answer ends it.
+func awaitsRetry(err error) bool {
+	if err == nil || errors.Is(err, ingestreport.ErrInvalidSequence) {
+		return false
+	}
+	return errors.Is(err, ingestreport.ErrBusy) || strings.HasPrefix(err.Error(), "commit:")
 }
 
 // committed acknowledges the sequences the retrier committed and checks
