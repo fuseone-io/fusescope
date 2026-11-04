@@ -98,7 +98,6 @@ type Handlers struct {
 	LLMPricingRuleHandler   llmpricingrule.Handler
 	StatsHandler            statsreporter.Handler
 	RUMApplicationHandler   rumapplication.Handler
-	RUMGateway              rumapplication.Gateway
 	Onboarding              onboarding.Handler
 }
 
@@ -157,7 +156,6 @@ func NewHandlers(
 		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(modules.LLMPricingRule),
 		StatsHandler:            statsreporter.NewHandler(statsAggregator),
 		RUMApplicationHandler:   implrumapplication.NewHandler(modules.RUMApplication),
-		RUMGateway:              implrumapplication.NewGateway(modules.RUMApplication, rumConfig, providerSettings),
 		Onboarding:              implonboarding.NewHandler(modules.Onboarding),
 	}
 }

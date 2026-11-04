@@ -60,16 +60,6 @@ type IngestRejection struct {
 	LastSeenAt time.Time       `json:"lastSeenAt" required:"true"`
 }
 
-// IngestBatch is what the gateway learned from one accepted request.
-type IngestBatch struct {
-	SessionIDs []string
-	Views      int64
-	Errors     int64
-	Vitals     int64
-	SDKName    string
-	SDKVersion string
-}
-
 func (RejectionReason) Enum() []any {
 	return []any{RejectionReasonBadKey, RejectionReasonUnknownKey, RejectionReasonOriginNotAllowed, RejectionReasonPackageNotAllowed, RejectionReasonRateLimited, RejectionReasonTooLarge, RejectionReasonInvalidPayload, RejectionReasonSignalNotAllowed}
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// rumPathPrefix serves the public ingestion gateway, which answers CORS itself.
+// rumPathPrefix serves the public browser SDK, outside the UI's CORS policy.
 const rumPathPrefix = "/rum/"
 
 type rumRoute struct {
@@ -51,15 +51,6 @@ func (provider *provider) addRUMRoutes(router *mux.Router) error {
 			route.openAPIDef,
 			handler.WithResourceDefs(resourceDef),
 		)).Methods(route.method).GetError(); err != nil {
-			return err
-		}
-	}
-
-	for path, handle := range map[string]http.HandlerFunc{
-		"/rum/v1/traces": provider.rumGateway.Traces,
-		"/rum/v1/logs":   provider.rumGateway.Logs,
-	} {
-		if err := router.HandleFunc(path, handle).Methods(http.MethodPost, http.MethodOptions).GetError(); err != nil {
 			return err
 		}
 	}

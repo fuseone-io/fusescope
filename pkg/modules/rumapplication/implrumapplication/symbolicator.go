@@ -14,7 +14,10 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-const maxSourceMapIndexEntries = 10000
+const (
+	maxSourceMapIndexEntries = 10000
+	sourceMapIndexTTL        = 30 * time.Second
+)
 
 type sourceMapSymbolicator struct {
 	store        rumtypes.Store
@@ -45,7 +48,7 @@ func NewSymbolicator(store rumtypes.Store, storage rumapplication.SourceMapStora
 		logger:       logger,
 		contextLines: config.SourceMaps.ContextLines,
 		maps:         newSourceMapCache(config.SourceMaps.CacheSize),
-		indexTTL:     config.KeyCacheTTL,
+		indexTTL:     sourceMapIndexTTL,
 		indexes:      map[string]sourceMapIndexEntry{},
 		usage:        map[valuer.UUID]time.Time{},
 	}

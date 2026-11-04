@@ -102,7 +102,6 @@ type provider struct {
 	quickFilterModule          quickfilter.Module
 	quickFilterHandler         quickfilter.Handler
 	rumApplicationHandler      rumapplication.Handler
-	rumGateway                 rumapplication.Gateway
 	onboardingHandler          onboarding.Handler
 }
 
@@ -155,7 +154,6 @@ func NewFactory(
 	quickFilterModule quickfilter.Module,
 	quickFilterHandler quickfilter.Handler,
 	rumApplicationHandler rumapplication.Handler,
-	rumGateway rumapplication.Gateway,
 	onboardingHandler onboarding.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
@@ -211,7 +209,6 @@ func NewFactory(
 			quickFilterModule,
 			quickFilterHandler,
 			rumApplicationHandler,
-			rumGateway,
 			onboardingHandler,
 		)
 	})
@@ -269,7 +266,6 @@ func newProvider(
 	quickFilterModule quickfilter.Module,
 	quickFilterHandler quickfilter.Handler,
 	rumApplicationHandler rumapplication.Handler,
-	rumGateway rumapplication.Gateway,
 	onboardingHandler onboarding.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/apiserver/signozapiserver")
@@ -322,7 +318,6 @@ func newProvider(
 		quickFilterModule:          quickFilterModule,
 		quickFilterHandler:         quickFilterHandler,
 		rumApplicationHandler:      rumApplicationHandler,
-		rumGateway:                 rumGateway,
 		onboardingHandler:          onboardingHandler,
 	}
 

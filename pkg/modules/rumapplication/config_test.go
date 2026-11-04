@@ -7,7 +7,7 @@ import (
 )
 
 // Ingest tokens travel only over TLS: a token file needs the listener's
-// certificate and key, whether or not the RUM gateway is on.
+// certificate and key.
 func TestConfigIngestPolicy(t *testing.T) {
 	withTLS := IngestPolicyConfig{TokenFile: "/tokens", Listen: "0.0.0.0:4321", TLS: IngestTLSConfig{CertFile: "/tls.crt", KeyFile: "/tls.key"}}
 	tests := []struct {
@@ -25,17 +25,14 @@ func TestConfigIngestPolicy(t *testing.T) {
 		{"the plaintext OpAMP port", func(p *IngestPolicyConfig) { p.Listen = "0.0.0.0:4320" }, false},
 	}
 	for _, test := range tests {
-		for _, enabled := range []bool{true, false} {
-			config := newConfig().(*Config)
-			config.Enabled = enabled
-			config.IngestPolicy = withTLS
-			test.policy(&config.IngestPolicy)
-			err := config.Validate()
-			if test.valid {
-				assert.NoError(t, err, "%s, gateway on: %v", test.name, enabled)
-			} else {
-				assert.Error(t, err, "%s, gateway on: %v", test.name, enabled)
-			}
+		config := newConfig().(*Config)
+		config.IngestPolicy = withTLS
+		test.policy(&config.IngestPolicy)
+		err := config.Validate()
+		if test.valid {
+			assert.NoError(t, err, test.name)
+		} else {
+			assert.Error(t, err, test.name)
 		}
 	}
 	assert.Equal(t, "0.0.0.0:4321", newConfig().(*Config).IngestPolicy.Listen)
