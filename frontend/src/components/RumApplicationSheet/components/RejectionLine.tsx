@@ -20,6 +20,8 @@ const REASONS: Record<RumtypesRejectionReasonDTO, string> = {
 	[RumtypesRejectionReasonDTO.rate_limited]: 'rate limited',
 	[RumtypesRejectionReasonDTO.too_large]: 'payload too large',
 	[RumtypesRejectionReasonDTO.invalid_payload]: 'not valid OTLP',
+	[RumtypesRejectionReasonDTO.signal_not_allowed]:
+		'signal not sent by this platform',
 };
 
 function RejectionLine({
