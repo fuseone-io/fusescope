@@ -634,7 +634,6 @@ rum:
 dashboard:
   public:
     # In-memory, per-process limits on anonymous public dashboard requests.
-    # The client IP follows rum.ratelimit.trust_forwarded_for.
     ratelimit:
       # Token bucket shared by every visitor of one public link.
       link:
@@ -644,6 +643,8 @@ dashboard:
       client:
         rate: 5
         burst: 100
+      # Use the first X-Forwarded-For address as the client IP. Enable only behind a proxy that sets it.
+      trust_forwarded_for: false
 
 ##################### Onboarding #####################
 onboarding:

@@ -17,8 +17,8 @@ type publicRateLimiter struct {
 	trustForwardedFor bool
 }
 
-func newPublicRateLimiter(config dashboard.PublicRateLimitConfig, trustForwardedFor bool) *publicRateLimiter {
-	return &publicRateLimiter{link: ratelimit.NewLimiter(config.Link), client: ratelimit.NewLimiter(config.Client), trustForwardedFor: trustForwardedFor}
+func newPublicRateLimiter(config dashboard.PublicRateLimitConfig) *publicRateLimiter {
+	return &publicRateLimiter{link: ratelimit.NewLimiter(config.Link), client: ratelimit.NewLimiter(config.Client), trustForwardedFor: config.TrustForwardedFor}
 }
 
 // CheckPublicRateLimit checks the client bucket before the link bucket, so a

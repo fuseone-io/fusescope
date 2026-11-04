@@ -31,6 +31,6 @@ def signoz_public_ratelimit(  # pylint: disable=too-many-arguments,too-many-posi
             "SIGNOZ_DASHBOARD_PUBLIC_RATELIMIT_LINK_BURST": 4,
             "SIGNOZ_DASHBOARD_PUBLIC_RATELIMIT_CLIENT_RATE": 0.001,
             "SIGNOZ_DASHBOARD_PUBLIC_RATELIMIT_CLIENT_BURST": 2,
-            "SIGNOZ_RUM_RATELIMIT_TRUST__FORWARDED__FOR": True,
+            "SIGNOZ_DASHBOARD_PUBLIC_RATELIMIT_TRUST__FORWARDED__FOR": True,
         },
     )
