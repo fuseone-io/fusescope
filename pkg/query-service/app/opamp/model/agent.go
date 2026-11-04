@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	stderrors "errors"
 	"log/slog"
 	"reflect"
 	"sync"
@@ -32,6 +33,10 @@ type Agent struct {
 	// effective config is compared with the recommendation once reported.
 	reconcilePending bool
 
+	// A pushed recommendation whose deployment could not be recorded as
+	// started; retried on the agent's next message, before its status.
+	initiatedPending *opamptypes.ConfigRecommendation
+
 	// can this agent be load balancer
 	CanLB bool
 
@@ -40,9 +45,11 @@ type Agent struct {
 
 	conn      opampTypes.Connection
 	connMutex sync.Mutex
-	mux       sync.RWMutex
-	store     sqlstore.SQLStore
-	logger    *slog.Logger
+	// Set once a send timed out and the agent was disconnected.
+	connDead bool
+	mux      sync.RWMutex
+	store    sqlstore.SQLStore
+	logger   *slog.Logger
 }
 
 // set in agent description when agent is capable of supporting
@@ -259,6 +266,9 @@ func (agent *Agent) processStatusUpdate(
 	// current status is not up-to-date.
 	lostPreviousUpdate := (agent.Status == nil) || (agent.Status != nil && agent.Status.SequenceNum+1 != newStatus.SequenceNum)
 
+	// Before the status, so an ack finds the deployment it acknowledges.
+	agent.retryDeploymentInitiated(configProvider)
+
 	agentDescrChanged := agent.updateStatusField(newStatus, configProvider)
 
 	// Check if any fields were omitted in the status report.
@@ -285,8 +295,7 @@ func (agent *Agent) processStatusUpdate(
 	agent.updateEffectiveConfig(newStatus, response)
 
 	configChanged := false
-	if agent.reconcilePending && !agentDescrChanged && newStatus.EffectiveConfig != nil && newStatus.EffectiveConfig.ConfigMap != nil {
-		agent.reconcilePending = false
+	if agent.reconcilePending && !agentDescrChanged && agent.Config != "" {
 		configChanged = agent.reconcileRemoteConfig(configProvider)
 	}
 	if agentDescrChanged {
@@ -325,12 +334,14 @@ func (agent *Agent) processStatusUpdate(
 
 // reconcileRemoteConfig sets the recommendation as the agent's remote config
 // if it differs from the agent's effective config, and reports whether it did.
+// A failed recommendation leaves reconcilePending set, for the next message.
 func (agent *Agent) reconcileRemoteConfig(configProvider AgentConfigProvider) bool {
 	recommendation, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
 	if err != nil {
 		agent.logger.Error("could not generate config recommendation for agent", "agent_id", agent.AgentID, errors.Attr(err))
 		return false
 	}
+	agent.reconcilePending = false
 	if sameConfig(recommendation.Config, []byte(agent.Config)) {
 		return false
 	}
@@ -346,16 +357,34 @@ func (agent *Agent) pushRemoteConfig(msg *protobufs.ServerToAgent, configProvide
 	if err := agent.SendToAgent(msg); err != nil {
 		return err
 	}
-	if agent.recommendation != nil {
-		configProvider.ReportConfigDeploymentInitiated(agent.OrgID, agent.recommendation)
-	}
 	ListenToConfigUpdate(
 		agent.OrgID,
 		agent.AgentID,
 		string(msg.RemoteConfig.ConfigHash),
 		configProvider.ReportConfigDeploymentStatus,
 	)
+	if agent.recommendation == nil {
+		return nil
+	}
+	if err := configProvider.ReportConfigDeploymentInitiated(agent.OrgID, agent.recommendation); err != nil {
+		agent.initiatedPending = agent.recommendation
+		return err
+	}
+	agent.initiatedPending = nil
 	return nil
+}
+
+// retryDeploymentInitiated records a pushed deployment as started if that
+// failed when it was pushed. The caller holds agent.mux.
+func (agent *Agent) retryDeploymentInitiated(configProvider AgentConfigProvider) {
+	if agent.initiatedPending == nil {
+		return
+	}
+	if err := configProvider.ReportConfigDeploymentInitiated(agent.OrgID, agent.initiatedPending); err != nil {
+		agent.logger.Error("could not record the config deployment as started", "agent_id", agent.AgentID, errors.Attr(err))
+		return
+	}
+	agent.initiatedPending = nil
 }
 
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
@@ -455,15 +484,31 @@ func isEqualConfigFile(f1, f2 *protobufs.AgentConfigObject) bool {
 	return bytes.Equal(f1.Body, f2.Body) && f1.ContentType == f2.ContentType
 }
 
-// sendTimeout bounds one message to an agent, so a slow agent cannot hold
-// up a push to the others.
-const sendTimeout = 10 * time.Second
+// sendTimeout bounds one message to an agent. opamp-go's WebSocket
+// connection ignores the send's context, so a send still blocked at the
+// timeout is ended by disconnecting the agent, which reconnects.
+var sendTimeout = 10 * time.Second
+
+var errAgentDisconnected = stderrors.New("agent disconnected after a send timed out")
 
 func (agent *Agent) SendToAgent(msg *protobufs.ServerToAgent) error {
 	agent.connMutex.Lock()
 	defer agent.connMutex.Unlock()
+	if agent.connDead {
+		return errAgentDisconnected
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
 	defer cancel()
-	return agent.conn.Send(ctx, msg)
+	sent := make(chan error, 1)
+	go func() { sent <- agent.conn.Send(ctx, msg) }()
+	select {
+	case err := <-sent:
+		return err
+	case <-ctx.Done():
+		// The send may still be blocked: no other send on this connection.
+		agent.connDead = true
+		_ = agent.conn.Disconnect()
+		return errors.WrapInternalf(ctx.Err(), errors.CodeInternal, "send to agent %s timed out after %s", agent.AgentID, sendTimeout)
+	}
 }

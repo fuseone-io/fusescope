@@ -117,37 +117,59 @@ func (agents *Agents) GetAllAgents() []*Agent {
 	return allAgents
 }
 
+// broadcastConcurrency bounds the agents pushed to at once, so slow agents
+// cost about one send timeout each batch, not one each.
+const broadcastConcurrency = 16
+
 // Recommend latest config to connected agents whose effective
 // config is not the same as the latest recommendation. An agent that fails
 // does not stop the push to the others; their errors are returned joined.
 func (agents *Agents) RecommendLatestConfigToAll(
 	provider AgentConfigProvider,
 ) error {
-	var errs []error
+	var (
+		mu   sync.Mutex
+		errs []error
+		wg   sync.WaitGroup
+	)
+	slots := make(chan struct{}, broadcastConcurrency)
 	for _, agent := range agents.GetAllAgents() {
-		recommendation, err := provider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
-		if err != nil {
-			errs = append(errs, errors.Wrap(err, fmt.Sprintf(
-				"could not generate conf recommendation for %v", agent.AgentID,
-			)))
-			continue
-		}
-
-		if sameConfig(recommendation.Config, []byte(agent.Config)) {
-			agents.logger.Info(
-				"recommended config same as current effective config for agent", "agent_id", agent.AgentID,
-			)
-			continue
-		}
-
-		agent.mux.Lock()
-		agent.remoteConfig = newRemoteConfig(recommendation)
-		agent.recommendation = recommendation
-		err = agent.pushRemoteConfig(&protobufs.ServerToAgent{RemoteConfig: agent.remoteConfig}, provider)
-		agent.mux.Unlock()
-		if err != nil {
-			errs = append(errs, errors.Wrap(err, fmt.Sprintf("could not push config to %v", agent.AgentID)))
-		}
+		slots <- struct{}{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			defer func() { <-slots }()
+			if err := agents.recommendLatestConfig(agent, provider); err != nil {
+				mu.Lock()
+				errs = append(errs, err)
+				mu.Unlock()
+			}
+		}()
 	}
+	wg.Wait()
 	return stderrors.Join(errs...)
+}
+
+func (agents *Agents) recommendLatestConfig(agent *Agent, provider AgentConfigProvider) error {
+	agent.mux.Lock()
+	defer agent.mux.Unlock()
+
+	recommendation, err := provider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("could not generate conf recommendation for %v", agent.AgentID))
+	}
+
+	if sameConfig(recommendation.Config, []byte(agent.Config)) {
+		agents.logger.Info(
+			"recommended config same as current effective config for agent", "agent_id", agent.AgentID,
+		)
+		return nil
+	}
+
+	agent.remoteConfig = newRemoteConfig(recommendation)
+	agent.recommendation = recommendation
+	if err := agent.pushRemoteConfig(&protobufs.ServerToAgent{RemoteConfig: agent.remoteConfig}, provider); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("could not push config to %v", agent.AgentID))
+	}
+	return nil
 }

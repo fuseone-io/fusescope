@@ -7,7 +7,9 @@ import (
 	"log/slog"
 	"net"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/types/opamptypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
@@ -57,10 +59,11 @@ type fixedConfigProvider struct {
 func (p *fixedConfigProvider) RecommendAgentConfig(valuer.UUID, []byte) (*opamptypes.ConfigRecommendation, error) {
 	return &opamptypes.ConfigRecommendation{Config: []byte(p.config), ID: "log_pipelines:1"}, nil
 }
-func (p *fixedConfigProvider) ReportConfigDeploymentInitiated(_ valuer.UUID, recommendation *opamptypes.ConfigRecommendation) {
+func (p *fixedConfigProvider) ReportConfigDeploymentInitiated(_ valuer.UUID, recommendation *opamptypes.ConfigRecommendation) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.initiated = append(p.initiated, recommendation.ID)
+	return nil
 }
 func (*fixedConfigProvider) ReportConfigDeploymentStatus(valuer.UUID, string, string, error) {}
 func (*fixedConfigProvider) GetDeployStatusByHash(context.Context, valuer.UUID, string) (opamptypes.DeployStatus, error) {
@@ -188,4 +191,159 @@ func TestReconnectedAgentIsReconciled(t *testing.T) {
 			assert.Equal(t, tc.wantInitiated, provider.initiatedCount())
 		})
 	}
+}
+
+// blockingConn's Send ignores its context, as opamp-go's WebSocket
+// connection does, and returns only once Disconnect is called.
+type blockingConn struct {
+	once         sync.Once
+	disconnected chan struct{}
+	sends        atomic.Int32
+}
+
+func newBlockingConn() *blockingConn { return &blockingConn{disconnected: make(chan struct{})} }
+
+func (c *blockingConn) Connection() net.Conn { return nil }
+func (c *blockingConn) Disconnect() error {
+	c.once.Do(func() { close(c.disconnected) })
+	return nil
+}
+func (c *blockingConn) Send(context.Context, *protobufs.ServerToAgent) error {
+	c.sends.Add(1)
+	<-c.disconnected
+	return errors.New("use of closed connection")
+}
+
+func withSendTimeout(t *testing.T, timeout time.Duration) {
+	t.Helper()
+	previous := sendTimeout
+	sendTimeout = timeout
+	t.Cleanup(func() { sendTimeout = previous })
+}
+
+// Review of #318: the send's context alone bounded nothing, since the
+// WebSocket connection ignores it.
+func TestSendToAgentDisconnectsABlockedAgent(t *testing.T) {
+	withSendTimeout(t, 50*time.Millisecond)
+	conn := newBlockingConn()
+	agent := New(nil, slog.Default(), valuer.GenerateUUID(), "agent", conn)
+
+	start := time.Now()
+	err := agent.SendToAgent(&protobufs.ServerToAgent{})
+	require.Error(t, err)
+	assert.Less(t, time.Since(start), time.Second)
+	select {
+	case <-conn.disconnected:
+	default:
+		t.Fatal("the blocked agent is disconnected")
+	}
+
+	require.Error(t, agent.SendToAgent(&protobufs.ServerToAgent{}), "a disconnected agent fails at once")
+	assert.Equal(t, int32(1), conn.sends.Load(), "no second send on a dead connection")
+}
+
+// Review of #318: slow agents are pushed to concurrently, not one timeout
+// after another.
+func TestRecommendLatestConfigToAllWithSlowAgents(t *testing.T) {
+	const timeout = 200 * time.Millisecond
+	withSendTimeout(t, timeout)
+	agents, conns := newTestAgents(t, map[string]string{"fast": "receivers: {}\n"})
+	orgID := agents.agentsById["fast"].OrgID
+	for i := range 8 {
+		id := fmt.Sprintf("slow-%d", i)
+		agent := New(nil, slog.Default(), orgID, id, newBlockingConn())
+		agent.Config = "receivers: {}\n"
+		agents.agentsById[id] = agent
+	}
+	provider := &fixedConfigProvider{config: "receivers: {otlp: {}}\n"}
+
+	start := time.Now()
+	err := agents.RecommendLatestConfigToAll(provider)
+	elapsed := time.Since(start)
+
+	require.Error(t, err, "the slow agents' timeouts are returned")
+	assert.Less(t, elapsed, 4*timeout, "8 slow agents cost about one timeout, not eight")
+	assert.Equal(t, 1, conns["fast"].count())
+	assert.Equal(t, 1, provider.initiatedCount(), "only the push that was sent starts a deployment")
+}
+
+// flakyProvider fails its first recommendation and its first
+// ReportConfigDeploymentInitiated, and records the order of calls.
+type flakyProvider struct {
+	fixedConfigProvider
+	recommendFailures, initiatedFailures int
+	events                               []string
+}
+
+func (p *flakyProvider) RecommendAgentConfig(org valuer.UUID, conf []byte) (*opamptypes.ConfigRecommendation, error) {
+	if p.recommendFailures > 0 {
+		p.recommendFailures--
+		return nil, errors.New("database unavailable")
+	}
+	return p.fixedConfigProvider.RecommendAgentConfig(org, conf)
+}
+func (p *flakyProvider) ReportConfigDeploymentInitiated(org valuer.UUID, recommendation *opamptypes.ConfigRecommendation) error {
+	if p.initiatedFailures > 0 {
+		p.initiatedFailures--
+		p.events = append(p.events, "initiated failed")
+		return errors.New("database unavailable")
+	}
+	p.events = append(p.events, "initiated")
+	return p.fixedConfigProvider.ReportConfigDeploymentInitiated(org, recommendation)
+}
+func (p *flakyProvider) ReportConfigDeploymentStatus(_ valuer.UUID, _ string, configID string, err error) {
+	p.events = append(p.events, fmt.Sprintf("status %s ok=%v", configID, err == nil))
+}
+
+func reconnectStatus(seq uint64, effective string, hash string) *protobufs.AgentToServer {
+	status := &protobufs.AgentToServer{
+		SequenceNum:  seq,
+		Capabilities: uint64(protobufs.AgentCapabilities_AgentCapabilities_ReportsEffectiveConfig),
+		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
+			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
+			LastRemoteConfigHash: []byte(hash),
+		},
+	}
+	if effective != "" {
+		status.AgentDescription = &protobufs.AgentDescription{}
+		status.EffectiveConfig = &protobufs.EffectiveConfig{ConfigMap: &protobufs.AgentConfigMap{ConfigMap: map[string]*protobufs.AgentConfigObject{
+			CollectorConfigFilename: {Body: []byte(effective)},
+		}}}
+	}
+	return status
+}
+
+// Review of #318: a failed recommendation at reconnect dropped the
+// reconciliation for good.
+func TestReconnectReconciliationRetriesAfterAFailure(t *testing.T) {
+	conn := &recordingConn{}
+	agent := New(nil, slog.Default(), valuer.GenerateUUID(), "agent", conn)
+	provider := &flakyProvider{fixedConfigProvider: fixedConfigProvider{config: "receivers: {otlp: {}}\n"}, recommendFailures: 1}
+
+	agent.UpdateStatus(reconnectStatus(7, "receivers: {}\n", "log_pipelines:0"), &protobufs.ServerToAgent{}, provider)
+	assert.Zero(t, conn.count(), "the recommendation failed")
+
+	agent.UpdateStatus(reconnectStatus(8, "", "log_pipelines:0"), &protobufs.ServerToAgent{}, provider)
+	assert.Equal(t, 1, conn.count(), "the next message retries the reconciliation")
+}
+
+// Review of #318: a failure to record the deployment as started was
+// dropped, so the agent's ack found no row to update.
+func TestDeploymentInitiatedIsRetriedBeforeTheAck(t *testing.T) {
+	conn := &recordingConn{}
+	orgID := valuer.GenerateUUID()
+	agent := New(nil, slog.Default(), orgID, "agent-initiated", conn)
+	provider := &flakyProvider{fixedConfigProvider: fixedConfigProvider{config: "receivers: {otlp: {}}\n"}, initiatedFailures: 1}
+
+	agent.UpdateStatus(reconnectStatus(7, "receivers: {}\n", "log_pipelines:0"), &protobufs.ServerToAgent{}, provider)
+	require.Equal(t, 1, conn.count(), "the config is pushed")
+
+	agent.UpdateStatus(reconnectStatus(8, "", "log_pipelines:1"), &protobufs.ServerToAgent{}, provider)
+	assert.Equal(t, []string{
+		// The reconnect reconciles the status of what the agent already applied.
+		"status " + orgID.String() + "log_pipelines:0 ok=true",
+		"initiated failed",
+		"initiated",
+		"status " + orgID.String() + "log_pipelines:1 ok=true",
+	}, provider.events)
 }

@@ -16,8 +16,9 @@ type AgentConfigProvider interface {
 	RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte) (*opamptypes.ConfigRecommendation, error)
 
 	// Record that a recommendation was pushed to an agent; called only
-	// after the push succeeded.
-	ReportConfigDeploymentInitiated(orgId valuer.UUID, recommendation *opamptypes.ConfigRecommendation)
+	// after the push succeeded. On error the agent retries it before
+	// handling its next status.
+	ReportConfigDeploymentInitiated(orgId valuer.UUID, recommendation *opamptypes.ConfigRecommendation) error
 
 	// Report the deployment status an agent sends for a pushed recommendation
 	ReportConfigDeploymentStatus(
