@@ -17,13 +17,16 @@ var (
 	RejectionReasonRateLimited       = RejectionReason{valuer.NewString("rate_limited")}
 	RejectionReasonTooLarge          = RejectionReason{valuer.NewString("too_large")}
 	RejectionReasonInvalidPayload    = RejectionReason{valuer.NewString("invalid_payload")}
+	// RejectionReasonSignalNotAllowed is a signal the application's
+	// platform does not send, refused by the collector only.
+	RejectionReasonSignalNotAllowed = RejectionReason{valuer.NewString("signal_not_allowed")}
 )
 
 type RejectionReason struct{ valuer.String }
 
 // GettableApplicationStatus backs the setup screen. Counts, the SDK seen and
-// rejections are kept in memory by each server instance over StatusWindow, so
-// they reset on restart and cover only the instance that answers.
+// rejections cover StatusWindow: the collectors' latest reports, summed, and
+// what the answering server instance's own gateway saw, kept in memory.
 type GettableApplicationStatus struct {
 	FirstSeenAt   *time.Time         `json:"firstSeenAt" required:"true" nullable:"true"`
 	WindowSeconds int64              `json:"windowSeconds" required:"true"`
@@ -68,5 +71,5 @@ type IngestBatch struct {
 }
 
 func (RejectionReason) Enum() []any {
-	return []any{RejectionReasonBadKey, RejectionReasonUnknownKey, RejectionReasonOriginNotAllowed, RejectionReasonPackageNotAllowed, RejectionReasonRateLimited, RejectionReasonTooLarge, RejectionReasonInvalidPayload}
+	return []any{RejectionReasonBadKey, RejectionReasonUnknownKey, RejectionReasonOriginNotAllowed, RejectionReasonPackageNotAllowed, RejectionReasonRateLimited, RejectionReasonTooLarge, RejectionReasonInvalidPayload, RejectionReasonSignalNotAllowed}
 }

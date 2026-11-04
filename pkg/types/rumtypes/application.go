@@ -36,6 +36,11 @@ var (
 
 var packageNamePattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$`)
 
+// IsWellFormedPackageName reports whether name is an Android package name.
+func IsWellFormedPackageName(name string) bool {
+	return packageNamePattern.MatchString(name)
+}
+
 // Platform is the kind of client an application ingests from. ios is
 // reserved.
 type Platform struct{ valuer.String }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/types/ingesttypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
@@ -19,7 +20,16 @@ type Store interface {
 	ListAllApplications(ctx context.Context, limit int) ([]*StorableApplication, error)
 	UpdateApplication(ctx context.Context, application *StorableApplication) error
 	DeleteApplication(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+	// SetFirstSeenAt keeps the earliest first-seen time.
 	SetFirstSeenAt(ctx context.Context, id valuer.UUID, seenAt time.Time) error
+	// KnownApplicationIDs is which of ids are applications.
+	KnownApplicationIDs(ctx context.Context, ids []valuer.UUID) (map[valuer.UUID]bool, error)
+	// SetFirstSeenAtEarliest is SetFirstSeenAt for many applications, a few
+	// statements for all; unknown IDs are ignored.
+	SetFirstSeenAtEarliest(ctx context.Context, seenAt map[valuer.UUID]time.Time) error
+	// ListReportedApplication loads the window values the collectors
+	// reported for the application since the given time, one row per agent.
+	ListReportedApplication(ctx context.Context, id valuer.UUID, since time.Time) ([]*ingesttypes.StorableReportApplication, error)
 
 	CreateKey(ctx context.Context, key *ApplicationKey) error
 	GetKey(ctx context.Context, orgID valuer.UUID, applicationID valuer.UUID, id valuer.UUID) (*ApplicationKey, error)
@@ -37,7 +47,11 @@ type Store interface {
 	// collectors' ingest policy content; it serialises such changes.
 	TouchIngestPolicy(ctx context.Context) error
 	UpdateKey(ctx context.Context, key *ApplicationKey) error
+	// SetKeyLastUsedAt keeps the latest use.
 	SetKeyLastUsedAt(ctx context.Context, id valuer.UUID, usedAt time.Time) error
+	// SetKeysLastUsedAtLatest is SetKeyLastUsedAt for many keys, a few
+	// statements for all; unknown IDs are ignored.
+	SetKeysLastUsedAtLatest(ctx context.Context, usedAt map[valuer.UUID]time.Time) error
 
 	CreateSourceMaps(ctx context.Context, files []*StorableSourceMap) error
 	ListSourceMaps(ctx context.Context, orgID valuer.UUID, applicationID valuer.UUID) ([]*StorableSourceMap, error)

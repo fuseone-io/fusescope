@@ -22,6 +22,13 @@ type IngestContent struct {
 	Skipped      int
 }
 
+// IngestUsage is what a collector's ingest report persists: when each
+// application first received data and when each key was last used.
+type IngestUsage struct {
+	FirstSeen map[valuer.UUID]time.Time
+	LastUsed  map[valuer.UUID]time.Time
+}
+
 type Module interface {
 	List(ctx context.Context, orgID valuer.UUID) ([]*rumtypes.Application, error)
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*rumtypes.Application, error)
@@ -66,6 +73,12 @@ type Module interface {
 	// OnChange registers f, called after every change of an application or
 	// key. f must not block.
 	OnChange(f func())
+	// RecordIngestUsage keeps the earliest first-seen time and the latest
+	// use, in the caller's transaction; unknown IDs are ignored.
+	RecordIngestUsage(ctx context.Context, usage *IngestUsage) error
+	// KnownApplications is which of ids are applications, read in the
+	// caller's transaction.
+	KnownApplications(ctx context.Context, ids []valuer.UUID) (map[valuer.UUID]bool, error)
 
 	// HasApplications reports whether any organization has an application.
 	HasApplications(ctx context.Context) (bool, error)
