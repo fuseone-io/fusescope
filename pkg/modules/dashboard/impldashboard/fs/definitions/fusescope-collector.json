@@ -22,10 +22,9 @@
             "allowAllValue": true,
             "sort": "alphabetical-asc",
             "plugin": {
-              "kind": "signoz/DynamicVariable",
+              "kind": "signoz/QueryVariable",
               "spec": {
-                "name": "host.name",
-                "signal": "metrics"
+                "queryValue": "SELECT JSONExtractString(labels, 'host.name') AS `host.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'otelcol_process_uptime'\n    AND JSONExtractString(labels, 'service.name') = 'fusescope-collector'\nGROUP BY `host.name`"
               }
             }
           }
@@ -284,7 +283,7 @@
           "spec": {
             "display": {
               "name": "Spans accepted",
-              "description": "Spans per second the receivers accepted."
+              "description": "Spans per second the receivers accepted, averaged over the range."
             },
             "plugin": {
               "kind": "signoz/NumberPanel",
@@ -342,7 +341,7 @@
           "spec": {
             "display": {
               "name": "Log records accepted",
-              "description": "Log records per second the receivers accepted."
+              "description": "Log records per second the receivers accepted, averaged over the range."
             },
             "plugin": {
               "kind": "signoz/NumberPanel",
@@ -400,7 +399,7 @@
           "spec": {
             "display": {
               "name": "Spans refused",
-              "description": "Spans per second the receivers refused, most often under memory pressure."
+              "description": "Spans per second the receivers refused, averaged over the range; most often under memory pressure."
             },
             "plugin": {
               "kind": "signoz/NumberPanel",
@@ -457,8 +456,8 @@
           "kind": "Panel",
           "spec": {
             "display": {
-              "name": "Largest export queue",
-              "description": "The fullest exporter queue, in batches."
+              "name": "Peak export queue",
+              "description": "The fullest exporter queue at its peak over the range, in batches."
             },
             "plugin": {
               "kind": "signoz/NumberPanel",
@@ -496,7 +495,7 @@
                                 "temporality": "",
                                 "timeAggregation": "max",
                                 "spaceAggregation": "max",
-                                "reduceTo": "avg"
+                                "reduceTo": "max"
                               }
                             ],
                             "groupBy": [],
@@ -515,8 +514,8 @@
           "kind": "Panel",
           "spec": {
             "display": {
-              "name": "Memory (RSS)",
-              "description": "Resident memory of the largest collector."
+              "name": "Memory (RSS) now",
+              "description": "Resident memory of the largest collector, at the latest point."
             },
             "plugin": {
               "kind": "signoz/NumberPanel",
@@ -554,7 +553,7 @@
                                 "temporality": "",
                                 "timeAggregation": "max",
                                 "spaceAggregation": "max",
-                                "reduceTo": "avg"
+                                "reduceTo": "last"
                               }
                             ],
                             "groupBy": [],
@@ -573,8 +572,8 @@
           "kind": "Panel",
           "spec": {
             "display": {
-              "name": "RUM policy age",
-              "description": "Seconds since the RUM ingest policy was received; empty while none is held."
+              "name": "RUM policy age now",
+              "description": "Seconds since the RUM ingest policy was received, at the latest point; empty while none is held."
             },
             "plugin": {
               "kind": "signoz/NumberPanel",
@@ -612,7 +611,7 @@
                                 "temporality": "",
                                 "timeAggregation": "max",
                                 "spaceAggregation": "max",
-                                "reduceTo": "avg"
+                                "reduceTo": "last"
                               }
                             ],
                             "groupBy": [],
