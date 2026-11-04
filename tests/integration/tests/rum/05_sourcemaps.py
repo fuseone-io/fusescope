@@ -9,7 +9,7 @@ import requests
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.rum import RUM_APPLICATIONS, RUM_KEY_HEADER, RUM_ORIGIN, SIGNOZ_API_KEY_HEADER, create_rum_application, padded_source_map, rum_event, send_rum, upload_source_maps, wait_for_rum_query
 from fixtures.serviceaccount import create_service_account_with_key
-from fixtures.types import Operation, SigNoz
+from fixtures.types import FuseScopeCollector, Operation, SigNoz
 
 FIXTURES = Path(__file__).resolve().parents[4] / "pkg" / "types" / "rumtypes" / "testdata" / "sourcemap"
 SOURCE_MAP = (FIXTURES / "main.js.map").read_bytes()
@@ -124,6 +124,7 @@ def test_sourcemaps_limits(
 
 def test_sourcemaps_symbolicate_error(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -137,8 +138,8 @@ def test_sourcemaps_symbolicate_error(
     def exception(at: int, session: str) -> dict:
         return rum_event("exception", at, {"session.id": session, "fusescope.rum.view.route": "/cart", "exception.type": "TypeError", "exception.message": "price is undefined", "exception.stacktrace": STACK})
 
-    send_rum(signoz, created["key"]["key"], {"service.name": "shop", "service.version": "1.8.0"}, events=[exception(t0, f"mapped-{uuid.uuid4().hex}")])
-    send_rum(signoz, created["key"]["key"], {"service.name": "shop", "service.version": "1.7.0"}, events=[exception(t0 - second, f"unmapped-{uuid.uuid4().hex}")])
+    send_rum(fusescope_collector, created["key"]["key"], {"service.name": "shop", "service.version": "1.8.0"}, events=[exception(t0, f"mapped-{uuid.uuid4().hex}")])
+    send_rum(fusescope_collector, created["key"]["key"], {"service.name": "shop", "service.version": "1.7.0"}, events=[exception(t0 - second, f"unmapped-{uuid.uuid4().hex}")])
 
     response = upload_source_maps(signoz, created["id"], "1.8.0", {SIGNOZ_API_KEY_HEADER: api_key}, {"/assets/main.js.map": SOURCE_MAP})
     assert response.status_code == HTTPStatus.CREATED, response.text
@@ -171,6 +172,7 @@ def test_sourcemaps_symbolicate_error(
 
 def test_sourcemaps_retrace_component_stack(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -182,7 +184,7 @@ def test_sourcemaps_retrace_component_stack(
     component_stack = "\n    at PriceTag (https://shop.example.com/assets/main.js:1:41)\n    at div\n    at Cart (https://shop.example.com/assets/main.js:1:131)\n    at ErrorBoundary (https://shop.example.com/assets/ma"
 
     attributes = {"session.id": f"react-{uuid.uuid4().hex}", "fusescope.rum.view.route": "/cart", "exception.type": "TypeError", "exception.message": "price is undefined", "exception.stacktrace": STACK, "fusescope.rum.react.component_stack": component_stack}
-    send_rum(signoz, created["key"]["key"], {"service.name": "shop", "service.version": "2.0.0"}, events=[rum_event("exception", t0, attributes)])
+    send_rum(fusescope_collector, created["key"]["key"], {"service.name": "shop", "service.version": "2.0.0"}, events=[rum_event("exception", t0, attributes)])
     response = upload_source_maps(signoz, created["id"], "2.0.0", {SIGNOZ_API_KEY_HEADER: api_key}, {"/assets/main.js.map": SOURCE_MAP})
     assert response.status_code == HTTPStatus.CREATED, response.text
 
@@ -202,6 +204,7 @@ def test_sourcemaps_retrace_component_stack(
 
 def test_sourcemaps_bounded_stacks(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -214,7 +217,7 @@ def test_sourcemaps_bounded_stacks(
     stacktrace = "TypeError: price is undefined\n" + "    at e (https://shop.example.com/assets/main.js:1:41)\n" * 20_000
     component_stack = "\n" + "    at Cart (https://shop.example.com/assets/main.js:1:131)\n" * 20_000
     attributes = {"session.id": f"bounded-{uuid.uuid4().hex}", "fusescope.rum.view.route": "/cart", "exception.type": "TypeError", "exception.message": "price is undefined", "exception.stacktrace": stacktrace, "fusescope.rum.react.component_stack": component_stack}
-    send_rum(signoz, created["key"]["key"], {"service.name": "shop", "service.version": "2.0.0"}, events=[rum_event("exception", t0, attributes)])
+    send_rum(fusescope_collector, created["key"]["key"], {"service.name": "shop", "service.version": "2.0.0"}, events=[rum_event("exception", t0, attributes)])
     response = upload_source_maps(signoz, created["id"], "2.0.0", {SIGNOZ_API_KEY_HEADER: api_key}, {"/assets/main.js.map": SOURCE_MAP})
     assert response.status_code == HTTPStatus.CREATED, response.text
 

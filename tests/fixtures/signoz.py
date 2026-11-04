@@ -2,6 +2,7 @@ import os
 import platform
 import subprocess
 import time
+from collections.abc import Callable
 from http import HTTPStatus
 from os import path
 
@@ -72,11 +73,15 @@ def create_signoz(
     env_overrides: dict | None = None,
     tls: types.TLS | None = None,
     config_file: str | None = None,
+    files: Callable[[], dict[str, bytes]] | None = None,
+    network_aliases: list[str] | None = None,
 ) -> types.SigNoz:
     """
     Factory function for creating a SigNoz container.
-    Accepts optional env_overrides to customize the container environment, and
-    an optional integration CA (tls) to trust in addition to the system roots.
+    Accepts optional env_overrides to customize the container environment, an
+    optional integration CA (tls) to trust in addition to the system roots,
+    files (called on creation: container path to content, copied in before it
+    starts) and network aliases other containers reach it by.
     """
 
     def create() -> types.SigNoz:
@@ -119,6 +124,10 @@ def create_signoz(
             container.with_env(k, v)
         container.with_exposed_ports(8080)
         container.with_network(network=network)
+        if network_aliases:
+            container.with_network_aliases(*network_aliases)
+        for container_path, content in (files() if files else {}).items():
+            container.with_copy_into_container(content, container_path)
 
         if config_file:
             container.with_volume_mapping(config_file, CONFIG_CONTAINER_PATH, "ro")

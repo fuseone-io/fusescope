@@ -8,7 +8,7 @@ import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.rum import RUM_APPLICATIONS, RUM_ORIGIN, create_rum_application, rum_event, rum_span, send_backend_span, send_rum, wait_for_rum_query
-from fixtures.types import Operation, SigNoz, TestContainerDocker
+from fixtures.types import FuseScopeCollector, Operation, SigNoz, TestContainerDocker
 
 CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
 FIREFOX = "Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0"
@@ -16,6 +16,7 @@ FIREFOX = "Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.
 
 def test_views_query(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -37,7 +38,7 @@ def test_views_query(
         return rum_event("browser.web_vital", t0 + 2 * second, {"session.id": session, "fusescope.rum.view.route": "/product/:id", "browser.web_vital.name": name, "browser.web_vital.value": value, "browser.web_vital.rating": rating})
 
     send_rum(
-        signoz,
+        fusescope_collector,
         created["key"]["key"],
         {"service.name": "shop", "service.version": "1.8.0", "deployment.environment.name": "production", "user_agent.original": CHROME},
         spans=[
@@ -96,6 +97,7 @@ def test_views_query(
 
 def test_errors_query(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -121,9 +123,9 @@ def test_errors_query(
             },
         )
 
-    send_rum(signoz, key, {"service.name": "shop", "service.version": "1.7.4", "user_agent.original": CHROME}, events=[order_error(old_session, t0 - 120 * second, "0d2e71c4-9f3a-4b8e-9d1c-6a2f7b80a4c9", "main.4f9c2a.js")])
+    send_rum(fusescope_collector, key, {"service.name": "shop", "service.version": "1.7.4", "user_agent.original": CHROME}, events=[order_error(old_session, t0 - 120 * second, "0d2e71c4-9f3a-4b8e-9d1c-6a2f7b80a4c9", "main.4f9c2a.js")])
     send_rum(
-        signoz,
+        fusescope_collector,
         key,
         {"service.name": "shop", "service.version": "1.8.0", "user_agent.original": CHROME},
         spans=[
@@ -192,6 +194,7 @@ def test_errors_query(
 
 def test_sessions_query(  # pylint: disable=too-many-locals
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     otel_collector: TestContainerDocker,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -208,7 +211,7 @@ def test_sessions_query(  # pylint: disable=too-many-locals
 
     common = {"session.id": busy, "session.previous_id": "previous-session", "user.id": user}
     send_rum(
-        signoz,
+        fusescope_collector,
         key,
         {"service.name": "shop", "service.version": "1.8.0", "deployment.environment.name": "production", "user_agent.original": FIREFOX},
         spans=[
@@ -224,7 +227,7 @@ def test_sessions_query(  # pylint: disable=too-many-locals
         ],
     )
     send_rum(
-        signoz,
+        fusescope_collector,
         key,
         {"service.name": "shop", "service.version": "1.7.4", "deployment.environment.name": "production", "user_agent.original": CHROME},
         spans=[rum_span("view", t0 + 5 * second, 3 * second, {"session.id": quiet, "fusescope.rum.view.route": "/", "url.path": "/", "fusescope.rum.view.loading_type": "initial_load"})],

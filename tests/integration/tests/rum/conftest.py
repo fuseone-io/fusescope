@@ -3,6 +3,7 @@ from testcontainers.core.container import Network
 
 from fixtures import types
 from fixtures.auth import register_admin
+from fixtures.fusescopecollector import INGEST_POLICY_ALIAS, INGEST_POLICY_ENV, ingest_policy_files
 from fixtures.signoz import create_signoz
 
 
@@ -13,7 +14,7 @@ def signoz_rum(  # pylint: disable=too-many-arguments,too-many-positional-argume
     gateway: types.TestContainerDocker,
     sqlstore: types.TestContainerSQL,
     clickhouse: types.TestContainerClickhouse,
-    otel_collector: types.TestContainerDocker,
+    tls: types.TLS,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
@@ -27,12 +28,14 @@ def signoz_rum(  # pylint: disable=too-many-arguments,too-many-positional-argume
         pytestconfig=pytestconfig,
         cache_key="signoz_rum",
         env_overrides={
-            "SIGNOZ_RUM_ENABLED": True,
-            "SIGNOZ_RUM_COLLECTOR__ENDPOINT": otel_collector.container_configs["4318"].base(),
             "SIGNOZ_RUM_SOURCEMAPS_MAX__FILE__SIZE": 65536,
             "SIGNOZ_RUM_SOURCEMAPS_MAX__FILES__PER__RELEASE": 5,
             "SIGNOZ_RUM_SOURCEMAPS_QUOTA": 262144,
-        },
+        }
+        | INGEST_POLICY_ENV,
+        tls=tls,
+        files=lambda: ingest_policy_files(tls),
+        network_aliases=[INGEST_POLICY_ALIAS],
     )
 
 

@@ -1,3 +1,4 @@
+import json
 import time
 import uuid
 from collections.abc import Callable
@@ -7,9 +8,9 @@ from pathlib import Path
 import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.rum import RUM_APPLICATIONS, RUM_KEY_HEADER, RUM_ORIGIN, SIGNOZ_API_KEY_HEADER, create_rum_application, otlp_attributes, rum_event, send_rum, upload_r8_mapping, wait_for_rum_query
+from fixtures.rum import RUM_APPLICATIONS, RUM_KEY_HEADER, RUM_ORIGIN, SIGNOZ_API_KEY_HEADER, create_rum_application, otlp_attributes, post_rum, post_rum_until, rum_event, send_rum, upload_r8_mapping, wait_for_rum_query, wait_for_rum_status
 from fixtures.serviceaccount import create_service_account_with_key
-from fixtures.types import Operation, SigNoz
+from fixtures.types import FuseScopeCollector, Operation, SigNoz
 
 FIXTURES = Path(__file__).resolve().parents[4] / "pkg" / "types" / "rumtypes" / "testdata" / "r8"
 MAPPING = (FIXTURES / "mapping.txt").read_bytes()
@@ -20,6 +21,7 @@ PACKAGE = "com.example.shop"
 
 def test_android_application_package_names(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -38,23 +40,23 @@ def test_android_application_package_names(
     key = created["key"]["key"]
     now = time.time_ns()
     for package, status in [(PACKAGE, HTTPStatus.OK), ("com.example.shop.debug", HTTPStatus.OK), ("com.evil.app", HTTPStatus.FORBIDDEN), (None, HTTPStatus.FORBIDDEN)]:
-        resource = {"service.name": "shop-android", "service.version": "2.1.0"} | ({"app.package.name": package} if package else {})
+        resource = {"service.name": "shop-android", "service.version": "2.1.0", "telemetry.distro.name": "io.fuseone.fusescope:android", "telemetry.distro.version": "0.1.0"} | ({"app.package.name": package} if package else {})
         body = {"resourceLogs": [{"resource": {"attributes": otlp_attributes(resource)}, "scopeLogs": [{"logRecords": [rum_event("app.screen.click", now, {"app.screen.name": "CartScreen"})]}]}]}
-        response = requests.post(signoz.self.host_configs["8080"].get("/rum/v1/logs"), json=body, headers={RUM_KEY_HEADER: key, "Content-Type": "application/json"}, timeout=10)
-        assert response.status_code == status, f"{package}: {response.text}"
+        response = post_rum_until(fusescope_collector, "logs", json.dumps(body), {RUM_KEY_HEADER: key, "Content-Type": "application/json"}, status)
         assert "Access-Control-Allow-Origin" not in response.headers
 
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/rum/v1/logs"),
-        json={"resourceLogs": [{"resource": {"attributes": otlp_attributes({"app.package.name": PACKAGE})}, "scopeLogs": [{"logRecords": []}]}]},
-        headers={RUM_KEY_HEADER: key, "Content-Type": "application/json", "Origin": RUM_ORIGIN},
-        timeout=10,
+    response = post_rum(
+        fusescope_collector,
+        "logs",
+        json.dumps({"resourceLogs": [{"resource": {"attributes": otlp_attributes({"app.package.name": PACKAGE})}, "scopeLogs": [{"logRecords": []}]}]}),
+        {RUM_KEY_HEADER: key, "Content-Type": "application/json", "Origin": RUM_ORIGIN},
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, "a browser cannot use an android key"
 
-    status = requests.get(f"{url}/{created['id']}/status", headers={"Authorization": f"Bearer {token}"}, timeout=10).json()["data"]
+    status = wait_for_rum_status(signoz, token, created["id"], lambda data: len(data["rejections"]) == 2 and data["sdk"]["name"] != "")
     reasons = {rejection["reason"]: rejection["lastOrigin"] for rejection in status["rejections"]}
     assert reasons == {"package_not_allowed": "", "origin_not_allowed": RUM_ORIGIN}
+    assert status["sdk"]["name"] == "io.fuseone.fusescope:android"
     assert "io.fuseone.fusescope:android" in [sdk["name"] for sdk in status["supportedSdks"]]
 
 
@@ -102,6 +104,7 @@ def test_android_r8_mapping_upload(
 
 def test_android_crash_grouped_and_retraced(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -114,9 +117,9 @@ def test_android_crash_grouped_and_retraced(
     t0 = time.time_ns() - 300 * second
 
     crash = {"exception.type": "a.a", "exception.message": "Cart is empty", "exception.stacktrace": CRASH, "fusescope.rum.error.source": "crash", "app.screen.name": "CheckoutScreen"}
-    send_rum(signoz, key, {"service.name": "shop-android", "service.version": "2.1.0", "app.package.name": PACKAGE}, events=[rum_event("exception", t0 + i * second, crash | {"session.id": f"mapped-{uuid.uuid4().hex}"}) for i in range(2)], origin=None)
-    send_rum(signoz, key, {"service.name": "shop-android", "service.version": "2.0.0", "app.package.name": PACKAGE}, events=[rum_event("exception", t0 - second, crash | {"session.id": f"unmapped-{uuid.uuid4().hex}"})], origin=None)
-    send_rum(signoz, key, {"service.name": "shop-android", "service.version": "2.1.0", "app.package.name": PACKAGE}, events=[rum_event("device.anr", t0 + 5 * second, {"exception.stacktrace": ANR, "session.id": f"anr-{uuid.uuid4().hex}"})], origin=None)
+    send_rum(fusescope_collector, key, {"service.name": "shop-android", "service.version": "2.1.0", "app.package.name": PACKAGE}, events=[rum_event("exception", t0 + i * second, crash | {"session.id": f"mapped-{uuid.uuid4().hex}"}) for i in range(2)], origin=None)
+    send_rum(fusescope_collector, key, {"service.name": "shop-android", "service.version": "2.0.0", "app.package.name": PACKAGE}, events=[rum_event("exception", t0 - second, crash | {"session.id": f"unmapped-{uuid.uuid4().hex}"})], origin=None)
+    send_rum(fusescope_collector, key, {"service.name": "shop-android", "service.version": "2.1.0", "app.package.name": PACKAGE}, events=[rum_event("device.anr", t0 + 5 * second, {"exception.stacktrace": ANR, "session.id": f"anr-{uuid.uuid4().hex}"})], origin=None)
 
     response = upload_r8_mapping(signoz, created["id"], "2.1.0", {SIGNOZ_API_KEY_HEADER: api_key}, MAPPING)
     assert response.status_code == HTTPStatus.CREATED, response.text
@@ -180,6 +183,7 @@ def test_android_r8_mapping_multipart_field_order(
 
 def test_android_crash_anr_and_handled_grouped_apart(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -201,7 +205,7 @@ def test_android_crash_anr_and_handled_grouped_apart(
         ("java.lang.IllegalStateException", "Payment provider unavailable", crash, "manual"),
     ]
     send_rum(
-        signoz,
+        fusescope_collector,
         created["key"]["key"],
         {"service.name": "android-sample", "service.version": "0.1.0", "app.package.name": package},
         events=[rum_event("exception", t0 + i * second, {"exception.type": exception_type, "exception.message": message, "exception.stacktrace": stacktrace, "fusescope.rum.error.source": source, "session.id": f"sample-{uuid.uuid4().hex}"}) for i, (exception_type, message, stacktrace, source) in enumerate(events)],
@@ -231,6 +235,7 @@ def test_android_crash_anr_and_handled_grouped_apart(
 
 def test_android_r8_mappings_per_map_id(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -261,7 +266,7 @@ def test_android_r8_mappings_per_map_id(
         for i, map_id in enumerate(["7e4c1a9", "260eabab"])
     ]
     events.append(rum_event("exception", t0 + 2 * second, {"exception.type": "ApplicationNotResponding", "exception.message": "Application Not Responding", "exception.stacktrace": ANR, "fusescope.rum.error.source": "anr", "session.id": f"anr-{uuid.uuid4().hex}"}))
-    send_rum(signoz, created["key"]["key"], resource, events=events, origin=None)
+    send_rum(fusescope_collector, created["key"]["key"], resource, events=events, origin=None)
 
     params = {"start": t0 // 1_000_000 - 60_000, "end": t0 // 1_000_000 + 60_000}
     errors = wait_for_rum_query(signoz, token, f"{base}/errors", params, lambda data: data["events"] == 3)

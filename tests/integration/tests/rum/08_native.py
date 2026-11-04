@@ -4,11 +4,12 @@ from collections.abc import Callable
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.rum import RUM_APPLICATIONS, create_rum_application, rum_event, send_rum, wait_for_rum_query
-from fixtures.types import Operation, SigNoz
+from fixtures.types import FuseScopeCollector, Operation, SigNoz
 
 
 def test_android_native_crashes_group_by_library_offset_and_build(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -24,7 +25,7 @@ def test_android_native_crashes_group_by_library_offset_and_build(
         ]
     ):
         send_rum(
-            signoz,
+            fusescope_collector,
             app["key"]["key"],
             {"service.name": "native-shop", "service.version": release, "app.package.name": "com.example.native"},
             events=[
