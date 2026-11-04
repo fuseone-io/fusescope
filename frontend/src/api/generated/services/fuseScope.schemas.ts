@@ -11934,6 +11934,7 @@ export enum RumtypesRejectionReasonDTO {
 	rate_limited = 'rate_limited',
 	too_large = 'too_large',
 	invalid_payload = 'invalid_payload',
+	signal_not_allowed = 'signal_not_allowed',
 }
 export interface RumtypesIngestRejectionDTO {
 	/**
