@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestreport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
@@ -516,4 +519,60 @@ func TestReportStoreNewAgentLimit(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, ingestreport.Applied, got, "after the window, a new agent gets a record")
 	})
+}
+
+// Concurrent new agents, through two replicas' stores, are admitted one at
+// a time: the hour never holds more than newAgents records.
+func TestReportStoreNewAgentLimitConcurrent(t *testing.T) {
+	forEachStore(t, func(t *testing.T, newStore func(*testing.T) sqlstore.SQLStore) {
+		ctx := context.Background()
+		db := newStore(t)
+		replicas := []*ReportStore{NewReportStore(db, &fakeUsage{}), NewReportStore(db, &fakeUsage{})}
+		now := time.Now().UTC()
+		filler := make([]ingesttypes.StorableReportAgent, newAgents-1)
+		for i := range filler {
+			filler[i] = ingesttypes.StorableReportAgent{AgentID: fmt.Sprintf("filler-%d", i), CreatedAt: now, UpdatedAt: now}
+		}
+		_, err := db.BunDB().NewInsert().Model(&filler).Exec(ctx)
+		require.NoError(t, err)
+
+		// Each count waits before its transaction goes on, so counts and
+		// inserts of concurrent transactions would interleave without the
+		// admission lock.
+		db.BunDB().AddQueryHook(slowCount{}) //nolint:staticcheck // WithQueryHook returns a copy; the stores hold this DB
+
+		start := make(chan struct{})
+		var wg sync.WaitGroup
+		var admitted atomic.Int32
+		for i := range 20 {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				<-start
+				got, err := replicas[i%2].ApplyIfGreater(ctx, fmt.Sprintf("new-%d", i), testReport(1))
+				if err == nil && got == ingestreport.Applied {
+					admitted.Add(1)
+				} else if err != nil && !errors.Is(err, errNewAgentLimit) {
+					t.Errorf("agent %d: %v", i, err)
+				}
+			}()
+		}
+		close(start)
+		wg.Wait()
+		recent, err := db.BunDB().NewSelect().Model((*ingesttypes.StorableReportAgent)(nil)).Where("created_at > ?", now.Add(-newAgentWindow)).Count(ctx)
+		require.NoError(t, err)
+		assert.EqualValues(t, newAgents, recent, "exactly the bound, never past it")
+		assert.Equal(t, int32(1), admitted.Load())
+	})
+}
+
+// slowCount delays every statement that counts rows.
+type slowCount struct{}
+
+func (slowCount) BeforeQuery(ctx context.Context, _ *bun.QueryEvent) context.Context { return ctx }
+
+func (slowCount) AfterQuery(_ context.Context, event *bun.QueryEvent) {
+	if strings.Contains(strings.ToLower(event.Query), "count(") {
+		time.Sleep(50 * time.Millisecond)
+	}
 }
