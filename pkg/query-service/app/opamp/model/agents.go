@@ -137,7 +137,7 @@ func (agents *Agents) RecommendLatestConfigToAll(
 			agents.logger.Info(
 				"recommended config same as current effective config for agent", "agent_id", agent.AgentID,
 			)
-			return nil
+			continue
 		}
 
 		newRemoteConfig := &protobufs.AgentRemoteConfig{
@@ -153,12 +153,11 @@ func (agents *Agents) RecommendLatestConfigToAll(
 		}
 
 		agent.mux.Lock()
-		defer agent.mux.Unlock()
 		agent.remoteConfig = newRemoteConfig
-
 		agent.SendToAgent(&protobufs.ServerToAgent{
 			RemoteConfig: newRemoteConfig,
 		})
+		agent.mux.Unlock()
 
 		ListenToConfigUpdate(agent.OrgID, agent.AgentID, confId, provider.ReportConfigDeploymentStatus)
 	}
