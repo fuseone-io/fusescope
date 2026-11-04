@@ -74,26 +74,29 @@ func (ta *MockAgentConfigProvider) HasRecommendations() bool {
 
 // AgentConfigProvider interface
 func (ta *MockAgentConfigProvider) RecommendAgentConfig(orgId valuer.UUID, baseConfYaml []byte) (
-	[]byte, string, error,
+	*opamptypes.ConfigRecommendation, error,
 ) {
 	if len(ta.ZPagesEndpoint) < 1 {
-		return baseConfYaml, "agent-base-config", nil
+		return &opamptypes.ConfigRecommendation{Config: baseConfYaml, ID: "agent-base-config"}, nil
 	}
 
 	k := koanf.New(".")
 	err := k.Load(rawbytes.Provider(baseConfYaml), yaml.Parser())
 	if err != nil {
-		return nil, "", errors.Wrap(err, "could not unmarshal baseConf")
+		return nil, errors.Wrap(err, "could not unmarshal baseConf")
 	}
 
 	_ = k.Set("extensions.zpages.endpoint", ta.ZPagesEndpoint)
 	recommendedYaml, err := k.Marshal(yaml.Parser())
 	if err != nil {
-		return nil, "", errors.Wrap(err, "could not marshal recommended conf")
+		return nil, errors.Wrap(err, "could not marshal recommended conf")
 	}
 
-	confId := ta.ZPagesEndpoint
-	return recommendedYaml, confId, nil
+	return &opamptypes.ConfigRecommendation{Config: recommendedYaml, ID: ta.ZPagesEndpoint}, nil
+}
+
+// AgentConfigProvider interface
+func (ta *MockAgentConfigProvider) ReportConfigDeploymentInitiated(valuer.UUID, *opamptypes.ConfigRecommendation) {
 }
 
 // AgentConfigProvider interface

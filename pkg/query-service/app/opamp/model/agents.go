@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -117,49 +118,36 @@ func (agents *Agents) GetAllAgents() []*Agent {
 }
 
 // Recommend latest config to connected agents whose effective
-// config is not the same as the latest recommendation
+// config is not the same as the latest recommendation. An agent that fails
+// does not stop the push to the others; their errors are returned joined.
 func (agents *Agents) RecommendLatestConfigToAll(
 	provider AgentConfigProvider,
 ) error {
+	var errs []error
 	for _, agent := range agents.GetAllAgents() {
-		newConfig, confId, err := provider.RecommendAgentConfig(
-			agent.OrgID,
-			[]byte(agent.Config),
-		)
+		recommendation, err := provider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
 		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf(
+			errs = append(errs, errors.Wrap(err, fmt.Sprintf(
 				"could not generate conf recommendation for %v", agent.AgentID,
-			))
+			)))
+			continue
 		}
 
-		// Recommendation is same as current config
-		if string(newConfig) == agent.Config {
+		if sameConfig(recommendation.Config, []byte(agent.Config)) {
 			agents.logger.Info(
 				"recommended config same as current effective config for agent", "agent_id", agent.AgentID,
 			)
 			continue
 		}
 
-		newRemoteConfig := &protobufs.AgentRemoteConfig{
-			Config: &protobufs.AgentConfigMap{
-				ConfigMap: map[string]*protobufs.AgentConfigObject{
-					CollectorConfigFilename: {
-						Body:        newConfig,
-						ContentType: "application/x-yaml",
-					},
-				},
-			},
-			ConfigHash: []byte(confId),
-		}
-
 		agent.mux.Lock()
-		agent.remoteConfig = newRemoteConfig
-		agent.SendToAgent(&protobufs.ServerToAgent{
-			RemoteConfig: newRemoteConfig,
-		})
+		agent.remoteConfig = newRemoteConfig(recommendation)
+		agent.recommendation = recommendation
+		err = agent.pushRemoteConfig(&protobufs.ServerToAgent{RemoteConfig: agent.remoteConfig}, provider)
 		agent.mux.Unlock()
-
-		ListenToConfigUpdate(agent.OrgID, agent.AgentID, confId, provider.ReportConfigDeploymentStatus)
+		if err != nil {
+			errs = append(errs, errors.Wrap(err, fmt.Sprintf("could not push config to %v", agent.AgentID)))
+		}
 	}
-	return nil
+	return stderrors.Join(errs...)
 }

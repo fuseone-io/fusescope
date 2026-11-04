@@ -106,7 +106,7 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 		return confHash, err
 	}
 
-	agent.SendToAgent(&protobufs.ServerToAgent{
+	_ = agent.SendToAgent(&protobufs.ServerToAgent{
 		RemoteConfig: &protobufs.AgentRemoteConfig{
 			Config: &protobufs.AgentConfigMap{
 				ConfigMap: map[string]*protobufs.AgentConfigObject{

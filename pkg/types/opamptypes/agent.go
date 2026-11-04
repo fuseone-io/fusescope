@@ -137,3 +137,29 @@ func NewElementType(value string) ElementType {
 		return ElementType{valuer.NewString("")}
 	}
 }
+
+// ConfigRecommendation is a collector configuration recommended for an
+// agent, with what is recorded once it is pushed.
+type ConfigRecommendation struct {
+	Config []byte
+
+	// ID is sent as the ConfigHash: each feature's ID, comma-joined.
+	ID string
+
+	Features []FeatureRecommendation
+}
+
+// FeatureRecommendation is one feature's part of a recommendation.
+type FeatureRecommendation struct {
+	// Empty for a feature whose settings are not versioned.
+	ElementType ElementType
+	Version     int
+
+	// `<element type>:<version>` for a versioned feature, and
+	// `<feature type>:<SHA-256 of its settings>` for the others, so the
+	// ID changes whenever what the feature recommends does.
+	ID string
+
+	// Stored as agent_config_version.config when the push starts.
+	Settings string
+}
