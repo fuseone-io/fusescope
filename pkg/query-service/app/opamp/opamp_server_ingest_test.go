@@ -1,7 +1,6 @@
 package opamp
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -12,15 +11,19 @@ import (
 	"log/slog"
 	"math/big"
 	"net"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy"
 	"github.com/gorilla/websocket"
 	"github.com/open-telemetry/opamp-go/protobufs"
+	"github.com/open-telemetry/opamp-go/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -84,24 +87,161 @@ func TestReportPage(t *testing.T) {
 	}
 }
 
-// The ingest listener speaks only TLS: a plaintext WebSocket is refused,
-// one over TLS 1.3 with the server's CA is accepted.
-func TestIngestListenerTLS(t *testing.T) {
+// fakeProvider counts the subscriptions to configuration updates.
+type fakeProvider struct {
+	model.AgentConfigProvider
+	subscribed atomic.Int32
+}
+
+func (p *fakeProvider) SubscribeToConfigUpdates(func()) func() {
+	p.subscribed.Add(1)
+	return func() { p.subscribed.Add(-1) }
+}
+
+// ingestFixture is a Server started with both listeners and tokenA.
+type ingestFixture struct {
+	srv      *Server
+	provider *fakeProvider
+	dialer   *websocket.Dialer
+	ingest   string
+}
+
+func startIngestFixture(t *testing.T, limits ingestLimits) *ingestFixture {
+	t.Helper()
 	certFile, keyFile, pool := selfSigned(t)
 	tlsConfig, err := ingest.ServerTLS(certFile, keyFile, "")
 	require.NoError(t, err)
-	srv := &Server{logger: slog.New(slog.DiscardHandler), agents: &model.Agents{}}
-	srv.WithIngest(ingest.NewHub(nil, slog.New(slog.DiscardHandler)), nil, nil, freeAddr(t), tlsConfig)
-	require.NoError(t, srv.ingestServer.Start(srv.settings(srv.ingestListen, srv.ingestTLS)))
-	t.Cleanup(func() { _ = srv.ingestServer.Stop(context.Background()) })
-
-	_, _, err = websocket.DefaultDialer.Dial("ws://"+srv.ingestListen+"/v1/opamp", nil)
-	assert.Error(t, err, "no plaintext on the ingest listener")
-	dialer := &websocket.Dialer{TLSClientConfig: &tls.Config{RootCAs: pool, ServerName: "localhost", MinVersion: tls.VersionTLS12}, HandshakeTimeout: 5 * time.Second}
-	conn, _, err := dialer.Dial("wss://"+srv.ingestListen+"/v1/opamp", nil)
+	path := filepath.Join(t.TempDir(), "tokens")
+	require.NoError(t, os.WriteFile(path, []byte(ingestToken+"\n"), 0o600))
+	tokens, err := ingest.LoadTokens(path)
 	require.NoError(t, err)
+	f := &ingestFixture{provider: &fakeProvider{}}
+	f.srv = &Server{logger: slog.New(slog.DiscardHandler), agents: &model.Agents{}, agentConfigProvider: f.provider, server: server.New(nil)}
+	f.srv.WithIngest(ingest.NewHub(nil, slog.New(slog.DiscardHandler)), nil, tokens, freeAddr(t), tlsConfig)
+	f.srv.ingestLimits = limits
+	require.NoError(t, f.srv.Start(freeAddr(t)))
+	t.Cleanup(f.srv.Stop)
+	f.ingest = f.srv.ingestHTTP.Addr().String()
+	f.dialer = &websocket.Dialer{TLSClientConfig: &tls.Config{RootCAs: pool, ServerName: "localhost", MinVersion: tls.VersionTLS12}, HandshakeTimeout: 5 * time.Second}
+	return f
+}
+
+func (f *ingestFixture) dial(authorization string) (*websocket.Conn, *http.Response, error) {
+	header := http.Header{}
+	if authorization != "" {
+		header.Set("Authorization", authorization)
+	}
+	return f.dialer.Dial("wss://"+f.ingest+"/v1/opamp", header)
+}
+
+const ingestToken = "ingest-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+// The ingest listener speaks only TLS 1.3 and admits only a WebSocket with
+// an ingest token: anything else is refused at the handshake, before any
+// OpAMP message is read.
+func TestIngestListenerAdmission(t *testing.T) {
+	f := startIngestFixture(t, defaultIngestLimits)
+
+	_, _, err := websocket.DefaultDialer.Dial("ws://"+f.ingest+"/v1/opamp", http.Header{"Authorization": {"Bearer " + ingestToken}})
+	assert.Error(t, err, "no plaintext on the ingest listener")
+
+	for _, authorization := range []string{"", "Bearer ingest-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbb", ingestToken} {
+		_, resp, err := f.dial(authorization)
+		require.Error(t, err, "%q", authorization)
+		require.NotNil(t, resp)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode, "%q", authorization)
+	}
+
+	conn, resp, err := f.dial("Bearer " + ingestToken)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
 	assert.Equal(t, uint16(tls.VersionTLS13), conn.UnderlyingConn().(*tls.Conn).ConnectionState().Version)
 	_ = conn.Close()
+
+	client := &http.Client{Transport: &http.Transport{TLSClientConfig: f.dialer.TLSClientConfig}, Timeout: 5 * time.Second}
+	req, err := http.NewRequest(http.MethodPost, "https://"+f.ingest+"/v1/opamp", strings.NewReader(""))
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "Bearer "+ingestToken)
+	req.Header.Set("Content-Type", "application/x-protobuf")
+	plain, err := client.Do(req)
+	require.NoError(t, err)
+	_ = plain.Body.Close()
+	assert.Equal(t, http.StatusBadRequest, plain.StatusCode, "the plain HTTP transport, even with a token")
+}
+
+// A connection that never completes its handshake is closed at the
+// handshake deadline, and an admitted one that goes quiet at the idle one.
+func TestIngestListenerDeadlines(t *testing.T) {
+	f := startIngestFixture(t, ingestLimits{handshake: 300 * time.Millisecond, idle: 500 * time.Millisecond, connections: 8})
+
+	raw, err := net.Dial("tcp", f.ingest)
+	require.NoError(t, err)
+	defer raw.Close()
+	start := time.Now()
+	_ = raw.SetReadDeadline(time.Now().Add(5 * time.Second))
+	_, err = raw.Read(make([]byte, 1))
+	assert.Error(t, err, "closed by the server")
+	assert.Less(t, time.Since(start), 3*time.Second, "at the handshake deadline, not the client's")
+
+	conn, _, err := f.dial("Bearer " + ingestToken)
+	require.NoError(t, err)
+	defer conn.Close()
+	start = time.Now()
+	_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	_, _, err = conn.ReadMessage()
+	assert.Error(t, err, "a quiet WebSocket is closed")
+	assert.Less(t, time.Since(start), 3*time.Second)
+}
+
+// Connections are bounded from their accept: past the bound, a new one
+// waits until one closes.
+func TestIngestListenerConnectionBound(t *testing.T) {
+	f := startIngestFixture(t, ingestLimits{handshake: 5 * time.Second, idle: 5 * time.Second, connections: 1})
+
+	held, err := net.Dial("tcp", f.ingest)
+	require.NoError(t, err)
+	time.Sleep(100 * time.Millisecond) // accepted, its handshake pending
+	quick := *f.dialer
+	quick.HandshakeTimeout = 300 * time.Millisecond
+	_, _, err = quick.Dial("wss://"+f.ingest+"/v1/opamp", http.Header{"Authorization": {"Bearer " + ingestToken}})
+	assert.Error(t, err, "no slot while the first connection holds it")
+
+	require.NoError(t, held.Close())
+	require.Eventually(t, func() bool {
+		conn, _, err := f.dial("Bearer " + ingestToken)
+		if err != nil {
+			return false
+		}
+		_ = conn.Close()
+		return true
+	}, 5*time.Second, 50*time.Millisecond, "the slot is released on close")
+}
+
+// If the plaintext listener cannot start, the ingest listener and the
+// subscription to configuration updates are undone.
+func TestStartUndoesOnFailure(t *testing.T) {
+	certFile, keyFile, _ := selfSigned(t)
+	tlsConfig, err := ingest.ServerTLS(certFile, keyFile, "")
+	require.NoError(t, err)
+	busy, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer busy.Close()
+
+	provider := &fakeProvider{}
+	srv := &Server{logger: slog.New(slog.DiscardHandler), agents: &model.Agents{}, agentConfigProvider: provider, server: server.New(nil)}
+	ingestAddr := freeAddr(t)
+	srv.WithIngest(ingest.NewHub(nil, slog.New(slog.DiscardHandler)), nil, nil, ingestAddr, tlsConfig)
+	require.Error(t, srv.Start(busy.Addr().String()))
+
+	assert.Zero(t, provider.subscribed.Load(), "unsubscribed")
+	assert.Nil(t, srv.ingestHTTP)
+	require.Eventually(t, func() bool {
+		conn, err := net.Dial("tcp", ingestAddr)
+		if err == nil {
+			_ = conn.Close()
+		}
+		return err != nil
+	}, 5*time.Second, 50*time.Millisecond, "the ingest listener is closed")
 }
 
 func freeAddr(t *testing.T) string {

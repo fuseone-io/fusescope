@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"log/slog"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy"
@@ -35,6 +36,10 @@ type Server struct {
 	ingestServer server.OpAMPServer
 	ingestListen string
 	ingestTLS    *tls.Config
+	ingestLimits ingestLimits
+	ingestHTTP   *ingestListener
+
+	plaintextTokenLog, refusedTokenLog atomic.Int64
 
 	// cleanups to be run when stopping the server
 	cleanups []func()
@@ -68,49 +73,47 @@ func InitializeServer(
 // no connection receives the policy or is read a report.
 func (srv *Server) WithIngest(hub *ingest.Hub, reports *ingest.Reports, tokens *ingest.Tokens, listen string, tlsConfig *tls.Config) {
 	srv.ingest, srv.ingestReports, srv.ingestTokens = hub, reports, tokens
-	srv.ingestListen, srv.ingestTLS = listen, tlsConfig
+	srv.ingestListen, srv.ingestTLS, srv.ingestLimits = listen, tlsConfig, defaultIngestLimits
 	srv.ingestServer = server.New(wrappedLogger(srv.logger))
 }
 
-// settings are the callbacks of a listener. Every connection is accepted
-// for remote configuration; only one on the TLS listener that presents a
-// token may receive the ingest policy, decided once, at the handshake.
-func (srv *Server) settings(listen string, tlsConfig *tls.Config) server.StartSettings {
-	return server.StartSettings{
-		Settings: server.Settings{
-			// The largest ingest policy fits; nothing larger is read from an
-			// unauthenticated connection.
-			MaxMessageSize: ingest.MaxMessageSize,
-			Callbacks: types.Callbacks{
-				OnConnecting: func(request *http.Request) types.ConnectionResponse {
-					authenticated := srv.authenticateIngest(request)
-					return types.ConnectionResponse{
-						Accept: true,
-						ConnectionCallbacks: types.ConnectionCallbacks{
-							OnMessage: func(ctx context.Context, conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
-								return srv.onMessage(ctx, conn, msg, authenticated)
-							},
-							OnConnectionClose: srv.onDisconnect,
-						},
+// settings are the callbacks of a listener. The plaintext listener accepts
+// every connection, for remote configuration, and never reads a token. The
+// ingest listener accepts only a connection that presents one of the
+// tokens, refused at the handshake otherwise; it may receive the ingest
+// policy.
+func (srv *Server) settings(ingestListener bool) server.Settings {
+	return server.Settings{
+		// The largest ingest policy fits; nothing larger is read from an
+		// unauthenticated connection.
+		MaxMessageSize: ingest.MaxMessageSize,
+		Callbacks: types.Callbacks{
+			OnConnecting: func(request *http.Request) types.ConnectionResponse {
+				authenticated := false
+				if ingestListener {
+					if authenticated = srv.authenticateIngest(request); !authenticated {
+						return types.ConnectionResponse{Accept: false, HTTPStatusCode: http.StatusUnauthorized}
 					}
-				},
+				} else if request.Header.Get("Authorization") != "" && srv.ingest != nil {
+					srv.warnEveryMinute(&srv.plaintextTokenLog, "OpAMP connection presented an ingest token without TLS; it is not read and gets no ingest policy: connect to the TLS listener and replace the token", "remote_addr", request.RemoteAddr, "ingest_listen", srv.ingestListen)
+				}
+				return types.ConnectionResponse{
+					Accept: true,
+					ConnectionCallbacks: types.ConnectionCallbacks{
+						OnMessage: func(ctx context.Context, conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
+							return srv.onMessage(ctx, conn, msg, authenticated)
+						},
+						OnConnectionClose: srv.onDisconnect,
+					},
+				}
 			},
 		},
-		ListenEndpoint: listen,
-		TLSConfig:      tlsConfig,
 	}
 }
 
 // Start serves OpAMP on listener, without TLS, and the ingest listener with
-// TLS when WithIngest set it.
+// TLS when WithIngest set it. If either cannot start, nothing stays started.
 func (srv *Server) Start(listener string) error {
-	if srv.ingestServer != nil {
-		if err := srv.ingestServer.Start(srv.settings(srv.ingestListen, srv.ingestTLS)); err != nil {
-			return err
-		}
-		srv.logger.Info("ingress collectors' OpAMP listener with TLS started", slog.String("addr", srv.ingestListen))
-	}
-
 	// This will have to send request to all the agents of all tenants
 	unsubscribe := srv.agentConfigProvider.SubscribeToConfigUpdates(func() {
 		err := srv.agents.RecommendLatestConfigToAll(srv.agentConfigProvider)
@@ -122,17 +125,42 @@ func (srv *Server) Start(listener string) error {
 	})
 	srv.cleanups = append(srv.cleanups, unsubscribe)
 
-	return srv.server.Start(srv.settings(listener, nil))
+	if srv.ingestServer != nil {
+		handler, connContext, err := srv.ingestServer.Attach(srv.settings(true))
+		if err == nil {
+			srv.ingestHTTP, err = startIngestListener(srv.ingestListen, srv.ingestTLS, handler, connContext, srv.ingestLimits)
+		}
+		if err != nil {
+			srv.undo()
+			return err
+		}
+		srv.logger.Info("ingress collectors' OpAMP listener with TLS started", slog.String("addr", srv.ingestHTTP.Addr().String()))
+	}
+
+	// opamp-go's Stop after a failed Start waits for a server that never
+	// served, so only what started is undone.
+	if err := srv.server.Start(server.StartSettings{Settings: srv.settings(false), ListenEndpoint: listener}); err != nil {
+		srv.undo()
+		return err
+	}
+	return nil
 }
 
 func (srv *Server) Stop() {
-	for _, cleanup := range srv.cleanups {
-		defer cleanup()
-	}
-
+	defer srv.undo()
 	_ = srv.server.Stop(context.Background())
-	if srv.ingestServer != nil {
-		_ = srv.ingestServer.Stop(context.Background())
+}
+
+// undo stops the ingest listener and runs the cleanups.
+func (srv *Server) undo() {
+	if srv.ingestHTTP != nil {
+		_ = srv.ingestHTTP.Stop(context.Background())
+		srv.ingestHTTP = nil
+	}
+	cleanups := srv.cleanups
+	srv.cleanups = nil
+	for _, cleanup := range cleanups {
+		cleanup()
 	}
 }
 
@@ -140,22 +168,26 @@ func (srv *Server) Stop() {
 // ingest tokens over TLS. A token sent without TLS is never accepted: it
 // may have been read on the way.
 func (srv *Server) authenticateIngest(request *http.Request) bool {
-	if srv.ingest == nil {
+	if srv.ingest == nil || request.TLS == nil {
 		return false
 	}
 	authorization := request.Header.Get("Authorization")
-	if authorization == "" {
-		return false
-	}
-	if request.TLS == nil {
-		srv.logger.Warn("OpAMP connection presented an ingest token without TLS; refused, it will not receive the ingest policy: connect to the TLS listener and replace the token", "remote_addr", request.RemoteAddr, "ingest_listen", srv.ingestListen)
-		return false
-	}
-	if srv.ingestTokens.Verify(authorization) {
+	if authorization != "" && srv.ingestTokens.Verify(authorization) {
 		return true
 	}
-	srv.logger.Warn("OpAMP connection presented an unknown ingest token; it will not receive the ingest policy", "remote_addr", request.RemoteAddr)
+	srv.warnEveryMinute(&srv.refusedTokenLog, "ingest OpAMP connection refused: no known ingest token", "remote_addr", request.RemoteAddr)
 	return false
+}
+
+// warnEveryMinute logs at most once a minute per last, so a client cannot
+// grow the log by connecting again and again.
+func (srv *Server) warnEveryMinute(last *atomic.Int64, msg string, args ...any) {
+	now := time.Now().UnixNano()
+	prev := last.Load()
+	if now-prev < int64(time.Minute) || !last.CompareAndSwap(prev, now) {
+		return
+	}
+	srv.logger.Warn(msg, args...)
 }
 
 func (srv *Server) onDisconnect(conn types.Connection) {
