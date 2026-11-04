@@ -34,7 +34,8 @@ type Agent struct {
 	reconcilePending bool
 
 	// A pushed recommendation whose deployment could not be recorded as
-	// started; retried on the agent's next message, before its status.
+	// started. Until it is, the agent's acks are left unhandled and no other
+	// push is sent, so it is never lost or acknowledged unrecorded.
 	initiatedPending *opamptypes.ConfigRecommendation
 
 	// can this agent be load balancer
@@ -267,7 +268,13 @@ func (agent *Agent) processStatusUpdate(
 	lostPreviousUpdate := (agent.Status == nil) || (agent.Status != nil && agent.Status.SequenceNum+1 != newStatus.SequenceNum)
 
 	// Before the status, so an ack finds the deployment it acknowledges.
-	agent.retryDeploymentInitiated(configProvider)
+	if err := agent.recordPendingDeployment(configProvider); err != nil {
+		agent.logger.Error("could not record the config deployment as started", "agent_id", agent.AgentID, errors.Attr(err))
+		// Neither handled nor stored: asked for again with the full state,
+		// it is handled once the deployment is recorded.
+		newStatus.RemoteConfigStatus = nil
+		response.Flags |= uint64(protobufs.ServerToAgentFlags_ServerToAgentFlags_ReportFullState)
+	}
 
 	agentDescrChanged := agent.updateStatusField(newStatus, configProvider)
 
@@ -354,6 +361,11 @@ func (agent *Agent) reconcileRemoteConfig(configProvider AgentConfigProvider) bo
 // once it is sent records the deployment as started and listens for the
 // agent's status. The caller holds agent.mux.
 func (agent *Agent) pushRemoteConfig(msg *protobufs.ServerToAgent, configProvider AgentConfigProvider) error {
+	// The previous push first: the remote config stays set, so this one is
+	// sent from a later status once that deployment is recorded.
+	if err := agent.recordPendingDeployment(configProvider); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "push deferred: the previous deployment is not recorded")
+	}
 	if err := agent.SendToAgent(msg); err != nil {
 		return err
 	}
@@ -374,17 +386,17 @@ func (agent *Agent) pushRemoteConfig(msg *protobufs.ServerToAgent, configProvide
 	return nil
 }
 
-// retryDeploymentInitiated records a pushed deployment as started if that
+// recordPendingDeployment records a pushed deployment as started if that
 // failed when it was pushed. The caller holds agent.mux.
-func (agent *Agent) retryDeploymentInitiated(configProvider AgentConfigProvider) {
+func (agent *Agent) recordPendingDeployment(configProvider AgentConfigProvider) error {
 	if agent.initiatedPending == nil {
-		return
+		return nil
 	}
 	if err := configProvider.ReportConfigDeploymentInitiated(agent.OrgID, agent.initiatedPending); err != nil {
-		agent.logger.Error("could not record the config deployment as started", "agent_id", agent.AgentID, errors.Attr(err))
-		return
+		return err
 	}
 	agent.initiatedPending = nil
+	return nil
 }
 
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
