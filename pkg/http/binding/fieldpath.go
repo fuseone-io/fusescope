@@ -193,35 +193,137 @@ func childType(parent reflect.Type, key string, element bool) reflect.Type {
 	return nil
 }
 
+// structField is the type of parent's field that key decodes into, chosen
+// as encoding/json chooses: fields of embedded structs are promoted level by
+// level, a field at a shallower level dominates deeper ones, a tagged field
+// dominates an untagged one at its level, and a name left ambiguous is no
+// field at all. An exact name is preferred to a case-insensitive one. It is
+// nil when no field, or no unambiguous one, takes key.
 func structField(parent reflect.Type, key string) reflect.Type {
-	var folded reflect.Type
-	for i := range parent.NumField() {
-		field := parent.Field(i)
-		tag, _, _ := strings.Cut(field.Tag.Get("json"), ",")
-		if tag == "-" {
-			continue
-		}
-		if field.Anonymous && tag == "" {
-			if inner := structField(deref(field.Type), key); inner != nil {
-				return inner
-			}
-			continue
-		}
-		if !field.IsExported() {
-			continue
-		}
-		name := tag
-		if name == "" {
-			name = field.Name
-		}
-		if name == key {
-			return field.Type
-		}
-		if folded == nil && strings.EqualFold(name, key) {
-			folded = field.Type
+	fields := jsonFields(parent)
+	for _, field := range fields {
+		if field.name == key {
+			return field.typ
 		}
 	}
-	return folded
+	for _, field := range fields {
+		if strings.EqualFold(field.name, key) {
+			return field.typ
+		}
+	}
+	return nil
+}
+
+type jsonField struct {
+	name   string
+	tagged bool
+	depth  int
+	typ    reflect.Type
+}
+
+// jsonFields lists the fields encoding/json decodes into for a struct type,
+// in field order, each name once, after dominance (encoding/json's
+// typeFields and dominantField).
+func jsonFields(root reflect.Type) []jsonField {
+	type level struct {
+		typ   reflect.Type
+		depth int
+	}
+	var candidates []jsonField
+	visited := map[reflect.Type]bool{}
+	next := []level{{typ: root}}
+	for len(next) > 0 {
+		current := next
+		next = nil
+		// A struct embedded more than once at one level gives each of its
+		// fields twice there, which annihilates them as encoding/json does.
+		count := map[reflect.Type]int{}
+		for _, embedded := range current {
+			count[embedded.typ]++
+		}
+		for _, embedded := range current {
+			if visited[embedded.typ] {
+				continue
+			}
+			visited[embedded.typ] = true
+			for i := range embedded.typ.NumField() {
+				field := embedded.typ.Field(i)
+				if field.Anonymous {
+					inner := deref(field.Type)
+					if !field.IsExported() && inner.Kind() != reflect.Struct {
+						continue
+					}
+				} else if !field.IsExported() {
+					continue
+				}
+				tag := field.Tag.Get("json")
+				if tag == "-" {
+					continue
+				}
+				name, _, _ := strings.Cut(tag, ",")
+				inner := field.Type
+				if inner.Name() == "" && inner.Kind() == reflect.Pointer {
+					inner = inner.Elem()
+				}
+				if name != "" || !field.Anonymous || inner.Kind() != reflect.Struct {
+					candidate := jsonField{name: name, tagged: name != "", depth: embedded.depth, typ: field.Type}
+					if candidate.name == "" {
+						candidate.name = field.Name
+					}
+					candidates = append(candidates, candidate)
+					if count[embedded.typ] > 1 {
+						candidates = append(candidates, candidate)
+					}
+					continue
+				}
+				next = append(next, level{typ: inner, depth: embedded.depth + 1})
+			}
+		}
+	}
+
+	byName := map[string][]jsonField{}
+	var order []string
+	for _, candidate := range candidates {
+		if _, seen := byName[candidate.name]; !seen {
+			order = append(order, candidate.name)
+		}
+		byName[candidate.name] = append(byName[candidate.name], candidate)
+	}
+	fields := make([]jsonField, 0, len(order))
+	for _, name := range order {
+		if field, ok := dominantField(byName[name]); ok {
+			fields = append(fields, field)
+		}
+	}
+	return fields
+}
+
+// dominantField is the field that takes a name among those sharing it: the
+// only one at the shallowest level, or the only tagged one there.
+func dominantField(fields []jsonField) (jsonField, bool) {
+	shallowest := fields[0].depth
+	for _, field := range fields[1:] {
+		shallowest = min(shallowest, field.depth)
+	}
+	var top []jsonField
+	for _, field := range fields {
+		if field.depth == shallowest {
+			top = append(top, field)
+		}
+	}
+	if len(top) == 1 {
+		return top[0], true
+	}
+	var tagged []jsonField
+	for _, field := range top {
+		if field.tagged {
+			tagged = append(tagged, field)
+		}
+	}
+	if len(tagged) == 1 {
+		return tagged[0], true
+	}
+	return jsonField{}, false
 }
 
 func deref(t reflect.Type) reflect.Type {

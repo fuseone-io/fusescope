@@ -220,3 +220,95 @@ func TestWalkJSONBudget(t *testing.T) {
 
 	assert.True(t, walkJSON([]byte(`{"a":[1,{"b":"c"}]}`), nil, visit))
 }
+
+type reviewMarker interface{ marker() }
+
+type scalarMarker int
+
+type withEmbeddedInterface struct {
+	reviewMarker
+	A int `json:"a"`
+}
+
+type withEmbeddedScalar struct {
+	scalarMarker
+	ScalarExported
+	A int `json:"a"`
+}
+
+type ScalarExported string
+
+// Untagged, so the shared name is the field name: vet refuses a tag
+// repeated between a direct and a promoted field, and encoding/json applies
+// the same rules either way.
+type embeddedA struct {
+	A string
+}
+
+type directDominates struct {
+	embeddedA
+	A int
+}
+
+type embeddedB struct {
+	A int
+}
+
+type ambiguousPromoted struct {
+	embeddedA
+	embeddedB
+}
+
+// Both are named A at one level; the tagged one takes it.
+type taggedWins struct {
+	A string
+	B int `json:"A"`
+}
+
+// Review of #323: the field a key decodes into is resolved as encoding/json
+// resolves it, and an unresolvable one is unknown rather than guessed.
+func TestChildTypeFollowsEncodingJSON(t *testing.T) {
+	testCases := []struct {
+		name   string
+		parent reflect.Type
+		key    string
+		want   reflect.Type
+	}{
+		{name: "EmbeddedInterfaceIsNotWalked", parent: reflect.TypeOf(withEmbeddedInterface{}), key: "a", want: reflect.TypeOf(0)},
+		{name: "EmbeddedScalarIsNotWalked", parent: reflect.TypeOf(withEmbeddedScalar{}), key: "a", want: reflect.TypeOf(0)},
+		{name: "EmbeddedExportedScalarIsAField", parent: reflect.TypeOf(withEmbeddedScalar{}), key: "ScalarExported", want: reflect.TypeOf(ScalarExported(""))},
+		{name: "DirectDominatesPromoted", parent: reflect.TypeOf(directDominates{}), key: "A", want: reflect.TypeOf(0)},
+		{name: "AmbiguousPromotedIsUnknown", parent: reflect.TypeOf(ambiguousPromoted{}), key: "A", want: nil},
+		{name: "TaggedWinsOverUntaggedAtOneLevel", parent: reflect.TypeOf(taggedWins{}), key: "A", want: reflect.TypeOf(0)},
+		{name: "CaseInsensitiveName", parent: reflect.TypeOf(taggedWins{}), key: "a", want: reflect.TypeOf(0)},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, childType(testCase.parent, testCase.key, false))
+		})
+	}
+
+	// The same choices as encoding/json itself.
+	var direct directDominates
+	require.NoError(t, json.Unmarshal([]byte(`{"A":5}`), &direct))
+	assert.Equal(t, 5, direct.A)
+	var tagged taggedWins
+	require.NoError(t, json.Unmarshal([]byte(`{"A":5}`), &tagged))
+	assert.Equal(t, 5, tagged.B)
+	var ambiguous ambiguousPromoted
+	require.NoError(t, json.Unmarshal([]byte(`{"A":"x"}`), &ambiguous))
+	assert.Equal(t, ambiguousPromoted{}, ambiguous, "an ambiguous name decodes into no field")
+}
+
+func TestJSONBinding_DirectFieldDominates(t *testing.T) {
+	var value struct {
+		D directDominates `json:"d"`
+	}
+	err := JSON.BindBody(strings.NewReader(`{"d":{"A":"bad"}}`), &value)
+	require.Error(t, err)
+	messages := []string{}
+	for _, additional := range errors.AsJSON(err).Errors {
+		messages = append(messages, additional.Message)
+	}
+	assert.Equal(t, []string{`value of type 'string' was received for field 'd.A', try sending 'int' instead?`}, messages)
+}
