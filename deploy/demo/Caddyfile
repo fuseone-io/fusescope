@@ -20,12 +20,34 @@ https://{$FUSESCOPE_HOST}:8443 {
 	import tls-{$FUSESCOPE_TLS}
 	encode zstd gzip
 
-	# The collector has no auth: OTLP stays on the internal network. Browsers use /rum/v1/*.
+	# OTLP stays on the internal network. Browsers and apps send RUM to the
+	# collector, which checks their keys against the backend's ingest policy;
+	# the rest of /rum/v1, the browser SDK, is the backend's.
 	@otlp path /v1/traces /v1/logs /v1/metrics
 	respond @otlp 404
 
-	reverse_proxy fusescope:8080 {
-		header_up X-Forwarded-For {client_ip}
-		flush_interval -1
+	# The demo account is shared publicly: nobody may change its password, name or email.
+	@selfedit {
+		method PUT
+		path /api/v2/users/me /api/v2/users/me/factor_password
+	}
+	respond @selfedit "The demo account cannot be changed." 403
+
+	@rum path /rum/v1/traces /rum/v1/logs
+	handle @rum {
+		reverse_proxy https://fusescope-collector:4319 {
+			header_up X-Forwarded-For {client_ip}
+			transport http {
+				tls_trust_pool file /ingest/ca.crt
+				tls_server_name fusescope-collector
+			}
+		}
+	}
+
+	handle {
+		reverse_proxy fusescope:8080 {
+			header_up X-Forwarded-For {client_ip}
+			flush_interval -1
+		}
 	}
 }

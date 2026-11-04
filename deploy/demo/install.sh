@@ -11,13 +11,14 @@ chmod 600 .env
 [ -z "${1:-}" ] || env_set FUSESCOPE_VERSION "$1"
 mkdir -p certs generated
 chmod 700 certs
+ensure_ingest
 load_env
 
 ./firewall/apply.sh
 
 compose pull --ignore-buildable --quiet
 # Caddy and the generators wait until the admin exists and self sign-up is closed.
-compose up -d fusescope otel-collector
+compose up -d fusescope fusescope-collector
 wait_healthy fusescope
 ./bootstrap.sh
 
