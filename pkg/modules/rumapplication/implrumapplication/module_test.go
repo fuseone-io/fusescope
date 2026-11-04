@@ -48,7 +48,7 @@ func newTestModuleWithConfig(t *testing.T, matchRegexp bool, configure func(*rum
 	})
 	require.NoError(t, err)
 
-	for _, model := range []any{(*rumtypes.StorableApplication)(nil), (*rumtypes.ApplicationKey)(nil), (*rumtypes.StorableSourceMap)(nil), (*ingesttypes.StorableRevision)(nil)} {
+	for _, model := range []any{(*rumtypes.StorableApplication)(nil), (*rumtypes.ApplicationKey)(nil), (*rumtypes.StorableSourceMap)(nil), (*ingesttypes.StorableRevision)(nil), (*ingesttypes.StorableReportApplication)(nil)} {
 		_, err := sqlStore.BunDB().NewCreateTable().Model(model).IfNotExists().Exec(ctx)
 		require.NoError(t, err)
 	}

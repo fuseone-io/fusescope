@@ -125,9 +125,9 @@ func (monitor *monitor) Snapshot(applicationID valuer.UUID, now time.Time) (rumt
 		for sessionID := range bucket.sessions {
 			sessions[sessionID] = struct{}{}
 		}
-		counts.Views += bucket.views
-		counts.Errors += bucket.errors
-		counts.Vitals += bucket.vitals
+		counts.Views = addCount(counts.Views, bucket.views)
+		counts.Errors = addCount(counts.Errors, bucket.errors)
+		counts.Vitals = addCount(counts.Vitals, bucket.vitals)
 		mergeRejections(byReason, bucket.rejections)
 	}
 	counts.Sessions = int64(len(sessions))
@@ -199,7 +199,7 @@ func mergeRejections(into map[rumtypes.RejectionReason]*rumtypes.IngestRejection
 			into[reason] = &copied
 			continue
 		}
-		merged.Count += rejection.Count
+		merged.Count = addCount(merged.Count, rejection.Count)
 		if rejection.LastSeenAt.After(merged.LastSeenAt) {
 			merged.LastSeenAt, merged.LastOrigin = rejection.LastSeenAt, rejection.LastOrigin
 		}

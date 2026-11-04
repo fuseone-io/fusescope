@@ -194,6 +194,11 @@ func (module *module) Status(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	counts, sdk, rejections, pendingFirstSeen := module.monitor.Snapshot(id, time.Now())
+	reportedCounts, reportedSDK, reportedRejections, err := module.reportedStatus(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	counts, sdk, rejections = withReported(counts, sdk, rejections, reportedCounts, reportedSDK, reportedRejections)
 	firstSeen := application.FirstSeenAt
 	if firstSeen == nil {
 		firstSeen = pendingFirstSeen

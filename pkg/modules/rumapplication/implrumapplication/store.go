@@ -2,6 +2,8 @@ package implrumapplication
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -175,12 +177,98 @@ func (store *store) SetFirstSeenAt(ctx context.Context, id valuer.UUID, seenAt t
 		Model((*rumtypes.StorableApplication)(nil)).
 		Set("first_seen_at = ?", seenAt).
 		Where("id = ?", id).
-		Where("first_seen_at IS NULL").
+		Where("first_seen_at IS NULL OR first_seen_at > ?", seenAt).
 		Exec(ctx)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to set rum application first seen time")
 	}
 	return nil
+}
+
+// usageBatch bounds the rows one statement of a batched update names.
+const usageBatch = 250
+
+func (store *store) KnownApplicationIDs(ctx context.Context, ids []valuer.UUID) (map[valuer.UUID]bool, error) {
+	known := make(map[valuer.UUID]bool, len(ids))
+	for chunk := range slices.Chunk(ids, usageBatch) {
+		var found []string
+		err := store.sqlstore.
+			BunDBCtx(ctx).
+			NewSelect().
+			Model((*rumtypes.StorableApplication)(nil)).
+			Column("id").
+			Where("id IN (?)", bun.List(chunk)).
+			Scan(ctx, &found)
+		if err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to look up rum applications")
+		}
+		for _, id := range found {
+			if uuid, err := valuer.NewUUID(id); err == nil {
+				known[uuid] = true
+			}
+		}
+	}
+	return known, nil
+}
+
+func (store *store) SetFirstSeenAtEarliest(ctx context.Context, seenAt map[valuer.UUID]time.Time) error {
+	if err := store.setMonotonic(ctx, (*rumtypes.StorableApplication)(nil), "first_seen_at", ">", seenAt); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to set rum application first seen times")
+	}
+	return nil
+}
+
+func (store *store) SetKeysLastUsedAtLatest(ctx context.Context, usedAt map[valuer.UUID]time.Time) error {
+	if err := store.setMonotonic(ctx, (*rumtypes.ApplicationKey)(nil), "last_used_at", "<", usedAt); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to set rum application key last used times")
+	}
+	return nil
+}
+
+// setMonotonic sets column to each row's new value where the row has none,
+// or one for which "old <replace> new" holds, usageBatch rows per
+// statement: one CASE over the batch, limited to its IDs.
+func (store *store) setMonotonic(ctx context.Context, model any, column string, replace string, values map[valuer.UUID]time.Time) error {
+	ids := make([]valuer.UUID, 0, len(values))
+	for id := range values {
+		ids = append(ids, id)
+	}
+	slices.SortFunc(ids, func(a, b valuer.UUID) int { return strings.Compare(a.StringValue(), b.StringValue()) })
+	for chunk := range slices.Chunk(ids, usageBatch) {
+		var expr strings.Builder
+		args := make([]any, 0, 3*len(chunk))
+		expr.WriteString(column + " = CASE")
+		for _, id := range chunk {
+			expr.WriteString(" WHEN id = ? AND (" + column + " IS NULL OR " + column + " " + replace + " ?) THEN ?")
+			args = append(args, id, values[id], values[id])
+		}
+		expr.WriteString(" ELSE " + column + " END")
+		if _, err := store.sqlstore.
+			BunDBCtx(ctx).
+			NewUpdate().
+			Model(model).
+			Set(expr.String(), args...).
+			Where("id IN (?)", bun.List(chunk)).
+			Exec(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (store *store) ListReportedApplication(ctx context.Context, id valuer.UUID, since time.Time) ([]*ingesttypes.StorableReportApplication, error) {
+	rows := []*ingesttypes.StorableReportApplication{}
+	err := store.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&rows).
+		Where("application_id = ?", id.StringValue()).
+		Where("reported_at >= ?", since).
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list the reported rum application status")
+	}
+	return rows, nil
 }
 
 func (store *store) CreateKey(ctx context.Context, key *rumtypes.ApplicationKey) error {
@@ -326,6 +414,7 @@ func (store *store) SetKeyLastUsedAt(ctx context.Context, id valuer.UUID, usedAt
 		Model((*rumtypes.ApplicationKey)(nil)).
 		Set("last_used_at = ?", usedAt).
 		Where("id = ?", id).
+		Where("last_used_at IS NULL OR last_used_at < ?", usedAt).
 		Exec(ctx)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to set rum application key last used time")

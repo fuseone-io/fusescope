@@ -42,6 +42,7 @@ func TestModuleIngestPolicyOnPostgres(t *testing.T) {
 		sqlmigration.NewAddRUMSourceMapsFactory(sqlStore, schema),
 		sqlmigration.NewAddRUMSourceMapKindFactory(schema),
 		sqlmigration.NewAddIngestPolicyRevisionFactory(schema),
+		sqlmigration.NewAddIngestReportFactory(schema),
 	} {
 		migration, err := migrationFactory.New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
 		require.NoError(t, err)
@@ -82,4 +83,44 @@ func TestModuleIngestPolicyOnPostgres(t *testing.T) {
 	row := new(ingesttypes.StorableRevision)
 	require.NoError(t, sqlStore.BunDB().NewSelect().Model(row).Where("id = ?", ingesttypes.RevisionID).Scan(ctx))
 	assert.Equal(t, int64(3), row.Generation, "create, rotate and revoke recorded")
+
+	// The report's durable values only move one way, and its window values
+	// count while fresh.
+	early := time.Date(2026, 11, 3, 11, 0, 0, 0, time.UTC)
+	for _, at := range []time.Time{early.Add(time.Hour), early} {
+		require.NoError(t, module.RecordIngestUsage(ctx, &rumapplication.IngestUsage{
+			FirstSeen: map[valuer.UUID]time.Time{created.ID: at},
+			LastUsed:  map[valuer.UUID]time.Time{created.Key.ID: at},
+		}))
+	}
+	stored, err := module.Get(ctx, orgID, created.ID)
+	require.NoError(t, err)
+	assert.True(t, early.Equal(*stored.FirstSeenAt))
+	key, err := module.store.GetKey(ctx, orgID, created.ID, created.Key.ID)
+	require.NoError(t, err)
+	assert.True(t, early.Add(time.Hour).Equal(*key.LastUsedAt))
+	// Batches over several statements, unknown IDs among them.
+	batched := map[valuer.UUID]time.Time{created.Key.ID: early.Add(2 * time.Hour)}
+	for range 2*usageBatch + 1 {
+		batched[valuer.GenerateUUID()] = early
+	}
+	require.NoError(t, module.RecordIngestUsage(ctx, &rumapplication.IngestUsage{LastUsed: batched, FirstSeen: batched}))
+	key, err = module.store.GetKey(ctx, orgID, created.ID, created.Key.ID)
+	require.NoError(t, err)
+	assert.True(t, early.Add(2*time.Hour).Equal(*key.LastUsedAt))
+	known, err := module.KnownApplications(ctx, []valuer.UUID{created.ID, created.Key.ID})
+	require.NoError(t, err)
+	assert.Equal(t, map[valuer.UUID]bool{created.ID: true}, known)
+
+	now, err := module.store.DatabaseNow(ctx)
+	require.NoError(t, err)
+	reported := []ingesttypes.StorableReportApplication{
+		{ApplicationID: created.ID.StringValue(), AgentID: "fresh", Sessions: 2, ReportedAt: now, Rejections: `[]`},
+		{ApplicationID: created.ID.StringValue(), AgentID: "stale", Sessions: 50, ReportedAt: now.Add(-time.Hour), Rejections: `[]`},
+	}
+	_, err = sqlStore.BunDB().NewInsert().Model(&reported).Exec(ctx)
+	require.NoError(t, err)
+	status, err := module.Status(ctx, orgID, created.ID)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), status.Counts.Sessions)
 }
