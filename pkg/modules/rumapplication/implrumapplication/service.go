@@ -9,7 +9,10 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/rumapplication"
 )
 
-const promoteRetryInterval = 30 * time.Second
+const (
+	promoteRetryInterval = 30 * time.Second
+	usageFlushInterval   = time.Minute
+)
 
 type service struct {
 	settings factory.ScopedProviderSettings
@@ -19,8 +22,8 @@ type service struct {
 }
 
 // NewService promotes the RUM fields at startup when an application exists,
-// retrying until ClickHouse accepts, flushes key, application and source map
-// usage and deletes source maps past retention.
+// retrying until ClickHouse accepts, flushes source map usage and deletes
+// source maps past retention.
 func NewService(providerSettings factory.ProviderSettings, module rumapplication.Module, config rumapplication.Config) rumapplication.Service {
 	return &service{
 		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/rumapplication/implrumapplication"),
@@ -31,11 +34,6 @@ func NewService(providerSettings factory.ProviderSettings, module rumapplication
 }
 
 func (service *service) Start(ctx context.Context) error {
-	if !service.config.Enabled {
-		<-service.stopC
-		return nil
-	}
-
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	go func() {
@@ -46,7 +44,7 @@ func (service *service) Start(ctx context.Context) error {
 		}
 	}()
 
-	flush := time.NewTicker(service.config.UsageFlushInterval)
+	flush := time.NewTicker(usageFlushInterval)
 	defer flush.Stop()
 	promote := time.NewTicker(promoteRetryInterval)
 	defer promote.Stop()
@@ -74,9 +72,7 @@ func (service *service) Start(ctx context.Context) error {
 
 func (service *service) Stop(ctx context.Context) error {
 	close(service.stopC)
-	if service.config.Enabled {
-		_ = service.module.FlushUsage(ctx)
-	}
+	_ = service.module.FlushUsage(ctx)
 	return nil
 }
 

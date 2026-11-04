@@ -2,7 +2,6 @@ package implrumapplication
 
 import (
 	"context"
-	"log/slog"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -129,90 +128,10 @@ func (module *module) RevokeKey(ctx context.Context, orgID valuer.UUID, applicat
 	return nil
 }
 
-func (module *module) Authenticate(ctx context.Context, plaintext string) (*rumtypes.Application, valuer.UUID, error) {
-	if !rumtypes.IsWellFormedKey(plaintext) {
-		return nil, valuer.UUID{}, errors.NewUnauthenticatedf(rumtypes.ErrCodeKeyInvalid, "invalid rum application key")
-	}
-
-	now := time.Now()
-	hash := rumtypes.HashKey(plaintext)
-	entry, ok := module.keys.Get(hash, now)
-	if !ok {
-		application, key, err := module.lookupKey(ctx, hash)
-		if err != nil {
-			return nil, valuer.UUID{}, err
-		}
-		module.keys.Set(hash, application, key, now)
-		entry = keyCacheEntry{application: application, key: key}
-	}
-
-	if entry.key == nil {
-		return nil, valuer.UUID{}, errors.NewUnauthenticatedf(rumtypes.ErrCodeKeyInvalid, "invalid rum application key")
-	}
-	if !entry.key.IsUsableAt(now) {
-		return entry.application, entry.key.ID, errors.NewUnauthenticatedf(rumtypes.ErrCodeKeyInvalid, "rum application key is %s", entry.key.StatusAt(now).StringValue())
-	}
-	return entry.application, entry.key.ID, nil
-}
-
-func (module *module) ObserveIngest(application *rumtypes.Application, keyID valuer.UUID, batch *rumtypes.IngestBatch) {
-	module.monitor.ObserveIngest(application.ID, keyID, batch, application.FirstSeenAt != nil, time.Now())
-}
-
-func (module *module) ObserveRejection(applicationID valuer.UUID, reason rumtypes.RejectionReason, origin string) {
-	module.monitor.ObserveRejection(applicationID, reason, origin, time.Now())
-}
-
 func (module *module) FlushUsage(ctx context.Context) error {
-	keysUsed, firstSeen := module.monitor.TakeUsage()
-
-	var flushErr error
-	for keyID, usedAt := range keysUsed {
-		if err := module.store.SetKeyLastUsedAt(ctx, keyID, usedAt); err != nil {
-			flushErr = err
-		}
-	}
-	for applicationID, seenAt := range firstSeen {
-		if err := module.store.SetFirstSeenAt(ctx, applicationID, seenAt); err != nil {
-			module.monitor.RestoreFirstSeen(applicationID, seenAt)
-			flushErr = err
-		}
-	}
-
-	if err := module.flushSourceMapUsage(ctx); err != nil {
-		flushErr = err
-	}
-
-	if len(firstSeen) > 0 {
-		module.keys.Clear()
-	}
-	if flushErr != nil {
-		module.settings.Logger().WarnContext(ctx, "failed to flush rum usage", slog.Int("keys", len(keysUsed)), slog.Int("applications", len(firstSeen)), errors.Attr(flushErr))
-	}
-	return flushErr
-}
-
-// lookupKey returns a nil key, without error, for a hash that was never issued.
-func (module *module) lookupKey(ctx context.Context, hash string) (*rumtypes.Application, *rumtypes.ApplicationKey, error) {
-	key, err := module.store.GetKeyByHash(ctx, hash)
+	err := module.flushSourceMapUsage(ctx)
 	if err != nil {
-		if errors.Ast(err, errors.TypeNotFound) {
-			return nil, nil, nil
-		}
-		return nil, nil, err
+		module.settings.Logger().WarnContext(ctx, "failed to flush rum source map usage", errors.Attr(err))
 	}
-
-	storable, err := module.store.GetApplicationByID(ctx, key.ApplicationID)
-	if err != nil {
-		if errors.Ast(err, errors.TypeNotFound) {
-			return nil, nil, nil
-		}
-		return nil, nil, err
-	}
-
-	application, err := rumtypes.NewApplicationFromStorable(storable)
-	if err != nil {
-		return nil, nil, err
-	}
-	return application, key, nil
+	return err
 }

@@ -116,7 +116,6 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ quickfilter.Module }{},
 		struct{ quickfilter.Handler }{},
 		struct{ rumapplication.Handler }{},
-		struct{ rumapplication.Gateway }{},
 		struct{ onboarding.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {

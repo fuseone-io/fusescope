@@ -50,20 +50,6 @@ func (store *store) GetApplication(ctx context.Context, orgID valuer.UUID, id va
 	return application, nil
 }
 
-func (store *store) GetApplicationByID(ctx context.Context, id valuer.UUID) (*rumtypes.StorableApplication, error) {
-	application := new(rumtypes.StorableApplication)
-	err := store.sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(application).
-		Where("id = ?", id).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, rumtypes.ErrCodeApplicationNotFound, "rum application %s not found", id.StringValue())
-	}
-	return application, nil
-}
-
 func (store *store) ListApplications(ctx context.Context, orgID valuer.UUID) ([]*rumtypes.StorableApplication, error) {
 	applications := make([]*rumtypes.StorableApplication, 0)
 	err := store.sqlstore.
@@ -168,21 +154,6 @@ func (store *store) DeleteApplication(ctx context.Context, orgID valuer.UUID, id
 		}
 		return nil
 	})
-}
-
-func (store *store) SetFirstSeenAt(ctx context.Context, id valuer.UUID, seenAt time.Time) error {
-	_, err := store.sqlstore.
-		BunDBCtx(ctx).
-		NewUpdate().
-		Model((*rumtypes.StorableApplication)(nil)).
-		Set("first_seen_at = ?", seenAt).
-		Where("id = ?", id).
-		Where("first_seen_at IS NULL OR first_seen_at > ?", seenAt).
-		Exec(ctx)
-	if err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "failed to set rum application first seen time")
-	}
-	return nil
 }
 
 // usageBatch bounds the rows one statement of a batched update names.
@@ -299,20 +270,6 @@ func (store *store) GetKey(ctx context.Context, orgID valuer.UUID, applicationID
 	return key, nil
 }
 
-func (store *store) GetKeyByHash(ctx context.Context, hash string) (*rumtypes.ApplicationKey, error) {
-	key := new(rumtypes.ApplicationKey)
-	err := store.sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(key).
-		Where("key_hash = ?", hash).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, rumtypes.ErrCodeKeyNotFound, "rum application key not found")
-	}
-	return key, nil
-}
-
 func (store *store) ListKeys(ctx context.Context, orgID valuer.UUID, applicationID valuer.UUID) ([]*rumtypes.ApplicationKey, error) {
 	keys := make([]*rumtypes.ApplicationKey, 0)
 	err := store.sqlstore.
@@ -403,21 +360,6 @@ func (store *store) UpdateKey(ctx context.Context, key *rumtypes.ApplicationKey)
 		Exec(ctx)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to update rum application key")
-	}
-	return nil
-}
-
-func (store *store) SetKeyLastUsedAt(ctx context.Context, id valuer.UUID, usedAt time.Time) error {
-	_, err := store.sqlstore.
-		BunDBCtx(ctx).
-		NewUpdate().
-		Model((*rumtypes.ApplicationKey)(nil)).
-		Set("last_used_at = ?", usedAt).
-		Where("id = ?", id).
-		Where("last_used_at IS NULL OR last_used_at < ?", usedAt).
-		Exec(ctx)
-	if err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "failed to set rum application key last used time")
 	}
 	return nil
 }

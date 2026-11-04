@@ -76,33 +76,10 @@ func (module *module) reportedStatus(ctx context.Context, id valuer.UUID) (rumty
 	for _, rejection := range byReason {
 		rejections = append(rejections, rejection)
 	}
-	return counts, sdk, rejections, nil
-}
-
-// withReported adds the collectors' reports to what this server's gateway
-// saw itself.
-func withReported(counts rumtypes.IngestCounts, sdk rumtypes.SeenSDK, rejections []*rumtypes.IngestRejection, reportedCounts rumtypes.IngestCounts, reportedSDK *rumtypes.SeenSDK, reportedRejections []*rumtypes.IngestRejection) (rumtypes.IngestCounts, rumtypes.SeenSDK, []*rumtypes.IngestRejection) {
-	counts = addCounts(counts, reportedCounts)
-	if sdk.Name == "" && reportedSDK != nil {
-		sdk = *reportedSDK
-	}
-
-	byReason := map[rumtypes.RejectionReason]*rumtypes.IngestRejection{}
-	for _, list := range [][]*rumtypes.IngestRejection{rejections, reportedRejections} {
-		from := make(map[rumtypes.RejectionReason]*rumtypes.IngestRejection, len(list))
-		for _, rejection := range list {
-			from[rejection.Reason] = rejection
-		}
-		mergeRejections(byReason, from)
-	}
-	merged := make([]*rumtypes.IngestRejection, 0, len(byReason))
-	for _, rejection := range byReason {
-		merged = append(merged, rejection)
-	}
-	slices.SortFunc(merged, func(a, b *rumtypes.IngestRejection) int {
+	slices.SortFunc(rejections, func(a, b *rumtypes.IngestRejection) int {
 		return b.LastSeenAt.Compare(a.LastSeenAt)
 	})
-	return counts, sdk, merged
+	return counts, sdk, rejections, nil
 }
 
 func addCounts(a, b rumtypes.IngestCounts) rumtypes.IngestCounts {
@@ -111,5 +88,20 @@ func addCounts(a, b rumtypes.IngestCounts) rumtypes.IngestCounts {
 		Views:    addCount(a.Views, b.Views),
 		Errors:   addCount(a.Errors, b.Errors),
 		Vitals:   addCount(a.Vitals, b.Vitals),
+	}
+}
+
+func mergeRejections(into map[rumtypes.RejectionReason]*rumtypes.IngestRejection, from map[rumtypes.RejectionReason]*rumtypes.IngestRejection) {
+	for reason, rejection := range from {
+		merged, ok := into[reason]
+		if !ok {
+			copied := *rejection
+			into[reason] = &copied
+			continue
+		}
+		merged.Count = addCount(merged.Count, rejection.Count)
+		if rejection.LastSeenAt.After(merged.LastSeenAt) {
+			merged.LastSeenAt, merged.LastOrigin = rejection.LastSeenAt, rejection.LastOrigin
+		}
 	}
 }

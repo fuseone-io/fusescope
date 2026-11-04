@@ -46,26 +46,6 @@ func TestHashKey(t *testing.T) {
 		})
 	}
 }
-
-func TestIsWellFormedKey(t *testing.T) {
-	testCases := []struct {
-		name     string
-		input    string
-		expected bool
-	}{
-		{name: "Generated_Valid", input: "rum_pub_abcdefghijklmnopqrstuvwxyz234567", expected: true},
-		{name: "WrongPrefix_Invalid", input: "rum_sec_abcdefghijklmnopqrstuvwxyz234567", expected: false},
-		{name: "Empty_Invalid", input: "", expected: false},
-		{name: "TooLong_Invalid", input: KeyPrefix + strings.Repeat("a", 200), expected: false},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.expected, IsWellFormedKey(testCase.input))
-		})
-	}
-}
-
 func TestApplicationKeyStatusAt(t *testing.T) {
 	now := time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)
 	future := now.Add(time.Hour)

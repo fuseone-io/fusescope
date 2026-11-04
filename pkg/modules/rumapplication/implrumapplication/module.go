@@ -21,23 +21,14 @@ type module struct {
 	symbolicator rumapplication.Symbolicator
 	storage      rumapplication.SourceMapStorage
 	promoter     *fieldPromoter
-	keys         *keyCache
-	monitor      *monitor
 	settings     factory.ScopedProviderSettings
 	config       rumapplication.Config
-	origins      originCache
 
 	listenersMu sync.Mutex
 	listeners   []func()
 
 	// ingestMaxSize is the ingest policy's cap, ingestpolicy.MaxSize.
 	ingestMaxSize int
-}
-
-type originCache struct {
-	mu           sync.Mutex
-	applications []*rumtypes.Application
-	expiresAt    time.Time
 }
 
 func NewModule(store rumtypes.Store, telemetryStore telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings, config rumapplication.Config) rumapplication.Module {
@@ -49,8 +40,6 @@ func NewModule(store rumtypes.Store, telemetryStore telemetrystore.TelemetryStor
 		symbolicator: NewSymbolicator(store, storage, settings.Logger(), config),
 		storage:      storage,
 		promoter:     newFieldPromoter(telemetryStore, providerSettings),
-		keys:         newKeyCache(config.KeyCacheTTL),
-		monitor:      newMonitor(),
 		settings:     settings,
 		config:       config,
 
@@ -182,7 +171,6 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		module.symbolicator.Forget(id, file.Release)
 	}
 
-	module.monitor.Forget(id)
 	module.changed()
 	return nil
 }
@@ -193,19 +181,17 @@ func (module *module) Status(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return nil, err
 	}
 
-	counts, sdk, rejections, pendingFirstSeen := module.monitor.Snapshot(id, time.Now())
-	reportedCounts, reportedSDK, reportedRejections, err := module.reportedStatus(ctx, id)
+	counts, reportedSDK, rejections, err := module.reportedStatus(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	counts, sdk, rejections = withReported(counts, sdk, rejections, reportedCounts, reportedSDK, reportedRejections)
-	firstSeen := application.FirstSeenAt
-	if firstSeen == nil {
-		firstSeen = pendingFirstSeen
+	sdk := rumtypes.SeenSDK{}
+	if reportedSDK != nil {
+		sdk = *reportedSDK
 	}
 
 	return &rumtypes.GettableApplicationStatus{
-		FirstSeenAt:   firstSeen,
+		FirstSeenAt:   application.FirstSeenAt,
 		WindowSeconds: int64(rumtypes.StatusWindow.Seconds()),
 		Counts:        counts,
 		SDK:           sdk,
@@ -232,43 +218,8 @@ func (module *module) HasApplications(ctx context.Context) (bool, error) {
 	return count > 0, nil
 }
 
-func (module *module) ApplicationsAllowingOrigin(ctx context.Context, origin string) []valuer.UUID {
-	module.origins.mu.Lock()
-	defer module.origins.mu.Unlock()
-
-	now := time.Now()
-	if module.origins.applications == nil || !now.Before(module.origins.expiresAt) {
-		storables, err := module.store.ListApplicationsInAllOrgs(ctx)
-		if err != nil {
-			module.settings.Logger().WarnContext(ctx, "failed to list rum applications", errors.Attr(err))
-			return nil
-		}
-		applications, err := rumtypes.NewApplicationsFromStorables(storables)
-		if err != nil {
-			module.settings.Logger().WarnContext(ctx, "failed to decode rum applications", errors.Attr(err))
-			return nil
-		}
-		module.origins.applications = applications
-		module.origins.expiresAt = now.Add(module.config.KeyCacheTTL)
-	}
-
-	ids := []valuer.UUID{}
-	for _, application := range module.origins.applications {
-		if application.AllowsOrigin(origin) {
-			ids = append(ids, application.ID)
-		}
-	}
-	return ids
-}
-
-// changed drops everything cached from the database after a write.
+// changed notifies the listeners after a write.
 func (module *module) changed() {
-	module.keys.Clear()
-
-	module.origins.mu.Lock()
-	module.origins.applications = nil
-	module.origins.mu.Unlock()
-
 	module.listenersMu.Lock()
 	listeners := module.listeners
 	module.listenersMu.Unlock()

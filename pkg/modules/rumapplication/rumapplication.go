@@ -52,16 +52,7 @@ type Module interface {
 
 	Status(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*rumtypes.GettableApplicationStatus, error)
 
-	// Authenticate resolves a plaintext key to its application and key id.
-	// An issued but unusable key still returns the application, with an error.
-	Authenticate(ctx context.Context, plaintext string) (*rumtypes.Application, valuer.UUID, error)
-	// ApplicationsAllowingOrigin returns the ids of the applications, in any organization, that allow the origin.
-	// It answers preflights, which carry no key, and attributes requests with an unknown key.
-	ApplicationsAllowingOrigin(ctx context.Context, origin string) []valuer.UUID
-	ObserveIngest(application *rumtypes.Application, keyID valuer.UUID, batch *rumtypes.IngestBatch)
-	ObserveRejection(applicationID valuer.UUID, reason rumtypes.RejectionReason, origin string)
-
-	// FlushUsage writes key last-used and application first-seen times observed since the last flush.
+	// FlushUsage writes the source map last-used times observed since the last flush.
 	FlushUsage(ctx context.Context) error
 
 	// PromoteFields materializes the RUM attributes in the traces and logs tables. It is idempotent.
@@ -157,12 +148,6 @@ type SourceMapStorage interface {
 
 	// Delete ignores a missing key.
 	Delete(ctx context.Context, key string) error
-}
-
-// Gateway serves the public OTLP/HTTP ingestion endpoints.
-type Gateway interface {
-	Traces(http.ResponseWriter, *http.Request)
-	Logs(http.ResponseWriter, *http.Request)
 }
 
 type Service interface {

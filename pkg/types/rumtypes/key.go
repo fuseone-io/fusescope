@@ -19,15 +19,11 @@ import (
 // in lowercase unpadded base32.
 const KeyPrefix = "rum_pub_"
 
-const (
-	keyRandomBytes = 20
-	maxKeyLength   = 128
-)
+const keyRandomBytes = 20
 
 var (
 	ErrCodeKeyNotFound = errors.MustNewCode("rum_application_key_not_found")
 	ErrCodeKeyConflict = errors.MustNewCode("rum_application_key_conflict")
-	ErrCodeKeyInvalid  = errors.MustNewCode("rum_application_key_invalid")
 )
 
 var (
@@ -142,10 +138,6 @@ func NewApplicationKey(orgID valuer.UUID, applicationID valuer.UUID, now time.Ti
 func HashKey(plaintext string) string {
 	sum := sha256.Sum256([]byte(plaintext))
 	return hex.EncodeToString(sum[:])
-}
-
-func IsWellFormedKey(plaintext string) bool {
-	return len(plaintext) > len(KeyPrefix) && len(plaintext) <= maxKeyLength && strings.HasPrefix(plaintext, KeyPrefix)
 }
 
 func (key *ApplicationKey) StatusAt(now time.Time) KeyStatus {

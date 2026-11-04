@@ -75,6 +75,18 @@ func newTestModuleWithConfig(t *testing.T, matchRegexp bool, configure func(*rum
 	return NewModule(NewStore(sqlStore), telemetryStore, factorytest.NewSettings(), *config).(*module), valuer.GenerateUUID(), telemetryStore.Mock()
 }
 
+// policyKeys returns the ids of the keys the ingest policy publishes.
+func policyKeys(t *testing.T, module *module) []valuer.UUID {
+	t.Helper()
+	content, err := module.IngestPolicyContent(context.Background(), time.Now())
+	require.NoError(t, err)
+	ids := []valuer.UUID{}
+	for _, key := range content.Keys {
+		ids = append(ids, valuer.MustNewUUID(key.ID))
+	}
+	return ids
+}
+
 func newTestPostable(t *testing.T, raw string) *rumtypes.PostableApplication {
 	t.Helper()
 	postable := new(rumtypes.PostableApplication)
@@ -82,7 +94,7 @@ func newTestPostable(t *testing.T, raw string) *rumtypes.PostableApplication {
 	return postable
 }
 
-func TestModuleCreateIssuesKeyAndAuthenticates(t *testing.T) {
+func TestModuleCreateIssuesKey(t *testing.T) {
 	ctx := context.Background()
 	module, orgID := newTestModule(t)
 
@@ -91,40 +103,10 @@ func TestModuleCreateIssuesKeyAndAuthenticates(t *testing.T) {
 	require.NotNil(t, created.Key)
 	assert.Equal(t, rumtypes.KeyStatusActive, created.Key.Status)
 
-	application, keyID, err := module.Authenticate(ctx, created.Key.Key)
-	require.NoError(t, err)
-	assert.Equal(t, created.ID, application.ID)
-	assert.Equal(t, created.Key.ID, keyID)
+	assert.Equal(t, []valuer.UUID{created.Key.ID}, policyKeys(t, module))
 
 	_, err = module.Create(ctx, orgID, "admin@example.com", newTestPostable(t, `{"name":"shop","platform":"web","environment":"staging"}`))
 	assert.True(t, errors.Ast(err, errors.TypeAlreadyExists))
-}
-
-func TestModuleAuthenticateRejects(t *testing.T) {
-	ctx := context.Background()
-	module, orgID := newTestModule(t)
-	created, err := module.Create(ctx, orgID, "admin@example.com", newTestPostable(t, `{"name":"web","platform":"web","environment":"production"}`))
-	require.NoError(t, err)
-	require.NoError(t, module.RevokeKey(ctx, orgID, created.ID, created.Key.ID))
-
-	testCases := []struct {
-		name        string
-		key         string
-		application bool
-	}{
-		{name: "Malformed_NoApplication", key: "not-a-key"},
-		{name: "Unknown_NoApplication", key: rumtypes.KeyPrefix + "unknownunknownunknownunknownunkn"},
-		{name: "Revoked_ApplicationResolved", key: created.Key.Key, application: true},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			application, _, err := module.Authenticate(ctx, testCase.key)
-			require.Error(t, err)
-			assert.True(t, errors.Ast(err, errors.TypeUnauthenticated))
-			assert.Equal(t, testCase.application, application != nil)
-		})
-	}
 }
 
 func TestModuleKeyRotation(t *testing.T) {
@@ -140,10 +122,7 @@ func TestModuleKeyRotation(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEqual(t, created.Key.Key, rotated.Key)
 
-	for _, plaintext := range []string{created.Key.Key, rotated.Key} {
-		_, _, err := module.Authenticate(ctx, plaintext)
-		assert.NoError(t, err, "both keys work during the overlap")
-	}
+	assert.ElementsMatch(t, []valuer.UUID{created.Key.ID, rotated.ID}, policyKeys(t, module), "both keys work during the overlap")
 
 	keys, err := module.ListKeys(ctx, orgID, created.ID)
 	require.NoError(t, err)
@@ -156,30 +135,10 @@ func TestModuleKeyRotation(t *testing.T) {
 	assert.True(t, errors.Ast(err, errors.TypeAlreadyExists), "one rotation at a time")
 
 	require.NoError(t, module.RevokeKey(ctx, orgID, created.ID, created.Key.ID))
-	_, _, err = module.Authenticate(ctx, created.Key.Key)
-	assert.True(t, errors.Ast(err, errors.TypeUnauthenticated), "revoke ends the overlap early")
+	assert.Equal(t, []valuer.UUID{rotated.ID}, policyKeys(t, module), "revoke ends the overlap early")
 
 	_, err = module.RotateKey(ctx, orgID, created.ID, rotated.ID, rumtypes.KeyOverlapOneDay)
 	assert.NoError(t, err)
-}
-
-func TestModuleUpdateClearsCache(t *testing.T) {
-	ctx := context.Background()
-	module, orgID := newTestModule(t)
-	created, err := module.Create(ctx, orgID, "admin@example.com", newTestPostable(t, `{"name":"web","platform":"web","environment":"production","allowedOrigins":["https://a.example.com"]}`))
-	require.NoError(t, err)
-
-	_, _, err = module.Authenticate(ctx, created.Key.Key)
-	require.NoError(t, err)
-
-	updatable := new(rumtypes.UpdatableApplication)
-	require.NoError(t, json.Unmarshal([]byte(`{"name":"web","environment":"production","allowedOrigins":["https://b.example.com"]}`), updatable))
-	_, err = module.Update(ctx, orgID, created.ID, updatable)
-	require.NoError(t, err)
-
-	application, _, err := module.Authenticate(ctx, created.Key.Key)
-	require.NoError(t, err)
-	assert.Equal(t, []string{"https://b.example.com"}, application.AllowedOrigins)
 }
 
 func TestModuleDeleteRemovesKeys(t *testing.T) {
@@ -192,8 +151,7 @@ func TestModuleDeleteRemovesKeys(t *testing.T) {
 
 	_, err = module.Get(ctx, orgID, created.ID)
 	assert.True(t, errors.Ast(err, errors.TypeNotFound))
-	_, _, err = module.Authenticate(ctx, created.Key.Key)
-	assert.True(t, errors.Ast(err, errors.TypeUnauthenticated))
+	assert.Empty(t, policyKeys(t, module))
 }
 
 func TestModuleOrgIsolation(t *testing.T) {
@@ -206,33 +164,6 @@ func TestModuleOrgIsolation(t *testing.T) {
 	_, err = module.Get(ctx, otherOrg, created.ID)
 	assert.True(t, errors.Ast(err, errors.TypeNotFound))
 	assert.True(t, errors.Ast(module.RevokeKey(ctx, otherOrg, created.ID, created.Key.ID), errors.TypeNotFound))
-}
-
-func TestModuleFlushUsage(t *testing.T) {
-	ctx := context.Background()
-	module, orgID := newTestModule(t)
-	created, err := module.Create(ctx, orgID, "admin@example.com", newTestPostable(t, `{"name":"web","platform":"web","environment":"production"}`))
-	require.NoError(t, err)
-
-	application, keyID, err := module.Authenticate(ctx, created.Key.Key)
-	require.NoError(t, err)
-	module.ObserveIngest(application, keyID, &rumtypes.IngestBatch{SessionIDs: []string{"s"}})
-
-	status, err := module.Status(ctx, orgID, created.ID)
-	require.NoError(t, err)
-	assert.NotNil(t, status.FirstSeenAt)
-	assert.Equal(t, int64(1), status.Counts.Sessions)
-
-	require.NoError(t, module.FlushUsage(ctx))
-
-	stored, err := module.Get(ctx, orgID, created.ID)
-	require.NoError(t, err)
-	assert.NotNil(t, stored.FirstSeenAt)
-
-	keys, err := module.ListKeys(ctx, orgID, created.ID)
-	require.NoError(t, err)
-	require.Len(t, keys, 1)
-	assert.NotNil(t, keys[0].LastUsedAt)
 }
 
 func TestModuleStatusBrowserBundle(t *testing.T) {
