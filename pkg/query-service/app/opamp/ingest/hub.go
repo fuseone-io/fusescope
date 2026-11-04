@@ -70,6 +70,9 @@ type agentState struct {
 
 type peer struct {
 	wake chan struct{}
+	// ack holds the latest sequence to acknowledge; an older one waiting
+	// is replaced, which only repeats its values in the next report.
+	ack  chan uint64
 	stop chan struct{}
 }
 
@@ -148,6 +151,38 @@ func (hub *Hub) Send(agentID string) {
 	}
 }
 
+// Accepts reports whether the hub holds agentID on conn as an eligible
+// ingress agent: the only agents whose reports are read.
+func (hub *Hub) Accepts(agentID string, conn Connection) bool {
+	hub.mu.Lock()
+	defer hub.mu.Unlock()
+	state := hub.agents[agentID]
+	return state != nil && state.conn == conn && state.peer != nil
+}
+
+// Ack sends a reportAck for seq to one agent, through its sender, if it is
+// eligible. The retrier calls it for sequences it committed after their
+// page's response had gone.
+func (hub *Hub) Ack(agentID string, seq uint64) {
+	hub.mu.Lock()
+	defer hub.mu.Unlock()
+	state := hub.agents[agentID]
+	if state == nil || state.peer == nil {
+		return
+	}
+	for {
+		select {
+		case state.peer.ack <- seq:
+			return
+		default:
+		}
+		select {
+		case <-state.peer.ack:
+		default:
+		}
+	}
+}
+
 // Close stops every sender.
 func (hub *Hub) Close() {
 	hub.mu.Lock()
@@ -170,7 +205,7 @@ func (hub *Hub) refused(agentID string) {
 }
 
 func (hub *Hub) start(agentID string, state *agentState) {
-	p := &peer{wake: make(chan struct{}, 1), stop: make(chan struct{})}
+	p := &peer{wake: make(chan struct{}, 1), ack: make(chan uint64, 1), stop: make(chan struct{})}
 	state.peer = p
 	go hub.send(agentID, state.uid, state.conn, p)
 	wake(p)
@@ -196,6 +231,13 @@ func (hub *Hub) send(agentID string, uid []byte, conn Connection, p *peer) {
 		select {
 		case <-p.stop:
 			return
+		case seq := <-p.ack:
+			if err := hub.write(conn, uid, ReportAck(seq)); err != nil {
+				hub.logger.Warn("ingest report not acknowledged; disconnecting the agent, which sends the report again", slog.String("agent_id", agentID), slog.Uint64("report_sequence", seq), errors.Attr(err))
+				_ = conn.Disconnect()
+				return
+			}
+			continue
 		case <-p.wake:
 		}
 		snapshot := hub.publisher.Current()
@@ -207,7 +249,7 @@ func (hub *Hub) send(agentID string, uid []byte, conn Connection, p *peer) {
 		case <-p.stop:
 			return
 		}
-		err := hub.sendOne(conn, uid, snapshot)
+		err := hub.write(conn, uid, &protobufs.CustomMessage{Capability: ingestpolicy.Capability, Type: ingestpolicy.TypePolicy, Data: snapshot.Data})
 		<-hub.sends
 		if err != nil {
 			hub.logger.Warn("ingest policy not sent; disconnecting the agent, which reconnects and gets it again", slog.String("agent_id", agentID), slog.Uint64("version", snapshot.Version), errors.Attr(err))
@@ -218,11 +260,11 @@ func (hub *Hub) send(agentID string, uid []byte, conn Connection, p *peer) {
 	}
 }
 
-// sendOne writes one policy within sendTimeout. The WebSocket library sets
+// write sends one custom message within sendTimeout. The WebSocket library sets
 // its own write deadline on every frame, so a deadline on the network
 // connection would not hold; past the timeout the connection is closed
 // instead, which ends the blocked write.
-func (hub *Hub) sendOne(conn Connection, uid []byte, snapshot *Snapshot) error {
+func (hub *Hub) write(conn Connection, uid []byte, message *protobufs.CustomMessage) error {
 	ctx, cancel := context.WithTimeout(context.Background(), hub.sendTimeout)
 	defer cancel()
 	var expired atomic.Bool
@@ -230,17 +272,10 @@ func (hub *Hub) sendOne(conn Connection, uid []byte, snapshot *Snapshot) error {
 		expired.Store(true)
 		_ = conn.Disconnect()
 	})
-	err := conn.Send(ctx, &protobufs.ServerToAgent{
-		InstanceUid: uid,
-		CustomMessage: &protobufs.CustomMessage{
-			Capability: ingestpolicy.Capability,
-			Type:       ingestpolicy.TypePolicy,
-			Data:       snapshot.Data,
-		},
-	})
+	err := conn.Send(ctx, &protobufs.ServerToAgent{InstanceUid: uid, CustomMessage: message})
 	watchdog.Stop()
 	if err == nil && expired.Load() {
-		err = errors.Newf(errors.TypeTimeout, errors.CodeInternal, "ingest policy write past %s", hub.sendTimeout)
+		err = errors.Newf(errors.TypeTimeout, errors.CodeInternal, "ingest message write past %s", hub.sendTimeout)
 	}
 	return err
 }

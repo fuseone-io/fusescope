@@ -612,8 +612,10 @@ rum:
     cleanup_interval: 1h
   ingest_policy:
     # File of the tokens, one per line (32 to 256 characters), that ingress
-    # collectors present on the OpAMP connection to receive the ingest policy.
-    # Unset, it is not published. Enable it only with TLS on the OpAMP port.
+    # collectors present on the OpAMP connection to receive the ingest policy
+    # and send their ingest reports, which feed the setup screen. Unset, no
+    # policy is published and no report is read. Enable it only with TLS on
+    # the OpAMP port.
     token_file: ""
 
 ##################### Dashboard #####################
