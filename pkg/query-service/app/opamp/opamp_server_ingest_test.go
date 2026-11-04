@@ -217,6 +217,45 @@ func TestIngestListenerConnectionBound(t *testing.T) {
 	}, 5*time.Second, 50*time.Millisecond, "the slot is released on close")
 }
 
+// Stop closes the WebSockets the listener admitted, at once, and frees
+// their slots: the HTTP server's Shutdown leaves them open.
+func TestIngestListenerStopClosesWebSockets(t *testing.T) {
+	f := startIngestFixture(t, ingestLimits{handshake: 5 * time.Second, idle: time.Minute, connections: 4})
+	conn, _, err := f.dial("Bearer " + ingestToken)
+	require.NoError(t, err)
+	defer conn.Close()
+	listener := f.srv.ingestHTTP.listener.(*limitedListener)
+	open := func() int {
+		listener.mu.Lock()
+		defer listener.mu.Unlock()
+		return len(listener.conns)
+	}
+	require.Equal(t, 1, open())
+
+	start := time.Now()
+	f.srv.Stop()
+	_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	_, _, err = conn.ReadMessage()
+	assert.Error(t, err, "closed by Stop")
+	assert.Less(t, time.Since(start), 2*time.Second, "at once, not at the idle deadline")
+	assert.Zero(t, open(), "no connection held")
+	require.Eventually(t, func() bool { return len(listener.slots) == 0 }, 5*time.Second, 10*time.Millisecond, "every slot is free, the waiting accept's too")
+}
+
+// What a connection may send before its token is checked is bounded.
+func TestIngestListenerHeaderBound(t *testing.T) {
+	f := startIngestFixture(t, defaultIngestLimits)
+	header := http.Header{"Authorization": {"Bearer " + ingestToken}, "X-Padding": {strings.Repeat("a", 64<<10)}}
+	_, resp, err := f.dialer.Dial("wss://"+f.ingest+"/v1/opamp", header)
+	require.Error(t, err)
+	require.NotNil(t, resp)
+	assert.Equal(t, http.StatusRequestHeaderFieldsTooLarge, resp.StatusCode)
+
+	conn, _, err := f.dial("Bearer " + ingestToken)
+	require.NoError(t, err, "a collector's handshake fits")
+	_ = conn.Close()
+}
+
 // If the plaintext listener cannot start, the ingest listener and the
 // subscription to configuration updates are undone.
 func TestStartUndoesOnFailure(t *testing.T) {
