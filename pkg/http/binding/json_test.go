@@ -34,6 +34,26 @@ type n struct {
 	S s `json:"s"`
 }
 
+type l struct {
+	Items []s `json:"items"`
+}
+
+type plain struct {
+	P struct {
+		B int `json:"b"`
+	} `json:"p"`
+}
+
+type named struct {
+	Name map[string]string `json:"name"`
+	S    s                 `json:"s"`
+}
+
+type two struct {
+	S s `json:"s"`
+	T s `json:"t"`
+}
+
 func TestJSONBinding_BindBodyErrors(t *testing.T) {
 	testCases := []struct {
 		name    string
@@ -51,6 +71,14 @@ func TestJSONBinding_BindBodyErrors(t *testing.T) {
 		{name: "CustomInvalidJSON", body: `{"a:9}`, opts: nil, obj: new(s), code: ErrCodeInvalidRequestBody, message: ErrMessageInvalidJSON, a: []string{io.ErrUnexpectedEOF.Error()}},
 		{name: "CustomMismatchedType", body: `{"a":"b"}`, opts: nil, obj: new(s), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 'a', try sending 'int' instead?`}},
 		{name: "CustomNestedMismatchedType", body: `{"s":{"a":"b"}}`, opts: nil, obj: new(n), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 's.a', try sending 'int' instead?`}},
+		// #322: under encoding/json v2 (Go 1.27's default) an error from a
+		// nested UnmarshalJSON carries only its own field; the path comes
+		// from the body, the same on every toolchain.
+		{name: "CustomNestedInArrayMismatchedType", body: `{"items":[{"a":11},{"a":"b"}]}`, opts: nil, obj: new(l), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 'items.1.a', try sending 'int' instead?`}},
+		{name: "PlainNestedMismatchedType", body: `{"p":{"b":"x"}}`, opts: nil, obj: new(plain), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 'p.b', try sending 'int' instead?`}},
+		{name: "SameFieldValidElsewhere", body: `{"name":{"a":"ok"},"s":{"a":"b"}}`, opts: nil, obj: new(named), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 's.a', try sending 'int' instead?`}},
+		{name: "LeadingWhitespace", body: "  \n" + `{"p":{"b":"x"}}`, opts: nil, obj: new(plain), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 'p.b', try sending 'int' instead?`}},
+		{name: "AmbiguousNestedMismatchedType", body: `{"s":{"a":"b"},"t":{"a":"c"}}`, opts: nil, obj: new(two), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 's.a', try sending 'int' instead?`}},
 	}
 
 	for _, testCase := range testCases {

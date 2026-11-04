@@ -1,6 +1,7 @@
 package binding
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"strings"
@@ -28,7 +29,9 @@ func (b *jsonBinding) BindBody(body io.Reader, obj any, opts ...BindBodyOption) 
 		opt(bindBodyOptions)
 	}
 
-	decoder := json.NewDecoder(body)
+	// The bytes read, kept to name the field of a type error (fieldPath).
+	var read bytes.Buffer
+	decoder := json.NewDecoder(io.TeeReader(body, &read))
 
 	if bindBodyOptions.DisallowUnknownFields {
 		decoder.DisallowUnknownFields()
@@ -53,7 +56,7 @@ func (b *jsonBinding) BindBody(body io.Reader, obj any, opts ...BindBodyOption) 
 			if unmarshalTypeError.Field != "" {
 				return errors.
 					New(errors.TypeInvalidInput, ErrCodeInvalidRequestField, ErrMessageInvalidField).
-					WithAdditional("value of type '" + unmarshalTypeError.Value + "' was received for field '" + unmarshalTypeError.Field + "', try sending '" + unmarshalTypeError.Type.String() + "' instead?")
+					WithAdditional("value of type '" + unmarshalTypeError.Value + "' was received for field '" + fieldPath(read.Bytes(), unmarshalTypeError) + "', try sending '" + unmarshalTypeError.Type.String() + "' instead?")
 			}
 
 			return errors.
