@@ -51,6 +51,15 @@ receivers:
           match_type: strict
       filesystem: {}
       memory: {}
+  # The collector's own telemetry, from its loopback-only listener
+  # (service.telemetry), written with the other metrics.
+  prometheus/self:
+    config:
+      scrape_configs:
+        - job_name: fusescope-collector
+          scrape_interval: 60s
+          static_configs:
+            - targets: [127.0.0.1:8888]
 
 processors:
   memory_limiter:
@@ -113,6 +122,15 @@ extensions:
 
 service:
   extensions: [healthcheckv2, fusescope_opamp]
+  # Only on loopback, never published.
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 127.0.0.1
+                port: 8888
   pipelines:
     traces:
       receivers: [otlp, rum]
@@ -128,5 +146,9 @@ service:
       exporters: [fusescope_clickhouse]
     metrics/host:
       receivers: [host_metrics]
+      processors: [resourcedetection/system]
+      exporters: [fusescope_clickhouse]
+    metrics/self:
+      receivers: [prometheus/self]
       processors: [resourcedetection/system]
       exporters: [fusescope_clickhouse]
