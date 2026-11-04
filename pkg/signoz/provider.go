@@ -277,6 +277,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewEnablePublicDashboardAccessFactory(),
 		sqlmigration.NewAddRUMSourceMapKindFactory(sqlschema),
 		sqlmigration.NewAddIngestPolicyRevisionFactory(sqlschema),
+		sqlmigration.NewAddIngestReportFactory(sqlschema),
 	)
 }
 
