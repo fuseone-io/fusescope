@@ -24,8 +24,8 @@ type handler struct {
 	publicLimiter    *publicRateLimiter
 }
 
-func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings, authz authz.AuthZ, publicRateLimit dashboard.PublicRateLimitConfig, trustForwardedFor bool) dashboard.Handler {
-	return &handler{module: module, providerSettings: providerSettings, authz: authz, publicLimiter: newPublicRateLimiter(publicRateLimit, trustForwardedFor)}
+func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings, authz authz.AuthZ, publicRateLimit dashboard.PublicRateLimitConfig) dashboard.Handler {
+	return &handler{module: module, providerSettings: providerSettings, authz: authz, publicLimiter: newPublicRateLimiter(publicRateLimit)}
 }
 
 func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {

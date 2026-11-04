@@ -8,7 +8,7 @@ Unpublishing deletes the public configuration. Publishing again generates a new 
 
 ## Rate limits
 
-Anonymous dashboard and panel requests share two token buckets: one per public link (`dashboard.public.ratelimit.link`, default 20/s, burst 200) and one per client IP across all links (`dashboard.public.ratelimit.client`, default 5/s, burst 100). An exhausted bucket returns `429` with `Retry-After`, before the link is resolved. The client IP is the remote address, or the first `X-Forwarded-For` address when `rum.ratelimit.trust_forwarded_for` is enabled; enable it only behind a proxy that sets the header, otherwise every visitor behind the proxy shares one bucket. Buckets are in memory and per process, so each replica enforces its own limits.
+Anonymous dashboard and panel requests share two token buckets: one per public link (`dashboard.public.ratelimit.link`, default 20/s, burst 200) and one per client IP across all links (`dashboard.public.ratelimit.client`, default 5/s, burst 100). An exhausted bucket returns `429` with `Retry-After`, before the link is resolved. The client IP is the remote address, or the first `X-Forwarded-For` address when `dashboard.public.ratelimit.trust_forwarded_for` is enabled; enable it only behind a proxy that sets the header, otherwise every visitor behind the proxy shares one bucket. Buckets are in memory and per process, so each replica enforces its own limits.
 
 ## Audit logs
 

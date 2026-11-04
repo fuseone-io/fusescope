@@ -126,7 +126,7 @@ func NewHandlers(
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
 		Apdex:                   implapdex.NewHandler(modules.Apdex),
-		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz, dashboardConfig.Public.RateLimit, rumConfig.RateLimit.TrustForwardedFor),
+		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz, dashboardConfig.Public.RateLimit),
 		QuickFilter:             implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:             impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),

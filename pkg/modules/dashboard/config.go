@@ -23,6 +23,9 @@ type PublicRateLimitConfig struct {
 
 	// Token bucket per client IP across all public links. The IP is kept in memory only.
 	Client ratelimit.Limit `mapstructure:"client"`
+
+	// Use the first X-Forwarded-For address as the client IP. Enable only behind a proxy that sets it.
+	TrustForwardedFor bool `mapstructure:"trust_forwarded_for"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {

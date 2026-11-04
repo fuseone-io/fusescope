@@ -22,11 +22,10 @@ type publicRequest struct {
 
 func TestCheckPublicRateLimit(t *testing.T) {
 	testCases := []struct {
-		name              string
-		limits            dashboard.PublicRateLimitConfig
-		trustForwardedFor bool
-		requests          []publicRequest
-		allowed           []bool
+		name     string
+		limits   dashboard.PublicRateLimitConfig
+		requests []publicRequest
+		allowed  []bool
 	}{
 		{
 			name:   "ClientBurstExceeded_Limited",
@@ -51,9 +50,8 @@ func TestCheckPublicRateLimit(t *testing.T) {
 			allowed: []bool{true, true, false, true},
 		},
 		{
-			name:              "ForwardedForTrusted_KeyedByForwardedAddress",
-			limits:            dashboard.PublicRateLimitConfig{Link: ratelimit.Limit{Rate: 0.001, Burst: 10}, Client: ratelimit.Limit{Rate: 0.001, Burst: 1}},
-			trustForwardedFor: true,
+			name:   "ForwardedForTrusted_KeyedByForwardedAddress",
+			limits: dashboard.PublicRateLimitConfig{Link: ratelimit.Limit{Rate: 0.001, Burst: 10}, Client: ratelimit.Limit{Rate: 0.001, Burst: 1}, TrustForwardedFor: true},
 			requests: []publicRequest{
 				{link: "link-e", remoteAddr: "10.0.2.1:1000", forwardedFor: "203.0.113.1"},
 				{link: "link-e", remoteAddr: "10.0.2.1:1000", forwardedFor: "203.0.113.2"},
@@ -74,7 +72,7 @@ func TestCheckPublicRateLimit(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			handler := NewHandler(nil, factorytest.NewSettings(), nil, testCase.limits, testCase.trustForwardedFor)
+			handler := NewHandler(nil, factorytest.NewSettings(), nil, testCase.limits)
 
 			for i, request := range testCase.requests {
 				req := httptest.NewRequest(http.MethodGet, "/api/v2/public/dashboards/"+request.link, nil)
