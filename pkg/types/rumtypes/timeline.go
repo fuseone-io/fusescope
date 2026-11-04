@@ -20,6 +20,9 @@ const (
 	AttributeVitalName         = "browser.web_vital.name"
 	AttributeVitalValue        = "browser.web_vital.value"
 	AttributeVitalRating       = "browser.web_vital.rating"
+	AttributeAppVitalName      = "fusescope.rum.vital.name"
+	AttributeAppVitalValue     = "fusescope.rum.vital.value"
+	AttributeAppVitalRating    = "fusescope.rum.vital.rating"
 	AttributeActionType        = "fusescope.rum.action.type"
 	AttributeActionName        = "fusescope.rum.action.name"
 	AttributeActionTarget      = "fusescope.rum.action.target"
@@ -112,9 +115,9 @@ type ErrorEventInfo struct {
 }
 
 type VitalEvent struct {
-	Name   VitalName   `json:"name" required:"true"`
-	Value  float64     `json:"value" required:"true" description:"Milliseconds; unitless for cls."`
-	Rating VitalRating `json:"rating" required:"true"`
+	Name   TimelineVitalName `json:"name" required:"true"`
+	Value  float64           `json:"value" required:"true" description:"Milliseconds; unitless for cls."`
+	Rating VitalRating       `json:"rating" required:"true"`
 }
 
 func (LoadingType) Enum() []any {

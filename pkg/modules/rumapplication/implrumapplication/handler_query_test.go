@@ -204,7 +204,7 @@ func TestHandlerGetSessionIgnoresRelease(t *testing.T) {
 		[]cmock.ColumnType{{Name: "timestamp", Type: "DateTime64(9)"}, {Name: "span_id", Type: "String"}, {Name: "trace_id", Type: "String"}, {Name: "name", Type: "String"}, {Name: "kind", Type: "Int8"}, {Name: "duration_nano", Type: "UInt64"}, {Name: "route", Type: "String"}, {Name: "path", Type: "String"}, {Name: "loading_type", Type: "String"}, {Name: "method", Type: "String"}, {Name: "url", Type: "String"}, {Name: "status", Type: "UInt16"}, {Name: "has_error", Type: "Bool"}, {Name: "fingerprint", Type: "String"}, {Name: "previous_id", Type: "String"}, {Name: "user_id", Type: "String"}},
 		[][]any{{time.Unix(1000, 0), "a1", "t1", rumtypes.SpanNameView, int8(1), uint64(1e9), "/", "/", "initial_load", "", "", uint16(0), false, "fp-174", "", ""}},
 	))
-	mock.ExpectQuery(`SELECT timestamp, attributes_string\['event.name'\]`).WithArgs(anyArgs(14)...).WillReturnRows(cmock.NewRows(
+	mock.ExpectQuery(`SELECT timestamp, attributes_string\['event.name'\]`).WithArgs(anyArgs(15)...).WillReturnRows(cmock.NewRows(
 		[]cmock.ColumnType{{Name: "timestamp", Type: "UInt64"}, {Name: "event", Type: "String"}, {Name: "route", Type: "String"}, {Name: "type", Type: "String"}, {Name: "message", Type: "String"}, {Name: "stack", Type: "String"}, {Name: "source", Type: "String"}, {Name: "vital", Type: "String"}, {Name: "value", Type: "Float64"}, {Name: "rating", Type: "String"}, {Name: "action_type", Type: "String"}, {Name: "action_name", Type: "String"}, {Name: "target", Type: "String"}},
 		[][]any{},
 	))
