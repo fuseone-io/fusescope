@@ -3,11 +3,13 @@ package binding
 import (
 	"encoding/json"
 	"io"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type s struct {
@@ -49,6 +51,11 @@ type named struct {
 	S    s                 `json:"s"`
 }
 
+type labelled struct {
+	X map[string]string `json:"x"`
+	S s                 `json:"s"`
+}
+
 type two struct {
 	S s `json:"s"`
 	T s `json:"t"`
@@ -77,6 +84,8 @@ func TestJSONBinding_BindBodyErrors(t *testing.T) {
 		{name: "CustomNestedInArrayMismatchedType", body: `{"items":[{"a":11},{"a":"b"}]}`, opts: nil, obj: new(l), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 'items.1.a', try sending 'int' instead?`}},
 		{name: "PlainNestedMismatchedType", body: `{"p":{"b":"x"}}`, opts: nil, obj: new(plain), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 'p.b', try sending 'int' instead?`}},
 		{name: "SameFieldValidElsewhere", body: `{"name":{"a":"ok"},"s":{"a":"b"}}`, opts: nil, obj: new(named), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 's.a', try sending 'int' instead?`}},
+		// Review of #323: x.a is a valid string; only s.a expects an int.
+		{name: "SameShapeValidBefore", body: `{"x":{"a":"b"},"s":{"a":"c"}}`, opts: nil, obj: new(labelled), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 's.a', try sending 'int' instead?`}},
 		{name: "LeadingWhitespace", body: "  \n" + `{"p":{"b":"x"}}`, opts: nil, obj: new(plain), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 'p.b', try sending 'int' instead?`}},
 		{name: "AmbiguousNestedMismatchedType", body: `{"s":{"a":"b"},"t":{"a":"c"}}`, opts: nil, obj: new(two), code: ErrCodeInvalidRequestField, message: ErrMessageInvalidField, a: []string{`value of type 'string' was received for field 's.a', try sending 'int' instead?`}},
 	}
@@ -171,4 +180,43 @@ func TestJSONBinding_BindBody_PassesThroughStructuredUnknownField(t *testing.T) 
 	assert.Equal(t, errors.CodeInvalidInput, c)
 	assert.Equal(t, `unknown field "foo" in inner spec`, m)
 	assert.Equal(t, []string{"did you mean: `bar`"}, errors.AsJSON(err).Suggestions)
+}
+
+// Review of #323: the bytes kept to name a field are bounded, and a body
+// past the bound, or a walk past its budget, keeps the error's own field.
+func TestFieldPathFallsBackToTheErrorsField(t *testing.T) {
+	typeError := &json.UnmarshalTypeError{Value: "string", Type: reflect.TypeOf(0), Field: "a", Offset: 8}
+	body := []byte(`{"s":{"a":"b"}}`)
+	assert.Equal(t, "s.a", fieldPath(body, false, reflect.TypeOf(n{}), typeError))
+	assert.Equal(t, "a", fieldPath(body, true, reflect.TypeOf(n{}), typeError), "a truncated capture is not searched")
+
+	deep := []byte(strings.Repeat(`{"d":`, maxWalkDepth) + `{"s":{"a":"b"}}` + strings.Repeat(`}`, maxWalkDepth))
+	assert.Equal(t, "a", fieldPath(deep, false, nil, typeError), "past the depth budget")
+}
+
+func TestCaptureIsBounded(t *testing.T) {
+	var capture boundedCapture
+	n, err := capture.Write(make([]byte, maxCapturedBody-10))
+	require.NoError(t, err)
+	assert.Equal(t, maxCapturedBody-10, n)
+	assert.False(t, capture.truncated)
+	n, err = capture.Write(make([]byte, 20))
+	require.NoError(t, err)
+	assert.Equal(t, 20, n, "the reader is never cut short")
+	assert.True(t, capture.truncated)
+	assert.LessOrEqual(t, capture.buf.Len(), maxCapturedBody)
+}
+
+func TestWalkJSONBudget(t *testing.T) {
+	visit := func([]string, []int64, reflect.Type, string, int64) bool { return true }
+	deep := strings.Repeat(`[`, maxWalkDepth+5) + strings.Repeat(`]`, maxWalkDepth+5)
+	assert.False(t, walkJSON([]byte(deep), nil, visit), "stops at the depth budget")
+
+	wide := "[" + strings.TrimSuffix(strings.Repeat(`1,`, maxWalkNodes+5), ",") + "]"
+	visited := 0
+	complete := walkJSON([]byte(wide), nil, func([]string, []int64, reflect.Type, string, int64) bool { visited++; return true })
+	assert.False(t, complete, "stops at the node budget")
+	assert.LessOrEqual(t, visited, maxWalkNodes)
+
+	assert.True(t, walkJSON([]byte(`{"a":[1,{"b":"c"}]}`), nil, visit))
 }
