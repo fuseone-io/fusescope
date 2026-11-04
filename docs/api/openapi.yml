@@ -7912,7 +7912,7 @@ components:
       nullable: true
       properties:
         endpoint:
-          description: rum.collector_endpoint.
+          description: onboarding.collector_endpoint.
           type: string
         reachable:
           description: True when the OTLP/HTTP receiver answered.

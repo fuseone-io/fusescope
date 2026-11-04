@@ -9693,7 +9693,7 @@ export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 export type OnboardingtypesCollectorHealthDTO = {
 	/**
 	 * @type string
-	 * @description rum.collector_endpoint.
+	 * @description onboarding.collector_endpoint.
 	 */
 	endpoint: string;
 	/**
