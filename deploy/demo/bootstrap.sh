@@ -59,3 +59,11 @@ if [ -z "${RUM_APPLICATION_ID:-}" ]; then
 	env_set RUM_PUBLIC_KEY "$(jq -r '.data.key.key' <<<"$created")"
 	echo "rum application: created"
 fi
+
+if [ -z "${RUM_REACT_APPLICATION_ID:-}" ]; then
+	created=$(api "${auth[@]}" --data '{"name":"demo-shop-react","platform":"web","environment":"demo","allowedOrigins":["http://rum-react-sample:3000"],"tracePropagationUrls":[],"sampleRate":1,"piiPolicy":{"dropQuery":true}}' \
+		"$base/api/v1/rum/applications")
+	env_set RUM_REACT_APPLICATION_ID "$(jq -r '.data.id' <<<"$created")"
+	env_set RUM_REACT_PUBLIC_KEY "$(jq -r '.data.key.key' <<<"$created")"
+	echo "rum react application: created"
+fi

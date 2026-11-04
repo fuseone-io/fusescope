@@ -115,31 +115,30 @@ services:
     mem_limit: 256m
     cpus: 0.25
 
-  otel-collector:
+  fusescope-collector:
     <<: *logging
-    image: *collector-image
-    entrypoint: [/bin/sh]
-    command:
-      - -c
-      - |
-        /fusescope-otel-collector migrate sync check &&
-        /fusescope-otel-collector --config=/etc/otel-collector-config.yaml
+    image: ${FUSESCOPE_COLLECTOR_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:sha-92c555fae01f}
+    command: [--config=fusescopeopamp:/etc/fusescope-collector/config.yaml]
+    user: "65532"
     # Host UTS namespace so the system detector reports the host's hostname.
     uts: host
     volumes:
-      - ./otel-collector/config.yaml:/etc/otel-collector-config.yaml:ro
+      - ./collector/config.yaml:/etc/fusescope-collector/config.yaml:ro
+      - ./ingest/ca.crt:/etc/fusescope-collector/ingest/ca.crt:ro
+      - ./ingest/token:/etc/fusescope-collector/ingest/token:ro
+      - ./ingest/fusescope-collector.crt:/etc/fusescope-collector/ingest/fusescope-collector.crt:ro
+      - ./ingest/fusescope-collector.key:/etc/fusescope-collector/ingest/fusescope-collector.key:ro
       - /:/hostfs:ro
-      - /proc:/hostfs/proc:ro
-      - /sys:/hostfs/sys:ro
-    environment:
-      <<: *collector-env
-      LOW_CARDINAL_EXCEPTION_GROUPING: "false"
+    # A new agent at every start, which waits for the ingest policy before
+    # accepting RUM.
+    tmpfs:
+      - /var/lib/fusescope-collector:uid=65532,gid=65532,mode=0700
     depends_on:
       telemetrystore-migrator:
         condition: service_completed_successfully
     restart: unless-stopped
-    mem_limit: 384m
-    cpus: 0.3
+    mem_limit: 768m
+    cpus: 0.5
 
   fusescope:
     <<: *logging
@@ -153,13 +152,19 @@ services:
       SIGNOZ_TELEMETRYSTORE_PROVIDER: clickhouse
       SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN: tcp://clickhouse:9000
       SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER: cluster
-      SIGNOZ_RUM_COLLECTOR__ENDPOINT: http://otel-collector:4318
-      SIGNOZ_RUM_RATELIMIT_TRUST__FORWARDED__FOR: "true"
+      SIGNOZ_ONBOARDING_COLLECTOR__ENDPOINT: http://fusescope-collector:4318
+      SIGNOZ_DASHBOARD_PUBLIC_RATELIMIT_TRUST__FORWARDED__FOR: "true"
+      SIGNOZ_RUM_INGEST__POLICY_TOKEN__FILE: /etc/fusescope/ingest/token
+      SIGNOZ_RUM_INGEST__POLICY_TLS_CERT__FILE: /etc/fusescope/ingest/fusescope.crt
+      SIGNOZ_RUM_INGEST__POLICY_TLS_KEY__FILE: /etc/fusescope/ingest/fusescope.key
       SIGNOZ_RETENTION_DEFAULT_LOGS: ${RETENTION_DAYS:-3}
       SIGNOZ_RETENTION_DEFAULT_TRACES: ${RETENTION_DAYS:-3}
       SIGNOZ_RETENTION_DEFAULT_METRICS: ${RETENTION_DAYS:-3}
     volumes:
       - fusescope-data:/var/lib/fusescope/
+      - ./ingest/token:/etc/fusescope/ingest/token:ro
+      - ./ingest/fusescope.crt:/etc/fusescope/ingest/fusescope.crt:ro
+      - ./ingest/fusescope.key:/etc/fusescope/ingest/fusescope.key:ro
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/health"]
       interval: 10s
@@ -184,6 +189,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./generated/cloudflare-ips.caddy:/etc/caddy/cloudflare-ips.caddy:ro
       - ./certs:/certs:ro
+      - ./ingest/ca.crt:/ingest/ca.crt:ro
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
@@ -198,7 +204,7 @@ services:
     image: jaegertracing/example-hotrod:1.76.0
     command: [all]
     environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://fusescope-collector:4318
       OTEL_RESOURCE_ATTRIBUTES: deployment.environment=demo
     restart: unless-stopped
     mem_limit: 128m
@@ -226,15 +232,15 @@ services:
 
   logs-checkout:
     <<: *telemetrygen
-    command: [logs, --otlp-endpoint=otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.5, --service=checkout, --otlp-attributes=deployment.environment="demo", --body=order placed, --severity-text=Info, --severity-number=9]
+    command: [logs, --otlp-endpoint=fusescope-collector:4317, --otlp-insecure, --duration=inf, --rate=0.5, --service=checkout, --otlp-attributes=deployment.environment="demo", --body=order placed, --severity-text=Info, --severity-number=9]
 
   logs-payment-error:
     <<: *telemetrygen
-    command: [logs, --otlp-endpoint=otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.1, --service=payment, --otlp-attributes=deployment.environment="demo", --body=card declined - insufficient funds, --severity-text=Error, --severity-number=17]
+    command: [logs, --otlp-endpoint=fusescope-collector:4317, --otlp-insecure, --duration=inf, --rate=0.1, --service=payment, --otlp-attributes=deployment.environment="demo", --body=card declined - insufficient funds, --severity-text=Error, --severity-number=17]
 
   traces-payment-errors:
     <<: *telemetrygen
-    command: [traces, --otlp-endpoint=otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.1, --service=payment, --otlp-attributes=deployment.environment="demo", --child-spans=2, --span-duration=250ms, --status-code=Error]
+    command: [traces, --otlp-endpoint=fusescope-collector:4317, --otlp-insecure, --duration=inf, --rate=0.1, --service=payment, --otlp-attributes=deployment.environment="demo", --child-spans=2, --span-duration=250ms, --status-code=Error]
 
   rum-sample:
     <<: *logging
@@ -245,7 +251,20 @@ services:
     environment:
       RUM_APPLICATION_ID: ${RUM_APPLICATION_ID:-}
       RUM_PUBLIC_KEY: ${RUM_PUBLIC_KEY:-}
-      RUM_ENDPOINT: ${RUM_ENDPOINT:-http://fusescope:8080}
+      RUM_ENDPOINT: ${RUM_ENDPOINT:-${FUSESCOPE_URL}}
+      HOTROD: http://hotrod:8080
+    restart: unless-stopped
+    mem_limit: 96m
+    cpus: 0.1
+    profiles: [generators]
+
+  rum-react-sample:
+    <<: *logging
+    build: ./rum-react-sample
+    environment:
+      RUM_APPLICATION_ID: ${RUM_REACT_APPLICATION_ID:-}
+      RUM_PUBLIC_KEY: ${RUM_REACT_PUBLIC_KEY:-}
+      RUM_ENDPOINT: ${RUM_ENDPOINT:-${FUSESCOPE_URL}}
       HOTROD: http://hotrod:8080
     restart: unless-stopped
     mem_limit: 96m
@@ -257,9 +276,11 @@ services:
     build: ./rum-driver
     environment:
       APP_URL: http://rum-sample:3000/
+      REACT_APP_URL: http://rum-react-sample:3000/
+      FUSESCOPE_TLS: ${FUSESCOPE_TLS:-internal}
       SESSIONS: ${RUM_DRIVER_SESSIONS:-3}
       INTERVAL_SECONDS: ${RUM_DRIVER_INTERVAL_SECONDS:-300}
-    depends_on: [rum-sample]
+    depends_on: [rum-sample, rum-react-sample]
     init: true
     shm_size: 128m
     restart: unless-stopped
