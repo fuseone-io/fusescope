@@ -1,0 +1,2121 @@
+{
+  "version": 1,
+  "definition": {
+    "schemaVersion": "v6",
+    "name": "signoz---fusescope-collector",
+    "tags": [],
+    "spec": {
+      "display": {
+        "name": "FuseScope Collector",
+        "description": "Health of the FuseScope collectors from their own telemetry: what the receivers accept and refuse, what the exporters send and drop, export queues, the memory limiter, CPU, memory and restarts. Scope by collector from the variable bar."
+      },
+      "variables": [
+        {
+          "kind": "ListVariable",
+          "spec": {
+            "name": "host",
+            "display": {
+              "name": "collector",
+              "description": "Collector host (the pod's name on Kubernetes)"
+            },
+            "allowMultiple": true,
+            "allowAllValue": true,
+            "sort": "alphabetical-asc",
+            "plugin": {
+              "kind": "signoz/QueryVariable",
+              "spec": {
+                "queryValue": "SELECT JSONExtractString(labels, 'host.name') AS `host.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'otelcol_process_uptime'\n    AND JSONExtractString(labels, 'service.name') = 'fusescope-collector'\nGROUP BY `host.name`"
+              }
+            }
+          }
+        }
+      ],
+      "layouts": [
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/d24875bc-0cb5-5e6b-ae2e-ccb2df2e17d2"
+                }
+              },
+              {
+                "x": 2,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/5622cd61-46df-5afd-8063-c0db71ac05b0"
+                }
+              },
+              {
+                "x": 4,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/54e9521f-d48d-54b1-a86a-660f9159cd57"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/946c19de-1836-5ec1-8232-8d2e01d862f4"
+                }
+              },
+              {
+                "x": 8,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/99da6cb8-2ae6-5d21-ad1a-647cdfec10c0"
+                }
+              },
+              {
+                "x": 10,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/b94d128f-45e1-5083-ad6e-7fec7dc60a19"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/22c1f7df-903d-5f02-b2dd-cc6492d03b09"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/aae0f542-3dce-5707-a901-7d92196851d9"
+                }
+              },
+              {
+                "x": 0,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/85bd94af-427c-5959-8a87-9ea5dfbe32a1"
+                }
+              },
+              {
+                "x": 6,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/cabfa3ff-07a9-5b2e-a1d2-da302e5ac303"
+                }
+              }
+            ],
+            "display": {
+              "title": "Throughput"
+            }
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/89460126-10c7-5ba7-b1ce-7b391964e979"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/8d5e276d-fcd3-593a-96f9-51f4a24b5921"
+                }
+              },
+              {
+                "x": 0,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/1068add8-6f98-5281-8a59-6e1eaa539d6a"
+                }
+              },
+              {
+                "x": 6,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/524847cc-7e06-5fbc-8b69-9560e3f9f9b1"
+                }
+              }
+            ],
+            "display": {
+              "title": "Refusals and failures"
+            }
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/9d14799b-dab5-5213-be61-65c21e97c6a5"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/c26f2ee0-2aec-5bbe-94e9-61b5ef03f936"
+                }
+              },
+              {
+                "x": 0,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/173f80d6-5645-5d0c-bbe1-7dc16c74f295"
+                }
+              },
+              {
+                "x": 6,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/5f5a2f27-87c4-5c55-882b-3f84a0eaf1a4"
+                }
+              }
+            ],
+            "display": {
+              "title": "Export queues"
+            }
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/c4d44ade-4273-5e66-bfde-350d50aa3c60"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/106e9c9d-6d1f-5ae8-b4a3-d76887d10334"
+                }
+              },
+              {
+                "x": 0,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/0ab37a80-881f-5908-8988-3e2020cad1bb"
+                }
+              },
+              {
+                "x": 6,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/f6e30b72-864a-5b2d-97c2-6074c69b2886"
+                }
+              }
+            ],
+            "display": {
+              "title": "Process"
+            }
+          }
+        }
+      ],
+      "panels": {
+        "d24875bc-0cb5-5e6b-ae2e-ccb2df2e17d2": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Spans accepted",
+              "description": "Spans per second the receivers accepted, averaged over the range."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_accepted_spans",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": ""
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "5622cd61-46df-5afd-8063-c0db71ac05b0": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Log records accepted",
+              "description": "Log records per second the receivers accepted, averaged over the range."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_accepted_log_records",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": ""
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "54e9521f-d48d-54b1-a86a-660f9159cd57": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Spans refused",
+              "description": "Spans per second the receivers refused, averaged over the range; most often under memory pressure."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_refused_spans",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": ""
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "946c19de-1836-5ec1-8232-8d2e01d862f4": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Peak export queue",
+              "description": "The fullest exporter queue at its peak over the range, in batches."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_queue_size",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "max"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": ""
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "99da6cb8-2ae6-5d21-ad1a-647cdfec10c0": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Memory (RSS) now",
+              "description": "Resident memory of the largest collector, at the latest point."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "bytes",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_process_memory_rss",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "last"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": ""
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "b94d128f-45e1-5083-ad6e-7fec7dc60a19": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "RUM policy age now",
+              "description": "Seconds since the RUM ingest policy was received, at the latest point; empty while none is held."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "s",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_rum_policy_age",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "last"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": ""
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "22c1f7df-903d-5f02-b2dd-cc6492d03b09": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Spans accepted by receiver",
+              "description": "Per second, by receiver (otlp, rum)."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_accepted_spans",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "receiver",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{receiver}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "aae0f542-3dce-5707-a901-7d92196851d9": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Log records accepted by receiver",
+              "description": "Per second, by receiver."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_accepted_log_records",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "receiver",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{receiver}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "85bd94af-427c-5959-8a87-9ea5dfbe32a1": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Metric points accepted by receiver",
+              "description": "Per second, by receiver."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_accepted_metric_points",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "receiver",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{receiver}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "cabfa3ff-07a9-5b2e-a1d2-da302e5ac303": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Sent by exporter",
+              "description": "Per second, by exporter: spans, log records and metric points."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_sent_spans",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "exporter",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "spans {{exporter}}"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_sent_log_records",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "exporter",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "logs {{exporter}}"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_sent_metric_points",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "exporter",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "metrics {{exporter}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "89460126-10c7-5ba7-b1ce-7b391964e979": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Refused by receiver",
+              "description": "Per second. Refusals tell the sender to retry; under memory pressure they come from the memory limiter."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_refused_spans",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "receiver",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "spans {{receiver}}"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_refused_log_records",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "receiver",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "logs {{receiver}}"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_refused_metric_points",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "receiver",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "metrics {{receiver}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "8d5e276d-fcd3-593a-96f9-51f4a24b5921": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Failed by receiver",
+              "description": "Per second: requests a receiver could not process."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_failed_spans",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "receiver",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "spans {{receiver}}"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_failed_log_records",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "receiver",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "logs {{receiver}}"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_receiver_failed_metric_points",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "receiver",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "metrics {{receiver}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "1068add8-6f98-5281-8a59-6e1eaa539d6a": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Failed to send by exporter",
+              "description": "Per second: items an exporter dropped after its retries. Empty until the first such failure."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_send_failed_spans",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "exporter",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "spans {{exporter}}"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_send_failed_log_records",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "exporter",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "logs {{exporter}}"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_send_failed_metric_points",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "exporter",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "metrics {{exporter}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "524847cc-7e06-5fbc-8b69-9560e3f9f9b1": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Memory limiter accepted",
+              "description": "Per second, by signal. A drop here with refusals above is the memory limiter at work."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_processor_memory_limiter_accepted_spans",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": "spans"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_processor_memory_limiter_accepted_log_records",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": "logs"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_processor_memory_limiter_accepted_metric_points",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": "metrics"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "9d14799b-dab5-5213-be61-65c21e97c6a5": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Queue size by exporter",
+              "description": "Batches waiting, by exporter and signal. A queue that keeps growing means the destination is slower than the input."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_queue_size",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "exporter",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              },
+                              {
+                                "name": "data_type",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{exporter}} {{data_type}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "c26f2ee0-2aec-5bbe-94e9-61b5ef03f936": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Queue capacity by exporter",
+              "description": "The most the queue holds; at capacity new data is refused."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_queue_capacity",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "exporter",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              },
+                              {
+                                "name": "data_type",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{exporter}} {{data_type}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "173f80d6-5645-5d0c-bbe1-7dc16c74f295": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Requests in flight by exporter",
+              "description": "Export requests being sent."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_in_flight_requests",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "exporter",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{exporter}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "5f5a2f27-87c4-5c55-882b-3f84a0eaf1a4": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Processor throughput",
+              "description": "Items per second into and out of each processor."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_processor_incoming_items",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "processor",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "in {{processor}}"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_processor_outgoing_items",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "processor",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "out {{processor}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "c4d44ade-4273-5e66-bfde-350d50aa3c60": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "CPU",
+              "description": "CPU seconds per second, by collector."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_process_cpu_seconds",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "host.name",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{host.name}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "106e9c9d-6d1f-5ae8-b4a3-d76887d10334": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Memory (RSS)",
+              "description": "Resident memory, by collector."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "bytes",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_process_memory_rss",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "host.name",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{host.name}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "0ab37a80-881f-5908-8988-3e2020cad1bb": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Go heap",
+              "description": "Heap allocated, by collector."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "bytes",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_process_runtime_heap_alloc_bytes",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "host.name",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{host.name}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "f6e30b72-864a-5b2d-97c2-6074c69b2886": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Uptime",
+              "description": "Seconds since start, by collector: a drop is a restart."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "s",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_process_uptime",
+                                "temporality": "",
+                                "timeAggregation": "max",
+                                "spaceAggregation": "max",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "host.name",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{host.name}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

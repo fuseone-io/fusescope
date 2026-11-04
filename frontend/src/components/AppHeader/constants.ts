@@ -69,6 +69,10 @@ export const CRUMB_ROUTES: Record<string, CrumbRoute> = {
 		parent: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		label: 'Kubernetes',
 	},
+	[ROUTES.INFRASTRUCTURE_MONITORING_COLLECTORS]: {
+		parent: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+		label: 'Collectors',
+	},
 	[ROUTES.ALERTS_NEW]: { parent: ROUTES.LIST_ALL_ALERT, label: 'New alert' },
 	[ROUTES.EDIT_ALERTS]: { parent: ROUTES.LIST_ALL_ALERT, label: 'Edit alert' },
 	[ROUTES.ALERT_HISTORY]: { parent: ROUTES.LIST_ALL_ALERT, label: 'History' },

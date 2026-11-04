@@ -406,6 +406,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
+		path: ROUTES.INFRASTRUCTURE_MONITORING_COLLECTORS,
+		exact: true,
+		component: InfrastructureMonitoring,
+		key: 'INFRASTRUCTURE_MONITORING_COLLECTORS',
+		isPrivate: true,
+	},
+	{
 		path: ROUTES.METRICS_EXPLORER,
 		exact: true,
 		component: MetricsExplorer,
