@@ -78,3 +78,52 @@ func collectFilterExpressions(t *testing.T, raw []byte, out *[]string) {
 	}
 	walk(node)
 }
+
+// The FuseScope collector dashboard reads only the collector's own
+// telemetry, so another collector's otelcol_* metrics in the same database,
+// such as the earlier collector's, never mix in.
+func TestFuseScopeCollectorDashboardIsScopedToTheCollector(t *testing.T) {
+	registry, err := NewSystemDashboardRegistry()
+	require.NoError(t, err)
+	_, ok := registry.Get("signoz---fusescope-collector")
+	require.True(t, ok, "the definition parses and is registered")
+
+	raw, err := definitionFiles.ReadFile(definitionsRoot + "/fusescope-collector.json")
+	require.NoError(t, err)
+	var expressions []string
+	collectFilterExpressions(t, raw, &expressions)
+	require.NotEmpty(t, expressions)
+	for _, expression := range expressions {
+		assert.True(t, strings.HasPrefix(expression, "service.name = 'fusescope-collector' AND host.name IN $host"), expression)
+	}
+
+	var metricNames []string
+	collectMetricNames(t, raw, &metricNames)
+	require.NotEmpty(t, metricNames)
+	for _, name := range metricNames {
+		assert.True(t, strings.HasPrefix(name, "otelcol_"), name)
+	}
+}
+
+func collectMetricNames(t *testing.T, raw []byte, out *[]string) {
+	t.Helper()
+	var node any
+	require.NoError(t, json.Unmarshal(raw, &node))
+	var walk func(any)
+	walk = func(n any) {
+		switch v := n.(type) {
+		case map[string]any:
+			if name, ok := v["metricName"].(string); ok {
+				*out = append(*out, name)
+			}
+			for _, child := range v {
+				walk(child)
+			}
+		case []any:
+			for _, child := range v {
+				walk(child)
+			}
+		}
+	}
+	walk(node)
+}
