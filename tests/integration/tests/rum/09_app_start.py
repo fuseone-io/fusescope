@@ -29,7 +29,9 @@ def test_android_app_start_session_timeline(
         ],
         origin=None,
     )
-    detail = wait_for_rum_query(signoz, token, f"{RUM_APPLICATIONS}/{app['id']}/sessions/{session}", {"start": now // 1_000_000 - 60_000, "end": now // 1_000_000 + 60_000}, lambda data: data["vitals"] == 2 and data["views"] == 1)
+    params = {"start": now // 1_000_000 - 60_000, "end": now // 1_000_000 + 60_000}
+    wait_for_rum_query(signoz, token, f"{RUM_APPLICATIONS}/{app['id']}/sessions", params, lambda data: any(item["sessionId"] == session and item["views"] == 1 for item in data["sessions"]))
+    detail = wait_for_rum_query(signoz, token, f"{RUM_APPLICATIONS}/{app['id']}/sessions/{session}", params, lambda data: data["vitals"] == 2 and data["views"] == 1)
     assert detail["actions"] == 0
     assert detail["release"] == "3.1.0"
     assert detail["leadingEvents"][0]["vital"] == {"name": "app_start", "value": 137.5, "rating": "good"}
