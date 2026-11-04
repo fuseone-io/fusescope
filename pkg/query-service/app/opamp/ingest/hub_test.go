@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"log/slog"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -127,9 +129,44 @@ func newTestHub(t *testing.T) (*Hub, *Publisher, *fakeSource) {
 	return hub, publisher, source
 }
 
+// eventuallyTimeout is generous on purpose: Eventually returns as soon as
+// the condition holds, and CI runs every package at once on a few CPUs,
+// where 5 s once passed with the first revision not done (#321).
+const eventuallyTimeout = 30 * time.Second
+
 func eventually(t *testing.T, conn *fakeConn, want []uint64) {
 	t.Helper()
-	require.Eventually(t, func() bool { return assert.ObjectsAreEqual(want, conn.versions()) }, 5*time.Second, time.Millisecond, "want %v, got %v", want, conn.versions())
+	require.Eventually(t, func() bool { return assert.ObjectsAreEqual(want, conn.versions()) }, eventuallyTimeout, time.Millisecond, "want %v, got %v", want, conn.versions())
+}
+
+// testLogger writes warnings and errors to the test's log, so a failed
+// revision shows in a failing run. Writes after the test are dropped.
+func testLogger(t *testing.T) *slog.Logger {
+	t.Helper()
+	w := &testLogWriter{t: t}
+	t.Cleanup(w.close)
+	return slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelWarn}))
+}
+
+type testLogWriter struct {
+	mu     sync.Mutex
+	t      *testing.T
+	closed bool
+}
+
+func (w *testLogWriter) Write(p []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.closed {
+		w.t.Log(strings.TrimSuffix(string(p), "\n"))
+	}
+	return len(p), nil
+}
+
+func (w *testLogWriter) close() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.closed = true
 }
 
 func never(t *testing.T, conn *fakeConn, want []uint64) {
@@ -397,16 +434,17 @@ func TestServiceRevocationAfterRollback(t *testing.T) {
 	forEachStore(t, func(t *testing.T, newStore func(*testing.T) sqlstore.SQLStore) {
 		ctx := context.Background()
 		store := newStore(t)
+		logger := testLogger(t)
 		source := &fakeSource{}
 		source.set(2)
-		newer := NewPublisher(store, source, slogDiscard())
+		newer := NewPublisher(store, source, logger)
 		newer.producer = Producer + 1
 		_, err := newer.Revise(ctx)
 		require.NoError(t, err)
 
-		older := NewPublisher(store, source, slogDiscard())
-		hub := NewHub(older, slogDiscard())
-		startService(t, NewService(older, hub, slogDiscard()))
+		older := NewPublisher(store, source, logger)
+		hub := NewHub(older, logger)
+		startService(t, NewService(older, hub, logger))
 		conn := &fakeConn{}
 		hub.Observe("agent", conn, describe(RoleIngress, ingestpolicy.Capability))
 		eventually(t, conn, []uint64{1})
