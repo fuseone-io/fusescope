@@ -1,6 +1,7 @@
 package rumapplication
 
 import (
+	"net"
 	"net/url"
 	"time"
 
@@ -41,9 +42,25 @@ type Config struct {
 // over OpAMP (ADR 0010 §3).
 type IngestPolicyConfig struct {
 	// File of the tokens, one per line, that ingress collectors present as
-	// `Authorization: Bearer` on the OpAMP connection. Unset, no policy is
-	// published and no ingest report is read.
+	// `Authorization: Bearer` on the OpAMP connection with TLS. Unset, no
+	// policy is published and no ingest report is read.
 	TokenFile string `mapstructure:"token_file"`
+
+	// Address of the OpAMP listener with TLS that ingress collectors connect
+	// to. Tokens are read only there, never on the plaintext OpAMP port.
+	Listen string `mapstructure:"listen"`
+
+	TLS IngestTLSConfig `mapstructure:"tls"`
+}
+
+// IngestTLSConfig is the TLS 1.3 of the ingress OpAMP listener. The
+// certificate is read again when its files change.
+type IngestTLSConfig struct {
+	CertFile string `mapstructure:"cert_file"`
+	KeyFile  string `mapstructure:"key_file"`
+	// CA of the client certificates required from collectors; unset, none
+	// is asked for.
+	ClientCAFile string `mapstructure:"client_ca_file"`
 }
 
 type SourceMapsConfig struct {
@@ -97,6 +114,7 @@ func newConfig() factory.Config {
 			Key:    LimitConfig{Rate: 500, Burst: 1000},
 			Client: LimitConfig{Rate: 20, Burst: 60},
 		},
+		IngestPolicy: IngestPolicyConfig{Listen: "0.0.0.0:4321"},
 		SourceMaps: SourceMapsConfig{
 			Dir:                "/var/lib/signoz/sourcemaps",
 			MaxFileSize:        50 << 20,
@@ -110,6 +128,9 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
+	if err := c.IngestPolicy.validate(); err != nil {
+		return err
+	}
 	if !c.Enabled {
 		return nil
 	}
@@ -129,6 +150,26 @@ func (c Config) Validate() error {
 		if limit.Rate <= 0 || limit.Burst <= 0 {
 			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "rum.ratelimit rates and bursts must be positive")
 		}
+	}
+	return nil
+}
+
+// plaintextOpAMPPort is the port of the OpAMP listener without TLS.
+const plaintextOpAMPPort = "4320"
+
+func (c IngestPolicyConfig) validate() error {
+	if c.TokenFile == "" {
+		return nil
+	}
+	if c.TLS.CertFile == "" || c.TLS.KeyFile == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "rum.ingest_policy.token_file needs rum.ingest_policy.tls.cert_file and key_file: ingest tokens are read only over TLS")
+	}
+	_, port, err := net.SplitHostPort(c.Listen)
+	if err != nil || port == "" {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidConfig, "rum.ingest_policy.listen must be a host:port, got %q", c.Listen)
+	}
+	if port == plaintextOpAMPPort {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidConfig, "rum.ingest_policy.listen must not use port 4320, the plaintext OpAMP listener")
 	}
 	return nil
 }

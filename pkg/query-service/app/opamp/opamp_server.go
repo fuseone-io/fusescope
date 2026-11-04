@@ -2,6 +2,7 @@ package opamp
 
 import (
 	"context"
+	"crypto/tls"
 	"log/slog"
 	"net/http"
 	"time"
@@ -29,6 +30,11 @@ type Server struct {
 	ingest              *ingest.Hub
 	ingestReports       *ingest.Reports
 	ingestTokens        *ingest.Tokens
+	// ingestServer is the OpAMP listener with TLS on ingestListen, the only
+	// one where ingest tokens are read.
+	ingestServer server.OpAMPServer
+	ingestListen string
+	ingestTLS    *tls.Config
 
 	// cleanups to be run when stopping the server
 	cleanups []func()
@@ -58,23 +64,25 @@ func InitializeServer(
 
 // WithIngest sends the ingest policy to the ingress collectors that
 // authenticate with one of tokens, and takes their ingest reports (ADR 0010
-// §3, §6). Without it, no connection receives the policy or is read a
-// report.
-func (srv *Server) WithIngest(hub *ingest.Hub, reports *ingest.Reports, tokens *ingest.Tokens) {
+// §3, §6), on a second OpAMP listener at listen with tlsConfig. Without it,
+// no connection receives the policy or is read a report.
+func (srv *Server) WithIngest(hub *ingest.Hub, reports *ingest.Reports, tokens *ingest.Tokens, listen string, tlsConfig *tls.Config) {
 	srv.ingest, srv.ingestReports, srv.ingestTokens = hub, reports, tokens
+	srv.ingestListen, srv.ingestTLS = listen, tlsConfig
+	srv.ingestServer = server.New(wrappedLogger(srv.logger))
 }
 
-func (srv *Server) Start(listener string) error {
-	settings := server.StartSettings{
+// settings are the callbacks of a listener. Every connection is accepted
+// for remote configuration; only one on the TLS listener that presents a
+// token may receive the ingest policy, decided once, at the handshake.
+func (srv *Server) settings(listen string, tlsConfig *tls.Config) server.StartSettings {
+	return server.StartSettings{
 		Settings: server.Settings{
 			// The largest ingest policy fits; nothing larger is read from an
 			// unauthenticated connection.
 			MaxMessageSize: ingest.MaxMessageSize,
 			Callbacks: types.Callbacks{
 				OnConnecting: func(request *http.Request) types.ConnectionResponse {
-					// Every connection is still accepted for remote
-					// configuration; only an authenticated one may receive
-					// the ingest policy, decided once, at the handshake.
 					authenticated := srv.authenticateIngest(request)
 					return types.ConnectionResponse{
 						Accept: true,
@@ -88,7 +96,19 @@ func (srv *Server) Start(listener string) error {
 				},
 			},
 		},
-		ListenEndpoint: listener,
+		ListenEndpoint: listen,
+		TLSConfig:      tlsConfig,
+	}
+}
+
+// Start serves OpAMP on listener, without TLS, and the ingest listener with
+// TLS when WithIngest set it.
+func (srv *Server) Start(listener string) error {
+	if srv.ingestServer != nil {
+		if err := srv.ingestServer.Start(srv.settings(srv.ingestListen, srv.ingestTLS)); err != nil {
+			return err
+		}
+		srv.logger.Info("ingress collectors' OpAMP listener with TLS started", slog.String("addr", srv.ingestListen))
 	}
 
 	// This will have to send request to all the agents of all tenants
@@ -102,7 +122,7 @@ func (srv *Server) Start(listener string) error {
 	})
 	srv.cleanups = append(srv.cleanups, unsubscribe)
 
-	return srv.server.Start(settings)
+	return srv.server.Start(srv.settings(listener, nil))
 }
 
 func (srv *Server) Stop() {
@@ -111,14 +131,24 @@ func (srv *Server) Stop() {
 	}
 
 	_ = srv.server.Stop(context.Background())
+	if srv.ingestServer != nil {
+		_ = srv.ingestServer.Stop(context.Background())
+	}
 }
 
+// authenticateIngest reports whether the connection presented one of the
+// ingest tokens over TLS. A token sent without TLS is never accepted: it
+// may have been read on the way.
 func (srv *Server) authenticateIngest(request *http.Request) bool {
 	if srv.ingest == nil {
 		return false
 	}
 	authorization := request.Header.Get("Authorization")
 	if authorization == "" {
+		return false
+	}
+	if request.TLS == nil {
+		srv.logger.Warn("OpAMP connection presented an ingest token without TLS; refused, it will not receive the ingest policy: connect to the TLS listener and replace the token", "remote_addr", request.RemoteAddr, "ingest_listen", srv.ingestListen)
 		return false
 	}
 	if srv.ingestTokens.Verify(authorization) {

@@ -115,8 +115,12 @@ func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) 
 	)
 
 	logger := signoz.Instrumentation.Logger()
-	if tokenFile := config.RUM.IngestPolicy.TokenFile; tokenFile != "" {
-		tokens, err := ingest.LoadTokens(tokenFile)
+	if policy := config.RUM.IngestPolicy; policy.TokenFile != "" {
+		tokens, err := ingest.LoadTokens(policy.TokenFile)
+		if err != nil {
+			return nil, err
+		}
+		tlsConfig, err := ingest.ServerTLS(policy.TLS.CertFile, policy.TLS.KeyFile, policy.TLS.ClientCAFile)
 		if err != nil {
 			return nil, err
 		}
@@ -125,8 +129,7 @@ func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) 
 		s.ingest = ingest.NewService(publisher, hub, logger)
 		s.reports = ingest.NewReports(ingest.NewReportStore(signoz.SQLStore, signoz.Modules.RUMApplication), hub, publisher, logger)
 		signoz.Modules.RUMApplication.OnChange(s.ingest.Changed)
-		s.opampServer.WithIngest(hub, s.reports, tokens)
-		logger.Warn("ingest policy published over OpAMP; its tokens travel unencrypted unless the OpAMP port is behind TLS")
+		s.opampServer.WithIngest(hub, s.reports, tokens, policy.Listen, tlsConfig)
 	} else {
 		logger.Info("ingest policy not published: rum.ingest_policy.token_file is not set")
 	}
