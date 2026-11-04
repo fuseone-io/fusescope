@@ -2,9 +2,9 @@ import ModuleTabsLayout from 'components/PageTemplate/components/ModuleTabsLayou
 import history from 'lib/history';
 import { Boxes } from 'lucide-react';
 
-import { Hosts, Kubernetes } from './constants';
+import { Collectors, Hosts, Kubernetes } from './constants';
 
-const routes = [Hosts, Kubernetes];
+const routes = [Hosts, Kubernetes, Collectors];
 
 export default function InfrastructureMonitoringPage(): JSX.Element {
 	return (

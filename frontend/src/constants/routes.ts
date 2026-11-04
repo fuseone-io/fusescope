@@ -65,6 +65,7 @@ const ROUTES = {
 	INFRASTRUCTURE_MONITORING_BASE: '/infrastructure-monitoring',
 	INFRASTRUCTURE_MONITORING_HOSTS: '/infrastructure-monitoring/hosts',
 	INFRASTRUCTURE_MONITORING_KUBERNETES: '/infrastructure-monitoring/kubernetes',
+	INFRASTRUCTURE_MONITORING_COLLECTORS: '/infrastructure-monitoring/collectors',
 	MESSAGING_QUEUES_CELERY_TASK: '/messaging-queues/celery-task',
 	MESSAGING_QUEUES_OVERVIEW: '/messaging-queues/overview',
 	METRICS_EXPLORER: '/metrics-explorer/summary',
