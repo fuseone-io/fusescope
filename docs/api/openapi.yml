@@ -11159,6 +11159,7 @@ components:
       - rate_limited
       - too_large
       - invalid_payload
+      - signal_not_allowed
       type: string
     RumtypesReleaseMarker:
       properties:
