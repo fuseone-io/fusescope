@@ -53,6 +53,11 @@ const (
 	maxLastOrigin = 256
 )
 
+// admissionRow is the record whose lock admits new agents one at a time.
+// It is no agent's: agents are UUIDs. Created at the epoch, it is never
+// counted as new.
+const admissionRow = "new-agent-admission"
+
 // earliestReported is the earliest time a report may carry; an earlier one
 // is dropped. Go parses the year 0, which PostgreSQL's timestamp refuses,
 // and a value that fails every commit would hold back every report.
@@ -305,9 +310,21 @@ func (s *ReportStore) raise(ctx context.Context, agent string, now time.Time, up
 }
 
 // create makes the agent's record, unless newAgents records were made in
-// the last newAgentWindow; it reports whether the record exists.
+// the last newAgentWindow; it reports whether the record exists. The count
+// and the insert run under the lock of one common row, so concurrent
+// transactions, of this replica or another, admit one at a time: each
+// counts, at read committed, the records the ones before it committed.
 func (s *ReportStore) create(ctx context.Context, agent string, now time.Time) (bool, error) {
 	db := s.store.BunDBCtx(ctx)
+	if _, err := db.NewInsert().
+		Model(&ingesttypes.StorableReportAgent{AgentID: admissionRow, CreatedAt: time.Unix(0, 0).UTC(), UpdatedAt: now}).
+		On("CONFLICT (agent_id) DO NOTHING").
+		Exec(ctx); err != nil {
+		return false, err
+	}
+	if _, err := db.NewUpdate().Model((*ingesttypes.StorableReportAgent)(nil)).Set("updated_at = ?", now).Where("agent_id = ?", admissionRow).Exec(ctx); err != nil {
+		return false, err
+	}
 	recent, err := db.NewSelect().Model((*ingesttypes.StorableReportAgent)(nil)).Where("created_at > ?", now.Add(-newAgentWindow)).Count(ctx)
 	if err != nil {
 		return false, err
