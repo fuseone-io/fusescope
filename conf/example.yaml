@@ -614,9 +614,21 @@ rum:
     # File of the tokens, one per line (32 to 256 characters), that ingress
     # collectors present on the OpAMP connection to receive the ingest policy
     # and send their ingest reports, which feed the setup screen. Unset, no
-    # policy is published and no report is read. Enable it only with TLS on
-    # the OpAMP port.
+    # policy is published and no report is read. Tokens are read only on the
+    # TLS listener below, so setting it needs tls.cert_file and tls.key_file.
     token_file: ""
+    # OpAMP listener with TLS 1.3 for ingress collectors (wss://HOST:4321/v1/opamp).
+    # The plaintext OpAMP port, 4320, keeps serving the other collectors and
+    # never accepts a token.
+    listen: 0.0.0.0:4321
+    tls:
+      # Certificate and key, read again when the files change (a renewal
+      # needs no restart).
+      cert_file: ""
+      key_file: ""
+      # CA of the client certificates collectors must present; unset, none
+      # is asked for.
+      client_ca_file: ""
 
 ##################### Dashboard #####################
 dashboard:
