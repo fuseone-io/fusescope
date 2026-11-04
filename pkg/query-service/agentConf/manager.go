@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	stderrors "errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -160,12 +161,13 @@ func (m *Manager) RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte
 }
 
 // Implements opamp.AgentConfigProvider
-func (m *Manager) ReportConfigDeploymentInitiated(orgId valuer.UUID, recommendation *opamptypes.ConfigRecommendation) {
+func (m *Manager) ReportConfigDeploymentInitiated(orgId valuer.UUID, recommendation *opamptypes.ConfigRecommendation) error {
+	var errs []error
 	for _, part := range recommendation.Features {
 		if part.ElementType.StringValue() == "" {
 			continue // no version row to update
 		}
-		_ = m.updateDeployStatus(
+		if apiErr := m.updateDeployStatus(
 			context.Background(),
 			orgId,
 			part.ElementType,
@@ -174,8 +176,11 @@ func (m *Manager) ReportConfigDeploymentInitiated(orgId valuer.UUID, recommendat
 			"Deployment has started",
 			part.ID,
 			part.Settings,
-		)
+		); apiErr != nil {
+			errs = append(errs, apiErr.Err)
+		}
 	}
+	return stderrors.Join(errs...)
 }
 
 // Implements opamp.AgentConfigProvider

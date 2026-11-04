@@ -96,7 +96,8 @@ func (ta *MockAgentConfigProvider) RecommendAgentConfig(orgId valuer.UUID, baseC
 }
 
 // AgentConfigProvider interface
-func (ta *MockAgentConfigProvider) ReportConfigDeploymentInitiated(valuer.UUID, *opamptypes.ConfigRecommendation) {
+func (ta *MockAgentConfigProvider) ReportConfigDeploymentInitiated(valuer.UUID, *opamptypes.ConfigRecommendation) error {
+	return nil
 }
 
 // AgentConfigProvider interface

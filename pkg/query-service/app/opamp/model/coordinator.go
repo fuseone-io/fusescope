@@ -46,7 +46,12 @@ func notifySubscribers(orgId valuer.UUID, agentId string, key string, err error)
 	// this method currently does not handle multi-agent scenario.
 	// as soon as a message is delivered, we release all the subscribers
 	// for a given key
+	// delete all subscribers for this key, assume future
+	// notifies will be disabled. the first response is processed
+	coordinator.mutex.Lock()
 	subs, ok := coordinator.subscribers[key]
+	delete(coordinator.subscribers, key)
+	coordinator.mutex.Unlock()
 	if !ok {
 		return
 	}
@@ -54,10 +59,6 @@ func notifySubscribers(orgId valuer.UUID, agentId string, key string, err error)
 	for _, s := range subs {
 		s(orgId, agentId, key, err)
 	}
-
-	// delete all subscribers for this key, assume future
-	// notifies will be disabled. the first response is processed
-	delete(coordinator.subscribers, key)
 }
 
 // callers subscribe to this function to listen on config change requests
