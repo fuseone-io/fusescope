@@ -2,6 +2,7 @@ package implrumapplication
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -16,7 +17,7 @@ const maxTimelineRows = 5000
 var (
 	// SDK 0.1 sent the hashed id as user.hash.
 	sessionUserExpr = "if(" + attribute(rumtypes.AttributeUserID) + " != '', " + attribute(rumtypes.AttributeUserID) + ", " + attribute(rumtypes.AttributeUserHash) + ")"
-	timelineEvents  = []any{rumtypes.EventNameException, rumtypes.EventNameWebVital, rumtypes.EventNameClick, rumtypes.EventNameCustomAction}
+	timelineEvents  = []any{rumtypes.EventNameException, rumtypes.EventNameWebVital, rumtypes.EventNameLegacyVital, rumtypes.EventNameClick, rumtypes.EventNameCustomAction}
 )
 
 type sessionRow struct {
@@ -323,9 +324,9 @@ func newSessionLogsQuery(scope telemetryScope, sessionID string) *sqlbuilder.Sel
 		errorMessageRaw,
 		errorStackExpr,
 		attribute(rumtypes.AttributeErrorSource),
-		"lower("+attribute(rumtypes.AttributeVitalName)+")",
-		vitalValueExpr,
-		attribute(rumtypes.AttributeVitalRating),
+		"lower("+timelineVitalAttribute(attribute(rumtypes.AttributeAppVitalName), attribute(rumtypes.AttributeVitalName))+")",
+		timelineVitalAttribute("attributes_number["+literal(rumtypes.AttributeAppVitalValue)+"]", vitalValueExpr),
+		timelineVitalAttribute(attribute(rumtypes.AttributeAppVitalRating), attribute(rumtypes.AttributeVitalRating)),
 		attribute(rumtypes.AttributeActionType),
 		attribute(rumtypes.AttributeActionName),
 		"if("+target+" != '', "+target+", "+selector+")",
@@ -336,4 +337,8 @@ func newSessionLogsQuery(scope telemetryScope, sessionID string) *sqlbuilder.Sel
 	sb.OrderBy("timestamp")
 	sb.Limit(maxTimelineRows + 1)
 	return sb
+}
+
+func timelineVitalAttribute(app string, web string) string {
+	return fmt.Sprintf("if(%s = %s, %s, %s)", eventNameExpr, literal(rumtypes.EventNameLegacyVital), app, web)
 }

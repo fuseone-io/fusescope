@@ -1,4 +1,10 @@
 import {
+	RumtypesTimelineEventKindDTO,
+	RumtypesTimelineVitalNameDTO,
+	RumtypesVitalRatingDTO,
+} from 'api/generated/services/fuseScope.schemas';
+
+import {
 	defaultExpanded,
 	describeEvent,
 	kindCounts,
@@ -178,5 +184,27 @@ describe('describeEvent', () => {
 		expect(
 			describeEvent(event as Parameters<typeof describeEvent>[0]),
 		).toStrictEqual(description);
+	});
+});
+
+describe('Android app-start timeline event', () => {
+	it('shows a readable label, milliseconds and the SDK rating', () => {
+		expect(
+			describeEvent({
+				kind: RumtypesTimelineEventKindDTO.vital,
+				timestamp: '2026-11-03T12:00:00Z',
+				route: 'HomeFragment',
+				vital: {
+					name: RumtypesTimelineVitalNameDTO.app_start,
+					value: 137,
+					rating: RumtypesVitalRatingDTO.good,
+				},
+			}),
+		).toStrictEqual({
+			label: 'Vital',
+			title: 'App start 137 ms',
+			detail: 'Good',
+			tone: 'success',
+		});
 	});
 });
