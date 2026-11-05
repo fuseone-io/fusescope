@@ -58,3 +58,14 @@ func TestSessionUserExpression(t *testing.T) {
 	sql, _ := newSessionAttributesQuery(telemetryScope{start: time.Unix(1000, 0), end: time.Unix(2000, 0)}, []string{"s1"}).Build()
 	assert.Contains(t, sql, "if(attributes_string['user.id'] != '', attributes_string['user.id'], attributes_string['user.hash'])")
 }
+
+func TestNewSessionLogsQueryIncludesAppVitalAttributes(t *testing.T) {
+	sql, args := newSessionLogsQuery(telemetryScope{start: time.Unix(1000, 0), end: time.Unix(2000, 0)}, "android-session").Build()
+	assert.Contains(t, args, rumtypes.EventNameLegacyVital)
+	for _, attribute := range []string{"fusescope.rum.vital.name", "fusescope.rum.vital.value", "fusescope.rum.vital.rating"} {
+		assert.Contains(t, sql, attribute)
+	}
+	assert.Contains(t, sql, rumtypes.AttributeVitalName)
+	assert.Contains(t, sql, rumtypes.AttributeVitalValue)
+	assert.Contains(t, sql, rumtypes.AttributeVitalRating)
+}

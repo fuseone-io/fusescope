@@ -3,7 +3,7 @@ import {
 	RumtypesLoadingTypeDTO,
 	RumtypesTimelineEventDTO,
 	RumtypesTimelineEventKindDTO,
-	RumtypesVitalNameDTO,
+	RumtypesTimelineVitalNameDTO,
 	RumtypesVitalRatingDTO,
 } from 'api/generated/services/fuseScope.schemas';
 
@@ -58,7 +58,7 @@ export const vital = (ms: number): RumtypesTimelineEventDTO => ({
 	timestamp: at(ms),
 	route: '/',
 	vital: {
-		name: RumtypesVitalNameDTO.lcp,
+		name: RumtypesTimelineVitalNameDTO.lcp,
 		value: 1820,
 		rating: RumtypesVitalRatingDTO.good,
 	},

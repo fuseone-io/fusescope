@@ -54,8 +54,8 @@ func newLogTimelineEvent(row *sessionLogRow) *rumtypes.TimelineEvent {
 	case rumtypes.EventNameException:
 		event.Kind = rumtypes.TimelineEventKindError
 		event.Error = &rumtypes.ErrorEventInfo{Fingerprint: rumtypes.NewErrorFingerprint(row.errorType, row.message, row.stacktrace), Type: row.errorType, Message: row.message, Source: row.source}
-	case rumtypes.EventNameWebVital:
-		name, ok := rumtypes.NewVitalName(row.vitalName)
+	case rumtypes.EventNameWebVital, rumtypes.EventNameLegacyVital:
+		name, ok := rumtypes.NewTimelineVitalName(row.event, row.vitalName)
 		if !ok {
 			return nil
 		}
