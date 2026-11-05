@@ -211,34 +211,37 @@ func TestReportStoreApplyIsAtomic(t *testing.T) {
 }
 
 // Replicas commit concurrently: whatever the order, the record ends at the
-// highest sequence, and no sequence applies after a higher one.
+// highest sequence, with its rows, and no sequence is invalidated. Each round
+// is a new store, whose agent record the first commits race to create: a
+// commit that missed a record another had not committed yet took the higher
+// sequence for invalidated, so the rounds repeat to catch it.
 func TestReportStoreConcurrentApply(t *testing.T) {
 	forEachStore(t, func(t *testing.T, newStore func(*testing.T) sqlstore.SQLStore) {
 		ctx := context.Background()
-		db := newStore(t)
-		store := NewReportStore(db, &fakeUsage{})
-		var mu sync.Mutex
-		var applied []uint64
-		var wg sync.WaitGroup
-		for seq := uint64(1); seq <= 12; seq++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				got, err := store.ApplyIfGreater(ctx, "agent", testReport(seq, activeApp(appA, int64(seq))))
-				assert.NoError(t, err)
-				if got == ingestreport.Applied {
-					mu.Lock()
-					applied = append(applied, seq)
-					mu.Unlock()
+		for round := range 20 {
+			// A subtest per round, so each store's connections close with it.
+			t.Run(fmt.Sprintf("round%d", round), func(t *testing.T) {
+				db := newStore(t)
+				store := NewReportStore(db, &fakeUsage{})
+				var wg sync.WaitGroup
+				for seq := uint64(1); seq <= 12; seq++ {
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						got, err := store.ApplyIfGreater(ctx, "agent", testReport(seq, activeApp(appA, int64(seq))))
+						assert.NoError(t, err)
+						// The order in which the calls return is not the order of
+						// the commits, so it is not asserted.
+						assert.NotEqual(t, ingestreport.Invalidated, got, "sequence %d is never invalidated", seq)
+					}()
 				}
-			}()
+				wg.Wait()
+				record, err := store.Record(ctx, "agent")
+				require.NoError(t, err)
+				assert.Equal(t, uint64(12), record.Applied)
+				assert.Equal(t, int64(12), windowRows(t, db, "agent")[appA].Sessions, "the rows are the highest sequence's")
+			})
 		}
-		wg.Wait()
-		record, err := store.Record(ctx, "agent")
-		require.NoError(t, err)
-		assert.Equal(t, uint64(12), record.Applied)
-		assert.IsIncreasing(t, applied, "applied in order of commit, each above the last")
-		assert.Equal(t, int64(12), windowRows(t, db, "agent")[appA].Sessions, "the rows are the highest sequence's")
 	})
 }
 
