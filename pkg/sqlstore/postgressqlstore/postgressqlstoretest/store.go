@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
@@ -29,13 +32,16 @@ func New(t testing.TB) sqlstore.SQLStore {
 	}
 	ctx := context.Background()
 	admin := open(t, dsn)
-	schema := "test_" + valuer.GenerateUUID().StringValue()[:8]
+	// The whole UUID: its first characters are a UUIDv7's milliseconds, so
+	// two stores made in the same millisecond, in one test or in packages
+	// run at once, would share a schema.
+	schema := "test_" + strings.ReplaceAll(valuer.GenerateUUID().StringValue(), "-", "")
 	if _, err := admin.BunDB().ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA %q", schema)); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
 		_, _ = admin.BunDB().ExecContext(context.Background(), fmt.Sprintf("DROP SCHEMA %q CASCADE", schema))
-		_ = admin.SQLDB().Close()
+		closeStore(admin)
 	})
 
 	scoped, err := url.Parse(dsn)
@@ -46,8 +52,18 @@ func New(t testing.TB) sqlstore.SQLStore {
 	query.Set("search_path", schema)
 	scoped.RawQuery = query.Encode()
 	store := open(t, scoped.String())
-	t.Cleanup(func() { _ = store.SQLDB().Close() })
+	t.Cleanup(func() { closeStore(store) })
 	return store
+}
+
+// closeStore closes a store's pool: closing the database/sql handle that
+// stdlib.OpenDBFromPool returns leaves the pgx pool, and its connections,
+// open.
+func closeStore(store sqlstore.SQLStore) {
+	_ = store.SQLDB().Close()
+	if pooled, ok := store.(interface{ PgxPool() *pgxpool.Pool }); ok {
+		pooled.PgxPool().Close()
+	}
 }
 
 func open(t testing.TB, dsn string) sqlstore.SQLStore {

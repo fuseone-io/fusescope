@@ -299,11 +299,17 @@ func (s *ReportStore) raise(ctx context.Context, agent string, now time.Time, up
 	if updated, err = run(); err != nil || updated {
 		return updated, true, err
 	}
-	if exists, err = db.NewSelect().Model((*ingesttypes.StorableReportAgent)(nil)).Where("agent_id = ?", agent).Exists(ctx); err != nil || exists {
-		return false, exists, err
+	// No row updated may mean a record another transaction inserted and had
+	// not committed when the update ran: it may be visible now, so the
+	// update runs again whether this one or another made it. Reading it as
+	// final would refuse a higher sequence as invalidated.
+	if exists, err = db.NewSelect().Model((*ingesttypes.StorableReportAgent)(nil)).Where("agent_id = ?", agent).Exists(ctx); err != nil {
+		return false, false, err
 	}
-	if exists, err = s.create(ctx, agent, now); err != nil || !exists {
-		return false, exists, err
+	if !exists {
+		if exists, err = s.create(ctx, agent, now); err != nil || !exists {
+			return false, exists, err
+		}
 	}
 	updated, err = run()
 	return updated, true, err
