@@ -4,11 +4,12 @@ from collections.abc import Callable
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.rum import RUM_APPLICATIONS, create_rum_application, rum_event, rum_span, send_rum, wait_for_rum_query
-from fixtures.types import Operation, SigNoz
+from fixtures.types import FuseScopeCollector, Operation, SigNoz
 
 
 def test_android_app_start_session_timeline(
     signoz: SigNoz,
+    fusescope_collector: FuseScopeCollector,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
@@ -18,7 +19,7 @@ def test_android_app_start_session_timeline(
     now = time.time_ns() - 60_000_000_000
     common = {"session.id": session}
     send_rum(
-        signoz,
+        fusescope_collector,
         app["key"]["key"],
         {"app.package.name": "com.example.launch", "service.version": "3.1.0", "deployment.environment.name": "production"},
         spans=[rum_span("view", now + 1_000_000_000, 2_000_000_000, common | {"fusescope.rum.view.route": "Home", "fusescope.rum.view.loading_type": "initial_load"})],
