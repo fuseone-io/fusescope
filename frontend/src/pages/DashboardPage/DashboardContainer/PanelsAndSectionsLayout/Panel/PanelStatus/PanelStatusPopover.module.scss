@@ -5,6 +5,15 @@
 	align-items: center;
 	cursor: pointer;
 	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: none;
+}
+
+// The card brings its own padding.
+.popover {
+	padding: 0;
+	max-width: 480px;
 }
 
 .content {

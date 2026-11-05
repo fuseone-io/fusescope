@@ -1,5 +1,5 @@
 import { CircleX, TriangleAlert } from '@signozhq/icons';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
 
 import PanelStatusContent from './PanelStatusContent';
 import type { PanelStatusDetail, PanelStatusVariant } from './types';
@@ -21,8 +21,11 @@ interface PanelStatusPopoverProps {
 }
 
 /**
- * Header status indicator: an icon that opens a tooltip with the status detail.
+ * Header status indicator: an icon that opens a popover with the status detail.
  * One component drives both variants so error and warning stay in lockstep.
+ * A popover, not a tooltip: the detail is a card drawn with the page theme's
+ * colors, with a list that scrolls, and a tooltip's surface is inverted by
+ * design, which read light on light in the dark theme.
  */
 function PanelStatusPopover({
 	variant,
@@ -33,19 +36,21 @@ function PanelStatusPopover({
 	const Icon = variant === 'error' ? CircleX : TriangleAlert;
 
 	return (
-		<Tooltip
-			title={<PanelStatusContent variant={variant} detail={detail} />}
-			side="top"
-			align="end"
-		>
-			<span
-				className={styles.trigger}
-				aria-label={ariaLabel}
-				data-testid={testId ?? `panel-status-${variant}`}
-			>
-				<Icon size={16} color={color} />
-			</span>
-		</Tooltip>
+		<Popover>
+			<PopoverTrigger asChild>
+				<button
+					type="button"
+					className={styles.trigger}
+					aria-label={ariaLabel}
+					data-testid={testId ?? `panel-status-${variant}`}
+				>
+					<Icon size={16} color={color} />
+				</button>
+			</PopoverTrigger>
+			<PopoverContent side="top" align="end" className={styles.popover}>
+				<PanelStatusContent variant={variant} detail={detail} />
+			</PopoverContent>
+		</Popover>
 	);
 }
 
