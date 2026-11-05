@@ -81,7 +81,9 @@ func collectFilterExpressions(t *testing.T, raw []byte, out *[]string) {
 
 // The FuseScope collector dashboard reads only the collector's own
 // telemetry, so another collector's otelcol_* metrics in the same database,
-// such as the earlier collector's, never mix in.
+// such as the earlier collector's, never mix in. The keys are qualified as
+// resource: the scraped metrics carry service.name and host.name both as
+// resource and as attributes, and an unqualified key is ambiguous.
 func TestFuseScopeCollectorDashboardIsScopedToTheCollector(t *testing.T) {
 	registry, err := NewSystemDashboardRegistry()
 	require.NoError(t, err)
@@ -94,7 +96,7 @@ func TestFuseScopeCollectorDashboardIsScopedToTheCollector(t *testing.T) {
 	collectFilterExpressions(t, raw, &expressions)
 	require.NotEmpty(t, expressions)
 	for _, expression := range expressions {
-		assert.True(t, strings.HasPrefix(expression, "service.name = 'fusescope-collector' AND host.name IN $host"), expression)
+		assert.True(t, strings.HasPrefix(expression, "resource.service.name = 'fusescope-collector' AND resource.host.name IN $host"), expression)
 	}
 
 	var metricNames []string
@@ -238,7 +240,7 @@ func TestFuseScopeCollectorDashboardClickHouseWrites(t *testing.T) {
 		} `json:"definition"`
 	}
 	require.NoError(t, json.Unmarshal(raw, &dashboard))
-	assert.GreaterOrEqual(t, dashboard.Version, 2, "a provisioned dashboard is upgraded only on a higher version")
+	assert.GreaterOrEqual(t, dashboard.Version, 3, "a provisioned dashboard is upgraded only on a higher version")
 
 	byName := map[string][]string{}
 	units := map[string]string{}
@@ -326,4 +328,33 @@ func TestFuseScopeCollectorDashboardUnits(t *testing.T) {
 		"Go heap":                            "bytes",
 		"Uptime":                             "s",
 	}, units)
+}
+
+func TestFuseScopeCollectorDashboardGroupsByResourceKeys(t *testing.T) {
+	raw, err := definitionFiles.ReadFile(definitionsRoot + "/fusescope-collector.json")
+	require.NoError(t, err)
+	var node any
+	require.NoError(t, json.Unmarshal(raw, &node))
+	var walk func(any)
+	seen := 0
+	walk = func(n any) {
+		switch v := n.(type) {
+		case map[string]any:
+			if name, ok := v["name"].(string); ok && name == "host.name" {
+				if context, ok := v["fieldContext"]; ok {
+					seen++
+					assert.Equal(t, "resource", context, "group by host.name as a resource key")
+				}
+			}
+			for _, child := range v {
+				walk(child)
+			}
+		case []any:
+			for _, child := range v {
+				walk(child)
+			}
+		}
+	}
+	walk(node)
+	assert.Positive(t, seen)
 }
