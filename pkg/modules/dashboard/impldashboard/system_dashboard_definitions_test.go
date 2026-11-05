@@ -94,7 +94,7 @@ func TestFuseScopeCollectorDashboardIsScopedToTheCollector(t *testing.T) {
 	require.NoError(t, err)
 	var expressions []string
 	collectFilterExpressions(t, raw, &expressions)
-	require.NotEmpty(t, expressions)
+	require.Len(t, expressions, 39, "one filter per query")
 	for _, expression := range expressions {
 		assert.True(t, strings.HasPrefix(expression, "resource.service.name = 'fusescope-collector' AND resource.host.name IN $host"), expression)
 	}
@@ -330,20 +330,25 @@ func TestFuseScopeCollectorDashboardUnits(t *testing.T) {
 	}, units)
 }
 
+// Every group-by on host.name uses its resource context; a group-by that
+// lost its context fails rather than being skipped.
 func TestFuseScopeCollectorDashboardGroupsByResourceKeys(t *testing.T) {
 	raw, err := definitionFiles.ReadFile(definitionsRoot + "/fusescope-collector.json")
 	require.NoError(t, err)
 	var node any
 	require.NoError(t, json.Unmarshal(raw, &node))
+	hostGroups := 0
 	var walk func(any)
-	seen := 0
 	walk = func(n any) {
 		switch v := n.(type) {
 		case map[string]any:
-			if name, ok := v["name"].(string); ok && name == "host.name" {
-				if context, ok := v["fieldContext"]; ok {
-					seen++
-					assert.Equal(t, "resource", context, "group by host.name as a resource key")
+			if groups, ok := v["groupBy"].([]any); ok {
+				for _, group := range groups {
+					entry, _ := group.(map[string]any)
+					if entry["name"] == "host.name" {
+						hostGroups++
+						assert.Equal(t, "resource", entry["fieldContext"], "group by host.name as a resource key")
+					}
 				}
 			}
 			for _, child := range v {
@@ -356,5 +361,5 @@ func TestFuseScopeCollectorDashboardGroupsByResourceKeys(t *testing.T) {
 		}
 	}
 	walk(node)
-	assert.Positive(t, seen)
+	assert.Equal(t, 4, hostGroups, "the four Process panels group by host.name")
 }
