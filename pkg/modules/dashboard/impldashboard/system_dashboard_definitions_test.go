@@ -205,6 +205,13 @@ func TestFuseScopeCollectorDashboardClickHouseWrites(t *testing.T) {
 						Display struct {
 							Name string `json:"name"`
 						} `json:"display"`
+						Plugin struct {
+							Spec struct {
+								Formatting struct {
+									Unit string `json:"unit"`
+								} `json:"formatting"`
+							} `json:"spec"`
+						} `json:"plugin"`
 						Queries []struct {
 							Spec struct {
 								Plugin struct {
@@ -234,7 +241,9 @@ func TestFuseScopeCollectorDashboardClickHouseWrites(t *testing.T) {
 	assert.GreaterOrEqual(t, dashboard.Version, 2, "a provisioned dashboard is upgraded only on a higher version")
 
 	byName := map[string][]string{}
+	units := map[string]string{}
 	for _, panel := range dashboard.Definition.Spec.Panels {
+		units[panel.Spec.Display.Name] = panel.Spec.Plugin.Spec.Formatting.Unit
 		for _, query := range panel.Spec.Queries[0].Spec.Plugin.Spec.Queries {
 			aggregation := query.Spec.Aggregations[0]
 			groups := []string{}
@@ -249,4 +258,10 @@ func TestFuseScopeCollectorDashboardClickHouseWrites(t *testing.T) {
 	assert.Equal(t, []string{insert + " /p50 ", insert + " /p95 ", insert + " /p99 "}, byName["Insert latency"])
 	assert.Equal(t, []string{"otelcol_exporter_fusescope_clickhouse_inserted_rows rate/sum table"}, byName["Rows inserted by table"])
 	assert.Equal(t, []string{"otelcol_exporter_fusescope_clickhouse_insert_errors rate/sum table,outcome"}, byName["Insert errors by table"])
+
+	// Review of #327: rows and failed attempts are not requests.
+	assert.Equal(t, "s", units["Insert latency by table (p95)"])
+	assert.Equal(t, "s", units["Insert latency"])
+	assert.Equal(t, "cps", units["Rows inserted by table"], "count/s")
+	assert.Equal(t, "ops", units["Insert errors by table"], "ops/s")
 }
