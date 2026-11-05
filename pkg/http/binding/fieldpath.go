@@ -1,3 +1,12 @@
+// Portions of this file (jsonFields and dominantField) are adapted from the
+// Go standard library's encoding/json, typeFields and dominantField:
+//
+//	Copyright 2009 The Go Authors. All rights reserved.
+//	Use of this source code is governed by a BSD-style license that can be
+//	found in the LICENSE-GO file in this directory.
+//
+// The rest of the file is FuseScope's, under the repository's MIT license.
+
 package binding
 
 import (
@@ -222,8 +231,8 @@ type jsonField struct {
 }
 
 // jsonFields lists the fields encoding/json decodes into for a struct type,
-// in field order, each name once, after dominance (encoding/json's
-// typeFields and dominantField).
+// in field order, each name once, after dominance. Adapted from
+// encoding/json's typeFields (see the file header and LICENSE-GO).
 func jsonFields(root reflect.Type) []jsonField {
 	type level struct {
 		typ   reflect.Type
@@ -299,7 +308,8 @@ func jsonFields(root reflect.Type) []jsonField {
 }
 
 // dominantField is the field that takes a name among those sharing it: the
-// only one at the shallowest level, or the only tagged one there.
+// only one at the shallowest level, or the only tagged one there. Adapted
+// from encoding/json's dominantField (see the file header and LICENSE-GO).
 func dominantField(fields []jsonField) (jsonField, bool) {
 	shallowest := fields[0].depth
 	for _, field := range fields[1:] {
