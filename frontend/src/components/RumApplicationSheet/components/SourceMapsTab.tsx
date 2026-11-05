@@ -7,7 +7,7 @@ import {
 import { Button } from 'components/ui/button';
 
 import { useSourceMapActions } from '../hooks/useSourceMapActions';
-import { sdkEndpoint } from '../utils/endpoint';
+import { managementEndpoint } from '../utils/endpoint';
 import { latestRelease } from '../utils/sourceMaps';
 import SectionHeading from './SectionHeading';
 import SheetFooter from './SheetFooter';
@@ -40,7 +40,11 @@ function SourceMapsTab({
 	const release = latestRelease(data?.releases ?? []) ?? EXAMPLE_RELEASE;
 	const settings = application.sourceMaps ?? DEFAULT_SETTINGS;
 	const android = application.platform === RumtypesPlatformDTO.android;
-	const target = { url: sdkEndpoint(), applicationId: application.id, release };
+	const target = {
+		url: managementEndpoint(),
+		applicationId: application.id,
+		release,
+	};
 
 	return (
 		<div

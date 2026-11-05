@@ -4,6 +4,9 @@ import type {
 } from 'api/generated/services/fuseScope.schemas';
 import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 import { Button } from 'components/ui/button';
+import { useGetOnboardingIngestion } from 'api/generated/services/onboarding';
+import ROUTES from 'constants/routes';
+import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 import { RevealedKey } from '../hooks/useApplicationSheet';
@@ -33,6 +36,14 @@ function InstallTab({
 	onBack,
 	onDone,
 }: InstallTabProps): JSX.Element {
+	const { data, isLoading, isError, refetch } = useGetOnboardingIngestion({
+		query: { refetchOnWindowFocus: false, retry: false },
+	});
+	const ingestion = data?.data;
+	const endpoint =
+		ingestion?.derived === false
+			? ingestion.otlpHttpEndpoint.replace(/\/+$/, '')
+			: undefined;
 	return (
 		<div
 			className="tw:flex tw:min-h-0 tw:flex-1 tw:flex-col"
@@ -45,14 +56,43 @@ function InstallTab({
 						applicationName={application.name}
 					/>
 				)}
-				{application.platform === RumtypesPlatformDTO.android ? (
+				{isLoading ? (
+					<span data-testid="rum-ingestion-loading">Loading the collector URL…</span>
+				) : isError ? (
+					<div
+						data-testid="rum-ingestion-error"
+						className="tw:flex tw:items-center tw:gap-2"
+					>
+						<span>Could not load the collector URL.</span>
+						<Button
+							variant="outline"
+							size="sm"
+							data-testid="rum-ingestion-retry"
+							onClick={(): void => {
+								void refetch();
+							}}
+						>
+							Retry
+						</Button>
+					</div>
+				) : !endpoint ? (
+					<span data-testid="rum-ingestion-unconfigured">
+						Configure the collector ingestion URL in{' '}
+						<Link to={ROUTES.GET_STARTED} className="tw:text-primary tw:underline">
+							Get started
+						</Link>{' '}
+						before copying the SDK setup.
+					</span>
+				) : application.platform === RumtypesPlatformDTO.android ? (
 					<AndroidInstall
+						endpoint={endpoint}
 						application={application}
 						publicKey={publicKey}
 						keyKnown={Boolean(revealed)}
 					/>
 				) : (
 					<WebInstall
+						endpoint={endpoint}
 						application={application}
 						publicKey={publicKey}
 						keyKnown={Boolean(revealed)}
