@@ -18,3 +18,10 @@ pkg/modules/rumapplication/browsersdk/snapshot
   JavaScript (Copyright The OpenTelemetry Authors) and web-vitals (Copyright
   Google LLC). Licensed under the Apache License, Version 2.0
   (pkg/modules/rumapplication/browsersdk/snapshot/LICENSE, NOTICE).
+
+pkg/http/binding/fieldpath.go
+  The struct field resolution in jsonFields and dominantField is adapted from
+  the Go standard library's encoding/json (typeFields and dominantField).
+  Copyright 2009 The Go Authors.
+  Licensed under a BSD-style license (pkg/http/binding/LICENSE-GO).
+  The adapted part is marked in the file's header.
