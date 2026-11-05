@@ -117,7 +117,7 @@ services:
 
   fusescope-collector:
     <<: *logging
-    image: ${FUSESCOPE_COLLECTOR_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:sha-92c555fae01f}
+    image: ${FUSESCOPE_COLLECTOR_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.2.0@sha256:b9f8b298703d65452a9314ce9007473a6164adfc3fa56e65d97cf136f90322f3}
     command: [--config=fusescopeopamp:/etc/fusescope-collector/config.yaml]
     user: "65532"
     # Host UTS namespace so the system detector reports the host's hostname.
