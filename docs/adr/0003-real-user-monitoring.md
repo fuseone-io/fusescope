@@ -177,6 +177,8 @@ Each phase ships behind a feature flag and ends with docs and an e2e test.
 
 ## Phase 3 decisions (Android)
 
+> Proposed follow-up, not yet accepted: [native symbols plan](proposals/rum-native-symbols.md) defines Android level 2 and iOS dSYM work with #234/#215. It must be reviewed before amending the decisions below; it does not change the delivered level-1 scope.
+
 Settled 2026-10-25, while building phase 3.
 
 - **One repo per native platform:** `fuseone-io/fusescope-sdk-android` now, `fusescope-sdk-ios` for phase 4. JS stays in the `fusescope-sdk` monorepo.
