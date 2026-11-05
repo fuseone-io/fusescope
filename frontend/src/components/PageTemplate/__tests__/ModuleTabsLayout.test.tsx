@@ -12,10 +12,12 @@ jest.mock('components/HeaderRightSection/HeaderRightSection', () => ({
 
 const mockShowsGlobalTimePicker = jest.fn(() => false);
 const mockShowsHeaderActionsOnly = jest.fn(() => false);
+const mockEmbedsDashboard = jest.fn(() => false);
 
 jest.mock('components/AppHeader/utils', () => ({
 	showsGlobalTimePicker: (): boolean => mockShowsGlobalTimePicker(),
 	showsHeaderActionsOnly: (): boolean => mockShowsHeaderActionsOnly(),
+	embedsDashboard: (): boolean => mockEmbedsDashboard(),
 }));
 
 jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
@@ -152,6 +154,12 @@ describe('ModuleTabsLayout', () => {
 
 	it('leaves the page actions to the app header when it shows them alone', () => {
 		mockShowsHeaderActionsOnly.mockReturnValueOnce(true);
+		renderLayout('/logs/explorer');
+		expect(screen.queryByTestId('header-right-section')).not.toBeInTheDocument();
+	});
+
+	it('leaves the page actions to an embedded dashboard', () => {
+		mockEmbedsDashboard.mockReturnValueOnce(true);
 		renderLayout('/logs/explorer');
 		expect(screen.queryByTestId('header-right-section')).not.toBeInTheDocument();
 	});

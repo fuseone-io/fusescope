@@ -6,6 +6,7 @@ import {
 	useParams,
 } from 'react-router-dom';
 import {
+	embedsDashboard,
 	showsGlobalTimePicker,
 	showsHeaderActionsOnly,
 } from 'components/AppHeader/utils';
@@ -78,7 +79,8 @@ function ModuleTabsLayout({
 	const pageActions =
 		actions === undefined &&
 		!showsGlobalTimePicker(pathname) &&
-		!showsHeaderActionsOnly(pathname) ? (
+		!showsHeaderActionsOnly(pathname) &&
+		!embedsDashboard(pathname) ? (
 			<HeaderRightSection enableAnnouncements={false} enableShare enableFeedback />
 		) : (
 			actions
