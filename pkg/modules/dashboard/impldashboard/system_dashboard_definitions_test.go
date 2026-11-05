@@ -265,3 +265,65 @@ func TestFuseScopeCollectorDashboardClickHouseWrites(t *testing.T) {
 	assert.Equal(t, "cps", units["Rows inserted by table"], "count/s")
 	assert.Equal(t, "ops", units["Insert errors by table"], "ops/s")
 }
+
+// Review of #327: each panel's unit, by name. Spans, log records, metric
+// points, processor items and rows are counts per second (cps), failed
+// insert attempts are operations per second (ops); none of them is a
+// request. A panel added or renamed has to be added here.
+func TestFuseScopeCollectorDashboardUnits(t *testing.T) {
+	raw, err := definitionFiles.ReadFile(definitionsRoot + "/fusescope-collector.json")
+	require.NoError(t, err)
+	var dashboard struct {
+		Definition struct {
+			Spec struct {
+				Panels map[string]struct {
+					Spec struct {
+						Display struct {
+							Name string `json:"name"`
+						} `json:"display"`
+						Plugin struct {
+							Spec struct {
+								Formatting struct {
+									Unit string `json:"unit"`
+								} `json:"formatting"`
+							} `json:"spec"`
+						} `json:"plugin"`
+					} `json:"spec"`
+				} `json:"panels"`
+			} `json:"spec"`
+		} `json:"definition"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &dashboard))
+	units := map[string]string{}
+	for _, panel := range dashboard.Definition.Spec.Panels {
+		units[panel.Spec.Display.Name] = panel.Spec.Plugin.Spec.Formatting.Unit
+	}
+	assert.Equal(t, map[string]string{
+		"Spans accepted":                     "cps",
+		"Log records accepted":               "cps",
+		"Spans refused":                      "cps",
+		"Peak export queue":                  "none",
+		"Memory (RSS) now":                   "bytes",
+		"RUM policy age now":                 "s",
+		"Spans accepted by receiver":         "cps",
+		"Log records accepted by receiver":   "cps",
+		"Metric points accepted by receiver": "cps",
+		"Sent by exporter":                   "cps",
+		"Refused by receiver":                "cps",
+		"Failed by receiver":                 "cps",
+		"Failed to send by exporter":         "cps",
+		"Memory limiter accepted":            "cps",
+		"Queue size by exporter":             "none",
+		"Queue capacity by exporter":         "none",
+		"Requests in flight by exporter":     "none",
+		"Processor throughput":               "cps",
+		"Insert latency by table (p95)":      "s",
+		"Insert latency":                     "s",
+		"Rows inserted by table":             "cps",
+		"Insert errors by table":             "ops",
+		"CPU":                                "none",
+		"Memory (RSS)":                       "bytes",
+		"Go heap":                            "bytes",
+		"Uptime":                             "s",
+	}, units)
+}

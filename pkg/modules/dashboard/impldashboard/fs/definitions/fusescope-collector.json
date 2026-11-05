@@ -338,7 +338,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 }
               }
@@ -396,7 +396,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 }
               }
@@ -454,7 +454,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 }
               }
@@ -686,7 +686,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -759,7 +759,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -832,7 +832,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -905,7 +905,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -1038,7 +1038,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -1171,7 +1171,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -1304,7 +1304,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -1437,7 +1437,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -1780,7 +1780,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
