@@ -275,7 +275,7 @@ func TestChildTypeFollowsEncodingJSON(t *testing.T) {
 		want   reflect.Type
 	}{
 		{name: "EmbeddedInterfaceIsNotWalked", parent: reflect.TypeOf(withEmbeddedInterface{}), key: "a", want: reflect.TypeOf(0)},
-		{name: "EmbeddedScalarIsNotWalked", parent: reflect.TypeOf(withEmbeddedScalar{}), key: "a", want: reflect.TypeOf(0)},
+		{name: "EmbeddedScalarIsNotWalked", parent: reflect.TypeOf(withEmbeddedScalar{scalarMarker: 1}), key: "a", want: reflect.TypeOf(0)},
 		{name: "EmbeddedExportedScalarIsAField", parent: reflect.TypeOf(withEmbeddedScalar{}), key: "ScalarExported", want: reflect.TypeOf(ScalarExported(""))},
 		{name: "DirectDominatesPromoted", parent: reflect.TypeOf(directDominates{}), key: "A", want: reflect.TypeOf(0)},
 		{name: "AmbiguousPromotedIsUnknown", parent: reflect.TypeOf(ambiguousPromoted{}), key: "A", want: nil},
