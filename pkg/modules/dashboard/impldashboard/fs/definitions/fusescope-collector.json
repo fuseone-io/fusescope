@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "definition": {
     "schemaVersion": "v6",
     "name": "signoz---fusescope-collector",
@@ -7,7 +7,7 @@
     "spec": {
       "display": {
         "name": "FuseScope Collector",
-        "description": "Health of the FuseScope collectors from their own telemetry: what the receivers accept and refuse, what the exporters send and drop, export queues, the memory limiter, CPU, memory and restarts. Scope by collector from the variable bar."
+        "description": "Health of the FuseScope collectors from their own telemetry: what the receivers accept and refuse, what the exporters send and drop, export queues, the memory limiter, ClickHouse insert latency, rows and errors per table, CPU, memory and restarts. Scope by collector from the variable bar."
       },
       "variables": [
         {
@@ -240,6 +240,52 @@
                 "width": 6,
                 "height": 6,
                 "content": {
+                  "$ref": "#/spec/panels/149fcb1a-8aba-5adc-9ee1-791078046f33"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/90b6adb8-cc27-5460-bbf5-7e98735ff17b"
+                }
+              },
+              {
+                "x": 0,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/26938b68-3db8-5649-b137-4efa87fed0c6"
+                }
+              },
+              {
+                "x": 6,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/d23a30aa-1c45-57b4-a1cb-62b5d3265bcf"
+                }
+              }
+            ],
+            "display": {
+              "title": "ClickHouse writes"
+            }
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
                   "$ref": "#/spec/panels/c4d44ade-4273-5e66-bfde-350d50aa3c60"
                 }
               },
@@ -292,7 +338,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 }
               }
@@ -350,7 +396,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 }
               }
@@ -408,7 +454,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 }
               }
@@ -640,7 +686,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -713,7 +759,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -786,7 +832,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -859,7 +905,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -992,7 +1038,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -1125,7 +1171,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -1258,7 +1304,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -1391,7 +1437,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -1734,7 +1780,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "reqps",
+                  "unit": "cps",
                   "decimalPrecision": "2"
                 },
                 "legend": {
@@ -1813,6 +1859,343 @@
                               }
                             ],
                             "legend": "out {{processor}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "149fcb1a-8aba-5adc-9ee1-791078046f33": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Insert latency by table (p95)",
+              "description": "95th percentile of one insert attempt, by table, retries included."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "s",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_fusescope_clickhouse_insert_duration.bucket",
+                                "temporality": "",
+                                "timeAggregation": "",
+                                "spaceAggregation": "p95",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "table",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{table}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "90b6adb8-cc27-5460-bbf5-7e98735ff17b": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Insert latency",
+              "description": "50th, 95th and 99th percentiles of one insert attempt, all tables."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "s",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_fusescope_clickhouse_insert_duration.bucket",
+                                "temporality": "",
+                                "timeAggregation": "",
+                                "spaceAggregation": "p50",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": "p50"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_fusescope_clickhouse_insert_duration.bucket",
+                                "temporality": "",
+                                "timeAggregation": "",
+                                "spaceAggregation": "p95",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": "p95"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_fusescope_clickhouse_insert_duration.bucket",
+                                "temporality": "",
+                                "timeAggregation": "",
+                                "spaceAggregation": "p99",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [],
+                            "legend": "p99"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "26938b68-3db8-5649-b137-4efa87fed0c6": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Rows inserted by table",
+              "description": "Per second, rows in confirmed inserts; a retry ClickHouse deduplicates adds no new rows."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "cps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_fusescope_clickhouse_inserted_rows",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "table",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{table}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "d23a30aa-1c45-57b4-a1cb-62b5d3265bcf": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Insert errors by table",
+              "description": "Per second, failed insert attempts by table and outcome (retryable or permanent). Empty until the first failure."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "ops",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 60,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = 'fusescope-collector' AND host.name IN $host"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "otelcol_exporter_fusescope_clickhouse_insert_errors",
+                                "temporality": "",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "table",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              },
+                              {
+                                "name": "outcome",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{table}} {{outcome}}"
                           }
                         }
                       ]
