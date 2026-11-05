@@ -189,3 +189,64 @@ func TestFuseScopeCollectorDashboardKPIsAndSelector(t *testing.T) {
 	assert.Equal(t, "signoz/QueryVariable", host.Plugin.Kind)
 	assert.Contains(t, host.Plugin.Spec.QueryValue, "JSONExtractString(labels, 'service.name') = 'fusescope-collector'")
 }
+
+// The ClickHouse writes section reads fusescope_clickhouse's own telemetry
+// (fusescope-collector-server#57): percentiles of the insert histogram are
+// taken on its buckets with no time aggregation, as the APM latency is.
+func TestFuseScopeCollectorDashboardClickHouseWrites(t *testing.T) {
+	raw, err := definitionFiles.ReadFile(definitionsRoot + "/fusescope-collector.json")
+	require.NoError(t, err)
+	var dashboard struct {
+		Version    int `json:"version"`
+		Definition struct {
+			Spec struct {
+				Panels map[string]struct {
+					Spec struct {
+						Display struct {
+							Name string `json:"name"`
+						} `json:"display"`
+						Queries []struct {
+							Spec struct {
+								Plugin struct {
+									Spec struct {
+										Queries []struct {
+											Spec struct {
+												Aggregations []struct {
+													MetricName       string `json:"metricName"`
+													TimeAggregation  string `json:"timeAggregation"`
+													SpaceAggregation string `json:"spaceAggregation"`
+												} `json:"aggregations"`
+												GroupBy []struct {
+													Name string `json:"name"`
+												} `json:"groupBy"`
+											} `json:"spec"`
+										} `json:"queries"`
+									} `json:"spec"`
+								} `json:"plugin"`
+							} `json:"spec"`
+						} `json:"queries"`
+					} `json:"spec"`
+				} `json:"panels"`
+			} `json:"spec"`
+		} `json:"definition"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &dashboard))
+	assert.GreaterOrEqual(t, dashboard.Version, 2, "a provisioned dashboard is upgraded only on a higher version")
+
+	byName := map[string][]string{}
+	for _, panel := range dashboard.Definition.Spec.Panels {
+		for _, query := range panel.Spec.Queries[0].Spec.Plugin.Spec.Queries {
+			aggregation := query.Spec.Aggregations[0]
+			groups := []string{}
+			for _, group := range query.Spec.GroupBy {
+				groups = append(groups, group.Name)
+			}
+			byName[panel.Spec.Display.Name] = append(byName[panel.Spec.Display.Name], aggregation.MetricName+" "+aggregation.TimeAggregation+"/"+aggregation.SpaceAggregation+" "+strings.Join(groups, ","))
+		}
+	}
+	const insert = "otelcol_exporter_fusescope_clickhouse_insert_duration.bucket"
+	assert.Equal(t, []string{insert + " /p95 table"}, byName["Insert latency by table (p95)"])
+	assert.Equal(t, []string{insert + " /p50 ", insert + " /p95 ", insert + " /p99 "}, byName["Insert latency"])
+	assert.Equal(t, []string{"otelcol_exporter_fusescope_clickhouse_inserted_rows rate/sum table"}, byName["Rows inserted by table"])
+	assert.Equal(t, []string{"otelcol_exporter_fusescope_clickhouse_insert_errors rate/sum table,outcome"}, byName["Insert errors by table"])
+}
