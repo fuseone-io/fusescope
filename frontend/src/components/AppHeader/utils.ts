@@ -62,6 +62,18 @@ export function showsHeaderActionsOnly(pathname: string): boolean {
 	);
 }
 
+/** Pages that embed a dashboard, which puts its picker, share and feedback in the header. */
+const ROUTES_WITH_EMBEDDED_DASHBOARD = [
+	ROUTES.AI_OBSERVABILITY_OVERVIEW,
+	ROUTES.INFRASTRUCTURE_MONITORING_COLLECTORS,
+];
+
+export function embedsDashboard(pathname: string): boolean {
+	return ROUTES_WITH_EMBEDDED_DASHBOARD.some((path) =>
+		matchesExactly(pathname, path),
+	);
+}
+
 /** The route template `pathname` matches in `CRUMB_ROUTES`, with its params. */
 export function matchCrumbRoute(
 	pathname: string,
