@@ -33,7 +33,8 @@ Two front doors mean two places to rate-limit, two auth models, a backend that m
 
 | Surface | Exposed to the internet | Who |
 |---|---|---|
-| `fusescope-collector` public listener: OTLP gRPC and HTTP, RUM, Pyroscope, artifact uploads | yes | SDKs, agents, browsers, apps, CI |
+| `fusescope-collector` public listener: OTLP gRPC and HTTP, RUM, artifact uploads | yes | SDKs, agents, browsers, apps, CI |
+| `fusescope-collector` profiles listener: Pyroscope, OTLP profiles, Parca `DebuginfoService` (ADR 0008) | yes | profiling SDKs and agents |
 | `fusescope-collector` internal listener (ClusterIP) | no | in-cluster agents, the backend's own telemetry |
 | backend UI and management API | operator's choice (VPN, SSO, public) | people, automation with API keys |
 | backend internal listener: OpAMP (4320), artifact intake | no | collectors only |
@@ -66,7 +67,7 @@ Managed in the backend, enforced in the collector. Built clean-room from this AD
 
 ### 4. `ingestauth` validates locally
 
-A server authenticator extension in `fusescope-collector`, attached to every receiver on the public listener.
+A server authenticator extension in `fusescope-collector`, attached to every receiver on the public and profiles listeners.
 
 - **No per-request backend call.** It hashes the presented key and looks it up in memory; a request with a key of the wrong kind or an expired key is refused. A server authenticator sees only headers, not the signal, so a signal the key doesn't allow is refused by `ingestauth`'s processor in each pipeline, which knows its signal.
 - **It stamps `fusescope.ingest.key_id`** on every resource, overwriting any value the client sent, and puts the org in the request's auth data for processors and exporters. The payload never decides the org.
@@ -82,10 +83,8 @@ A server authenticator extension in `fusescope-collector`, attached to every rec
 | `warn` | accepted, stamped | accepted, counted, sampled log, `FuseScope-Ingest-Warning` response header |
 | `enforce` | accepted, stamped | 401 (missing or unknown), 403 (wrong signal, origin, kind) |
 
-- The mode is set per listener in the chart. New installs: public listener `enforce`, internal listener `permissive`. Upgraded installs start `permissive`; `warn` becomes the upgrade default one release later, and `enforce` the release after, each announced in release notes.
+- The mode is set per listener in the chart, since an authenticator can't tell signals apart: a new signal with no existing clients gets its own listener and can start in `enforce` while the shared OTLP listener is still `permissive`, as profiles do (ADR 0008). New installs: public listener `enforce`, internal listener `permissive`. Upgraded installs start `permissive`; `warn` becomes the upgrade default one release later, and `enforce` the release after, each announced in release notes.
 - The UI lists unauthenticated sources (service, host, count) from the collector's counters, so operators can issue keys before enforcing.
-
-- **Per listener.** The mode is set per listener, since an authenticator can't tell signals apart. A new signal with no existing clients gets its own listener and can start in `enforce` while the shared OTLP listener is still `permissive`. Profiles (ADR 0008) use this.
 
 ### 6. The RUM gateway moves to the collector
 
@@ -103,14 +102,16 @@ The backend gateway is our MIT code, so it is moved, not rewritten; it keeps its
 
 ### 7. Symbol and artifact uploads go through the collector
 
-Source maps, R8 mappings, dSYMs later, and ADR 0008's debug files all enter through one **`artifactreceiver`**, authenticated with a secret key that has the `artifacts` signal. It checks size limits and streams the file to the backend's **internal** artifact intake, which stores it in the artifact store and keeps quota, retention and read-time symbolication. The backend's management endpoints (list, delete, upload from the UI) stay on its API for people.
+Source maps, R8 mappings, dSYMs later, and ADR 0008's debug files from the CLI or HTTP upload enter through one **`artifactreceiver`**, authenticated with a secret key that has the `artifacts` signal. It checks size limits and streams the file to the backend's **internal** artifact intake, which stores it in the artifact store and keeps quota, retention and read-time symbolication. The backend's management endpoints (list, delete, upload from the UI) stay on its API for people.
+
+Parca's `DebuginfoService` is the exception: `parca-agent` sends profiles and debug files to one address, so `profilesreceiver` serves it on the profiles listener (ADR 0008), checks the `artifacts` signal itself and streams to the same intake with `artifactreceiver`'s code.
 
 Why not keep CI uploads on the backend API, unexposed by default:
 
 - CI runners (GitHub-hosted, GitLab SaaS) are on the internet. An unexposed backend API means self-hosted runners or a VPN for every customer, or exposing the backend anyway, which is what this ADR removes.
 - Uploads today need an editor credential that can also read and change everything else. An `artifacts`-only ingestion key can do nothing but upload.
 - Uploads are large and bursty at release time. They belong on the tier that scales out and has limits, not on the API server.
-- ADR 0008 already chose this path for debug files; one receiver and one key model cover all artifacts.
+- ADR 0008 already chose this path for debug files; one key model covers all artifacts, and one receiver every upload but Parca's.
 
 The collector reaches the internal intake with a per-collector credential delivered over OpAMP and sends the key's org and application with each file; the intake accepts no other caller.
 
