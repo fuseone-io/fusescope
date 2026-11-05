@@ -6,7 +6,6 @@ import type {
 import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 
 import { SnippetInput } from '../types';
-import { sdkEndpoint } from '../utils/endpoint';
 import {
 	NPM_INSTALL_COMMAND,
 	SDK_PACKAGE,
@@ -17,6 +16,7 @@ import SectionHeading from './SectionHeading';
 import SnippetBlock from './SnippetBlock';
 
 interface WebInstallProps {
+	endpoint: string;
 	application: RumtypesApplicationDTO;
 	/** The key for the snippet: plaintext while known, else a placeholder. */
 	publicKey: string;
@@ -42,6 +42,7 @@ const SDK_ATTRIBUTES_URL =
 
 /** npm or script-tag setup of a web application. */
 function WebInstall({
+	endpoint,
 	application,
 	publicKey,
 	keyKnown,
@@ -53,12 +54,12 @@ function WebInstall({
 			applicationId: application.id,
 			environment: application.environment,
 			publicKey,
-			endpoint: sdkEndpoint(),
+			endpoint,
 			sampleRate: application.sampleRate,
 			tracePropagationUrls: application.tracePropagationUrls ?? [],
 			piiPolicy: application.piiPolicy,
 		}),
-		[application, publicKey],
+		[application, publicKey, endpoint],
 	);
 
 	return (

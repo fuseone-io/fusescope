@@ -8,11 +8,12 @@ import {
 	mappingGradleSnippet,
 } from 'lib/rum/androidSetup';
 
-import { sdkEndpoint } from '../utils/endpoint';
+import { managementEndpoint } from '../utils/endpoint';
 import SectionHeading from './SectionHeading';
 import SnippetBlock from './SnippetBlock';
 
 interface AndroidInstallProps {
+	endpoint: string;
 	application: RumtypesApplicationDTO;
 	/** The key for the snippet: plaintext while known, else a placeholder. */
 	publicKey: string;
@@ -24,11 +25,11 @@ const MONO = 'tw:font-mono';
 
 /** Gradle setup, the init call and the mapping upload of an Android application. */
 function AndroidInstall({
+	endpoint,
 	application,
 	publicKey,
 	keyKnown,
 }: AndroidInstallProps): JSX.Element {
-	const endpoint = sdkEndpoint();
 	const init = useMemo(
 		() =>
 			buildAndroidInitSnippet({
@@ -43,7 +44,7 @@ function AndroidInstall({
 		[application, publicKey, endpoint],
 	);
 	const mapping = mappingGradleSnippet({
-		url: endpoint,
+		url: managementEndpoint(),
 		applicationId: application.id,
 		release: '',
 	});

@@ -10,6 +10,22 @@ test.describe.configure({ mode: 'serial' });
 
 const created = new Set<string>();
 
+// This setup flow tests snippets, keys and rotation; telemetry acceptance uses the real collector.
+test.beforeEach(async ({ authedPage: page }) => {
+	await page.route('**/api/v1/onboarding/ingestion', (route) =>
+		route.fulfill({
+			json: {
+				status: 'success',
+				data: {
+					otlpHttpEndpoint: 'https://ingest.example.com',
+					source: 'config',
+					derived: false,
+				},
+			},
+		}),
+	);
+});
+
 test.afterAll(async ({ browser }) => {
 	if (created.size === 0) {
 		return;
@@ -65,6 +81,9 @@ test('RUM-01 create an application, see its key once, then rotate it', async ({
 	await expect(firstKey).toHaveText(body.data.key.key);
 	await expect(page.getByTestId('rum-install-snippet')).toContainText(
 		`publicKey: '${body.data.key.key}'`,
+	);
+	await expect(page.getByTestId('rum-install-snippet')).toContainText(
+		"endpoint: 'https://ingest.example.com'",
 	);
 	await expect(page.getByTestId('rum-setup-status')).toBeVisible();
 
