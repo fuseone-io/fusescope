@@ -11,7 +11,7 @@ services:
     command:
       - all
     environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://fusescope-otel-collector:4318
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://fusescope-collector:4318
       - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=dev
     restart: unless-stopped
     networks:
@@ -39,22 +39,22 @@ services:
   logs-checkout:
     <<: *telemetrygen
     container_name: logs-checkout
-    command: [logs, --otlp-endpoint=fusescope-otel-collector:4317, --otlp-insecure, --duration=inf, --rate=2, --service=checkout, --otlp-attributes=deployment.environment="dev", --body=order placed, --severity-text=Info, --severity-number=9]
+    command: [logs, --otlp-endpoint=fusescope-collector:4317, --otlp-insecure, --duration=inf, --rate=2, --service=checkout, --otlp-attributes=deployment.environment="dev", --body=order placed, --severity-text=Info, --severity-number=9]
 
   logs-payment-warn:
     <<: *telemetrygen
     container_name: logs-payment-warn
-    command: [logs, --otlp-endpoint=fusescope-otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.5, --service=payment, --otlp-attributes=deployment.environment="dev", --body=payment gateway slow; retrying, --severity-text=Warn, --severity-number=13]
+    command: [logs, --otlp-endpoint=fusescope-collector:4317, --otlp-insecure, --duration=inf, --rate=0.5, --service=payment, --otlp-attributes=deployment.environment="dev", --body=payment gateway slow; retrying, --severity-text=Warn, --severity-number=13]
 
   logs-payment-error:
     <<: *telemetrygen
     container_name: logs-payment-error
-    command: [logs, --otlp-endpoint=fusescope-otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.2, --service=payment, --otlp-attributes=deployment.environment="dev", --body=card declined - insufficient funds, --severity-text=Error, --severity-number=17]
+    command: [logs, --otlp-endpoint=fusescope-collector:4317, --otlp-insecure, --duration=inf, --rate=0.2, --service=payment, --otlp-attributes=deployment.environment="dev", --body=card declined - insufficient funds, --severity-text=Error, --severity-number=17]
 
   traces-payment-errors:
     <<: *telemetrygen
     container_name: traces-payment-errors
-    command: [traces, --otlp-endpoint=fusescope-otel-collector:4317, --otlp-insecure, --duration=inf, --rate=0.5, --service=payment, --otlp-attributes=deployment.environment="dev", --child-spans=2, --span-duration=250ms, --status-code=Error]
+    command: [traces, --otlp-endpoint=fusescope-collector:4317, --otlp-insecure, --duration=inf, --rate=0.5, --service=payment, --otlp-attributes=deployment.environment="dev", --child-spans=2, --span-duration=250ms, --status-code=Error]
 
 networks:
   signoz-devenv:

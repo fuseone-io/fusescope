@@ -50,17 +50,23 @@ devenv-postgres: ## Run postgres in devenv
 	docker compose -f compose.yaml up -d
 
 .PHONY: devenv-fusescope-otel-collector
-devenv-fusescope-otel-collector: ## Run fusescope-otel-collector in devenv (requires clickhouse to be running)
+devenv-fusescope-otel-collector: ## Run fusescope-otel-collector in devenv, internal only: it migrates the schema (requires clickhouse to be running)
 	@cd .devenv/docker/fusescope-otel-collector; \
 	docker compose -f compose.yaml up -d
 
+.PHONY: devenv-fusescope-collector
+devenv-fusescope-collector: ## Run fusescope-collector in devenv, the OTLP collector (requires clickhouse and fusescope-otel-collector)
+	@cd .devenv/docker/fusescope-collector; \
+	docker compose -f compose.yaml up -d
+
 .PHONY: devenv-up
-devenv-up: devenv-clickhouse devenv-fusescope-otel-collector ## Start both clickhouse and fusescope-otel-collector for local development
+devenv-up: devenv-clickhouse devenv-fusescope-otel-collector devenv-fusescope-collector ## Start clickhouse and the collectors for local development
 	@echo "Development environment is ready!"
 	@echo "   - ClickHouse: http://localhost:8123"
-	@echo "   - Signoz OTel Collector: grpc://localhost:4317, http://localhost:4318"
+	@echo "   - FuseScope collector (OTLP): grpc://localhost:4317, http://localhost:4318"
 
-DEVENV_COMPOSE := docker compose -f .devenv/docker/compose.yaml
+# The collector reaches the containerised backend over OpAMP.
+DEVENV_COMPOSE := FUSESCOPE_OPAMP_ENDPOINT=ws://fusescope-dev:4320/v1/opamp docker compose -f .devenv/docker/compose.yaml
 DEVENV_TMP     := .devenv/tmp
 DEV_UI_PORT    ?= 3301
 DEV_EMAIL      ?= admin@fusescope.local

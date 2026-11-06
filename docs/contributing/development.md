@@ -83,20 +83,21 @@ This command:
 - Runs ClickHouse Keeper inside the ClickHouse process
 - Runs the latest schema migrations
 
-### 2. Setting up the FuseScope OpenTelemetry Collector
+### 2. Setting up the collectors
 
-Next, start the OpenTelemetry Collector to receive telemetry data:
+Next, start the collectors:
 
 ```bash
 make devenv-fusescope-otel-collector
+make devenv-fusescope-collector
 ```
 
-This command:
-- Starts the FuseScope OpenTelemetry Collector
-- Listens on port 4317 (gRPC) and 4318 (HTTP) for incoming telemetry data
-- Forwards data to ClickHouse for storage
+These commands:
+- Start the FuseScope OpenTelemetry Collector internal only, to run the schema migrations
+- Start the FuseScope collector (`fusescope-collector`), which listens on port 4317 (gRPC) and 4318 (HTTP) and writes ClickHouse itself, with usage (`signoz_meter`) and attribute metadata (`signoz_metadata`), as the Helm chart does
+- Connect the FuseScope collector to the backend on the host over OpAMP (`ws://host.docker.internal:4320`), so the processors you edit in the UI apply; set `FUSESCOPE_OPAMP_ENDPOINT` to point it elsewhere
 
-> **Quick setup**: Use `make devenv-up` to start both ClickHouse and OTel Collector together
+> **Quick setup**: Use `make devenv-up` to start ClickHouse and both collectors together
 
 ### 3. Starting the Backend
 

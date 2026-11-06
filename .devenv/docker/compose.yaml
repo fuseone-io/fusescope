@@ -3,5 +3,6 @@ name: fusescope-devenv
 include:
   - clickhouse/compose.yaml
   - fusescope-otel-collector/compose.yaml
+  - fusescope-collector/compose.yaml
   - fusescope/compose.yaml
   - loadgen/compose.yaml
