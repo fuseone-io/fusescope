@@ -115,6 +115,178 @@ service:
 """
 
 
+# The OTLP collector of the chart's default install (fusescope-charts 0.161.0):
+# OTLP in, ClickHouse out, with span metrics, the meter and attribute metadata.
+# A plain file config: no OpAMP, so it needs no org and no backend.
+OTLP_CONFIG_TEMPLATE = """
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 20
+  signozspanmapper: {{groups: []}}
+  signozllmpricing:
+    attrs:
+      model: gen_ai.request.model
+      in: gen_ai.usage.input_tokens
+      out: gen_ai.usage.output_tokens
+      cache_read: gen_ai.usage.cache_read.input_tokens
+      cache_write: gen_ai.usage.cache_creation.input_tokens
+    default_pricing:
+      rules: []
+    output_attrs:
+      in: signoz.gen_ai.usage.input_tokens.cost
+      out: signoz.gen_ai.usage.output_tokens.cost
+      cache_read: signoz.gen_ai.usage.cache_read.input_tokens.cost
+      cache_write: signoz.gen_ai.usage.cache_write.input_tokens.cost
+      total: signoz.gen_ai.usage.tokens.cost
+
+connectors:
+  fusescope_spanmetrics:
+  fusescope_meter: {{}}
+
+exporters:
+  fusescope_clickhouse:
+    endpoint: {clickhouse}
+    username: {username}
+    password_file: {dir}/clickhouse/password
+    tls:
+      insecure: true
+    attributes_metadata: {{enabled: true}}
+    sending_queue:
+      batch:
+        flush_timeout: 1s
+  fusescope_clickhouse/meter:
+    mode: meter
+    endpoint: {clickhouse}
+    username: {username}
+    password_file: {dir}/clickhouse/password
+    tls:
+      insecure: true
+
+extensions:
+  healthcheckv2:
+    use_v2: true
+    http:
+      endpoint: 0.0.0.0:{health_port}
+      status:
+        enabled: true
+        path: /health/status
+      config:
+        enabled: false
+
+service:
+  extensions: [healthcheckv2]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, signozspanmapper, signozllmpricing]
+      exporters: [fusescope_clickhouse, fusescope_spanmetrics, fusescope_meter]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter]
+      exporters: [fusescope_clickhouse, fusescope_meter]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter]
+      exporters: [fusescope_clickhouse, fusescope_meter]
+    metrics/spanmetrics:
+      receivers: [fusescope_spanmetrics]
+      processors: [memory_limiter]
+      exporters: [fusescope_clickhouse]
+    metrics/meter:
+      receivers: [fusescope_meter]
+      exporters: [fusescope_clickhouse/meter]
+"""
+
+
+def create_otlp_collector(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    network: Network,
+    clickhouse: types.TestContainerClickhouse,
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+    cache_key: str = "otel_collector",
+) -> types.TestContainerDocker:
+    """The FuseScope collector receiving OTLP/HTTP as the chart's default install
+    does, written straight to the test ClickHouse once the schema is migrated."""
+
+    image = f"ghcr.io/fuseone-io/fusescope-collector:{pytestconfig.getoption('--fusescope-collector-version')}"
+
+    def create() -> types.TestContainerDocker:
+        request.getfixturevalue("migrator")
+        clickhouse_address = clickhouse.container.container_configs["9000"]
+        config = OTLP_CONFIG_TEMPLATE.format(
+            health_port=HEALTH_PORT,
+            dir=COLLECTOR_DIR,
+            clickhouse=f"{clickhouse_address.address}:{clickhouse_address.port}",
+            username=CLICKHOUSE_USERNAME,
+        )
+
+        container = DockerContainer(image=image)
+        container.with_copy_into_container(config.encode(), f"{COLLECTOR_DIR}/config/config.yaml")
+        container.with_copy_into_container(CLICKHOUSE_PASSWORD.encode(), f"{COLLECTOR_DIR}/clickhouse/password")
+        container.with_command(f"--config={COLLECTOR_DIR}/config/config.yaml")
+        container.with_exposed_ports(4318, HEALTH_PORT)
+        container.with_network(network=network)
+        container.start()
+
+        for _ in range(60):
+            try:
+                response = requests.get(f"http://{container.get_container_host_ip()}:{container.get_exposed_port(HEALTH_PORT)}/health/status", timeout=2)
+                if response.status_code == HTTPStatus.OK:
+                    break
+            except requests.RequestException:
+                pass
+            time.sleep(1)
+        else:
+            stdout, stderr = container.get_logs()
+            logger.error("fusescope collector logs:\n%s\n%s", stdout.decode(errors="replace")[-20000:], stderr.decode(errors="replace")[-20000:])
+            raise TimeoutError("fusescope collector did not become healthy")
+
+        return types.TestContainerDocker(
+            id=container.get_wrapped_container().id,
+            host_configs={"4318": types.TestContainerUrlConfig("http", container.get_container_host_ip(), container.get_exposed_port(4318))},
+            container_configs={"4318": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 4318)},
+        )
+
+    def delete(container: types.TestContainerDocker) -> None:
+        client = docker.from_env()
+        try:
+            client.containers.get(container_id=container.id).stop()
+            client.containers.get(container_id=container.id).remove(v=True)
+        except docker.errors.NotFound:
+            logger.info("Skipping removal of collector %s, not found", container.id)
+
+    def restore(cache: dict) -> types.TestContainerDocker:
+        return types.TestContainerDocker.from_cache(cache)
+
+    def stale(container: types.TestContainerDocker) -> bool:
+        try:
+            attrs = docker.from_env().containers.get(container_id=container.id).attrs
+        except docker.errors.NotFound:
+            return True
+        return reuse.image_differs(attrs, image)
+
+    return reuse.wrap(
+        request,
+        pytestconfig,
+        cache_key,
+        lambda: types.TestContainerDocker(id="", host_configs={}, container_configs={}),
+        create,
+        delete,
+        restore,
+        stale=stale,
+    )
+
+
 INGEST_POLICY_ENV = {
     "SIGNOZ_RUM_INGEST__POLICY_TOKEN__FILE": f"{BACKEND_DIR}/tokens",
     "SIGNOZ_RUM_INGEST__POLICY_LISTEN": f"0.0.0.0:{INGEST_POLICY_PORT}",

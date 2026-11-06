@@ -48,7 +48,7 @@ GROUPS: dict[str, dict[str, list[str]]] = {
         "isolated": [],
     },
     "api": {
-        "shared": ["querierscalar", "querierai", "promqlconformance", "promapiconformance", "dashboard", "serviceaccount", "thirdpartyapi", "integrations", "savedview", "logspipelines", "rawexportdata", "simulatorcontract"],
+        "shared": ["querierscalar", "querierai", "promqlconformance", "promapiconformance", "dashboard", "serviceaccount", "thirdpartyapi", "integrations", "savedview", "logspipelines", "rawexportdata", "simulatorcontract", "fixturereuse"],
         "isolated": ["authdomainconfig"],
     },
     "ttl": {

@@ -131,8 +131,15 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--fusescope-collector-version",
         action="store",
-        default="sha-92c555fae01f",
-        help="ghcr.io/fuseone-io/fusescope-collector tag, the collector that receives RUM",
+        default="0.3.1",
+        help="ghcr.io/fuseone-io/fusescope-collector tag, the collector that receives OTLP and RUM",
+    )
+    parser.addoption(
+        "--otlp-collector",
+        action="store",
+        default="fusescope",
+        choices=["fusescope", "fork"],
+        help="the collector the suites send OTLP to: fusescope-collector (default, as the chart installs it) or fork, the earlier fusescope-otel-collector",
     )
     parser.addoption(
         "--signoz-image",

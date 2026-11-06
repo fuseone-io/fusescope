@@ -10,6 +10,7 @@ import requests
 from testcontainers.core.container import DockerContainer, Network
 
 from fixtures import reuse, types
+from fixtures.fusescopecollector import create_otlp_collector
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -65,15 +66,16 @@ def create_otel_collector(  # pylint: disable=too-many-arguments,too-many-positi
 ) -> types.TestContainerDocker:
     """OTLP/HTTP collector writing traces, metrics and logs to the test ClickHouse."""
 
+    image = f"ghcr.io/fuseone-io/fusescope-otel-collector:{request.config.getoption('--collector-version')}"
+
     def create() -> types.TestContainerDocker:
         request.getfixturevalue("migrator")
-        version = request.config.getoption("--collector-version")
         dsn = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"]
 
         config_path = tmpfs(cache_key) / "config.yaml"
         config_path.write_text(CONFIG_TEMPLATE.format(dsn=dsn), encoding="utf-8")
 
-        container = DockerContainer(image=f"ghcr.io/fuseone-io/fusescope-otel-collector:{version}")
+        container = DockerContainer(image=image)
         container.with_env("SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN", dsn)
         container.with_env("SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER", "cluster")
         container.with_env("SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION", "true")
@@ -114,6 +116,13 @@ def create_otel_collector(  # pylint: disable=too-many-arguments,too-many-positi
     def restore(cache: dict) -> types.TestContainerDocker:
         return types.TestContainerDocker.from_cache(cache)
 
+    def stale(container: types.TestContainerDocker) -> bool:
+        try:
+            attrs = docker.from_env().containers.get(container_id=container.id).attrs
+        except docker.errors.NotFound:
+            return True
+        return reuse.image_differs(attrs, image)
+
     return reuse.wrap(
         request,
         pytestconfig,
@@ -122,6 +131,7 @@ def create_otel_collector(  # pylint: disable=too-many-arguments,too-many-positi
         create,
         delete,
         restore,
+        stale=stale,
     )
 
 
@@ -133,4 +143,9 @@ def otel_collector(  # pylint: disable=too-many-arguments,too-many-positional-ar
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerDocker:
-    return create_otel_collector(tmpfs, network, clickhouse, request, pytestconfig)
+    """The OTLP collector the suites send to: the FuseScope collector, as the
+    chart installs it by default (#225), or with --otlp-collector=fork the
+    earlier collector."""
+    if pytestconfig.getoption("--otlp-collector") == "fork":
+        return create_otel_collector(tmpfs, network, clickhouse, request, pytestconfig)
+    return create_otlp_collector(network, clickhouse, request, pytestconfig)
