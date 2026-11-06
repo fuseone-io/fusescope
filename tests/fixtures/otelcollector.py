@@ -10,6 +10,7 @@ import requests
 from testcontainers.core.container import DockerContainer, Network
 
 from fixtures import reuse, types
+from fixtures.fusescopecollector import create_otlp_collector
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -133,4 +134,9 @@ def otel_collector(  # pylint: disable=too-many-arguments,too-many-positional-ar
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerDocker:
-    return create_otel_collector(tmpfs, network, clickhouse, request, pytestconfig)
+    """The OTLP collector the suites send to: the FuseScope collector, as the
+    chart installs it by default (#225), or with --otlp-collector=fork the
+    earlier collector."""
+    if pytestconfig.getoption("--otlp-collector") == "fork":
+        return create_otel_collector(tmpfs, network, clickhouse, request, pytestconfig)
+    return create_otlp_collector(network, clickhouse, request, pytestconfig)
