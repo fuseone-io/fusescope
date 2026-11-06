@@ -10,7 +10,7 @@ services:
       - SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse
       - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000
       - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster
-      - SIGNOZ_ONBOARDING_COLLECTOR__ENDPOINT=http://fusescope-otel-collector-dev:4318
+      - SIGNOZ_ONBOARDING_COLLECTOR__ENDPOINT=http://fusescope-collector-dev:4318
     volumes:
       - fusescope-data:/var/lib/fusescope/
     ports:

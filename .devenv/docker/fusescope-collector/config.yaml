@@ -1,0 +1,131 @@
+# The FuseScope collector receives OTLP in the devenv and writes ClickHouse
+# itself, with the configuration the chart installs by default
+# (fusescope-charts 0.161.0, fuseone-io/fusescope#225), its own telemetry
+# included. The
+# fusescope_opamp section is read by the fusescopeopamp provider and never
+# reaches the collector.
+fusescope_opamp:
+  endpoint: ${env:FUSESCOPE_OPAMP_ENDPOINT}
+  # Plaintext to the local backend by explicit tls.insecure (collector ADR 0008
+  # §3); the devenv backend serves OpAMP without TLS.
+  tls:
+    insecure: true
+  # The image runs as nonroot, whose home is writable.
+  storage: /home/nonroot/opamp
+  role: writer
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  # The collector's own telemetry, from its loopback-only listener
+  # (service.telemetry), written with the other metrics.
+  prometheus/self:
+    config:
+      scrape_configs:
+        - job_name: fusescope-collector
+          scrape_interval: 60s
+          static_configs:
+            - targets: [127.0.0.1:8888]
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 20
+  # FuseScope edits these two over OpAMP and never places them, so they are
+  # declared and wired here.
+  signozspanmapper: {groups: []}
+  signozllmpricing:
+    attrs:
+      model: gen_ai.request.model
+      in: gen_ai.usage.input_tokens
+      out: gen_ai.usage.output_tokens
+      cache_read: gen_ai.usage.cache_read.input_tokens
+      cache_write: gen_ai.usage.cache_creation.input_tokens
+    default_pricing:
+      rules: []
+    output_attrs:
+      in: signoz.gen_ai.usage.input_tokens.cost
+      out: signoz.gen_ai.usage.output_tokens.cost
+      cache_read: signoz.gen_ai.usage.cache_read.input_tokens.cost
+      cache_write: signoz.gen_ai.usage.cache_write.input_tokens.cost
+      total: signoz.gen_ai.usage.tokens.cost
+  # host.name is the container's name: it tells collectors apart.
+  resourcedetection/system:
+    detectors: [system]
+    system:
+      hostname_sources: [os]
+
+connectors:
+  fusescope_spanmetrics:
+  fusescope_meter: {}
+
+exporters:
+  fusescope_clickhouse:
+    endpoint: clickhouse:9000
+    tls:
+      insecure: true
+    attributes_metadata: {enabled: true}
+    # Shorter than the chart's 10 s so local changes show quickly.
+    sending_queue:
+      batch:
+        flush_timeout: 2s
+  # Only the meter's hourly usage, to signoz_meter, with its own queue.
+  fusescope_clickhouse/meter:
+    mode: meter
+    endpoint: clickhouse:9000
+    tls:
+      insecure: true
+
+extensions:
+  fusescope_opamp: {}
+  healthcheckv2:
+    use_v2: true
+    http:
+      endpoint: 0.0.0.0:13133
+      status:
+        enabled: true
+        path: /health/status
+      config:
+        enabled: false
+
+service:
+  extensions: [healthcheckv2, fusescope_opamp]
+  # Only on loopback, never published.
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 127.0.0.1
+                port: 8888
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, signozspanmapper, signozllmpricing]
+      exporters: [fusescope_clickhouse, fusescope_spanmetrics, fusescope_meter]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter]
+      exporters: [fusescope_clickhouse, fusescope_meter]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter]
+      exporters: [fusescope_clickhouse, fusescope_meter]
+    # Span metrics are derived from the traces: not metered.
+    metrics/spanmetrics:
+      receivers: [fusescope_spanmetrics]
+      processors: [memory_limiter]
+      exporters: [fusescope_clickhouse]
+    metrics/meter:
+      receivers: [fusescope_meter]
+      exporters: [fusescope_clickhouse/meter]
+    metrics/self:
+      receivers: [prometheus/self]
+      processors: [resourcedetection/system]
+      exporters: [fusescope_clickhouse]

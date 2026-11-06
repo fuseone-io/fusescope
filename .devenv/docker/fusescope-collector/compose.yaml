@@ -1,0 +1,38 @@
+services:
+  # Waits until telemetrystore-migrator (clickhouse/compose.yaml) has migrated
+  # the ClickHouse schema, as the chart's init container does.
+  fusescope-schema:
+    image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
+    container_name: fusescope-schema-dev
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["until /fusescope-otel-collector migrate sync check; do sleep 2; done"]
+    environment:
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+    networks:
+      - signoz-devenv
+  fusescope-collector:
+    image: ${FUSESCOPE_COLLECTOR_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.3.1@sha256:3856f022c2ac27369c3bb1224b8945940bd7d6f6a30fce0f59734584cfc4374b}
+    container_name: fusescope-collector-dev
+    command: ["--config=fusescopeopamp:/etc/fusescope-collector/config.yaml"]
+    environment:
+      # The backend run on the host (make run-go); the all-in-one compose sets fusescope-dev.
+      - FUSESCOPE_OPAMP_ENDPOINT=${FUSESCOPE_OPAMP_ENDPOINT:-ws://host.docker.internal:4320/v1/opamp}
+    volumes:
+      - ./config.yaml:/etc/fusescope-collector/config.yaml:ro
+    ports:
+      # Loopback only: the devenv is not reachable from the network.
+      - "127.0.0.1:4317:4317" # OTLP gRPC receiver
+      - "127.0.0.1:4318:4318" # OTLP HTTP receiver
+      - "127.0.0.1:13133:13133" # health check extension
+    depends_on:
+      fusescope-schema:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - signoz-devenv
+
+networks:
+  signoz-devenv:
+    name: signoz-devenv
