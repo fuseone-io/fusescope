@@ -234,14 +234,18 @@ def create_signoz(
         )
 
     def stale(container: types.SigNoz) -> bool:
-        if not tls:
+        if not tls and not env_overrides:
             return False
         client = docker.from_env()
         try:
-            labels = client.containers.get(container_id=container.self.id).attrs["Config"]["Labels"]
+            attrs = client.containers.get(container_id=container.self.id).attrs
         except docker.errors.NotFound:
             return True
-        return labels.get(CA_ID_LABEL) != ca_id(tls)
+        if tls and attrs["Config"]["Labels"].get(CA_ID_LABEL) != ca_id(tls):
+            return True
+        # A setting that points at another resource, such as a collector
+        # recreated with another image, must not reuse the cached backend.
+        return bool(env_overrides) and reuse.env_differs(attrs, env_overrides)
 
     return reuse.wrap(
         request,

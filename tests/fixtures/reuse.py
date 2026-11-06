@@ -18,6 +18,20 @@ def teardown(request: pytest.FixtureRequest) -> bool:
     return request.config.getoption("--teardown")
 
 
+def image_differs(attrs: dict, image: str) -> bool:
+    """Whether a restored container (its docker inspect attrs) runs another
+    image than the one wanted: a cached resource from a run with another
+    image or version must not be reused."""
+    return attrs.get("Config", {}).get("Image") != image
+
+
+def env_differs(attrs: dict, env: dict) -> bool:
+    """Whether a restored container (its docker inspect attrs) lacks one of
+    env's values, so a resource cached with other settings is not reused."""
+    current = dict(e.split("=", 1) for e in attrs.get("Config", {}).get("Env") or [] if "=" in e)
+    return any(current.get(k) != str(v) for k, v in env.items())
+
+
 def get_cached_resource(pytestconfig: pytest.Config, key: str):
     return pytestconfig.cache.get(key, None)
 

@@ -218,9 +218,10 @@ def create_otlp_collector(  # pylint: disable=too-many-arguments,too-many-positi
     """The FuseScope collector receiving OTLP/HTTP as the chart's default install
     does, written straight to the test ClickHouse once the schema is migrated."""
 
+    image = f"ghcr.io/fuseone-io/fusescope-collector:{pytestconfig.getoption('--fusescope-collector-version')}"
+
     def create() -> types.TestContainerDocker:
         request.getfixturevalue("migrator")
-        version = pytestconfig.getoption("--fusescope-collector-version")
         clickhouse_address = clickhouse.container.container_configs["9000"]
         config = OTLP_CONFIG_TEMPLATE.format(
             health_port=HEALTH_PORT,
@@ -229,7 +230,7 @@ def create_otlp_collector(  # pylint: disable=too-many-arguments,too-many-positi
             username=CLICKHOUSE_USERNAME,
         )
 
-        container = DockerContainer(image=f"ghcr.io/fuseone-io/fusescope-collector:{version}")
+        container = DockerContainer(image=image)
         container.with_copy_into_container(config.encode(), f"{COLLECTOR_DIR}/config/config.yaml")
         container.with_copy_into_container(CLICKHOUSE_PASSWORD.encode(), f"{COLLECTOR_DIR}/clickhouse/password")
         container.with_command(f"--config={COLLECTOR_DIR}/config/config.yaml")
@@ -267,6 +268,13 @@ def create_otlp_collector(  # pylint: disable=too-many-arguments,too-many-positi
     def restore(cache: dict) -> types.TestContainerDocker:
         return types.TestContainerDocker.from_cache(cache)
 
+    def stale(container: types.TestContainerDocker) -> bool:
+        try:
+            attrs = docker.from_env().containers.get(container_id=container.id).attrs
+        except docker.errors.NotFound:
+            return True
+        return reuse.image_differs(attrs, image)
+
     return reuse.wrap(
         request,
         pytestconfig,
@@ -275,6 +283,7 @@ def create_otlp_collector(  # pylint: disable=too-many-arguments,too-many-positi
         create,
         delete,
         restore,
+        stale=stale,
     )
 
 
