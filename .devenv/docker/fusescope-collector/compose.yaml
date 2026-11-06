@@ -1,7 +1,6 @@
 services:
-  # Waits until the ClickHouse schema is migrated, with the migrator the chart
-  # uses (telemetryStoreMigrator); the migration itself runs in
-  # fusescope-otel-collector, internal only since #225.
+  # Waits until telemetrystore-migrator (clickhouse/compose.yaml) has migrated
+  # the ClickHouse schema, as the chart's init container does.
   fusescope-schema:
     image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
     container_name: fusescope-schema-dev
@@ -21,9 +20,10 @@ services:
     volumes:
       - ./config.yaml:/etc/fusescope-collector/config.yaml:ro
     ports:
-      - "4317:4317" # OTLP gRPC receiver
-      - "4318:4318" # OTLP HTTP receiver
-      - "13133:13133" # health check extension
+      # Loopback only: the devenv is not reachable from the network.
+      - "127.0.0.1:4317:4317" # OTLP gRPC receiver
+      - "127.0.0.1:4318:4318" # OTLP HTTP receiver
+      - "127.0.0.1:13133:13133" # health check extension
     depends_on:
       fusescope-schema:
         condition: service_completed_successfully

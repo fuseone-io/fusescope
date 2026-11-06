@@ -1,5 +1,7 @@
 # The FuseScope collector receives OTLP in the devenv and writes ClickHouse
-# itself, as the chart does by default (fuseone-io/fusescope#225). The
+# itself, with the configuration the chart installs by default
+# (fusescope-charts 0.161.0, fuseone-io/fusescope#225), its own telemetry
+# included. The
 # fusescope_opamp section is read by the fusescopeopamp provider and never
 # reaches the collector.
 fusescope_opamp:
@@ -19,6 +21,15 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+  # The collector's own telemetry, from its loopback-only listener
+  # (service.telemetry), written with the other metrics.
+  prometheus/self:
+    config:
+      scrape_configs:
+        - job_name: fusescope-collector
+          scrape_interval: 60s
+          static_configs:
+            - targets: [127.0.0.1:8888]
 
 processors:
   memory_limiter:
@@ -43,6 +54,11 @@ processors:
       cache_read: signoz.gen_ai.usage.cache_read.input_tokens.cost
       cache_write: signoz.gen_ai.usage.cache_write.input_tokens.cost
       total: signoz.gen_ai.usage.tokens.cost
+  # host.name is the container's name: it tells collectors apart.
+  resourcedetection/system:
+    detectors: [system]
+    system:
+      hostname_sources: [os]
 
 connectors:
   fusescope_spanmetrics:
@@ -79,6 +95,15 @@ extensions:
 
 service:
   extensions: [healthcheckv2, fusescope_opamp]
+  # Only on loopback, never published.
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 127.0.0.1
+                port: 8888
   pipelines:
     traces:
       receivers: [otlp]
@@ -100,3 +125,7 @@ service:
     metrics/meter:
       receivers: [fusescope_meter]
       exporters: [fusescope_clickhouse/meter]
+    metrics/self:
+      receivers: [prometheus/self]
+      processors: [resourcedetection/system]
+      exporters: [fusescope_clickhouse]

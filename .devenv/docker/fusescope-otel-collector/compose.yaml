@@ -18,8 +18,10 @@ services:
       - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
       - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
       - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
-    # Internal only (fuseone-io/fusescope#225): it migrates the schema, and
-    # fusescope-collector receives OTLP on the host's 4317 and 4318.
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+      - "13133:13133" # health check extension
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"

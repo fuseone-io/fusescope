@@ -50,17 +50,17 @@ devenv-postgres: ## Run postgres in devenv
 	docker compose -f compose.yaml up -d
 
 .PHONY: devenv-fusescope-otel-collector
-devenv-fusescope-otel-collector: ## Run fusescope-otel-collector in devenv, internal only: it migrates the schema (requires clickhouse to be running)
+devenv-fusescope-otel-collector: ## Legacy, opt-in: run the earlier fusescope-otel-collector instead of fusescope-collector (same ports; stop one before starting the other)
 	@cd .devenv/docker/fusescope-otel-collector; \
 	docker compose -f compose.yaml up -d
 
 .PHONY: devenv-fusescope-collector
-devenv-fusescope-collector: ## Run fusescope-collector in devenv, the OTLP collector (requires clickhouse and fusescope-otel-collector)
+devenv-fusescope-collector: ## Run fusescope-collector in devenv, the OTLP collector (requires clickhouse, which migrates the schema)
 	@cd .devenv/docker/fusescope-collector; \
 	docker compose -f compose.yaml up -d
 
 .PHONY: devenv-up
-devenv-up: devenv-clickhouse devenv-fusescope-otel-collector devenv-fusescope-collector ## Start clickhouse and the collectors for local development
+devenv-up: devenv-clickhouse devenv-fusescope-collector ## Start clickhouse and fusescope-collector for local development
 	@echo "Development environment is ready!"
 	@echo "   - ClickHouse: http://localhost:8123"
 	@echo "   - FuseScope collector (OTLP): grpc://localhost:4317, http://localhost:4318"
