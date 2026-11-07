@@ -261,7 +261,9 @@ Tests can be configured using pytest options:
 - `--sqlite-mode` — SQLite journal mode: `delete` or `wal` (default: `delete`). Only relevant when `--sqlstore-provider=sqlite`.
 - `--postgres-version` — PostgreSQL version (default: `15`)
 - `--clickhouse-version` — ClickHouse version, also used for ClickHouse Keeper (default: `25.12.5`)
-- `--schema-migrator-version` — SigNoz schema migrator version (default: `v0.144.9`)
+- `--schema-migrator` — the migrator that creates the ClickHouse schema: `fusescope` (`fusescope-schema`, default) or `fork` (the earlier `fusescope-schema-migrator`). Independent of `--otlp-collector`
+- `--fusescope-schema-version` — `ghcr.io/fuseone-io/fusescope-collector` tag, pinned by digest, whose `/fusescope-schema` runs with `--schema-migrator=fusescope`
+- `--schema-migrator-version` — `fusescope-schema-migrator` tag for `--schema-migrator=fork` (default: `0.145.0`)
 - `--with-web` — Build the frontend into the SigNoz image (required for e2e)
 - `--signoz-image` — Run this prebuilt image instead of building one from the current sources (CI builds it once per run)
 

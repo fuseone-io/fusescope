@@ -103,7 +103,8 @@ def pytest_addoption(parser: pytest.Parser):
         default="delete",
         help="sqlite mode",
     )
-    # Keep the version defaults below in sync with pull-images in .github/workflows/e2eci.yaml.
+    # Keep the version defaults below of the images e2e starts (postgres, clickhouse and the
+    # --schema-migrator default's migrator) in sync with pull-images in .github/workflows/e2eci.yaml.
     parser.addoption(
         "--postgres-version",
         action="store",
@@ -120,7 +121,20 @@ def pytest_addoption(parser: pytest.Parser):
         "--schema-migrator-version",
         action="store",
         default="0.145.0",
-        help="schema migrator version",
+        help="ghcr.io/fuseone-io/fusescope-schema-migrator tag, the fork's migrator that --schema-migrator=fork runs",
+    )
+    parser.addoption(
+        "--fusescope-schema-version",
+        action="store",
+        default="0.4.0@sha256:a1e2fcd7248035b231e8d4c9c3234d617b983296464d31834fdabc1184fa24a1",
+        help="ghcr.io/fuseone-io/fusescope-collector tag (pinned by digest) whose /fusescope-schema --schema-migrator=fusescope runs",
+    )
+    parser.addoption(
+        "--schema-migrator",
+        action="store",
+        default="fusescope",
+        choices=["fusescope", "fork"],
+        help="the migrator that creates the ClickHouse schema: fusescope-schema (default) or fork, the earlier fusescope-schema-migrator. Independent of --otlp-collector",
     )
     parser.addoption(
         "--collector-version",
