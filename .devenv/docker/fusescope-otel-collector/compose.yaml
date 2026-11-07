@@ -4,10 +4,15 @@ services:
     container_name: fusescope-otel-collector-dev
     entrypoint:
       - /bin/sh
+    # Runs the fork's own migrator first: its `migrate sync check` fails on a
+    # schema fusescope-schema created (empty schema_migrations_v2), and its
+    # migrations apply cleanly on top of one.
     command:
       - -c
       - |
-        /fusescope-otel-collector migrate sync check &&
+        /fusescope-otel-collector migrate bootstrap &&
+        /fusescope-otel-collector migrate sync up &&
+        /fusescope-otel-collector migrate async up &&
         /fusescope-otel-collector --config=/etc/otel-collector-config.yaml
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml

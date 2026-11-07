@@ -53,6 +53,8 @@
             <port>9181</port>
         </node>
     </zookeeper>
+    <!-- fusescope-schema keeps its lease and history in KeeperMap tables. -->
+    <keeper_map_path_prefix>/fusescope/keeper_map</keeper_map_path_prefix>
     <macros>
         <shard>01</shard>
         <replica>01</replica>

@@ -50,21 +50,12 @@ services:
       - default
       - signoz-devenv
   telemetrystore-migrator:
-    image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
+    # fusescope-schema, shipped in the FuseScope collector image. Exit 2
+    # (ClickHouse not ready) is retryable, hence restart: on-failure.
+    image: ${FUSESCOPE_SCHEMA_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.4.0@sha256:a1e2fcd7248035b231e8d4c9c3234d617b983296464d31834fdabc1184fa24a1}
     container_name: telemetrystore-migrator
-    environment:
-      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
-      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
-      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
-      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
-    entrypoint:
-      - /bin/sh
-    command:
-      - -c
-      - |
-        /fusescope-otel-collector migrate bootstrap &&
-        /fusescope-otel-collector migrate sync up &&
-        /fusescope-otel-collector migrate async up
+    entrypoint: ["/fusescope-schema"]
+    command: ["migrate", "--endpoint=clickhouse:9000", "--username=default", "--tls-insecure", "--cluster=cluster"]
     depends_on:
       clickhouse:
         condition: service_healthy

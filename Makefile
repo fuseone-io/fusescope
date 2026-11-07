@@ -40,7 +40,7 @@ help: ## Displays help.
 # devenv commands
 ##############################################################
 .PHONY: devenv-clickhouse
-devenv-clickhouse: ## Run clickhouse in devenv
+devenv-clickhouse: ## Run clickhouse in devenv and migrate its schema with fusescope-schema
 	@cd .devenv/docker/clickhouse; \
 	docker compose -f compose.yaml up -d
 
@@ -50,7 +50,7 @@ devenv-postgres: ## Run postgres in devenv
 	docker compose -f compose.yaml up -d
 
 .PHONY: devenv-fusescope-otel-collector
-devenv-fusescope-otel-collector: ## Legacy, opt-in: run the earlier fusescope-otel-collector instead of fusescope-collector (same ports; stop one before starting the other)
+devenv-fusescope-otel-collector: ## Legacy, opt-in: run the earlier fusescope-otel-collector instead of fusescope-collector (same ports; stop one before starting the other); it runs the fork migrator over the schema first
 	@cd .devenv/docker/fusescope-otel-collector; \
 	docker compose -f compose.yaml up -d
 
