@@ -25,6 +25,33 @@ api() { docker run --rm --network fusescope-demo curlimages/curl:8.17.0 -sS --ma
 # Same, with the request body read from stdin.
 api_in() { docker run --rm -i --network fusescope-demo curlimages/curl:8.17.0 -sS --max-time 30 --data-binary @- "$@"; }
 
+# fusescope-schema keeps its history in KeeperMap tables, which ClickHouse enables only with
+# keeper_map_path_prefix, read at its startup. Before the migrator runs: start ClickHouse,
+# recreate it when the running server lacks the value (an install from before the setting), and
+# stop when it still does.
+KEEPER_MAP_PREFIX=/fusescope/keeper_map
+# The value the running server loaded: system.server_settings does not list this setting, but
+# the server writes the configuration it merged at startup to preprocessed_configs, and a mounted
+# file reaches only a container created with it.
+keeper_map_prefix() {
+	compose exec -T clickhouse sh -c \
+		"sed -n 's:.*<keeper_map_path_prefix>\\(.*\\)</keeper_map_path_prefix>.*:\\1:p' /var/lib/clickhouse/preprocessed_configs/config.xml"
+}
+ensure_keeper_map() {
+	compose up -d --no-recreate clickhouse
+	wait_healthy clickhouse
+	if [ "$(keeper_map_prefix)" != "$KEEPER_MAP_PREFIX" ]; then
+		compose up -d --no-deps --force-recreate clickhouse
+		wait_healthy clickhouse
+	fi
+	local prefix
+	prefix=$(keeper_map_prefix)
+	if [ "$prefix" != "$KEEPER_MAP_PREFIX" ]; then
+		echo "ClickHouse runs with keeper_map_path_prefix '$prefix', not $KEEPER_MAP_PREFIX: fusescope-schema cannot migrate" >&2
+		return 1
+	fi
+}
+
 wait_healthy() {
 	local service=$1 id
 	for _ in $(seq 1 90); do

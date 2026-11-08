@@ -16,14 +16,6 @@ x-telemetrygen: &telemetrygen
   profiles: [generators]
 
 x-clickhouse-image: &clickhouse-image clickhouse/clickhouse-server:25.12.5
-x-collector-image: &collector-image ghcr.io/fuseone-io/fusescope-otel-collector:${COLLECTOR_VERSION:-0.145.0}
-
-x-collector-env: &collector-env
-  SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN: tcp://clickhouse:9000
-  SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER: cluster
-  SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION: "true"
-  SIGNOZ_OTEL_COLLECTOR_TIMEOUT: 10m
-
 services:
   init-clickhouse:
     <<: *logging
@@ -73,6 +65,7 @@ services:
     volumes:
       - ./clickhouse/config.d/cluster.xml:/etc/clickhouse-server/config.d/config.xml:ro
       - ./clickhouse/config.d/zz-limits.xml:/etc/clickhouse-server/config.d/zz-limits.xml:ro
+      - ./clickhouse/config.d/zz-keeper-map.xml:/etc/clickhouse-server/config.d/zz-keeper-map.xml:ro
       - ./clickhouse/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml:ro
       - ./clickhouse/users.d/zz-limits.xml:/etc/clickhouse-server/users.d/zz-limits.xml:ro
       - ./clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml:ro
@@ -98,16 +91,17 @@ services:
     cpus: 2
 
   telemetrystore-migrator:
+    # fusescope-schema, from the FuseScope collector image, as the chart runs it.
+    # On a schema the earlier collector's migrator created, it adopts 0001 and
+    # applies 0002, after which that migrator refuses the schema: one way only
+    # (collector-server deploy/shadow/CUTOVER.md §8). It changes nothing before
+    # refusing (exit 1) or on a connection error (exit 2), so the restarts
+    # retry the second and only repeat the first; the services below start only
+    # once it exits 0.
     <<: *logging
-    image: *collector-image
-    environment: *collector-env
-    entrypoint: [/bin/sh]
-    command:
-      - -c
-      - |
-        /fusescope-otel-collector migrate bootstrap &&
-        /fusescope-otel-collector migrate sync up &&
-        /fusescope-otel-collector migrate async up
+    image: ${FUSESCOPE_SCHEMA_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.4.1@sha256:9951f2479ac6e5150b116cd856569aaae6ed921e9b951f0fd9c93160e7311077}
+    entrypoint: [/fusescope-schema]
+    command: [migrate, --endpoint=clickhouse:9000, --username=default, --tls-insecure, --cluster=cluster]
     depends_on:
       clickhouse:
         condition: service_healthy
