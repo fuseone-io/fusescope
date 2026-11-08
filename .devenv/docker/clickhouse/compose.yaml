@@ -50,8 +50,10 @@ services:
       - default
       - signoz-devenv
   telemetrystore-migrator:
-    # fusescope-schema, shipped in the FuseScope collector image. Exit 2
-    # (ClickHouse not ready) is retryable, hence restart: on-failure.
+    # fusescope-schema, shipped in the FuseScope collector image. No restart
+    # policy: Compose cannot tell its exit codes apart, so make
+    # devenv-clickhouse reruns it on exit 2 (retryable) only, as the chart's
+    # Job does, and stops on 1 (refused) or 4 (interrupted).
     image: ${FUSESCOPE_SCHEMA_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.4.1@sha256:9951f2479ac6e5150b116cd856569aaae6ed921e9b951f0fd9c93160e7311077}
     container_name: telemetrystore-migrator
     entrypoint: ["/fusescope-schema"]
@@ -59,7 +61,6 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
-    restart: on-failure
     networks:
       - default
       - signoz-devenv
