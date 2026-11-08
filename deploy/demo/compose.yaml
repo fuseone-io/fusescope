@@ -65,6 +65,7 @@ services:
     volumes:
       - ./clickhouse/config.d/cluster.xml:/etc/clickhouse-server/config.d/config.xml:ro
       - ./clickhouse/config.d/zz-limits.xml:/etc/clickhouse-server/config.d/zz-limits.xml:ro
+      - ./clickhouse/config.d/zz-keeper-map.xml:/etc/clickhouse-server/config.d/zz-keeper-map.xml:ro
       - ./clickhouse/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml:ro
       - ./clickhouse/users.d/zz-limits.xml:/etc/clickhouse-server/users.d/zz-limits.xml:ro
       - ./clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml:ro

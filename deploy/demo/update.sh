@@ -13,6 +13,7 @@ ensure_ingest
 load_env
 
 compose pull --ignore-buildable --quiet
+ensure_keeper_map
 compose up -d --build --remove-orphans
 wait_healthy fusescope
 compose ps

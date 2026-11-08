@@ -17,6 +17,7 @@ load_env
 ./firewall/apply.sh
 
 compose pull --ignore-buildable --quiet
+ensure_keeper_map
 # Caddy and the generators wait until the admin exists and self sign-up is closed.
 compose up -d fusescope fusescope-collector
 wait_healthy fusescope

@@ -1,0 +1,5 @@
+<clickhouse>
+    <!-- fusescope-schema keeps its history in KeeperMap tables, which ClickHouse enables only
+         with this prefix, read at its startup (lib.sh, ensure_keeper_map). -->
+    <keeper_map_path_prefix>/fusescope/keeper_map</keeper_map_path_prefix>
+</clickhouse>

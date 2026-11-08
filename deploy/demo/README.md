@@ -58,6 +58,21 @@ Passwords are written only to `credentials.txt` (mode 600).
 From an install older than 0.159.0, which ingested RUM in the backend, `update.sh` also creates `ingest/` and points
 `RUM_ENDPOINT` at `FUSESCOPE_URL`; the old `otel-collector` is removed as an orphan.
 
+`fusescope-schema` keeps its history in KeeperMap tables, which ClickHouse enables only with `keeper_map_path_prefix`
+(`clickhouse/config.d/zz-keeper-map.xml`), read at its startup. Before the migrator runs, `install.sh` and `update.sh`
+(`ensure_keeper_map` in `lib.sh`) start ClickHouse, recreate it when the running server lacks the value (an install
+from before the setting), and stop if it still does: the migrator, the collector and the backend then stay as they
+were.
+
+The first update that runs `fusescope-schema` on a schema the earlier collector's migrator created adopts it and
+applies `0002`: one way only. Take a backup of the ClickHouse and ZooKeeper volumes first (collector-server
+`deploy/shadow/CUTOVER.md` §8). `test/schema-update.sh` runs that update on a throwaway project, from the kit at an
+earlier commit, without touching the demo:
+
+```bash
+test/schema-update.sh            # needs Docker and network access to pull the images
+```
+
 ## TLS
 
 `FUSESCOPE_TLS=internal` serves a self-signed certificate (Cloudflare SSL mode "Full"). For "Full (strict)",
