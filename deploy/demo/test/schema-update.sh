@@ -17,14 +17,17 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 
 # The demo's network is named fusescope-demo; this project gets one of its own.
 network() { printf 'networks:\n  default:\n    name: fsdemo-update-test\n' > "$W/test-network.yaml"; }
+# The migrator's exit code once its container has exited, or a failure when it has not within 240 s.
 migrator_exit() {
-  local id; id=$(docker compose ps -aq telemetrystore-migrator)
+  local id status=unknown
+  id=$(docker compose ps -aq telemetrystore-migrator)
+  [ -n "$id" ] || fail "no telemetrystore-migrator container"
   for _ in $(seq 120); do
-    [ "$(docker inspect -f '{{.State.Status}}' "$id")" = exited ] && [ "$(docker inspect -f '{{.RestartCount}}' "$id")" -ge 0 ] && \
-      [ "$(docker inspect -f '{{.State.Restarting}}' "$id")" = false ] && break
+    status=$(docker inspect -f '{{.State.Status}}' "$id")
+    if [ "$status" = exited ]; then docker inspect -f '{{.State.ExitCode}}' "$id"; return 0; fi
     sleep 2
   done
-  docker inspect -f '{{.State.ExitCode}}' "$id"
+  fail "telemetrystore-migrator is still $status after 240 s"
 }
 
 echo "=== previous kit at $PREVIOUS"
@@ -56,7 +59,10 @@ network
 . ./lib.sh; load_env
 ensure_keeper_map
 after=$(keeper_map_prefix)
-echo "keeper_map_path_prefix after: '${after}'; clickhouse recreated: $([ "$(compose ps -q clickhouse)" != "$ch_before" ] && echo yes || echo no)"
+ch_after=$(compose ps -q clickhouse)
+echo "keeper_map_path_prefix after: '${after}'; clickhouse container ${ch_before:0:12} -> ${ch_after:0:12}"
+[ "$ch_after" != "$ch_before" ] || fail "ClickHouse was not recreated: the new configuration is not in effect"
+[ "$after" = /fusescope/keeper_map ] || fail "keeper_map_path_prefix is '$after'"
 compose up -d telemetrystore-migrator >/dev/null 2>&1
 rc=$(migrator_exit); echo "migrator ($(docker inspect -f '{{.Config.Image}}' "$(compose ps -aq telemetrystore-migrator)")) exit $rc"
 docker compose logs --no-log-prefix telemetrystore-migrator 2>&1 | tail -3
