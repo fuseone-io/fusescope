@@ -65,6 +65,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/statsreporter/noopstatsreporter"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore/flighttelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/telemetrystorehook"
 	"github.com/fuseone-io/fusescope/pkg/tokenizer"
 	"github.com/fuseone-io/fusescope/pkg/tokenizer/jwttokenizer"
@@ -282,12 +283,17 @@ func NewSQLMigrationProviderFactories(
 }
 
 func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
+	clickhouseHooks := []factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]{
+		telemetrystorehook.NewLoggingFactory(),
+		// adding instrumentation factory before settings as we are starting the query span here
+		telemetrystorehook.NewInstrumentationFactory(),
+		telemetrystorehook.NewSettingsFactory(),
+	}
 	return factory.MustNewNamedMap(
-		clickhousetelemetrystore.NewFactory(
-			telemetrystorehook.NewLoggingFactory(),
-			// adding instrumentation factory before settings as we are starting the query span here
-			telemetrystorehook.NewInstrumentationFactory(),
-			telemetrystorehook.NewSettingsFactory(),
+		clickhousetelemetrystore.NewFactory(clickhouseHooks...),
+		flighttelemetrystore.NewFactory(
+			[]factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]{telemetrystorehook.NewLoggingFactory()},
+			clickhouseHooks,
 		),
 	)
 }
