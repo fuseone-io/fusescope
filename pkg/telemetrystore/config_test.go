@@ -89,3 +89,61 @@ func TestNewWithEnvProviderWithQuerySettings(t *testing.T) {
 
 	assert.Equal(t, expected.Clickhouse.QuerySettings, actual.Clickhouse.QuerySettings)
 }
+
+func TestValidateFlight(t *testing.T) {
+	flight := func(edit func(*Config)) Config {
+		conf := NewConfigFactory().New().(Config)
+		conf.Provider = "flight"
+		conf.Flight.Endpoint = "engine-querier:8815"
+		conf.Flight.TLS.CertFile = "/etc/fusescope/engine/tls.crt"
+		conf.Flight.TLS.KeyFile = "/etc/fusescope/engine/tls.key"
+		conf.Flight.JWT.KeyFile = "/etc/fusescope/engine/jwt.key"
+		conf.Flight.JWT.KeyID = "backend-1"
+		edit(&conf)
+		return conf
+	}
+
+	testCases := []struct {
+		name   string
+		config Config
+		want   string
+	}{
+		{name: "Complete_Valid", config: flight(func(*Config) {})},
+		{name: "ClickhouseProvider_FlightBlockIgnored", config: func() Config {
+			c := flight(func(*Config) {})
+			c.Provider = "clickhouse"
+			c.Flight = FlightConfig{}
+			return c
+		}()},
+		{name: "NoEndpoint_Refused", config: flight(func(c *Config) { c.Flight.Endpoint = "" }), want: "telemetrystore.flight.endpoint"},
+		{name: "NoClientCertificate_Refused", config: flight(func(c *Config) { c.Flight.TLS.CertFile = "" }), want: "telemetrystore.flight.tls"},
+		{name: "NoClientKey_Refused", config: flight(func(c *Config) { c.Flight.TLS.KeyFile = "" }), want: "telemetrystore.flight.tls"},
+		{name: "NoSigningKey_Refused", config: flight(func(c *Config) { c.Flight.JWT.KeyFile = "" }), want: "telemetrystore.flight.jwt"},
+		{name: "NoKeyID_Refused", config: flight(func(c *Config) { c.Flight.JWT.KeyID = "" }), want: "telemetrystore.flight.jwt"},
+		{name: "TTLAboveEngineMaximum_Refused", config: flight(func(c *Config) { c.Flight.JWT.TTL = 301 * time.Second }), want: "telemetrystore.flight.jwt.ttl"},
+		{name: "ZeroTTL_Refused", config: flight(func(c *Config) { c.Flight.JWT.TTL = 0 }), want: "telemetrystore.flight.jwt.ttl"},
+		{name: "ZeroMessageBytes_Refused", config: flight(func(c *Config) { c.Flight.MaxMessageBytes = 0 }), want: "telemetrystore.flight.max_message_bytes"},
+		{name: "NoClickhouseFallback_Refused", config: flight(func(c *Config) { c.Clickhouse.DSN = "" }), want: "telemetrystore.clickhouse.dsn"},
+		{name: "UnknownProvider_Refused", config: flight(func(c *Config) { c.Provider = "duckdb" }), want: "telemetrystore.provider"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := testCase.config.Validate()
+			if testCase.want == "" {
+				assert.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), testCase.want)
+		})
+	}
+}
+
+func TestFlightDefaults(t *testing.T) {
+	conf := NewConfigFactory().New().(Config)
+	assert.Equal(t, "fusescope-engine", conf.Flight.JWT.Audience)
+	assert.Equal(t, "fusescope-backend", conf.Flight.JWT.Issuer)
+	assert.Equal(t, 60*time.Second, conf.Flight.JWT.TTL)
+	assert.Equal(t, 64<<20, conf.Flight.MaxMessageBytes)
+}

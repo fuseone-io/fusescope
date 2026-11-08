@@ -193,10 +193,11 @@ telemetrystore:
   max_open_conns: 100
   # Maximum time to wait for a connection to be established.
   dial_timeout: 5s
-  # Specifies the telemetrystore provider to use.
+  # Specifies the telemetrystore provider to use: clickhouse, or flight for fusescope-engine.
   provider: clickhouse
   clickhouse:
-    # The DSN to use for clickhouse.
+    # The DSN to use for clickhouse. Required by the flight provider too, for the callers not
+    # yet moved to the engine.
     dsn: tcp://localhost:9000
     # The cluster name to use for clickhouse.
     cluster: cluster
@@ -208,6 +209,26 @@ telemetrystore:
       max_bytes_to_read: 0
       max_result_rows: 0
       ignore_data_skipping_indices: ""
+  flight:
+    # host:port of the engine's Flight SQL listener; the host is the name its certificate carries.
+    endpoint: ""
+    tls:
+      # The backend's client certificate and key, issued by a CA of the engine's tls.public_client_ca.
+      cert_file: ""
+      key_file: ""
+      # When set, the only trust for the engine's certificate in place of the system store.
+      ca_file: ""
+      server_name: ""
+    jwt:
+      # Ed25519 private key (PKCS#8 PEM) whose public key is in the engine's auth.jwt_keys under kid.
+      key_file: ""
+      kid: ""
+      issuer: fusescope-backend
+      audience: fusescope-engine
+      # Lifetime of a tenant token, at most 300s.
+      ttl: 60s
+    # Largest message read from the engine.
+    max_message_bytes: 67108864
 
 ##################### Prometheus #####################
 prometheus:
