@@ -142,7 +142,7 @@ jobs:
         run: |
           echo "matrix=$(python3 tests/integration/groups.py "$SELECTION")" >> "$GITHUB_OUTPUT"
   test:
-    name: test (${{ matrix.group.name }}, ${{ matrix.sqlstore-provider }})
+    name: test (${{ matrix.group.name }}, ${{ matrix.sqlstore-provider }}, ${{ matrix.schema-migrator }})
     needs: [build, groups]
     strategy:
       fail-fast: false
@@ -155,10 +155,20 @@ jobs:
           - wal
         clickhouse-version:
           - 25.12.5
+        # fusescope-schema by default; the fork's migrator stays on one SQL
+        # store until both variants pass.
+        schema-migrator:
+          - fusescope
+          - fork
+        fusescope-schema-version:
+          - 0.4.1@sha256:9951f2479ac6e5150b116cd856569aaae6ed921e9b951f0fd9c93160e7311077
         schema-migrator-version:
           - 0.145.0
         postgres-version:
           - 15
+        exclude:
+          - schema-migrator: fork
+            sqlstore-provider: sqlite
     if: needs.groups.outputs.matrix != '[]'
     runs-on: ubuntu-24.04
     steps:
@@ -222,6 +232,8 @@ jobs:
               --sqlite-mode ${{matrix.sqlite-mode}} \
               --postgres-version ${{matrix.postgres-version}} \
               --clickhouse-version ${{matrix.clickhouse-version}} \
+              --schema-migrator ${{matrix.schema-migrator}} \
+              --fusescope-schema-version ${{matrix.fusescope-schema-version}} \
               --schema-migrator-version ${{matrix.schema-migrator-version}} \
               --signoz-image fusescope-ci:integration \
               || { status=1; echo "::error title=integration failed::${suites[*]}"; }

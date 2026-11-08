@@ -220,8 +220,11 @@ def create_otlp_collector(  # pylint: disable=too-many-arguments,too-many-positi
 
     image = f"ghcr.io/fuseone-io/fusescope-collector:{pytestconfig.getoption('--fusescope-collector-version')}"
 
+    # Before reuse.wrap: a stack restored under --reuse still checks that its
+    # migration matches this run's migrator.
+    request.getfixturevalue("migrator")
+
     def create() -> types.TestContainerDocker:
-        request.getfixturevalue("migrator")
         clickhouse_address = clickhouse.container.container_configs["9000"]
         config = OTLP_CONFIG_TEMPLATE.format(
             health_port=HEALTH_PORT,

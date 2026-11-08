@@ -95,10 +95,13 @@ def render_node_config(
     keeper_port: int,
     shard: str,
     remote_servers: str,
+    keeper_map_path_prefix: str,
     distributed_ddl_path: str = "/clickhouse/task_queue/ddl",
 ) -> str:
     # <zookeeper> is ClickHouse's config section name for any coordination
-    # service, including ClickHouse Keeper.
+    # service, including ClickHouse Keeper. fusescope-schema keeps its lease
+    # and history in KeeperMap tables, which need keeper_map_path_prefix, the
+    # same on every replica.
     return f"""
         <clickhouse>
             <logger>
@@ -124,6 +127,7 @@ def render_node_config(
                     <port>{keeper_port}</port>
                 </node>
             </zookeeper>
+            <keeper_map_path_prefix>{keeper_map_path_prefix}</keeper_map_path_prefix>
 {remote_servers}
 
             <user_defined_executable_functions_config>*function.xml</user_defined_executable_functions_config>
@@ -220,6 +224,10 @@ def create_clickhouse(  # pylint: disable=too-many-arguments,too-many-positional
             keeper_port=coordinator.port,
             shard="01",
             remote_servers=render_remote_servers([("127.0.0.1", 9000)]),
+            # Unique per creation: under --reuse a recreated ClickHouse may
+            # meet the keeper of the previous one, whose KeeperMap history
+            # would claim a schema this server does not hold.
+            keeper_map_path_prefix=f"/fusescope/{cache_key}-{uuid4().hex[:6]}/keeper_map",
         )
 
         tmp_dir = tmpfs(cache_key)
@@ -390,9 +398,10 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
         suffix = uuid4().hex[:6]
         aliases = [f"signoz-ch-{suffix}-{i:02d}" for i in range(1, shards + 1)]
         remote_servers = render_remote_servers([(alias, 9000) for alias in aliases], secret=cache_key)
-        # Own DDL queue path: the keeper instance may be shared with other
-        # environments under --reuse; its DDL queue stays separate.
+        # Own DDL queue and KeeperMap paths: the keeper instance may be shared
+        # with other environments under --reuse; their state stays separate.
         distributed_ddl_path = f"/clickhouse/{cache_key}-{suffix}/task_queue/ddl"
+        keeper_map_path_prefix = f"/fusescope/{cache_key}-{suffix}/keeper_map"
 
         nodes: list[types.TestContainerDocker] = []
         started: list[ClickHouseContainer] = []
@@ -404,6 +413,7 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
                     shard=f"{i:02d}",
                     remote_servers=remote_servers,
                     distributed_ddl_path=distributed_ddl_path,
+                    keeper_map_path_prefix=keeper_map_path_prefix,
                 )
 
                 tmp_dir = tmpfs(f"clickhouse-{suffix}-{i:02d}")

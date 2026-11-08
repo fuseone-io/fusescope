@@ -40,17 +40,27 @@ help: ## Displays help.
 # devenv commands
 ##############################################################
 .PHONY: devenv-clickhouse
-devenv-clickhouse: ## Run clickhouse in devenv
-	@cd .devenv/docker/clickhouse; \
-	docker compose -f compose.yaml up -d
+devenv-clickhouse: ## Run clickhouse in devenv and migrate its schema with fusescope-schema (reruns it on exit 2 only, up to 10 times)
+	@docker compose -f .devenv/docker/clickhouse/compose.yaml up -d && \
+	.devenv/scripts/migrate.sh .devenv/docker/clickhouse/compose.yaml
 
 .PHONY: devenv-postgres
 devenv-postgres: ## Run postgres in devenv
 	@cd .devenv/docker/postgres; \
 	docker compose -f compose.yaml up -d
 
+.PHONY: devenv-clickhouse-fork
+devenv-clickhouse-fork: ## Legacy, opt-in: run clickhouse in devenv on volumes of its own, unmigrated, for devenv-fusescope-otel-collector (stop devenv-clickhouse first: same containers and ports)
+	@cd .devenv/docker/clickhouse; \
+	docker compose -p clickhouse-fork -f compose.yaml up -d clickhouse
+
 .PHONY: devenv-fusescope-otel-collector
-devenv-fusescope-otel-collector: ## Legacy, opt-in: run the earlier fusescope-otel-collector instead of fusescope-collector (same ports; stop one before starting the other)
+devenv-fusescope-otel-collector: ## Legacy, opt-in: run the earlier fusescope-otel-collector instead of fusescope-collector (same ports; stop one before starting the other); it runs the fork migrator first, so it needs devenv-clickhouse-fork
+	@if [ "$$(docker exec clickhouse clickhouse-client -q 'EXISTS DATABASE fusescope_schema' 2>/dev/null)" != 0 ]; then \
+	  echo "devenv-fusescope-otel-collector runs the fork's migrator, which is not supported on a ClickHouse fusescope-schema migrated (or none is running)." >&2; \
+	  echo "Stop devenv-clickhouse (cd .devenv/docker/clickhouse && docker compose down) and run make devenv-clickhouse-fork, on volumes of its own." >&2; \
+	  exit 1; \
+	fi
 	@cd .devenv/docker/fusescope-otel-collector; \
 	docker compose -f compose.yaml up -d
 
@@ -72,9 +82,16 @@ DEV_UI_PORT    ?= 3301
 DEV_EMAIL      ?= admin@fusescope.local
 DEV_PASSWORD   ?= FuseScope-dev-1
 
-.PHONY: dev
-dev: ## Start ClickHouse, collector, backend and sample telemetry in containers, plus the frontend dev server
+# The migration first, rerun on exit 2: the full up -d waits for the
+# collector's schema check, which waits for the migration.
+.PHONY: devenv-compose
+devenv-compose: ## Start the containers of make dev: ClickHouse and its schema migration first, then the rest
+	@$(DEVENV_COMPOSE) up -d telemetrystore-migrator
+	@.devenv/scripts/migrate.sh .devenv/docker/compose.yaml
 	@$(DEVENV_COMPOSE) up -d
+
+.PHONY: dev
+dev: devenv-compose ## Start ClickHouse, collector, backend and sample telemetry in containers, plus the frontend dev server
 	@printf "Waiting for the backend"; \
 	for i in $$(seq 1 90); do \
 		curl -sf -o /dev/null localhost:8080/api/v1/health && break; \

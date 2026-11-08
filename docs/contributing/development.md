@@ -81,7 +81,7 @@ make devenv-clickhouse
 This command:
 - Starts ClickHouse in a single-shard, single-replica cluster
 - Runs ClickHouse Keeper inside the ClickHouse process
-- Runs the latest schema migrations
+- Runs the latest schema migrations with `fusescope-schema` (from the FuseScope collector image; set `FUSESCOPE_SCHEMA_IMAGE` to try another build)
 
 ### 2. Setting up the collector
 
@@ -96,7 +96,7 @@ This command:
 - Uses the configuration the Helm chart installs by default: span metrics, usage (`signoz_meter`), attribute metadata (`signoz_metadata`) and its own telemetry.
 - Connects to the backend on the host over OpAMP (`ws://host.docker.internal:4320`), so the processors you edit in the UI apply. Set `FUSESCOPE_OPAMP_ENDPOINT` to point it elsewhere.
 
-The earlier `fusescope-otel-collector` is still available with `make devenv-fusescope-otel-collector`, opt-in. It uses the same ports, so stop one collector before starting the other.
+The earlier `fusescope-otel-collector` is still available with `make devenv-fusescope-otel-collector`, opt-in. It uses the same ports, so stop one collector before starting the other. It runs the fork's own migrator before starting, which is not supported on a schema `fusescope-schema` migrated (its `0002` makes that one-way). So it needs a ClickHouse of its own: stop `devenv-clickhouse` (`cd .devenv/docker/clickhouse && docker compose down`) and run `make devenv-clickhouse-fork`, which starts ClickHouse on separate volumes without `fusescope-schema`. The target refuses a ClickHouse that holds `fusescope_schema`.
 
 > **Quick setup**: Use `make devenv-up` to start ClickHouse and the FuseScope collector together
 

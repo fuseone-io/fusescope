@@ -50,25 +50,18 @@ services:
       - default
       - signoz-devenv
   telemetrystore-migrator:
-    image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
+    # fusescope-schema, shipped in the FuseScope collector image. No restart
+    # policy: Compose cannot tell its exit codes apart, so make
+    # devenv-clickhouse and make dev rerun it through .devenv/scripts/migrate.sh,
+    # on exit 2 (retryable) only, as the chart's Job does, and stop on 1
+    # (refused) or 4 (interrupted).
+    image: ${FUSESCOPE_SCHEMA_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.4.1@sha256:9951f2479ac6e5150b116cd856569aaae6ed921e9b951f0fd9c93160e7311077}
     container_name: telemetrystore-migrator
-    environment:
-      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
-      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
-      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
-      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
-    entrypoint:
-      - /bin/sh
-    command:
-      - -c
-      - |
-        /fusescope-otel-collector migrate bootstrap &&
-        /fusescope-otel-collector migrate sync up &&
-        /fusescope-otel-collector migrate async up
+    entrypoint: ["/fusescope-schema"]
+    command: ["migrate", "--endpoint=clickhouse:9000", "--username=default", "--tls-insecure", "--cluster=cluster"]
     depends_on:
       clickhouse:
         condition: service_healthy
-    restart: on-failure
     networks:
       - default
       - signoz-devenv

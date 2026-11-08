@@ -936,10 +936,15 @@ def insert_traces(
     )
 
 
+ATTRIBUTE_EVOLUTION_COLUMNS = ["signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time"]
+ATTRIBUTE_EVOLUTION_ROWS = "column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__'"
+
+
 def insert_attribute_evolution_to_clickhouse(conn, signal: str, release_time: datetime.datetime) -> None:
     """Seed the `attributes` JSON column-evolution row for a signal at release_time, so tests
     gate map-vs-JSON resolution across a window. The migrator also seeds a traces row at install
-    time; delete_attribute_evolution_from_clickhouse removes it."""
+    time; delete_attribute_evolution_from_clickhouse removes it, and the seed_attribute_evolution
+    fixture puts it back."""
     # insert_deduplicate=0: successive tests seed a byte-identical row (release_time is
     # minute-aligned), and ReplicatedMergeTree would drop the re-insert as a duplicate even
     # after the prior test's teardown deleted it, leaving the querier to fall back to the Map.
@@ -958,17 +963,28 @@ def insert_attribute_evolution_to_clickhouse(conn, signal: str, release_time: da
 def seed_attribute_evolution(
     clickhouse: types.TestContainerClickhouse,
 ) -> Generator[Callable[[str, datetime.datetime], None], Any]:
+    # The install's rows (a traces row at install time) are restored on teardown, so a test
+    # that seeds or clears rows leaves the store as the install left it.
+    baseline = clickhouse.conn.query(f"SELECT {', '.join(ATTRIBUTE_EVOLUTION_COLUMNS)} FROM signoz_metadata.distributed_column_evolution_metadata WHERE {ATTRIBUTE_EVOLUTION_ROWS}").result_rows
+
     def _seed(signal: str, release_time: datetime.datetime) -> None:
         insert_attribute_evolution_to_clickhouse(clickhouse.conn, signal, release_time)
 
     yield _seed
 
     delete_attribute_evolution_from_clickhouse(clickhouse)
+    if baseline:
+        clickhouse.conn.insert(
+            "signoz_metadata.distributed_column_evolution_metadata",
+            baseline,
+            column_names=ATTRIBUTE_EVOLUTION_COLUMNS,
+            settings={"insert_deduplicate": 0},
+        )
 
 
 def delete_attribute_evolution_from_clickhouse(clickhouse: types.TestContainerClickhouse) -> None:
     cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
-    clickhouse.conn.query(f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' DELETE WHERE column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__' SETTINGS mutations_sync = 1")
+    clickhouse.conn.query(f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' DELETE WHERE {ATTRIBUTE_EVOLUTION_ROWS} SETTINGS mutations_sync = 1")
 
 
 # A rollout far before any test's query window, so seeding it makes the querier read span

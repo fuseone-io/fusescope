@@ -2,12 +2,10 @@ services:
   # Waits until telemetrystore-migrator (clickhouse/compose.yaml) has migrated
   # the ClickHouse schema, as the chart's init container does.
   fusescope-schema:
-    image: ghcr.io/fuseone-io/fusescope-otel-collector:0.145.0
+    image: ${FUSESCOPE_SCHEMA_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.4.1@sha256:9951f2479ac6e5150b116cd856569aaae6ed921e9b951f0fd9c93160e7311077}
     container_name: fusescope-schema-dev
-    entrypoint: ["/bin/sh", "-c"]
-    command: ["until /fusescope-otel-collector migrate sync check; do sleep 2; done"]
-    environment:
-      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+    entrypoint: ["/fusescope-schema"]
+    command: ["check", "--wait=10m", "--endpoint=clickhouse:9000", "--username=default", "--tls-insecure", "--cluster=cluster"]
     networks:
       - signoz-devenv
   fusescope-collector:

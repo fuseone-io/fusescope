@@ -84,9 +84,11 @@ def create_signoz(
     starts) and network aliases other containers reach it by.
     """
 
+    # Before reuse.wrap: a stack restored under --reuse still checks that its
+    # migration matches this run's migrator.
+    request.getfixturevalue("migrator")
+
     def create() -> types.SigNoz:
-        # Run the migrations for clickhouse
-        request.getfixturevalue("migrator")
 
         # Get the no-web flag
         with_web = pytestconfig.getoption("--with-web")
