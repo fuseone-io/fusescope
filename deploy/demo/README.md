@@ -5,7 +5,7 @@ Single-host Docker Compose deployment of a public FuseScope demo with live sampl
 | Service | Role | Limit |
 |---|---|---|
 | `clickhouse` (+ `zookeeper`, `init-clickhouse`) | telemetry store, 3-day retention | 4.5 GiB, 2 CPU (+384 MiB, 0.2) |
-| `telemetrystore-migrator` | creates/migrates the schema, then exits | 256 MiB, 0.25 |
+| `telemetrystore-migrator` | `fusescope-schema migrate`: creates or migrates the schema, then exits | 256 MiB, 0.25 |
 | `fusescope-collector` | OTLP (internal only), RUM (`/rum/v1/traces`, `/rum/v1/logs`) and host metrics | 768 MiB, 0.5 |
 | `fusescope` | API, web UI, browser SDK, ingest policy for the collector (SQLite) | 768 MiB, 0.5 |
 | `caddy` | TLS on host port 8443, the only published port | 128 MiB, 0.2 |
@@ -18,8 +18,10 @@ Caddy proxies to the collector's TLS listener; the collector checks each request
 policy FuseScope publishes to it over OpAMP (`fusescope:4321`, TLS 1.3, bearer token). The token and both
 certificates, from a CA of the demo's own, are generated once into `ingest/`.
 
-`otel-collector/config.yaml` is the collector configuration of the kit before 0.159.0. The kit no longer runs it: only
-fusescope-collector-server's `deploy/shadow` overlay uses it on the demo host, for the old collector kept as the ghost.
+The kit runs no image of the earlier collector (`fusescope-otel-collector`): `fusescope-collector` receives and
+writes, and `fusescope-schema`, from the same image, creates and migrates the schema. On a schema the earlier
+collector's migrator created, `fusescope-schema` adopts it and applies its own migrations, after which the earlier
+migrator refuses it; there is no going back (collector-server `deploy/shadow/CUTOVER.md` §8).
 
 The collector mounts the host root read-only at `/hostfs` and shares the host's UTS namespace, so the host appears in
 Infrastructure › Hosts under its own hostname. Network metrics are not collected: from a bridged container they would
