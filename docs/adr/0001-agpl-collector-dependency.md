@@ -147,4 +147,4 @@ Since #344, the devenv's `make dev` and the integration suites also create the s
 
 Removing them, and archiving `fusescope-otel-collector`, is tracked in #229 and is not part of this amendment.
 
-**Guard.** `make agpl-check AGPL_CHART=<fusescope-charts>/charts/fusescope` renders the chart with its default values and fails if any image comes from one of those repositories, besides the existing check on the backend binary. The `agpl-guard` job in `goci` runs it against `fusescope-charts`' `main`.
+**Guard.** `make agpl-check AGPL_CHART=<fusescope-charts>/charts/fusescope` renders the chart with its default values and fails if any image comes from one of those repositories, besides the existing check on the backend binary. The `agpl-guard` job in `goci` runs it against `fusescope-charts`' `main`. It is a check of the current chart, run when this repo's Go CI runs, not a gate on chart PRs: an AGPL image merged into the chart is caught afterwards. Running the same check in `fusescope-charts`' CI is a condition for closing #229.
