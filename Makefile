@@ -82,10 +82,16 @@ DEV_UI_PORT    ?= 3301
 DEV_EMAIL      ?= admin@fusescope.local
 DEV_PASSWORD   ?= FuseScope-dev-1
 
-.PHONY: dev
-dev: ## Start ClickHouse, collector, backend and sample telemetry in containers, plus the frontend dev server
-	@$(DEVENV_COMPOSE) up -d
+# The migration first, rerun on exit 2: the full up -d waits for the
+# collector's schema check, which waits for the migration.
+.PHONY: devenv-compose
+devenv-compose: ## Start the containers of make dev: ClickHouse and its schema migration first, then the rest
+	@$(DEVENV_COMPOSE) up -d telemetrystore-migrator
 	@.devenv/scripts/migrate.sh .devenv/docker/compose.yaml
+	@$(DEVENV_COMPOSE) up -d
+
+.PHONY: dev
+dev: devenv-compose ## Start ClickHouse, collector, backend and sample telemetry in containers, plus the frontend dev server
 	@printf "Waiting for the backend"; \
 	for i in $$(seq 1 90); do \
 		curl -sf -o /dev/null localhost:8080/api/v1/health && break; \

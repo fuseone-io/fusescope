@@ -51,3 +51,50 @@ def test_migrate_reruns_on_exit_2_only(tmp_path: Path, codes: str, exit_code: in
     assert (len(waits), len(starts)) == (runs, runs - 1), lines
     if exit_code:
         assert "fake log" in result.stderr
+
+
+REPO = Path(__file__).parents[4]
+
+
+def run_make(tmp_path: Path, codes: str, *args: str) -> tuple[subprocess.CompletedProcess, list[str]]:
+    (tmp_path / "docker").write_text(FAKE_DOCKER)
+    (tmp_path / "docker").chmod(0o755)
+    calls = tmp_path / "calls"
+    calls.touch()
+    env = os.environ | {"PATH": f"{tmp_path}:{os.environ['PATH']}", "CALLS": str(calls), "CODES": codes, "MIGRATE_RETRY_DELAY": "0"}
+    result = subprocess.run(["make", "-s", "-C", str(REPO), *args], env=env, capture_output=True, text=True, check=False)
+    return result, [line for line in calls.read_text().splitlines() if not line.startswith("logs")]
+
+
+AGGREGATE = "compose -f .devenv/docker/compose.yaml"
+
+
+@pytest.mark.parametrize(
+    ("codes", "ok", "calls"),
+    [
+        ("0", True, [f"{AGGREGATE} up -d telemetrystore-migrator", "wait telemetrystore-migrator", f"{AGGREGATE} up -d"]),
+        (
+            "2 0",
+            True,
+            [f"{AGGREGATE} up -d telemetrystore-migrator", "wait telemetrystore-migrator", f"{AGGREGATE} start telemetrystore-migrator", "wait telemetrystore-migrator", f"{AGGREGATE} up -d"],
+        ),
+        ("1", False, [f"{AGGREGATE} up -d telemetrystore-migrator", "wait telemetrystore-migrator"]),
+        ("2 4", False, [f"{AGGREGATE} up -d telemetrystore-migrator", "wait telemetrystore-migrator", f"{AGGREGATE} start telemetrystore-migrator", "wait telemetrystore-migrator"]),
+    ],
+)
+def test_make_dev_migrates_before_the_full_compose(tmp_path: Path, codes: str, ok: bool, calls: list[str]) -> None:
+    # The full `up -d` waits for the collector's schema check, which waits for
+    # the migration: it may start only once the migration has succeeded.
+    result, got = run_make(tmp_path, codes, "devenv-compose")
+    assert (result.returncode == 0) is ok, result.stderr
+    assert got == calls
+
+
+def test_make_dev_starts_with_devenv_compose() -> None:
+    dry = subprocess.run(["make", "-n", "-C", str(REPO), "dev"], capture_output=True, text=True, check=True).stdout.splitlines()
+    commands = [line for line in dry if "docker compose" in line or "migrate.sh" in line]
+    assert [c.split("docker compose -f .devenv/docker/compose.yaml ")[-1] for c in commands[:3]] == [
+        "up -d telemetrystore-migrator",
+        ".devenv/scripts/migrate.sh .devenv/docker/compose.yaml",
+        "up -d",
+    ], commands
