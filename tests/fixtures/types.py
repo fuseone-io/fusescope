@@ -149,9 +149,12 @@ class SigNoz:
 class Operation:
     __test__ = False
     name: str
+    # What produced it, for a cached operation that must match the run, such
+    # as the migrator and its version; empty when nothing else matters.
+    identity: str = ""
 
     def __cache__(self) -> dict:
-        return {"name": self.name}
+        return {"name": self.name, "identity": self.identity}
 
     def __log__(self) -> str:
         return f"Operation(name={self.name})"

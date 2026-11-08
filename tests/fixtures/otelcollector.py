@@ -68,8 +68,11 @@ def create_otel_collector(  # pylint: disable=too-many-arguments,too-many-positi
 
     image = f"ghcr.io/fuseone-io/fusescope-otel-collector:{request.config.getoption('--collector-version')}"
 
+    # Before reuse.wrap: a stack restored under --reuse still checks that its
+    # migration matches this run's migrator.
+    request.getfixturevalue("migrator")
+
     def create() -> types.TestContainerDocker:
-        request.getfixturevalue("migrator")
         dsn = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"]
 
         config_path = tmpfs(cache_key) / "config.yaml"

@@ -264,6 +264,7 @@ Tests can be configured using pytest options:
 - `--schema-migrator` — the migrator that creates the ClickHouse schema: `fusescope` (`fusescope-schema`, default) or `fork` (the earlier `fusescope-schema-migrator`). Independent of `--otlp-collector`
 - `--fusescope-schema-version` — `ghcr.io/fuseone-io/fusescope-collector` tag, pinned by digest, whose `/fusescope-schema` runs with `--schema-migrator=fusescope`
 - `--schema-migrator-version` — `fusescope-schema-migrator` tag for `--schema-migrator=fork` (default: `0.145.0`)
+  - Under `--reuse`, a change of migrator, of its version or of its overrides runs the migration again. `--schema-migrator=fork` refuses a ClickHouse that `fusescope-schema` migrated past `0001`: after its `0002` the fork is not supported there, so `--teardown` a stack `fusescope-schema` migrated before reusing it with the fork
 - `--with-web` — Build the frontend into the SigNoz image (required for e2e)
 - `--signoz-image` — Run this prebuilt image instead of building one from the current sources (CI builds it once per run)
 

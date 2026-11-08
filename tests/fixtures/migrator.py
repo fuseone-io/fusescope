@@ -12,6 +12,25 @@ logger = setup_logger(__name__)
 FUSESCOPE_SCHEMA_DIR = "/etc/fusescope-schema"
 
 
+def identity(pytestconfig: pytest.Config, env_overrides: dict | None) -> str:
+    """The migrator a run selects: its mode, that mode's version and the
+    overrides. Under --reuse a migration cached with another identity is
+    run again."""
+    mode = pytestconfig.getoption("--schema-migrator")
+    version = pytestconfig.getoption("--fusescope-schema-version" if mode == "fusescope" else "--schema-migrator-version")
+    return json.dumps({"migrator": mode, "version": version, "env": env_overrides or {}}, sort_keys=True)
+
+
+def require_fork_supported(conn) -> None:
+    """Refuses a ClickHouse where fusescope-schema recorded a migration after
+    0001: after its 0002 the fork's migrator is not supported on that schema
+    (fusescope-schema spec §10)."""
+    if not conn.query("EXISTS TABLE fusescope_schema.migrations").result_rows[0][0]:
+        return
+    if conn.query("SELECT count() FROM fusescope_schema.migrations WHERE id > 1").result_rows[0][0]:
+        raise RuntimeError("fusescope-schema migrated this ClickHouse past 0001, where the fork's migrator is not supported: run --schema-migrator=fork on a stack of its own (--teardown the reused one first)")
+
+
 def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     network: Network,
     clickhouse: types.TestContainerClickhouse,
@@ -26,6 +45,8 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
     migrator environment; the release comes from --fusescope-schema-version or,
     for the fork, --schema-migrator-version.
     """
+
+    wanted = identity(pytestconfig, env_overrides)
 
     def create() -> types.Operation:
         if pytestconfig.getoption("--schema-migrator") == "fusescope":
@@ -59,9 +80,10 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
             print(logs)
             raise RuntimeError(f"fusescope-schema migrate exited {result['StatusCode']}")
 
-        return types.Operation(name=cache_key)
+        return types.Operation(name=cache_key, identity=wanted)
 
     def create_fork() -> types.Operation:
+        require_fork_supported(clickhouse.conn)
         migrator_version = request.config.getoption("--schema-migrator-version")
         client = docker.from_env()
 
@@ -105,13 +127,13 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
 
         container.remove()
 
-        return types.Operation(name=cache_key)
+        return types.Operation(name=cache_key, identity=wanted)
 
     def delete(_: types.Operation) -> None:
         pass
 
     def restore(cache: dict) -> types.Operation:
-        return types.Operation(name=cache["name"])
+        return types.Operation(name=cache["name"], identity=cache.get("identity", ""))
 
     return reuse.wrap(
         request,
@@ -121,6 +143,7 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
         create,
         delete,
         restore,
+        stale=lambda op: op.identity != wanted,
     )
 
 
