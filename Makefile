@@ -279,9 +279,13 @@ integrations-catalog: ## Fetch and verify the pinned integration catalog release
 rum-browser-sdk: ## Fetch and verify the pinned @fusescope/browser bundle the backend serves (SDK_VERSION=x.y.z moves the pin)
 	@go run ./scripts/rumbrowsersdk $(if $(SDK_VERSION),-version $(SDK_VERSION))
 
+# AGPL_CHART: a fusescope-charts checkout's charts/fusescope; when set, agpl-check also
+# fails if the chart's default install runs an AGPL image (needs helm).
+AGPL_CHART ?=
+
 .PHONY: agpl-check
-agpl-check: ## Fail if the community binary links any AGPL collector package
-	@go run ./scripts/agplguard
+agpl-check: ## Fail if the community binary links any AGPL collector package, or AGPL_CHART's default install runs an AGPL image
+	@go run ./scripts/agplguard $(if $(AGPL_CHART),-chart $(AGPL_CHART))
 
 .PHONY: gen-mocks
 gen-mocks:

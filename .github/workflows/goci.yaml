@@ -156,8 +156,16 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - name: check-agpl-collector-packages
-        run: make agpl-check
+      - name: charts-checkout
+        uses: actions/checkout@v7
+        with:
+          repository: fuseone-io/fusescope-charts
+          ref: main
+          path: fusescope-charts
+          persist-credentials: false
+      # helm comes with the ubuntu-24.04 runner image.
+      - name: check-agpl-collector-packages-and-default-install-images
+        run: make agpl-check AGPL_CHART=fusescope-charts/charts/fusescope
   build:
     needs: changes
     if: needs.changes.outputs.go == 'true'
