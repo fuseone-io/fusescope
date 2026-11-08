@@ -16,6 +16,14 @@ packages:
       filename: "maintenance.go"
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
+  github.com/fuseone-io/fusescope/pkg/telemetrystore:
+    interfaces:
+      TelemetryStoreHook:
+    config:
+      dir: '{{.InterfaceDir}}/telemetrystoretest'
+      filename: "hook.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'
   github.com/fuseone-io/fusescope/pkg/tokenizer:
     config:
       all: true
