@@ -4,9 +4,9 @@ services:
     container_name: fusescope-otel-collector-dev
     entrypoint:
       - /bin/sh
-    # Runs the fork's own migrator first: its `migrate sync check` fails on a
-    # schema fusescope-schema created (empty schema_migrations_v2), and its
-    # migrations apply cleanly on top of one.
+    # Runs the fork's own migrator first, on the ClickHouse of
+    # `make devenv-clickhouse-fork`: never on one fusescope-schema migrated,
+    # which no longer supports the fork's migrator after its 0002.
     command:
       - -c
       - |
@@ -30,10 +30,16 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # The fork's migrator connects to the hosts ClickHouse lists for the
+    # cluster, which resolve on devenv-clickhouse-fork's own network.
     networks:
       - default
       - signoz-devenv
+      - clickhouse-fork
 
 networks:
   signoz-devenv:
     name: signoz-devenv
+  clickhouse-fork:
+    name: clickhouse-fork_default
+    external: true
