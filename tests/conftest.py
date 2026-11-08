@@ -126,7 +126,7 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--fusescope-schema-version",
         action="store",
-        default="0.4.0@sha256:a1e2fcd7248035b231e8d4c9c3234d617b983296464d31834fdabc1184fa24a1",
+        default="0.4.1@sha256:9951f2479ac6e5150b116cd856569aaae6ed921e9b951f0fd9c93160e7311077",
         help="ghcr.io/fuseone-io/fusescope-collector tag (pinned by digest) whose /fusescope-schema --schema-migrator=fusescope runs",
     )
     parser.addoption(

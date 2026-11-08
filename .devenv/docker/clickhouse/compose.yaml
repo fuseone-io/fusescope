@@ -52,7 +52,7 @@ services:
   telemetrystore-migrator:
     # fusescope-schema, shipped in the FuseScope collector image. Exit 2
     # (ClickHouse not ready) is retryable, hence restart: on-failure.
-    image: ${FUSESCOPE_SCHEMA_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.4.0@sha256:a1e2fcd7248035b231e8d4c9c3234d617b983296464d31834fdabc1184fa24a1}
+    image: ${FUSESCOPE_SCHEMA_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.4.1@sha256:9951f2479ac6e5150b116cd856569aaae6ed921e9b951f0fd9c93160e7311077}
     container_name: telemetrystore-migrator
     entrypoint: ["/fusescope-schema"]
     command: ["migrate", "--endpoint=clickhouse:9000", "--username=default", "--tls-insecure", "--cluster=cluster"]

@@ -2,7 +2,7 @@ services:
   # Waits until telemetrystore-migrator (clickhouse/compose.yaml) has migrated
   # the ClickHouse schema, as the chart's init container does.
   fusescope-schema:
-    image: ${FUSESCOPE_SCHEMA_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.4.0@sha256:a1e2fcd7248035b231e8d4c9c3234d617b983296464d31834fdabc1184fa24a1}
+    image: ${FUSESCOPE_SCHEMA_IMAGE:-ghcr.io/fuseone-io/fusescope-collector:0.4.1@sha256:9951f2479ac6e5150b116cd856569aaae6ed921e9b951f0fd9c93160e7311077}
     container_name: fusescope-schema-dev
     entrypoint: ["/fusescope-schema"]
     command: ["check", "--wait=10m", "--endpoint=clickhouse:9000", "--username=default", "--tls-insecure", "--cluster=cluster"]
