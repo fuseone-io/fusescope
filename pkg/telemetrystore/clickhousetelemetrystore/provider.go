@@ -74,6 +74,9 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	},
 }
 
+// conn is the provider seen as a clickhouse.Conn, running the hooks around each statement.
+type conn provider
+
 type provider struct {
 	settings       factory.ScopedProviderSettings
 	clickHouseConn clickhouse.Conn
@@ -141,38 +144,55 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 func (p *provider) ClickhouseDB() clickhouse.Conn {
-	return p
+	return (*conn)(p)
+}
+
+func (p *provider) Query(ctx context.Context, stmt string, args ...any) (telemetrystore.Rows, error) {
+	rows, err := (*conn)(p).Query(ctx, stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	return NewRows(rows), nil
+}
+
+func (p *provider) Do(_ context.Context, action string, _ []byte) (telemetrystore.Rows, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, telemetrystore.ErrCodeUnsupported, "the clickhouse provider serves no engine action, %s", action)
+}
+
+// Close closes the ClickHouse connection.
+func (p *provider) Close() error {
+	return p.clickHouseConn.Close()
 }
 
 func (p *provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error) {
-	return RunExplainEstimate(ctx, p, stmt, args...)
+	return RunExplainEstimate(ctx, (*conn)(p), stmt, args...)
 }
 
 func (p *provider) Plan(ctx context.Context, stmt string, args ...any) error {
-	return RunExplainPlan(ctx, p, stmt, args...)
+	return RunExplainPlan(ctx, (*conn)(p), stmt, args...)
 }
 
 func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error) {
-	return RunExplainIndexes(ctx, p, stmt, args...)
+	return RunExplainIndexes(ctx, (*conn)(p), stmt, args...)
 }
 
 func (p *provider) Cluster() string {
 	return p.cluster
 }
 
-func (p *provider) Close() error {
+func (p *conn) Close() error {
 	return p.clickHouseConn.Close()
 }
 
-func (p *provider) Ping(ctx context.Context) error {
+func (p *conn) Ping(ctx context.Context) error {
 	return p.clickHouseConn.Ping(ctx)
 }
 
-func (p *provider) Stats() driver.Stats {
+func (p *conn) Stats() driver.Stats {
 	return p.clickHouseConn.Stats()
 }
 
-func (p *provider) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
+func (p *conn) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
@@ -191,7 +211,7 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 	}, nil
 }
 
-func (p *provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
+func (p *conn) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
@@ -208,7 +228,7 @@ func (p *provider) QueryRow(ctx context.Context, query string, args ...interface
 	return &rowWithCastError{Row: row}
 }
 
-func (p *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+func (p *conn) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
@@ -220,7 +240,7 @@ func (p *provider) Select(ctx context.Context, dest interface{}, query string, a
 	return castError(err)
 }
 
-func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
+func (p *conn) Exec(ctx context.Context, query string, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
@@ -232,7 +252,7 @@ func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) 
 	return castError(err)
 }
 
-func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
+func (p *conn) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
@@ -244,7 +264,7 @@ func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, arg
 	return castError(err)
 }
 
-func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
+func (p *conn) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
 	event := telemetrystore.NewQueryEvent(query, nil)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
@@ -259,11 +279,11 @@ func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...drive
 	return &batchWithCastError{Batch: batch}, castError(err)
 }
 
-func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
+func (p *conn) ServerVersion() (*driver.ServerVersion, error) {
 	return p.clickHouseConn.ServerVersion()
 }
 
-func (p *provider) Contributors() []string {
+func (p *conn) Contributors() []string {
 	return p.clickHouseConn.Contributors()
 }
 

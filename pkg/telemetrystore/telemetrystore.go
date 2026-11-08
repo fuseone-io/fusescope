@@ -22,6 +22,13 @@ type TelemetryStore interface {
 
 	// Indexes returns the granule-skip breakdown from EXPLAIN json = 1, indexes = 1.
 	Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error)
+
+	// Query runs a read-only statement for the tenant and subject of ctx (see WithTenant). The
+	// flight provider takes no args: literals belong in the statement's dialect.
+	Query(ctx context.Context, stmt string, args ...any) (Rows, error)
+
+	// Do runs a typed engine action, such as trace.lookup, with its JSON body.
+	Do(ctx context.Context, action string, body []byte) (Rows, error)
 }
 
 type TelemetryStoreHook interface {

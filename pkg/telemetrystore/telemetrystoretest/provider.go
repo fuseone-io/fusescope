@@ -6,6 +6,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/DATA-DOG/go-sqlmock"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
@@ -53,6 +54,20 @@ func (p *Provider) Plan(ctx context.Context, stmt string, args ...any) error {
 // Indexes runs EXPLAIN indexes against the mock connection.
 func (p *Provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error) {
 	return clickhousetelemetrystore.RunExplainIndexes(ctx, p.clickhouseDB.(clickhouse.Conn), stmt, args...)
+}
+
+// Query runs stmt against the mock connection.
+func (p *Provider) Query(ctx context.Context, stmt string, args ...any) (telemetrystore.Rows, error) {
+	rows, err := p.ClickhouseDB().Query(ctx, stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	return clickhousetelemetrystore.NewRows(rows), nil
+}
+
+// Do refuses every action, as the clickhouse provider does.
+func (p *Provider) Do(_ context.Context, action string, _ []byte) (telemetrystore.Rows, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, telemetrystore.ErrCodeUnsupported, "the clickhouse provider serves no engine action, %s", action)
 }
 
 // Mock returns the underlying Clickhouse mock instance for setting expectations.
