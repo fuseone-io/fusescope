@@ -49,7 +49,7 @@ The full list — anomaly detection, custom roles, synthetics, SLOs, profiling a
 
 ## Getting started
 
-FuseScope needs ClickHouse and the [FuseScope OpenTelemetry collector](https://github.com/fuseone-io/fusescope-otel-collector). Deploy them with the [FuseScope Helm charts](https://github.com/fuseone-io/fusescope-charts), or build from source:
+FuseScope needs ClickHouse and the [FuseScope collector](https://github.com/fuseone-io/fusescope-collector-server), which also creates and migrates the ClickHouse schema (`fusescope-schema`). Deploy them with the [FuseScope Helm charts](https://github.com/fuseone-io/fusescope-charts), or build from source:
 
 ```bash
 # backend (Go 1.26)
@@ -109,4 +109,4 @@ Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) an
 
 FuseScope stands on the work of the [SigNoz](https://signoz.io) team and community, whose MIT-licensed code is the foundation of this project. "SigNoz" is a trademark of SigNoz Inc.; FuseScope is not affiliated with or endorsed by SigNoz Inc.
 
-The source code in this repository is released under the [MIT License](LICENSE), and the `fusescope` backend binary is MIT-only: it links no AGPL code. The [fusescope-otel-collector](https://github.com/fuseone-io/fusescope-otel-collector) is a separate program licensed under the **AGPL-3.0**. Third-party notices are in [NOTICE](NOTICE).
+The source code in this repository is released under the [MIT License](LICENSE), and the `fusescope` backend binary is MIT-only: it links no AGPL code. The [FuseScope collector](https://github.com/fuseone-io/fusescope-collector-server) is Apache-2.0, and the Helm chart's default install runs no AGPL image (`make agpl-check AGPL_CHART=…` checks both). The earlier [fusescope-otel-collector](https://github.com/fuseone-io/fusescope-otel-collector) is a separate program licensed under the **AGPL-3.0**; it runs only where you opt in to it. Third-party notices are in [NOTICE](NOTICE).
