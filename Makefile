@@ -41,25 +41,8 @@ help: ## Displays help.
 ##############################################################
 .PHONY: devenv-clickhouse
 devenv-clickhouse: ## Run clickhouse in devenv and migrate its schema with fusescope-schema (reruns it on exit 2 only, up to 10 times)
-	@cd .devenv/docker/clickhouse; \
-	docker compose -f compose.yaml up -d || exit 1; \
-	for i in $$(seq 10); do \
-	  code=$$(docker wait telemetrystore-migrator); \
-	  [ "$$code" = 2 ] || break; \
-	  echo "fusescope-schema migrate exited 2 (retryable), rerunning it ($$i of 10)" >&2; \
-	  sleep 5; docker compose -f compose.yaml start telemetrystore-migrator >/dev/null; \
-	done; \
-	if [ "$$code" != 0 ]; then \
-	  docker logs --tail 20 telemetrystore-migrator >&2; \
-	  case "$$code" in \
-	    1) why="refused (drift or an unknown history), not retried" ;; \
-	    2) why="still retryable after 10 reruns" ;; \
-	    4) why="a migration was interrupted after it started, not retried: it needs status and repair" ;; \
-	    *) why="an unexpected exit" ;; \
-	  esac; \
-	  echo "fusescope-schema migrate exited $$code: $$why; see https://github.com/fuseone-io/fusescope-collector-server/blob/main/docs/spec/fusescope-schema.md#10-runbook" >&2; \
-	  exit 1; \
-	fi
+	@docker compose -f .devenv/docker/clickhouse/compose.yaml up -d && \
+	.devenv/scripts/migrate.sh .devenv/docker/clickhouse/compose.yaml
 
 .PHONY: devenv-postgres
 devenv-postgres: ## Run postgres in devenv
@@ -102,6 +85,7 @@ DEV_PASSWORD   ?= FuseScope-dev-1
 .PHONY: dev
 dev: ## Start ClickHouse, collector, backend and sample telemetry in containers, plus the frontend dev server
 	@$(DEVENV_COMPOSE) up -d
+	@.devenv/scripts/migrate.sh .devenv/docker/compose.yaml
 	@printf "Waiting for the backend"; \
 	for i in $$(seq 1 90); do \
 		curl -sf -o /dev/null localhost:8080/api/v1/health && break; \
