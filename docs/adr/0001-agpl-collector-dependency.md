@@ -123,3 +123,28 @@ Phases 1 and 2 brought the binary from 29 linked collector packages to 26, phase
 Check with `go list -deps ./cmd/community | grep fusescope-otel-collector` (prints nothing) or `make agpl-check`. Release SBOMs (`fusescope-linux-*.spdx.json` on the GitHub release) list no `fusescope-otel-collector` module from the first release after phase 3c. The `simulatorcontract` integration suite replays the corpus through the collector image and keeps both previews matched to it.
 
 Open before this ADR is accepted: legal review before 1.0.
+
+## Amendment (2026-11-08): the default install
+
+This amendment records where the default install stands. It does not change the decision above, which covers the backend binary, nor its status: legal review before 1.0 is still open (#22).
+
+When this ADR was written, the collector was the AGPL `fusescope-otel-collector`, run as a separate program, and it owned the ClickHouse schema. Since then [ADR 0009](0009-fusescope-collector.md) added the FuseScope collector ([fusescope-collector-server](https://github.com/fuseone-io/fusescope-collector-server), Apache-2.0), whose image also ships `fusescope-schema`, a clean-room schema migrator.
+
+**Default install.** The Helm chart [0.162.1](https://github.com/fuseone-io/fusescope-charts/releases/tag/fusescope-0.162.1) runs no AGPL image by default:
+
+- OTLP goes to `fusescope-collector`, and the schema Job runs `fusescope-schema` from `ghcr.io/fuseone-io/fusescope-collector:0.4.1@sha256:9951f2479ac6e5150b116cd856569aaae6ed921e9b951f0fd9c93160e7311077` (`migrator: fusescope-schema`).
+- The earlier collector is off (`otelCollector.enabled: false`).
+- `helm template` with the default values renders 8 images, none from `fusescope-otel-collector`.
+
+Since #344, the devenv's `make dev` and the integration suites also create the schema with `fusescope-schema` by default.
+
+**Still AGPL, opt-in only.** These run images built from `fusescope-otel-collector` (`ghcr.io/fuseone-io/fusescope-otel-collector` and `ghcr.io/fuseone-io/fusescope-schema-migrator`, labelled `org.opencontainers.image.licenses: AGPL-3.0`):
+
+- the chart's `migrator: fork` and `otelCollector.enabled: true`;
+- the devenv's legacy `make devenv-clickhouse-fork` and `make devenv-fusescope-otel-collector`;
+- the suites' `--schema-migrator=fork` and `--otlp-collector=fork`, with the `fork` axis in `integrationci`;
+- the `simulatorcontract` suite, which replays the corpus through the earlier collector image to keep the previews matched to it.
+
+Removing them, and archiving `fusescope-otel-collector`, is tracked in #229 and is not part of this amendment.
+
+**Guard.** `make agpl-check AGPL_CHART=<fusescope-charts>/charts/fusescope` renders the chart with its default values and fails if any image comes from one of those repositories, besides the existing check on the backend binary. The `agpl-guard` job in `goci` runs it against `fusescope-charts`' `main`.
