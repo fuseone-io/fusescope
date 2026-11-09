@@ -54,32 +54,64 @@
       "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.05) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineAggregationMatrix/p05if(duration_nano,_has_error_=_true)",
+      "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.05) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = true) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineAggregationMatrix/p10(duration_nano)",
       "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.10) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineAggregationMatrix/p10if(duration_nano,_has_error_=_true)",
+      "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.10) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = true) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineAggregationMatrix/p20(duration_nano)",
       "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.20) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineAggregationMatrix/p20if(duration_nano,_has_error_=_true)",
+      "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.20) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = true) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineAggregationMatrix/p25(duration_nano)",
       "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.25) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineAggregationMatrix/p25if(duration_nano,_has_error_=_true)",
+      "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.25) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = true) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineAggregationMatrix/p50(duration_nano)",
       "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.50) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineAggregationMatrix/p50if(duration_nano,_has_error_=_true)",
+      "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.50) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = true) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineAggregationMatrix/p75(duration_nano)",
       "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.75) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineAggregationMatrix/p75if(duration_nano,_has_error_=_true)",
+      "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.75) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = true) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineAggregationMatrix/p90(duration_nano)",
       "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.90) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineAggregationMatrix/p90if(duration_nano,_has_error_=_true)",
+      "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.90) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = true) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineAggregationMatrix/p95(duration_nano)",
       "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.95) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineAggregationMatrix/p95if(duration_nano,_has_error_=_true)",
+      "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.95) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = true) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineAggregationMatrix/p99(duration_nano)",
@@ -88,6 +120,10 @@
     {
       "name": "TestEngineAggregationMatrix/p999(duration_nano)",
       "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.999) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineAggregationMatrix/p999if(duration_nano,_has_error_=_true)",
+      "sql": "SELECT CAST(service_name AS VARCHAR) AS \"__GROUP_BY_KEY_0_service.name\", approx_percentile_cont(0.999) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = true) AS __result_0 FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_service.name\" ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineAggregationMatrix/p99if(duration_nano,_has_error_=_true)",
@@ -302,12 +338,20 @@
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE name \u003c\u003e 'a' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/name_\u003c=_'m'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE name \u003c= 'm' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/name_\u003c_'m'",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE name \u003c 'm' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/name_=_'a'",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE name = 'a' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/name_\u003e=_'m'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE name \u003e= 'm' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/name_\u003e_'m'",
@@ -374,8 +418,28 @@
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (parent_span_id IS NULL OR parent_span_id != decode('00f067aa0ba902b7', 'hex')) AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/parent_span_id_\u003c=_'00f067aa0ba902b7'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(encode(parent_span_id, 'hex'), '') \u003c= '00f067aa0ba902b7' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/parent_span_id_\u003c_'00f067aa0ba902b7'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(encode(parent_span_id, 'hex'), '') \u003c '00f067aa0ba902b7' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/parent_span_id_=_'00f067aa0ba902b7'",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE parent_span_id = decode('00f067aa0ba902b7', 'hex') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/parent_span_id_\u003e=_'00f067aa0ba902b7'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(encode(parent_span_id, 'hex'), '') \u003e= '00f067aa0ba902b7' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/parent_span_id_\u003e_'00f067aa0ba902b7'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(encode(parent_span_id, 'hex'), '') \u003e '00f067aa0ba902b7' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/parent_span_id_BETWEEN_'00f067aa0ba902b7'_AND_'00f067aa0ba902b8'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(encode(parent_span_id, 'hex'), '') BETWEEN '00f067aa0ba902b7' AND '00f067aa0ba902b8' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/parent_span_id_CONTAINS_'aa0b'",
@@ -386,6 +450,10 @@
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(encode(parent_span_id, 'hex'), '') \u003c\u003e '' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/parent_span_id_ILIKE_'00F0%'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE LOWER(coalesce(encode(parent_span_id, 'hex'), '')) LIKE LOWER('00F0%') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/parent_span_id_IN_['00f067aa0ba902b7',_'00f067aa0ba902b8']",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (parent_span_id = decode('00f067aa0ba902b7', 'hex') OR parent_span_id = decode('00f067aa0ba902b8', 'hex')) AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
@@ -394,12 +462,36 @@
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(encode(parent_span_id, 'hex'), '') LIKE '00f0%' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/parent_span_id_NOT_BETWEEN_'00f067aa0ba902b7'_AND_'00f067aa0ba902b8'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(encode(parent_span_id, 'hex'), '') NOT BETWEEN '00f067aa0ba902b7' AND '00f067aa0ba902b8' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/parent_span_id_NOT_CONTAINS_'aa0b'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE LOWER(coalesce(encode(parent_span_id, 'hex'), '')) NOT LIKE LOWER('%aa0b%') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/parent_span_id_NOT_EXISTS",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(encode(parent_span_id, 'hex'), '') = '' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/parent_span_id_NOT_ILIKE_'00F0%'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE LOWER(coalesce(encode(parent_span_id, 'hex'), '')) NOT LIKE LOWER('00F0%') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/parent_span_id_NOT_IN_['00f067aa0ba902b7',_'00f067aa0ba902b8']",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (parent_span_id IS NULL OR NOT (parent_span_id = decode('00f067aa0ba902b7', 'hex') OR parent_span_id = decode('00f067aa0ba902b8', 'hex'))) AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/parent_span_id_NOT_LIKE_'00f0%'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(encode(parent_span_id, 'hex'), '') NOT LIKE '00f0%' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/parent_span_id_NOT_REGEXP_'^00f0'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE NOT regexp_like(coalesce(encode(parent_span_id, 'hex'), ''), '^00f0') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/parent_span_id_REGEXP_'^00f0'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE regexp_like(coalesce(encode(parent_span_id, 'hex'), ''), '^00f0') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/response_status_code_!=_200",
@@ -454,12 +546,20 @@
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE scope_name \u003c\u003e 'a' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/scope.name_\u003c=_'m'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (scope_name \u003c= 'm' AND scope_name \u003c\u003e '') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/scope.name_\u003c_'m'",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (scope_name \u003c 'm' AND scope_name \u003c\u003e '') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/scope.name_=_'a'",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (scope_name = 'a' AND scope_name \u003c\u003e '') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/scope.name_\u003e=_'m'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (scope_name \u003e= 'm' AND scope_name \u003c\u003e '') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/scope.name_\u003e_'m'",
@@ -526,12 +626,20 @@
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE service_name \u003c\u003e 'a' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/service.name_\u003c=_'m'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE service_name \u003c= 'm' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/service.name_\u003c_'m'",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE service_name \u003c 'm' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/service.name_=_'a'",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE service_name = 'a' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/service.name_\u003e=_'m'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE service_name \u003e= 'm' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/service.name_\u003e_'m'",
@@ -598,8 +706,28 @@
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE span_id != decode('00f067aa0ba902b7', 'hex') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/span_id_\u003c=_'00f067aa0ba902b7'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE encode(span_id, 'hex') \u003c= '00f067aa0ba902b7' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/span_id_\u003c_'00f067aa0ba902b7'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE encode(span_id, 'hex') \u003c '00f067aa0ba902b7' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/span_id_=_'00f067aa0ba902b7'",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE span_id = decode('00f067aa0ba902b7', 'hex') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/span_id_\u003e=_'00f067aa0ba902b7'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE encode(span_id, 'hex') \u003e= '00f067aa0ba902b7' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/span_id_\u003e_'00f067aa0ba902b7'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE encode(span_id, 'hex') \u003e '00f067aa0ba902b7' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/span_id_BETWEEN_'00f067aa0ba902b7'_AND_'00f067aa0ba902b8'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE encode(span_id, 'hex') BETWEEN '00f067aa0ba902b7' AND '00f067aa0ba902b8' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/span_id_CONTAINS_'aa0b'",
@@ -610,6 +738,10 @@
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE encode(span_id, 'hex') \u003c\u003e '' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/span_id_ILIKE_'00F0%'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE LOWER(encode(span_id, 'hex')) LIKE LOWER('00F0%') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/span_id_IN_['00f067aa0ba902b7',_'00f067aa0ba902b8']",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (span_id = decode('00f067aa0ba902b7', 'hex') OR span_id = decode('00f067aa0ba902b8', 'hex')) AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
@@ -618,16 +750,44 @@
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE encode(span_id, 'hex') LIKE '00f0%' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/span_id_NOT_BETWEEN_'00f067aa0ba902b7'_AND_'00f067aa0ba902b8'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE encode(span_id, 'hex') NOT BETWEEN '00f067aa0ba902b7' AND '00f067aa0ba902b8' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/span_id_NOT_CONTAINS_'aa0b'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE LOWER(encode(span_id, 'hex')) NOT LIKE LOWER('%aa0b%') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/span_id_NOT_EXISTS",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE encode(span_id, 'hex') = '' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/span_id_NOT_ILIKE_'00F0%'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE LOWER(encode(span_id, 'hex')) NOT LIKE LOWER('00F0%') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/span_id_NOT_IN_['00f067aa0ba902b7',_'00f067aa0ba902b8']",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE NOT (span_id = decode('00f067aa0ba902b7', 'hex') OR span_id = decode('00f067aa0ba902b8', 'hex')) AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineFilterMatrix/span_id_NOT_LIKE_'00f0%'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE encode(span_id, 'hex') NOT LIKE '00f0%' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/span_id_NOT_REGEXP_'^00f0'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE NOT regexp_like(encode(span_id, 'hex'), '^00f0') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/span_id_REGEXP_'^00f0'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE regexp_like(encode(span_id, 'hex'), '^00f0') AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
       "name": "TestEngineFilterMatrix/user.id_!=_'a'",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE coalesce(attributes_string['user.id'], '') \u003c\u003e 'a' AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/user.id_\u003c=_'m'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (coalesce(attributes_string['user.id'], '') \u003c= 'm' AND attributes_string['user.id'] IS NOT NULL) AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/user.id_\u003c_'m'",
@@ -636,6 +796,10 @@
     {
       "name": "TestEngineFilterMatrix/user.id_=_'a'",
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (coalesce(attributes_string['user.id'], '') = 'a' AND attributes_string['user.id'] IS NOT NULL) AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
+    },
+    {
+      "name": "TestEngineFilterMatrix/user.id_\u003e=_'m'",
+      "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (coalesce(attributes_string['user.id'], '') \u003e= 'm' AND attributes_string['user.id'] IS NOT NULL) AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
       "name": "TestEngineFilterMatrix/user.id_\u003e_'m'",

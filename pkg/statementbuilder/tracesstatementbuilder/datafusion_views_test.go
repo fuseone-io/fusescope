@@ -138,7 +138,7 @@ func TestEngineRefusesWhatItDoesNotServe(t *testing.T) {
 // scope, and a derived column.
 func TestEngineFilterMatrix(t *testing.T) {
 	text := []string{
-		"%s = 'a'", "%s != 'a'", "%s < 'm'", "%s > 'm'",
+		"%s = 'a'", "%s != 'a'", "%s < 'm'", "%s <= 'm'", "%s > 'm'", "%s >= 'm'",
 		"%s LIKE 'a%%'", "%s NOT LIKE 'a%%'", "%s ILIKE 'A%%'", "%s NOT ILIKE 'A%%'",
 		"%s CONTAINS 'a'", "%s NOT CONTAINS 'a'", "%s REGEXP '^a'", "%s NOT REGEXP '^a'",
 		"%s IN ['a', 'b']", "%s NOT IN ['a', 'b']", "%s EXISTS", "%s NOT EXISTS",
@@ -152,8 +152,12 @@ func TestEngineFilterMatrix(t *testing.T) {
 	boolean := []string{"%s = true", "%s != true", "%s EXISTS", "%s NOT EXISTS"}
 	id := []string{
 		"%s = '00f067aa0ba902b7'", "%s != '00f067aa0ba902b7'",
+		"%s < '00f067aa0ba902b7'", "%s <= '00f067aa0ba902b7'", "%s > '00f067aa0ba902b7'", "%s >= '00f067aa0ba902b7'",
+		"%s LIKE '00f0%%'", "%s NOT LIKE '00f0%%'", "%s ILIKE '00F0%%'", "%s NOT ILIKE '00F0%%'",
+		"%s CONTAINS 'aa0b'", "%s NOT CONTAINS 'aa0b'", "%s REGEXP '^00f0'", "%s NOT REGEXP '^00f0'",
 		"%s IN ['00f067aa0ba902b7', '00f067aa0ba902b8']", "%s NOT IN ['00f067aa0ba902b7', '00f067aa0ba902b8']",
-		"%s LIKE '00f0%%'", "%s CONTAINS 'aa0b'", "%s EXISTS", "%s NOT EXISTS",
+		"%s EXISTS", "%s NOT EXISTS",
+		"%s BETWEEN '00f067aa0ba902b7' AND '00f067aa0ba902b8'", "%s NOT BETWEEN '00f067aa0ba902b7' AND '00f067aa0ba902b8'",
 	}
 	fields := []struct {
 		field     string
@@ -203,7 +207,10 @@ func TestEngineAggregationMatrix(t *testing.T) {
 		"min(duration_nano)", "minIf(duration_nano, has_error = true)", "max(duration_nano)", "maxIf(duration_nano, has_error = true)",
 		"p05(duration_nano)", "p10(duration_nano)", "p20(duration_nano)", "p25(duration_nano)", "p50(duration_nano)",
 		"p75(duration_nano)", "p90(duration_nano)", "p95(duration_nano)", "p99(duration_nano)", "p999(duration_nano)",
-		"p99if(duration_nano, has_error = true)",
+		"p05if(duration_nano, has_error = true)", "p10if(duration_nano, has_error = true)", "p20if(duration_nano, has_error = true)",
+		"p25if(duration_nano, has_error = true)", "p50if(duration_nano, has_error = true)", "p75if(duration_nano, has_error = true)",
+		"p90if(duration_nano, has_error = true)", "p95if(duration_nano, has_error = true)", "p99if(duration_nano, has_error = true)",
+		"p999if(duration_nano, has_error = true)",
 		"rate()", "rate_if(has_error = true)", "rate_sum(duration_nano)", "rate_avg(duration_nano)", "rate_min(duration_nano)", "rate_max(duration_nano)",
 		"sum(duration_nano) / count()",
 		"count_distinct(name, kind_string)",
