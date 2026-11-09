@@ -7,7 +7,8 @@ code and do not track upstream; useful upstream fixes are cherry-picked by hand.
 | Repo | What | License |
 |---|---|---|
 | `fuseone-io/fusescope` (this) | Go backend (`cmd/community`, `pkg/`), React frontend (`frontend/`), integration/e2e tests (`tests/`) | MIT |
-| `fuseone-io/fusescope-otel-collector` | collector + ClickHouse schema migrator (owns the telemetry schema) | AGPL-3.0 |
+| `fuseone-io/fusescope-collector-server` | the FuseScope collector and `fusescope-schema`, the ClickHouse schema migrator (owns the telemetry schema) | Apache-2.0 |
+| `fuseone-io/fusescope-otel-collector` | the earlier collector and migrator, **archived** (#229); its images stay published | AGPL-3.0 |
 | `fuseone-io/fusescope-charts` | Helm charts | MIT |
 
 These rules apply repo-wide. Topic rules live in [`.claude/rules/`](.claude/rules/)

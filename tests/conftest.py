@@ -103,8 +103,8 @@ def pytest_addoption(parser: pytest.Parser):
         default="delete",
         help="sqlite mode",
     )
-    # Keep the version defaults below of the images e2e starts (postgres, clickhouse and the
-    # --schema-migrator default's migrator) in sync with pull-images in .github/workflows/e2eci.yaml.
+    # Keep the version defaults below of the images e2e starts (postgres, clickhouse and
+    # fusescope-schema) in sync with pull-images in .github/workflows/e2eci.yaml.
     parser.addoption(
         "--postgres-version",
         action="store",
@@ -118,42 +118,22 @@ def pytest_addoption(parser: pytest.Parser):
         help="clickhouse version",
     )
     parser.addoption(
-        "--schema-migrator-version",
-        action="store",
-        default="0.145.0",
-        help="ghcr.io/fuseone-io/fusescope-schema-migrator tag, the fork's migrator that --schema-migrator=fork runs",
-    )
-    parser.addoption(
         "--fusescope-schema-version",
         action="store",
         default="0.4.1@sha256:9951f2479ac6e5150b116cd856569aaae6ed921e9b951f0fd9c93160e7311077",
-        help="ghcr.io/fuseone-io/fusescope-collector tag (pinned by digest) whose /fusescope-schema --schema-migrator=fusescope runs",
-    )
-    parser.addoption(
-        "--schema-migrator",
-        action="store",
-        default="fusescope",
-        choices=["fusescope", "fork"],
-        help="the migrator that creates the ClickHouse schema: fusescope-schema (default) or fork, the earlier fusescope-schema-migrator. Independent of --otlp-collector",
+        help="ghcr.io/fuseone-io/fusescope-collector tag (pinned by digest) whose /fusescope-schema creates the ClickHouse schema",
     )
     parser.addoption(
         "--collector-version",
         action="store",
         default="0.145.0",
-        help="fusescope otel collector version",
+        help="ghcr.io/fuseone-io/fusescope-otel-collector tag, the reference the simulatorcontract suite replays its corpus through",
     )
     parser.addoption(
         "--fusescope-collector-version",
         action="store",
         default="0.3.1",
         help="ghcr.io/fuseone-io/fusescope-collector tag, the collector that receives OTLP and RUM",
-    )
-    parser.addoption(
-        "--otlp-collector",
-        action="store",
-        default="fusescope",
-        choices=["fusescope", "fork"],
-        help="the collector the suites send OTLP to: fusescope-collector (default, as the chart installs it) or fork, the earlier fusescope-otel-collector",
     )
     parser.addoption(
         "--signoz-image",
