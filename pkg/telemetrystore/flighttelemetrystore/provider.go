@@ -18,9 +18,9 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
@@ -128,22 +128,22 @@ func (p *provider) Query(ctx context.Context, stmt string, args ...any) (telemet
 	}
 	info, err := p.client.Execute(ctx, stmt)
 	if err != nil {
-		return nil, end.end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	if len(info.GetEndpoint()) != 1 {
 		return nil, end.end(errors.NewInternalf(ErrCodeEngine, "fusescope-engine answered %d endpoints, one expected", len(info.GetEndpoint())))
 	}
 	stream, err := p.client.Client.DoGet(ctx, info.GetEndpoint()[0].GetTicket())
 	if err != nil {
-		return nil, end.end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	header, err := stream.Header()
 	if err != nil {
-		return nil, end.end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	reader, err := flight.NewRecordReader(stream, ipc.WithAllocator(p.mem))
 	if err != nil {
-		return nil, end.end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	return p.rows(ctx, reader, header, end)
 }
@@ -155,15 +155,15 @@ func (p *provider) Do(ctx context.Context, action string, body []byte) (telemetr
 	}
 	results, err := p.client.Client.DoAction(ctx, &flight.Action{Type: action, Body: body})
 	if err != nil {
-		return nil, end.end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	header, err := results.Header()
 	if err != nil {
-		return nil, end.end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	reader, err := ipc.NewReader(&actionStream{results: results}, ipc.WithAllocator(p.mem))
 	if err != nil {
-		return nil, end.end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	return p.rows(ctx, reader, header, end)
 }
@@ -182,6 +182,7 @@ func (p *provider) begin(ctx context.Context, operation, statement string) (cont
 	}
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 	ctx, observed := p.observer.begin(ctx, operation, statement, identity.Tenant.StringValue())
+	ctx = withTraceContext(ctx)
 	event := &telemetrystore.QueryEvent{Operation: operation, StartTime: time.Now()}
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	ctx, cancel := context.WithCancel(ctx)
@@ -207,31 +208,24 @@ func (e *ending) end(err error) error {
 func (p *provider) rows(ctx context.Context, src source, header metadata.MD, end *ending) (telemetrystore.Rows, error) {
 	warnings := partialCategories(header.Get(PartialHeader))
 	end.observed.partial = warnings
-	rows, err := newRows(castSource{source: src, cast: func(err error) error { return p.cast(ctx, err) }}, warnings, func(err error) { _ = end.end(err) })
+	rows, err := newRows(castSource{source: src, cast: func(err error) error { return end.cast(ctx, err) }}, warnings, func(err error) { _ = end.end(err) })
 	if err != nil {
 		return nil, err
 	}
 	return rows, nil
 }
 
-// cast logs what the engine said, which may name SQL, columns or paths, and returns an error that
-// carries only what kind of refusal it was. A refusal of the deployment's making, a wrong kid or a
-// skewed clock, is a warning and an engine failure an error; the query's own refusals stay at debug.
-func (p *provider) cast(ctx context.Context, err error) error {
+// cast returns an error that carries only what kind of refusal it was: the engine's message may
+// name SQL, columns or paths. The call's observation records the code, for its one log event.
+func (e *ending) cast(ctx context.Context, err error) error {
 	if err == nil {
 		return nil
 	}
 	if st, ok := status.FromError(err); ok {
-		level := slog.LevelDebug
-		switch st.Code() {
-		case codes.Unauthenticated, codes.PermissionDenied:
-			level = slog.LevelWarn
-		case codes.Internal, codes.Unknown, codes.DataLoss:
-			level = slog.LevelError
-		}
-		p.settings.Logger().Log(ctx, level, "fusescope-engine refused a call", slog.String("code", st.Code().String()), errors.Attr(err))
+		e.observed.code = st.Code()
+		e.observed.refused = true
 	} else if ctx.Err() == nil {
-		p.settings.Logger().WarnContext(ctx, "fusescope-engine unreachable", errors.Attr(err))
+		e.observed.unreachable = true
 	}
 	return castError(ctx, err)
 }
@@ -243,3 +237,14 @@ type castSource struct {
 }
 
 func (s castSource) Err() error { return s.cast(s.source.Err()) }
+
+// withTraceContext carries the call's span to the engine as W3C trace context in the gRPC metadata.
+func withTraceContext(ctx context.Context) context.Context {
+	carrier := propagation.MapCarrier{}
+	propagation.TraceContext{}.Inject(ctx, carrier)
+	pairs := make([]string, 0, 2*len(carrier))
+	for key, value := range carrier {
+		pairs = append(pairs, key, value)
+	}
+	return metadata.AppendToOutgoingContext(ctx, pairs...)
+}

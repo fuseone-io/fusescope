@@ -100,6 +100,8 @@ type fakeEngine struct {
 	mu      sync.Mutex
 	tokens  []*jwt.Token
 	actions []*flight.Action
+	// traceparents are the W3C trace contexts the calls carried, one per authorised call.
+	traceparents []string
 }
 
 func (e *fakeEngine) authorize(ctx context.Context) error {
@@ -116,6 +118,7 @@ func (e *fakeEngine) authorize(ctx context.Context) error {
 	}
 	e.mu.Lock()
 	e.tokens = append(e.tokens, token)
+	e.traceparents = append(e.traceparents, strings.Join(md.Get("traceparent"), ","))
 	e.mu.Unlock()
 	return nil
 }

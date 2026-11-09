@@ -39,9 +39,10 @@ func TestAnEngineTimeoutBeforeTheCallersDeadlineIsTheEngines(t *testing.T) {
 	assert.ErrorContains(t, err, "fusescope-engine refused the call")
 }
 
-// engineTooManyRows is the grpc-status-details-bin fusescope-engine 0.0.2 sends with a query past
-// query.max_rows: a google.rpc.Status holding an ErrorInfo of reason TOO_MANY_ROWS.
-const engineTooManyRows = "0808121f71756572792072657475726e6564206d6f7265207468616e203220726f77731a4d0a28747970652e676f6f676c65617069732e636f6d2f676f6f676c652e7270632e4572726f72496e666f12210a0d544f4f5f4d414e595f524f575312106675736573636f70652d656e67696e65"
+// engineTooManyRows is the grpc-status-details-bin fusescope-engine 0.0.2 sends with a query past a
+// query.max_rows of 2: a google.rpc.Status of message "result exceeded 2 rows" holding an
+// ErrorInfo of reason TOO_MANY_ROWS.
+const engineTooManyRows = "08081216726573756c74206578636565646564203220726f77731a4d0a28747970652e676f6f676c65617069732e636f6d2f676f6f676c652e7270632e4572726f72496e666f12210a0d544f4f5f4d414e595f524f575312106675736573636f70652d656e67696e65"
 
 func statusFromDetails(t *testing.T, hexDetails string) error {
 	raw, err := hex.DecodeString(hexDetails)
@@ -52,7 +53,9 @@ func statusFromDetails(t *testing.T, hexDetails string) error {
 }
 
 func TestTheEnginesRowCapIsTooLarge(t *testing.T) {
-	err := castError(context.Background(), statusFromDetails(t, engineTooManyRows))
+	refused := statusFromDetails(t, engineTooManyRows)
+	assert.Equal(t, "result exceeded 2 rows", status.Convert(refused).Message())
+	err := castError(context.Background(), refused)
 	assert.True(t, errors.Ast(err, errors.TypePayloadTooLarge), "%v", err)
 	assert.True(t, errors.Asc(err, ErrCodeTooManyRows), "%v", err)
 }

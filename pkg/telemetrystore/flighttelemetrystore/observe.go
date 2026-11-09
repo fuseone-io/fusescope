@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
+	grpccodes "google.golang.org/grpc/codes"
 )
 
 // observer reports each call to the engine as one log event, one client span and its metrics.
@@ -56,6 +57,10 @@ type call struct {
 	bytes     int
 	digest    string
 	partial   []string
+	// code is the gRPC code the engine refused with, when refused; unreachable when no status came.
+	code        grpccodes.Code
+	refused     bool
+	unreachable bool
 }
 
 // begin starts observing operation, a statement or an action name, whose text is statement.
@@ -104,7 +109,7 @@ func (c *call) finish(ctx context.Context, err error) {
 		c.span.SetStatus(codes.Error, outcome)
 	}
 	c.span.End()
-	c.observer.logger.DebugContext(ctx, "fusescope-engine call",
+	attrs := []slog.Attr{
 		slog.String("route", string(c.route)),
 		slog.String("operation", c.operation),
 		slog.String("tenant", c.tenant),
@@ -113,7 +118,29 @@ func (c *call) finish(ctx context.Context, err error) {
 		slog.Int("statement_bytes", c.bytes),
 		slog.String("statement_sha256", c.digest),
 		slog.Any("partial", c.partial),
-	)
+	}
+	if c.refused {
+		attrs = append(attrs, slog.String("code", c.code.String()))
+	}
+	c.observer.logger.LogAttrs(ctx, c.level(), "fusescope-engine call", attrs...)
+}
+
+// level is warn for a refusal of the deployment's making, a wrong kid or a skewed clock, and for an
+// engine out of reach; error for an engine failure; debug for the query's own refusals and success.
+func (c *call) level() slog.Level {
+	switch {
+	case c.unreachable:
+		return slog.LevelWarn
+	case !c.refused:
+		return slog.LevelDebug
+	}
+	switch c.code {
+	case grpccodes.Unauthenticated, grpccodes.PermissionDenied:
+		return slog.LevelWarn
+	case grpccodes.Internal, grpccodes.Unknown, grpccodes.DataLoss:
+		return slog.LevelError
+	}
+	return slog.LevelDebug
 }
 
 // outcomeOf is ok, partial, the context's end or the error's type: a bounded set.

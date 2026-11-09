@@ -3,7 +3,9 @@ package flighttelemetrystore
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log/slog"
+	"strings"
 	"testing"
 	"time"
 
@@ -20,6 +22,8 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestPartialReasonsAreBoundedCategories(t *testing.T) {
@@ -128,5 +132,58 @@ func TestARefusalIsObservedByItsKind(t *testing.T) {
 				requireLabels(t, points, map[string]string{"route": "unrouted", "operation": "query", "outcome": "payload-too-large"})
 			}
 		}
+	}
+}
+
+func TestARefusalIsLoggedOnceWithoutTheEnginesMessage(t *testing.T) {
+	bed := newTestbed(t)
+	const statement = "select * from spans where user_id = 'secret-tenant-value'"
+	bed.engine.refuse = status.Error(codes.InvalidArgument, "could not plan: "+statement)
+	p, o := openObserved(t, bed)
+	_, err := p.Query(userContext(), statement)
+	require.Error(t, err)
+	assert.NotContains(t, err.Error(), "secret-tenant-value")
+	assert.NotContains(t, o.logs.String(), "secret-tenant-value")
+	var calls []string
+	for _, line := range strings.Split(strings.TrimSpace(o.logs.String()), "\n") {
+		if strings.Contains(line, `"msg":"fusescope-engine call"`) {
+			calls = append(calls, line)
+		}
+	}
+	require.Len(t, calls, 1, "one event per call: %s", o.logs.String())
+	assert.NotContains(t, o.logs.String(), "refused a call", "no second log of the refusal")
+	assert.Contains(t, calls[0], `"code":"InvalidArgument"`)
+	assert.Contains(t, calls[0], `"level":"DEBUG"`)
+}
+
+func TestARefusalOfTheDeploymentIsAWarning(t *testing.T) {
+	for code, level := range map[codes.Code]string{
+		codes.Unauthenticated: "WARN",
+		codes.Internal:        "ERROR",
+		codes.NotFound:        "DEBUG",
+	} {
+		bed := newTestbed(t)
+		bed.engine.refuse = status.Error(code, "detail the engine logged")
+		p, o := openObserved(t, bed)
+		_, err := p.Query(userContext(), "select 1")
+		require.Error(t, err)
+		assert.Contains(t, o.logs.String(), `"level":"`+level+`"`, code)
+		assert.NotContains(t, o.logs.String(), "detail the engine logged", code)
+	}
+}
+
+func TestACallCarriesItsTraceContextToTheEngine(t *testing.T) {
+	bed := newTestbed(t)
+	p, o := openObserved(t, bed)
+	rows, err := p.Query(userContext(), "select trace_id, name from spans")
+	require.NoError(t, err)
+	readAll(t, rows)
+	require.NoError(t, rows.Close())
+	spans := o.spans.Ended()
+	require.Len(t, spans, 1)
+	want := fmt.Sprintf("00-%s-%s-01", spans[0].SpanContext().TraceID(), spans[0].SpanContext().SpanID())
+	require.Len(t, bed.engine.traceparents, 2, "GetFlightInfo and DoGet")
+	for _, got := range bed.engine.traceparents {
+		assert.Equal(t, want, got)
 	}
 }
