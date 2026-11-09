@@ -93,7 +93,7 @@ func sharedOperator(
 	}
 	// Coercion switches only on the data type, which every member shares, so
 	// the first member stands in for the field.
-	read, value := DataTypeCollisionHandledFieldName(field.Single(), value, sql, operator)
+	read, value := DataTypeCollisionHandledFieldNameIn(DialectOf(q), field.Single(), value, sql, operator)
 	return OperatorCondition(ctx, q, storage, field, read, operator, value, sb)
 }
 
@@ -141,9 +141,9 @@ func OperatorCondition(
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(read), sb.Var(value)), nil
+		return DialectOf(q).Regexp(sqlbuilder.Escape(read), sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
-		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(read), sb.Var(value)), nil
+		return "NOT " + DialectOf(q).Regexp(sqlbuilder.Escape(read), sb.Var(value)), nil
 
 	case qbtypes.FilterOperatorBetween:
 		values, ok := value.([]any)

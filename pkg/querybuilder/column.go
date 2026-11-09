@@ -2,7 +2,6 @@ package querybuilder
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -33,6 +32,7 @@ func Column(
 		targetValue = 0.0
 	}
 	coerced := target != telemetrytypes.FieldDataTypeUnspecified
+	d := DialectOf(q)
 	several := len(resolved.Fields) > 1
 
 	branches := make([]string, 0, len(resolved.Fields)*2)
@@ -52,19 +52,19 @@ func Column(
 		}
 		expr := read.SQL
 		if coerced && !read.KeepType {
-			expr, _ = DataTypeCollisionHandledFieldName(logical.Single(), targetValue, expr, qbtypes.FilterOperatorUnknown)
+			expr, _ = DataTypeCollisionHandledFieldNameIn(d, logical.Single(), targetValue, expr, qbtypes.FilterOperatorUnknown)
 		}
 		// several native shapes share one multiIf, so every branch reads as text
 		branch := expr
 		if !coerced && several {
-			branch, _ = DataTypeCollisionHandledFieldName(logical.Single(), "", expr, qbtypes.FilterOperatorUnknown)
+			branch, _ = DataTypeCollisionHandledFieldNameIn(d, logical.Single(), "", expr, qbtypes.FilterOperatorUnknown)
 		}
 		switch read.WhenAbsent {
 		case qbtypes.AlwaysPresent, qbtypes.AbsentIsValue:
 			if len(branches) == 0 {
 				return expr, nil
 			}
-			return fmt.Sprintf("multiIf(%s, %s)", strings.Join(branches, ", "), branch), nil
+			return d.MultiIf(branches, branch), nil
 		case qbtypes.AbsentIsNull:
 			if !several {
 				return expr, nil
@@ -80,7 +80,7 @@ func Column(
 		}
 		return "", NewKeyNotFoundError(resolved.Key.Name, nil)
 	}
-	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(branches, ", ")), nil
+	return d.MultiIf(branches, "NULL"), nil
 }
 
 func bareRead(logical *telemetrytypes.LogicalField) bool {

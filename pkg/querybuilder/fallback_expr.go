@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/chschema"
@@ -88,6 +87,11 @@ func FormatFullTextSearch(input string) string {
 }
 
 func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, value any, tblFieldName string, operator qbtypes.FilterOperator) (string, any) {
+	return DataTypeCollisionHandledFieldNameIn(ClickHouse{}, key, value, tblFieldName, operator)
+}
+
+// DataTypeCollisionHandledFieldNameIn is DataTypeCollisionHandledFieldName with the casts of d.
+func DataTypeCollisionHandledFieldNameIn(d qbtypes.Dialect, key *telemetrytypes.TelemetryFieldKey, value any, tblFieldName string, operator qbtypes.FilterOperator) (string, any) {
 	// This block of code exists to handle the data type collisions
 	// We don't want to fail the requests when there is a key with more than one data type
 	// Let's take an example of `http.status_code`, and consider user sent a string value and number value
@@ -100,17 +104,17 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		switch v := value.(type) {
 		case float64:
 			// try to convert the string value to to number
-			tblFieldName = castFloat(tblFieldName)
+			tblFieldName = d.FloatOrNull(tblFieldName)
 		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-			tblFieldName = castFloat(tblFieldName)
+			tblFieldName = d.FloatOrNull(tblFieldName)
 		case []any:
 			if allFloats(v) {
-				tblFieldName = castFloat(tblFieldName)
+				tblFieldName = d.FloatOrNull(tblFieldName)
 			} else {
 				// Any mix that is not all-floats (e.g. [bool, float64], [bool], all-strings)
 				// must be stringified: passing a Go bool as UInt8 against a String column
 				// causes ClickHouse error 386 "no supertype for String and UInt8".
-				_, value = castString(tblFieldName), toStrings(v)
+				_, value = d.ToText(tblFieldName), toStrings(v)
 			}
 		case bool:
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
@@ -139,7 +143,7 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		// and clickhouse float64 has a 53-bit mantissa, so values above 2^53 rounds to the nearest representable double
 		// breaking the equality filters for large integers
 		case float32, float64:
-			tblFieldName = castFloatHack(tblFieldName)
+			tblFieldName = d.Float(tblFieldName)
 		case string:
 			// check if it's a number inside a string
 			isNumber := false
@@ -149,51 +153,51 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 
 			if !operator.IsComparisonOperator() || !isNumber {
 				// try to convert the number attribute to string
-				tblFieldName = castString(tblFieldName) // numeric col vs string literal
+				tblFieldName = d.ToText(tblFieldName) // numeric col vs string literal
 			} else {
-				tblFieldName = castFloatHack(tblFieldName)
+				tblFieldName = d.Float(tblFieldName)
 			}
 		case []any:
 			if allFloats(v) {
-				tblFieldName = castFloatHack(tblFieldName)
+				tblFieldName = d.Float(tblFieldName)
 			} else if hasString(v) {
-				tblFieldName, value = castString(tblFieldName), toStrings(v)
+				tblFieldName, value = d.ToText(tblFieldName), toStrings(v)
 			}
 		case bool:
 			// a bool can't equal a number; compare as strings (type-safe, matches
 			// nothing) instead of erroring with "Bad get: ... Float64" (CH 170).
-			tblFieldName, value = castString(tblFieldName), fmt.Sprintf("%t", v)
+			tblFieldName, value = d.ToText(tblFieldName), fmt.Sprintf("%t", v)
 		}
 
 	case telemetrytypes.FieldDataTypeBool,
 		telemetrytypes.FieldDataTypeArrayBool:
 		switch v := value.(type) {
 		case string:
-			tblFieldName = castString(tblFieldName)
+			tblFieldName = d.ToText(tblFieldName)
 		case []any:
 			if hasString(v) {
-				tblFieldName, value = castString(tblFieldName), toStrings(v)
+				tblFieldName, value = d.ToText(tblFieldName), toStrings(v)
 			}
 		}
 	case telemetrytypes.FieldDataTypeArrayDynamic:
 		switch v := value.(type) {
 		case string:
-			tblFieldName = castString(tblFieldName)
+			tblFieldName = d.ToText(tblFieldName)
 		case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-			tblFieldName = accurateCastFloat(tblFieldName)
+			tblFieldName = d.ExactFloatOrNull(tblFieldName)
 		case bool:
-			tblFieldName = castBool(tblFieldName)
+			tblFieldName = d.BoolOrNull(tblFieldName)
 		case []any:
 			// dynamic array elements will be default casted to string
-			tblFieldName, value = castString(tblFieldName), toStrings(v)
+			tblFieldName, value = d.ToText(tblFieldName), toStrings(v)
 		}
 	case telemetrytypes.FieldDataTypeUnspecified:
 		if operator == qbtypes.FilterOperatorUnknown {
 			switch value.(type) {
 			case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, json.Number:
-				tblFieldName = accurateCastFloat(tblFieldName)
+				tblFieldName = d.ExactFloatOrNull(tblFieldName)
 			case string:
-				tblFieldName = castString(tblFieldName)
+				tblFieldName = d.ToText(tblFieldName)
 			}
 		}
 	}
@@ -208,22 +212,6 @@ func ColumnIsTemporal(col *chschema.Column) bool {
 		return true
 	}
 	return false
-}
-
-func castFloat(col string) string  { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
-func castString(col string) string { return fmt.Sprintf("toString(%s)", col) }
-func castBool(col string) string   { return fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", col) }
-func accurateCastFloat(col string) string {
-	return fmt.Sprintf("accurateCastOrNull(%s, 'Float64')", col)
-}
-
-// castFloatHack leaves a read already cast to Float64 bare: the wrapper would hide it from
-// its skip index.
-func castFloatHack(col string) string {
-	if strings.HasPrefix(col, "toFloat64OrNull(") {
-		return col
-	}
-	return fmt.Sprintf("toFloat64(%s)", col)
 }
 
 func allFloats(in []any) bool {

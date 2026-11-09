@@ -49,6 +49,8 @@ type QueryInfo struct {
 	FamiliesOn       bool
 	BodyJSONOn       bool
 	TraceAttrsJSONOn bool
+	// Dialect is the SQL the query renders in; nil is ClickHouse.
+	Dialect Dialect
 }
 
 // Absent is how a field key reads for a row that does not carry it, with

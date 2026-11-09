@@ -15,9 +15,10 @@ func isSpanSearchScopeField(name string) bool {
 	return keyName == SpanSearchScopeRoot || keyName == SpanSearchScopeEntryPoint
 }
 
-func buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, startNs uint64) (string, error) {
+// checkSpanScopeOperand accepts only `= true` on a span scope key.
+func checkSpanScopeOperand(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) error {
 	if operator != qbtypes.FilterOperatorEqual {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name)
 	}
 
 	var isTrue bool
@@ -27,11 +28,18 @@ func buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbt
 	case string:
 		isTrue = strings.ToLower(v) == "true"
 	default:
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s expects boolean value, got %T", key.Name, value)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s expects boolean value, got %T", key.Name, value)
 	}
 
 	if !isTrue {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s can only be filtered with value 'true'", key.Name)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s can only be filtered with value 'true'", key.Name)
+	}
+	return nil
+}
+
+func buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, startNs uint64) (string, error) {
+	if err := checkSpanScopeOperand(key, operator, value); err != nil {
+		return "", err
 	}
 
 	keyName := strings.ToLower(key.Name)
