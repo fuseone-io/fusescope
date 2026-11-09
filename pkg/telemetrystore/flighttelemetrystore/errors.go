@@ -2,6 +2,7 @@ package flighttelemetrystore
 
 import (
 	"context"
+	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -11,7 +12,8 @@ import (
 var ErrCodeEngine = errors.MustNewCode("telemetrystore_engine")
 
 // castError keeps a context error as it is, so callers that test for a deadline find it, and
-// gives an engine status the error type its code means. The engine's message is not carried: it
+// gives an engine status the error type its code means. The gRPC deadline timer can fire before
+// the context's own, so a DeadlineExceeded once the caller's deadline has passed is the caller's. The engine's message is not carried: it
 // may name SQL, columns or paths, and the error can reach the API.
 func castError(ctx context.Context, err error) error {
 	if err == nil {
@@ -23,6 +25,9 @@ func castError(ctx context.Context, err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return errors.NewInternalf(ErrCodeEngine, "fusescope-engine is unreachable")
+	}
+	if deadline, set := ctx.Deadline(); set && st.Code() == codes.DeadlineExceeded && !time.Now().Before(deadline) {
+		return context.DeadlineExceeded
 	}
 	typ := errors.TypeInternal
 	switch st.Code() {
