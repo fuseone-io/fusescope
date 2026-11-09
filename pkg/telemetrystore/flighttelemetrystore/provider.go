@@ -20,6 +20,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
@@ -207,13 +208,21 @@ func (p *provider) rows(ctx context.Context, src source, header metadata.MD, end
 }
 
 // cast logs what the engine said, which may name SQL, columns or paths, and returns an error that
-// carries only what kind of refusal it was.
+// carries only what kind of refusal it was. A refusal of the deployment's making, a wrong kid or a
+// skewed clock, is a warning and an engine failure an error; the query's own refusals stay at debug.
 func (p *provider) cast(ctx context.Context, err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := status.FromError(err); ok {
-		p.settings.Logger().DebugContext(ctx, "fusescope-engine refused a call", errors.Attr(err))
+	if st, ok := status.FromError(err); ok {
+		level := slog.LevelDebug
+		switch st.Code() {
+		case codes.Unauthenticated, codes.PermissionDenied:
+			level = slog.LevelWarn
+		case codes.Internal, codes.Unknown, codes.DataLoss:
+			level = slog.LevelError
+		}
+		p.settings.Logger().Log(ctx, level, "fusescope-engine refused a call", slog.String("code", st.Code().String()), errors.Attr(err))
 	} else if ctx.Err() == nil {
 		p.settings.Logger().WarnContext(ctx, "fusescope-engine unreachable", errors.Attr(err))
 	}

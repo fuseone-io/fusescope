@@ -74,11 +74,15 @@ func TestRefusals(t *testing.T) {
 }
 
 func TestNumbersAndBools(t *testing.T) {
-	assert.Equal(t, "-42", Int(-42))
+	assert.Equal(t, "(-42)", Int(-42), "a negative cannot meet a minus before it and open a comment")
+	assert.Equal(t, "42", Int(42))
 	assert.Equal(t, "18446744073709551615", Uint(math.MaxUint64))
 	got, err := Float(0.1)
 	require.NoError(t, err)
 	assert.Equal(t, "0.1", got)
+	got, err = Float(-0.5)
+	require.NoError(t, err)
+	assert.Equal(t, "(-0.5)", got)
 	got, err = Float(1e21)
 	require.NoError(t, err)
 	assert.Equal(t, "1e+21", got)

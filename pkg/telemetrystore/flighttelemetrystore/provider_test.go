@@ -9,6 +9,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"log/slog"
+	"sync"
 	"testing"
 	"time"
 
@@ -260,4 +262,56 @@ func TestARotatedKeySignsUnderItsOwnKid(t *testing.T) {
 	parsed, _, err := jwt.NewParser().ParseUnverified(after, jwt.MapClaims{})
 	require.NoError(t, err)
 	assert.Equal(t, thumbprintOf(t, public), parsed.Header["kid"])
+}
+
+// recorder keeps the level of every record logged.
+type recorder struct {
+	mu     sync.Mutex
+	levels []slog.Level
+}
+
+func (r *recorder) Enabled(context.Context, slog.Level) bool { return true }
+
+func (r *recorder) Handle(_ context.Context, record slog.Record) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.levels = append(r.levels, record.Level)
+	return nil
+}
+
+func (r *recorder) WithAttrs([]slog.Attr) slog.Handler { return r }
+
+func (r *recorder) WithGroup(string) slog.Handler { return r }
+
+// A refusal that points at the deployment, a wrong kid, skewed clocks or an engine bug, is logged
+// at the default level; one that is the query's own is not.
+func TestEngineRefusalsAreLoggedByWhatTheyMean(t *testing.T) {
+	testCases := []struct {
+		name string
+		code codes.Code
+		want slog.Level
+	}{
+		{name: "Unauthenticated_Warn", code: codes.Unauthenticated, want: slog.LevelWarn},
+		{name: "PermissionDenied_Warn", code: codes.PermissionDenied, want: slog.LevelWarn},
+		{name: "Internal_Error", code: codes.Internal, want: slog.LevelError},
+		{name: "InvalidArgument_Debug", code: codes.InvalidArgument, want: slog.LevelDebug},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			bed := newTestbed(t)
+			bed.engine.refuse = status.Error(testCase.code, "refused")
+			logs := &recorder{}
+			settings := factorytest.NewSettings()
+			settings.Logger = slog.New(logs)
+			fallback := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherEqual)
+			p, err := newProvider(settings, bed.config, 5*time.Second, fallback, nil, memory.DefaultAllocator)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = p.client.Close() })
+			_, err = p.Query(userContext(), "select 1")
+			require.Error(t, err)
+			logs.mu.Lock()
+			defer logs.mu.Unlock()
+			assert.Contains(t, logs.levels, testCase.want)
+		})
+	}
 }
