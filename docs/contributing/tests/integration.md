@@ -261,10 +261,8 @@ Tests can be configured using pytest options:
 - `--sqlite-mode` — SQLite journal mode: `delete` or `wal` (default: `delete`). Only relevant when `--sqlstore-provider=sqlite`.
 - `--postgres-version` — PostgreSQL version (default: `15`)
 - `--clickhouse-version` — ClickHouse version, also used for ClickHouse Keeper (default: `25.12.5`)
-- `--schema-migrator` — the migrator that creates the ClickHouse schema: `fusescope` (`fusescope-schema`, default) or `fork` (the earlier `fusescope-schema-migrator`). Independent of `--otlp-collector`
-- `--fusescope-schema-version` — `ghcr.io/fuseone-io/fusescope-collector` tag, pinned by digest, whose `/fusescope-schema` runs with `--schema-migrator=fusescope`
-- `--schema-migrator-version` — `fusescope-schema-migrator` tag for `--schema-migrator=fork` (default: `0.145.0`)
-  - Under `--reuse`, a change of migrator, of its version or of its overrides runs the migration again. `--schema-migrator=fork` refuses a ClickHouse that `fusescope-schema` migrated past `0001`: after its `0002` the fork is not supported there, so `--teardown` a stack `fusescope-schema` migrated before reusing it with the fork
+- `--fusescope-schema-version` — `ghcr.io/fuseone-io/fusescope-collector` tag, pinned by digest, whose `/fusescope-schema` creates the ClickHouse schema
+  - Under `--reuse`, a change of its version or of its overrides runs the migration again, and so does a stack the earlier fork's migrator migrated (that mode is removed, #229): `fusescope-schema` adopts its schema
 - `--with-web` — Build the frontend into the SigNoz image (required for e2e)
 - `--signoz-image` — Run this prebuilt image instead of building one from the current sources (CI builds it once per run)
 

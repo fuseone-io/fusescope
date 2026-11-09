@@ -1,6 +1,5 @@
 import json
 
-import docker
 import pytest
 from testcontainers.core.container import DockerContainer, Network
 
@@ -13,22 +12,12 @@ FUSESCOPE_SCHEMA_DIR = "/etc/fusescope-schema"
 
 
 def identity(pytestconfig: pytest.Config, env_overrides: dict | None) -> str:
-    """The migrator a run selects: its mode, that mode's version and the
-    overrides. Under --reuse a migration cached with another identity is
-    run again."""
-    mode = pytestconfig.getoption("--schema-migrator")
-    version = pytestconfig.getoption("--fusescope-schema-version" if mode == "fusescope" else "--schema-migrator-version")
-    return json.dumps({"migrator": mode, "version": version, "env": env_overrides or {}}, sort_keys=True)
-
-
-def require_fork_supported(conn) -> None:
-    """Refuses a ClickHouse where fusescope-schema recorded a migration after
-    0001: after its 0002 the fork's migrator is not supported on that schema
-    (fusescope-schema spec §10)."""
-    if not conn.query("EXISTS TABLE fusescope_schema.migrations").result_rows[0][0]:
-        return
-    if conn.query("SELECT count() FROM fusescope_schema.migrations WHERE id > 1").result_rows[0][0]:
-        raise RuntimeError("fusescope-schema migrated this ClickHouse past 0001, where the fork's migrator is not supported: run --schema-migrator=fork on a stack of its own (--teardown the reused one first)")
+    """The migration a run selects: fusescope-schema's version and the overrides.
+    Under --reuse a migration cached with another identity, the earlier fork's
+    included, is run again. The format is the fusescope mode's from before the
+    fork mode was removed (#229), so stacks reused since are not migrated again."""
+    version = pytestconfig.getoption("--fusescope-schema-version")
+    return json.dumps({"migrator": "fusescope", "version": version, "env": env_overrides or {}}, sort_keys=True)
 
 
 def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -40,20 +29,14 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
     env_overrides: dict | None = None,
 ) -> types.Operation:
     """
-    Factory function for running schema migrations with the migrator
-    --schema-migrator selects. Accepts optional env_overrides to customize the
-    migrator environment; the release comes from --fusescope-schema-version or,
-    for the fork, --schema-migrator-version.
+    Factory function for running schema migrations with fusescope-schema, the
+    release --fusescope-schema-version selects. Accepts optional env_overrides to
+    customize the migrator environment.
     """
 
     wanted = identity(pytestconfig, env_overrides)
 
     def create() -> types.Operation:
-        if pytestconfig.getoption("--schema-migrator") == "fusescope":
-            return create_fusescope_schema()
-        return create_fork()
-
-    def create_fusescope_schema() -> types.Operation:
         address = clickhouse.container.container_configs["9000"]
         config = {
             "endpoint": f"{address.address}:{address.port}",
@@ -79,53 +62,6 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
         if result["StatusCode"] != 0:
             print(logs)
             raise RuntimeError(f"fusescope-schema migrate exited {result['StatusCode']}")
-
-        return types.Operation(name=cache_key, identity=wanted)
-
-    def create_fork() -> types.Operation:
-        require_fork_supported(clickhouse.conn)
-        migrator_version = request.config.getoption("--schema-migrator-version")
-        client = docker.from_env()
-
-        environment = dict(env_overrides) if env_overrides else {}
-
-        container = client.containers.run(
-            image=f"ghcr.io/fuseone-io/fusescope-schema-migrator:{migrator_version}",
-            command=f"sync --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN']}",
-            detach=True,
-            auto_remove=False,
-            network=network.id,
-            environment=environment,
-        )
-
-        result = container.wait()
-
-        if result["StatusCode"] != 0:
-            logs = container.logs().decode(encoding="utf-8")
-            container.remove()
-            print(logs)
-            raise RuntimeError("failed to run migrations on clickhouse")
-
-        container.remove()
-
-        container = client.containers.run(
-            image=f"ghcr.io/fuseone-io/fusescope-schema-migrator:{migrator_version}",
-            command=f"async --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN']}",
-            detach=True,
-            auto_remove=False,
-            network=network.id,
-            environment=environment,
-        )
-
-        result = container.wait()
-
-        if result["StatusCode"] != 0:
-            logs = container.logs().decode(encoding="utf-8")
-            container.remove()
-            print(logs)
-            raise RuntimeError("failed to run migrations on clickhouse")
-
-        container.remove()
 
         return types.Operation(name=cache_key, identity=wanted)
 

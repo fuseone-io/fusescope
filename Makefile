@@ -49,21 +49,6 @@ devenv-postgres: ## Run postgres in devenv
 	@cd .devenv/docker/postgres; \
 	docker compose -f compose.yaml up -d
 
-.PHONY: devenv-clickhouse-fork
-devenv-clickhouse-fork: ## Legacy, opt-in: run clickhouse in devenv on volumes of its own, unmigrated, for devenv-fusescope-otel-collector (stop devenv-clickhouse first: same containers and ports)
-	@cd .devenv/docker/clickhouse; \
-	docker compose -p clickhouse-fork -f compose.yaml up -d clickhouse
-
-.PHONY: devenv-fusescope-otel-collector
-devenv-fusescope-otel-collector: ## Legacy, opt-in: run the earlier fusescope-otel-collector instead of fusescope-collector (same ports; stop one before starting the other); it runs the fork migrator first, so it needs devenv-clickhouse-fork
-	@if [ "$$(docker exec clickhouse clickhouse-client -q 'EXISTS DATABASE fusescope_schema' 2>/dev/null)" != 0 ]; then \
-	  echo "devenv-fusescope-otel-collector runs the fork's migrator, which is not supported on a ClickHouse fusescope-schema migrated (or none is running)." >&2; \
-	  echo "Stop devenv-clickhouse (cd .devenv/docker/clickhouse && docker compose down) and run make devenv-clickhouse-fork, on volumes of its own." >&2; \
-	  exit 1; \
-	fi
-	@cd .devenv/docker/fusescope-otel-collector; \
-	docker compose -f compose.yaml up -d
-
 .PHONY: devenv-fusescope-collector
 devenv-fusescope-collector: ## Run fusescope-collector in devenv, the OTLP collector (requires clickhouse, which migrates the schema)
 	@cd .devenv/docker/fusescope-collector; \

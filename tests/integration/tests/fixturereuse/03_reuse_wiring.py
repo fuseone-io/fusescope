@@ -1,8 +1,9 @@
 """The migrator's cache check works only through reuse.wrap and the factories
-that request it: a migration cached for another migrator is run again, and a
-stack restored under --reuse still requests the migrator."""
+that request it: a migration the earlier fork's migrator left is run again with
+fusescope-schema, and a stack restored under --reuse still requests the migrator."""
 
 import ast
+import json
 from pathlib import Path
 
 import pytest
@@ -24,14 +25,12 @@ class Cache:
 
 
 class Config:
-    def __init__(self, mode: str, cache: dict) -> None:
+    def __init__(self, cache: dict) -> None:
         self.options = {
             "--reuse": True,
             "--teardown": False,
             "--rebuild": False,
-            "--schema-migrator": mode,
             "--fusescope-schema-version": FUSESCOPE,
-            "--schema-migrator-version": "0.145.0",
         }
         self.cache = Cache(cache)
 
@@ -51,60 +50,64 @@ class Request:
         pass
 
 
-class Result:
-    def __init__(self, rows: list) -> None:
-        self.result_rows = rows
+class WouldRun(Exception):
+    """Raised where fusescope-schema's container would start."""
 
 
-class Past0001:
-    """A ClickHouse fusescope-schema migrated through 0002."""
+class NoContainer:
+    def __init__(self, image: str) -> None:
+        raise WouldRun(image)
 
-    def __init__(self) -> None:
-        self.queried = False
 
-    def query(self, sql: str) -> Result:
-        self.queried = True
-        return Result([[1]])
+class Address:
+    address, port = "clickhouse", 9000
 
 
 class Clickhouse:
-    def __init__(self) -> None:
-        self.conn = Past0001()
+    """Only what fusescope-schema's config reads."""
+
+    class container:  # pylint: disable=invalid-name,too-few-public-methods
+        container_configs = {"9000": Address()}
+
+    env = {
+        "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME": "default",
+        "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD": "password",
+        "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER": "cluster",
+    }
 
 
-def cached_migrator(mode: str) -> dict:
-    return {"migrator": {"name": "migrator", "identity": migrator.identity(Config(mode, {}), None)}}
+def cached_migrator(identity: str) -> dict:
+    return {"migrator": {"name": "migrator", "identity": identity}}
 
 
-def run_migrator(mode: str, cache: dict, clickhouse: Clickhouse) -> types.Operation:
-    config = Config(mode, cache)
-    return migrator.create_migrator(network=None, clickhouse=clickhouse, request=Request(config), pytestconfig=config)
+def run_migrator(cache: dict) -> types.Operation:
+    config = Config(cache)
+    return migrator.create_migrator(network=None, clickhouse=Clickhouse(), request=Request(config), pytestconfig=config)
 
 
-def test_a_migration_cached_for_fusescope_schema_runs_the_fork_which_refuses() -> None:
-    clickhouse = Clickhouse()
-    with pytest.raises(RuntimeError, match="not supported"):
-        run_migrator("fork", cached_migrator("fusescope"), clickhouse)
-    assert clickhouse.conn.queried
+def test_a_migration_the_fork_left_runs_fusescope_schema(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(migrator, "DockerContainer", NoContainer)
+    fork = json.dumps({"migrator": "fork", "version": "0.145.0", "env": {}}, sort_keys=True)
+    with pytest.raises(WouldRun, match="fusescope-collector"):
+        run_migrator(cached_migrator(fork))
 
 
-def test_a_migration_cached_for_the_same_migrator_is_reused() -> None:
-    clickhouse = Clickhouse()
-    op = run_migrator("fork", cached_migrator("fork"), clickhouse)
-    assert op.identity == migrator.identity(Config("fork", {}), None)
-    assert not clickhouse.conn.queried
+def test_a_migration_cached_for_the_same_version_is_reused(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(migrator, "DockerContainer", NoContainer)
+    op = run_migrator(cached_migrator(migrator.identity(Config({}), None)))
+    assert op.identity == migrator.identity(Config({}), None)
 
 
 def test_a_restored_signoz_requests_the_migrator() -> None:
     port = {"scheme": "http", "address": "localhost", "port": 8080}
-    config = Config("fusescope", {"signoz": {"id": "cached", "host_configs": {"8080": port}, "container_configs": {"8080": port}}})
+    config = Config({"signoz": {"id": "cached", "host_configs": {"8080": port}, "container_configs": {"8080": port}}})
     request = Request(config)
     restored = signoz.create_signoz(network=None, zeus=None, gateway=None, sqlstore=None, clickhouse=None, request=request, pytestconfig=config)
     assert restored.self.id == "cached"
     assert "migrator" in request.requested
 
 
-@pytest.mark.parametrize("module", ["signoz.py", "otelcollector.py", "fusescopecollector.py"])
+@pytest.mark.parametrize("module", ["signoz.py", "fusescopecollector.py"])
 def test_factories_request_the_migrator_outside_create(module: str) -> None:
     tree = ast.parse((Path(__file__).parents[3] / "fixtures" / module).read_text())
     enclosing: list[str] = []

@@ -1,5 +1,5 @@
 """Under --reuse a cached resource is restored only while it still matches the
-run: switching --otlp-collector or a version must not silently reuse the other
+run: switching an image or a version must not silently reuse the other
 collector, nor a backend pointed at a removed one (#225)."""
 
 import pytest
