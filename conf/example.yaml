@@ -216,13 +216,13 @@ telemetrystore:
       # The backend's client certificate and key, issued by a CA of the engine's tls.public_client_ca.
       cert_file: ""
       key_file: ""
-      # When set, the only trust for the engine's certificate in place of the system store.
+      # The CA of the engine's certificate, its only trust; required, read at start.
       ca_file: ""
       server_name: ""
     jwt:
-      # Ed25519 private key (PKCS#8 PEM) whose public key is in the engine's auth.jwt_keys under kid.
+      # Ed25519 private key (PKCS#8 PEM). Publish its public key in the engine's auth.jwt_keys under
+      # its RFC 7638 thumbprint, the kid the backend logs at start and whenever the file changes.
       key_file: ""
-      kid: ""
       issuer: fusescope-backend
       audience: fusescope-engine
       # Lifetime of a tenant token, at most 300s.

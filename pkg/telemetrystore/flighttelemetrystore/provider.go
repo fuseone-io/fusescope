@@ -5,7 +5,8 @@ package flighttelemetrystore
 
 import (
 	"context"
-	"strings"
+	"log/slog"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/apache/arrow-go/v18/arrow/flight"
@@ -18,12 +19,22 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
-// PartialHeader carries the reasons a result may be partial, joined by "; ".
+// PartialHeader carries the reasons a result may be partial, one per value.
 const PartialHeader = "x-fusescope-partial"
+
+// keepaliveTime and keepaliveTimeout find a half-open connection to the engine while a call waits
+// on it, whatever deadline the caller set.
+const (
+	keepaliveTime    = 30 * time.Second
+	keepaliveTimeout = 10 * time.Second
+)
 
 // clickhouseOnly is what the fallback serves: the ClickHouse surface alone, so Query and Do
 // cannot reach it.
@@ -62,16 +73,29 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	if err != nil {
 		return nil, err
 	}
-	hooks := make([]telemetrystore.TelemetryStoreHook, len(flightHooks))
-	for i, hookFactory := range flightHooks {
-		if hooks[i], err = hookFactory.New(ctx, providerSettings, config); err != nil {
-			return nil, err
+	p, err := newFlight(ctx, providerSettings, config, fallback, flightHooks)
+	if err != nil {
+		if closer, ok := fallback.(interface{ Close() error }); ok {
+			_ = closer.Close()
 		}
+		return nil, err
 	}
-	return newProvider(providerSettings, config.Flight, fallback, hooks, memory.DefaultAllocator)
+	return p, nil
 }
 
-func newProvider(providerSettings factory.ProviderSettings, config telemetrystore.FlightConfig, fallback clickhouseOnly, hooks []telemetrystore.TelemetryStoreHook, mem memory.Allocator) (*provider, error) {
+func newFlight(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, fallback clickhouseOnly, flightHooks HookFactories) (*provider, error) {
+	hooks := make([]telemetrystore.TelemetryStoreHook, len(flightHooks))
+	for i, hookFactory := range flightHooks {
+		hook, err := hookFactory.New(ctx, providerSettings, config)
+		if err != nil {
+			return nil, err
+		}
+		hooks[i] = hook
+	}
+	return newProvider(providerSettings, config.Flight, config.Connection.DialTimeout, fallback, hooks, memory.DefaultAllocator)
+}
+
+func newProvider(providerSettings factory.ProviderSettings, config telemetrystore.FlightConfig, dialTimeout time.Duration, fallback clickhouseOnly, hooks []telemetrystore.TelemetryStoreHook, mem memory.Allocator) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/telemetrystore/flighttelemetrystore")
 	reloadFailed := func(err error) {
 		settings.Logger().WarnContext(context.Background(), "engine credentials changed but do not load; the last good ones stay", errors.Attr(err))
@@ -80,13 +104,17 @@ func newProvider(providerSettings factory.ProviderSettings, config telemetrystor
 	if err != nil {
 		return nil, err
 	}
-	signer, err := newSigner(config.JWT, reloadFailed)
+	signer, err := newSigner(config.JWT, reloadFailed, func(kid string) {
+		settings.Logger().InfoContext(context.Background(), "engine tokens are signed under a new key; publish it in the engine's auth.jwt_keys", slog.String("kid", kid))
+	})
 	if err != nil {
 		return nil, err
 	}
 	client, err := flightsql.NewClient(config.Endpoint, nil, nil,
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(config.MaxMessageBytes)),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{Time: keepaliveTime, Timeout: keepaliveTimeout}),
+		grpc.WithConnectParams(grpc.ConnectParams{Backoff: backoff.DefaultConfig, MinConnectTimeout: dialTimeout}),
 	)
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, telemetrystore.ErrCodeInvalidConfig, "telemetrystore.flight.endpoint")
@@ -105,22 +133,22 @@ func (p *provider) Query(ctx context.Context, stmt string, args ...any) (telemet
 	}
 	info, err := p.client.Execute(ctx, stmt)
 	if err != nil {
-		return nil, end(castError(ctx, err))
+		return nil, end(p.cast(ctx, err))
 	}
 	if len(info.GetEndpoint()) != 1 {
 		return nil, end(errors.NewInternalf(ErrCodeEngine, "fusescope-engine answered %d endpoints, one expected", len(info.GetEndpoint())))
 	}
 	stream, err := p.client.Client.DoGet(ctx, info.GetEndpoint()[0].GetTicket())
 	if err != nil {
-		return nil, end(castError(ctx, err))
+		return nil, end(p.cast(ctx, err))
 	}
 	header, err := stream.Header()
 	if err != nil {
-		return nil, end(castError(ctx, err))
+		return nil, end(p.cast(ctx, err))
 	}
 	reader, err := flight.NewRecordReader(stream, ipc.WithAllocator(p.mem))
 	if err != nil {
-		return nil, end(castError(ctx, err))
+		return nil, end(p.cast(ctx, err))
 	}
 	return p.rows(ctx, reader, header, end)
 }
@@ -132,15 +160,15 @@ func (p *provider) Do(ctx context.Context, action string, body []byte) (telemetr
 	}
 	results, err := p.client.Client.DoAction(ctx, &flight.Action{Type: action, Body: body})
 	if err != nil {
-		return nil, end(castError(ctx, err))
+		return nil, end(p.cast(ctx, err))
 	}
 	header, err := results.Header()
 	if err != nil {
-		return nil, end(castError(ctx, err))
+		return nil, end(p.cast(ctx, err))
 	}
 	reader, err := ipc.NewReader(&actionStream{results: results}, ipc.WithAllocator(p.mem))
 	if err != nil {
-		return nil, end(castError(ctx, err))
+		return nil, end(p.cast(ctx, err))
 	}
 	return p.rows(ctx, reader, header, end)
 }
@@ -161,30 +189,41 @@ func (p *provider) begin(ctx context.Context, operation string) (context.Context
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	ctx, cancel := context.WithCancel(ctx)
 	end := func(err error) error {
-		cancel()
 		event.Err = err
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+		cancel()
 		return err
 	}
 	return ctx, end, nil
 }
 
 func (p *provider) rows(ctx context.Context, src source, header metadata.MD, end func(error) error) (telemetrystore.Rows, error) {
-	var warnings []string
-	for _, value := range header.Get(PartialHeader) {
-		warnings = append(warnings, strings.Split(value, "; ")...)
-	}
-	rows, err := newRows(castSource{source: src, ctx: ctx}, warnings, func(err error) { _ = end(err) })
+	warnings := header.Get(PartialHeader)
+	rows, err := newRows(castSource{source: src, cast: func(err error) error { return p.cast(ctx, err) }}, warnings, func(err error) { _ = end(err) })
 	if err != nil {
 		return nil, err
 	}
 	return rows, nil
 }
 
-// castSource reports the stream's error as castError does.
-type castSource struct {
-	source
-	ctx context.Context
+// cast logs what the engine said, which may name SQL, columns or paths, and returns an error that
+// carries only what kind of refusal it was.
+func (p *provider) cast(ctx context.Context, err error) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := status.FromError(err); ok {
+		p.settings.Logger().DebugContext(ctx, "fusescope-engine refused a call", errors.Attr(err))
+	} else if ctx.Err() == nil {
+		p.settings.Logger().WarnContext(ctx, "fusescope-engine unreachable", errors.Attr(err))
+	}
+	return castError(ctx, err)
 }
 
-func (s castSource) Err() error { return castError(s.ctx, s.source.Err()) }
+// castSource reports the stream's error through cast.
+type castSource struct {
+	source
+	cast func(error) error
+}
+
+func (s castSource) Err() error { return s.cast(s.source.Err()) }

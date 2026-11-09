@@ -93,7 +93,8 @@ func write(t *testing.T, dir, name string, contents []byte) string {
 type fakeEngine struct {
 	flight.BaseFlightServer
 	public  ed25519.PublicKey
-	partial string
+	partial []string
+	refuse  error
 	hold    bool
 	calls   atomic.Int32
 	mu      sync.Mutex
@@ -124,6 +125,9 @@ func (e *fakeEngine) GetFlightInfo(ctx context.Context, _ *flight.FlightDescript
 	if err := e.authorize(ctx); err != nil {
 		return nil, err
 	}
+	if e.refuse != nil {
+		return nil, e.refuse
+	}
 	return &flight.FlightInfo{Endpoint: []*flight.FlightEndpoint{{Ticket: &flight.Ticket{Ticket: []byte("FST2")}}}}, nil
 }
 
@@ -131,10 +135,8 @@ func (e *fakeEngine) DoGet(_ *flight.Ticket, stream flight.FlightService_DoGetSe
 	if err := e.authorize(stream.Context()); err != nil {
 		return err
 	}
-	if e.partial != "" {
-		if err := stream.SetHeader(metadata.Pairs(PartialHeader, e.partial)); err != nil {
-			return err
-		}
+	if err := e.announce(stream); err != nil {
+		return err
 	}
 	if e.hold {
 		<-stream.Context().Done()
@@ -155,10 +157,8 @@ func (e *fakeEngine) DoAction(action *flight.Action, stream flight.FlightService
 	e.mu.Lock()
 	e.actions = append(e.actions, action)
 	e.mu.Unlock()
-	if e.partial != "" {
-		if err := stream.SetHeader(metadata.Pairs(PartialHeader, e.partial)); err != nil {
-			return err
-		}
+	if err := e.announce(stream); err != nil {
+		return err
 	}
 	batch := traceBatch()
 	defer batch.Release()
@@ -177,6 +177,15 @@ func (e *fakeEngine) DoAction(action *flight.Action, stream flight.FlightService
 		}
 	}
 	return nil
+}
+
+func (e *fakeEngine) announce(stream grpc.ServerStream) error {
+	if len(e.partial) == 0 {
+		return nil
+	}
+	md := metadata.MD{}
+	md.Append(PartialHeader, e.partial...)
+	return stream.SetHeader(md)
 }
 
 // traceBatch is two spans of one trace.
@@ -240,7 +249,6 @@ func newTestbed(t *testing.T) *testbed {
 			},
 			JWT: telemetrystore.FlightJWTConfig{
 				KeyFile:  write(t, dir, "jwt.key", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privateDER})),
-				KeyID:    "backend-1",
 				Issuer:   "fusescope-backend",
 				Audience: "fusescope-engine",
 				TTL:      time.Minute,

@@ -14,7 +14,9 @@ import (
 )
 
 // column reads one field of a batch into Scan destinations of its scanType: *T for a
-// non-nullable field, **T for a nullable one, which a null sets to nil. Every value is a copy.
+// non-nullable field, **T for a nullable one, which a null sets to nil. A nullable field also
+// scans into *T, as a computed column the ClickHouse caller read as non-null, and refuses an
+// actual null there. Every value is a copy.
 type column struct {
 	field    arrow.Field
 	scanType reflect.Type
@@ -39,7 +41,9 @@ func kindOfField(field arrow.Field) (kind, error) {
 	case *arrow.MapType:
 		return mapKind(field, dt)
 	case *arrow.ListType:
-		return listKind(field, dt)
+		return listKind(field, dt.ElemField())
+	case *arrow.LargeListType:
+		return listKind(field, dt.ElemField())
 	case *arrow.StructType:
 		return structKind(field, dt)
 	}
@@ -55,12 +59,8 @@ func typed[T any](field arrow.Field, get getter[T]) column {
 		scanType = reflect.PointerTo(scanType)
 	}
 	return column{field: field, scanType: scanType, scan: func(arr arrow.Array, i int, dest any) error {
-		if field.Nullable {
-			d, ok := dest.(**T)
-			if !ok {
-				return wrongDestination(field, scanType, dest)
-			}
-			if arr.IsNull(i) {
+		if d, ok := dest.(**T); ok && field.Nullable {
+			if isNull(arr, i) {
 				*d = nil
 				return nil
 			}
@@ -75,7 +75,7 @@ func typed[T any](field arrow.Field, get getter[T]) column {
 		if !ok {
 			return wrongDestination(field, scanType, dest)
 		}
-		if arr.IsNull(i) {
+		if isNull(arr, i) {
 			return nullInNonNull(field.Name)
 		}
 		v, err := get(arr, i)
@@ -108,20 +108,26 @@ func kindOf[T any](get getter[T]) kind {
 // scalar returns the kind of a scalar type.
 func scalar(dt arrow.DataType) (kind, bool) {
 	switch dt := dt.(type) {
-	case *arrow.StringType, *arrow.LargeStringType:
+	case *arrow.StringType, *arrow.LargeStringType, *arrow.StringViewType:
 		return kindOf(getString), true
 	case *arrow.DictionaryType:
 		if isString(dt.ValueType) {
-			return kindOf(getDictionaryString), true
+			return kindOf(dictionaryStrings()), true
 		}
 	case *arrow.FixedSizeBinaryType:
 		return kindOf(getHex), true
-	case *arrow.BinaryType:
+	case *arrow.BinaryType, *arrow.LargeBinaryType, *arrow.BinaryViewType:
 		return kindOf(getBytes), true
 	case *arrow.TimestampType:
 		return kindOf(getTime(dt.Unit)), true
+	case *arrow.Date32Type:
+		return kindOf(getDate), true
+	case *arrow.Decimal128Type:
+		return kindOf(getDecimal(dt.Scale)), true
 	case *arrow.BooleanType:
 		return kindOf(value[bool, *array.Boolean]()), true
+	case *arrow.NullType:
+		return kindOf(func(arrow.Array, int) (any, error) { return nil, nil }), true
 	}
 	return numeric(dt)
 }
@@ -162,13 +168,35 @@ func getString(arr arrow.Array, i int) (string, error) {
 		return strings.Clone(a.Value(i)), nil
 	case *array.LargeString:
 		return strings.Clone(a.Value(i)), nil
+	case *array.StringView:
+		return strings.Clone(a.Value(i)), nil
 	}
 	return "", unexpectedArray(arr)
 }
 
-func getDictionaryString(arr arrow.Array, i int) (string, error) {
-	d := arr.(*array.Dictionary)
-	return getString(d.Dictionary(), d.GetValueIndex(i))
+// dictionaryStrings copies each value of a dictionary once, however many rows point at it; the
+// copies are kept until the next batch brings another dictionary.
+func dictionaryStrings() getter[string] {
+	var (
+		dict   arrow.Array
+		copies []string
+		copied []bool
+	)
+	return func(arr arrow.Array, i int) (string, error) {
+		d := arr.(*array.Dictionary)
+		if values := d.Dictionary(); values != dict {
+			dict, copies, copied = values, make([]string, values.Len()), make([]bool, values.Len())
+		}
+		at := d.GetValueIndex(i)
+		if !copied[at] {
+			s, err := getString(dict, at)
+			if err != nil {
+				return "", err
+			}
+			copies[at], copied[at] = s, true
+		}
+		return copies[at], nil
+	}
 }
 
 func getHex(arr arrow.Array, i int) (string, error) {
@@ -176,7 +204,26 @@ func getHex(arr arrow.Array, i int) (string, error) {
 }
 
 func getBytes(arr arrow.Array, i int) ([]byte, error) {
-	return bytes.Clone(arr.(*array.Binary).Value(i)), nil
+	switch a := arr.(type) {
+	case *array.Binary:
+		return bytes.Clone(a.Value(i)), nil
+	case *array.LargeBinary:
+		return bytes.Clone(a.Value(i)), nil
+	case *array.BinaryView:
+		return bytes.Clone(a.Value(i)), nil
+	}
+	return nil, unexpectedArray(arr)
+}
+
+func getDate(arr arrow.Array, i int) (time.Time, error) {
+	return arr.(*array.Date32).Value(i).ToTime().UTC(), nil
+}
+
+// getDecimal reads a decimal as its exact text, which no float holds.
+func getDecimal(scale int32) getter[string] {
+	return func(arr arrow.Array, i int) (string, error) {
+		return arr.(*array.Decimal128).Value(i).ToString(scale), nil
+	}
 }
 
 func getTime(unit arrow.TimeUnit) getter[time.Time] {
@@ -186,7 +233,23 @@ func getTime(unit arrow.TimeUnit) getter[time.Time] {
 }
 
 func isString(dt arrow.DataType) bool {
-	return dt.ID() == arrow.STRING || dt.ID() == arrow.LARGE_STRING
+	switch dt.ID() {
+	case arrow.STRING, arrow.LARGE_STRING, arrow.STRING_VIEW:
+		return true
+	}
+	return false
+}
+
+// isNull is whether the value at i is null: every value of a null array, and a dictionary entry
+// pointing at a null value, included.
+func isNull(arr arrow.Array, i int) bool {
+	if arr.IsNull(i) || arr.DataType().ID() == arrow.NULL {
+		return true
+	}
+	if d, ok := arr.(*array.Dictionary); ok {
+		return d.Dictionary().IsNull(d.GetValueIndex(i))
+	}
+	return false
 }
 
 func unsupported(field arrow.Field) error {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
+	"github.com/apache/arrow-go/v18/arrow/decimal128"
 	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
@@ -159,8 +160,8 @@ func TestRowsRefuseWhatTheyCannotRepresent(t *testing.T) {
 	require.NoError(t, rows.Close())
 	mem.AssertSize(t, 0)
 
-	decimal := arrow.NewSchema([]arrow.Field{{Name: "price", Type: &arrow.Decimal128Type{Precision: 10, Scale: 2}}}, nil)
-	db := array.NewRecordBuilder(mem, decimal)
+	interval := arrow.NewSchema([]arrow.Field{{Name: "window", Type: arrow.FixedWidthTypes.MonthDayNanoInterval}}, nil)
+	db := array.NewRecordBuilder(mem, interval)
 	db.Field(0).AppendNull()
 	unsupported := db.NewRecordBatch()
 	db.Release()
@@ -214,4 +215,123 @@ func TestRowsEndTheStreamExactlyOnce(t *testing.T) {
 			mem.AssertSize(t, 0)
 		})
 	}
+}
+
+// handWritten is one row of what DataFusion returns for SQL beyond the stored schemas: view
+// strings from CAST and string functions, large types, dates, decimals and SELECT NULL.
+func handWritten(mem memory.Allocator) arrow.RecordBatch {
+	schema := arrow.NewSchema([]arrow.Field{
+		{Name: "label", Type: arrow.BinaryTypes.StringView},
+		{Name: "blob", Type: arrow.BinaryTypes.BinaryView},
+		{Name: "large_blob", Type: arrow.BinaryTypes.LargeBinary},
+		{Name: "large_tags", Type: arrow.LargeListOfNonNullable(arrow.BinaryTypes.String)},
+		{Name: "day", Type: arrow.FixedWidthTypes.Date32},
+		{Name: "price", Type: &arrow.Decimal128Type{Precision: 10, Scale: 2}},
+		{Name: "nothing", Type: arrow.Null, Nullable: true},
+	}, nil)
+	b := array.NewRecordBuilder(mem, schema)
+	defer b.Release()
+	b.Field(0).(*array.StringViewBuilder).Append("a label longer than twelve bytes")
+	b.Field(1).(*array.BinaryViewBuilder).Append([]byte{1, 2, 3})
+	b.Field(2).(*array.BinaryBuilder).Append([]byte{4, 5})
+	tags := b.Field(3).(*array.LargeListBuilder)
+	tags.Append(true)
+	tags.ValueBuilder().(*array.StringBuilder).AppendValues([]string{"red", "blue"}, nil)
+	b.Field(4).(*array.Date32Builder).Append(arrow.Date32FromTime(time.Date(2026, 11, 9, 0, 0, 0, 0, time.UTC)))
+	b.Field(5).(*array.Decimal128Builder).Append(decimal128.FromI64(12345))
+	b.Field(6).AppendNull()
+	return b.NewRecordBatch()
+}
+
+func TestRowsConvertWhatHandWrittenSQLReturns(t *testing.T) {
+	mem := newPoisonAllocator()
+	rows, err := newRows(newSliceSource(handWritten(mem)), nil, func(error) {})
+	require.NoError(t, err)
+	require.True(t, rows.Next())
+	var (
+		label     string
+		blob      []byte
+		largeBlob []byte
+		tags      []string
+		day       time.Time
+		price     string
+		nothing   *any
+	)
+	require.NoError(t, rows.Scan(&label, &blob, &largeBlob, &tags, &day, &price, &nothing))
+	require.NoError(t, rows.Close())
+	mem.AssertSize(t, 0)
+	assert.Equal(t, "a label longer than twelve bytes", label)
+	assert.Equal(t, []byte{1, 2, 3}, blob)
+	assert.Equal(t, []byte{4, 5}, largeBlob)
+	assert.Equal(t, []string{"red", "blue"}, tags)
+	assert.Equal(t, time.Date(2026, 11, 9, 0, 0, 0, 0, time.UTC), day)
+	assert.Equal(t, "123.45", price)
+	assert.Nil(t, nothing)
+}
+
+// DataFusion marks computed columns nullable, so a caller moved from ClickHouse scans them into
+// *T: that works until an actual null arrives, which is refused, never read as zero.
+func TestANullableColumnScansIntoAPlainDestination(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	schema := arrow.NewSchema([]arrow.Field{{Name: "count", Type: arrow.PrimitiveTypes.Int64, Nullable: true}}, nil)
+	b := array.NewRecordBuilder(mem, schema)
+	b.Field(0).(*array.Int64Builder).Append(7)
+	b.Field(0).AppendNull()
+	batch := b.NewRecordBatch()
+	b.Release()
+
+	rows, err := newRows(newSliceSource(batch), nil, func(error) {})
+	require.NoError(t, err)
+	var count int64
+	require.True(t, rows.Next())
+	require.NoError(t, rows.Scan(&count))
+	assert.Equal(t, int64(7), count)
+	require.True(t, rows.Next())
+	err = rows.Scan(&count)
+	assert.True(t, errors.Asc(err, telemetrystore.ErrCodeNullInNonNull), "%v", err)
+	require.NoError(t, rows.Close())
+	mem.AssertSize(t, 0)
+}
+
+func TestANullInADictionaryIsANull(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	dictType := &arrow.DictionaryType{IndexType: arrow.PrimitiveTypes.Int32, ValueType: arrow.BinaryTypes.String}
+	values := array.NewStringBuilder(mem)
+	values.Append("api")
+	values.AppendNull()
+	dict := values.NewArray()
+	values.Release()
+	indices := array.NewInt32Builder(mem)
+	indices.AppendValues([]int32{0, 1, 0}, nil)
+	idx := indices.NewArray()
+	indices.Release()
+	column := array.NewDictionaryArray(dictType, idx, dict)
+	idx.Release()
+	dict.Release()
+	nullable := arrow.NewSchema([]arrow.Field{{Name: "service", Type: dictType, Nullable: true}}, nil)
+	strict := arrow.NewSchema([]arrow.Field{{Name: "service", Type: dictType}}, nil)
+
+	rows, err := newRows(newSliceSource(array.NewRecordBatch(nullable, []arrow.Array{column}, 3)), nil, func(error) {})
+	require.NoError(t, err)
+	var got []*string
+	for rows.Next() {
+		var service *string
+		require.NoError(t, rows.Scan(&service))
+		got = append(got, service)
+	}
+	require.NoError(t, rows.Close())
+	api := "api"
+	assert.Equal(t, []*string{&api, nil, &api}, got)
+
+	rows, err = newRows(newSliceSource(array.NewRecordBatch(strict, []arrow.Array{column}, 3)), nil, func(error) {})
+	require.NoError(t, err)
+	var service string
+	require.True(t, rows.Next())
+	require.NoError(t, rows.Scan(&service))
+	require.True(t, rows.Next())
+	err = rows.Scan(&service)
+	assert.True(t, errors.Asc(err, telemetrystore.ErrCodeNullInNonNull), "%v", err)
+	require.NoError(t, rows.Close())
+	column.Release()
+	mem.AssertSize(t, 0)
 }

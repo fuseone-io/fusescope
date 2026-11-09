@@ -97,8 +97,8 @@ func TestValidateFlight(t *testing.T) {
 		conf.Flight.Endpoint = "engine-querier:8815"
 		conf.Flight.TLS.CertFile = "/etc/fusescope/engine/tls.crt"
 		conf.Flight.TLS.KeyFile = "/etc/fusescope/engine/tls.key"
+		conf.Flight.TLS.CAFile = "/etc/fusescope/engine/ca.crt"
 		conf.Flight.JWT.KeyFile = "/etc/fusescope/engine/jwt.key"
-		conf.Flight.JWT.KeyID = "backend-1"
 		edit(&conf)
 		return conf
 	}
@@ -119,7 +119,7 @@ func TestValidateFlight(t *testing.T) {
 		{name: "NoClientCertificate_Refused", config: flight(func(c *Config) { c.Flight.TLS.CertFile = "" }), want: "telemetrystore.flight.tls"},
 		{name: "NoClientKey_Refused", config: flight(func(c *Config) { c.Flight.TLS.KeyFile = "" }), want: "telemetrystore.flight.tls"},
 		{name: "NoSigningKey_Refused", config: flight(func(c *Config) { c.Flight.JWT.KeyFile = "" }), want: "telemetrystore.flight.jwt"},
-		{name: "NoKeyID_Refused", config: flight(func(c *Config) { c.Flight.JWT.KeyID = "" }), want: "telemetrystore.flight.jwt"},
+		{name: "NoEngineCA_Refused", config: flight(func(c *Config) { c.Flight.TLS.CAFile = "" }), want: "telemetrystore.flight.tls.ca_file"},
 		{name: "TTLAboveEngineMaximum_Refused", config: flight(func(c *Config) { c.Flight.JWT.TTL = 301 * time.Second }), want: "telemetrystore.flight.jwt.ttl"},
 		{name: "ZeroTTL_Refused", config: flight(func(c *Config) { c.Flight.JWT.TTL = 0 }), want: "telemetrystore.flight.jwt.ttl"},
 		{name: "ZeroMessageBytes_Refused", config: flight(func(c *Config) { c.Flight.MaxMessageBytes = 0 }), want: "telemetrystore.flight.max_message_bytes"},

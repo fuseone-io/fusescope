@@ -52,9 +52,9 @@ func mapOf[V any](name string, get getter[V]) getter[map[string]V] {
 	}
 }
 
-// listKind reads a list as []V when its elements cannot be null, and as []any otherwise.
-func listKind(field arrow.Field, dt *arrow.ListType) (kind, error) {
-	elem := dt.ElemField()
+// listKind reads a list or a large list as []V when its elements cannot be null, and as []any
+// otherwise.
+func listKind(field arrow.Field, elem arrow.Field) (kind, error) {
 	elemKind, err := kindOfField(elem)
 	if err != nil {
 		return kind{}, err
@@ -74,7 +74,10 @@ func listKind(field arrow.Field, dt *arrow.ListType) (kind, error) {
 
 func listOf[V any](name string, get getter[V]) getter[[]V] {
 	return func(arr arrow.Array, i int) ([]V, error) {
-		l := arr.(*array.List)
+		l := arr.(interface {
+			ValueOffsets(int) (int64, int64)
+			ListValues() arrow.Array
+		})
 		start, end := l.ValueOffsets(i)
 		values := l.ListValues()
 		out := make([]V, 0, end-start)
@@ -121,7 +124,7 @@ func structKind(field arrow.Field, dt *arrow.StructType) (kind, error) {
 // refused otherwise.
 func element[V any](name string, arr arrow.Array, j int, get getter[V]) (V, error) {
 	var zero V
-	if arr.IsNull(j) {
+	if isNull(arr, j) {
 		if _, boxed := any(&zero).(*any); boxed {
 			return zero, nil
 		}
