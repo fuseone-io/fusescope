@@ -163,7 +163,13 @@ jobs:
           ref: main
           path: fusescope-charts
           persist-credentials: false
-      # helm comes with the ubuntu-24.04 runner image.
+      # helm comes with the ubuntu-24.04 runner image. The guard builds charts/fusescope's own
+      # dependencies; the clickhouse subchart's, zookeeper, is built first so every image the
+      # default install runs is rendered, as in fusescope-charts' agpl-guard workflow.
+      - name: charts-subchart-dependencies
+        run: |
+          helm dependency build fusescope-charts/charts/zookeeper
+          helm dependency build fusescope-charts/charts/clickhouse
       - name: check-agpl-collector-packages-and-default-install-images
         run: make agpl-check AGPL_CHART=fusescope-charts/charts/fusescope
   build:
