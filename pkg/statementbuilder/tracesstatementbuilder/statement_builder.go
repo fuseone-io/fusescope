@@ -29,6 +29,8 @@ type traceQueryStatementBuilder struct {
 	logger                         *slog.Logger
 	metadataStore                  telemetrytypes.MetadataStore
 	storage                        qbtypes.Storage
+	dialect                        qbtypes.Dialect
+	spansTable                     string
 	resourceFilterResolver         *resourcefilter.ResourceFingerprintResolver[qbtypes.TraceAggregation]
 	aggExprRewriter                qbtypes.AggExprRewriter
 	fl                             flagger.Flagger
@@ -64,10 +66,38 @@ func NewFactory(
 	)
 }
 
+// ClickHouseTarget is the target of every builder of the ClickHouse
+// telemetry store.
+func ClickHouseTarget(storage qbtypes.Storage) querybuilder.Target {
+	return querybuilder.Target{
+		Dialect:    querybuilder.ClickHouse{},
+		Storage:    storage,
+		SpansTable: fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName),
+	}
+}
+
+// NewTraceQueryStatementBuilder renders for ClickHouse.
 func NewTraceQueryStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
 	storage qbtypes.Storage,
+	aggExprRewriter qbtypes.AggExprRewriter,
+	telemetryStore telemetrystore.TelemetryStore,
+	flagger flagger.Flagger,
+	skipResourceFingerprintEnable bool,
+	skipResourceFingerprintThreshold uint64,
+) *traceQueryStatementBuilder {
+	return NewTraceQueryStatementBuilderFor(
+		settings, metadataStore, ClickHouseTarget(storage), aggExprRewriter, telemetryStore, flagger,
+		skipResourceFingerprintEnable, skipResourceFingerprintThreshold,
+	)
+}
+
+// NewTraceQueryStatementBuilderFor renders for target.
+func NewTraceQueryStatementBuilderFor(
+	settings factory.ProviderSettings,
+	metadataStore telemetrytypes.MetadataStore,
+	target querybuilder.Target,
 	aggExprRewriter qbtypes.AggExprRewriter,
 	telemetryStore telemetrystore.TelemetryStore,
 	flagger flagger.Flagger,
@@ -92,7 +122,9 @@ func NewTraceQueryStatementBuilder(
 	return &traceQueryStatementBuilder{
 		logger:                         tracesSettings.Logger(),
 		metadataStore:                  metadataStore,
-		storage:                        storage,
+		storage:                        target.Storage,
+		dialect:                        target.Dialect,
+		spansTable:                     target.SpansTable,
 		resourceFilterResolver:         resourceFilterResolver,
 		aggExprRewriter:                aggExprRewriter,
 		fl:                             flagger,
@@ -125,7 +157,7 @@ func (b *traceQueryStatementBuilder) attachTraceScope(sb *sqlbuilder.SelectBuild
 	if b.traceScope == nil {
 		return nil, nil
 	}
-	sb.Where("trace_id GLOBAL IN (SELECT trace_id FROM __trace_scope)")
+	sb.Where(b.dialect.InSubquery("trace_id", "(SELECT trace_id FROM __trace_scope)"))
 	var frags []string
 	var args [][]any
 	if b.traceScopeResource != nil && !resourceEmitted {
@@ -395,7 +427,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	}
 
 	// From table
-	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
+	sb.From(b.spansTable)
 
 	// Add filter conditions
 	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, skipResourceFilter)
@@ -423,7 +455,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		sb.Offset(query.Offset)
 	}
 
-	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	mainSQL, mainArgs := sb.BuildWithFlavor(b.dialect.Flavor())
 
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
@@ -453,7 +485,7 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 
 	distSB := sqlbuilder.NewSelectBuilder()
 	distSB.Select("trace_id")
-	distSB.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
+	distSB.From(b.spansTable)
 
 	var (
 		cteFragments []string
@@ -475,7 +507,7 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 		return nil, err
 	}
 
-	distSQL, distArgs := distSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	distSQL, distArgs := distSB.BuildWithFlavor(b.dialect.Flavor())
 
 	cteFragments = append(cteFragments, fmt.Sprintf("__toe AS (%s)", distSQL))
 	cteArgs = append(cteArgs, distArgs)
@@ -483,26 +515,25 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	// Build the inner subquery for root spans
 	innerSB := sqlbuilder.NewSelectBuilder()
 	innerSB.Select("trace_id", "duration_nano", sqlbuilder.Escape("resource_string_service$$name as `service.name`"), "name")
-	innerSB.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
+	innerSB.From(b.spansTable)
 	innerSB.Where("parent_span_id = ''")
 
 	// this only helps when there is a filter
 	if query.Filter != nil && query.Filter.Expression != "" {
-		innerSB.Where("trace_id GLOBAL IN __toe")
+		innerSB.Where(b.dialect.InSubquery("trace_id", "__toe"))
 	}
 
 	// Add time filter to inner query
 	innerSB.Where(
-		innerSB.GE("timestamp", fmt.Sprintf("%d", start)),
-		innerSB.L("timestamp", fmt.Sprintf("%d", end)),
-		innerSB.GE("ts_bucket_start", startBucket),
-		innerSB.LE("ts_bucket_start", endBucket))
+		append(b.dialect.TimestampRange(innerSB, start, end),
+			innerSB.GE("ts_bucket_start", startBucket),
+			innerSB.LE("ts_bucket_start", endBucket))...)
 
 	// order by duration and limit 1 per trace
 	innerSB.OrderBy("duration_nano DESC")
 	innerSB.SQL("LIMIT 1 BY trace_id")
 
-	innerSQL, innerArgs := innerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	innerSQL, innerArgs := innerSB.BuildWithFlavor(b.dialect.Flavor())
 
 	cteFragments = append(cteFragments, fmt.Sprintf("__toe_duration_sorted AS (%s)", innerSQL))
 	cteArgs = append(cteArgs, innerArgs)
@@ -541,7 +572,7 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 		mainSB.Offset(query.Offset)
 	}
 
-	mainSQL, mainArgs := mainSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	mainSQL, mainArgs := mainSB.BuildWithFlavor(b.dialect.Flavor())
 
 	// combine it all together:  WITH … SELECT …
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL + " SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000"
@@ -586,10 +617,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs = append(cteArgs, scopeArgs...)
 	}
 
-	sb.SelectMore(fmt.Sprintf(
-		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
-		int64(query.StepInterval.Seconds()),
-	))
+	sb.SelectMore(b.dialect.TimeBucket("timestamp", int64(query.StepInterval.Seconds())) + " AS ts")
 
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
@@ -600,7 +628,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			return nil, err
 		}
 		fieldAlias := groupByColumnAlias(i, gb.Name)
-		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", b.dialect.ToText(expr), fieldAlias)))
 		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
 	}
 
@@ -619,7 +647,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
 	}
 
-	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
+	sb.From(b.spansTable)
 	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, skipResourceFilter)
 	if err != nil {
 		return nil, err
@@ -641,7 +669,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 
 		// Constrain the main query to the rows that appear in the CTE.
 		tuple := fmt.Sprintf("(%s)", strings.Join(fieldNames, ", "))
-		sb.Where(fmt.Sprintf("%s GLOBAL IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
+		sb.Where(b.dialect.InSubquery(tuple, fmt.Sprintf("(SELECT %s FROM __limit_cte)", strings.Join(fieldNames, ", "))))
 
 		// Group by all dimensions
 		sb.GroupBy("ts")
@@ -670,7 +698,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 
 		combinedArgs := allAggChArgs
-		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
+		mainSQL, mainArgs := sb.BuildWithFlavor(b.dialect.Flavor(), combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
 		finalSQL = querybuilder.CombineCTEs(cteFragments) + mainSQL
@@ -703,7 +731,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 
 		combinedArgs := allAggChArgs
-		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
+		mainSQL, mainArgs := sb.BuildWithFlavor(b.dialect.Flavor(), combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
 		finalSQL = querybuilder.CombineCTEs(cteFragments) + mainSQL
@@ -764,7 +792,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 			return nil, err
 		}
 		fieldAlias := groupByColumnAlias(i, gb.Name)
-		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", b.dialect.ToText(expr), fieldAlias)))
 		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
 	}
 
@@ -789,7 +817,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	}
 
 	// From table
-	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
+	sb.From(b.spansTable)
 
 	// Add filter conditions
 	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, skipResourceFilter)
@@ -836,7 +864,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	combinedArgs := allAggChArgs
 
-	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
+	mainSQL, mainArgs := sb.BuildWithFlavor(b.dialect.Flavor(), combinedArgs...)
 
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
@@ -891,7 +919,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := end / querybuilder.NsToSeconds
 
-	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.L("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
+	sb.Where(append(b.dialect.TimestampRange(sb, start, end), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))...)
 
 	return preparedWhereClause, nil
 }
@@ -961,7 +989,7 @@ func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 	if stmt == nil {
 		return "", nil, true, nil
 	}
-	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
+	sb.Where(b.dialect.InSubquery("resource_fingerprint", "(SELECT fingerprint FROM __resource_filter)"))
 	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, true, nil
 }
 
