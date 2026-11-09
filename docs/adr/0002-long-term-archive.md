@@ -8,7 +8,7 @@
 
 ClickHouse keeps hot and warm data and retention deletes it afterwards. Teams need older logs, traces and metrics for audits and incident reviews without keeping them in ClickHouse. The archive must be an open format readable without FuseScope, and slices of it must be loadable back for analysis.
 
-Facts the design rests on. They were checked against the backend, migrator and exporters v0.145.0 (the schema-migrator version the integration CI runs; since ADR 0001 phase 4 the backend no longer pins the collector in `go.mod`) and ClickHouse 25.12.5. Experiments E1–E9 are reproducible from [`0002-experiments/`](0002-experiments/).
+Facts the design rests on. They were checked against the backend, migrator and exporters v0.145.0 (the schema-migrator version the integration CI ran when these experiments were recorded; since ADR 0001 phase 4 the backend no longer pins the collector in `go.mod`) and ClickHouse 25.12.5. Experiments E1–E9 are reproducible from [`0002-experiments/`](0002-experiments/).
 
 - **Deletion is per part.** Bulk tables set `ttl_only_drop_parts=1`, so a part is dropped once all its rows are expired, during a TTL merge.
   - `merge_with_ttl_timeout` (4 h by default) is the *minimum* delay before repeating such a merge, not a bound on when deletion happens.
