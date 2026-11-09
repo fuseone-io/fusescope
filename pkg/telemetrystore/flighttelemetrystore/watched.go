@@ -17,6 +17,7 @@ type watched[T any] struct {
 	now     func() time.Time
 	mu      sync.Mutex
 	value   T
+	version uint64
 	stamps  []stamp
 	checked time.Time
 	failed  func(error)
@@ -36,6 +37,12 @@ func newWatched[T any](parse func([][]byte) (T, error), failed func(error), path
 }
 
 func (w *watched[T]) get() T {
+	value, _ := w.current()
+	return value
+}
+
+// current is the value and its version, which grows every time a change loads.
+func (w *watched[T]) current() (T, uint64) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if now := w.now(); now.Sub(w.checked) >= watchInterval {
@@ -44,7 +51,7 @@ func (w *watched[T]) get() T {
 			w.failed(err)
 		}
 	}
-	return w.value
+	return w.value, w.version
 }
 
 func (w *watched[T]) reloadIfChanged() error {
@@ -76,6 +83,7 @@ func (w *watched[T]) load() error {
 		return err
 	}
 	w.value, w.stamps = value, stamps
+	w.version++
 	return nil
 }
 

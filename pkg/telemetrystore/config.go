@@ -46,17 +46,17 @@ type FlightTLSConfig struct {
 	CertFile string `mapstructure:"cert_file"`
 	KeyFile  string `mapstructure:"key_file"`
 
-	// CAFile, when set, is the only trust for the engine's certificate in place of the system's.
+	// CAFile is the only trust for the engine's certificate, read at start.
 	CAFile string `mapstructure:"ca_file"`
 
 	ServerName string `mapstructure:"server_name"`
 }
 
 type FlightJWTConfig struct {
-	// KeyFile holds the Ed25519 private key, PKCS#8 PEM, whose public half is in the engine's
-	// auth.jwt_keys under KeyID.
+	// KeyFile holds the Ed25519 private key, PKCS#8 PEM. Its public half goes in the engine's
+	// auth.jwt_keys under the key's RFC 7638 thumbprint, which tokens carry as kid and the
+	// provider logs at start and on every rotation, so old and new keys can sit side by side.
 	KeyFile string `mapstructure:"key_file"`
-	KeyID   string `mapstructure:"kid"`
 
 	Issuer   string        `mapstructure:"issuer"`
 	Audience string        `mapstructure:"audience"`
@@ -143,8 +143,10 @@ func (c Config) validateFlight() error {
 		return invalid("telemetrystore.flight.endpoint is required by the flight provider")
 	case flight.TLS.CertFile == "" || flight.TLS.KeyFile == "":
 		return invalid("telemetrystore.flight.tls.cert_file and key_file are required: the engine admits only certified clients")
-	case flight.JWT.KeyFile == "" || flight.JWT.KeyID == "":
-		return invalid("telemetrystore.flight.jwt.key_file and kid are required to sign tenant tokens")
+	case flight.TLS.CAFile == "":
+		return invalid("telemetrystore.flight.tls.ca_file is required: the engine is trusted through its own CA, not a public one")
+	case flight.JWT.KeyFile == "":
+		return invalid("telemetrystore.flight.jwt.key_file is required to sign tenant tokens")
 	case flight.JWT.Issuer == "" || flight.JWT.Audience == "":
 		return invalid("telemetrystore.flight.jwt.issuer and audience must not be empty")
 	case flight.JWT.TTL <= 0 || flight.JWT.TTL > MaxFlightTokenTTL:

@@ -2,7 +2,13 @@ package flighttelemetrystore
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
+	"encoding/pem"
 	"testing"
 	"time"
 
@@ -18,6 +24,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var testOrg = valuer.MustNewUUID("0190f3a1-7b2c-7d4e-9f00-112233445566")
@@ -27,18 +35,30 @@ func userContext() context.Context {
 	return telemetrystore.WithTenant(authtypes.NewContextWithClaims(context.Background(), claims), testOrg)
 }
 
-// expectOneCall wants the hooks to run once around one call, however it ends.
+// expectOneCall wants the hooks to run once around one call, however it ends, and the after-hooks
+// to run before the provider cancels the call.
 func expectOneCall(t *testing.T) *telemetrystoretest.MockTelemetryStoreHook {
 	hook := telemetrystoretest.NewMockTelemetryStoreHook(t)
 	hook.EXPECT().BeforeQuery(mock.Anything, mock.Anything).RunAndReturn(
 		func(ctx context.Context, _ *telemetrystore.QueryEvent) context.Context { return ctx }).Once()
-	hook.EXPECT().AfterQuery(mock.Anything, mock.Anything).Once()
+	hook.EXPECT().AfterQuery(mock.Anything, mock.Anything).Run(func(ctx context.Context, _ *telemetrystore.QueryEvent) {
+		assert.NotErrorIs(t, ctx.Err(), context.Canceled, "after-hooks run before the provider cancels the call")
+	}).Once()
 	return hook
+}
+
+// thumbprintOf is the RFC 7638 thumbprint of an Ed25519 public key, computed apart from the code
+// under test.
+func thumbprintOf(t *testing.T, public ed25519.PublicKey) string {
+	jwk, err := json.Marshal(map[string]string{"crv": "Ed25519", "kty": "OKP", "x": base64.RawURLEncoding.EncodeToString(public)})
+	require.NoError(t, err)
+	sum := sha256.Sum256(jwk)
+	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
 func open(t *testing.T, bed *testbed, mem memory.Allocator, hooks ...telemetrystore.TelemetryStoreHook) *provider {
 	fallback := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherEqual)
-	p, err := newProvider(factorytest.NewSettings(), bed.config, fallback, hooks, mem)
+	p, err := newProvider(factorytest.NewSettings(), bed.config, 5*time.Second, fallback, hooks, mem)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = p.client.Close() })
 	return p
@@ -57,7 +77,7 @@ func readAll(t *testing.T, rows telemetrystore.Rows) [][2]string {
 
 func TestQueryReadsTheEngineUnderATenantToken(t *testing.T) {
 	bed := newTestbed(t)
-	bed.engine.partial = "ingester-1 did not answer; ingester-2 did not answer"
+	bed.engine.partial = []string{"ingester-1 did not answer", "the hot window of a; b timed out"}
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	p := open(t, bed, mem, expectOneCall(t))
 
@@ -65,14 +85,14 @@ func TestQueryReadsTheEngineUnderATenantToken(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{"trace_id", "name"}, rows.Columns())
 	assert.Equal(t, [][2]string{{"ab01", "GET /api"}, {"ab01", "SELECT users"}}, readAll(t, rows))
-	assert.Equal(t, []string{"ingester-1 did not answer", "ingester-2 did not answer"}, rows.Warnings())
+	assert.Equal(t, []string{"ingester-1 did not answer", "the hot window of a; b timed out"}, rows.Warnings(), "one reason per header value, never split")
 	require.NoError(t, rows.Close())
 	require.NoError(t, rows.Close())
 	mem.AssertSize(t, 0)
 
 	require.Len(t, bed.engine.tokens, 2, "GetFlightInfo and DoGet each carry the token")
 	token := bed.engine.tokens[0]
-	assert.Equal(t, "backend-1", token.Header["kid"])
+	assert.Equal(t, thumbprintOf(t, bed.engine.public), token.Header["kid"])
 	claims := token.Claims.(jwt.MapClaims)
 	assert.Equal(t, "user:0190f3a1-0000-7000-8000-00000000000a", claims["sub"])
 	assert.Equal(t, testOrg.StringValue(), claims["fusescope_tenant"])
@@ -81,7 +101,7 @@ func TestQueryReadsTheEngineUnderATenantToken(t *testing.T) {
 
 func TestDoRunsAnActionAndReadsItsStream(t *testing.T) {
 	bed := newTestbed(t)
-	bed.engine.partial = "ingester-1 did not answer"
+	bed.engine.partial = []string{"ingester-1 did not answer"}
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	p := open(t, bed, mem, expectOneCall(t))
 
@@ -185,7 +205,7 @@ func TestTheFallbackServesOnlyClickhouse(t *testing.T) {
 
 func TestTokensAreReusedUntilHalfTheirLife(t *testing.T) {
 	bed := newTestbed(t)
-	s, err := newSigner(bed.config.JWT, func(error) {})
+	s, err := newSigner(bed.config.JWT, func(error) {}, func(string) {})
 	require.NoError(t, err)
 	now := time.Unix(1_792_678_623, 0)
 	s.now = func() time.Time { return now }
@@ -204,4 +224,40 @@ func TestTokensAreReusedUntilHalfTheirLife(t *testing.T) {
 	renewed, err := s.token(alice)
 	require.NoError(t, err)
 	assert.NotEqual(t, first, renewed, "renewed once half the 60 s passed")
+}
+
+func TestEngineMessagesStayOutOfTheError(t *testing.T) {
+	bed := newTestbed(t)
+	bed.engine.refuse = status.Error(codes.InvalidArgument, "column secret_salary of /data/t/acme/l1/f.parquet not found")
+	p := open(t, bed, memory.DefaultAllocator, expectOneCall(t))
+	_, err := p.Query(userContext(), "select secret_salary from spans")
+	require.Error(t, err)
+	assert.True(t, errors.Ast(err, errors.TypeInvalidInput), "%v", err)
+	assert.NotContains(t, err.Error(), "secret_salary")
+	assert.NotContains(t, err.Error(), "parquet")
+}
+
+func TestARotatedKeySignsUnderItsOwnKid(t *testing.T) {
+	bed := newTestbed(t)
+	s, err := newSigner(bed.config.JWT, func(error) {}, func(string) {})
+	require.NoError(t, err)
+	now := time.Unix(1_792_678_623, 0)
+	s.now = func() time.Time { return now }
+	s.key.now = func() time.Time { return now }
+	alice := telemetrystore.Identity{Tenant: testOrg, Subject: "user:alice"}
+	before, err := s.token(alice)
+	require.NoError(t, err)
+
+	public, private, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+	der, err := x509.MarshalPKCS8PrivateKey(private)
+	require.NoError(t, err)
+	write(t, bed.dir, "jwt.key", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der}))
+	now = now.Add(2 * time.Second)
+	after, err := s.token(alice)
+	require.NoError(t, err)
+	assert.NotEqual(t, before, after, "the cache is cleared when the key changes, well within ttl/2")
+	parsed, _, err := jwt.NewParser().ParseUnverified(after, jwt.MapClaims{})
+	require.NoError(t, err)
+	assert.Equal(t, thumbprintOf(t, public), parsed.Header["kid"])
 }

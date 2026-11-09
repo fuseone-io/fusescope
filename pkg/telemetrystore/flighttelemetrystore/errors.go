@@ -11,7 +11,8 @@ import (
 var ErrCodeEngine = errors.MustNewCode("telemetrystore_engine")
 
 // castError keeps a context error as it is, so callers that test for a deadline find it, and
-// gives an engine status the error type its code means.
+// gives an engine status the error type its code means. The engine's message is not carried: it
+// may name SQL, columns or paths, and the error can reach the API.
 func castError(ctx context.Context, err error) error {
 	if err == nil {
 		return nil
@@ -21,7 +22,7 @@ func castError(ctx context.Context, err error) error {
 	}
 	st, ok := status.FromError(err)
 	if !ok {
-		return errors.WrapInternalf(err, ErrCodeEngine, "fusescope-engine")
+		return errors.NewInternalf(ErrCodeEngine, "fusescope-engine is unreachable")
 	}
 	typ := errors.TypeInternal
 	switch st.Code() {
@@ -42,5 +43,5 @@ func castError(ctx context.Context, err error) error {
 	case codes.Unimplemented:
 		typ = errors.TypeUnsupported
 	}
-	return errors.Wrapf(err, typ, ErrCodeEngine, "fusescope-engine: %s", st.Message())
+	return errors.Newf(typ, ErrCodeEngine, "fusescope-engine refused the call: %s", st.Code())
 }
