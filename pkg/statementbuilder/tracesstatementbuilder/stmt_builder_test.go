@@ -491,6 +491,7 @@ func TestStatementBuilder(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 
 			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, vars)
+			checkDataFusion(t, mockMetadataStore, fl, 1747947419000, 1747983448000, c.requestType, c.query, vars)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -784,6 +785,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 
 			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			checkDataFusion(t, mockMetadataStore, fl, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -1046,6 +1048,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 			)
 
 			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			checkDataFusion(t, mockMetadataStore, fl, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -1135,6 +1138,7 @@ func TestStatementBuilderGroupByResourceEvolution(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, c.startMs, c.endMs, qbtypes.RequestTypeTimeSeries, query, nil)
+			checkDataFusion(t, mockMetadataStore, fl, c.startMs, c.endMs, qbtypes.RequestTypeTimeSeries, query, nil)
 			require.NoError(t, err)
 			require.Equal(t, c.expected.Query, q.Query)
 			require.Equal(t, c.expected.Args, q.Args)
@@ -1284,6 +1288,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 
 			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			checkDataFusion(t, mockMetadataStore, fl, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -1953,6 +1958,7 @@ func TestStatementBuilderGroupByUnseenKey(t *testing.T) {
 	}
 
 	q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeTimeSeries, query, nil)
+	checkDataFusion(t, mockMetadataStore, fl, 1747947419000, 1747983448000, qbtypes.RequestTypeTimeSeries, query, nil)
 	require.NoError(t, err) // guard: q is nil on error
 	assert.Contains(t, q.Query, "attributes_string['error.type']")
 	assert.Contains(t, q.Query, "attributes_number['error.type']")
@@ -1990,6 +1996,7 @@ func TestStatementBuilderAggregationUnseenKey(t *testing.T) {
 	}
 
 	q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeTimeSeries, query, nil)
+	checkDataFusion(t, mockMetadataStore, fl, 1747947419000, 1747983448000, qbtypes.RequestTypeTimeSeries, query, nil)
 	require.NoError(t, err) // guard: q is nil on error
 	assert.Contains(t, q.Query, "attributes_string['error.type']")
 	assert.Contains(t, q.Query, "attributes_number['error.type']")
@@ -2056,6 +2063,7 @@ func TestStatementBuilderSemconvFamilies(t *testing.T) {
 			)
 
 			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
+			checkDataFusion(t, mockMetadataStore, fl, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
 			require.NoError(t, err)
 			require.Equal(t, c.expected.Query, q.Query)
 			require.Equal(t, c.expected.Args, q.Args)
@@ -2107,6 +2115,7 @@ func TestStatementBuilderSemconvSingleSpelling(t *testing.T) {
 	}
 
 	q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
+	checkDataFusion(t, mockMetadataStore, fl, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
 	require.NoError(t, err)
 	require.Equal(t, "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'deployment.environment') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT toString(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL)) AS `__GROUP_BY_KEY_0_deployment.environment.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_deployment.environment.name` ORDER BY __result_0 DESC", q.Query)
 }

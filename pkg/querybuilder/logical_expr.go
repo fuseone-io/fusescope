@@ -68,7 +68,7 @@ func LogicalRead(ctx context.Context, q qbtypes.QueryInfo, storage qbtypes.Stora
 	for _, read := range reads {
 		branches = append(branches, read.Presence, read.SQL)
 	}
-	merged.SQL = "multiIf(" + strings.Join(branches, ", ") + ", NULL)"
+	merged.SQL = DialectOf(q).MultiIf(branches, "NULL")
 	return merged, nil
 }
 

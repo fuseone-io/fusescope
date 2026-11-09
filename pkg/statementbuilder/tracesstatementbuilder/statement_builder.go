@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -31,6 +30,8 @@ type traceQueryStatementBuilder struct {
 	storage                        qbtypes.Storage
 	dialect                        qbtypes.Dialect
 	spansTable                     string
+	contextColumns                 []string
+	inlineResource                 bool
 	resourceFilterResolver         *resourcefilter.ResourceFingerprintResolver[qbtypes.TraceAggregation]
 	aggExprRewriter                qbtypes.AggExprRewriter
 	fl                             flagger.Flagger
@@ -70,10 +71,29 @@ func NewFactory(
 // telemetry store.
 func ClickHouseTarget(storage qbtypes.Storage) querybuilder.Target {
 	return querybuilder.Target{
-		Dialect:    querybuilder.ClickHouse{},
-		Storage:    storage,
-		SpansTable: fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName),
+		Dialect:        querybuilder.ClickHouse{},
+		Storage:        storage,
+		SpansTable:     fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName),
+		ContextColumns: tracestelemetryschema.ContextualSpanColumns,
 	}
+}
+
+// NewEngineTraceQueryStatementBuilder renders for fusescope-engine, for the
+// routes served by the Flight telemetry store.
+func NewEngineTraceQueryStatementBuilder(
+	settings factory.ProviderSettings,
+	metadataStore telemetrytypes.MetadataStore,
+	flagger flagger.Flagger,
+) *traceQueryStatementBuilder {
+	target := tracestelemetryschema.DataFusionTarget()
+	rewriter := querybuilder.NewDataFusionAggExprRewriter(target.Storage, flagger, telemetrytypes.SignalTraces)
+	return NewTraceQueryStatementBuilderFor(settings, metadataStore, target, rewriter, nil, flagger, false, 0)
+}
+
+func (b *traceQueryStatementBuilder) queryInfo(ctx context.Context, orgID valuer.UUID, start, end uint64) qbtypes.QueryInfo {
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
+	info.Dialect = b.dialect
+	return info
 }
 
 // NewTraceQueryStatementBuilder renders for ClickHouse.
@@ -125,6 +145,8 @@ func NewTraceQueryStatementBuilderFor(
 		storage:                        target.Storage,
 		dialect:                        target.Dialect,
 		spansTable:                     target.SpansTable,
+		contextColumns:                 target.ContextColumns,
+		inlineResource:                 target.InlineResource,
 		resourceFilterResolver:         resourceFilterResolver,
 		aggExprRewriter:                aggExprRewriter,
 		fl:                             flagger,
@@ -204,18 +226,30 @@ func (b *traceQueryStatementBuilder) Build(
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
 
-	switch requestType {
-	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables, isSelectFieldsEmpty)
-	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
-	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, variables, false, false)
-	case qbtypes.RequestTypeTrace:
-		return b.buildTraceQuery(ctx, orgID, q, query, start, end, keys, variables)
+	if b.inlineResource && (requestType == qbtypes.RequestTypeTrace || b.traceScope != nil) {
+		return nil, errors.NewInvalidInputf(querybuilder.ErrCodeUnsupportedDialect, "the engine does not serve trace lists or trace operators yet")
 	}
 
-	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
+	var stmt *qbtypes.Statement
+	switch requestType {
+	case qbtypes.RequestTypeRaw:
+		stmt, err = b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables, isSelectFieldsEmpty)
+	case qbtypes.RequestTypeTimeSeries:
+		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
+	case qbtypes.RequestTypeScalar:
+		stmt, err = b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, variables, false, false)
+	case qbtypes.RequestTypeTrace:
+		stmt, err = b.buildTraceQuery(ctx, orgID, q, query, start, end, keys, variables)
+	default:
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if stmt.Query, stmt.Args, err = b.dialect.Bind(stmt.Query, stmt.Args); err != nil {
+		return nil, err
+	}
+	return stmt, nil
 }
 
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) []*telemetrytypes.FieldKeySelector {
@@ -411,7 +445,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, scopeArgs...)
 	}
 
-	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
+	info := b.queryInfo(ctx, orgID, start, end)
 	for i, field := range query.SelectFields {
 		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
@@ -421,7 +455,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	}
 
 	if isSelectFieldsEmpty {
-		for _, col := range tracestelemetryschema.ContextualSpanColumns {
+		for _, col := range b.contextColumns {
 			sb.SelectMore(col)
 		}
 	}
@@ -621,7 +655,8 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
-	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
+	groupExprs := make([]string, 0, len(query.GroupBy))
+	info := b.queryInfo(ctx, orgID, start, end)
 	for i, gb := range query.GroupBy {
 		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
@@ -630,6 +665,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		fieldAlias := groupByColumnAlias(i, gb.Name)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", b.dialect.ToText(expr), fieldAlias)))
 		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
+		groupExprs = append(groupExprs, sqlbuilder.Escape(b.dialect.ToText(expr)))
 	}
 
 	// Aggregations
@@ -668,8 +704,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs = append(cteArgs, cteStmt.Args)
 
 		// Constrain the main query to the rows that appear in the CTE.
-		tuple := fmt.Sprintf("(%s)", strings.Join(fieldNames, ", "))
-		sb.Where(b.dialect.InSubquery(tuple, fmt.Sprintf("(SELECT %s FROM __limit_cte)", strings.Join(fieldNames, ", "))))
+		sb.Where(b.dialect.GroupsIn(groupExprs, fieldNames, "__limit_cte"))
 
 		// Group by all dimensions
 		sb.GroupBy("ts")
@@ -785,7 +820,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	allAggChArgs := []any{}
 
 	fieldNames := make([]string, 0, len(query.GroupBy))
-	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
+	info := b.queryInfo(ctx, orgID, start, end)
 	for i, gb := range query.GroupBy {
 		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
@@ -898,7 +933,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 		// add filter expression
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
-			Query:              querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end),
+			Query:              b.queryInfo(ctx, orgID, start, end),
 			Storage:            b.storage,
 			Logger:             b.logger,
 			FieldKeys:          keys,
@@ -966,6 +1001,9 @@ func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
 ) (cteSQL string, cteArgs []any, skipResourceFilter bool, err error) {
+	if b.inlineResource {
+		return "", nil, false, nil
+	}
 
 	if b.skipResourceFingerprintEnabled {
 		decision, err := b.resourceFilterResolver.Resolve(ctx, orgID, query, start, end, variables)
