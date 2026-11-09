@@ -50,7 +50,7 @@ func TestDataFusionAggExprRewriter(t *testing.T) {
 
 func TestDataFusionAggExprRewriterRefuses(t *testing.T) {
 	rewriter := querybuilder.NewDataFusionAggExprRewriter(tracestelemetryschema.NewDataFusionStorage(), nil, telemetrytypes.SignalTraces)
-	for _, expr := range []string{"median(duration_nano)", "count() AND 1", "'x'"} {
+	for _, expr := range []string{"median(duration_nano)", "count() AND 1", "'x'", "count_distinct(name, kind_string)"} {
 		_, _, err := rewriter.Rewrite(context.Background(), valuer.UUID{}, 1, 2, expr, 60, map[string][]*telemetrytypes.TelemetryFieldKey{})
 		require.Error(t, err, expr)
 	}

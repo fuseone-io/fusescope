@@ -2,9 +2,11 @@ package tracesstatementbuilder
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/flagger"
 	"github.com/fuseone-io/fusescope/pkg/flagger/flaggertest"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
@@ -128,4 +130,108 @@ func TestEngineRefusesWhatItDoesNotServe(t *testing.T) {
 	query.Aggregations = []qbtypes.TraceAggregation{{Expression: "median(duration_nano)"}}
 	_, err = builder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
 	require.Error(t, err)
+}
+
+// TestEngineFilterMatrix renders every filter operator over every kind of
+// read the engine storage has: a promoted column, string and numeric maps,
+// intrinsic strings, numbers and bools, an id and the nullable parent, the
+// scope, and a derived column.
+func TestEngineFilterMatrix(t *testing.T) {
+	text := []string{
+		"%s = 'a'", "%s != 'a'", "%s < 'm'", "%s > 'm'",
+		"%s LIKE 'a%%'", "%s NOT LIKE 'a%%'", "%s ILIKE 'A%%'", "%s NOT ILIKE 'A%%'",
+		"%s CONTAINS 'a'", "%s NOT CONTAINS 'a'", "%s REGEXP '^a'", "%s NOT REGEXP '^a'",
+		"%s IN ['a', 'b']", "%s NOT IN ['a', 'b']", "%s EXISTS", "%s NOT EXISTS",
+		"%s BETWEEN 'a' AND 'm'", "%s NOT BETWEEN 'a' AND 'm'",
+	}
+	number := []string{
+		"%s = 200", "%s != 200", "%s < 200", "%s <= 200", "%s > 200", "%s >= 200",
+		"%s BETWEEN 100 AND 300", "%s NOT BETWEEN 100 AND 300",
+		"%s IN [200, 404]", "%s NOT IN [200, 404]", "%s EXISTS", "%s NOT EXISTS",
+	}
+	boolean := []string{"%s = true", "%s != true", "%s EXISTS", "%s NOT EXISTS"}
+	id := []string{
+		"%s = '00f067aa0ba902b7'", "%s != '00f067aa0ba902b7'",
+		"%s IN ['00f067aa0ba902b7', '00f067aa0ba902b8']", "%s NOT IN ['00f067aa0ba902b7', '00f067aa0ba902b8']",
+		"%s LIKE '00f0%%'", "%s CONTAINS 'aa0b'", "%s EXISTS", "%s NOT EXISTS",
+	}
+	fields := []struct {
+		field     string
+		operators []string
+	}{
+		{"service.name", text},
+		{"user.id", text},
+		{"scope.name", text},
+		{"name", text},
+		{"cart.items_count", number},
+		{"http.status_code", number},
+		{"duration_nano", number},
+		{"response_status_code", number},
+		{"has_error", boolean},
+		{"span_id", id},
+		{"parent_span_id", id},
+		{"isRoot", []string{"%s = true"}},
+		{"isEntryPoint", []string{"%s = true"}},
+	}
+	fl := flaggertest.New(t)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC))
+	clickhouse := clickHouseBuilder(mockMetadataStore, fl)
+	for _, f := range fields {
+		for _, operator := range f.operators {
+			expression := fmt.Sprintf(operator, f.field)
+			t.Run(expression, func(t *testing.T) {
+				query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+					Signal:       telemetrytypes.SignalTraces,
+					Filter:       &qbtypes.Filter{Expression: expression},
+					Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
+				}
+				_, err := clickhouse.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
+				require.NoError(t, err)
+				checkDataFusion(t, mockMetadataStore, fl, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
+			})
+		}
+	}
+}
+
+// TestEngineAggregationMatrix renders every aggregation function, with and
+// without its condition.
+func TestEngineAggregationMatrix(t *testing.T) {
+	expressions := []string{
+		"count()", "count(name)", "count_distinct(name)", "count_distinct_if(name, has_error = true)", "countIf(has_error = true)",
+		"sum(duration_nano)", "sumIf(duration_nano, has_error = true)", "avg(duration_nano)", "avgIf(duration_nano, has_error = true)",
+		"min(duration_nano)", "minIf(duration_nano, has_error = true)", "max(duration_nano)", "maxIf(duration_nano, has_error = true)",
+		"p05(duration_nano)", "p10(duration_nano)", "p20(duration_nano)", "p25(duration_nano)", "p50(duration_nano)",
+		"p75(duration_nano)", "p90(duration_nano)", "p95(duration_nano)", "p99(duration_nano)", "p999(duration_nano)",
+		"p99if(duration_nano, has_error = true)",
+		"rate()", "rate_if(has_error = true)", "rate_sum(duration_nano)", "rate_avg(duration_nano)", "rate_min(duration_nano)", "rate_max(duration_nano)",
+		"sum(duration_nano) / count()",
+		"count_distinct(name, kind_string)",
+	}
+	fl := flaggertest.New(t)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC))
+	clickhouse := clickHouseBuilder(mockMetadataStore, fl)
+	serviceName := telemetrytypes.TelemetryFieldKey{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString}
+	for _, expression := range expressions {
+		t.Run(expression, func(t *testing.T) {
+			query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				GroupBy:      []qbtypes.GroupByKey{{TelemetryFieldKey: serviceName}},
+				Aggregations: []qbtypes.TraceAggregation{{Expression: expression}},
+			}
+			_, err := clickhouse.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
+			require.NoError(t, err)
+			checkDataFusion(t, mockMetadataStore, fl, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
+		})
+	}
+}
+
+func clickHouseBuilder(metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *traceQueryStatementBuilder {
+	storage := tracestelemetryschema.NewStorage()
+	return NewTraceQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(), metadataStore, storage,
+		querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces),
+		nil, fl, false, 100000,
+	)
 }

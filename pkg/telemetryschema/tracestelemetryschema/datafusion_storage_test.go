@@ -203,8 +203,8 @@ func TestDataFusionStorageCompile(t *testing.T) {
 			key:      telemetrytypes.TelemetryFieldKey{Name: SpanSearchScopeEntryPoint, FieldContext: telemetrytypes.FieldContextSpan},
 			operator: qbtypes.FilterOperatorEqual,
 			value:    "true",
-			want: "((parent_span_id IS NOT NULL AND is_remote = 'true') OR EXISTS (SELECT 1 FROM top_level_operations t " +
-				"WHERE t.service_name = spans.service_name AND t.name = spans.name AND t.last_seen >= to_timestamp_nanos(1747947419000000000)))",
+			want: "(parent_span_id IS NOT NULL AND (is_remote = 'true' OR EXISTS (SELECT 1 FROM top_level_operations t " +
+				"WHERE t.service_name = spans.service_name AND t.name = spans.name AND t.last_seen >= to_timestamp_nanos(1747947419000000000))))",
 		},
 		{
 			name:     "a trace id compares as bytes",
@@ -213,6 +213,30 @@ func TestDataFusionStorageCompile(t *testing.T) {
 			value:    "5B8EFFF798038103D269B633813FC60C",
 			want:     "trace_id = decode(?, 'hex')",
 			args:     []any{"5b8efff798038103d269b633813fc60c"},
+		},
+		{
+			name:     "a parent other than one keeps the roots",
+			key:      telemetrytypes.TelemetryFieldKey{Name: "parent_span_id", FieldContext: telemetrytypes.FieldContextSpan},
+			operator: qbtypes.FilterOperatorNotEqual,
+			value:    "00f067aa0ba902b7",
+			want:     "(parent_span_id IS NULL OR parent_span_id != decode(?, 'hex'))",
+			args:     []any{"00f067aa0ba902b7"},
+		},
+		{
+			name:     "a parent outside a list keeps the roots",
+			key:      telemetrytypes.TelemetryFieldKey{Name: "parentSpanID", FieldContext: telemetrytypes.FieldContextSpan},
+			operator: qbtypes.FilterOperatorNotIn,
+			value:    []any{"00f067aa0ba902b7", "00f067aa0ba902b8"},
+			want:     "(parent_span_id IS NULL OR NOT (parent_span_id = decode(?, 'hex') OR parent_span_id = decode(?, 'hex')))",
+			args:     []any{"00f067aa0ba902b7", "00f067aa0ba902b8"},
+		},
+		{
+			name:     "a span id other than one has no NULL to keep",
+			key:      telemetrytypes.TelemetryFieldKey{Name: "span_id", FieldContext: telemetrytypes.FieldContextSpan},
+			operator: qbtypes.FilterOperatorNotEqual,
+			value:    "00f067aa0ba902b7",
+			want:     "span_id != decode(?, 'hex')",
+			args:     []any{"00f067aa0ba902b7"},
 		},
 		{
 			name:     "a list of span ids compares each as bytes",

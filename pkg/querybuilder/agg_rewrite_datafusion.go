@@ -209,7 +209,10 @@ func dataFusionAggregate(agg AggrFunc, columns []string) (string, error) {
 		}
 		return fmt.Sprintf("count(%s)", strings.Join(columns, ", ")), nil
 	case "countDistinct":
-		return fmt.Sprintf("count(DISTINCT %s)", strings.Join(columns, ", ")), nil
+		if len(columns) != 1 {
+			return "", errors.NewInvalidInputf(ErrCodeUnsupportedDialect, "count_distinct over %d columns has no DataFusion form", len(columns))
+		}
+		return fmt.Sprintf("count(DISTINCT %s)", columns[0]), nil
 	case "sum", "avg", "min", "max":
 		if len(columns) != 1 {
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "%s takes one argument", base)
