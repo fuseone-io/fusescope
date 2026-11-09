@@ -300,6 +300,14 @@ func idCondition(column string, width int, operator qbtypes.FilterOperator, valu
 		}
 		return fmt.Sprintf("%s = decode(%s, 'hex')", column, sb.Var(strings.ToLower(hex))), nil
 	}
+	// A root's parent is NULL, which ClickHouse read as '': a negative
+	// operator keeps it.
+	keepNull := func(condition string) string {
+		if column != SpanParentSpanIDColumn {
+			return condition
+		}
+		return fmt.Sprintf("(%s IS NULL OR %s)", column, condition)
+	}
 	switch operator {
 	case qbtypes.FilterOperatorEqual, qbtypes.FilterOperatorNotEqual:
 		condition, err := one(value)
@@ -307,7 +315,7 @@ func idCondition(column string, width int, operator qbtypes.FilterOperator, valu
 			return "", true, err
 		}
 		if operator == qbtypes.FilterOperatorNotEqual {
-			condition = strings.Replace(condition, " = ", " != ", 1)
+			condition = keepNull(strings.Replace(condition, " = ", " != ", 1))
 		}
 		return condition, true, nil
 	case qbtypes.FilterOperatorIn, qbtypes.FilterOperatorNotIn:
@@ -324,7 +332,7 @@ func idCondition(column string, width int, operator qbtypes.FilterOperator, valu
 			conditions = append(conditions, condition)
 		}
 		if operator == qbtypes.FilterOperatorNotIn {
-			return "NOT " + sb.Or(conditions...), true, nil
+			return keepNull("NOT " + sb.Or(conditions...)), true, nil
 		}
 		return sb.Or(conditions...), true, nil
 	}
@@ -332,9 +340,10 @@ func idCondition(column string, width int, operator qbtypes.FilterOperator, valu
 }
 
 // dataFusionSpanScopeCondition is the span scope predicate on the engine.
-// An entry point is a span with a remote parent, read from the span itself
-// for data still in the hot window, or one whose operation the compacted
-// top_level_operations holds, as ClickHouse matches it by operation.
+// An entry point is a span with a parent, either remote, read from the span
+// itself for data still in the hot window, or of an operation the compacted
+// top_level_operations holds, as ClickHouse matches it by operation. The
+// table holds root operations too, so the parent test covers both parts.
 func dataFusionSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, startNs uint64) (string, error) {
 	if err := checkSpanScopeOperand(key, operator, value); err != nil {
 		return "", err
@@ -347,8 +356,8 @@ func dataFusionSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operato
 		if startNs > 0 {
 			since = fmt.Sprintf(" AND t.last_seen >= to_timestamp_nanos(%d)", startNs)
 		}
-		return "((parent_span_id IS NOT NULL AND is_remote = 'true') OR EXISTS (SELECT 1 FROM top_level_operations t " +
-			"WHERE t.service_name = spans.service_name AND t.name = spans.name" + since + "))", nil
+		return "(parent_span_id IS NOT NULL AND (is_remote = 'true' OR EXISTS (SELECT 1 FROM top_level_operations t " +
+			"WHERE t.service_name = spans.service_name AND t.name = spans.name" + since + ")))", nil
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid span search scope: %s", key.Name)
 }
