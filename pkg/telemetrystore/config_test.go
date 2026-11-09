@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/valuer"
+
 	"github.com/fuseone-io/fusescope/pkg/config"
 	"github.com/fuseone-io/fusescope/pkg/config/envprovider"
 	"github.com/fuseone-io/fusescope/pkg/factory"
@@ -125,6 +127,12 @@ func TestValidateFlight(t *testing.T) {
 		{name: "ZeroMessageBytes_Refused", config: flight(func(c *Config) { c.Flight.MaxMessageBytes = 0 }), want: "telemetrystore.flight.max_message_bytes"},
 		{name: "NoClickhouseFallback_Refused", config: flight(func(c *Config) { c.Clickhouse.DSN = "" }), want: "telemetrystore.clickhouse.dsn"},
 		{name: "UnknownProvider_Refused", config: flight(func(c *Config) { c.Provider = "duckdb" }), want: "telemetrystore.provider"},
+		{name: "KnownRoutesAndOrgs_Valid", config: flight(func(c *Config) {
+			c.Flight.Routes = []string{"traces_raw", "traces_aggregate", "trace_detail"}
+			c.Flight.Orgs = []string{"0190f3a1-0000-7000-8000-000000000001"}
+		})},
+		{name: "UnknownRoute_Refused", config: flight(func(c *Config) { c.Flight.Routes = []string{"logs"} }), want: "telemetrystore.flight.routes"},
+		{name: "OrgNotAnID_Refused", config: flight(func(c *Config) { c.Flight.Orgs = []string{"acme"} }), want: "telemetrystore.flight.orgs"},
 	}
 
 	for _, testCase := range testCases {
@@ -146,4 +154,22 @@ func TestFlightDefaults(t *testing.T) {
 	assert.Equal(t, "fusescope-backend", conf.Flight.JWT.Issuer)
 	assert.Equal(t, 60*time.Second, conf.Flight.JWT.TTL)
 	assert.Equal(t, 64<<20, conf.Flight.MaxMessageBytes)
+}
+
+func TestTheEngineServesOnlyListedRoutesOfListedOrgs(t *testing.T) {
+	listed := valuer.MustNewUUID("0190f3a1-0000-7000-8000-000000000001")
+	other := valuer.MustNewUUID("0190f3a1-0000-7000-8000-000000000002")
+	conf := NewConfigFactory().New().(Config)
+	conf.Provider = "flight"
+	conf.Flight.Routes = []string{"traces_raw"}
+	conf.Flight.Orgs = []string{listed.StringValue()}
+
+	assert.True(t, conf.EngineServes(RouteTracesRaw, listed))
+	assert.False(t, conf.EngineServes(RouteTracesAggregate, listed), "a route not listed")
+	assert.False(t, conf.EngineServes(RouteTracesRaw, other), "an org not listed")
+	conf.Provider = "clickhouse"
+	assert.False(t, conf.EngineServes(RouteTracesRaw, listed), "the clickhouse provider serves everything itself")
+	conf.Provider = "flight"
+	conf.Flight.Routes = nil
+	assert.False(t, conf.EngineServes(RouteTracesRaw, listed), "no route, nothing routed")
 }

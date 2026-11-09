@@ -334,7 +334,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Querier,
-		NewQuerierProviderFactories(telemetrystore, prometheus, telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
+		NewQuerierProviderFactories(telemetrystore, prometheus, telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger, engineRouting(providerSettings, config, telemetryMetadataStore, flagger)),
 		config.Querier.Provider(),
 	)
 	if err != nil {
@@ -673,4 +673,15 @@ func New(
 		Auditor:                auditor,
 		MeterReporter:          meterReporter,
 	}, nil
+}
+
+// engineRouting is the trace routing to fusescope-engine under the flight provider, nil otherwise.
+func engineRouting(settings factory.ProviderSettings, config Config, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *querier.EngineRouting {
+	if config.TelemetryStore.Provider != "flight" {
+		return nil
+	}
+	return &querier.EngineRouting{
+		Serves:           config.TelemetryStore.EngineServes,
+		TraceStmtBuilder: tracesstatementbuilder.NewEngineTraceQueryStatementBuilder(settings, metadataStore, fl),
+	}
 }

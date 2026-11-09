@@ -229,6 +229,10 @@ telemetrystore:
       ttl: 60s
     # Largest message read from the engine.
     max_message_bytes: 67108864
+    # The reads the engine serves: traces_raw, traces_aggregate, trace_detail. Empty serves none.
+    routes: []
+    # The organisations whose routed reads the engine serves; each needs its tenant there.
+    orgs: []
 
 ##################### Prometheus #####################
 prometheus:

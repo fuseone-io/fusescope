@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -39,6 +40,9 @@ type builderQuery[T any] struct {
 	kind   qbtypes.RequestType
 
 	builderConfig builderConfig
+
+	// engine is set when the query is routed to fusescope-engine.
+	engine *engineCall[T]
 }
 
 var _ qbtypes.Query = (*builderQuery[any])(nil)
@@ -99,6 +103,11 @@ func (q *builderQuery[T]) Fingerprint() string {
 
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
+
+	// A query routed to the engine caches apart from the same query on ClickHouse
+	if q.engine != nil {
+		parts = append(parts, "store=engine")
+	}
 
 	// Add source type
 	parts = append(parts, fmt.Sprintf("source=%s", q.spec.Source.StringValue()))
@@ -258,7 +267,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	}
 
 	fromMS, toMS := q.fromMS, q.toMS
-	if q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs {
+	if q.engine == nil && (q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs) {
 		var overlap bool
 		var warning string
 		fromMS, toMS, overlap, warning = q.narrowWindowByTraceID(ctx, fromMS, toMS)
@@ -271,22 +280,24 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 		}
 	}
 
-	stmt, err := q.stmtBuilder.Build(ctx, q.orgID, fromMS, toMS, q.kind, q.spec, q.variables)
+	stmt, onEngine, err := q.build(ctx, fromMS, toMS)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := q.enforceEstimate(ctx, stmt); err != nil {
-		return nil, err
+	if !onEngine {
+		if err := q.enforceEstimate(ctx, stmt); err != nil {
+			return nil, err
+		}
 	}
 
 	// Execute the query with proper context for partial value detection
-	result, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
+	result, err := q.execute(ctx, stmt, onEngine)
 	if err != nil {
 		return nil, err
 	}
 
-	result.Warnings = stmt.Warnings
+	result.Warnings = append(append([]string{}, stmt.Warnings...), result.Warnings...)
 	result.WarningsDocURL = stmt.WarningsDocURL
 	return result, nil
 }
@@ -551,7 +562,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	// Check if filter contains trace_id(s) and optimize time range if needed.
 	// Applies to both traces (the listing this branch was built for) and logs
 	// (which carry trace_id and benefit from the same clamp before bucketing).
-	if q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs {
+	if q.engine == nil && (q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs) {
 		var overlap bool
 		var warning string
 		fromMS, toMS, overlap, warning = q.narrowWindowByTraceID(ctx, fromMS, toMS)
@@ -581,7 +592,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		}
 	}
 
-	var warnings []string
+	var warnings, partial []string
 	var warningsDocURL string
 
 	// Cumulative across visited buckets: the budget bounds the whole query's per-shard
@@ -592,15 +603,17 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		q.spec.Offset = 0
 		q.spec.Limit = need
 
-		stmt, err := q.stmtBuilder.Build(ctx, q.orgID, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
+		stmt, onEngine, err := q.build(ctx, r.fromNS/1e6, r.toNS/1e6)
 		if err != nil {
 			return nil, err
 		}
 		warnings = stmt.Warnings
 		warningsDocURL = stmt.WarningsDocURL
-		rowsEst, guarded, err := q.estimateRows(ctx, stmt)
-		if err != nil {
-			return nil, err
+		rowsEst, guarded := int64(0), false
+		if !onEngine {
+			if rowsEst, guarded, err = q.estimateRows(ctx, stmt); err != nil {
+				return nil, err
+			}
 		}
 		if guarded {
 			estimatedScan += rowsEst
@@ -611,10 +624,11 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 			}
 		}
 		// Execute with proper context for partial value detection
-		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
+		res, err := q.execute(ctx, stmt, onEngine)
 		if err != nil {
 			return nil, err
 		}
+		partial = appendNew(partial, res.Warnings...)
 		totalRows += res.Stats.RowsScanned
 		totalBytes += res.Stats.BytesScanned
 
@@ -649,7 +663,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 			Rows:       rows,
 			NextCursor: nextCursor,
 		},
-		Warnings:       warnings,
+		Warnings:       append(append([]string{}, warnings...), partial...),
 		WarningsDocURL: warningsDocURL,
 		Stats: qbtypes.ExecStats{
 			RowsScanned:  totalRows,
@@ -669,4 +683,14 @@ func decodeCursor(cur string) (int64, error) {
 		return 0, err
 	}
 	return strconv.ParseInt(string(b), 10, 64)
+}
+
+// appendNew appends each of items not already in list.
+func appendNew(list []string, items ...string) []string {
+	for _, item := range items {
+		if !slices.Contains(list, item) {
+			list = append(list, item)
+		}
+	}
+	return list
 }

@@ -28,6 +28,7 @@ func NewFactory(
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 	bucketCache querier.BucketCache,
 	flagger flagger.Flagger,
+	engine *querier.EngineRouting,
 ) factory.ProviderFactory[querier.Querier, querier.Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("signoz"),
@@ -36,7 +37,7 @@ func NewFactory(
 			settings factory.ProviderSettings,
 			cfg querier.Config,
 		) (querier.Querier, error) {
-			return querier.New(
+			q := querier.New(
 				settings,
 				telemetryStore,
 				metadataStore,
@@ -52,7 +53,13 @@ func NewFactory(
 				flagger,
 				cfg.LogTraceIDWindowPadding,
 				cfg.MaxConcurrentQueries,
-			), nil
+			)
+			if engine != nil {
+				if err := q.RouteToEngine(*engine); err != nil {
+					return nil, err
+				}
+			}
+			return q, nil
 		},
 	)
 }
