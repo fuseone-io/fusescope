@@ -13,6 +13,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -488,7 +489,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 
-	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+	payload, err := consume(clickhousetelemetrystore.NewRows(rows), kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
 	}

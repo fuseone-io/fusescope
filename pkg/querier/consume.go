@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
@@ -73,7 +73,7 @@ func labelValue(val any) string {
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
 // * Distribution- *qbtypes.DistributionData.
-func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
+func consume(rows telemetrystore.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
 		err     error
@@ -94,7 +94,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 	return payload, err
 }
 
-func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
+func readAsTimeSeries(rows telemetrystore.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
 
@@ -303,7 +303,7 @@ func hasHeatmapBucketBounds(colNames []string) bool {
 }
 
 // readAsHeatmap folds one row per cell — (timestamp, group labels, bucket bounds, count) — into one series per group.
-func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
+func readAsHeatmap(rows telemetrystore.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
 
@@ -432,7 +432,7 @@ func isNumericKind(t reflect.Type) bool {
 	}
 }
 
-func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, error) {
+func readAsScalar(rows telemetrystore.Rows, queryName string) (*qbtypes.ScalarData, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 
@@ -510,7 +510,7 @@ func derefValue(v any) any {
 	return val.Interface()
 }
 
-func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
+func readAsRaw(rows telemetrystore.Rows, queryName string) (*qbtypes.RawData, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 	colCnt := len(colNames)

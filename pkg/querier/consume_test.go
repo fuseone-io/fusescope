@@ -8,6 +8,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
@@ -100,7 +101,7 @@ func TestConsume_JSONColumn(t *testing.T) {
 			{Name: "__result_0", Type: "UInt64"},
 		}, [][]any{{body, uint64(3)}, {`{"level":"warn"}`, uint64(1)}}))
 
-		payload, err := consume(rows, qbtypes.RequestTypeScalar, nil, qbtypes.Step{}, "A")
+		payload, err := consume(clickhousetelemetrystore.NewRows(rows), qbtypes.RequestTypeScalar, nil, qbtypes.Step{}, "A")
 		require.NoError(t, err)
 
 		data := payload.(*qbtypes.ScalarData)
@@ -118,7 +119,7 @@ func TestConsume_JSONColumn(t *testing.T) {
 			{Name: "__result_0", Type: "UInt64"},
 		}, [][]any{{ts, body, uint64(3)}}))
 
-		payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
+		payload, err := consume(clickhousetelemetrystore.NewRows(rows), qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
 		require.NoError(t, err)
 
 		data := payload.(*qbtypes.TimeSeriesData)
@@ -140,7 +141,7 @@ func TestConsume_JSONColumn(t *testing.T) {
 			{ts, `{"level":"warn"}`, uint64(2)},
 		}))
 
-		payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
+		payload, err := consume(clickhousetelemetrystore.NewRows(rows), qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
 		require.NoError(t, err)
 
 		data := payload.(*qbtypes.TimeSeriesData)
@@ -162,7 +163,7 @@ func TestConsume_JSONColumn(t *testing.T) {
 			{Name: "body_v2", Type: "JSON"},
 		}, [][]any{{ts, body}}))
 
-		payload, err := consume(rows, qbtypes.RequestTypeRaw, nil, qbtypes.Step{}, "A")
+		payload, err := consume(clickhousetelemetrystore.NewRows(rows), qbtypes.RequestTypeRaw, nil, qbtypes.Step{}, "A")
 		require.NoError(t, err)
 
 		data := payload.(*qbtypes.RawData)
