@@ -68,10 +68,17 @@ func (q *querier) engineFor(org valuer.UUID, kind qbtypes.RequestType, req *qbty
 
 // engineCall is how one routed builder query reaches the engine.
 type engineCall[T any] struct {
-	route   telemetrystore.Route
-	builder qbtypes.StatementBuilder[T]
-	routed  metric.Int64Counter
-	logger  *slog.Logger
+	route    telemetrystore.Route
+	builder  qbtypes.StatementBuilder[T]
+	routed   metric.Int64Counter
+	logger   *slog.Logger
+	decision *engineDecision
+}
+
+// engineDecision is where a query runs, with the engine statement of its whole window if there.
+type engineDecision struct {
+	stmt     *qbtypes.Statement
+	onEngine bool
 }
 
 func (e *engineCall[T]) decided(ctx context.Context, store, reason string) {
@@ -80,29 +87,43 @@ func (e *engineCall[T]) decided(ctx context.Context, store, reason string) {
 	}
 }
 
-// build renders the statement, on the engine when the query is routed there, and reports where
-// it runs. A query the engine dialect cannot render is built for ClickHouse instead; that is
-// decided here, before any call, and counted.
-func (q *builderQuery[T]) build(ctx context.Context, fromMS, toMS uint64) (*qbtypes.Statement, bool, error) {
-	if q.engine != nil {
-		stmt, err := q.engine.builder.Build(ctx, q.orgID, fromMS, toMS, q.kind, q.spec, q.variables)
-		if err == nil {
-			q.engine.decided(ctx, "engine", "routed")
-			return stmt, true, nil
-		}
-		if !errors.Asc(err, querybuilder.ErrCodeUnsupportedDialect) {
-			return nil, false, err
-		}
+// onEngine decides once, before any call, whether the query runs on the engine, and gives the
+// engine statement for the query's whole window when it does. A query the engine dialect cannot
+// render runs on ClickHouse instead, with ClickHouse's own preprocessing, and the fallback is
+// counted. Any other build error is the caller's.
+func (q *builderQuery[T]) onEngine(ctx context.Context) (*qbtypes.Statement, bool, error) {
+	if q.engine == nil {
+		return nil, false, nil
+	}
+	if q.engine.decision != nil {
+		return q.engine.decision.stmt, q.engine.decision.onEngine, nil
+	}
+	stmt, err := q.engine.builder.Build(ctx, q.orgID, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
+	switch {
+	case err == nil:
+		q.engine.decided(ctx, "engine", "routed")
+		q.engine.decision = &engineDecision{stmt: stmt, onEngine: true}
+	case errors.Asc(err, querybuilder.ErrCodeUnsupportedDialect):
 		q.engine.decided(ctx, "clickhouse", "unsupported_dialect")
 		if q.engine.logger != nil {
 			q.engine.logger.InfoContext(ctx, "a routed query has no engine form; ClickHouse serves it", slog.String("route", string(q.engine.route)), errors.Attr(err))
 		}
+		q.engine.decision = &engineDecision{}
+	default:
+		return nil, false, err
 	}
-	stmt, err := q.stmtBuilder.Build(ctx, q.orgID, fromMS, toMS, q.kind, q.spec, q.variables)
-	return stmt, false, err
+	return q.engine.decision.stmt, q.engine.decision.onEngine, nil
 }
 
-// execute runs stmt where build decided.
+// build renders the statement of [fromMS, toMS] for the store onEngine names.
+func (q *builderQuery[T]) build(ctx context.Context, fromMS, toMS uint64, onEngine bool) (*qbtypes.Statement, error) {
+	if onEngine {
+		return q.engine.builder.Build(ctx, q.orgID, fromMS, toMS, q.kind, q.spec, q.variables)
+	}
+	return q.stmtBuilder.Build(ctx, q.orgID, fromMS, toMS, q.kind, q.spec, q.variables)
+}
+
+// execute runs stmt where onEngine decided.
 func (q *builderQuery[T]) execute(ctx context.Context, stmt *qbtypes.Statement, onEngine bool) (*qbtypes.Result, error) {
 	if onEngine {
 		return q.executeOnEngine(ctx, stmt)

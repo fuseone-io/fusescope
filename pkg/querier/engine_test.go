@@ -223,3 +223,63 @@ func TestTheCacheKeyNamesTheStore(t *testing.T) {
 	assert.NotEmpty(t, clickhouse.Fingerprint())
 	assert.NotEqual(t, clickhouse.Fingerprint(), engine.Fingerprint())
 }
+
+const knownTrace = "5b8efff798038103d269b633813fc60c"
+
+func traceIDRequest(kind qbtypes.RequestType) *qbtypes.QueryRangeRequest {
+	req := traceRequest(kind)
+	spec := req.CompositeQuery.Queries[0].Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+	spec.Filter = &qbtypes.Filter{Expression: "trace_id = '" + knownTrace + "'"}
+	if kind == qbtypes.RequestTypeRaw {
+		spec.Aggregations = nil
+		spec.Order = []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp"}}, Direction: qbtypes.OrderDirectionDesc}}
+		spec.Limit = 10
+	}
+	req.CompositeQuery.Queries[0].Spec = spec
+	return req
+}
+
+// A fallback runs ClickHouse's own preprocessing: the trace-id window lookup, here answering that
+// the trace is unknown, which ends the query empty with that lookup as ClickHouse's only call.
+func TestAFallbackNarrowsItsWindowAsClickhouseDoes(t *testing.T) {
+	for _, kind := range []qbtypes.RequestType{qbtypes.RequestTypeScalar, qbtypes.RequestTypeRaw} {
+		t.Run(kind.StringValue(), func(t *testing.T) {
+			route, _ := traceRoute(kind)
+			bed := newEngineBed(t, route)
+			bed.engine.err = errors.NewInvalidInputf(querybuilder.ErrCodeUnsupportedDialect, "no DataFusion form")
+			bed.store.Mock().ExpectQueryRow("trace_summary").WillReturnRow(cmock.NewRow(
+				[]cmock.ColumnType{{Name: "count()", Type: "UInt64"}, {Name: "start", Type: "Int64"}, {Name: "end", Type: "Int64"}},
+				[]any{uint64(0), int64(0), int64(0)},
+			))
+			_, err := bed.querier.QueryRange(telemetrystore.WithService(context.Background(), "querier-test"), engineOrg, traceIDRequest(kind))
+			require.NoError(t, err)
+			assert.Empty(t, bed.store.statements)
+			assert.Zero(t, bed.clickhouse.calls, "the unknown trace ends the query before its statement")
+		})
+	}
+}
+
+func TestARoutedQueryLeavesClickhousePreprocessingOut(t *testing.T) {
+	for _, kind := range []qbtypes.RequestType{qbtypes.RequestTypeScalar, qbtypes.RequestTypeRaw} {
+		t.Run(kind.StringValue(), func(t *testing.T) {
+			route, _ := traceRoute(kind)
+			bed := newEngineBed(t, route)
+			_, err := bed.querier.QueryRange(telemetrystore.WithService(context.Background(), "querier-test"), engineOrg, traceIDRequest(kind))
+			require.NoError(t, err)
+			assert.NotEmpty(t, bed.store.statements, "the engine served it")
+		})
+	}
+}
+
+func TestThePreviewShowsTheStatementThatRuns(t *testing.T) {
+	spec := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Name: "A", Signal: telemetrytypes.SignalTraces, Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}}}
+	preview := func(engine *fakeBuilder) string {
+		q := newBuilderQuery[qbtypes.TraceAggregation](nil, nil, engineOrg, &fakeBuilder{query: "clickhouse sql"}, qbtypes.QueryTypeBuilder, spec, qbtypes.TimeRange{From: 1, To: 2}, qbtypes.RequestTypeScalar, nil, builderConfig{})
+		q.engine = &engineCall[qbtypes.TraceAggregation]{route: telemetrystore.RouteTracesAggregate, builder: engine}
+		stmt, err := q.Statement(context.Background())
+		require.NoError(t, err)
+		return stmt.Query
+	}
+	assert.Equal(t, "engine sql", preview(&fakeBuilder{query: "engine sql"}))
+	assert.Equal(t, "clickhouse sql", preview(&fakeBuilder{err: errors.NewInvalidInputf(querybuilder.ErrCodeUnsupportedDialect, "no form")}))
+}

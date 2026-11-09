@@ -254,20 +254,39 @@ func (q *builderQuery[T]) isWindowList() bool {
 	return true
 }
 
-// Statement renders the SQL without executing it, for the preview path.
+// Statement renders the SQL without executing it, for the preview path: the statement of the
+// store the query runs on.
 func (q *builderQuery[T]) Statement(ctx context.Context) (*qbtypes.Statement, error) {
+	stmt, onEngine, err := q.onEngine(ctx)
+	if err != nil || onEngine {
+		return stmt, err
+	}
 	return q.stmtBuilder.Build(ctx, q.orgID, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
 }
 
 func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) {
+	engineStmt, onEngine, err := q.onEngine(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	// can we do window based pagination?
 	if q.kind == qbtypes.RequestTypeRaw && q.isWindowList() {
-		return q.executeWindowList(ctx)
+		return q.executeWindowList(ctx, onEngine)
+	}
+
+	if onEngine {
+		result, err := q.executeOnEngine(ctx, engineStmt)
+		if err != nil {
+			return nil, err
+		}
+		result.Warnings = append(append([]string{}, engineStmt.Warnings...), result.Warnings...)
+		result.WarningsDocURL = engineStmt.WarningsDocURL
+		return result, nil
 	}
 
 	fromMS, toMS := q.fromMS, q.toMS
-	if q.engine == nil && (q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs) {
+	if q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs {
 		var overlap bool
 		var warning string
 		fromMS, toMS, overlap, warning = q.narrowWindowByTraceID(ctx, fromMS, toMS)
@@ -280,24 +299,22 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 		}
 	}
 
-	stmt, onEngine, err := q.build(ctx, fromMS, toMS)
+	stmt, err := q.stmtBuilder.Build(ctx, q.orgID, fromMS, toMS, q.kind, q.spec, q.variables)
 	if err != nil {
 		return nil, err
 	}
 
-	if !onEngine {
-		if err := q.enforceEstimate(ctx, stmt); err != nil {
-			return nil, err
-		}
+	if err := q.enforceEstimate(ctx, stmt); err != nil {
+		return nil, err
 	}
 
 	// Execute the query with proper context for partial value detection
-	result, err := q.execute(ctx, stmt, onEngine)
+	result, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 	if err != nil {
 		return nil, err
 	}
 
-	result.Warnings = append(append([]string{}, stmt.Warnings...), result.Warnings...)
+	result.Warnings = stmt.Warnings
 	result.WarningsDocURL = stmt.WarningsDocURL
 	return result, nil
 }
@@ -525,7 +542,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	}, nil
 }
 
-func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Result, error) {
+func (q *builderQuery[T]) executeWindowList(ctx context.Context, onEngine bool) (*qbtypes.Result, error) {
 	isAsc := len(q.spec.Order) > 0 &&
 		strings.ToLower(string(q.spec.Order[0].Direction.StringValue())) == "asc"
 
@@ -562,7 +579,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	// Check if filter contains trace_id(s) and optimize time range if needed.
 	// Applies to both traces (the listing this branch was built for) and logs
 	// (which carry trace_id and benefit from the same clamp before bucketing).
-	if q.engine == nil && (q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs) {
+	if !onEngine && (q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs) {
 		var overlap bool
 		var warning string
 		fromMS, toMS, overlap, warning = q.narrowWindowByTraceID(ctx, fromMS, toMS)
@@ -603,7 +620,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		q.spec.Offset = 0
 		q.spec.Limit = need
 
-		stmt, onEngine, err := q.build(ctx, r.fromNS/1e6, r.toNS/1e6)
+		stmt, err := q.build(ctx, r.fromNS/1e6, r.toNS/1e6, onEngine)
 		if err != nil {
 			return nil, err
 		}
