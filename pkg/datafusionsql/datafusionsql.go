@@ -3,9 +3,10 @@
 // statement through it.
 //
 // In that dialect a string literal is closed only by a quote not followed by another: a quote is
-// written twice and a backslash is an ordinary character (no E'' strings are produced). A quoted
-// identifier follows the same rule with double quotes and keeps its case. NUL and invalid UTF-8
-// are refused rather than rendered.
+// written twice and a backslash is an ordinary character, since escape-string literals (the E
+// prefix) are never produced. A quoted identifier follows the same rule with double quotes and
+// keeps its case. A negative number is parenthesised, so a minus written before it cannot form a
+// comment. NUL and invalid UTF-8 are refused rather than rendered.
 package datafusionsql
 
 import (
@@ -38,7 +39,7 @@ func Ident(name string) (string, error) {
 	return `"` + strings.ReplaceAll(name, `"`, `""`) + `"`, nil
 }
 
-func Int(v int64) string { return strconv.FormatInt(v, 10) }
+func Int(v int64) string { return signed(strconv.FormatInt(v, 10)) }
 
 func Uint(v uint64) string { return strconv.FormatUint(v, 10) }
 
@@ -47,7 +48,14 @@ func Float(v float64) (string, error) {
 	if math.IsNaN(v) || math.IsInf(v, 0) {
 		return "", errors.NewInvalidInputf(ErrCodeUnrenderable, "%v has no SQL literal", v)
 	}
-	return strconv.FormatFloat(v, 'g', -1, 64), nil
+	return signed(strconv.FormatFloat(v, 'g', -1, 64)), nil
+}
+
+func signed(number string) string {
+	if strings.HasPrefix(number, "-") {
+		return "(" + number + ")"
+	}
+	return number
 }
 
 func Bool(v bool) string { return strconv.FormatBool(v) }
