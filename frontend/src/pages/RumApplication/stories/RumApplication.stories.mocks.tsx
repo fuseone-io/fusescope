@@ -5,8 +5,13 @@
 
 import { rest } from 'msw';
 
-import { toggleControl } from '@/storybook/controls/controls';
+import { choiceControl, toggleControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import {
+	RUM_COLLECTOR_STATES,
+	rumIngestion,
+} from '@/storybook/msw/__story_mockdata__/rumIngestion';
+import type { RumCollectorState } from '@/storybook/msw/__story_mockdata__/rumIngestion';
 import {
 	RUM_APPLICATIONS,
 	rumApplicationKeys,
@@ -34,6 +39,13 @@ const ok = (data: unknown): Record<string, unknown> => ({
 
 export const rumApplicationMocks = defineStoryMocks({
 	controls: {
+		collectorEndpoint: choiceControl<RumCollectorState>('Collector URL', {
+			group: 'Frontend · setup',
+			description:
+				'Configured SDK ingest URL, missing configuration, loading or failed settings request.',
+			value: 'configured',
+			options: [...RUM_COLLECTOR_STATES],
+		}),
 		telemetry: toggleControl('Telemetry', {
 			group: 'Frontend · overview',
 			description: 'Off, the application has sent nothing in the range.',
@@ -66,6 +78,14 @@ export const rumApplicationMocks = defineStoryMocks({
 		}),
 	},
 	handlers: (values, response) => [
+		rest.get('http://localhost/api/v1/onboarding/ingestion', (_req, res, ctx) =>
+			values.collectorEndpoint === 'error'
+				? res(ctx.status(503))
+				: res(
+						ctx.delay(values.collectorEndpoint === 'loading' ? 'infinite' : 0),
+						ctx.json(ok(rumIngestion(values.collectorEndpoint !== 'unconfigured'))),
+					),
+		),
 		rest.get(`${APPS}/:id/status`, (_req, res, ctx) =>
 			res(ctx.json(ok(rumApplicationStatus(true)))),
 		),

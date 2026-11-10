@@ -149,9 +149,9 @@ export const KeyShownOnce: Story = {
 		await expect(
 			await screen.findByTestId('rum-key-value', {}, WAIT),
 		).toHaveTextContent('rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs');
-		await expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
-			"publicKey: 'rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs'",
-		);
+		await expect(
+			await screen.findByTestId('rum-install-snippet', {}, WAIT),
+		).toHaveTextContent("publicKey: 'rum_pub_k7q2m4xzan6cw5rthfyp3jav4dlb6eqs'");
 		await expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
 			"version: '<your app version>'",
 		);

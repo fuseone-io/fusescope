@@ -1,7 +1,7 @@
 import type { RumtypesMissingSourceMapDTO } from 'api/generated/services/fuseScope.schemas';
 import { RumtypesArtifactKindDTO } from 'api/generated/services/fuseScope.schemas';
 import CopyButton from 'components/RumApplicationSheet/components/CopyButton';
-import { sdkEndpoint } from 'components/RumApplicationSheet/utils/endpoint';
+import { managementEndpoint } from 'components/RumApplicationSheet/utils/endpoint';
 import { mappingUploadCommand } from 'lib/rum/androidSetup';
 import { appUploadCommand } from 'lib/rum/sourceMapCommands';
 import { TriangleAlert } from 'lucide-react';
@@ -24,7 +24,7 @@ function MissingSourceMap({
 }: MissingSourceMapProps): JSX.Element {
 	const { release } = missing;
 	const r8 = missing.kind === RumtypesArtifactKindDTO['r8-mapping'];
-	const target = { url: sdkEndpoint(), applicationId, release };
+	const target = { url: managementEndpoint(), applicationId, release };
 	const command = r8 ? mappingUploadCommand(target) : appUploadCommand(target);
 	return (
 		<div

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { RumtypesBundledSDKDTO } from 'api/generated/services/fuseScope.schemas';
 import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 
+import { managementEndpoint } from '../utils/endpoint';
 import { ScriptSource, SnippetInput } from '../types';
 import {
 	SCRIPT_SOURCES,
@@ -33,7 +34,7 @@ function ScriptTagInstall({
 			bundle &&
 			buildScriptSnippet(
 				input,
-				scriptSource(source, bundle, input.endpoint),
+				scriptSource(source, bundle, managementEndpoint()),
 				bundle.integrity,
 			),
 		[input, bundle, source],
