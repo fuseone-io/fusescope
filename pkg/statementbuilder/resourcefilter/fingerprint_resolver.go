@@ -23,7 +23,7 @@ func NewResolver[T any](
 	tableName string,
 	signal telemetrytypes.Signal,
 	source telemetrytypes.Source,
-	metadataStore telemetrytypes.MetadataStore,
+	metadataStore telemetrytypes.KeyResolver,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fl flagger.Flagger,
 	telemetryStore telemetrystore.TelemetryStore,

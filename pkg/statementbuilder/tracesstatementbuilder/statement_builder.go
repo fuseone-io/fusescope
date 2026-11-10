@@ -26,7 +26,7 @@ var (
 
 type traceQueryStatementBuilder struct {
 	logger                         *slog.Logger
-	metadataStore                  telemetrytypes.MetadataStore
+	metadataStore                  telemetrytypes.KeyResolver
 	storage                        qbtypes.Storage
 	dialect                        qbtypes.Dialect
 	spansTable                     string
@@ -51,7 +51,7 @@ var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatement
 // SkipResourceFingerprint from the config.
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
-	metadataStore telemetrytypes.MetadataStore,
+	metadataStore telemetrytypes.KeyResolver,
 	fl flagger.Flagger,
 ) factory.ProviderFactory[qbtypes.StatementBuilder[qbtypes.TraceAggregation], statementbuilder.Config] {
 	return factory.NewProviderFactory(
@@ -82,7 +82,7 @@ func ClickHouseTarget(storage qbtypes.Storage) querybuilder.Target {
 // routes served by the Flight telemetry store.
 func NewEngineTraceQueryStatementBuilder(
 	settings factory.ProviderSettings,
-	metadataStore telemetrytypes.MetadataStore,
+	metadataStore telemetrytypes.KeyResolver,
 	flagger flagger.Flagger,
 ) *traceQueryStatementBuilder {
 	target := tracestelemetryschema.DataFusionTarget()
@@ -99,7 +99,7 @@ func (b *traceQueryStatementBuilder) queryInfo(ctx context.Context, orgID valuer
 // NewTraceQueryStatementBuilder renders for ClickHouse.
 func NewTraceQueryStatementBuilder(
 	settings factory.ProviderSettings,
-	metadataStore telemetrytypes.MetadataStore,
+	metadataStore telemetrytypes.KeyResolver,
 	storage qbtypes.Storage,
 	aggExprRewriter qbtypes.AggExprRewriter,
 	telemetryStore telemetrystore.TelemetryStore,
@@ -116,7 +116,7 @@ func NewTraceQueryStatementBuilder(
 // NewTraceQueryStatementBuilderFor renders for target.
 func NewTraceQueryStatementBuilderFor(
 	settings factory.ProviderSettings,
-	metadataStore telemetrytypes.MetadataStore,
+	metadataStore telemetrytypes.KeyResolver,
 	target querybuilder.Target,
 	aggExprRewriter qbtypes.AggExprRewriter,
 	telemetryStore telemetrystore.TelemetryStore,

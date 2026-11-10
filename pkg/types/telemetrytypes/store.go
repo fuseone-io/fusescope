@@ -7,14 +7,19 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
+// KeyResolver resolves the field keys a query builder reads.
+type KeyResolver interface {
+	// GetKeysMulti is GetKeys over any number of fieldKeySelectors.
+	GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
+}
+
 // MetadataStore is the interface for the telemetry metadata store.
 type MetadataStore interface {
 	// GetKeys returns a map of field keys types.TelemetryFieldKey by name, there can be multiple keys with the same name
 	// if they have different types or data types.
 	GetKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
 
-	// GetKeys but with any number of fieldKeySelectors.
-	GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
+	KeyResolver
 
 	// GetKey returns a list of keys with the given name.
 	GetKey(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) ([]*TelemetryFieldKey, error)

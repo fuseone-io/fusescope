@@ -20,7 +20,7 @@ type resourceFilterStatementBuilder[T any] struct {
 	dbName        string
 	tableName     string
 	storage       qbtypes.Storage
-	metadataStore telemetrytypes.MetadataStore
+	metadataStore telemetrytypes.KeyResolver
 	signal        telemetrytypes.Signal
 	source        telemetrytypes.Source
 	flagger       flagger.Flagger
@@ -40,7 +40,7 @@ func New[T any](
 	tableName string,
 	signal telemetrytypes.Signal,
 	source telemetrytypes.Source,
-	metadataStore telemetrytypes.MetadataStore,
+	metadataStore telemetrytypes.KeyResolver,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fl flagger.Flagger,
 ) *resourceFilterStatementBuilder[T] {
