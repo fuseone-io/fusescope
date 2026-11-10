@@ -21,6 +21,8 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type SuccessResponse struct {
 	Status string      `json:"status" required:"true"`
 	Data   interface{} `json:"data,omitempty" required:"true"`
+	// Warnings say why data may be incomplete, such as an engine answer in part.
+	Warnings []string `json:"warnings,omitempty"`
 }
 
 type ErrorResponse struct {
@@ -29,7 +31,12 @@ type ErrorResponse struct {
 }
 
 func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
-	body, err := json.Marshal(&SuccessResponse{Status: StatusSuccess.s, Data: data})
+	SuccessWithWarnings(rw, httpCode, data, nil)
+}
+
+// SuccessWithWarnings is Success with warnings beside the data, where an array data has no room.
+func SuccessWithWarnings(rw http.ResponseWriter, httpCode int, data interface{}, warnings []string) {
+	body, err := json.Marshal(&SuccessResponse{Status: StatusSuccess.s, Data: data, Warnings: warnings})
 	if err != nil {
 		Error(rw, err)
 		return

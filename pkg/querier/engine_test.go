@@ -3,6 +3,7 @@ package querier
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/telemetrystoretest"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
@@ -327,4 +329,65 @@ func TestRangedQueriesDecideEachForItsOwnWindow(t *testing.T) {
 	for i, window := range ranges {
 		assert.Equal(t, fmt.Sprintf("engine sql %d-%d", window.From, window.To), statements[i])
 	}
+}
+
+// nativeRows is one span row as the engine adapter reads it: events and links as lists of structs.
+type nativeRows struct {
+	done bool
+}
+
+type nativeColumn struct {
+	name string
+	typ  reflect.Type
+}
+
+func (c nativeColumn) Name() string             { return c.name }
+func (c nativeColumn) DatabaseTypeName() string { return "" }
+func (c nativeColumn) ScanType() reflect.Type   { return c.typ }
+func (c nativeColumn) Nullable() bool           { return false }
+
+func (r *nativeRows) Columns() []string {
+	return []string{"__SELECT_KEY_0_name", "__SELECT_KEY_1_events", "__SELECT_KEY_2_links"}
+}
+
+func (r *nativeRows) ColumnTypes() []telemetrystore.ColumnType {
+	structs := reflect.TypeOf([]map[string]any{})
+	return []telemetrystore.ColumnType{nativeColumn{"__SELECT_KEY_0_name", reflect.TypeOf("")}, nativeColumn{"__SELECT_KEY_1_events", structs}, nativeColumn{"__SELECT_KEY_2_links", structs}}
+}
+
+func (r *nativeRows) Next() bool {
+	if r.done {
+		return false
+	}
+	r.done = true
+	return true
+}
+
+func (r *nativeRows) Scan(dest ...any) error {
+	*dest[0].(*string) = "GET /cart"
+	*dest[1].(*[]map[string]any) = []map[string]any{{"timestamp": time.Unix(0, 5).UTC(), "name": "retry", "attributes": map[string]string{}}}
+	*dest[2].(*[]map[string]any) = []map[string]any{{"trace_id": knownTrace, "span_id": "00f067aa0ba902b7"}}
+	return nil
+}
+
+func (r *nativeRows) Err() error         { return nil }
+func (r *nativeRows) Close() error       { return nil }
+func (r *nativeRows) Warnings() []string { return nil }
+
+type nativeStore struct{ engineStore }
+
+func (s *nativeStore) Query(context.Context, string, ...any) (telemetrystore.Rows, error) {
+	return &nativeRows{}, nil
+}
+
+func TestASpanListFromTheEngineCarriesEventsAndLinksAsStored(t *testing.T) {
+	store := &nativeStore{engineStore{Provider: telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})}}
+	spec := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Name: "A", Signal: telemetrytypes.SignalTraces}
+	q := newBuilderQuery[qbtypes.TraceAggregation](nil, store, engineOrg, &fakeBuilder{}, qbtypes.QueryTypeBuilder, spec, qbtypes.TimeRange{From: 1, To: 2}, qbtypes.RequestTypeRaw, nil, builderConfig{})
+	q.engine = &engineCall[qbtypes.TraceAggregation]{route: telemetrystore.RouteTracesRaw, builder: &fakeBuilder{query: "engine sql"}}
+	result, err := q.executeOnEngine(telemetrystore.WithService(context.Background(), "querier-test"), &qbtypes.Statement{Query: "engine sql"})
+	require.NoError(t, err)
+	row := result.Value.(*qbtypes.RawData).Rows[0].Data
+	assert.Equal(t, []spantypes.EventV2{{Name: "retry", TimeUnixNano: 5}}, row["events"], "the reader decodes them as it does ClickHouse's")
+	assert.Equal(t, []spantypes.Link{{TraceID: knownTrace, SpanID: "00f067aa0ba902b7"}}, row["links"])
 }
