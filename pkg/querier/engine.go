@@ -21,6 +21,9 @@ import (
 type EngineRouting struct {
 	Serves           func(route telemetrystore.Route, org valuer.UUID) bool
 	TraceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	// RequireEngine returns a routed query the engine dialect cannot render to the caller, as
+	// querybuilder.ErrCodeUnsupportedDialect, instead of serving it from ClickHouse.
+	RequireEngine bool
 }
 
 // RouteToEngine sends the reads routing serves to the engine; it is set once, at assembly.
@@ -64,7 +67,7 @@ func (q *querier) engineFor(org valuer.UUID, kind qbtypes.RequestType, req *qbty
 			return nil
 		}
 	}
-	return &engineCall[qbtypes.TraceAggregation]{route: route, builder: q.engine.routing.TraceStmtBuilder, routed: q.engine.routed, logger: q.logger}
+	return &engineCall[qbtypes.TraceAggregation]{route: route, builder: q.engine.routing.TraceStmtBuilder, routed: q.engine.routed, logger: q.logger, requireEngine: q.engine.routing.RequireEngine}
 }
 
 // engineCall is how one routed builder query reaches the engine.
@@ -74,6 +77,8 @@ type engineCall[T any] struct {
 	routed   metric.Int64Counter
 	logger   *slog.Logger
 	decision *engineDecision
+	// requireEngine is EngineRouting.RequireEngine.
+	requireEngine bool
 }
 
 // forAnotherWindow is the same route for a query over another window, which decides on its own:
@@ -115,6 +120,9 @@ func (q *builderQuery[T]) onEngine(ctx context.Context) (*qbtypes.Statement, boo
 	case err == nil:
 		q.engine.decided(ctx, "engine", "routed")
 		q.engine.decision = &engineDecision{stmt: stmt, onEngine: true}
+	case errors.Asc(err, querybuilder.ErrCodeUnsupportedDialect) && q.engine.requireEngine:
+		q.engine.decided(ctx, "none", "unsupported_dialect")
+		return nil, false, err
 	case errors.Asc(err, querybuilder.ErrCodeUnsupportedDialect):
 		q.engine.decided(ctx, "clickhouse", "unsupported_dialect")
 		if q.engine.logger != nil {

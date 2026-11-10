@@ -186,6 +186,17 @@ func TestAnUnsupportedDialectIsBuiltForClickhouseBeforeTheEngineIsCalled(t *test
 	assert.Equal(t, 1, bed.clickhouse.calls)
 }
 
+func TestAStrictRoutingReturnsAnUnsupportedDialectToTheCaller(t *testing.T) {
+	bed := newEngineBed(t, telemetrystore.RouteTracesAggregate)
+	bed.querier.engine.routing.RequireEngine = true
+	bed.engine.err = errors.NewInvalidInputf(querybuilder.ErrCodeUnsupportedDialect, "no DataFusion form")
+	_, err := bed.querier.QueryRange(telemetrystore.WithService(context.Background(), "querier-test"), engineOrg, traceRequest(qbtypes.RequestTypeScalar))
+	require.Error(t, err)
+	assert.True(t, errors.Asc(err, querybuilder.ErrCodeUnsupportedDialect), "the caller sees why: a coverage gap, not a ClickHouse answer")
+	assert.Empty(t, bed.store.statements)
+	assert.Zero(t, bed.clickhouse.calls, "nothing is built for ClickHouse")
+}
+
 func TestAnyOtherBuildErrorReachesTheCaller(t *testing.T) {
 	bed := newEngineBed(t, telemetrystore.RouteTracesAggregate)
 	bed.engine.err = errors.NewInvalidInputf(errors.CodeInvalidInput, "bad filter")
