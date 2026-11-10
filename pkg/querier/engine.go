@@ -8,6 +8,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"go.opentelemetry.io/otel/attribute"
@@ -162,6 +163,7 @@ func (q *builderQuery[T]) executeOnEngine(ctx context.Context, stmt *qbtypes.Sta
 	if q.spec.Signal == telemetrytypes.SignalTraces {
 		if raw, ok := payload.(*qbtypes.RawData); ok {
 			for _, rr := range raw.Rows {
+				storedEventsAndLinks(rr.Data)
 				mergeSpanAttributeColumns(rr.Data)
 			}
 		}
@@ -171,4 +173,15 @@ func (q *builderQuery[T]) executeOnEngine(ctx context.Context, stmt *qbtypes.Sta
 		result.Warnings = append(result.Warnings, telemetrystore.PartialWarning(category))
 	}
 	return result, nil
+}
+
+// storedEventsAndLinks writes the engine's native events and links in the stored form the span
+// reader decodes, so both stores answer alike.
+func storedEventsAndLinks(data map[string]any) {
+	if native, ok := data["events"].([]any); ok {
+		data["events"] = spantypes.LegacyEvents(native)
+	}
+	if native, ok := data["links"].([]any); ok {
+		data["links"] = spantypes.LegacyLinks(native)
+	}
 }

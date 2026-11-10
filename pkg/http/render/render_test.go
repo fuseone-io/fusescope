@@ -216,3 +216,21 @@ func TestErrorRetryAfterHeader(t *testing.T) {
 		})
 	}
 }
+
+func TestSuccessWithWarningsSitsBesideTheData(t *testing.T) {
+	for name, testCase := range map[string]struct {
+		data     any
+		warnings []string
+		want     string
+	}{
+		"an array with a warning": {data: []int{1}, warnings: []string{"part"}, want: `{"status":"success","data":[1],"warnings":["part"]}`},
+		"empty data still warns":  {data: []int{}, warnings: []string{"part"}, want: `{"status":"success","data":[],"warnings":["part"]}`},
+		"no warning, no field":    {data: []int{1}, want: `{"status":"success","data":[1]}`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			SuccessWithWarnings(rec, http.StatusOK, testCase.data, testCase.warnings)
+			assert.JSONEq(t, testCase.want, rec.Body.String())
+		})
+	}
+}

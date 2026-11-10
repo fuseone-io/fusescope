@@ -242,3 +242,15 @@ func clickHouseBuilder(metadataStore telemetrytypes.MetadataStore, fl flagger.Fl
 		nil, fl, false, 100000,
 	)
 }
+
+// TestEngineTopLevelOperationsStatement is the services view's own engine SQL.
+func TestEngineTopLevelOperationsStatement(t *testing.T) {
+	start := time.Unix(0, 1_747_947_419_000_000_000)
+	for name, services := range map[string][]string{"some services": {"frontend", "cart"}, "every service": nil} {
+		t.Run(name, func(t *testing.T) {
+			sql, err := tracestelemetryschema.DataFusionTopLevelOperations(start, services)
+			require.NoError(t, err)
+			checkDataFusionStatement(t, sql)
+		})
+	}
+}

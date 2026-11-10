@@ -29,7 +29,24 @@ type ErrorResponse struct {
 }
 
 func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
-	body, err := json.Marshal(&SuccessResponse{Status: StatusSuccess.s, Data: data})
+	write(rw, httpCode, &SuccessResponse{Status: StatusSuccess.s, Data: data})
+}
+
+// successWithWarnings is the envelope of a route that can answer in part. It is its own type so
+// the documented envelope of every other route stays as it is.
+type successWithWarnings struct {
+	Status   string      `json:"status"`
+	Data     interface{} `json:"data,omitempty"`
+	Warnings []string    `json:"warnings,omitempty"`
+}
+
+// SuccessWithWarnings is Success with warnings beside the data, where an array data has no room.
+func SuccessWithWarnings(rw http.ResponseWriter, httpCode int, data interface{}, warnings []string) {
+	write(rw, httpCode, &successWithWarnings{Status: StatusSuccess.s, Data: data, Warnings: warnings})
+}
+
+func write(rw http.ResponseWriter, httpCode int, response any) {
+	body, err := json.Marshal(response)
 	if err != nil {
 		Error(rw, err)
 		return

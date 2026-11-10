@@ -18,8 +18,9 @@ type Handler interface {
 
 // Module represents the services QBv5 module interface.
 type Module interface {
-	Get(ctx context.Context, orgID valuer.UUID, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error)
-	FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error)
-	GetTopOperations(ctx context.Context, orgID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error)
-	GetEntryPointOperations(ctx context.Context, orgID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error)
+	// Get, GetTopOperations and GetEntryPointOperations also return the warnings of a partial answer.
+	Get(ctx context.Context, orgID valuer.UUID, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, []string, error)
+	FetchTopLevelOperations(ctx context.Context, orgID valuer.UUID, start time.Time, services []string) (map[string][]string, []string, error)
+	GetTopOperations(ctx context.Context, orgID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, []string, error)
+	GetEntryPointOperations(ctx context.Context, orgID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, []string, error)
 }

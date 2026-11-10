@@ -2,20 +2,26 @@ package querier
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"sync"
 	"testing"
 	"time"
 
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/apache/arrow-go/v18/arrow/array"
+	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/flagger/flaggertest"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore/flighttelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/telemetrystoretest"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
@@ -327,4 +333,70 @@ func TestRangedQueriesDecideEachForItsOwnWindow(t *testing.T) {
 	for i, window := range ranges {
 		assert.Equal(t, fmt.Sprintf("engine sql %d-%d", window.From, window.To), statements[i])
 	}
+}
+
+// nativeSpanBatch is one span row of name, events and links as the engine sends it.
+func nativeSpanBatch(t *testing.T) arrow.RecordBatch {
+	attributes := arrow.MapOf(arrow.BinaryTypes.String, arrow.BinaryTypes.String)
+	attributes.SetItemNullable(false)
+	event := arrow.StructOf(
+		arrow.Field{Name: "timestamp", Type: &arrow.TimestampType{Unit: arrow.Nanosecond, TimeZone: "UTC"}},
+		arrow.Field{Name: "name", Type: arrow.BinaryTypes.String},
+		arrow.Field{Name: "attributes", Type: attributes},
+	)
+	link := arrow.StructOf(
+		arrow.Field{Name: "trace_id", Type: &arrow.FixedSizeBinaryType{ByteWidth: 16}},
+		arrow.Field{Name: "span_id", Type: &arrow.FixedSizeBinaryType{ByteWidth: 8}},
+		arrow.Field{Name: "trace_state", Type: arrow.BinaryTypes.String},
+		arrow.Field{Name: "attributes", Type: attributes},
+	)
+	schema := arrow.NewSchema([]arrow.Field{
+		{Name: "__SELECT_KEY_0_name", Type: arrow.BinaryTypes.String},
+		{Name: "__SELECT_KEY_1_events", Type: arrow.ListOfNonNullable(event)},
+		{Name: "__SELECT_KEY_2_links", Type: arrow.ListOfNonNullable(link)},
+	}, nil)
+	b := array.NewRecordBuilder(memory.DefaultAllocator, schema)
+	defer b.Release()
+	b.Field(0).(*array.StringBuilder).Append("GET /cart")
+
+	events := b.Field(1).(*array.ListBuilder)
+	events.Append(true)
+	e := events.ValueBuilder().(*array.StructBuilder)
+	e.Append(true)
+	e.FieldBuilder(0).(*array.TimestampBuilder).Append(5)
+	e.FieldBuilder(1).(*array.StringBuilder).Append("retry")
+	e.FieldBuilder(2).(*array.MapBuilder).Append(true)
+
+	links := b.Field(2).(*array.ListBuilder)
+	links.Append(true)
+	l := links.ValueBuilder().(*array.StructBuilder)
+	l.Append(true)
+	traceID, err := hex.DecodeString(knownTrace)
+	require.NoError(t, err)
+	l.FieldBuilder(0).(*array.FixedSizeBinaryBuilder).Append(traceID)
+	l.FieldBuilder(1).(*array.FixedSizeBinaryBuilder).Append([]byte{0x00, 0xf0, 0x67, 0xaa, 0x0b, 0xa9, 0x02, 0xb7})
+	l.FieldBuilder(2).(*array.StringBuilder).Append("")
+	l.FieldBuilder(3).(*array.MapBuilder).Append(true)
+	return b.NewRecordBatch()
+}
+
+type nativeStore struct {
+	engineStore
+	batch arrow.RecordBatch
+}
+
+func (s *nativeStore) Query(context.Context, string, ...any) (telemetrystore.Rows, error) {
+	return flighttelemetrystore.NewRows(nil, s.batch)
+}
+
+func TestASpanListFromTheEngineCarriesEventsAndLinksAsStored(t *testing.T) {
+	store := &nativeStore{engineStore: engineStore{Provider: telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})}, batch: nativeSpanBatch(t)}
+	spec := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Name: "A", Signal: telemetrytypes.SignalTraces}
+	q := newBuilderQuery[qbtypes.TraceAggregation](nil, store, engineOrg, &fakeBuilder{}, qbtypes.QueryTypeBuilder, spec, qbtypes.TimeRange{From: 1, To: 2}, qbtypes.RequestTypeRaw, nil, builderConfig{})
+	q.engine = &engineCall[qbtypes.TraceAggregation]{route: telemetrystore.RouteTracesRaw, builder: &fakeBuilder{query: "engine sql"}}
+	result, err := q.executeOnEngine(telemetrystore.WithService(context.Background(), "querier-test"), &qbtypes.Statement{Query: "engine sql"})
+	require.NoError(t, err)
+	row := result.Value.(*qbtypes.RawData).Rows[0].Data
+	assert.Equal(t, []spantypes.EventV2{{Name: "retry", TimeUnixNano: 5}}, row["events"], "the reader decodes them as it does ClickHouse's")
+	assert.Equal(t, []spantypes.Link{{TraceID: knownTrace, SpanID: "00f067aa0ba902b7"}}, row["links"])
 }

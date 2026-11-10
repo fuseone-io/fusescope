@@ -39,12 +39,12 @@ func (h *handler) Get(rw http.ResponseWriter, req *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	out, err := h.Module.Get(req.Context(), orgUUID, &in)
+	out, warnings, err := h.Module.Get(req.Context(), orgUUID, &in)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
-	render.Success(rw, http.StatusOK, out)
+	render.SuccessWithWarnings(rw, http.StatusOK, out, warnings)
 }
 
 func (h *handler) GetTopOperations(rw http.ResponseWriter, req *http.Request) {
@@ -65,12 +65,12 @@ func (h *handler) GetTopOperations(rw http.ResponseWriter, req *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	out, err := h.Module.GetTopOperations(req.Context(), orgUUID, &in)
+	out, warnings, err := h.Module.GetTopOperations(req.Context(), orgUUID, &in)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
-	render.Success(rw, http.StatusOK, out)
+	render.SuccessWithWarnings(rw, http.StatusOK, out, warnings)
 }
 
 func (h *handler) GetEntryPointOperations(rw http.ResponseWriter, req *http.Request) {
@@ -91,10 +91,10 @@ func (h *handler) GetEntryPointOperations(rw http.ResponseWriter, req *http.Requ
 		render.Error(rw, err)
 		return
 	}
-	out, err := h.Module.GetEntryPointOperations(req.Context(), orgUUID, &in)
+	out, warnings, err := h.Module.GetEntryPointOperations(req.Context(), orgUUID, &in)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
-	render.Success(rw, http.StatusOK, out)
+	render.SuccessWithWarnings(rw, http.StatusOK, out, warnings)
 }

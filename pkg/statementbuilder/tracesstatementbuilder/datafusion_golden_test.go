@@ -84,6 +84,18 @@ func checkDataFusion(
 		require.Empty(t, stmt.Args, "the engine takes no parameters")
 		got.SQL = stmt.Query
 	}
+	compareDataFusion(t, got)
+}
+
+// checkDataFusionStatement compares a statement rendered outside the builder, such as a module's
+// own engine SQL, with the golden file, so the engine plans it too.
+func checkDataFusionStatement(t *testing.T, sql string) {
+	t.Helper()
+	compareDataFusion(t, dataFusionGoldenCase{Name: t.Name(), SQL: sql})
+}
+
+func compareDataFusion(t *testing.T, got dataFusionGoldenCase) {
+	t.Helper()
 	if *updateDataFusion {
 		goldenMu.Lock()
 		goldenSeen[got.Name] = got

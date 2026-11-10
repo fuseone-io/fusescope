@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/apache/arrow-go/v18/arrow/array"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 )
@@ -45,6 +46,22 @@ func newRows(src source, warnings []string, onEnd func(error)) (*rows, error) {
 		r.names = append(r.names, field.Name)
 	}
 	return r, nil
+}
+
+// NewRows reads batches as an engine answer with these partial-result categories reads, for a
+// stand-in of the engine. The batches share one schema; the rows release them at their end.
+func NewRows(warnings []string, batches ...arrow.RecordBatch) (telemetrystore.Rows, error) {
+	if len(batches) == 0 {
+		return nil, errors.NewInternalf(errors.CodeInternal, "rows need a batch for their schema")
+	}
+	reader, err := array.NewRecordReader(batches[0].Schema(), batches)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "batches of different schemas")
+	}
+	for _, batch := range batches {
+		batch.Release()
+	}
+	return newRows(reader, warnings, func(error) {})
 }
 
 func (r *rows) Columns() []string { return r.names }
