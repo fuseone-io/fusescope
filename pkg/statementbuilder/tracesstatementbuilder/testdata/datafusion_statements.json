@@ -862,6 +862,14 @@
       "sql": "SELECT count(*) AS __result_0 FROM spans WHERE (regexp_like(coalesce(attributes_string['user.id'], ''), '^a') AND attributes_string['user.id'] IS NOT NULL) AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 ORDER BY __result_0 DESC"
     },
     {
+      "name": "TestEngineTopLevelOperationsStatement/every_service",
+      "sql": "SELECT name, service_name, max(seen) AS ts FROM (SELECT name, service_name, last_seen AS seen FROM top_level_operations WHERE last_seen \u003e= to_timestamp_nanos(1747947419000000000) UNION ALL SELECT CAST(name AS VARCHAR) AS name, CAST(service_name AS VARCHAR) AS service_name, timestamp AS seen FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND service_name IS NOT NULL AND (parent_span_id IS NULL OR is_remote = 'true')) AS operations GROUP BY name, service_name ORDER BY ts DESC LIMIT 5000"
+    },
+    {
+      "name": "TestEngineTopLevelOperationsStatement/some_services",
+      "sql": "SELECT name, service_name, max(seen) AS ts FROM (SELECT name, service_name, last_seen AS seen FROM top_level_operations WHERE last_seen \u003e= to_timestamp_nanos(1747947419000000000) AND service_name IN ('frontend', 'cart') UNION ALL SELECT CAST(name AS VARCHAR) AS name, CAST(service_name AS VARCHAR) AS service_name, timestamp AS seen FROM spans WHERE timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND service_name IN ('frontend', 'cart') AND (parent_span_id IS NULL OR is_remote = 'true')) AS operations GROUP BY name, service_name ORDER BY ts DESC LIMIT 5000"
+    },
+    {
       "name": "TestEngineViewStatements/entry_point_operations",
       "sql": "SELECT CAST(name AS VARCHAR) AS \"__GROUP_BY_KEY_0_name\", approx_percentile_cont(0.99) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) AS __result_0, (count(*) / 36029) AS __result_1 FROM spans WHERE ((service_name = 'frontend') AND (parent_span_id IS NOT NULL AND (is_remote = 'true' OR EXISTS (SELECT 1 FROM top_level_operations t WHERE t.service_name = spans.service_name AND t.name = spans.name AND t.last_seen \u003e= to_timestamp_nanos(1747947419000000000))))) AND timestamp \u003e= to_timestamp_nanos(1747947419000000000) AND timestamp \u003c to_timestamp_nanos(1747983448000000000) AND ts_bucket_start \u003e= 1747945619 AND ts_bucket_start \u003c= 1747983448 GROUP BY \"__GROUP_BY_KEY_0_name\" ORDER BY __result_0 DESC LIMIT 50"
     },

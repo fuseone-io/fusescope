@@ -67,6 +67,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/types/authtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/preferencetypes"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 type Modules struct {
@@ -158,7 +159,7 @@ func NewModules(
 		AuthDomain:           authDomainModule,
 		Session:              implsession.NewModule(providerSettings, authNs, userSetter, userGetter, authDomainModule, tokenizer, orgGetter, authz, config.Global),
 		SpanPercentile:       implspanpercentile.NewModule(querier, providerSettings),
-		Services:             implservices.NewModule(querier, telemetryStore),
+		Services:             implservices.NewModule(querier, telemetryStore, engineServes(config)),
 		MetricsExplorer:      implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, fl, providerSettings, config.MetricsExplorer),
 		MetricReductionRule:  metricReductionRule,
 		InfraMonitoring:      implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, fl, providerSettings, config.InfraMonitoring),
@@ -175,4 +176,10 @@ func NewModules(
 		RUMApplication:       implrumapplication.NewModule(implrumapplication.NewStore(sqlstore), telemetryStore, providerSettings, config.RUM),
 		Onboarding:           implonboarding.NewModule(telemetryStore, preferenceModule, config.Global, config.Onboarding.CollectorEndpoint, providerSettings),
 	}
+}
+
+// engineServes names the reads fusescope-engine serves for an org, none unless the flight provider
+// routes them.
+func engineServes(config Config) func(telemetrystore.Route, valuer.UUID) bool {
+	return config.TelemetryStore.EngineServes
 }

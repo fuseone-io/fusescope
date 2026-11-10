@@ -3,6 +3,7 @@ package implservices
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/querier"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -24,19 +26,27 @@ import (
 type module struct {
 	Querier        querier.Querier
 	TelemetryStore telemetrystore.TelemetryStore
+	// serves names the reads fusescope-engine serves, by route and org; nil serves none.
+	serves func(telemetrystore.Route, valuer.UUID) bool
 }
 
-// NewModule constructs the services module with the provided querier dependency.
-func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Module {
+// NewModule constructs the services module; serves names the reads of an org the engine serves.
+func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore, serves func(telemetrystore.Route, valuer.UUID) bool) services.Module {
 	return &module{
 		Querier:        q,
 		TelemetryStore: ts,
+		serves:         serves,
 	}
 }
 
-// FetchTopLevelOperations returns top-level operations per service using db query.
-func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
+// FetchTopLevelOperations returns top-level operations per service, latest first, each list led
+// by the overflow_operation sentinel, and the warnings of a partial answer. An org whose trace
+// aggregates the engine serves reads them from the engine.
+func (m *module) FetchTopLevelOperations(ctx context.Context, orgID valuer.UUID, start time.Time, services []string) (map[string][]string, []string, error) {
 	ctx = m.withServicesContext(ctx, "FetchTopLevelOperations")
+	if m.serves != nil && m.serves(telemetrystore.RouteTracesAggregate, orgID) {
+		return m.engineTopLevelOperations(ctx, orgID, start, services)
+	}
 
 	db := m.TelemetryStore.ClickhouseDB()
 	query := fmt.Sprintf("SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start", tracestelemetryschema.DBName, tracestelemetryschema.TopLevelOperationsTableName)
@@ -49,14 +59,35 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 
 	rows, err := db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
+		return nil, nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
 	}
-	defer rows.Close()
+	ops, err := readTopLevelOperations(clickhousetelemetrystore.NewRows(rows))
+	return ops, nil, err
+}
 
-	ops := make(map[string][]string)
-	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
+func (m *module) engineTopLevelOperations(ctx context.Context, orgID valuer.UUID, start time.Time, services []string) (map[string][]string, []string, error) {
+	stmt, err := tracestelemetryschema.DataFusionTopLevelOperations(start, services)
+	if err != nil {
+		return nil, nil, err
 	}
+	ctx = telemetrystore.WithRoute(telemetrystore.WithTenant(ctx, orgID), telemetrystore.RouteTracesAggregate)
+	rows, err := m.TelemetryStore.Query(ctx, stmt)
+	if err != nil {
+		return nil, nil, err
+	}
+	var warnings []string
+	for _, category := range rows.Warnings() {
+		warnings = append(warnings, telemetrystore.PartialWarning(category))
+	}
+	ops, err := readTopLevelOperations(rows)
+	return ops, warnings, err
+}
+
+// readTopLevelOperations reads rows of name, service and last seen, latest first, into each
+// service's operations behind the overflow_operation sentinel.
+func readTopLevelOperations(rows telemetrystore.Rows) (map[string][]string, error) {
+	defer rows.Close()
+	ops := make(map[string][]string)
 	for rows.Next() {
 		var name, serviceName string
 		var ts time.Time
@@ -68,85 +99,113 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 		}
 		ops[serviceName] = append(ops[serviceName], name)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
+	}
 	return ops, nil
+}
+
+// warningsOf are the messages of a query range response's warnings.
+func warningsOf(resp *qbtypes.QueryRangeResponse) []string {
+	if resp == nil || resp.Warning == nil {
+		return nil
+	}
+	var out []string
+	for _, warning := range resp.Warning.Warnings {
+		out = appendNew(out, warning.Message)
+	}
+	return out
+}
+
+// appendNew appends each of items not already in list.
+func appendNew(list []string, items ...string) []string {
+	for _, item := range items {
+		if !slices.Contains(list, item) {
+			list = append(list, item)
+		}
+	}
+	return list
 }
 
 // Get implements services.Module
 // Builds a QBv5 traces aggregation grouped by service.name and maps results to ResponseItem.
-func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error) {
+func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, []string, error) {
 	ctx = m.withServicesContext(ctx, "Get")
 	if req == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
 	// Prepare phase
 	queryRangeReq, startMs, endMs, err := m.buildQueryRangeRequest(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Fetch phase
 	resp, err := m.executeQuery(ctx, orgUUID, queryRangeReq)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	warnings := warningsOf(resp)
 
 	// Process phase
 	items, serviceNames := m.mapQueryRangeRespToServices(resp, startMs, endMs)
 	if len(items) == 0 {
-		return []*servicetypesv1.ResponseItem{}, nil
+		return []*servicetypesv1.ResponseItem{}, warnings, nil
 	}
 
 	// attach top level ops to service items
 	if len(serviceNames) > 0 {
-		if err := m.attachTopLevelOps(ctx, serviceNames, startMs, items); err != nil {
-			return nil, err
+		opsWarnings, err := m.attachTopLevelOps(ctx, orgUUID, serviceNames, startMs, items)
+		if err != nil {
+			return nil, nil, err
 		}
+		warnings = appendNew(warnings, opsWarnings...)
 	}
 
-	return items, nil
+	return items, warnings, nil
 }
 
 // GetTopOperations implements services.Module for QBV5 based top ops.
-func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
+func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, []string, error) {
 	ctx = m.withServicesContext(ctx, "GetTopOperations")
 	if req == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
 	qr, err := m.buildTopOpsQueryRangeRequest(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	resp, err := m.executeQuery(ctx, orgUUID, qr)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	items := m.mapTopOpsQueryRangeResp(resp)
-	return items, nil
+	return items, warningsOf(resp), nil
 }
 
 // GetEntryPointOperations implements services.Module for QBV5 based entry point ops.
-func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
+func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, []string, error) {
 	ctx = m.withServicesContext(ctx, "GetEntryPointOperations")
 	if req == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
 	qr, err := m.buildEntryPointOpsQueryRangeRequest(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	resp, err := m.executeQuery(ctx, orgUUID, qr)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	items := m.mapEntryPointOpsQueryRangeResp(resp)
-	return items, nil
+	return items, warningsOf(resp), nil
 }
 
 // buildQueryRangeRequest constructs the QBv5 QueryRangeRequest and computes the time window.
@@ -293,14 +352,14 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 }
 
 // attachTopLevelOps fetches top-level ops from TelemetryStore and attaches them to items.
-func (m *module) attachTopLevelOps(ctx context.Context, serviceNames []string, startMs uint64, items []*servicetypesv1.ResponseItem) error {
+func (m *module) attachTopLevelOps(ctx context.Context, orgID valuer.UUID, serviceNames []string, startMs uint64, items []*servicetypesv1.ResponseItem) ([]string, error) {
 	startTime := time.UnixMilli(int64(startMs)).UTC()
-	opsMap, err := m.FetchTopLevelOperations(ctx, startTime, serviceNames)
+	opsMap, warnings, err := m.FetchTopLevelOperations(ctx, orgID, startTime, serviceNames)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	applyOpsToItems(items, opsMap)
-	return nil
+	return warnings, nil
 }
 
 func (m *module) buildTopOpsQueryRangeRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
