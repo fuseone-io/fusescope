@@ -107,3 +107,26 @@ func TestTheEngineGraphReadsATraceThroughTheEngine(t *testing.T) {
 	assert.Equal(t, []string{"trace.lookup"}, store.actions)
 	assert.Zero(t, store.Touches(1))
 }
+
+func TestATraceOperatorOnTheEngineGraphIsRefusedNotAPanic(t *testing.T) {
+	g, store := engineGraph(t)
+	req := request(qbtypes.RequestTypeScalar, "count()")
+	req.CompositeQuery.Queries = append(req.CompositeQuery.Queries, qbtypes.QueryEnvelope{Type: qbtypes.QueryTypeTraceOperator, Spec: qbtypes.QueryBuilderTraceOperator{Name: "B", Expression: "A", Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}}}})
+	assert.NotPanics(t, func() { _, _ = g.Querier.QueryRange(pairContext(), org, req) })
+	assert.Positive(t, store.Touches(1))
+	assert.Empty(t, store.statements)
+}
+
+func TestATraceDetailViewTheEngineDoesNotServeIsRefusedNotAPanic(t *testing.T) {
+	g, store := engineGraph(t)
+	var err error
+	assert.NotPanics(t, func() {
+		_, err = g.TraceDetail.GetFlamegraph(pairContext(), "0123456789abcdef0123456789abcdef", "", nil)
+	})
+	assert.Error(t, err)
+	assert.NotPanics(t, func() {
+		_, err = g.TraceDetail.GetThread(pairContext(), org, "0123456789abcdef0123456789abcdef", &spantypes.ThreadQuery{})
+	})
+	assert.Error(t, err)
+	assert.Positive(t, store.Touches(1), "they reach ClickHouse, which refuses")
+}

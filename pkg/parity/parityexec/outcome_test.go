@@ -33,6 +33,7 @@ func TestTheOutcomeMatrix(t *testing.T) {
 	cases := map[string]struct {
 		engine, clickhouse Side
 		touched, retried   bool
+		limit              *TraceLimit
 		want               Outcome
 	}{
 		"both answer":             {engine: answered, clickhouse: answered, want: Outcome{Compare: true}},
@@ -40,7 +41,9 @@ func TestTheOutcomeMatrix(t *testing.T) {
 		"both fail differently":   {engine: internal, clickhouse: invalid, want: Outcome{Verdict: verdict(parity.CategoryAsymmetricFailure, parity.Blocking)}},
 		"engine fails alone":      {engine: internal, clickhouse: answered, want: Outcome{Verdict: verdict(parity.CategoryAsymmetricFailure, parity.Blocking)}},
 		"clickhouse fails alone":  {engine: answered, clickhouse: internal, want: Outcome{Verdict: verdict(parity.CategoryAsymmetricFailure, parity.Blocking)}},
-		"a trace past max_rows":   {engine: tooLarge, clickhouse: answered, want: Outcome{Verdict: verdict(parity.CategoryLimit, parity.Accepted)}},
+		"a trace past max_rows":   {engine: tooLarge, clickhouse: answered, limit: &TraceLimit{Spans: 501, MaxRows: 500}, want: Outcome{Verdict: verdict(parity.CategoryLimit, parity.Accepted)}},
+		"too large at max_rows":   {engine: tooLarge, clickhouse: answered, limit: &TraceLimit{Spans: 500, MaxRows: 500}, want: Outcome{Verdict: verdict(parity.CategoryAsymmetricFailure, parity.Blocking)}},
+		"too large, no evidence":  {engine: tooLarge, clickhouse: answered, want: Outcome{Verdict: verdict(parity.CategoryAsymmetricFailure, parity.Blocking)}},
 		"too large both sides":    {engine: tooLarge, clickhouse: tooLarge, want: Outcome{BothFailed: "payload-too-large"}},
 		"a first timeout":         {engine: timedOut, clickhouse: answered, want: Outcome{Retry: true}},
 		"a deadline":              {engine: answered, clickhouse: deadline, want: Outcome{Retry: true}},
@@ -54,6 +57,6 @@ func TestTheOutcomeMatrix(t *testing.T) {
 		"a canceled round":        {engine: Side{Err: context.Canceled}, clickhouse: answered, want: Outcome{Canceled: true}},
 	}
 	for name, c := range cases {
-		assert.Equal(t, c.want, Decide(c.engine, c.clickhouse, c.touched, c.retried), name)
+		assert.Equal(t, c.want, Decide(c.engine, c.clickhouse, c.touched, c.retried, c.limit), name)
 	}
 }

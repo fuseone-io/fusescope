@@ -80,9 +80,21 @@ func (r *Refuser) Builder() qbtypes.StatementBuilder[qbtypes.TraceAggregation] {
 	return refusingBuilder{r}
 }
 
+// TraceOperatorBuilder is the trace operator builder of the engine graph's querier: the engine
+// serves no trace operators, so it refuses to build.
+func (r *Refuser) TraceOperatorBuilder() qbtypes.TraceOperatorStatementBuilder {
+	return refusingOperatorBuilder{r}
+}
+
 type refusingBuilder struct{ r *Refuser }
 
+type refusingOperatorBuilder struct{ r *Refuser }
+
 func (b refusingBuilder) Build(ctx context.Context, _ valuer.UUID, _, _ uint64, _ qbtypes.RequestType, _ qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], _ map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
+	return nil, b.r.refuse(ctx)
+}
+
+func (b refusingOperatorBuilder) Build(ctx context.Context, _ valuer.UUID, _, _ uint64, _ qbtypes.RequestType, _ qbtypes.QueryBuilderTraceOperator, _ *qbtypes.CompositeQuery) (*qbtypes.Statement, error) {
 	return nil, b.r.refuse(ctx)
 }
 

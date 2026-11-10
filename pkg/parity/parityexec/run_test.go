@@ -9,6 +9,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/parity"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -124,4 +125,50 @@ func TestACanceledRoundStopsThePair(t *testing.T) {
 	cancel()
 	result := r.Run(ctx, Pair{Index: 0, Call: func(ctx context.Context, _ *Graph) (any, []string, error) { return nil, nil, ctx.Err() }})
 	assert.True(t, result.Outcome.Canceled)
+}
+
+func TestARoundThatEndsDuringARetryLeavesNoResult(t *testing.T) {
+	r, engine := runner(NewRefuser())
+	r.RetryWait = 0
+	ctx, cancel := context.WithCancel(context.Background())
+	slow := errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "slow")
+	calls := 0
+	result := r.Run(ctx, Pair{Index: 1, Call: func(_ context.Context, g *Graph) (any, []string, error) {
+		calls++
+		if calls == 3 {
+			cancel()
+		}
+		if g == engine {
+			return nil, nil, slow
+		}
+		return 1, nil, nil
+	}})
+	assert.Equal(t, Outcome{Canceled: true}, result.Outcome, "the round's end is not the pair's timeout")
+}
+
+func TestAnUnattributedClickhouseCallPoisonsThePair(t *testing.T) {
+	refuser := NewRefuser()
+	r, engine := runner(refuser)
+	result := r.Run(context.Background(), Pair{Index: 2, Call: func(_ context.Context, g *Graph) (any, []string, error) {
+		if g == engine {
+			_, _ = refuser.ClickhouseDB().ServerVersion()
+		}
+		return 1, nil, nil
+	}})
+	assert.Equal(t, &parity.Verdict{Category: parity.CategoryFallbackAttempted, Disposition: parity.Blocking}, result.Outcome.Verdict)
+}
+
+func TestTheLimitEvidenceTravelsWithThePair(t *testing.T) {
+	r, engine := runner(NewRefuser())
+	tooLarge := errors.Newf(errors.TypePayloadTooLarge, spantypes.ErrCodeTraceTooLarge, "big")
+	call := func(_ context.Context, g *Graph) (any, []string, error) {
+		if g == engine {
+			return nil, nil, tooLarge
+		}
+		return 1, nil, nil
+	}
+	accepted := r.Run(context.Background(), Pair{Index: 0, Call: call, Limit: &TraceLimit{Spans: 900, MaxRows: 500}})
+	assert.Equal(t, &parity.Verdict{Category: parity.CategoryLimit, Disposition: parity.Accepted}, accepted.Outcome.Verdict)
+	below := r.Run(context.Background(), Pair{Index: 0, Call: call, Limit: &TraceLimit{Spans: 20, MaxRows: 500}})
+	assert.Equal(t, &parity.Verdict{Category: parity.CategoryAsymmetricFailure, Disposition: parity.Blocking}, below.Outcome.Verdict)
 }

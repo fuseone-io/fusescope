@@ -21,6 +21,8 @@ type Call func(ctx context.Context, g *Graph) (any, []string, error)
 type Pair struct {
 	Index int
 	Call  Call
+	// Limit is the trace's span count against max_rows, for a pair of one trace.
+	Limit *TraceLimit
 }
 
 // Runner runs pairs on the two graphs. Each call gets a context of its own with the same deadline,
@@ -54,10 +56,15 @@ func (r Runner) Run(ctx context.Context, p Pair) Result {
 	result := Result{EngineFirst: r.engineFirst(p.Index)}
 	for {
 		result.Attempts++
-		before := r.Refuser.Touches(p.Index)
+		before, unattributed := r.Refuser.Touches(p.Index), r.Refuser.Unattributed()
 		r.attempt(ctx, p, &result)
-		touched := r.Refuser.Touches(p.Index) > before
-		result.Outcome = Decide(result.Engine, result.ClickHouse, touched, result.Attempts > 1)
+		if ctx.Err() != nil {
+			result.Outcome = Outcome{Canceled: true}
+			return result
+		}
+		// A call that named no pair may be this one's, so it poisons every pair it overlaps.
+		touched := r.Refuser.Touches(p.Index) > before || r.Refuser.Unattributed() > unattributed
+		result.Outcome = Decide(result.Engine, result.ClickHouse, touched, result.Attempts > 1, p.Limit)
 		if !result.Outcome.Retry {
 			return result
 		}

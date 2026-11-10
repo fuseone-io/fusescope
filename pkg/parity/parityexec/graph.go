@@ -52,15 +52,16 @@ func NewEngineGraph(ctx context.Context, ps factory.ProviderSettings, fl flagger
 
 func newEngineGraph(ps factory.ProviderSettings, fl flagger.Flagger, ts telemetrystore.TelemetryStore, refuser *Refuser, cfg Config) (*Graph, error) {
 	serves := func(_ telemetrystore.Route, org valuer.UUID) bool { return org == cfg.Org }
-	builder := tracesstatementbuilder.NewEngineTraceQueryStatementBuilder(ps, telemetrymetadata.NewEngineKeyStore(ts), fl)
-	q := querier.New(ps, ts, nil, nil, refuser.Builder(), nil, nil, nil, nil, nil, nil, nil, fl, cfg.Querier.LogTraceIDWindowPadding, cfg.Querier.MaxConcurrentQueries)
+	keys := telemetrymetadata.NewEngineKeyStore(ts)
+	builder := tracesstatementbuilder.NewEngineTraceQueryStatementBuilder(ps, keys, fl)
+	q := querier.New(ps, ts, nil, nil, refuser.Builder(), nil, nil, nil, nil, nil, refuser.TraceOperatorBuilder(), nil, fl, cfg.Querier.LogTraceIDWindowPadding, cfg.Querier.MaxConcurrentQueries)
 	if err := q.RouteToEngine(querier.EngineRouting{Serves: serves, TraceStmtBuilder: builder, RequireEngine: true}); err != nil {
 		return nil, err
 	}
 	return &Graph{
 		Querier:     q,
 		Services:    implservices.NewModule(q, ts, serves),
-		TraceDetail: impltracedetail.NewModule(impltracedetail.NewTraceStore(ts, nil, fl), impltracedetail.NewEngineReader(ts, fl, serves), ps, cfg.TraceDetail),
+		TraceDetail: impltracedetail.NewModule(impltracedetail.NewTraceStore(ts, keys, fl), impltracedetail.NewEngineReader(ts, fl, serves), ps, cfg.TraceDetail),
 	}, nil
 }
 

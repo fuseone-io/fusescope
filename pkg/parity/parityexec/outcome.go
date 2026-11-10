@@ -38,8 +38,15 @@ var partialWarnings = []string{
 }
 
 // Decide applies the outcome matrix. A ClickHouse call by the engine graph overrides everything:
-// whatever the engine answered, it did not answer alone.
-func Decide(engine, clickhouse Side, touched, retried bool) Outcome {
+// whatever the engine answered, it did not answer alone. A trace the engine refuses as too large is
+// the accepted limit only when limit shows it holds more spans than max_rows.
+// TraceLimit is what a trace pair knows of its trace against the engine's query.max_rows.
+type TraceLimit struct {
+	Spans   int64
+	MaxRows int64
+}
+
+func Decide(engine, clickhouse Side, touched, retried bool, limit *TraceLimit) Outcome {
 	verdict := func(c parity.Category, d parity.Disposition) Outcome {
 		return Outcome{Verdict: &parity.Verdict{Category: c, Disposition: d}}
 	}
@@ -64,7 +71,7 @@ func Decide(engine, clickhouse Side, touched, retried bool) Outcome {
 			return Outcome{BothFailed: e}
 		}
 		return verdict(parity.CategoryAsymmetricFailure, parity.Blocking)
-	case hasCode(engine.Err, spantypes.ErrCodeTraceTooLarge):
+	case hasCode(engine.Err, spantypes.ErrCodeTraceTooLarge) && clickhouse.Err == nil && limit != nil && limit.Spans > limit.MaxRows:
 		return verdict(parity.CategoryLimit, parity.Accepted)
 	case engine.Err != nil || clickhouse.Err != nil:
 		return verdict(parity.CategoryAsymmetricFailure, parity.Blocking)
