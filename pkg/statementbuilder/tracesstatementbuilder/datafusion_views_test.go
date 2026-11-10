@@ -96,6 +96,17 @@ func TestEngineViewStatements(t *testing.T) {
 				Limit:  20,
 			},
 		},
+		{
+			name:        "span list selecting links without the ids",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				Filter:       &qbtypes.Filter{Expression: "service.name = 'frontend'"},
+				SelectFields: []telemetrytypes.TelemetryFieldKey{spanName, {Name: "links", FieldContext: telemetrytypes.FieldContextSpan}},
+				Order:        []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp", FieldContext: telemetrytypes.FieldContextSpan}}, Direction: qbtypes.OrderDirectionDesc}},
+				Limit:        20,
+			},
+		},
 	}
 
 	fl := flaggertest.New(t)

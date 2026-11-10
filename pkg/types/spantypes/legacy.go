@@ -38,26 +38,6 @@ func LegacyEvents(native []any) []string {
 	return out
 }
 
-// LegacyLinks writes links read natively from fusescope-engine, a list of structs with hex ids as
-// the Flight reader gives it, in the stored form the readers take: one JSON array of Link.
-func LegacyLinks(native []any) string {
-	links := make([]Link, 0, len(native))
-	for _, element := range native {
-		link, ok := element.(map[string]any)
-		if !ok {
-			continue
-		}
-		traceID, _ := link["trace_id"].(string)
-		spanID, _ := link["span_id"].(string)
-		links = append(links, Link{TraceID: traceID, SpanID: spanID})
-	}
-	encoded, err := json.Marshal(links)
-	if err != nil {
-		return "[]"
-	}
-	return string(encoded)
-}
-
 // AttributesDocument nests the attributes read from fusescope-engine by their dotted keys, as the
 // ClickHouse JSON attributes column stores them. A key that is also the prefix of another gives
 // way to the deeper value, whatever the order the maps are read in. No attributes is nil.

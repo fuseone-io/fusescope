@@ -162,6 +162,14 @@ func TestDataFusionStorageRead(t *testing.T) {
 	}
 }
 
+func TestDataFusionStorageReadsLinksWithTheirSpansIDs(t *testing.T) {
+	key := telemetrytypes.TelemetryFieldKey{Name: "links", FieldContext: telemetrytypes.FieldContextSpan}
+	read, err := NewDataFusionStorage().Read(context.Background(), qbtypes.QueryInfo{}, &key)
+	require.NoError(t, err)
+	assert.Equal(t, "named_struct('trace_id', encode(trace_id, 'hex'), 'parent_span_id', coalesce(encode(parent_span_id, 'hex'), ''), 'links', links)", read.SQL, "the reader writes the parent's reference as ClickHouse stores it")
+	assert.Equal(t, [2]string{"cardinality(links) > 0", "cardinality(links) = 0"}, [2]string{read.Presence, read.Absence})
+}
+
 func TestDataFusionStorageSpanColumnPresence(t *testing.T) {
 	cases := map[string][2]string{
 		"has_error": {"has_error <> false", "has_error = false"},

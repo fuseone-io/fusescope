@@ -27,14 +27,6 @@ func TestEngineEventsReadAsTheStoredJSON(t *testing.T) {
 	assert.Equal(t, []string{}, LegacyEvents(nil))
 }
 
-func TestEngineLinksReadAsTheStoredJSON(t *testing.T) {
-	native := []any{map[string]any{"trace_id": "5b8efff798038103d269b633813fc60c", "span_id": "00f067aa0ba902b7", "trace_state": "", "attributes": map[string]string{}}}
-	legacy := LegacyLinks(native)
-	assert.Equal(t, `[{"traceId":"5b8efff798038103d269b633813fc60c","spanId":"00f067aa0ba902b7"}]`, legacy)
-	assert.Equal(t, []Link{{TraceID: "5b8efff798038103d269b633813fc60c", SpanID: "00f067aa0ba902b7"}}, ParseLinks(legacy))
-	assert.Equal(t, "[]", LegacyLinks(nil))
-}
-
 func TestEngineAttributesReadAsTheStoredDocument(t *testing.T) {
 	doc := AttributesDocument(
 		map[string]string{"gen_ai.prompt.0.role": "user", "gen_ai.prompt.0.content": "hi", "http.route": "/cart", "a": "leaf", "a.b": "deeper"},

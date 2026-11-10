@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"maps"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -335,7 +337,15 @@ func TestRangedQueriesDecideEachForItsOwnWindow(t *testing.T) {
 	}
 }
 
-// nativeSpanBatch is one span row of name, events and links as the engine sends it.
+// childTrace and childParent are the trace and parent of nativeSpanBatch's second row.
+const (
+	childTrace  = "4bf92f3577b34da6a3ce929d0e0e4736"
+	childParent = "53995c3f42cd8ad8"
+)
+
+// nativeSpanBatch is two span rows of name, events and links as the engine sends them: links read
+// with the span's trace and parent ids, the selection asks for no ids. The first row is a root
+// without links, the second a child with one link.
 func nativeSpanBatch(t *testing.T) arrow.RecordBatch {
 	attributes := arrow.MapOf(arrow.BinaryTypes.String, arrow.BinaryTypes.String)
 	attributes.SetItemNullable(false)
@@ -350,14 +360,20 @@ func nativeSpanBatch(t *testing.T) arrow.RecordBatch {
 		arrow.Field{Name: "trace_state", Type: arrow.BinaryTypes.String},
 		arrow.Field{Name: "attributes", Type: attributes},
 	)
+	linksWithIDs := arrow.StructOf(
+		arrow.Field{Name: "trace_id", Type: arrow.BinaryTypes.String},
+		arrow.Field{Name: "parent_span_id", Type: arrow.BinaryTypes.String},
+		arrow.Field{Name: "links", Type: arrow.ListOfNonNullable(link)},
+	)
 	schema := arrow.NewSchema([]arrow.Field{
 		{Name: "__SELECT_KEY_0_name", Type: arrow.BinaryTypes.String},
 		{Name: "__SELECT_KEY_1_events", Type: arrow.ListOfNonNullable(event)},
-		{Name: "__SELECT_KEY_2_links", Type: arrow.ListOfNonNullable(link)},
+		// A struct DataFusion builds is nullable: the reader scans it behind a pointer.
+		{Name: "__SELECT_KEY_2_links", Type: linksWithIDs, Nullable: true},
 	}, nil)
 	b := array.NewRecordBuilder(memory.DefaultAllocator, schema)
 	defer b.Release()
-	b.Field(0).(*array.StringBuilder).Append("GET /cart")
+	b.Field(0).(*array.StringBuilder).AppendValues([]string{"GET /cart", "cart.get"}, nil)
 
 	events := b.Field(1).(*array.ListBuilder)
 	events.Append(true)
@@ -366,8 +382,18 @@ func nativeSpanBatch(t *testing.T) arrow.RecordBatch {
 	e.FieldBuilder(0).(*array.TimestampBuilder).Append(5)
 	e.FieldBuilder(1).(*array.StringBuilder).Append("retry")
 	e.FieldBuilder(2).(*array.MapBuilder).Append(true)
+	events.Append(true)
 
-	links := b.Field(2).(*array.ListBuilder)
+	withIDs := b.Field(2).(*array.StructBuilder)
+	withIDs.Append(true)
+	withIDs.FieldBuilder(0).(*array.StringBuilder).Append(childTrace)
+	withIDs.FieldBuilder(1).(*array.StringBuilder).Append("")
+	withIDs.FieldBuilder(2).(*array.ListBuilder).Append(true)
+
+	withIDs.Append(true)
+	withIDs.FieldBuilder(0).(*array.StringBuilder).Append(childTrace)
+	withIDs.FieldBuilder(1).(*array.StringBuilder).Append(childParent)
+	links := withIDs.FieldBuilder(2).(*array.ListBuilder)
 	links.Append(true)
 	l := links.ValueBuilder().(*array.StructBuilder)
 	l.Append(true)
@@ -396,7 +422,13 @@ func TestASpanListFromTheEngineCarriesEventsAndLinksAsStored(t *testing.T) {
 	q.engine = &engineCall[qbtypes.TraceAggregation]{route: telemetrystore.RouteTracesRaw, builder: &fakeBuilder{query: "engine sql"}}
 	result, err := q.executeOnEngine(telemetrystore.WithService(context.Background(), "querier-test"), &qbtypes.Statement{Query: "engine sql"})
 	require.NoError(t, err)
-	row := result.Value.(*qbtypes.RawData).Rows[0].Data
-	assert.Equal(t, []spantypes.EventV2{{Name: "retry", TimeUnixNano: 5}}, row["events"], "the reader decodes them as it does ClickHouse's")
-	assert.Equal(t, []spantypes.Link{{TraceID: knownTrace, SpanID: "00f067aa0ba902b7"}}, row["links"])
+	rows := result.Value.(*qbtypes.RawData).Rows
+	require.Len(t, rows, 2)
+	root, child := rows[0].Data, rows[1].Data
+	assert.Equal(t, []spantypes.EventV2{{Name: "retry", TimeUnixNano: 5}}, root["events"], "the reader decodes them as it does ClickHouse's")
+	assert.Equal(t, []spantypes.Link{{TraceID: childTrace}}, root["links"], "a root's own reference names its trace only")
+	assert.Equal(t, []spantypes.Link{{TraceID: childTrace, SpanID: childParent}, {TraceID: knownTrace, SpanID: "00f067aa0ba902b7"}}, child["links"], "the parent first, then the links, as ClickHouse stores them")
+	for _, row := range []map[string]any{root, child} {
+		assert.ElementsMatch(t, []string{"name", "events", "links"}, slices.Collect(maps.Keys(row)), "the ids links read with are not in the answer")
+	}
 }
