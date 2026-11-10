@@ -16115,6 +16115,10 @@ export type GetTraceSummary200 = {
 	 * @type string
 	 */
 	status: string;
+	/**
+	 * @type array
+	 */
+	warnings?: string[];
 };
 
 export type GetTraceThreadPathParameters = {
@@ -17757,6 +17761,10 @@ export type GetWaterfallV4200 = {
 	 * @type string
 	 */
 	status: string;
+	/**
+	 * @type array
+	 */
+	warnings?: string[];
 };
 
 export type QueryRangeV5200 = {

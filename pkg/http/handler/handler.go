@@ -107,8 +107,12 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 
 	// Add success response
 	if handler.openAPIDef.Response != nil {
+		var envelope any = render.SuccessResponse{Status: render.StatusSuccess.String(), Data: handler.openAPIDef.Response}
+		if handler.openAPIDef.PartialResults {
+			envelope = render.SuccessWithWarningsResponse{Status: render.StatusSuccess.String(), Data: handler.openAPIDef.Response}
+		}
 		opCtx.AddRespStructure(
-			render.SuccessResponse{Status: render.StatusSuccess.String(), Data: handler.openAPIDef.Response},
+			envelope,
 			openapi.WithContentType(handler.openAPIDef.ResponseContentType),
 			openapi.WithHTTPStatus(handler.openAPIDef.SuccessStatusCode),
 		)

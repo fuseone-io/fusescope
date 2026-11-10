@@ -20,7 +20,8 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 			Response:            new(spantypes.GettableTraceSummary),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusNotFound},
+			ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusRequestEntityTooLarge},
+			PartialResults:      true,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 		},
 	)).Methods(http.MethodGet).GetError(); err != nil {
@@ -39,7 +40,8 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 			Response:            new(spantypes.GettableWaterfallTrace),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusRequestEntityTooLarge},
+			PartialResults:      true,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 		},
 	)).Methods(http.MethodPost).GetError(); err != nil {

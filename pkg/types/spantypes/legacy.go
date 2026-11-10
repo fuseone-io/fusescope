@@ -2,7 +2,10 @@ package spantypes
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
+
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
 )
 
 // LegacyEvents writes events read natively from fusescope-engine, a list of structs of timestamp,
@@ -53,4 +56,41 @@ func LegacyLinks(native []any) string {
 		return "[]"
 	}
 	return string(encoded)
+}
+
+// AttributesDocument nests the attributes read from fusescope-engine by their dotted keys, as the
+// ClickHouse JSON attributes column stores them. A key that is also the prefix of another gives
+// way to the deeper value, whatever the order the maps are read in. No attributes is nil.
+func AttributesDocument(texts map[string]string, numbers map[string]float64, bools map[string]bool) telemetrystoretypes.JSONValue {
+	if len(texts)+len(numbers)+len(bools) == 0 {
+		return nil
+	}
+	doc := telemetrystoretypes.JSONValue{}
+	for key, value := range texts {
+		nest(doc, key, value)
+	}
+	for key, value := range numbers {
+		nest(doc, key, value)
+	}
+	for key, value := range bools {
+		nest(doc, key, value)
+	}
+	return doc
+}
+
+func nest(doc map[string]any, key string, value any) {
+	segments := strings.Split(key, ".")
+	current := doc
+	for _, segment := range segments[:len(segments)-1] {
+		child, ok := current[segment].(map[string]any)
+		if !ok {
+			child = map[string]any{}
+			current[segment] = child
+		}
+		current = child
+	}
+	last := segments[len(segments)-1]
+	if _, deeper := current[last].(map[string]any); !deeper {
+		current[last] = value
+	}
 }

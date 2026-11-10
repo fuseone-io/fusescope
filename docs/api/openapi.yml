@@ -20438,6 +20438,10 @@ paths:
                     $ref: '#/components/schemas/SpantypesGettableTraceSummary'
                   status:
                     type: string
+                  warnings:
+                    items:
+                      type: string
+                    type: array
                 required:
                 - status
                 - data
@@ -20461,6 +20465,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Not Found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Request Entity Too Large
         "500":
           content:
             application/json:
@@ -32734,6 +32744,10 @@ paths:
                     $ref: '#/components/schemas/SpantypesGettableWaterfallTrace'
                   status:
                     type: string
+                  warnings:
+                    items:
+                      type: string
+                    type: array
                 required:
                 - status
                 - data
@@ -32763,6 +32777,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Not Found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Request Entity Too Large
         "500":
           content:
             application/json:

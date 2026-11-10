@@ -23,6 +23,9 @@ const (
 // ErrTraceNotFound is returned when a trace ID has no matching spans in ClickHouse.
 var ErrTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found")
 
+// ErrCodeTraceTooLarge is a trace with more spans than fusescope-engine answers at once.
+var ErrCodeTraceTooLarge = errors.MustNewCode("trace_too_large")
+
 // PostableWaterfall is the request body for the waterfall API.
 type PostableWaterfall struct {
 	SelectedSpanID   string   `json:"selectedSpanId"`
@@ -141,11 +144,14 @@ type MinimalSpan struct {
 	DurationNano uint64    `ch:"duration_nano"`
 	HasError     bool      `ch:"has_error"`
 	ServiceName  string    `ch:"resource_string_service$$name"`
+	// Name names a root and orders siblings tied in time.
+	Name string `ch:"name"`
 }
 
 func (item *MinimalSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	return &WaterfallSpan{
 		SpanID:       item.SpanID,
+		Name:         item.Name,
 		TraceID:      traceID,
 		ParentSpanID: item.ParentSpanID,
 		TimeUnix:     uint64(item.StartTime.UnixNano()),

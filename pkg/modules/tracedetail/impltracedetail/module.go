@@ -19,12 +19,15 @@ const formattedSpansLogThreshold = 200
 
 type module struct {
 	store    spantypes.TraceStore
+	engine   *EngineReader
 	settings factory.ScopedProviderSettings
 	config   tracedetail.Config
 	metrics  *moduleMetrics
 }
 
-func NewModule(traceStore spantypes.TraceStore, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
+// NewModule reads trace detail from traceStore, and the summary and waterfall of the orgs engine
+// serves from fusescope-engine; a nil engine serves none.
+func NewModule(traceStore spantypes.TraceStore, engine *EngineReader, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/tracedetail/impltracedetail")
 
 	metrics, err := newModuleMetrics(scopedProviderSettings.Meter())
@@ -35,6 +38,7 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 	m := &module{
 		config:   cfg,
 		store:    traceStore,
+		engine:   engine,
 		settings: scopedProviderSettings,
 		metrics:  metrics,
 	}
@@ -45,50 +49,101 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 	return m
 }
 
-func (m *module) GetTraceSummary(ctx context.Context, orgID valuer.UUID, traceID string) (*spantypes.TraceStats, error) {
+func (m *module) GetTraceSummary(ctx context.Context, orgID valuer.UUID, traceID string) (*spantypes.TraceStats, []string, error) {
+	if m.engine.servesOrg(orgID) {
+		return m.engine.stats(ctx, orgID, traceID)
+	}
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	stats, err := m.store.GetTraceStats(ctx, orgID, traceID, bounds)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if stats.TotalSpans == 0 {
-		return nil, spantypes.ErrTraceNotFound
+		return nil, nil, spantypes.ErrTraceNotFound
 	}
-	return stats, nil
+	return stats, nil, nil
 }
 
 // GetWaterfallV4 is the OOM-safe V4 waterfall.
 // For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
 // minimal fields for all spans to build the tree, then full fields for the
 // visible window only. Aggregations are not returned.
-func (m *module) GetWaterfallV4(ctx context.Context, orgID valuer.UUID, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
-	bounds, err := m.store.GetTraceBounds(ctx, traceID)
-	if err != nil {
-		return nil, err
-	}
-	windowed := bounds.NumSpans > uint64(m.config.Waterfall.MaxLimitToSelectAllSpans)
-	if windowed {
-		attrs := metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed))
-		m.metrics.waterfallRequestCount.Add(ctx, 1, attrs)
-		m.metrics.waterfallSpanCount.Add(ctx, int64(bounds.NumSpans), attrs)
-	}
-
-	var trace *spantypes.GettableWaterfallTrace
-	if windowed {
-		trace, err = m.getWindowedWaterfall(ctx, orgID, traceID, selectedSpanID, uncollapsedSpans, bounds.Start, bounds.End)
+func (m *module) GetWaterfallV4(ctx context.Context, orgID valuer.UUID, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, []string, error) {
+	var (
+		trace    *spantypes.GettableWaterfallTrace
+		warnings []string
+		err      error
+	)
+	if m.engine.servesOrg(orgID) {
+		trace, warnings, err = m.getEngineWaterfall(ctx, orgID, traceID, selectedSpanID, uncollapsedSpans)
 	} else {
-		trace, err = m.getFullWaterfall(ctx, orgID, traceID, bounds)
+		trace, err = m.getWaterfall(ctx, orgID, traceID, selectedSpanID, uncollapsedSpans)
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if trace.FormattedSpans > formattedSpansLogThreshold {
 		m.settings.Logger().WarnContext(ctx, "waterfall response carries many formatted gen_ai spans", slog.String("trace_id", traceID), slog.Int("formatted_spans", trace.FormattedSpans), slog.Int("spans", len(trace.Spans)), slog.Bool("windowed", trace.HasMore))
 	}
-	return trace, nil
+	return trace, warnings, nil
+}
+
+func (m *module) getWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+	if m.windowed(ctx, bounds.NumSpans) {
+		return m.getWindowedWaterfall(ctx, orgID, traceID, selectedSpanID, uncollapsedSpans, bounds.Start, bounds.End)
+	}
+	return m.getFullWaterfall(ctx, orgID, traceID, bounds)
+}
+
+// windowed tells whether a waterfall of numSpans returns only a window, and counts it if so.
+func (m *module) windowed(ctx context.Context, numSpans uint64) bool {
+	if numSpans <= uint64(m.config.Waterfall.MaxLimitToSelectAllSpans) {
+		return false
+	}
+	attrs := metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed))
+	m.metrics.waterfallRequestCount.Add(ctx, 1, attrs)
+	m.metrics.waterfallSpanCount.Add(ctx, int64(numSpans), attrs)
+	return true
+}
+
+// getEngineWaterfall reads the tree with a minimal lookup, then in full every span or, past the
+// limit, only the window's.
+func (m *module) getEngineWaterfall(ctx context.Context, orgID valuer.UUID, traceID, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, []string, error) {
+	minimalSpans, warnings, err := m.engine.minimalSpans(ctx, orgID, traceID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(minimalSpans) == 0 {
+		return nil, nil, spantypes.ErrTraceNotFound
+	}
+	if !m.windowed(ctx, uint64(len(minimalSpans))) {
+		spans, more, err := m.engine.fullSpans(ctx, orgID, traceID, nil)
+		if err != nil {
+			return nil, nil, err
+		}
+		if len(spans) == 0 {
+			return nil, nil, spantypes.ErrTraceNotFound
+		}
+		return fullWaterfall(traceID, spans), appendNew(warnings, more...), nil
+	}
+
+	waterfallTrace, selectedSpans, uncollapsedSpans := m.waterfallWindow(traceID, minimalSpans, selectedSpanID, uncollapsedSpans)
+	if ids := windowSpanIDs(selectedSpans); len(ids) > 0 {
+		fullSpans, more, err := m.engine.fullSpans(ctx, orgID, traceID, ids)
+		if err != nil {
+			return nil, nil, err
+		}
+		warnings = appendNew(warnings, more...)
+		spantypes.EnrichSelectedSpans(selectedSpans, fullSpans)
+	}
+	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, false), warnings, nil
 }
 
 func (m *module) getFullWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) (*spantypes.GettableWaterfallTrace, error) {
@@ -100,7 +155,10 @@ func (m *module) getFullWaterfall(ctx context.Context, orgID valuer.UUID, traceI
 	if len(spanItems) == 0 {
 		return nil, spantypes.ErrTraceNotFound
 	}
+	return fullWaterfall(traceID, spanItems), nil
+}
 
+func fullWaterfall(traceID string, spanItems []spantypes.StorableSpan) *spantypes.GettableWaterfallTrace {
 	nodes := make([]*spantypes.WaterfallSpan, len(spanItems))
 	for i := range spanItems {
 		nodes[i] = spanItems[i].ToWaterfallSpan(traceID)
@@ -108,7 +166,7 @@ func (m *module) getFullWaterfall(ctx context.Context, orgID valuer.UUID, traceI
 	waterfallTrace := spantypes.NewWaterfallTraceFromSpans(nodes)
 	selectedSpans := waterfallTrace.GetAllSpans()
 
-	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true), nil
+	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true)
 }
 
 func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error) {
@@ -177,25 +235,10 @@ func (m *module) getWindowedWaterfall(ctx context.Context, orgID valuer.UUID, tr
 		return nil, spantypes.ErrTraceNotFound
 	}
 
-	nodes := make([]*spantypes.WaterfallSpan, len(minimalSpans))
-	for i := range minimalSpans {
-		nodes[i] = minimalSpans[i].ToWaterfallSpan(traceID)
-	}
-	waterfallTrace := spantypes.NewWaterfallTraceFromSpans(nodes)
-
-	selectedSpans, uncollapsedSpans := waterfallTrace.GetSelectedSpans(
-		uncollapsedSpans,
-		selectedSpanID,
-		m.config.Waterfall.SpanPageSize,
-		m.config.Waterfall.MaxDepthToAutoExpand,
-	)
+	waterfallTrace, selectedSpans, uncollapsedSpans := m.waterfallWindow(traceID, minimalSpans, selectedSpanID, uncollapsedSpans)
 
 	// Step 2: full fetch for the selected window only
-	spanIDs := make([]string, len(selectedSpans))
-	for i, s := range selectedSpans {
-		spanIDs[i] = s.SpanID
-	}
-	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, orgID, traceID, start, end, spanIDs)
+	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, orgID, traceID, start, end, windowSpanIDs(selectedSpans))
 	if err != nil {
 		return nil, err
 	}
@@ -205,6 +248,30 @@ func (m *module) getWindowedWaterfall(ctx context.Context, orgID valuer.UUID, tr
 	return spantypes.NewGettableWaterfallTrace(
 		waterfallTrace, selectedSpans, uncollapsedSpans, false,
 	), nil
+}
+
+// waterfallWindow builds the tree from minimal spans and selects the visible window.
+func (m *module) waterfallWindow(traceID string, minimalSpans []spantypes.MinimalSpan, selectedSpanID string, uncollapsedSpans []string) (*spantypes.WaterfallTrace, []*spantypes.WaterfallSpan, []string) {
+	nodes := make([]*spantypes.WaterfallSpan, len(minimalSpans))
+	for i := range minimalSpans {
+		nodes[i] = minimalSpans[i].ToWaterfallSpan(traceID)
+	}
+	waterfallTrace := spantypes.NewWaterfallTraceFromSpans(nodes)
+	selectedSpans, uncollapsedSpans := waterfallTrace.GetSelectedSpans(
+		uncollapsedSpans,
+		selectedSpanID,
+		m.config.Waterfall.SpanPageSize,
+		m.config.Waterfall.MaxDepthToAutoExpand,
+	)
+	return waterfallTrace, selectedSpans, uncollapsedSpans
+}
+
+func windowSpanIDs(selectedSpans []*spantypes.WaterfallSpan) []string {
+	spanIDs := make([]string, len(selectedSpans))
+	for i, s := range selectedSpans {
+		spanIDs[i] = s.SpanID
+	}
+	return spanIDs
 }
 
 func (m *module) GetThread(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.ThreadQuery) (*spantypes.GettableTraceThread, error) {
