@@ -230,7 +230,7 @@ func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, start,
 	sb.Select(
 		"DISTINCT ON (span_id) span_id",
 		"parent_span_id", "timestamp", "duration_nano", "has_error",
-		colServiceName,
+		colServiceName, "name",
 	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	sb.Where(

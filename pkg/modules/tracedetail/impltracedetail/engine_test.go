@@ -2,6 +2,7 @@ package impltracedetail
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -272,4 +273,25 @@ func TestTheSummaryAndWaterfallCarryTheWarningsBesideTheData(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code, call.name)
 		assert.Contains(t, rec.Body.String(), want, call.name)
 	}
+}
+
+func TestALargeEngineWaterfallNamesItsRootAndOrdersTiedSiblingsByName(t *testing.T) {
+	cfg := defaultConfig()
+	cfg.Waterfall.MaxLimitToSelectAllSpans = 2
+	cfg.Waterfall.SpanPageSize = 10
+	spans := []engineSpan{{spanID: "0000000000000001", at: t0, duration: 100, name: "GET /cart", service: "front"}}
+	for i, name := range []string{"f", "e", "d", "c", "b", "a"} {
+		spans = append(spans, engineSpan{spanID: fmt.Sprintf("00000000000000%02x", i+2), parentSpanID: "0000000000000001", at: t0.Add(5), duration: 1, name: name, service: "back"})
+	}
+	m, engine := newEngineModule(t, cfg, true,
+		rowsOf(t, nil, batchOf(t, minimalSchema(), spans...)),
+		rowsOf(t, nil, batchOf(t, fullSchema(), spans...)),
+	)
+	trace, _, err := m.GetWaterfallV4(detailContext(), engineOrg, testTraceID, "", []string{"0000000000000001"})
+	require.NoError(t, err)
+	require.True(t, trace.HasMore, "the window path")
+	assert.Equal(t, "GET /cart", trace.RootServiceEntryPoint)
+	assert.Equal(t, "front", trace.RootServiceName)
+	assert.Equal(t, []string{"0000000000000001", "0000000000000007", "0000000000000006", "0000000000000005", "0000000000000004", "0000000000000003", "0000000000000002"}, spanIDs(trace.Spans), "siblings tied in time order by name")
+	assert.Equal(t, spanIDs(trace.Spans), engine.calls[1].Body.SpanIDs)
 }

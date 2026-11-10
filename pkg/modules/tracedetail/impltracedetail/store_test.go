@@ -117,7 +117,7 @@ func TestGetTraceStats(t *testing.T) {
 }
 
 func TestGetMinimalSpans(t *testing.T) {
-	expectedSQL := "SELECT DISTINCT ON (span_id) span_id, parent_span_id, timestamp, duration_nano, has_error, resource_string_service$$name FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
+	expectedSQL := "SELECT DISTINCT ON (span_id) span_id, parent_span_id, timestamp, duration_nano, has_error, resource_string_service$$name, name FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
 
 	t.Run("ValidRange_GeneratesExpectedSQL", func(t *testing.T) {
 		s := newTestStore(sqlmock.QueryMatcherRegexp)

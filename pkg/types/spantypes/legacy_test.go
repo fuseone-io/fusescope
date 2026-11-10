@@ -32,3 +32,8 @@ func TestEngineLinksReadAsTheStoredJSON(t *testing.T) {
 	assert.Equal(t, []Link{{TraceID: "5b8efff798038103d269b633813fc60c", SpanID: "00f067aa0ba902b7"}}, ParseLinks(legacy))
 	assert.Equal(t, "[]", LegacyLinks(nil))
 }
+
+func TestAMinimalSpanCarriesItsName(t *testing.T) {
+	span := (&MinimalSpan{SpanID: "0000000000000001", Name: "GET /cart"}).ToWaterfallSpan("t")
+	assert.Equal(t, "GET /cart", span.Name)
+}

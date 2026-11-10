@@ -111,6 +111,7 @@ func readMinimalSpans(rows telemetrystore.Rows) ([]spantypes.MinimalSpan, error)
 			DurationNano: get[uint64](row, "duration_nano"),
 			HasError:     get[bool](row, "has_error"),
 			ServiceName:  get[string](row, "service_name"),
+			Name:         get[string](row, "name"),
 		}
 		if _, dup := seen[span.SpanID]; dup {
 			continue
