@@ -148,13 +148,21 @@ func (c Config) Validate() error {
 	case "clickhouse":
 		return nil
 	case "flight":
-		return c.validateFlight()
+		if err := c.ValidateFlight(); err != nil {
+			return err
+		}
+		if c.Clickhouse.DSN == "" {
+			return errors.NewInvalidInputf(ErrCodeInvalidConfig, "telemetrystore.clickhouse.dsn is required by the flight provider while callers of ClickhouseDB remain")
+		}
+		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeInvalidConfig, "telemetrystore.provider %q: expected clickhouse or flight", c.Provider)
 	}
 }
 
-func (c Config) validateFlight() error {
+// ValidateFlight checks the flight provider's own configuration, without the ClickHouse its
+// fallback is otherwise opened from.
+func (c Config) ValidateFlight() error {
 	invalid := func(format string, args ...any) error {
 		return errors.NewInvalidInputf(ErrCodeInvalidConfig, format, args...)
 	}
@@ -184,9 +192,6 @@ func (c Config) validateFlight() error {
 		if _, err := valuer.NewUUID(org); err != nil {
 			return invalid("telemetrystore.flight.orgs: %q is not an organisation id", org)
 		}
-	}
-	if c.Clickhouse.DSN == "" {
-		return invalid("telemetrystore.clickhouse.dsn is required by the flight provider while callers of ClickhouseDB remain")
 	}
 	return nil
 }
