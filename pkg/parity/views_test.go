@@ -82,14 +82,14 @@ func TestServicesAreKeyedByNameAndTheirTopLevelOperationsByMultiset(t *testing.T
 
 	extra := `{"data":[{"serviceName":"b","p99":10,"numCalls":5,"dataWarning":{"topLevelOps":["overflow_operation","x","y","z"]}}]}`
 	fewer := `{"data":[{"serviceName":"b","p99":10,"numCalls":5,"dataWarning":{"topLevelOps":["overflow_operation","x","y"]}}]}`
-	assert.Equal(t, map[string]Kind{"data[b].dataWarning.topLevelOps.operations[z]": KindRows}, diffOf(t, Services, fewer, extra))
+	assert.Equal(t, map[string]Kind{"data[b][0].dataWarning.topLevelOps.operations[z]": KindRows}, diffOf(t, Services, fewer, extra))
 
 	repeated := `{"data":[{"serviceName":"b","p99":10,"numCalls":5,"dataWarning":{"topLevelOps":["overflow_operation","x","x"]}}]}`
 	once := `{"data":[{"serviceName":"b","p99":10,"numCalls":5,"dataWarning":{"topLevelOps":["overflow_operation","x"]}}]}`
-	assert.Equal(t, map[string]Kind{"data[b].dataWarning.topLevelOps.operations[x]": KindField}, diffOf(t, Services, repeated, once), "a multiset, not a set")
+	assert.Equal(t, map[string]Kind{"data[b][0].dataWarning.topLevelOps.operations[x]": KindField}, diffOf(t, Services, repeated, once), "a multiset, not a set")
 
 	noSentinel := `{"data":[{"serviceName":"b","p99":10,"numCalls":5,"dataWarning":{"topLevelOps":["x","overflow_operation"]}}]}`
-	assert.Contains(t, diffOf(t, Services, noSentinel, once), "data[b].dataWarning.topLevelOps.sentinel", "the sentinel first is the contract")
+	assert.Contains(t, diffOf(t, Services, noSentinel, once), "data[b][0].dataWarning.topLevelOps.sentinel", "the sentinel first is the contract")
 }
 
 func TestTopOperationsKeepTheirOrderExceptBetweenTies(t *testing.T) {
@@ -104,4 +104,50 @@ func TestASummaryAndAWaterfallCompareFieldByField(t *testing.T) {
 	engine := `{"data":{"spans":[{"span_id":"1","name":"a"},{"span_id":"2","name":"b"}],"rootServiceName":"x"}}`
 	clickhouse := `{"data":{"spans":[{"span_id":"2","name":"b"},{"span_id":"1","name":"a"}],"rootServiceName":"x"}}`
 	assert.Equal(t, map[string]Kind{"data.spans": KindOrder}, diffOf(t, Waterfall, engine, clickhouse), "the pre-order of the tree is the contract")
+}
+
+func onlyKinds(t *testing.T, got map[string]Kind) []Kind {
+	t.Helper()
+	var out []Kind
+	for _, kind := range got {
+		out = append(out, kind)
+	}
+	return out
+}
+
+func TestADuplicateSeriesIsARowDifference(t *testing.T) {
+	series := `{"labels":[{"key":{"name":"service.name"},"value":"a"}],"values":[{"timestamp":1,"value":1}]}`
+	twice := `{"type":"time_series","data":{"results":[{"aggregations":[{"index":0,"series":[` + series + `,` + series + `]}]}]}}`
+	once := `{"type":"time_series","data":{"results":[{"aggregations":[{"index":0,"series":[` + series + `]}]}]}}`
+	assert.Equal(t, []Kind{KindRows}, onlyKinds(t, diffOf(t, TimeSeries, twice, once)))
+}
+
+func TestADuplicateScalarRowIsARowDifference(t *testing.T) {
+	columns := `"columns":[{"name":"service.name","columnType":"group"},{"name":"__result_0","columnType":"aggregation","aggregationIndex":0}]`
+	twice := `{"type":"scalar","data":{"results":[{` + columns + `,"data":[["a",1],["a",1]]}]}}`
+	once := `{"type":"scalar","data":{"results":[{` + columns + `,"data":[["a",1]]}]}}`
+	assert.Equal(t, []Kind{KindRows}, onlyKinds(t, diffOf(t, ScalarView(false, nil), twice, once)))
+}
+
+func TestScalarGroupsWithCommasNeverCollide(t *testing.T) {
+	columns := `"columns":[{"name":"x","columnType":"group"},{"name":"y","columnType":"group"},{"name":"__result_0","columnType":"aggregation","aggregationIndex":0}]`
+	engine := `{"type":"scalar","data":{"results":[{` + columns + `,"data":[["a,b","c",1]]}]}}`
+	clickhouse := `{"type":"scalar","data":{"results":[{` + columns + `,"data":[["a","b,c",1]]}]}}`
+	got := diffOf(t, ScalarView(false, nil), engine, clickhouse)
+	assert.Len(t, got, 2, "a group on each side")
+	for path, kind := range got {
+		assert.Equal(t, KindRows, kind, path)
+	}
+}
+
+func TestADuplicateServiceIsARowDifference(t *testing.T) {
+	service := `{"serviceName":"a","p99":1,"numCalls":1,"dataWarning":{"topLevelOps":["overflow_operation"]}}`
+	assert.Equal(t, []Kind{KindRows}, onlyKinds(t, diffOf(t, Services, `{"data":[`+service+`,`+service+`]}`, `{"data":[`+service+`]}`)))
+}
+
+func TestADuplicateOperationIsARowDifference(t *testing.T) {
+	op := `{"name":"a","p99":3}`
+	got := diffOf(t, Operations, `{"data":[`+op+`,`+op+`]}`, `{"data":[`+op+`]}`)
+	assert.Equal(t, KindRows, got["order"], "the order lists the duplicate")
+	assert.Equal(t, KindRows, got["items[a]"], "and so do the items")
 }

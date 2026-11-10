@@ -1,9 +1,6 @@
 package parity
 
-import (
-	"slices"
-	"strings"
-)
+import "slices"
 
 // View normalizes one view's answer for Compare: it turns the collections without a contractual
 // order into Keyed ones and says which paths hold quantiles and which are outside the contract.
@@ -47,13 +44,10 @@ func TimeSeriesView(quantiles map[int]float64) View {
 					continue
 				}
 				series, _ := agg["series"].([]any)
-				keyed := Keyed{}
-				for _, s := range series {
-					if m, ok := s.(map[string]any); ok {
-						keyed[canonical(m["labels"])] = s
-					}
-				}
-				agg["series"] = keyed
+				agg["series"] = keyedBy(series, func(s any) string {
+					m, _ := s.(map[string]any)
+					return canonical(m["labels"])
+				})
 			}
 		})
 		return answer, Rule{Excluded: isMeta, Quantile: func(path Path) bool {
@@ -89,18 +83,19 @@ func ScalarView(ordered bool, quantiles map[int]float64) View {
 				return
 			}
 			rows, _ := result["data"].([]any)
-			keyed := Keyed{}
-			for _, row := range rows {
+			result["data"] = keyedBy(rows, func(row any) string {
 				r, _ := row.([]any)
-				var key []string
+				group := []any{}
 				for _, i := range groups {
 					if i < len(r) {
-						key = append(key, keyOf(r[i]))
+						group = append(group, r[i])
 					}
 				}
-				keyed[strings.Join(key, ",")] = row
-			}
-			result["data"] = keyed
+				if len(group) == 1 {
+					return keyOf(group[0])
+				}
+				return canonical(group)
+			})
 		})
 		return answer, Rule{Excluded: isMeta, Quantile: func(path Path) bool {
 			column, ok := path[len(path)-1].(int)
@@ -112,17 +107,18 @@ func ScalarView(ordered bool, quantiles map[int]float64) View {
 func normalizeServices(answer any) (any, Rule) {
 	envelope, _ := answer.(map[string]any)
 	items, _ := envelope["data"].([]any)
-	keyed := Keyed{}
 	for _, item := range items {
 		service, _ := item.(map[string]any)
-		name, _ := service["serviceName"].(string)
 		if warning, ok := service["dataWarning"].(map[string]any); ok {
 			ops, _ := warning["topLevelOps"].([]any)
 			warning["topLevelOps"] = topLevelOps(ops)
 		}
-		keyed[name] = service
 	}
-	envelope["data"] = keyed
+	envelope["data"] = keyedBy(items, func(item any) string {
+		service, _ := item.(map[string]any)
+		name, _ := service["serviceName"].(string)
+		return name
+	})
 	return envelope, Rule{Quantile: func(path Path) bool { return path.Last() == "p99" }}
 }
 
@@ -147,7 +143,6 @@ func topLevelOps(ops []any) map[string]any {
 func normalizeOperations(answer any) (any, Rule) {
 	envelope, _ := answer.(map[string]any)
 	items, _ := envelope["data"].([]any)
-	keyed := Keyed{}
 	var order []any
 	var block []string
 	var blockP99 any
@@ -161,7 +156,6 @@ func normalizeOperations(answer any) (any, Rule) {
 	for _, item := range items {
 		op, _ := item.(map[string]any)
 		name, _ := op["name"].(string)
-		keyed[name] = op
 		if len(block) > 0 && !equalValues(op["p99"], blockP99) {
 			flush()
 		}
@@ -171,6 +165,11 @@ func normalizeOperations(answer any) (any, Rule) {
 	if order == nil {
 		order = []any{}
 	}
+	keyed := keyedBy(items, func(item any) string {
+		op, _ := item.(map[string]any)
+		name, _ := op["name"].(string)
+		return name
+	})
 	return map[string]any{"order": order, "items": keyed}, Rule{Quantile: func(path Path) bool {
 		switch path.Last() {
 		case "p50", "p95", "p99":
@@ -181,6 +180,18 @@ func normalizeOperations(answer any) (any, Rule) {
 }
 
 func identity(answer any) (any, Rule) { return answer, Rule{} }
+
+// keyedBy keys items by key, each key holding the list of its occurrences in their order, so a
+// duplicate on one side is a row difference rather than an item overwritten.
+func keyedBy(items []any, key func(any) string) Keyed {
+	keyed := Keyed{}
+	for _, item := range items {
+		k := key(item)
+		occurrences, _ := keyed[k].([]any)
+		keyed[k] = append(occurrences, item)
+	}
+	return keyed
+}
 
 // keyOf is a value as a Keyed key: a string as it is, anything else in its canonical form.
 func keyOf(v any) string {
