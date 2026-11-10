@@ -126,10 +126,10 @@ def pytest_addoption(parser: pytest.Parser):
         help="ghcr.io/fuseone-io/fusescope-collector tag (pinned by digest) whose /fusescope-schema creates the ClickHouse schema",
     )
     parser.addoption(
-        "--collector-version",
+        "--contract-collector-version",
         action="store",
-        default="0.145.0",
-        help="ghcr.io/fuseone-io/fusescope-otel-collector tag, the reference the simulatorcontract suite replays its corpus through",
+        default="0.5.0@sha256:f42a78b2ec2433af83430731ff8ff00781b686cc9e764ca9f1238d53dfcb75cf",
+        help="ghcr.io/fuseone-io/fusescope-collector tag (pinned by digest), the reference the simulatorcontract suite replays its corpus through: its signozlogspipeline and signozspanmapper processors, with the file exporter",
     )
     parser.addoption(
         "--fusescope-collector-version",
