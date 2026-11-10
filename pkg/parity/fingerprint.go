@@ -61,14 +61,16 @@ func (f *Fingerprinter) Segment(s string) string {
 	return "h:" + f.mac("segment\x00" + s)[:segmentHexDigits]
 }
 
-// Path joins segments: a fixed one, a field of the contract, as it is; a Dynamic one as its
-// fingerprint, in brackets.
+// Path joins segments: a fixed one, a field of the contract, as it is; a list position in
+// brackets; a Dynamic one as its fingerprint, in brackets.
 func (f *Fingerprinter) Path(segments ...any) string {
 	var b strings.Builder
 	for _, segment := range segments {
 		switch s := segment.(type) {
 		case Dynamic:
 			b.WriteString("[" + f.Segment(string(s)) + "]")
+		case int:
+			fmt.Fprintf(&b, "[%d]", s)
 		default:
 			if b.Len() > 0 {
 				b.WriteByte('.')

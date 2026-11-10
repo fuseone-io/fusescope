@@ -48,6 +48,7 @@ func TestADynamicPathSegmentReadsAsAShortFingerprint(t *testing.T) {
 	assert.NotContains(t, segment, "eng-cart")
 	assert.Equal(t, segment, f.Segment("eng-cart"))
 	assert.Equal(t, "services["+segment+"].numCalls", f.Path("services", Dynamic("eng-cart"), "numCalls"), "fixed segments stay as they are")
+	assert.Equal(t, "spans[2].references[0].spanId", f.Path(Path{"spans", 2, "references", 0, "spanId"}...), "list positions are not tenant data")
 }
 
 func TestAShortRunKeyIsRefused(t *testing.T) {
