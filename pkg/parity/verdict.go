@@ -41,3 +41,15 @@ const (
 	// CategoryUnknown is a difference no other category explains.
 	CategoryUnknown Category = "unknown"
 )
+
+const (
+	// CategoryDivergentData is a minute the two stores count differently, which the count gate left
+	// out of the comparison.
+	CategoryDivergentData Category = "divergent_data"
+	// CategoryIngestionDuplicate is a minute with the same distinct spans and more rows in one
+	// store: explained, and still a divergence.
+	CategoryIngestionDuplicate Category = "ingestion_duplicate"
+	// CategoryDualWriteUnhealthy is a minute the collector failed to write to a store, left out of
+	// the comparison.
+	CategoryDualWriteUnhealthy Category = "dual_write_unhealthy"
+)
