@@ -41,6 +41,8 @@ pytest_plugins = [
     "fixtures.otelcollector",
     "fixtures.fusescopecollector",
     "fixtures.simulatorcontract",
+    "fixtures.engine",
+    "fixtures.enginecollector",
 ]
 
 
@@ -134,6 +136,12 @@ def pytest_addoption(parser: pytest.Parser):
         action="store",
         default="0.3.1",
         help="ghcr.io/fuseone-io/fusescope-collector tag, the collector that receives OTLP and RUM",
+    )
+    parser.addoption(
+        "--fusescope-engine-version",
+        action="store",
+        default="0.0.3",
+        help="ghcr.io/fuseone-io/fusescope-engine tag the queriertraces_engine suite reads traces from",
     )
     parser.addoption(
         "--signoz-image",
