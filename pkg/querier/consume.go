@@ -142,6 +142,12 @@ func readAsTimeSeries(rows telemetrystore.Rows, queryWindow *qbtypes.TimeRange, 
 			case *time.Time:
 				ts = v.UnixMilli()
 
+			case **time.Time:
+				// fusescope-engine's bucket is nullable; a null leaves ts zero and the row is skipped.
+				if *v != nil {
+					ts = (*v).UnixMilli()
+				}
+
 			case *float64, *float32, *int64, *int32, *uint64, *uint32:
 				val := numericAsFloat(reflect.ValueOf(ptr).Elem().Interface())
 				if m := aggRe.FindStringSubmatch(name); m != nil {
