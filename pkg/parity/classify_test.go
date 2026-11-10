@@ -75,3 +75,24 @@ func TestNullAgainstTheEmptyStringOutsideAPromotedColumnIsUnknown(t *testing.T) 
 		assert.Equal(t, Verdict{Category: CategoryAbsentKey, Disposition: Blocking}, Classify(promoted, Context{}), field)
 	}
 }
+
+func TestAServiceMissingFromTheEngineAtAServiceBoundaryIsKnownAndBlocking(t *testing.T) {
+	// The D4 case: eng-x-back's only call has a parent in eng-x-front and no remote flag.
+	boundary := func(service, operation string) bool { return service == "eng-x-back" && operation == "x.handle" }
+	engine := decode(t, `{"data":[]}`)
+	clickhouse := decode(t, `{"data":[{"serviceName":"eng-x-back","p99":1,"numCalls":1,"dataWarning":{"topLevelOps":["overflow_operation","x.handle"]}}]}`)
+	ne, rule := Services.Normalize(engine)
+	nc, _ := Services.Normalize(clickhouse)
+	diffs := Compare(ne, nc, rule)
+	if assert.Len(t, diffs, 1) {
+		assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Blocking}, Classify(diffs[0], Context{ServiceBoundary: boundary}))
+		assert.Equal(t, Verdict{Category: CategoryRows, Disposition: Blocking}, Classify(diffs[0], Context{ServiceBoundary: func(string, string) bool { return false }}), "unconfirmed, a missing service is a row difference")
+	}
+
+	mixed := decode(t, `{"data":[{"serviceName":"eng-x-back","p99":1,"numCalls":2,"dataWarning":{"topLevelOps":["overflow_operation","x.handle","x.other"]}}]}`)
+	nm, _ := Services.Normalize(mixed)
+	diffs = Compare(ne, nm, rule)
+	if assert.Len(t, diffs, 1) {
+		assert.Equal(t, Verdict{Category: CategoryRows, Disposition: Blocking}, Classify(diffs[0], Context{ServiceBoundary: boundary}), "only a service every operation of which is a confirmed boundary")
+	}
+}

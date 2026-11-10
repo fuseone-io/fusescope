@@ -57,7 +57,7 @@ func Classify(d Difference, ctx Context) Verdict {
 		if ctx.AbsentKeyCase {
 			return Verdict{Category: CategoryAbsentKey, Disposition: Blocking}
 		}
-		if service, operation, ok := serviceAndOperation(d.Path, ctx); ok && d.Engine == nil && ctx.ServiceBoundary != nil && ctx.ServiceBoundary(service, operation) {
+		if d.Engine == nil && ctx.ServiceBoundary != nil && atServiceBoundary(d, ctx) {
 			return Verdict{Category: CategoryServiceBoundary, Disposition: Blocking}
 		}
 		return Verdict{Category: CategoryRows, Disposition: Blocking}
@@ -86,6 +86,59 @@ func classifyQuantile(d Difference, ctx Context) Verdict {
 		return Verdict{Category: CategoryApproximation, Disposition: Inconclusive}
 	}
 	return JudgeQuantile(q, v, evidence)
+}
+
+// atServiceBoundary tells whether what ClickHouse has and the engine lacks is the service-boundary
+// rule: a top-level operation or entry point confirmed to have its parent in another service, or a
+// whole service every top-level operation of which is.
+func atServiceBoundary(d Difference, ctx Context) bool {
+	if service, operation, ok := serviceAndOperation(d.Path, ctx); ok {
+		return ctx.ServiceBoundary(service, operation)
+	}
+	service, ok := onlyDynamic(d.Path)
+	if !ok {
+		return false
+	}
+	operations := missingServiceOperations(d.ClickHouse)
+	if len(operations) == 0 {
+		return false
+	}
+	for _, operation := range operations {
+		if !ctx.ServiceBoundary(service, operation) {
+			return false
+		}
+	}
+	return true
+}
+
+// missingServiceOperations are the top-level operations of a service as the services view
+// normalizes it, past the sentinel.
+func missingServiceOperations(occurrences any) []string {
+	var operations []string
+	list, _ := occurrences.([]any)
+	for _, occurrence := range list {
+		service, _ := occurrence.(map[string]any)
+		warning, _ := service["dataWarning"].(map[string]any)
+		ops, _ := warning["topLevelOps"].(map[string]any)
+		keyed, _ := ops["operations"].(Keyed)
+		for name := range keyed {
+			operations = append(operations, name)
+		}
+	}
+	return operations
+}
+
+func onlyDynamic(path Path) (string, bool) {
+	var found []string
+	for _, segment := range path {
+		if d, ok := segment.(Dynamic); ok {
+			found = append(found, string(d))
+		}
+	}
+	if len(found) != 1 {
+		return "", false
+	}
+	return found[0], true
 }
 
 // serviceAndOperation reads the service and the operation a top-level or entry point difference is
