@@ -94,3 +94,24 @@ func nest(doc map[string]any, key string, value any) {
 		current[last] = value
 	}
 }
+
+// LegacyReferences writes a span's references as the collector stores them for ClickHouse: the span's
+// own CHILD_OF reference to its parent, naming no span for a root, then each link read natively from
+// fusescope-engine as FOLLOWS_FROM.
+func LegacyReferences(traceID, parentSpanID string, native []any) string {
+	refs := []OtelSpanRef{{TraceId: traceID, SpanId: parentSpanID, RefType: "CHILD_OF"}}
+	for _, element := range native {
+		link, ok := element.(map[string]any)
+		if !ok {
+			continue
+		}
+		linkTrace, _ := link["trace_id"].(string)
+		linkSpan, _ := link["span_id"].(string)
+		refs = append(refs, OtelSpanRef{TraceId: linkTrace, SpanId: linkSpan, RefType: "FOLLOWS_FROM"})
+	}
+	encoded, err := json.Marshal(refs)
+	if err != nil {
+		return "[]"
+	}
+	return string(encoded)
+}

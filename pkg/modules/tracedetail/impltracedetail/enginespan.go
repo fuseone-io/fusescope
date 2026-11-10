@@ -67,7 +67,7 @@ func storableSpanOf(row map[string]any, withJSON bool) spantypes.StorableSpan {
 		DBOperation:        get[string](row, "db_operation"),
 		HTTPMethod:         get[string](row, "http_method"),
 		ResponseStatusCode: get[string](row, "response_status_code"),
-		References:         spantypes.LegacyLinks(get[[]any](row, "links")),
+		References:         spantypes.LegacyReferences(get[string](row, "trace_id"), get[string](row, "parent_span_id"), get[[]any](row, "links")),
 	}
 	if withJSON {
 		span.AttributesJSON = spantypes.AttributesDocument(span.AttributesString, span.AttributesNumber, span.AttributesBool)

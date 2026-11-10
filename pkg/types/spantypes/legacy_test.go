@@ -62,6 +62,14 @@ func TestEngineAttributesReadAsTheStoredDocument(t *testing.T) {
 	assert.Equal(t, want, AttributesDocument(conflicts, nil, nil), "twenty conflicts leave no room for a lucky map order")
 }
 
+func TestEngineReferencesReadAsTheCollectorStoresThem(t *testing.T) {
+	links := []any{map[string]any{"trace_id": "5b8efff798038103d269b633813fc60c", "span_id": "00f067aa0ba902b7", "trace_state": "", "attributes": map[string]string{}}}
+	child := LegacyReferences("4bf92f3577b34da6a3ce929d0e0e4736", "53995c3f42cd8ad8", links)
+	assert.Equal(t, `[{"traceId":"4bf92f3577b34da6a3ce929d0e0e4736","spanId":"53995c3f42cd8ad8","refType":"CHILD_OF"},{"traceId":"5b8efff798038103d269b633813fc60c","spanId":"00f067aa0ba902b7","refType":"FOLLOWS_FROM"}]`, child)
+	assert.Equal(t, `[{"traceId":"4bf92f3577b34da6a3ce929d0e0e4736","refType":"CHILD_OF"}]`, LegacyReferences("4bf92f3577b34da6a3ce929d0e0e4736", "", nil), "a root's own reference names no span")
+	assert.Equal(t, []OtelSpanRef{{TraceId: "4bf92f3577b34da6a3ce929d0e0e4736", SpanId: "53995c3f42cd8ad8", RefType: "CHILD_OF"}, {TraceId: "5b8efff798038103d269b633813fc60c", SpanId: "00f067aa0ba902b7", RefType: "FOLLOWS_FROM"}}, (&StorableSpan{References: child}).UnmarshalledRefs())
+}
+
 func TestAMinimalSpanCarriesItsName(t *testing.T) {
 	span := (&MinimalSpan{SpanID: "0000000000000001", Name: "GET /cart"}).ToWaterfallSpan("t")
 	assert.Equal(t, "GET /cart", span.Name)

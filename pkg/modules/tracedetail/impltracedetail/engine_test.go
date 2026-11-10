@@ -65,7 +65,7 @@ func TestTheMapperReadsEveryColumnOfAnEngineSpan(t *testing.T) {
 		StatusMessage:    "boom", StatusCodeString: "Error", SpanKind: "Server", ParentSpanID: "53995c3f42cd8ad8",
 		Flags: 1, IsRemote: "yes", TraceState: "rojo=00f067aa0ba902b7", StatusCode: 2,
 		DBName: "carts", DBOperation: "SELECT", HTTPMethod: "GET", ResponseStatusCode: "500",
-		References: `[{"traceId":"5b8efff798038103d269b633813fc60c","spanId":"eee19b7ec3c1b174"}]`,
+		References: `[{"traceId":"` + testTraceID + `","spanId":"53995c3f42cd8ad8","refType":"CHILD_OF"},{"traceId":"5b8efff798038103d269b633813fc60c","spanId":"eee19b7ec3c1b174","refType":"FOLLOWS_FROM"}]`,
 	}, spans[0], "the columns the engine does not store, http_url, http_host and the external_http pair, read empty")
 }
 
@@ -81,7 +81,7 @@ func TestARootAndUnsetPromotedColumnsReadEmpty(t *testing.T) {
 	assert.Empty(t, spans[0].ServiceName)
 	assert.Empty(t, spans[0].HTTPMethod)
 	assert.Equal(t, []string{}, spans[0].Events)
-	assert.Equal(t, "[]", spans[0].References)
+	assert.Equal(t, `[{"traceId":"`+testTraceID+`","refType":"CHILD_OF"}]`, spans[0].References)
 	assert.Equal(t, "no", spans[0].IsRemote)
 }
 
