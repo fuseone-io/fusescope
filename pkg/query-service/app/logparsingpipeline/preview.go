@@ -2,6 +2,7 @@ package logparsingpipeline
 
 import (
 	"context"
+	"encoding/json"
 	"sort"
 	"strings"
 	"time"
@@ -194,7 +195,7 @@ func PLogsToSignozLogs(plogs []plog.Logs) []model.SignozLog {
 						TraceFlags:         uint32(lr.Flags()),
 						SeverityText:       lr.SeverityText(),
 						SeverityNumber:     uint8(lr.SeverityNumber()),
-						Body:               lr.Body().AsString(),
+						Body:               valueString(lr.Body()),
 						Resources_string:   pMapToStrMap(rl.Resource().Attributes()),
 						Attributes_string:  map[string]string{},
 						Attributes_int64:   map[string]int64{},
@@ -208,7 +209,7 @@ func PLogsToSignozLogs(plogs []plog.Logs) []model.SignozLog {
 						} else if v.Type() == pcommon.ValueTypeInt {
 							signozLog.Attributes_int64[k] = v.Int()
 						} else {
-							signozLog.Attributes_string[k] = v.AsString()
+							signozLog.Attributes_string[k] = valueString(v)
 						}
 						return true
 					})
@@ -225,8 +226,25 @@ func PLogsToSignozLogs(plogs []plog.Logs) []model.SignozLog {
 func pMapToStrMap(pMap pcommon.Map) map[string]string {
 	result := map[string]string{}
 	pMap.Range(func(k string, v pcommon.Value) bool {
-		result[k] = v.AsString()
+		result[k] = valueString(v)
 		return true
 	})
 	return result
+}
+
+// valueString stringifies a value as the collector stores it in a String
+// column: maps and arrays as encoding/json does (sorted keys, HTML-safe, so
+// "<" is "\u003c"), anything else as pdata's AsString. pdata's AsString of a
+// map stopped escaping HTML in v1.70.
+func valueString(v pcommon.Value) string {
+	switch v.Type() {
+	case pcommon.ValueTypeMap, pcommon.ValueTypeSlice:
+		b, err := json.Marshal(v.AsRaw())
+		if err != nil {
+			return v.AsString()
+		}
+		return string(b)
+	default:
+		return v.AsString()
+	}
 }

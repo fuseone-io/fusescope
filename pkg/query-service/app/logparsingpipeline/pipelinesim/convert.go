@@ -93,7 +93,7 @@ func plogsFromEntries(entries []*entry.Entry) plog.Logs {
 		e.TraceID = rightAligned(e.TraceID, 16)
 		e.SpanID = rightAligned(e.SpanID, 8)
 	}
-	return adapter.ConvertEntries(entries)
+	return adapter.ConvertEntries(entries, "", "")
 }
 
 func nilsAsText(m map[string]any) map[string]any {

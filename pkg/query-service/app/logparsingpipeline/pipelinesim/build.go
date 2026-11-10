@@ -1,14 +1,16 @@
 package pipelinesim
 
 import (
+	"context"
 	"maps"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/helper"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/parser/regex"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/parser/severity"
-	stanzatime "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/parser/time"
+	stanzatime "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/parser/timeparser"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/parser/trace"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/transformer/copy"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/transformer/move"
@@ -34,7 +36,7 @@ var builders = map[string]func() operator.Builder{
 	"normalize":       newNormalizeConfig,
 	"regex_parser":    func() operator.Builder { return regex.NewConfig() },
 	"remove":          func() operator.Builder { return remove.NewConfig() },
-	"severity_parser": func() operator.Builder { return severity.NewConfig() },
+	"severity_parser": func() operator.Builder { return &severityConfig{Config: *severity.NewConfig()} },
 	"time_parser":     func() operator.Builder { return newTimeConfig() },
 	"trace_parser":    func() operator.Builder { return trace.NewConfig() },
 }
@@ -246,4 +248,46 @@ func (c *timeConfig) Build(set component.TelemetrySettings) (operator.Operator, 
 		c.Location = "UTC"
 	}
 	return c.Config.Build(set)
+}
+
+// severityConfig is stanza's severity_parser, except that a 64-bit integer
+// value (every OTLP integer) is an error, as in the collector: stanza
+// v0.164.1 maps int64, and the collector's processor keeps the earlier
+// behavior (fusescope-collector-server docs/spec/signozlogspipeline.md §3.1).
+type severityConfig struct {
+	severity.Config `mapstructure:",squash"`
+}
+
+func (c *severityConfig) Build(set component.TelemetrySettings) (operator.Operator, error) {
+	t, err := c.TransformerConfig.Build(set)
+	if err != nil {
+		return nil, err
+	}
+	p, err := c.SeverityConfig.Build(set)
+	if err != nil {
+		return nil, err
+	}
+	return &severityOperator{TransformerOperator: t, parser: p}, nil
+}
+
+type severityOperator struct {
+	helper.TransformerOperator
+	parser helper.SeverityParser
+}
+
+func (o *severityOperator) Process(ctx context.Context, e *entry.Entry) error {
+	return o.ProcessWith(ctx, e, o.parse)
+}
+
+func (o *severityOperator) ProcessBatch(ctx context.Context, entries []*entry.Entry) error {
+	return o.ProcessBatchWith(ctx, entries, o.Process)
+}
+
+func (o *severityOperator) parse(e *entry.Entry) error {
+	if v, ok := e.Get(o.parser.ParseFrom); ok {
+		if _, isInt64 := v.(int64); isInt64 {
+			return errors.NewInvalidInputf(codeUnparsable, "type int64 cannot be parsed as a severity")
+		}
+	}
+	return o.parser.Parse(e)
 }
