@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"cmp"
 	"slices"
+
+	"github.com/fuseone-io/fusescope/pkg/errors"
 )
 
 // TraceReason is why a trace was sampled.
@@ -42,8 +44,16 @@ type SampledTrace struct {
 
 // Traces is up to the total of a tenant's traces, each kind up to its quota, in this order: above
 // max_rows, the largest within it (max_rows included), with an error, windowed, then random ones.
-// A trace listed twice is one, at its larger count.
-func (s Sampler) Traces(tenant string, candidates []TraceCandidate, limits TraceLimits) []SampledTrace {
+// A trace listed twice is one, at its larger count. Only the first quota takes traces above
+// max_rows: any other would be a refusal, not a comparison.
+//
+// # Errors
+//
+// Limits that are not 0 <= WindowedAbove < MaxRows.
+func (s Sampler) Traces(tenant string, candidates []TraceCandidate, limits TraceLimits) ([]SampledTrace, error) {
+	if limits.WindowedAbove < 0 || limits.WindowedAbove >= limits.MaxRows {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeSample, "trace limits need 0 <= windowed above < max_rows, got %d and %d", limits.WindowedAbove, limits.MaxRows)
+	}
 	byID := map[string]TraceCandidate{}
 	for _, c := range candidates {
 		prev, ok := byID[c.ID]
@@ -82,8 +92,8 @@ func (s Sampler) Traces(tenant string, candidates []TraceCandidate, limits Trace
 	}
 	take(pool, q.AboveMaxRows, ReasonAboveMaxRows, func(c TraceCandidate) bool { return !within(c) })
 	take(largest, q.Largest, ReasonLargest, within)
-	take(pool, q.WithError, ReasonWithError, func(c TraceCandidate) bool { return c.HasError })
+	take(pool, q.WithError, ReasonWithError, func(c TraceCandidate) bool { return within(c) && c.HasError })
 	take(pool, q.Windowed, ReasonWindowed, func(c TraceCandidate) bool { return within(c) && c.Spans > limits.WindowedAbove })
-	take(pool, q.Total, ReasonRandom, func(TraceCandidate) bool { return true })
-	return out
+	take(pool, q.Total, ReasonRandom, within)
+	return out, nil
 }

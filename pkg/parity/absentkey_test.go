@@ -57,13 +57,48 @@ func TestAQuoteInAValueIsEscaped(t *testing.T) {
 	assert.Equal(t, `peer.service != 'o\'brien'`, got[0].Filter)
 }
 
-func TestAColumnWithoutAPlainValueKeepsTheCasesWithoutOne(t *testing.T) {
-	got := cases(t, AbsentKeyColumn{Attribute: "rpc.method", Present: []string{`a\b`, "x[1]", "^y", "", "bad\x01"}})
+func operators(got []AbsentKeyCase) []string {
 	var ops []string
 	for _, c := range got {
 		ops = append(ops, c.Operator)
 	}
-	assert.Equal(t, []string{"NOT EXISTS", "NOT EXISTS", "EXISTS", ""}, ops, "a backslash, a bracket, a caret, an empty or a control character never reach a filter")
+	return ops
+}
+
+var everyOperator = []string{"!=", "!=", "NOT IN", "NOT IN", "NOT LIKE", "NOT LIKE", "NOT REGEXP", "NOT REGEXP", "NOT EXISTS", "NOT EXISTS", "EXISTS", ""}
+
+func TestAKeyWithoutASafeValueStillHasEveryOperator(t *testing.T) {
+	for name, present := range map[string][]string{
+		"absent from every span": nil,
+		"only unsafe values":     {`a\b`, "x[1]", "^y", "", "bad\x01"},
+	} {
+		got := cases(t, AbsentKeyColumn{Attribute: "rpc.method", Present: present})
+		assert.Equal(t, everyOperator, operators(got), name)
+		require.NotEmpty(t, got, name)
+		assert.Equal(t, `rpc.method != '`+AbsentKeySentinel+`'`, got[0].Filter, "the sentinel, which no span is expected to hold")
+		for _, c := range got {
+			for _, unsafe := range []string{`\`, "[1]", "^y", "\x01"} {
+				if c.Operator != "NOT REGEXP" || unsafe != "^y" {
+					assert.NotContains(t, c.Filter, unsafe, name)
+				}
+			}
+		}
+	}
+}
+
+func TestNotLikeNeverTakesAWildcardFromAValue(t *testing.T) {
+	notLike := func(got []AbsentKeyCase) string {
+		for _, c := range got {
+			if c.Operator == "NOT LIKE" {
+				return c.Filter
+			}
+		}
+		return ""
+	}
+	assert.Equal(t, `db.name NOT LIKE 'orders%'`, notLike(cases(t, AbsentKeyColumn{Attribute: "db.name", Present: []string{"find_one", "orders", "100%"}})))
+	got := cases(t, AbsentKeyColumn{Attribute: "db.name", Present: []string{"%", "_"}})
+	assert.Equal(t, `db.name NOT LIKE '`+AbsentKeySentinel+`%'`, notLike(got), "a value of only wildcards would match the empty string too")
+	assert.Equal(t, everyOperator, operators(got))
 }
 
 func TestOnlyPromotedTextKeysHaveAbsentKeyCases(t *testing.T) {

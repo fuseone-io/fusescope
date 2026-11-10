@@ -88,7 +88,7 @@ func reasons(got []SampledTrace) map[TraceReason]int {
 }
 
 func TestTracesCoverEveryKind(t *testing.T) {
-	got := sampler(t, 7).Traces("t1", candidates(), limits)
+	got := mustTraces(t, sampler(t, 7), candidates(), limits)
 	q := DefaultSampleConfig().Traces
 	assert.Len(t, got, q.Total)
 	assert.Equal(t, map[TraceReason]int{
@@ -122,14 +122,14 @@ func TestTracesCoverEveryKind(t *testing.T) {
 
 func TestTracesAreSampledByTheSeedWhateverTheInputOrder(t *testing.T) {
 	s := sampler(t, 7)
-	got := s.Traces("t1", candidates(), limits)
-	assert.Equal(t, got, s.Traces("t1", shuffled(candidates()), limits))
-	assert.NotEqual(t, got, sampler(t, 9).Traces("t1", candidates(), limits))
+	got := mustTraces(t, s, candidates(), limits)
+	assert.Equal(t, got, mustTraces(t, s, shuffled(candidates()), limits))
+	assert.NotEqual(t, got, mustTraces(t, sampler(t, 9), candidates(), limits))
 }
 
 func TestFewCandidatesAreAllSampled(t *testing.T) {
 	few := []TraceCandidate{{ID: "a", Spans: 3}, {ID: "b", Spans: 20_000}}
-	got := sampler(t, 7).Traces("t1", few, limits)
+	got := mustTraces(t, sampler(t, 7), few, limits)
 	assert.ElementsMatch(t, []SampledTrace{{ID: "b", Reason: ReasonAboveMaxRows}, {ID: "a", Reason: ReasonLargest}}, got)
 }
 
@@ -139,7 +139,7 @@ func TestARepeatedTraceIsOneAtItsLargestWithAnyError(t *testing.T) {
 	s, err := NewSampler(7, span(0, 60), cfg)
 	require.NoError(t, err)
 	repeated := []TraceCandidate{{ID: "a", Spans: 20_000}, {ID: "c", Spans: 2, HasError: true}, {ID: "b", Spans: 3}, {ID: "a", Spans: 3}, {ID: "c", Spans: 2}}
-	assert.Equal(t, []SampledTrace{{ID: "a", Reason: ReasonAboveMaxRows}, {ID: "c", Reason: ReasonWithError}, {ID: "b", Reason: ReasonRandom}}, s.Traces("t1", repeated, limits))
+	assert.Equal(t, []SampledTrace{{ID: "a", Reason: ReasonAboveMaxRows}, {ID: "c", Reason: ReasonWithError}, {ID: "b", Reason: ReasonRandom}}, mustTraces(t, s, repeated, limits))
 }
 
 func TestASamplerRefusesAConfigurationItCannotHonour(t *testing.T) {
@@ -157,4 +157,43 @@ func TestASamplerRefusesAConfigurationItCannotHonour(t *testing.T) {
 	}
 	_, err := NewSampler(1, span(5, 5), DefaultSampleConfig())
 	assert.Error(t, err, "an empty window")
+}
+
+func mustTraces(t *testing.T, s Sampler, candidates []TraceCandidate, limits TraceLimits) []SampledTrace {
+	t.Helper()
+	got, err := s.Traces("t1", candidates, limits)
+	require.NoError(t, err)
+	return got
+}
+
+func TestOnlyTheAboveMaxRowsQuotaTakesTracesTheEngineRefuses(t *testing.T) {
+	var population []TraceCandidate
+	for i := 0; i < 100; i++ {
+		population = append(population, TraceCandidate{ID: fmt.Sprintf("huge-%02d", i), Spans: 10_001 + int64(i), HasError: i%2 == 0})
+	}
+	population = append(population, TraceCandidate{ID: "small", Spans: 4}, TraceCandidate{ID: "small-error", Spans: 5, HasError: true}, TraceCandidate{ID: "tiny", Spans: 1})
+	got := mustTraces(t, sampler(t, 7), population, limits)
+	above := 0
+	for _, tr := range got {
+		if tr.Reason == ReasonAboveMaxRows {
+			above++
+			continue
+		}
+		assert.NotContains(t, tr.ID, "huge", "%s as %s would be a 413, not a comparison", tr.ID, tr.Reason)
+	}
+	assert.Equal(t, DefaultSampleConfig().Traces.AboveMaxRows, above)
+	assert.Len(t, got, above+3, "every returnable trace, and no more of the large ones")
+}
+
+func TestInvalidTraceLimitsFailClosed(t *testing.T) {
+	for name, l := range map[string]TraceLimits{
+		"no max_rows":            {MaxRows: 0, WindowedAbove: 0},
+		"negative max_rows":      {MaxRows: -1, WindowedAbove: 0},
+		"negative windowed":      {MaxRows: 10_000, WindowedAbove: -1},
+		"windowed past max_rows": {MaxRows: 10_000, WindowedAbove: 10_000},
+	} {
+		got, err := sampler(t, 7).Traces("t1", candidates(), l)
+		assert.Error(t, err, name)
+		assert.Nil(t, got, name)
+	}
 }

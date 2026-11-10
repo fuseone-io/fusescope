@@ -16,6 +16,10 @@ var absentKeyAttributes = map[string]bool{
 	"peer.service": true, "deployment.environment": true,
 }
 
+// AbsentKeySentinel stands for a present value when a key has no safe one: no span is expected to
+// hold it, so every negative operator keeps every row and still tells NULL from the empty string.
+const AbsentKeySentinel = "fusescope-parity-absent"
+
 // maxCaseValueBytes caps a present value written into a filter.
 const maxCaseValueBytes = 128
 
@@ -46,8 +50,8 @@ type AbsentKeyCase struct {
 
 // AbsentKeyCases is, for every promoted text key in columns, lists and counts under each negative
 // operator, a list under EXISTS and a list selecting the key. The operators that need a value take
-// one or two present values by rank; a key without a plain value keeps only NOT EXISTS, EXISTS and
-// the selection.
+// one or two present values by rank, NOT LIKE the first without a LIKE wildcard, and
+// AbsentKeySentinel when there is none.
 func (s Sampler) AbsentKeyCases(tenant string, columns []AbsentKeyColumn) []AbsentKeyCase {
 	present := map[string][]string{}
 	for _, c := range columns {
@@ -69,17 +73,22 @@ func (s Sampler) AbsentKeyCases(tenant string, columns []AbsentKeyColumn) []Abse
 				out = append(out, AbsentKeyCase{Attribute: attribute, Operator: op, Shape: shape, Filter: filter})
 			}
 		}
+		v := AbsentKeySentinel
 		if len(values) > 0 {
-			v := values[0]
-			in := []string{quote(v)}
-			if len(values) > 1 {
-				in = append(in, quote(values[1]))
-			}
-			add("!=", attribute+" != "+quote(v), ShapeList, ShapeCount)
-			add("NOT IN", attribute+" NOT IN ("+strings.Join(in, ", ")+")", ShapeList, ShapeCount)
-			add("NOT LIKE", attribute+" NOT LIKE "+quote(v+"%"), ShapeList, ShapeCount)
-			add("NOT REGEXP", attribute+" NOT REGEXP "+quote("^"+literalPattern(v)), ShapeList, ShapeCount)
+			v = values[0]
 		}
+		in := []string{quote(v)}
+		if len(values) > 1 {
+			in = append(in, quote(values[1]))
+		}
+		like := AbsentKeySentinel
+		if i := slices.IndexFunc(values, func(v string) bool { return !strings.ContainsAny(v, "%_") }); i >= 0 {
+			like = values[i]
+		}
+		add("!=", attribute+" != "+quote(v), ShapeList, ShapeCount)
+		add("NOT IN", attribute+" NOT IN ("+strings.Join(in, ", ")+")", ShapeList, ShapeCount)
+		add("NOT LIKE", attribute+" NOT LIKE "+quote(like+"%"), ShapeList, ShapeCount)
+		add("NOT REGEXP", attribute+" NOT REGEXP "+quote("^"+literalPattern(v)), ShapeList, ShapeCount)
 		add("NOT EXISTS", attribute+" NOT EXISTS", ShapeList, ShapeCount)
 		add("EXISTS", attribute+" EXISTS", ShapeList)
 		out = append(out, AbsentKeyCase{Attribute: attribute, Shape: ShapeSelect})
