@@ -58,10 +58,11 @@ def contract_collector_config(signal: str, cases: list[dict]) -> dict:
         }
     return {
         "receivers": {"otlp": {"protocols": {"http": {"endpoint": "0.0.0.0:4318"}}}},
-        "extensions": {"health_check": {"endpoint": "0.0.0.0:13133"}},
+        # healthcheckv2 in its legacy mode answers 200 on /, as health_check did.
+        "extensions": {"healthcheckv2": {"endpoint": "0.0.0.0:13133"}},
         "processors": processors,
         "exporters": exporters,
-        "service": {"extensions": ["health_check"], "pipelines": pipelines},
+        "service": {"extensions": ["healthcheckv2"], "pipelines": pipelines},
     }
 
 
@@ -144,7 +145,7 @@ def contract_collector_container(workdir: types.LegacyPath, version: str, config
     config_path = workdir / "config.yaml"
     config_path.write_text(json.dumps(config), encoding="utf-8")
 
-    container = DockerContainer(image=f"ghcr.io/fuseone-io/fusescope-otel-collector:{version}")
+    container = DockerContainer(image=f"ghcr.io/fuseone-io/fusescope-collector:{version}")
     container.with_volume_mapping(str(config_path), CONFIG_CONTAINER_PATH, "ro")
     container.with_volume_mapping(str(output_dir), OUTPUT_CONTAINER_DIR, "rw")
     container.with_command(f"--config={CONFIG_CONTAINER_PATH}")
@@ -178,7 +179,7 @@ def simulator_contract_collector(
     started: list[DockerContainer] = []
 
     def start(name: str, config: dict) -> tuple[types.TestContainerDocker, str]:
-        container, output_dir = contract_collector_container(tmpfs(f"simulatorcontract_{name}"), request.config.getoption("--collector-version"), config)
+        container, output_dir = contract_collector_container(tmpfs(f"simulatorcontract_{name}"), request.config.getoption("--contract-collector-version"), config)
         container.start()
         started.append(container)
         if not wait_for_contract_collector(container):
@@ -207,7 +208,7 @@ def simulator_contract_collector_accepts(
     started: list[DockerContainer] = []
 
     def accepts(name: str, config: dict) -> bool:
-        container, _ = contract_collector_container(tmpfs(f"simulatorcontract_{name}"), request.config.getoption("--collector-version"), config)
+        container, _ = contract_collector_container(tmpfs(f"simulatorcontract_{name}"), request.config.getoption("--contract-collector-version"), config)
         container.start()
         started.append(container)
         return wait_for_contract_collector(container)

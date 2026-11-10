@@ -96,7 +96,7 @@ This command:
 - Uses the configuration the Helm chart installs by default: span metrics, usage (`signoz_meter`), attribute metadata (`signoz_metadata`) and its own telemetry.
 - Connects to the backend on the host over OpAMP (`ws://host.docker.internal:4320`), so the processors you edit in the UI apply. Set `FUSESCOPE_OPAMP_ENDPOINT` to point it elsewhere.
 
-The earlier `fusescope-otel-collector` is no longer part of the devenv, and its repository is archived (#229). The suites no longer run it as a collector or migrator. One exception remains: the `simulatorcontract` suite, part of `integrationci`, still runs its image as the reference the previews are matched to.
+The earlier `fusescope-otel-collector` is no longer part of the devenv, and its repository is archived (#229). No suite runs its image: the `simulatorcontract` suite, part of `integrationci`, matches the previews to the FuseScope collector image (`--contract-collector-version`, pinned by digest).
 
 > **Quick setup**: Use `make devenv-up` to start ClickHouse and the FuseScope collector together
 
