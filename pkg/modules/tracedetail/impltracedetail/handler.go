@@ -27,13 +27,13 @@ func (h *handler) GetTraceSummary(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats, err := h.module.GetTraceSummary(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"])
+	stats, warnings, err := h.module.GetTraceSummary(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, spantypes.NewGettableTraceSummary(stats))
+	render.SuccessWithWarnings(rw, http.StatusOK, spantypes.NewGettableTraceSummary(stats), warnings)
 }
 
 func (h *handler) GetWaterfallV4(rw http.ResponseWriter, r *http.Request) {
@@ -54,13 +54,13 @@ func (h *handler) GetWaterfallV4(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.module.GetWaterfallV4(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], req.SelectedSpanID, req.UncollapsedSpans)
+	result, warnings, err := h.module.GetWaterfallV4(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], req.SelectedSpanID, req.UncollapsedSpans)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, result)
+	render.SuccessWithWarnings(rw, http.StatusOK, result, warnings)
 }
 
 func (h *handler) GetTraceAggregations(rw http.ResponseWriter, r *http.Request) {
