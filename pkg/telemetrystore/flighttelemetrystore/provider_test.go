@@ -87,7 +87,7 @@ func TestQueryReadsTheEngineUnderATenantToken(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{"trace_id", "name"}, rows.Columns())
 	assert.Equal(t, [][2]string{{"ab01", "GET /api"}, {"ab01", "SELECT users"}}, readAll(t, rows))
-	assert.Equal(t, []string{"ingester-1 did not answer", "the hot window of a; b timed out"}, rows.Warnings(), "one reason per header value, never split")
+	assert.Equal(t, []string{telemetrystore.PartialIngesterUnavailable, telemetrystore.PartialUnknown}, rows.Warnings(), "each header value is a category, never the engine's text")
 	require.NoError(t, rows.Close())
 	require.NoError(t, rows.Close())
 	mem.AssertSize(t, 0)
@@ -111,7 +111,7 @@ func TestDoRunsAnActionAndReadsItsStream(t *testing.T) {
 	rows, err := p.Do(telemetrystore.WithService(telemetrystore.WithTenant(context.Background(), testOrg), "tracedetail"), "trace.lookup", body)
 	require.NoError(t, err)
 	assert.Equal(t, [][2]string{{"ab01", "GET /api"}, {"ab01", "SELECT users"}}, readAll(t, rows))
-	assert.Equal(t, []string{"ingester-1 did not answer"}, rows.Warnings())
+	assert.Equal(t, []string{telemetrystore.PartialIngesterUnavailable}, rows.Warnings())
 	require.NoError(t, rows.Close())
 	mem.AssertSize(t, 0)
 

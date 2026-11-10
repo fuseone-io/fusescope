@@ -18,9 +18,9 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
@@ -53,20 +53,22 @@ type provider struct {
 	client   *flightsql.Client
 	signer   *signer
 	hooks    []telemetrystore.TelemetryStoreHook
+	observer *observer
 	mem      memory.Allocator
 }
 
 type HookFactories = []factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]
 
-// NewFactory builds the flight provider; flightHooks run around Query and Do, clickhouseHooks
-// around the fallback's statements.
-func NewFactory(flightHooks, clickhouseHooks HookFactories) factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config] {
+// NewFactory builds the flight provider. Query and Do are observed by the provider itself, which
+// keeps their statements out of logs and spans; clickhouseHooks run around the fallback's
+// statements.
+func NewFactory(clickhouseHooks HookFactories) factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("flight"), func(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStore, error) {
-		return New(ctx, providerSettings, config, flightHooks, clickhouseHooks)
+		return New(ctx, providerSettings, config, clickhouseHooks)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, flightHooks, clickhouseHooks HookFactories) (telemetrystore.TelemetryStore, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, clickhouseHooks HookFactories) (telemetrystore.TelemetryStore, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -74,7 +76,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	if err != nil {
 		return nil, err
 	}
-	p, err := newFlight(ctx, providerSettings, config, fallback, flightHooks)
+	p, err := newProvider(providerSettings, config.Flight, config.Connection.DialTimeout, fallback, nil, memory.DefaultAllocator)
 	if err != nil {
 		if closer, ok := fallback.(interface{ Close() error }); ok {
 			_ = closer.Close()
@@ -82,18 +84,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 	return p, nil
-}
-
-func newFlight(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, fallback clickhouseOnly, flightHooks HookFactories) (*provider, error) {
-	hooks := make([]telemetrystore.TelemetryStoreHook, len(flightHooks))
-	for i, hookFactory := range flightHooks {
-		hook, err := hookFactory.New(ctx, providerSettings, config)
-		if err != nil {
-			return nil, err
-		}
-		hooks[i] = hook
-	}
-	return newProvider(providerSettings, config.Flight, config.Connection.DialTimeout, fallback, hooks, memory.DefaultAllocator)
 }
 
 func newProvider(providerSettings factory.ProviderSettings, config telemetrystore.FlightConfig, dialTimeout time.Duration, fallback clickhouseOnly, hooks []telemetrystore.TelemetryStoreHook, mem memory.Allocator) (*provider, error) {
@@ -121,62 +111,67 @@ func newProvider(providerSettings factory.ProviderSettings, config telemetrystor
 		return nil, errors.WrapInvalidInputf(err, telemetrystore.ErrCodeInvalidConfig, "telemetrystore.flight.endpoint")
 	}
 	client.Alloc = mem
-	return &provider{clickhouseOnly: fallback, settings: settings, client: client, signer: signer, hooks: hooks, mem: mem}, nil
+	observer, err := newObserver(settings)
+	if err != nil {
+		return nil, err
+	}
+	return &provider{clickhouseOnly: fallback, settings: settings, client: client, signer: signer, hooks: hooks, observer: observer, mem: mem}, nil
 }
 
 func (p *provider) Query(ctx context.Context, stmt string, args ...any) (telemetrystore.Rows, error) {
 	if len(args) > 0 {
 		return nil, errors.NewInvalidInputf(telemetrystore.ErrCodeArgsUnsupported, "the engine takes no statement arguments; render literals in the statement's dialect")
 	}
-	ctx, end, err := p.begin(ctx, stmt)
+	ctx, end, err := p.begin(ctx, "query", stmt)
 	if err != nil {
 		return nil, err
 	}
 	info, err := p.client.Execute(ctx, stmt)
 	if err != nil {
-		return nil, end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	if len(info.GetEndpoint()) != 1 {
-		return nil, end(errors.NewInternalf(ErrCodeEngine, "fusescope-engine answered %d endpoints, one expected", len(info.GetEndpoint())))
+		return nil, end.end(errors.NewInternalf(ErrCodeEngine, "fusescope-engine answered %d endpoints, one expected", len(info.GetEndpoint())))
 	}
 	stream, err := p.client.Client.DoGet(ctx, info.GetEndpoint()[0].GetTicket())
 	if err != nil {
-		return nil, end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	header, err := stream.Header()
 	if err != nil {
-		return nil, end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	reader, err := flight.NewRecordReader(stream, ipc.WithAllocator(p.mem))
 	if err != nil {
-		return nil, end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	return p.rows(ctx, reader, header, end)
 }
 
 func (p *provider) Do(ctx context.Context, action string, body []byte) (telemetrystore.Rows, error) {
-	ctx, end, err := p.begin(ctx, action)
+	ctx, end, err := p.begin(ctx, action, string(body))
 	if err != nil {
 		return nil, err
 	}
 	results, err := p.client.Client.DoAction(ctx, &flight.Action{Type: action, Body: body})
 	if err != nil {
-		return nil, end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	header, err := results.Header()
 	if err != nil {
-		return nil, end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	reader, err := ipc.NewReader(&actionStream{results: results}, ipc.WithAllocator(p.mem))
 	if err != nil {
-		return nil, end(p.cast(ctx, err))
+		return nil, end.end(end.cast(ctx, err))
 	}
 	return p.rows(ctx, reader, header, end)
 }
 
-// begin authorises ctx for its tenant and subject and starts the hooks. The returned end, which
-// the caller runs exactly once, cancels the call and finishes the hooks; it returns its error.
-func (p *provider) begin(ctx context.Context, operation string) (context.Context, func(error) error, error) {
+// begin authorises ctx for its tenant and subject and starts observing the call. The returned
+// end, which the caller runs exactly once, cancels the call and finishes the observation; it
+// returns its error. The hooks see the operation, never the statement.
+func (p *provider) begin(ctx context.Context, operation, statement string) (context.Context, *ending, error) {
 	identity, err := telemetrystore.IdentityFromContext(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -186,45 +181,51 @@ func (p *provider) begin(ctx context.Context, operation string) (context.Context
 		return nil, nil, err
 	}
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
-	event := telemetrystore.NewQueryEvent(operation, nil)
+	ctx, observed := p.observer.begin(ctx, operation, statement, identity.Tenant.StringValue())
+	ctx = withTraceContext(ctx)
+	event := &telemetrystore.QueryEvent{Operation: operation, StartTime: time.Now()}
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	ctx, cancel := context.WithCancel(ctx)
-	end := func(err error) error {
+	return ctx, &ending{finish: func(err error) {
 		event.Err = err
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+		observed.finish(ctx, err)
 		cancel()
-		return err
-	}
-	return ctx, end, nil
+	}, observed: observed}, nil
 }
 
-func (p *provider) rows(ctx context.Context, src source, header metadata.MD, end func(error) error) (telemetrystore.Rows, error) {
-	warnings := header.Get(PartialHeader)
-	rows, err := newRows(castSource{source: src, cast: func(err error) error { return p.cast(ctx, err) }}, warnings, func(err error) { _ = end(err) })
+// ending finishes one call exactly once, with the partial categories its answer announced.
+type ending struct {
+	finish   func(error)
+	observed *call
+}
+
+func (e *ending) end(err error) error {
+	e.finish(err)
+	return err
+}
+
+func (p *provider) rows(ctx context.Context, src source, header metadata.MD, end *ending) (telemetrystore.Rows, error) {
+	warnings := partialCategories(header.Get(PartialHeader))
+	end.observed.partial = warnings
+	rows, err := newRows(castSource{source: src, cast: func(err error) error { return end.cast(ctx, err) }}, warnings, func(err error) { _ = end.end(err) })
 	if err != nil {
 		return nil, err
 	}
 	return rows, nil
 }
 
-// cast logs what the engine said, which may name SQL, columns or paths, and returns an error that
-// carries only what kind of refusal it was. A refusal of the deployment's making, a wrong kid or a
-// skewed clock, is a warning and an engine failure an error; the query's own refusals stay at debug.
-func (p *provider) cast(ctx context.Context, err error) error {
+// cast returns an error that carries only what kind of refusal it was: the engine's message may
+// name SQL, columns or paths. The call's observation records the code, for its one log event.
+func (e *ending) cast(ctx context.Context, err error) error {
 	if err == nil {
 		return nil
 	}
 	if st, ok := status.FromError(err); ok {
-		level := slog.LevelDebug
-		switch st.Code() {
-		case codes.Unauthenticated, codes.PermissionDenied:
-			level = slog.LevelWarn
-		case codes.Internal, codes.Unknown, codes.DataLoss:
-			level = slog.LevelError
-		}
-		p.settings.Logger().Log(ctx, level, "fusescope-engine refused a call", slog.String("code", st.Code().String()), errors.Attr(err))
+		e.observed.code = st.Code()
+		e.observed.refused = true
 	} else if ctx.Err() == nil {
-		p.settings.Logger().WarnContext(ctx, "fusescope-engine unreachable", errors.Attr(err))
+		e.observed.unreachable = true
 	}
 	return castError(ctx, err)
 }
@@ -236,3 +237,14 @@ type castSource struct {
 }
 
 func (s castSource) Err() error { return s.cast(s.source.Err()) }
+
+// withTraceContext carries the call's span to the engine as W3C trace context in the gRPC metadata.
+func withTraceContext(ctx context.Context) context.Context {
+	carrier := propagation.MapCarrier{}
+	propagation.TraceContext{}.Inject(ctx, carrier)
+	pairs := make([]string, 0, 2*len(carrier))
+	for key, value := range carrier {
+		pairs = append(pairs, key, value)
+	}
+	return metadata.AppendToOutgoingContext(ctx, pairs...)
+}

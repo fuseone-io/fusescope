@@ -291,10 +291,7 @@ func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFacto
 	}
 	return factory.MustNewNamedMap(
 		clickhousetelemetrystore.NewFactory(clickhouseHooks...),
-		flighttelemetrystore.NewFactory(
-			[]factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]{telemetrystorehook.NewLoggingFactory()},
-			clickhouseHooks,
-		),
+		flighttelemetrystore.NewFactory(clickhouseHooks),
 	)
 }
 
