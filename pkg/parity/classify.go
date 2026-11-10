@@ -9,6 +9,25 @@ var derivedColumns = map[string]bool{
 	"external_http_method": true,
 }
 
+// promotedColumns are the engine's promoted span columns, which read NULL when a span has none of
+// their keys, by column name and by the attribute keys that feed them (fs-schema's PROMOTED).
+var promotedColumns = map[string]bool{
+	"service_name": true, "service.name": true,
+	"deployment_environment": true, "deployment.environment": true, "deployment.environment.name": true,
+	"http_route": true, "http.route": true,
+	"http_method": true, "http.request.method": true, "http.method": true,
+	"response_status_code": true, "http.response.status_code": true, "http.status_code": true, "rpc.grpc.status_code": true,
+	"db_system": true, "db.system": true, "db.system.name": true,
+	"db_name": true, "db.namespace": true, "db.name": true,
+	"db_operation": true, "db.operation": true, "db.operation.name": true,
+	"rpc_system": true, "rpc.system": true,
+	"rpc_service": true, "rpc.service": true,
+	"rpc_method": true, "rpc.method": true,
+	"messaging_system": true, "messaging.system": true,
+	"messaging_operation": true, "messaging.operation": true, "messaging.operation.type": true, "messaging.operation.name": true,
+	"peer_service": true, "peer.service": true,
+}
+
 // Context is what classifying a pair's differences needs beyond the differences: what the pair
 // tests and how to confirm a known difference.
 type Context struct {
@@ -46,7 +65,7 @@ func Classify(d Difference, ctx Context) Verdict {
 		if derivedColumns[d.Path.Last()] && d.Engine == "" && d.ClickHouse != "" {
 			return Verdict{Category: CategoryDerivedColumn, Disposition: Blocking}
 		}
-		if nullAgainstEmpty(d.Engine, d.ClickHouse) {
+		if nullAgainstEmpty(d.Engine, d.ClickHouse) && (ctx.AbsentKeyCase || promotedColumns[d.Path.Last()]) {
 			return Verdict{Category: CategoryAbsentKey, Disposition: Blocking}
 		}
 	}

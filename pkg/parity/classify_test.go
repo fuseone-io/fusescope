@@ -65,3 +65,13 @@ func TestAnythingElseIsUnknownAndBlocking(t *testing.T) {
 	d := Difference{Path: p("summary", "rootServiceName"), Kind: KindField, Engine: "a", ClickHouse: "b"}
 	assert.Equal(t, Verdict{Category: CategoryUnknown, Disposition: Blocking}, Classify(d, Context{}))
 }
+
+func TestNullAgainstTheEmptyStringOutsideAPromotedColumnIsUnknown(t *testing.T) {
+	d := Difference{Path: p("data", "rootServiceName"), Kind: KindField, Engine: nil, ClickHouse: ""}
+	assert.Equal(t, Verdict{Category: CategoryUnknown, Disposition: Blocking}, Classify(d, Context{}), "a nullable field that is not promoted")
+	assert.Equal(t, Verdict{Category: CategoryAbsentKey, Disposition: Blocking}, Classify(d, Context{AbsentKeyCase: true}), "unless the pair tests an absent key")
+	for _, field := range []string{"http_route", "db_name", "service.name", "http.route", "db.namespace"} {
+		promoted := Difference{Path: p("data", "results", 0, "rows", 0, "data", field), Kind: KindField, Engine: nil, ClickHouse: ""}
+		assert.Equal(t, Verdict{Category: CategoryAbsentKey, Disposition: Blocking}, Classify(promoted, Context{}), field)
+	}
+}
