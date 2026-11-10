@@ -37,9 +37,9 @@ const (
 	keepaliveTimeout = 10 * time.Second
 )
 
-// clickhouseOnly is what the fallback serves: the ClickHouse surface alone, so Query and Do
+// Fallback is what the fallback serves: the ClickHouse surface alone, so Query and Do
 // cannot reach it.
-type clickhouseOnly interface {
+type Fallback interface {
 	ClickhouseDB() clickhouse.Conn
 	Cluster() string
 	Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error)
@@ -48,7 +48,7 @@ type clickhouseOnly interface {
 }
 
 type provider struct {
-	clickhouseOnly
+	Fallback
 	settings factory.ScopedProviderSettings
 	client   *flightsql.Client
 	signer   *signer
@@ -86,7 +86,23 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	return p, nil
 }
 
-func newProvider(providerSettings factory.ProviderSettings, config telemetrystore.FlightConfig, dialTimeout time.Duration, fallback clickhouseOnly, hooks []telemetrystore.TelemetryStoreHook, mem memory.Allocator) (*provider, error) {
+// NewWithFallback is New with the ClickHouse surface given instead of opened from
+// telemetrystore.clickhouse, so a caller can refuse it, or serve it from a store of its own.
+//
+// # Errors
+//
+// A missing fallback, or an invalid flight configuration.
+func NewWithFallback(_ context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, fallback Fallback) (telemetrystore.TelemetryStore, error) {
+	if fallback == nil {
+		return nil, errors.NewInvalidInputf(telemetrystore.ErrCodeInvalidConfig, "the flight provider needs a fallback for its ClickHouse surface")
+	}
+	if err := config.ValidateFlight(); err != nil {
+		return nil, err
+	}
+	return newProvider(providerSettings, config.Flight, config.Connection.DialTimeout, fallback, nil, memory.DefaultAllocator)
+}
+
+func newProvider(providerSettings factory.ProviderSettings, config telemetrystore.FlightConfig, dialTimeout time.Duration, fallback Fallback, hooks []telemetrystore.TelemetryStoreHook, mem memory.Allocator) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/telemetrystore/flighttelemetrystore")
 	reloadFailed := func(err error) {
 		settings.Logger().WarnContext(context.Background(), "engine credentials changed but do not load; the last good ones stay", errors.Attr(err))
@@ -115,7 +131,7 @@ func newProvider(providerSettings factory.ProviderSettings, config telemetrystor
 	if err != nil {
 		return nil, err
 	}
-	return &provider{clickhouseOnly: fallback, settings: settings, client: client, signer: signer, hooks: hooks, observer: observer, mem: mem}, nil
+	return &provider{Fallback: fallback, settings: settings, client: client, signer: signer, hooks: hooks, observer: observer, mem: mem}, nil
 }
 
 func (p *provider) Query(ctx context.Context, stmt string, args ...any) (telemetrystore.Rows, error) {

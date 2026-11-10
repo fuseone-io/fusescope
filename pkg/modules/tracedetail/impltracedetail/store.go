@@ -57,12 +57,12 @@ type spanDurationRow struct {
 
 type traceStore struct {
 	telemetryStore telemetrystore.TelemetryStore
-	metadataStore  telemetrytypes.MetadataStore
+	metadataStore  telemetrytypes.KeyResolver
 	storage        qbtypes.Storage
 	flagger        flagger.Flagger
 }
 
-func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *traceStore {
+func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.KeyResolver, fl flagger.Flagger) *traceStore {
 	return &traceStore{
 		telemetryStore: ts,
 		metadataStore:  metadataStore,
