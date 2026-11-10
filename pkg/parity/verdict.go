@@ -16,15 +16,28 @@ const (
 	Inconclusive Disposition = "inconclusive"
 )
 
-const (
-	// CategoryApproximation is a quantile the two stores estimate differently.
-	CategoryApproximation Category = "approximation"
-	// CategoryRows is a different set of rows or groups.
-	CategoryRows Category = "rows"
-)
-
 // Verdict is the category and the disposition of one difference.
 type Verdict struct {
 	Category    Category
 	Disposition Disposition
 }
+
+const (
+	// CategoryApproximation is a quantile the two stores estimate differently.
+	CategoryApproximation Category = "approximation"
+	// CategoryRows is a different set of rows or groups.
+	CategoryRows Category = "rows"
+	// CategoryDerivedColumn is a derived span column the engine does not keep yet, empty where
+	// ClickHouse has a value (D6).
+	CategoryDerivedColumn Category = "derived_column"
+	// CategoryServiceBoundary is a top-level operation or entry point ClickHouse counts for a span
+	// whose parent is in another service (D7).
+	CategoryServiceBoundary Category = "service_boundary"
+	// CategoryAbsentKey is an absent promoted key read differently: a null against an empty string,
+	// or the rows a filter on it keeps (D8).
+	CategoryAbsentKey Category = "absent_key"
+	// CategoryOrder is a contractual order that differs.
+	CategoryOrder Category = "order"
+	// CategoryUnknown is a difference no other category explains.
+	CategoryUnknown Category = "unknown"
+)
