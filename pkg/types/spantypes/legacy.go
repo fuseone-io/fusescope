@@ -6,10 +6,15 @@ import (
 )
 
 // LegacyEvents writes events read natively from fusescope-engine, a list of structs of timestamp,
-// name and attributes, in the stored form the readers take: one JSON Event per element.
-func LegacyEvents(native []map[string]any) []string {
+// name and attributes as the Flight reader gives it, in the stored form the readers take: one
+// JSON Event per element.
+func LegacyEvents(native []any) []string {
 	out := make([]string, 0, len(native))
-	for _, event := range native {
+	for _, element := range native {
+		event, ok := element.(map[string]any)
+		if !ok {
+			continue
+		}
 		legacy := Event{}
 		legacy.Name, _ = event["name"].(string)
 		if at, ok := event["timestamp"].(time.Time); ok {
@@ -30,11 +35,15 @@ func LegacyEvents(native []map[string]any) []string {
 	return out
 }
 
-// LegacyLinks writes links read natively from fusescope-engine, a list of structs with hex ids, in
-// the stored form the readers take: one JSON array of Link.
-func LegacyLinks(native []map[string]any) string {
+// LegacyLinks writes links read natively from fusescope-engine, a list of structs with hex ids as
+// the Flight reader gives it, in the stored form the readers take: one JSON array of Link.
+func LegacyLinks(native []any) string {
 	links := make([]Link, 0, len(native))
-	for _, link := range native {
+	for _, element := range native {
+		link, ok := element.(map[string]any)
+		if !ok {
+			continue
+		}
 		traceID, _ := link["trace_id"].(string)
 		spanID, _ := link["span_id"].(string)
 		links = append(links, Link{TraceID: traceID, SpanID: spanID})

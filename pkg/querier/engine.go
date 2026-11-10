@@ -178,10 +178,10 @@ func (q *builderQuery[T]) executeOnEngine(ctx context.Context, stmt *qbtypes.Sta
 // storedEventsAndLinks writes the engine's native events and links in the stored form the span
 // reader decodes, so both stores answer alike.
 func storedEventsAndLinks(data map[string]any) {
-	if native, ok := data["events"].([]map[string]any); ok {
+	if native, ok := data["events"].([]any); ok {
 		data["events"] = spantypes.LegacyEvents(native)
 	}
-	if native, ok := data["links"].([]map[string]any); ok {
+	if native, ok := data["links"].([]any); ok {
 		data["links"] = spantypes.LegacyLinks(native)
 	}
 }
