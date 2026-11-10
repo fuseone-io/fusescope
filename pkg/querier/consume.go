@@ -1,6 +1,7 @@
 package querier
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -279,6 +280,10 @@ func readAsTimeSeries(rows telemetrystore.Rows, queryWindow *qbtypes.TimeRange, 
 		}
 	}
 	for k, s := range seriesMap {
+		// A GROUP BY ts is unordered in either store; a series reads in time order.
+		slices.SortStableFunc(s.Values, func(a, b *qbtypes.TimeSeriesValue) int {
+			return cmp.Compare(a.Timestamp, b.Timestamp)
+		})
 		buckets[k.agg].Series = append(buckets[k.agg].Series, s)
 	}
 
