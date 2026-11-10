@@ -6,6 +6,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -89,7 +90,7 @@ func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query strin
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
 
 	// Use the consume function like builderQuery does
-	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+	payload, err := consume(clickhousetelemetrystore.NewRows(rows), q.kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
 	}

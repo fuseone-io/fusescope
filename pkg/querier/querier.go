@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"go.opentelemetry.io/otel/metric"
 	"golang.org/x/exp/maps"
 	"golang.org/x/sync/errgroup"
 
@@ -61,6 +62,8 @@ type querier struct {
 	liveDataRefresh          time.Duration
 	builderConfig            builderConfig
 	maxConcurrentQueries     int
+	meter                    metric.Meter
+	engine                   *engineRouting
 }
 
 var _ Querier = (*querier)(nil)
@@ -105,6 +108,7 @@ func New(
 			logTraceIDWindowPaddingMS: uint64(logTraceIDWindowPadding.Milliseconds()),
 		},
 		maxConcurrentQueries: maxConcurrentQueries,
+		meter:                querierSettings.Meter(),
 	}
 }
 
@@ -260,6 +264,7 @@ func (q *querier) buildQueries(
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 				bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, q.traceStmtBuilder, query.Type, spec, timeRange, req.RequestType, tmplVars, builderConfig{})
+				bq.engine = q.engineFor(orgID, req.RequestType, req)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
@@ -930,7 +935,9 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
 		// reuse the original query's statement builder and type so an AI query
 		// keeps its AI builder and cache key
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, qt.builderConfig)
+		shifted := newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, qt.builderConfig)
+		shifted.engine = qt.engine.forAnotherWindow()
+		return shifted
 
 	case *builderQuery[qbtypes.LogAggregation]:
 		specCopy := qt.spec.Copy()

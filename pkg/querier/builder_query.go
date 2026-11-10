@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -38,6 +40,9 @@ type builderQuery[T any] struct {
 	kind   qbtypes.RequestType
 
 	builderConfig builderConfig
+
+	// engine is set when the query is routed to fusescope-engine.
+	engine *engineCall[T]
 }
 
 var _ qbtypes.Query = (*builderQuery[any])(nil)
@@ -98,6 +103,11 @@ func (q *builderQuery[T]) Fingerprint() string {
 
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
+
+	// A query routed to the engine caches apart from the same query on ClickHouse
+	if q.engine != nil {
+		parts = append(parts, "store=engine")
+	}
 
 	// Add source type
 	parts = append(parts, fmt.Sprintf("source=%s", q.spec.Source.StringValue()))
@@ -244,16 +254,35 @@ func (q *builderQuery[T]) isWindowList() bool {
 	return true
 }
 
-// Statement renders the SQL without executing it, for the preview path.
+// Statement renders the SQL without executing it, for the preview path: the statement of the
+// store the query runs on.
 func (q *builderQuery[T]) Statement(ctx context.Context) (*qbtypes.Statement, error) {
+	stmt, onEngine, err := q.onEngine(ctx)
+	if err != nil || onEngine {
+		return stmt, err
+	}
 	return q.stmtBuilder.Build(ctx, q.orgID, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
 }
 
 func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) {
+	engineStmt, onEngine, err := q.onEngine(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	// can we do window based pagination?
 	if q.kind == qbtypes.RequestTypeRaw && q.isWindowList() {
-		return q.executeWindowList(ctx)
+		return q.executeWindowList(ctx, onEngine)
+	}
+
+	if onEngine {
+		result, err := q.executeOnEngine(ctx, engineStmt)
+		if err != nil {
+			return nil, err
+		}
+		result.Warnings = append(append([]string{}, engineStmt.Warnings...), result.Warnings...)
+		result.WarningsDocURL = engineStmt.WarningsDocURL
+		return result, nil
 	}
 
 	fromMS, toMS := q.fromMS, q.toMS
@@ -488,7 +517,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 
-	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+	payload, err := consume(clickhousetelemetrystore.NewRows(rows), kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +542,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	}, nil
 }
 
-func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Result, error) {
+func (q *builderQuery[T]) executeWindowList(ctx context.Context, onEngine bool) (*qbtypes.Result, error) {
 	isAsc := len(q.spec.Order) > 0 &&
 		strings.ToLower(string(q.spec.Order[0].Direction.StringValue())) == "asc"
 
@@ -550,7 +579,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	// Check if filter contains trace_id(s) and optimize time range if needed.
 	// Applies to both traces (the listing this branch was built for) and logs
 	// (which carry trace_id and benefit from the same clamp before bucketing).
-	if q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs {
+	if !onEngine && (q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs) {
 		var overlap bool
 		var warning string
 		fromMS, toMS, overlap, warning = q.narrowWindowByTraceID(ctx, fromMS, toMS)
@@ -580,7 +609,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		}
 	}
 
-	var warnings []string
+	var warnings, partial []string
 	var warningsDocURL string
 
 	// Cumulative across visited buckets: the budget bounds the whole query's per-shard
@@ -591,15 +620,17 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		q.spec.Offset = 0
 		q.spec.Limit = need
 
-		stmt, err := q.stmtBuilder.Build(ctx, q.orgID, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
+		stmt, err := q.build(ctx, r.fromNS/1e6, r.toNS/1e6, onEngine)
 		if err != nil {
 			return nil, err
 		}
 		warnings = stmt.Warnings
 		warningsDocURL = stmt.WarningsDocURL
-		rowsEst, guarded, err := q.estimateRows(ctx, stmt)
-		if err != nil {
-			return nil, err
+		rowsEst, guarded := int64(0), false
+		if !onEngine {
+			if rowsEst, guarded, err = q.estimateRows(ctx, stmt); err != nil {
+				return nil, err
+			}
 		}
 		if guarded {
 			estimatedScan += rowsEst
@@ -610,10 +641,11 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 			}
 		}
 		// Execute with proper context for partial value detection
-		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
+		res, err := q.execute(ctx, stmt, onEngine)
 		if err != nil {
 			return nil, err
 		}
+		partial = appendNew(partial, res.Warnings...)
 		totalRows += res.Stats.RowsScanned
 		totalBytes += res.Stats.BytesScanned
 
@@ -648,7 +680,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 			Rows:       rows,
 			NextCursor: nextCursor,
 		},
-		Warnings:       warnings,
+		Warnings:       append(append([]string{}, warnings...), partial...),
 		WarningsDocURL: warningsDocURL,
 		Stats: qbtypes.ExecStats{
 			RowsScanned:  totalRows,
@@ -668,4 +700,14 @@ func decodeCursor(cur string) (int64, error) {
 		return 0, err
 	}
 	return strconv.ParseInt(string(b), 10, 64)
+}
+
+// appendNew appends each of items not already in list.
+func appendNew(list []string, items ...string) []string {
+	for _, item := range items {
+		if !slices.Contains(list, item) {
+			list = append(list, item)
+		}
+	}
+	return list
 }

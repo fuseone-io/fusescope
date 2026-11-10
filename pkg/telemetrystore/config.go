@@ -1,10 +1,12 @@
 package telemetrystore
 
 import (
+	"slices"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // MaxFlightTokenTTL is the longest a token may live, the engine's auth.jwt_max_ttl_secs default.
@@ -38,6 +40,25 @@ type FlightConfig struct {
 
 	// MaxMessageBytes bounds one message received from the engine, checked before it is decoded.
 	MaxMessageBytes int `mapstructure:"max_message_bytes"`
+
+	// Routes are the reads the engine serves: traces_raw, traces_aggregate, trace_detail. None is
+	// served unless listed; everything else stays on ClickHouse.
+	Routes []string `mapstructure:"routes"`
+
+	// Orgs are the organisations whose routed reads the engine serves; the others stay on
+	// ClickHouse. A listed org must have its tenant in the engine.
+	Orgs []string `mapstructure:"orgs"`
+}
+
+var engineRoutes = map[string]bool{
+	string(RouteTracesRaw):       true,
+	string(RouteTracesAggregate): true,
+	string(RouteTraceDetail):     true,
+}
+
+// EngineServes reports whether route reads for org go to the engine.
+func (c Config) EngineServes(route Route, org valuer.UUID) bool {
+	return c.Provider == "flight" && slices.Contains(c.Flight.Routes, string(route)) && slices.Contains(c.Flight.Orgs, org.StringValue())
 }
 
 type FlightTLSConfig struct {
@@ -153,7 +174,18 @@ func (c Config) validateFlight() error {
 		return invalid("telemetrystore.flight.jwt.ttl must be above 0 and at most %s", MaxFlightTokenTTL)
 	case flight.MaxMessageBytes <= 0:
 		return invalid("telemetrystore.flight.max_message_bytes must be positive")
-	case c.Clickhouse.DSN == "":
+	}
+	for _, route := range flight.Routes {
+		if !engineRoutes[route] {
+			return invalid("telemetrystore.flight.routes: %q is not traces_raw, traces_aggregate or trace_detail", route)
+		}
+	}
+	for _, org := range flight.Orgs {
+		if _, err := valuer.NewUUID(org); err != nil {
+			return invalid("telemetrystore.flight.orgs: %q is not an organisation id", org)
+		}
+	}
+	if c.Clickhouse.DSN == "" {
 		return invalid("telemetrystore.clickhouse.dsn is required by the flight provider while callers of ClickhouseDB remain")
 	}
 	return nil

@@ -15,6 +15,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -147,7 +148,7 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	}
 	defer rows.Close()
 
-	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)
+	payload, err := consume(clickhousetelemetrystore.NewRows(rows), q.kind, nil, qbtypes.Step{}, q.query.Name)
 	if err != nil {
 		return nil, err
 	}
