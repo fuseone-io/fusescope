@@ -11625,6 +11625,15 @@ components:
       - error
       - vital
       type: string
+    RumtypesTimelineVitalName:
+      enum:
+      - lcp
+      - inp
+      - cls
+      - fcp
+      - ttfb
+      - app_start
+      type: string
     RumtypesUpdatableApplication:
       properties:
         allowedOrigins:
@@ -11726,7 +11735,7 @@ components:
     RumtypesVitalEvent:
       properties:
         name:
-          $ref: '#/components/schemas/RumtypesVitalName'
+          $ref: '#/components/schemas/RumtypesTimelineVitalName'
         rating:
           $ref: '#/components/schemas/RumtypesVitalRating'
         value:

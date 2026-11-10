@@ -244,7 +244,7 @@ export function describeEvent(
 	if (vital) {
 		return {
 			label: 'Vital',
-			title: `${vital.name.toUpperCase()} ${formatVital(vital.name, vital.value)}`,
+			title: `${vital.name === 'app_start' ? 'App start' : vital.name.toUpperCase()} ${formatVital(vital.name, vital.value)}`,
 			detail: RATING_LABELS[vital.rating] ?? vital.rating,
 			tone: RATING_TONES[vital.rating] ?? 'neutral',
 		};

@@ -27,6 +27,8 @@ describe('rateVital', () => {
 
 describe('formatVital', () => {
 	it.each([
+		['app_start', 137.5, '138 ms'],
+		['app_start', 2750, '2.75 s'],
 		['lcp', 2140, '2.14 s'],
 		['lcp', 980, '980 ms'],
 		['inp', 180.4, '180 ms'],

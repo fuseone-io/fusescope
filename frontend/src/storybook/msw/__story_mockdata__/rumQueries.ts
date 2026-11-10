@@ -16,6 +16,7 @@ import type {
 import {
 	RumtypesLoadingTypeDTO,
 	RumtypesTimelineEventKindDTO,
+	RumtypesTimelineVitalNameDTO,
 	RumtypesVitalNameDTO,
 	RumtypesVitalRatingDTO,
 } from 'api/generated/services/fuseScope.schemas';
@@ -589,10 +590,10 @@ const VIEWS: [
 	],
 ];
 
-const VITAL_NAMES: Record<string, RumtypesVitalNameDTO> = {
-	lcp: RumtypesVitalNameDTO.lcp,
-	fcp: RumtypesVitalNameDTO.fcp,
-	ttfb: RumtypesVitalNameDTO.ttfb,
+const VITAL_NAMES: Record<string, RumtypesTimelineVitalNameDTO> = {
+	lcp: RumtypesTimelineVitalNameDTO.lcp,
+	fcp: RumtypesTimelineVitalNameDTO.fcp,
+	ttfb: RumtypesTimelineVitalNameDTO.ttfb,
 };
 
 function timelineEvent(

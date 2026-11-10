@@ -32,7 +32,10 @@ export function rateVital(
 }
 
 /** CLS is unitless; the others are milliseconds, shown in seconds from 1 s. */
-export function formatVital(name: VitalName, value: number): string {
+export function formatVital(
+	name: VitalName | 'app_start',
+	value: number,
+): string {
 	if (!Number.isFinite(value)) {
 		return '—';
 	}
