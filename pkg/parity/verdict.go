@@ -53,3 +53,19 @@ const (
 	// the comparison.
 	CategoryDualWriteUnhealthy Category = "dual_write_unhealthy"
 )
+
+const (
+	// CategoryLimit is a trace the engine refuses as too large and ClickHouse answers: accepted,
+	// counted.
+	CategoryLimit Category = "limit"
+	// CategoryPartial is an engine answer that may be partial; the pair runs again next round.
+	CategoryPartial Category = "partial"
+	// CategoryTimeout is a pair that timed out again after one retry.
+	CategoryTimeout Category = "timeout"
+	// CategoryAsymmetricFailure is one store failing where the other answered.
+	CategoryAsymmetricFailure Category = "asymmetric_failure"
+	// CategoryFallbackAttempted is the engine graph reaching for ClickHouse.
+	CategoryFallbackAttempted Category = "fallback_attempted"
+	// CategoryCoverageGap is a routed query the engine dialect cannot render.
+	CategoryCoverageGap Category = "coverage_gap"
+)
