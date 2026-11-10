@@ -37,6 +37,9 @@ type Context struct {
 	AbsentKeyCase bool
 	// ServiceBoundary confirms that operation of service has a parent in another service.
 	ServiceBoundary func(service, operation string) bool
+	// OperationOrder judges the order of a top or entry point operations pair, as
+	// JudgeOperationOrder does.
+	OperationOrder func() Verdict
 	// QuantileOf is the quantile a path holds.
 	QuantileOf func(Path) (float64, bool)
 	// QuantileEvidence is ClickHouse's exact distribution of the path's group for the engine's
@@ -52,6 +55,9 @@ func Classify(d Difference, ctx Context) Verdict {
 	case KindQuantile:
 		return classifyQuantile(d, ctx)
 	case KindOrder:
+		if ctx.OperationOrder != nil && len(d.Path) == 1 && d.Path.Last() == "order" {
+			return ctx.OperationOrder()
+		}
 		return Verdict{Category: CategoryOrder, Disposition: Blocking}
 	case KindRows:
 		if ctx.AbsentKeyCase {
