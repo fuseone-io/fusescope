@@ -2,6 +2,8 @@ package querier
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -282,4 +284,47 @@ func TestThePreviewShowsTheStatementThatRuns(t *testing.T) {
 	}
 	assert.Equal(t, "engine sql", preview(&fakeBuilder{query: "engine sql"}))
 	assert.Equal(t, "clickhouse sql", preview(&fakeBuilder{err: errors.NewInvalidInputf(querybuilder.ErrCodeUnsupportedDialect, "no form")}))
+}
+
+// windowBuilder renders the window it is asked for, safely from many goroutines.
+type windowBuilder struct {
+	mu      sync.Mutex
+	windows [][2]uint64
+}
+
+func (b *windowBuilder) Build(_ context.Context, _ valuer.UUID, from, to uint64, _ qbtypes.RequestType, _ qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], _ map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
+	b.mu.Lock()
+	b.windows = append(b.windows, [2]uint64{from, to})
+	b.mu.Unlock()
+	return &qbtypes.Statement{Query: fmt.Sprintf("engine sql %d-%d", from, to)}, nil
+}
+
+// Ranged queries of one cached query run in parallel; each decides for its own window.
+func TestRangedQueriesDecideEachForItsOwnWindow(t *testing.T) {
+	bed := newEngineBed(t, telemetrystore.RouteTracesAggregate)
+	engine := &windowBuilder{}
+	spec := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Name: "A", Signal: telemetrytypes.SignalTraces, Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}}}
+	original := newBuilderQuery[qbtypes.TraceAggregation](nil, bed.store, engineOrg, bed.clickhouse, qbtypes.QueryTypeBuilder, spec, qbtypes.TimeRange{From: 1_000, To: 9_000}, qbtypes.RequestTypeTimeSeries, nil, builderConfig{})
+	original.engine = &engineCall[qbtypes.TraceAggregation]{route: telemetrystore.RouteTracesAggregate, builder: engine}
+	_, _, err := original.onEngine(context.Background())
+	require.NoError(t, err)
+
+	ranges := []qbtypes.TimeRange{{From: 1_000, To: 2_000}, {From: 5_000, To: 6_000}, {From: 8_000, To: 9_000}}
+	statements := make([]string, len(ranges))
+	var wg sync.WaitGroup
+	for i, window := range ranges {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ranged := bed.querier.createRangedQuery(engineOrg, original, window).(*builderQuery[qbtypes.TraceAggregation])
+			stmt, onEngine, err := ranged.onEngine(context.Background())
+			assert.NoError(t, err)
+			assert.True(t, onEngine)
+			statements[i] = stmt.Query
+		}()
+	}
+	wg.Wait()
+	for i, window := range ranges {
+		assert.Equal(t, fmt.Sprintf("engine sql %d-%d", window.From, window.To), statements[i])
+	}
 }

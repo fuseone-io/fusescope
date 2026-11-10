@@ -75,6 +75,17 @@ type engineCall[T any] struct {
 	decision *engineDecision
 }
 
+// forAnotherWindow is the same route for a query over another window, which decides on its own:
+// ranged queries of one cached query run in parallel, each with its statement.
+func (e *engineCall[T]) forAnotherWindow() *engineCall[T] {
+	if e == nil {
+		return nil
+	}
+	copied := *e
+	copied.decision = nil
+	return &copied
+}
+
 // engineDecision is where a query runs, with the engine statement of its whole window if there.
 type engineDecision struct {
 	stmt     *qbtypes.Statement

@@ -936,7 +936,7 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		// reuse the original query's statement builder and type so an AI query
 		// keeps its AI builder and cache key
 		shifted := newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, qt.builderConfig)
-		shifted.engine = qt.engine
+		shifted.engine = qt.engine.forAnotherWindow()
 		return shifted
 
 	case *builderQuery[qbtypes.LogAggregation]:
