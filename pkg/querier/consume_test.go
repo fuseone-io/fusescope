@@ -7,8 +7,12 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/apache/arrow-go/v18/arrow/array"
+	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore/flighttelemetrystore"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrystoretypes"
@@ -307,4 +311,60 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 			}
 		})
 	}
+}
+
+// engineTimeSeriesBatch is a time series as fusescope-engine answers it: a nullable time bucket, a
+// label and a signed count; the second row's bucket is null.
+func engineTimeSeriesBatch(at time.Time) arrow.RecordBatch {
+	schema := arrow.NewSchema([]arrow.Field{
+		{Name: "ts", Type: &arrow.TimestampType{Unit: arrow.Nanosecond, TimeZone: "UTC"}, Nullable: true},
+		{Name: "__GROUP_BY_KEY_0_service.name", Type: arrow.BinaryTypes.String, Nullable: true},
+		{Name: "__result_0", Type: arrow.PrimitiveTypes.Int64},
+	}, nil)
+	b := array.NewRecordBuilder(memory.DefaultAllocator, schema)
+	defer b.Release()
+	b.Field(0).(*array.TimestampBuilder).Append(arrow.Timestamp(at.UnixNano()))
+	b.Field(0).(*array.TimestampBuilder).AppendNull()
+	b.Field(1).(*array.StringBuilder).AppendValues([]string{"cart", "cart"}, nil)
+	b.Field(2).(*array.Int64Builder).AppendValues([]int64{3, 9}, nil)
+	return b.NewRecordBatch()
+}
+
+func TestATimeSeriesFromTheEngineReadsItsNullableBucket(t *testing.T) {
+	at := time.UnixMilli(1_747_950_000_000).UTC()
+	rows, err := flighttelemetrystore.NewRows(nil, engineTimeSeriesBatch(at))
+	require.NoError(t, err)
+
+	payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{Duration: time.Minute}, "A")
+	require.NoError(t, err)
+	series := payload.(*qbtypes.TimeSeriesData).Aggregations
+	require.Len(t, series, 1)
+	require.Len(t, series[0].Series, 1)
+	assert.Equal(t, []*qbtypes.TimeSeriesValue{{Timestamp: at.UnixMilli(), Value: 3}}, series[0].Series[0].Values, "the null bucket's row is skipped")
+	assert.Equal(t, "cart", series[0].Series[0].Labels[0].Value)
+}
+
+func TestATimeSeriesComesInTimeOrderWhateverTheRowOrder(t *testing.T) {
+	schema := arrow.NewSchema([]arrow.Field{
+		{Name: "ts", Type: &arrow.TimestampType{Unit: arrow.Nanosecond, TimeZone: "UTC"}, Nullable: true},
+		{Name: "__result_0", Type: arrow.PrimitiveTypes.Int64},
+	}, nil)
+	b := array.NewRecordBuilder(memory.DefaultAllocator, schema)
+	defer b.Release()
+	at := time.UnixMilli(1_747_950_000_000).UTC()
+	for _, minutes := range []int{2, 0, 1} {
+		b.Field(0).(*array.TimestampBuilder).Append(arrow.Timestamp(at.Add(time.Duration(minutes) * time.Minute).UnixNano()))
+		b.Field(1).(*array.Int64Builder).Append(int64(minutes))
+	}
+	rows, err := flighttelemetrystore.NewRows(nil, b.NewRecordBatch())
+	require.NoError(t, err)
+
+	payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{Duration: time.Minute}, "A")
+	require.NoError(t, err)
+	values := payload.(*qbtypes.TimeSeriesData).Aggregations[0].Series[0].Values
+	var got []int64
+	for _, v := range values {
+		got = append(got, v.Timestamp)
+	}
+	assert.Equal(t, []int64{at.UnixMilli(), at.Add(time.Minute).UnixMilli(), at.Add(2 * time.Minute).UnixMilli()}, got, "neither store orders a GROUP BY ts")
 }

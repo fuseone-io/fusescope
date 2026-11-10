@@ -60,7 +60,6 @@ var (
 		"status_message":     "status_message",
 		"status_code_string": "status_code_string",
 		"has_error":          "has_error",
-		"is_remote":          "is_remote",
 		"events":             "events",
 		"links":              "links",
 		"ts_bucket_start":    "ts_bucket_start",
@@ -79,7 +78,6 @@ var (
 		"status_message":     "''",
 		"status_code_string": "''",
 		"has_error":          "false",
-		"is_remote":          "''",
 		"ts_bucket_start":    "0",
 	}
 
@@ -121,6 +119,13 @@ var (
 
 	hexDigits = regexp.MustCompile(`^[0-9a-fA-F]+$`)
 )
+
+// dataFusionIsRemote reads the engine's is_remote, the OTLP flags as ”, 'true' or 'false', in the
+// backend's vocabulary, 'unknown', 'yes' or 'no', for selection and every filter operator alike.
+// The engine's own top-level rule compares the canonical value.
+const dataFusionLinksWithIDs = "named_struct('trace_id', encode(trace_id, 'hex'), 'parent_span_id', coalesce(encode(parent_span_id, 'hex'), ''), 'links', links)"
+
+const dataFusionIsRemote = "CASE is_remote WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' ELSE 'unknown' END"
 
 type dataFusionStorage struct {
 	clickhouse *storage
@@ -191,11 +196,19 @@ func spanColumnRead(name string) (qbtypes.Read, error) {
 		}
 		return presentRead(fmt.Sprintf("encode(%s, 'hex')", name), "''"), nil
 	}
+	if name == SpanIsRemoteColumn {
+		return presentRead(dataFusionIsRemote, "''"), nil
+	}
 	if column, ok := dataFusionSpanColumns[name]; ok {
 		read := presentRead(column, dataFusionEmpty[column])
 		read.KeepType = name == SpanTimestampColumn
 		if column == "events" || column == "links" {
 			read.Presence, read.Absence = fmt.Sprintf("cardinality(%s) > 0", column), fmt.Sprintf("cardinality(%s) = 0", column)
+		}
+		if column == "links" {
+			// ClickHouse stores a span's own reference to its parent ahead of its links; the
+			// reader writes it from the ids read alongside, which the answer does not carry.
+			read.SQL = dataFusionLinksWithIDs
 		}
 		return read, nil
 	}

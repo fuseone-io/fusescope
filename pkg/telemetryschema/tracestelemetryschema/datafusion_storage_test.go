@@ -29,6 +29,14 @@ func TestDataFusionStorageRead(t *testing.T) {
 			whenAbsent: qbtypes.AbsentIsNull,
 		},
 		{
+			name:       "is_remote reads in the backend's legacy vocabulary, from the engine's canonical one",
+			key:        telemetrytypes.TelemetryFieldKey{Name: "is_remote", FieldContext: telemetrytypes.FieldContextSpan},
+			sql:        "CASE is_remote WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' ELSE 'unknown' END",
+			presence:   "CASE is_remote WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' ELSE 'unknown' END <> ''",
+			absence:    "CASE is_remote WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' ELSE 'unknown' END = ''",
+			whenAbsent: qbtypes.AlwaysPresent,
+		},
+		{
 			name:       "a legacy semconv key reads the same promoted column",
 			key:        telemetrytypes.TelemetryFieldKey{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
 			sql:        "deployment_environment",
@@ -152,6 +160,14 @@ func TestDataFusionStorageRead(t *testing.T) {
 			assert.Equal(t, c.whenAbsent, read.WhenAbsent)
 		})
 	}
+}
+
+func TestDataFusionStorageReadsLinksWithTheirSpansIDs(t *testing.T) {
+	key := telemetrytypes.TelemetryFieldKey{Name: "links", FieldContext: telemetrytypes.FieldContextSpan}
+	read, err := NewDataFusionStorage().Read(context.Background(), qbtypes.QueryInfo{}, &key)
+	require.NoError(t, err)
+	assert.Equal(t, "named_struct('trace_id', encode(trace_id, 'hex'), 'parent_span_id', coalesce(encode(parent_span_id, 'hex'), ''), 'links', links)", read.SQL, "the reader writes the parent's reference as ClickHouse stores it")
+	assert.Equal(t, [2]string{"cardinality(links) > 0", "cardinality(links) = 0"}, [2]string{read.Presence, read.Absence})
 }
 
 func TestDataFusionStorageSpanColumnPresence(t *testing.T) {

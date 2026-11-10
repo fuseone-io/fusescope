@@ -4,6 +4,7 @@ import hashlib
 import ipaddress
 import os
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -127,7 +128,61 @@ def issue_leaf(tls: types.TLS, *hostnames: str) -> tuple[x509.Certificate, rsa.R
     the CA certificate."""
     ca_cert = x509.load_pem_x509_certificate(Path(tls.ca_cert_path).read_bytes())
     ca_key = serialization.load_pem_private_key(Path(tls.ca_key_path).read_bytes(), password=None)
+    leaf_cert, leaf_key = sign_leaf(ca_cert, ca_key, hostnames, [x509.oid.ExtendedKeyUsageOID.SERVER_AUTH])
+    return leaf_cert, leaf_key, ca_cert
 
+
+@dataclass(frozen=True)
+class CA:
+    """A CA held in memory, for a stack that needs CAs of its own beside the
+    integration CA, such as one per client population."""
+
+    cert: x509.Certificate
+    key: rsa.RSAPrivateKey
+
+    def pem(self) -> bytes:
+        return self.cert.public_bytes(serialization.Encoding.PEM)
+
+
+def new_ca(common_name: str) -> CA:
+    now = datetime.datetime.now(datetime.UTC)
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)])
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(name)
+        .issuer_name(name)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now - datetime.timedelta(days=1))
+        .not_valid_after(now + datetime.timedelta(days=30))
+        .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+        .add_extension(
+            x509.KeyUsage(digital_signature=False, key_encipherment=False, content_commitment=False, data_encipherment=False, key_agreement=False, key_cert_sign=True, crl_sign=True, encipher_only=False, decipher_only=False),
+            critical=True,
+        )
+        .add_extension(x509.SubjectKeyIdentifier.from_public_key(key.public_key()), critical=False)
+        .sign(key, hashes.SHA256())
+    )
+    return CA(cert=cert, key=key)
+
+
+def issue_certificate(ca: CA, *hostnames: str, server: bool = True, client: bool = False) -> tuple[bytes, bytes]:
+    """PEM certificate and unencrypted PKCS8 key for the hostnames, issued by
+    ca, for serving, presenting as a client, or both."""
+    usages = ([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH] if server else []) + ([x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH] if client else [])
+    leaf_cert, leaf_key = sign_leaf(ca.cert, ca.key, hostnames, usages)
+    return (
+        leaf_cert.public_bytes(serialization.Encoding.PEM),
+        leaf_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        ),
+    )
+
+
+def sign_leaf(ca_cert: x509.Certificate, ca_key, hostnames: tuple[str, ...], usages: list[x509.ObjectIdentifier]) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
     sans: list[x509.GeneralName] = []
     for hostname in hostnames:
         try:
@@ -152,10 +207,10 @@ def issue_leaf(tls: types.TLS, *hostnames: str) -> tuple[x509.Certificate, rsa.R
             x509.KeyUsage(digital_signature=True, key_encipherment=True, content_commitment=False, data_encipherment=False, key_agreement=False, key_cert_sign=False, crl_sign=False, encipher_only=False, decipher_only=False),
             critical=True,
         )
-        .add_extension(x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), critical=False)
+        .add_extension(x509.ExtendedKeyUsage(usages), critical=False)
         .sign(ca_key, hashes.SHA256())
     )
-    return leaf_cert, leaf_key, ca_cert
+    return leaf_cert, leaf_key
 
 
 def issue_server_keystore(tls: types.TLS, directory: Path, *hostnames: str) -> Path:

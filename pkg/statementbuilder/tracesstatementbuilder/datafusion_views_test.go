@@ -96,6 +96,17 @@ func TestEngineViewStatements(t *testing.T) {
 				Limit:  20,
 			},
 		},
+		{
+			name:        "span list selecting links without the ids",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				Filter:       &qbtypes.Filter{Expression: "service.name = 'frontend'"},
+				SelectFields: []telemetrytypes.TelemetryFieldKey{spanName, {Name: "links", FieldContext: telemetrytypes.FieldContextSpan}},
+				Order:        []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp", FieldContext: telemetrytypes.FieldContextSpan}}, Direction: qbtypes.OrderDirectionDesc}},
+				Limit:        20,
+			},
+		},
 	}
 
 	fl := flaggertest.New(t)
@@ -150,6 +161,10 @@ func TestEngineFilterMatrix(t *testing.T) {
 		"%s IN [200, 404]", "%s NOT IN [200, 404]", "%s EXISTS", "%s NOT EXISTS",
 	}
 	boolean := []string{"%s = true", "%s != true", "%s EXISTS", "%s NOT EXISTS"}
+	remote := []string{
+		"%s = 'yes'", "%s = 'no'", "%s = 'unknown'", "%s != 'yes'",
+		"%s IN ['yes', 'no']", "%s NOT IN ['yes', 'no']", "%s LIKE 'y%%'", "%s REGEXP '^n'", "%s EXISTS",
+	}
 	id := []string{
 		"%s = '00f067aa0ba902b7'", "%s != '00f067aa0ba902b7'",
 		"%s < '00f067aa0ba902b7'", "%s <= '00f067aa0ba902b7'", "%s > '00f067aa0ba902b7'", "%s >= '00f067aa0ba902b7'",
@@ -172,6 +187,7 @@ func TestEngineFilterMatrix(t *testing.T) {
 		{"duration_nano", number},
 		{"response_status_code", number},
 		{"has_error", boolean},
+		{"is_remote", remote},
 		{"span_id", id},
 		{"parent_span_id", id},
 		{"isRoot", []string{"%s = true"}},

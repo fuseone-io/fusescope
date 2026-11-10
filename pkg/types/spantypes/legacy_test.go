@@ -27,14 +27,6 @@ func TestEngineEventsReadAsTheStoredJSON(t *testing.T) {
 	assert.Equal(t, []string{}, LegacyEvents(nil))
 }
 
-func TestEngineLinksReadAsTheStoredJSON(t *testing.T) {
-	native := []any{map[string]any{"trace_id": "5b8efff798038103d269b633813fc60c", "span_id": "00f067aa0ba902b7", "trace_state": "", "attributes": map[string]string{}}}
-	legacy := LegacyLinks(native)
-	assert.Equal(t, `[{"traceId":"5b8efff798038103d269b633813fc60c","spanId":"00f067aa0ba902b7"}]`, legacy)
-	assert.Equal(t, []Link{{TraceID: "5b8efff798038103d269b633813fc60c", SpanID: "00f067aa0ba902b7"}}, ParseLinks(legacy))
-	assert.Equal(t, "[]", LegacyLinks(nil))
-}
-
 func TestEngineAttributesReadAsTheStoredDocument(t *testing.T) {
 	doc := AttributesDocument(
 		map[string]string{"gen_ai.prompt.0.role": "user", "gen_ai.prompt.0.content": "hi", "http.route": "/cart", "a": "leaf", "a.b": "deeper"},
@@ -60,6 +52,14 @@ func TestEngineAttributesReadAsTheStoredDocument(t *testing.T) {
 		want[key] = map[string]any{"x": "deeper"}
 	}
 	assert.Equal(t, want, AttributesDocument(conflicts, nil, nil), "twenty conflicts leave no room for a lucky map order")
+}
+
+func TestEngineReferencesReadAsTheCollectorStoresThem(t *testing.T) {
+	links := []any{map[string]any{"trace_id": "5b8efff798038103d269b633813fc60c", "span_id": "00f067aa0ba902b7", "trace_state": "", "attributes": map[string]string{}}}
+	child := LegacyReferences("4bf92f3577b34da6a3ce929d0e0e4736", "53995c3f42cd8ad8", links)
+	assert.Equal(t, `[{"traceId":"4bf92f3577b34da6a3ce929d0e0e4736","spanId":"53995c3f42cd8ad8","refType":"CHILD_OF"},{"traceId":"5b8efff798038103d269b633813fc60c","spanId":"00f067aa0ba902b7","refType":"FOLLOWS_FROM"}]`, child)
+	assert.Equal(t, `[{"traceId":"4bf92f3577b34da6a3ce929d0e0e4736","refType":"CHILD_OF"}]`, LegacyReferences("4bf92f3577b34da6a3ce929d0e0e4736", "", nil), "a root's own reference names no span")
+	assert.Equal(t, []OtelSpanRef{{TraceId: "4bf92f3577b34da6a3ce929d0e0e4736", SpanId: "53995c3f42cd8ad8", RefType: "CHILD_OF"}, {TraceId: "5b8efff798038103d269b633813fc60c", SpanId: "00f067aa0ba902b7", RefType: "FOLLOWS_FROM"}}, (&StorableSpan{References: child}).UnmarshalledRefs())
 }
 
 func TestAMinimalSpanCarriesItsName(t *testing.T) {

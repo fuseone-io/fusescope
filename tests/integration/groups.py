@@ -39,6 +39,10 @@ GROUPS: dict[str, dict[str, list[str]]] = {
         "shared": [],
         "isolated": ["queriertraces", "rootuser"],
     },
+    "queriertraces_engine": {
+        "shared": [],
+        "isolated": ["queriertraces_engine"],
+    },
     "ruler": {
         "shared": ["ruler", "querierauthz", "role", "preference", "promote", "llmpricingrules", "spanmapper", "schemacontract", "quickfilter", "auditquerier", "ingestionkeys", "cloudintegrations"],
         "isolated": [],

@@ -36,6 +36,14 @@ func TestToUint64(t *testing.T) {
 		want uint64
 	}{
 		{name: "uint64", row: []any{uint64(5)}, idx: 0, want: 5},
+		{name: "uint64 past int64", row: []any{uint64(1<<63 + 1)}, idx: 0, want: 1<<63 + 1},
+		{name: "int64, as fusescope-engine counts", row: []any{int64(5)}, idx: 0, want: 5},
+		{name: "int64 kept exact", row: []any{int64(1<<62 + 1)}, idx: 0, want: 1<<62 + 1},
+		{name: "negative int64 -> 0", row: []any{int64(-1)}, idx: 0, want: 0},
+		{name: "uint32", row: []any{uint32(7)}, idx: 0, want: 7},
+		{name: "int32", row: []any{int32(7)}, idx: 0, want: 7},
+		{name: "negative int32 -> 0", row: []any{int32(-7)}, idx: 0, want: 0},
+		{name: "float64 -> 0", row: []any{float64(5)}, idx: 0, want: 0},
 		{name: "nil -> 0", row: []any{nil}, idx: 0, want: 0},
 		{name: "oob -> 0", row: []any{1}, idx: 2, want: 0},
 		{name: "wrong type -> 0", row: []any{"not-number"}, idx: 0, want: 0},

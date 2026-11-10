@@ -176,12 +176,19 @@ func (q *builderQuery[T]) executeOnEngine(ctx context.Context, stmt *qbtypes.Sta
 }
 
 // storedEventsAndLinks writes the engine's native events and links in the stored form the span
-// reader decodes, so both stores answer alike.
+// reader decodes, so both stores answer alike. Links come with the span's trace and parent ids,
+// for the span's own reference to its parent that ClickHouse stores ahead of them.
 func storedEventsAndLinks(data map[string]any) {
 	if native, ok := data["events"].([]any); ok {
 		data["events"] = spantypes.LegacyEvents(native)
 	}
-	if native, ok := data["links"].([]any); ok {
-		data["links"] = spantypes.LegacyLinks(native)
+	if nullable, ok := data["links"].(*map[string]any); ok && nullable != nil {
+		data["links"] = *nullable
+	}
+	if withIDs, ok := data["links"].(map[string]any); ok {
+		traceID, _ := withIDs["trace_id"].(string)
+		parentSpanID, _ := withIDs["parent_span_id"].(string)
+		native, _ := withIDs["links"].([]any)
+		data["links"] = spantypes.LegacyReferences(traceID, parentSpanID, native)
 	}
 }

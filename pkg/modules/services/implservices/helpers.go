@@ -100,16 +100,42 @@ func toFloat(row []any, idx int) float64 {
 	return v
 }
 
-// toUint64 safely converts a cell value to uint64.
+// toUint64 safely converts a cell value to uint64: any integer either store returns, ClickHouse's
+// unsigned counts or fusescope-engine's signed ones, exactly. A negative, a null or another type is 0.
 func toUint64(row []any, idx int) uint64 {
-	if idx < 0 || idx >= len(row) || row[idx] == nil {
+	if idx < 0 || idx >= len(row) {
 		return 0
 	}
-	v, ok := row[idx].(uint64)
-	if !ok {
+	switch v := row[idx].(type) {
+	case uint64:
+		return v
+	case uint32:
+		return uint64(v)
+	case uint16:
+		return uint64(v)
+	case uint8:
+		return uint64(v)
+	case uint:
+		return uint64(v)
+	case int64:
+		return nonNegative(v)
+	case int32:
+		return nonNegative(int64(v))
+	case int16:
+		return nonNegative(int64(v))
+	case int8:
+		return nonNegative(int64(v))
+	case int:
+		return nonNegative(int64(v))
+	}
+	return 0
+}
+
+func nonNegative(v int64) uint64 {
+	if v < 0 {
 		return 0
 	}
-	return v
+	return uint64(v)
 }
 
 // applyOpsToItems sets topLevelOps for matching service names.
