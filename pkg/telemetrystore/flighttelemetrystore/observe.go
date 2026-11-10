@@ -126,7 +126,8 @@ func (c *call) finish(ctx context.Context, err error) {
 }
 
 // level is warn for a refusal of the deployment's making, a wrong kid or a skewed clock, and for an
-// engine out of reach; error for an engine failure; debug for the query's own refusals and success.
+// engine out of reach, refused connection included; error for an engine failure; debug for the
+// query's own refusals and success.
 func (c *call) level() slog.Level {
 	switch {
 	case c.unreachable:
@@ -135,7 +136,7 @@ func (c *call) level() slog.Level {
 		return slog.LevelDebug
 	}
 	switch c.code {
-	case grpccodes.Unauthenticated, grpccodes.PermissionDenied:
+	case grpccodes.Unauthenticated, grpccodes.PermissionDenied, grpccodes.Unavailable:
 		return slog.LevelWarn
 	case grpccodes.Internal, grpccodes.Unknown, grpccodes.DataLoss:
 		return slog.LevelError

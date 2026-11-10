@@ -159,6 +159,7 @@ func TestARefusalIsLoggedOnceWithoutTheEnginesMessage(t *testing.T) {
 func TestARefusalOfTheDeploymentIsAWarning(t *testing.T) {
 	for code, level := range map[codes.Code]string{
 		codes.Unauthenticated: "WARN",
+		codes.Unavailable:     "WARN",
 		codes.Internal:        "ERROR",
 		codes.NotFound:        "DEBUG",
 	} {
@@ -185,5 +186,21 @@ func TestACallCarriesItsTraceContextToTheEngine(t *testing.T) {
 	require.Len(t, bed.engine.traceparents, 2, "GetFlightInfo and DoGet")
 	for _, got := range bed.engine.traceparents {
 		assert.Equal(t, want, got)
+	}
+}
+
+func TestAnEngineOutOfReachIsAWarning(t *testing.T) {
+	bed := newTestbed(t)
+	bed.config.Endpoint = "127.0.0.1:1"
+	p, o := openObserved(t, bed)
+	ctx, cancel := context.WithTimeout(userContext(), 2*time.Second)
+	defer cancel()
+	_, err := p.Query(ctx, "select 1")
+	require.Error(t, err)
+	assert.Contains(t, o.logs.String(), `"msg":"fusescope-engine call"`)
+	for _, line := range strings.Split(strings.TrimSpace(o.logs.String()), "\n") {
+		if strings.Contains(line, `"msg":"fusescope-engine call"`) {
+			assert.Contains(t, line, `"level":"WARN"`, line)
+		}
 	}
 }
