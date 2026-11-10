@@ -12,6 +12,7 @@ import (
 
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/flagger"
 	"github.com/fuseone-io/fusescope/pkg/flagger/flaggertest"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
 	"github.com/fuseone-io/fusescope/pkg/modules/tracedetail"
@@ -50,7 +51,7 @@ func richSpan() engineSpan {
 func TestTheMapperReadsEveryColumnOfAnEngineSpan(t *testing.T) {
 	rows, err := rowsOf(t, nil, batchOf(t, fullSchema(), richSpan()))()
 	require.NoError(t, err)
-	spans, err := readSpans(rows)
+	spans, err := readSpans(rows, false)
 	require.NoError(t, err)
 	require.Len(t, spans, 1)
 	assert.Equal(t, spantypes.StorableSpan{
@@ -72,9 +73,10 @@ func TestARootAndUnsetPromotedColumnsReadEmpty(t *testing.T) {
 	root := engineSpan{spanID: "53995c3f42cd8ad8", at: t0, name: "root", isRemote: "false"}
 	rows, err := rowsOf(t, nil, batchOf(t, fullSchema(), root))()
 	require.NoError(t, err)
-	spans, err := readSpans(rows)
+	spans, err := readSpans(rows, true)
 	require.NoError(t, err)
 	require.Len(t, spans, 1)
+	assert.Nil(t, spans[0].AttributesJSON, "no attributes, no document")
 	assert.Empty(t, spans[0].ParentSpanID)
 	assert.Empty(t, spans[0].ServiceName)
 	assert.Empty(t, spans[0].HTTPMethod)
@@ -83,8 +85,12 @@ func TestARootAndUnsetPromotedColumnsReadEmpty(t *testing.T) {
 }
 
 func newEngineModule(t *testing.T, cfg tracedetail.Config, serves bool, answers ...func() (telemetrystore.Rows, error)) (*module, *fakeEngine) {
+	return newEngineModuleWithFlags(t, cfg, serves, nil, answers...)
+}
+
+func newEngineModuleWithFlags(t *testing.T, cfg tracedetail.Config, serves bool, flags map[string]bool, answers ...func() (telemetrystore.Rows, error)) (*module, *fakeEngine) {
 	engine := newFakeEngine(t, answers...)
-	reader := NewEngineReader(engine, flaggertest.WithBooleanFlags(t, nil), func(route telemetrystore.Route, org valuer.UUID) bool {
+	reader := NewEngineReader(engine, flaggertest.WithBooleanFlags(t, flags), func(route telemetrystore.Route, org valuer.UUID) bool {
 		return serves && route == telemetrystore.RouteTraceDetail && org == engineOrg
 	})
 	return NewModule(NewTraceStore(engine, nil, nil), reader, instrumentationtest.New().ToProviderSettings(), cfg), engine
@@ -294,4 +300,73 @@ func TestALargeEngineWaterfallNamesItsRootAndOrdersTiedSiblingsByName(t *testing
 	assert.Equal(t, "front", trace.RootServiceName)
 	assert.Equal(t, []string{"0000000000000001", "0000000000000007", "0000000000000006", "0000000000000005", "0000000000000004", "0000000000000003", "0000000000000002"}, spanIDs(trace.Spans), "siblings tied in time order by name")
 	assert.Equal(t, spanIDs(trace.Spans), engine.calls[1].Body.SpanIDs)
+}
+
+// genAISpans are an LLM span of semconv messages and one of traceloop's flattened prompts.
+func genAISpans() []engineSpan {
+	return []engineSpan{
+		{spanID: "0000000000000001", at: t0, duration: 100, name: "chat", service: "agent",
+			attrs: map[string]string{
+				aiobservabilitytypes.GenAIInputMessages:  `[{"role": "user", "parts": [{"type": "text", "content": "Define observability."}]}]`,
+				aiobservabilitytypes.GenAIOutputMessages: `[{"role": "assistant", "parts": [{"type": "text", "content": "Knowing a system from its outputs."}], "finish_reason": "stop"}]`,
+			},
+			numbers: map[string]float64{aiobservabilitytypes.GenAIUsageInputTokens: 4}},
+		{spanID: "0000000000000002", parentSpanID: "0000000000000001", at: t0.Add(1), duration: 10, name: "openai.chat", service: "agent",
+			attrs: map[string]string{
+				"gen_ai.prompt.0.role": "user", "gen_ai.prompt.0.content": "Weather in Paris?",
+				"gen_ai.completion.0.role": "assistant", "gen_ai.completion.0.content": "Sunny.", "gen_ai.completion.0.finish_reason": "stop",
+			}},
+	}
+}
+
+// clickhouseGenAISpans are genAISpans as the ClickHouse reader scans them with the JSON column on.
+func clickhouseGenAISpans() []spantypes.StorableSpan {
+	spans := genAISpans()
+	return []spantypes.StorableSpan{
+		{SpanID: spans[0].spanID, AttributesJSON: map[string]any{"gen_ai": map[string]any{
+			"input":  map[string]any{"messages": spans[0].attrs[aiobservabilitytypes.GenAIInputMessages]},
+			"output": map[string]any{"messages": spans[0].attrs[aiobservabilitytypes.GenAIOutputMessages]},
+			"usage":  map[string]any{"input_tokens": float64(4)},
+		}}},
+		{SpanID: spans[1].spanID, AttributesJSON: map[string]any{"gen_ai": map[string]any{
+			"prompt":     map[string]any{"0": map[string]any{"role": "user", "content": "Weather in Paris?"}},
+			"completion": map[string]any{"0": map[string]any{"role": "assistant", "content": "Sunny.", "finish_reason": "stop"}},
+		}}},
+	}
+}
+
+func TestAnEngineWaterfallFormatsGenAIMessagesAsClickhouseDoes(t *testing.T) {
+	spans := genAISpans()
+	m, _ := newEngineModuleWithFlags(t, defaultConfig(), true, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): true},
+		rowsOf(t, nil, batchOf(t, minimalSchema(), spans...)),
+		rowsOf(t, nil, batchOf(t, fullSchema(), spans...)),
+	)
+	trace, _, err := m.GetWaterfallV4(detailContext(), engineOrg, testTraceID, "", nil)
+	require.NoError(t, err)
+	require.Len(t, trace.Spans, 2)
+	for i, want := range clickhouseGenAISpans() {
+		clickhouse := want.ToWaterfallSpan(testTraceID)
+		require.NotEmpty(t, clickhouse.FormattedInput, want.SpanID)
+		require.NotEmpty(t, clickhouse.FormattedOutput, want.SpanID)
+		assert.Equal(t, clickhouse.FormattedInput, trace.Spans[i].FormattedInput, want.SpanID)
+		assert.Equal(t, clickhouse.FormattedOutput, trace.Spans[i].FormattedOutput, want.SpanID)
+		assert.Equal(t, clickhouse.FormatterWarnings, trace.Spans[i].FormatterWarnings, want.SpanID)
+	}
+	assert.Equal(t, 2, trace.FormattedSpans)
+}
+
+func TestAnEngineWaterfallWithoutTheJSONAttributesFlagFormatsNothingAsClickhouse(t *testing.T) {
+	spans := genAISpans()
+	m, _ := newEngineModule(t, defaultConfig(), true,
+		rowsOf(t, nil, batchOf(t, minimalSchema(), spans...)),
+		rowsOf(t, nil, batchOf(t, fullSchema(), spans...)),
+	)
+	trace, _, err := m.GetWaterfallV4(detailContext(), engineOrg, testTraceID, "", nil)
+	require.NoError(t, err)
+	for _, span := range trace.Spans {
+		clickhouse := (&spantypes.StorableSpan{SpanID: span.SpanID}).ToWaterfallSpan(testTraceID)
+		assert.Equal(t, clickhouse.FormattedInput, span.FormattedInput, span.SpanID)
+		assert.Equal(t, clickhouse.FormattedOutput, span.FormattedOutput, span.SpanID)
+	}
+	assert.Zero(t, trace.FormattedSpans)
 }

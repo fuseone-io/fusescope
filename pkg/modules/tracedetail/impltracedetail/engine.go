@@ -10,6 +10,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/flagger"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/flighttelemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/featuretypes"
 	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
@@ -86,7 +87,8 @@ func (e *EngineReader) fullSpans(ctx context.Context, orgID valuer.UUID, traceID
 		return nil, nil, err
 	}
 	warnings := partialWarnings(rows)
-	spans, err := readSpans(rows)
+	withJSON := e.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseTraceAttributesJSON, featuretypes.NewFlaggerEvaluationContext(orgID))
+	spans, err := readSpans(rows, withJSON)
 	return spans, warnings, traceError(err)
 }
 

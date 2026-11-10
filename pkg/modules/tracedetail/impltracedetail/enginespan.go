@@ -37,10 +37,12 @@ func get[T any](row map[string]any, column string) T {
 	return v
 }
 
-// storableSpanOf maps a row of the engine's spans table to the span the ClickHouse reader scans.
-// http_url, http_host and the external_http pair are not stored by the engine and read empty.
-func storableSpanOf(row map[string]any) spantypes.StorableSpan {
-	return spantypes.StorableSpan{
+// storableSpanOf maps a row of the engine's spans table to the span the ClickHouse reader scans,
+// with the JSON attributes document when withJSON, as the ClickHouse reader reads it under
+// use_trace_attributes_json. http_url, http_host and the external_http pair are not stored by the
+// engine and read empty.
+func storableSpanOf(row map[string]any, withJSON bool) spantypes.StorableSpan {
+	span := spantypes.StorableSpan{
 		StartTime:          get[time.Time](row, "timestamp"),
 		DurationNano:       get[uint64](row, "duration_nano"),
 		SpanID:             get[string](row, "span_id"),
@@ -67,10 +69,14 @@ func storableSpanOf(row map[string]any) spantypes.StorableSpan {
 		ResponseStatusCode: get[string](row, "response_status_code"),
 		References:         spantypes.LegacyLinks(get[[]any](row, "links")),
 	}
+	if withJSON {
+		span.AttributesJSON = spantypes.AttributesDocument(span.AttributesString, span.AttributesNumber, span.AttributesBool)
+	}
+	return span
 }
 
 // readSpans reads full rows, one per span_id.
-func readSpans(rows telemetrystore.Rows) ([]spantypes.StorableSpan, error) {
+func readSpans(rows telemetrystore.Rows, withJSON bool) ([]spantypes.StorableSpan, error) {
 	defer rows.Close()
 	types := rows.ColumnTypes()
 	seen := make(map[string]struct{})
@@ -80,7 +86,7 @@ func readSpans(rows telemetrystore.Rows) ([]spantypes.StorableSpan, error) {
 		if err != nil {
 			return nil, err
 		}
-		span := storableSpanOf(row)
+		span := storableSpanOf(row, withJSON)
 		if _, dup := seen[span.SpanID]; dup {
 			continue
 		}

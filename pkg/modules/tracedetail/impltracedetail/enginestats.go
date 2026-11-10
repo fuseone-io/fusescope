@@ -91,7 +91,7 @@ func newStatsAccumulator(keys genAIKeys) *statsAccumulator {
 }
 
 func (a *statsAccumulator) add(row map[string]any) {
-	span := storableSpanOf(row)
+	span := storableSpanOf(row, false)
 	if _, dup := a.seen[span.SpanID]; dup {
 		return
 	}
