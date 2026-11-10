@@ -1,6 +1,7 @@
 package parity
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -121,4 +122,29 @@ func TestTheOrderStatisticRanksSurroundTheExactRank(t *testing.T) {
 		low, high := orderStatisticRanks(c.q, c.n)
 		assert.Equal(t, [2]int64{c.low, c.high}, [2]int64{low, high}, "q=%v n=%v", c.q, c.n)
 	}
+}
+
+func TestInvalidEvidenceIsInconclusiveNeverAccepted(t *testing.T) {
+	valid := evidence([]float64{1, 2, 3, 4}, 0.5, 2)
+	inconclusive := Verdict{Category: CategoryApproximation, Disposition: Inconclusive}
+	cases := map[string]struct {
+		q, v float64
+		e    QuantileEvidence
+	}{
+		"q below 0":          {-0.1, 2, valid},
+		"q above 1":          {1.1, 2, valid},
+		"q not a number":     {math.NaN(), 2, valid},
+		"v not finite":       {0.5, math.Inf(1), valid},
+		"negative size":      {0.5, 2, QuantileEvidence{N: -1, Low: 1, High: 2}},
+		"more at or below":   {0.5, 2, QuantileEvidence{N: 4, Low: 2, High: 3, Below: 1, AtOrBelow: 5}},
+		"below past at":      {0.5, 2, QuantileEvidence{N: 4, Low: 2, High: 3, Below: 3, AtOrBelow: 2}},
+		"negative below":     {0.5, 2, QuantileEvidence{N: 4, Low: 2, High: 3, Below: -1, AtOrBelow: 2}},
+		"low past high":      {0.5, 2, QuantileEvidence{N: 4, Low: 3, High: 2, Below: 1, AtOrBelow: 2}},
+		"low not finite":     {0.5, 2, QuantileEvidence{N: 4, Low: math.NaN(), High: 3, Below: 1, AtOrBelow: 2}},
+		"rank past the size": {0.5, 2, QuantileEvidence{N: 100_000, Low: 2, High: 2, Below: 100_001, AtOrBelow: 200_000}},
+	}
+	for name, c := range cases {
+		assert.Equal(t, inconclusive, JudgeQuantile(c.q, c.v, c.e), name)
+	}
+	assert.Equal(t, Verdict{Category: CategoryRows, Disposition: Blocking}, JudgeQuantile(0.5, 2, QuantileEvidence{}), "an empty group is still a row difference")
 }
