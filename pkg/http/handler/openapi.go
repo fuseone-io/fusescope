@@ -54,9 +54,12 @@ type OpenAPIDef struct {
 	ResponseContentType string
 	SuccessStatusCode   int
 	ErrorStatusCodes    []int
-	Deprecated          bool
-	Stability           Stability
-	SecuritySchemes     []OpenAPISecurityScheme
+	// PartialResults documents the success envelope with its warnings, for a handler that
+	// answers with render.SuccessWithWarnings.
+	PartialResults  bool
+	Deprecated      bool
+	Stability       Stability
+	SecuritySchemes []OpenAPISecurityScheme
 }
 
 type OpenAPISecurityScheme struct {

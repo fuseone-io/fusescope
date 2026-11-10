@@ -32,17 +32,22 @@ func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
 	write(rw, httpCode, &SuccessResponse{Status: StatusSuccess.s, Data: data})
 }
 
-// successWithWarnings is the envelope of a route that can answer in part. It is its own type so
-// the documented envelope of every other route stays as it is.
-type successWithWarnings struct {
-	Status   string      `json:"status"`
-	Data     interface{} `json:"data,omitempty"`
-	Warnings []string    `json:"warnings,omitempty"`
+// SuccessWithWarningsResponse is the envelope of a route that can answer in part. It is its own
+// type so the documented envelope of every other route stays as it is.
+type SuccessWithWarningsResponse struct {
+	Status string      `json:"status" required:"true"`
+	Data   interface{} `json:"data,omitempty" required:"true"`
+	// Warnings say why data may be incomplete, such as an engine answer in part.
+	Warnings []string `json:"warnings,omitempty"`
 }
+
+// InlineJSONSchema inlines the envelope in each route's spec, as SuccessResponse is, since its data
+// differs per route.
+func (SuccessWithWarningsResponse) InlineJSONSchema() {}
 
 // SuccessWithWarnings is Success with warnings beside the data, where an array data has no room.
 func SuccessWithWarnings(rw http.ResponseWriter, httpCode int, data interface{}, warnings []string) {
-	write(rw, httpCode, &successWithWarnings{Status: StatusSuccess.s, Data: data, Warnings: warnings})
+	write(rw, httpCode, &SuccessWithWarningsResponse{Status: StatusSuccess.s, Data: data, Warnings: warnings})
 }
 
 func write(rw http.ResponseWriter, httpCode int, response any) {
