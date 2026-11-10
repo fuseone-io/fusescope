@@ -63,7 +63,7 @@ func TestTheMapperReadsEveryColumnOfAnEngineSpan(t *testing.T) {
 		ResourcesString:  map[string]string{"service.name": "cart", "host.name": "h1"},
 		Events:           []string{`{"name":"exception","timeUnixNano":1747950000000000200,"attributeMap":{"exception.type":"IOError"}}`},
 		StatusMessage:    "boom", StatusCodeString: "Error", SpanKind: "Server", ParentSpanID: "53995c3f42cd8ad8",
-		Flags: 1, IsRemote: "true", TraceState: "rojo=00f067aa0ba902b7", StatusCode: 2,
+		Flags: 1, IsRemote: "yes", TraceState: "rojo=00f067aa0ba902b7", StatusCode: 2,
 		DBName: "carts", DBOperation: "SELECT", HTTPMethod: "GET", ResponseStatusCode: "500",
 		References: `[{"traceId":"5b8efff798038103d269b633813fc60c","spanId":"eee19b7ec3c1b174"}]`,
 	}, spans[0], "the columns the engine does not store, http_url, http_host and the external_http pair, read empty")
@@ -82,6 +82,17 @@ func TestARootAndUnsetPromotedColumnsReadEmpty(t *testing.T) {
 	assert.Empty(t, spans[0].HTTPMethod)
 	assert.Equal(t, []string{}, spans[0].Events)
 	assert.Equal(t, "[]", spans[0].References)
+	assert.Equal(t, "no", spans[0].IsRemote)
+}
+
+func TestIsRemoteReadsInTheBackendsVocabulary(t *testing.T) {
+	for stored, want := range map[string]string{"true": "yes", "false": "no", "": "unknown"} {
+		rows, err := rowsOf(t, nil, batchOf(t, fullSchema(), engineSpan{spanID: "53995c3f42cd8ad8", at: t0, name: "s", isRemote: stored}))()
+		require.NoError(t, err)
+		spans, err := readSpans(rows, false)
+		require.NoError(t, err)
+		assert.Equal(t, want, spans[0].IsRemote, "stored %q", stored)
+	}
 }
 
 func newEngineModule(t *testing.T, cfg tracedetail.Config, serves bool, answers ...func() (telemetrystore.Rows, error)) (*module, *fakeEngine) {

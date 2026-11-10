@@ -60,7 +60,7 @@ func storableSpanOf(row map[string]any, withJSON bool) spantypes.StorableSpan {
 		SpanKind:           get[string](row, "kind_string"),
 		ParentSpanID:       get[string](row, "parent_span_id"),
 		Flags:              get[uint32](row, "flags"),
-		IsRemote:           get[string](row, "is_remote"),
+		IsRemote:           legacyIsRemote(get[string](row, "is_remote")),
 		TraceState:         get[string](row, "trace_state"),
 		StatusCode:         get[int16](row, "status_code"),
 		DBName:             get[string](row, "db_name"),
@@ -73,6 +73,18 @@ func storableSpanOf(row map[string]any, withJSON bool) spantypes.StorableSpan {
 		span.AttributesJSON = spantypes.AttributesDocument(span.AttributesString, span.AttributesNumber, span.AttributesBool)
 	}
 	return span
+}
+
+// legacyIsRemote is the engine's is_remote, the OTLP flags as ”, 'true' or 'false', in the
+// vocabulary the backend exposes: 'unknown', 'yes' or 'no'.
+func legacyIsRemote(stored string) string {
+	switch stored {
+	case "true":
+		return "yes"
+	case "false":
+		return "no"
+	}
+	return "unknown"
 }
 
 // readSpans reads full rows, one per span_id.

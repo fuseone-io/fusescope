@@ -150,6 +150,10 @@ func TestEngineFilterMatrix(t *testing.T) {
 		"%s IN [200, 404]", "%s NOT IN [200, 404]", "%s EXISTS", "%s NOT EXISTS",
 	}
 	boolean := []string{"%s = true", "%s != true", "%s EXISTS", "%s NOT EXISTS"}
+	remote := []string{
+		"%s = 'yes'", "%s = 'no'", "%s = 'unknown'", "%s != 'yes'",
+		"%s IN ['yes', 'no']", "%s NOT IN ['yes', 'no']", "%s LIKE 'y%%'", "%s REGEXP '^n'", "%s EXISTS",
+	}
 	id := []string{
 		"%s = '00f067aa0ba902b7'", "%s != '00f067aa0ba902b7'",
 		"%s < '00f067aa0ba902b7'", "%s <= '00f067aa0ba902b7'", "%s > '00f067aa0ba902b7'", "%s >= '00f067aa0ba902b7'",
@@ -172,6 +176,7 @@ func TestEngineFilterMatrix(t *testing.T) {
 		{"duration_nano", number},
 		{"response_status_code", number},
 		{"has_error", boolean},
+		{"is_remote", remote},
 		{"span_id", id},
 		{"parent_span_id", id},
 		{"isRoot", []string{"%s = true"}},

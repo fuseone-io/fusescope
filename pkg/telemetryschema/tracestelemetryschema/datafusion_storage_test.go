@@ -29,6 +29,14 @@ func TestDataFusionStorageRead(t *testing.T) {
 			whenAbsent: qbtypes.AbsentIsNull,
 		},
 		{
+			name:       "is_remote reads in the backend's legacy vocabulary, from the engine's canonical one",
+			key:        telemetrytypes.TelemetryFieldKey{Name: "is_remote", FieldContext: telemetrytypes.FieldContextSpan},
+			sql:        "CASE is_remote WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' ELSE 'unknown' END",
+			presence:   "CASE is_remote WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' ELSE 'unknown' END <> ''",
+			absence:    "CASE is_remote WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' ELSE 'unknown' END = ''",
+			whenAbsent: qbtypes.AlwaysPresent,
+		},
+		{
 			name:       "a legacy semconv key reads the same promoted column",
 			key:        telemetrytypes.TelemetryFieldKey{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
 			sql:        "deployment_environment",

@@ -60,7 +60,6 @@ var (
 		"status_message":     "status_message",
 		"status_code_string": "status_code_string",
 		"has_error":          "has_error",
-		"is_remote":          "is_remote",
 		"events":             "events",
 		"links":              "links",
 		"ts_bucket_start":    "ts_bucket_start",
@@ -79,7 +78,6 @@ var (
 		"status_message":     "''",
 		"status_code_string": "''",
 		"has_error":          "false",
-		"is_remote":          "''",
 		"ts_bucket_start":    "0",
 	}
 
@@ -121,6 +119,11 @@ var (
 
 	hexDigits = regexp.MustCompile(`^[0-9a-fA-F]+$`)
 )
+
+// dataFusionIsRemote reads the engine's is_remote, the OTLP flags as ”, 'true' or 'false', in the
+// backend's vocabulary, 'unknown', 'yes' or 'no', for selection and every filter operator alike.
+// The engine's own top-level rule compares the canonical value.
+const dataFusionIsRemote = "CASE is_remote WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' ELSE 'unknown' END"
 
 type dataFusionStorage struct {
 	clickhouse *storage
@@ -190,6 +193,9 @@ func spanColumnRead(name string) (qbtypes.Read, error) {
 			return presentRead(fmt.Sprintf("coalesce(encode(%s, 'hex'), '')", name), "''"), nil
 		}
 		return presentRead(fmt.Sprintf("encode(%s, 'hex')", name), "''"), nil
+	}
+	if name == SpanIsRemoteColumn {
+		return presentRead(dataFusionIsRemote, "''"), nil
 	}
 	if column, ok := dataFusionSpanColumns[name]; ok {
 		read := presentRead(column, dataFusionEmpty[column])
