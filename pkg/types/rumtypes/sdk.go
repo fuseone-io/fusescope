@@ -7,14 +7,15 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
-// The FuseScope distribution versions this server is tested with, the same
-// range for each: SupportedSDKMinVersion included, SupportedSDKMaxVersion
-// excluded. The name is the distribution's telemetry.distro.name.
+// The FuseScope distribution versions this server is tested with, with an
+// inclusive minimum and exclusive per-distribution maximum. The name is
+// the distribution's telemetry.distro.name.
 const (
-	SDKBrowserName         = "@fusescope/browser"
-	SDKAndroidName         = "io.fuseone.fusescope:android"
-	SupportedSDKMinVersion = "0.1.0"
-	SupportedSDKMaxVersion = "1.0.0"
+	SDKBrowserName                = "@fusescope/browser"
+	SDKAndroidName                = "io.fuseone.fusescope:android"
+	SupportedSDKMinVersion        = "0.1.0"
+	SupportedSDKMaxVersion        = "1.0.0"
+	SupportedAndroidSDKMaxVersion = "1.1.0"
 )
 
 var (
@@ -50,7 +51,7 @@ func (SDKSupport) Enum() []any {
 func NewSupportedSDKs() []SupportedSDK {
 	return []SupportedSDK{
 		{Name: SDKBrowserName, MinVersion: SupportedSDKMinVersion, MaxVersion: SupportedSDKMaxVersion},
-		{Name: SDKAndroidName, MinVersion: SupportedSDKMinVersion, MaxVersion: SupportedSDKMaxVersion},
+		{Name: SDKAndroidName, MinVersion: SupportedSDKMinVersion, MaxVersion: SupportedAndroidSDKMaxVersion},
 	}
 }
 
@@ -64,7 +65,11 @@ func SDKSupportOf(name string, version string) SDKSupport {
 			return SDKSupportOutdated
 		}
 		minimum, _ := parseVersion(SupportedSDKMinVersion)
-		maximum, _ := parseVersion(SupportedSDKMaxVersion)
+		maxVersion := SupportedSDKMaxVersion
+		if name == SDKAndroidName {
+			maxVersion = SupportedAndroidSDKMaxVersion
+		}
+		maximum, _ := parseVersion(maxVersion)
 		if compareVersions(current, minimum) >= 0 && compareVersions(current, maximum) < 0 {
 			return SDKSupportSupported
 		}

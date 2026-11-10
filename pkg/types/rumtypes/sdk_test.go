@@ -20,7 +20,11 @@ func TestSDKSupportOf(t *testing.T) {
 		{name: "DistroUnparsable_Outdated", sdkName: SDKBrowserName, version: "dev", expected: SDKSupportOutdated},
 		{name: "DistroPrerelease_Supported", sdkName: SDKBrowserName, version: "0.2.0-beta.1", expected: SDKSupportSupported},
 		{name: "AndroidDistroInRange_Supported", sdkName: SDKAndroidName, version: "0.3.0", expected: SDKSupportSupported},
-		{name: "AndroidDistroAboveRange_Outdated", sdkName: SDKAndroidName, version: "1.0.0", expected: SDKSupportOutdated},
+		{name: "AndroidStableRelease_Supported", sdkName: SDKAndroidName, version: "1.0.0", expected: SDKSupportSupported},
+		{name: "AndroidStablePatch_Supported", sdkName: SDKAndroidName, version: "1.0.7", expected: SDKSupportSupported},
+		{name: "AndroidNextMinor_Outdated", sdkName: SDKAndroidName, version: "1.1.0", expected: SDKSupportOutdated},
+		{name: "AndroidBelowRange_Outdated", sdkName: SDKAndroidName, version: "0.0.8", expected: SDKSupportOutdated},
+		{name: "AndroidInvalidVersion_Outdated", sdkName: SDKAndroidName, version: "invalid", expected: SDKSupportOutdated},
 		{name: "AndroidMavenCoordinates_Supported", sdkName: "io.fuseone.fusescope:android", version: "0.3.0", expected: SDKSupportSupported},
 		{name: "AndroidOldCoordinates_Other", sdkName: "io.fusescope:android", version: "0.3.0", expected: SDKSupportOther},
 		{name: "PlainOpenTelemetry_Other", sdkName: "opentelemetry", version: "2.12.0", expected: SDKSupportOther},
@@ -40,4 +44,18 @@ func TestNewSupportedSDKs(t *testing.T) {
 		names = append(names, sdk.Name)
 	}
 	assert.Equal(t, []string{SDKBrowserName, SDKAndroidName}, names)
+}
+
+func TestSupportedSDKMetadataMatchesClassification(t *testing.T) {
+	for _, sdk := range NewSupportedSDKs() {
+		t.Run(sdk.Name, func(t *testing.T) {
+			assert.Equal(t, SDKSupportSupported, SDKSupportOf(sdk.Name, sdk.MinVersion))
+			assert.Equal(t, SDKSupportOutdated, SDKSupportOf(sdk.Name, sdk.MaxVersion))
+			expectedMax := "1.0.0"
+			if sdk.Name == SDKAndroidName {
+				expectedMax = "1.1.0"
+			}
+			assert.Equal(t, expectedMax, sdk.MaxVersion)
+		})
+	}
 }
