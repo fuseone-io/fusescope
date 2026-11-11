@@ -2,7 +2,9 @@ package parityrun
 
 import (
 	"context"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -172,4 +174,68 @@ func absentKeyRequest(spec PairSpec, listLimit int) *qbtypes.QueryRangeRequest {
 	}
 	q.Limit, q.Order = listLimit, latestFirst
 	return builderRequest(qbtypes.RequestTypeRaw, spec.Window, q)
+}
+
+// validSpec checks everything a queued spec needs, before it is gated: a spec that fails it never
+// becomes valid later, so it leaves the queue.
+//
+// # Errors
+//
+// An unknown class or view, a window that is empty, misaligned or before the tenant's dual write,
+// or a spec without what its view asks for.
+func (r Round) validSpec(spec PairSpec, tenant Tenant) error {
+	invalid := func(format string, args ...any) error {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRound, format, args...)
+	}
+	step := int64(r.Config.Window.Step)
+	w := spec.Window
+	switch {
+	case spec.Class != parity.Settled && spec.Class != parity.Recent:
+		return invalid("a spec of no window class")
+	case step <= 0 || w.Start >= w.End || w.Start%step != 0 || w.End%step != 0:
+		return invalid("a spec window must be non-empty and aligned to the step")
+	case w.Start < tenant.DualWriteEpoch.UnixNano():
+		return invalid("a spec window starts before the tenant's dual write")
+	}
+	switch spec.View {
+	case ViewServices:
+		return nil
+	case ViewTopOperations, ViewEntryOperations:
+		if spec.Service == "" {
+			return invalid("an operations spec needs its service")
+		}
+	case ViewSpanList, ViewTimeSeries, ViewScalar:
+		if spec.Service == "" || spec.Operation == "" {
+			return invalid("an operation spec needs its service and operation")
+		}
+	case ViewSummary, ViewWaterfall:
+		if !traceID.MatchString(spec.TraceID) {
+			return invalid("a trace spec needs a trace id")
+		}
+	case ViewAbsentKey:
+		return validCase(spec.Case)
+	default:
+		return invalid("a spec of no view")
+	}
+	return nil
+}
+
+func validCase(c *parity.AbsentKeyCase) error {
+	invalid := errors.Newf(errors.TypeInvalidInput, ErrCodeRound, "an absent-key spec needs a case of a promoted key")
+	if c == nil || !slices.Contains(parity.AbsentKeyAttributes(), c.Attribute) {
+		return invalid
+	}
+	switch c.Shape {
+	case parity.ShapeSelect:
+		if c.Filter != "" {
+			return invalid
+		}
+	case parity.ShapeList, parity.ShapeCount:
+		if !strings.HasPrefix(c.Filter, c.Attribute+" ") {
+			return invalid
+		}
+	default:
+		return invalid
+	}
+	return nil
 }

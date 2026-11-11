@@ -214,6 +214,7 @@ func (r Round) run(ctx context.Context, start time.Time, runID, keyID string, fp
 				continue
 			}
 			seen[specKey(spec)] = true
+			t.plan(spec.Org, spec.View)
 			p, err := r.build(r.evidencer(), spec)
 			if err != nil {
 				return outcome{}, err
@@ -257,9 +258,10 @@ func (r Round) evidencer() parityexec.Evidencer {
 	return parityexec.Evidencer{Querier: r.ClickHouse.Querier, Keys: r.Keys}
 }
 
-// specKey names a spec whatever its span count, which is read again.
+// specKey names a spec whatever its span count, which is read again, and why its trace was
+// sampled, which changes no query.
 func specKey(spec PairSpec) string {
-	spec.Spans = 0
+	spec.Spans, spec.Reason = 0, ""
 	raw, _ := json.Marshal(spec)
 	return string(raw)
 }
@@ -291,7 +293,11 @@ func (r Round) requeued(ctx context.Context, now time.Time, t *tally, out *outco
 	var carried []PairSpec
 	for _, spec := range uniqueSpecs(specs) {
 		tenant, ok := r.Tenants.tenant(spec.Org)
-		if !ok {
+		if !ok || r.validSpec(spec, tenant) != nil {
+			t.addReason(ReasonRequeueInvalid)
+			continue
+		}
+		if _, err := r.build(r.evidencer(), spec); err != nil {
 			t.addReason(ReasonRequeueInvalid)
 			continue
 		}
@@ -351,9 +357,6 @@ func (r Round) specClean(ctx context.Context, tenant Tenant, spec PairSpec) (boo
 func (r Round) refreshSpans(ctx context.Context, tenant Tenant, spec PairSpec) (PairSpec, error) {
 	if spec.TraceID == "" {
 		return spec, nil
-	}
-	if !traceID.MatchString(spec.TraceID) {
-		return spec, errors.Newf(errors.TypeInvalidInput, ErrCodeRound, "a requeued trace id is malformed")
 	}
 	got, err := candidateQuery(telemetrystore.WithService(ctx, subject), r.ClickHouse.Querier, tenant.Org, spec.Window, "trace_id IN ('"+spec.TraceID+"')", "spans", qbtypes.OrderDirectionDesc, 1)
 	if err != nil {

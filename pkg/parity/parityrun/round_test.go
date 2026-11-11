@@ -533,3 +533,65 @@ func TestARequeuedPairTheBudgetCutsStaysQueued(t *testing.T) {
 	spec.Spans = 5
 	assert.Contains(t, left, spec, "it was cut while it ran, its span count read again")
 }
+
+func TestAnInvalidQueuedSpecLeavesTheQueueAndMakesTheRoundUnusable(t *testing.T) {
+	base := func(r Round) PairSpec { return queuedSummary(t, r) }
+	cases := map[string]func(*PairSpec){
+		"an unknown view":     func(s *PairSpec) { s.View = "flamegraph" },
+		"an unknown class":    func(s *PairSpec) { s.Class = "warm" },
+		"a misaligned window": func(s *PairSpec) { s.Window.Start++ },
+		"an empty window":     func(s *PairSpec) { s.Window.End = s.Window.Start },
+		"before the dual write": func(s *PairSpec) {
+			s.Window.Start, s.Window.End = s.Window.Start-int64(20*24*time.Hour), s.Window.End-int64(20*24*time.Hour)
+		},
+		"a malformed trace id":     func(s *PairSpec) { s.TraceID = "not-a-trace" },
+		"operations of no service": func(s *PairSpec) { s.View, s.TraceID = ViewTopOperations, "" },
+		"an operation of no name":  func(s *PairSpec) { s.View, s.TraceID, s.Service = ViewSpanList, "", "cart" },
+		"an absent key of no case": func(s *PairSpec) { s.View, s.TraceID = ViewAbsentKey, "" },
+		"an absent key not promoted": func(s *PairSpec) {
+			s.View, s.TraceID, s.Case = ViewAbsentKey, "", &parity.AbsentKeyCase{Attribute: "user.id", Operator: "EXISTS", Shape: parity.ShapeList, Filter: "user.id EXISTS"}
+		},
+		"an absent key of no shape": func(s *PairSpec) {
+			s.View, s.TraceID, s.Case = ViewAbsentKey, "", &parity.AbsentKeyCase{Attribute: "http.route", Operator: "EXISTS", Shape: "bar", Filter: "http.route EXISTS"}
+		},
+	}
+	for name, mutate := range cases {
+		r, _, _, _ := round(t, &store{p99: 5}, &store{p99: 5})
+		spec := base(r)
+		mutate(&spec)
+		r.Requeue = queueOf(t, spec)
+		summary, err := r.Run(context.Background())
+		require.NoError(t, err, name)
+		assert.Contains(t, summary.Reasons, ReasonRequeueInvalid, name)
+		assert.False(t, summary.Usable, name)
+		left, _, err := r.Requeue.Load(context.Background())
+		require.NoError(t, err, name)
+		assert.NotContains(t, left, spec, "%s: an invalid spec never comes back", name)
+	}
+}
+
+func TestAQueuedSpecTheRoundAlsoSamplesIsPlannedOnce(t *testing.T) {
+	r, _, _, dir := round(t, &store{p99: 5}, &store{p99: 5})
+	w, ok, err := parity.PlanWindow(r.Config.Window, parity.Settled, r.Now(), r.Tenants.Tenants[0].DualWriteEpoch, r.Tenants.Tenants[0].Retention)
+	require.NoError(t, err)
+	require.True(t, ok)
+	queued := PairSpec{View: ViewSummary, Org: orgA, Class: parity.Settled, Window: w, TraceID: secretTrace, Spans: 1, Reason: parity.ReasonWithError}
+	r.Requeue = queueOf(t, queued)
+	summary, err := r.Run(context.Background())
+	require.NoError(t, err)
+	c := coverageOf(summary, ViewSummary)
+	assert.Equal(t, c.Planned, c.Reached, "the queued and the sampled spec are one pair, whatever their reason")
+	assert.NotContains(t, summary.Reasons, ReasonCoverage)
+	_, records := lines(t, dir)
+	var requeued, settled int
+	for _, rec := range summaryPairs(records) {
+		if rec["requeued"] == true {
+			requeued++
+		}
+		if rec["window_class"] == string(parity.Settled) {
+			settled++
+		}
+	}
+	assert.Equal(t, 1, requeued)
+	assert.Equal(t, 1, settled, "one pair for the settled window's trace, not one a reason")
+}

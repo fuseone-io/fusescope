@@ -12,8 +12,9 @@ import (
 // subject is who the parity is to both stores.
 const subject = "parity"
 
-// plan reads one window's gate and sample data and plans its pair specs. A window whose data cannot
-// be read plans nothing and makes the round unusable.
+// plan reads one window's gate and sample data and plans its pair specs. The caller counts the specs
+// it keeps as planned; plan counts the pairs the gate leaves out, which have no spec. A window whose
+// data cannot be read plans nothing and makes the round unusable.
 func (r Round) plan(ctx context.Context, fp *parity.Fingerprinter, report ReportWriter, t *tally, win window) ([]PairSpec, error) {
 	ctx = telemetrystore.WithService(ctx, subject)
 	org, class := win.tenant.Org, win.class
@@ -45,10 +46,11 @@ func (r Round) plan(ctx context.Context, fp *parity.Fingerprinter, report Report
 	}
 	base := PairSpec{Org: org.StringValue(), Class: class}
 	tenant := org.StringValue()
-	t.plan(tenant, ViewServices)
 	var specs []PairSpec
 	if gate.Tenant != nil {
 		specs = append(specs, with(base, ViewServices, *gate.Tenant))
+	} else {
+		t.plan(tenant, ViewServices)
 	}
 	for _, service := range sampler.Services(tenant, services) {
 		more, err := r.serviceSpecs(ctx, t, sampler, base, org, gate, service)
@@ -62,7 +64,7 @@ func (r Round) plan(ctx context.Context, fp *parity.Fingerprinter, report Report
 		t.plan(tenant, ViewSummary, ViewWaterfall, ViewAbsentKey)
 		return specs, nil
 	}
-	more, err := r.tenantSpecs(ctx, t, sampler, base, org, *gate.Tenant)
+	more, err := r.tenantSpecs(ctx, sampler, base, org, *gate.Tenant)
 	if err != nil {
 		t.addReason(ReasonDataUnavailable)
 	}
@@ -90,10 +92,9 @@ func (r Round) serviceNames(ctx context.Context, win window) ([]string, error) {
 // serviceSpecs are a sampled service's operations views and its sampled operations' views, over
 // the service's clean window; a service the gate left out is planned and not compared.
 func (r Round) serviceSpecs(ctx context.Context, t *tally, sampler parity.Sampler, base PairSpec, org valuer.UUID, gate parity.GateResult, service string) ([]PairSpec, error) {
-	t.plan(base.Org, ViewTopOperations, ViewEntryOperations)
 	w, clean := gate.Services[service]
 	if !clean {
-		t.plan(base.Org, ViewSpanList, ViewTimeSeries, ViewScalar)
+		t.plan(base.Org, ViewTopOperations, ViewEntryOperations, ViewSpanList, ViewTimeSeries, ViewScalar)
 		return nil, nil
 	}
 	base.Service = service
@@ -103,7 +104,6 @@ func (r Round) serviceSpecs(ctx context.Context, t *tally, sampler parity.Sample
 		return nil, err
 	}
 	for _, op := range sampler.Operations(base.Org, service, ops) {
-		t.plan(base.Org, ViewSpanList, ViewTimeSeries, ViewScalar)
 		base.Operation = op
 		specs = append(specs, with(base, ViewSpanList, w), with(base, ViewTimeSeries, w), with(base, ViewScalar, w))
 	}
@@ -111,7 +111,7 @@ func (r Round) serviceSpecs(ctx context.Context, t *tally, sampler parity.Sample
 }
 
 // tenantSpecs are the trace and absent-key specs of a tenant's clean window.
-func (r Round) tenantSpecs(ctx context.Context, t *tally, sampler parity.Sampler, base PairSpec, org valuer.UUID, w parity.Window) ([]PairSpec, error) {
+func (r Round) tenantSpecs(ctx context.Context, sampler parity.Sampler, base PairSpec, org valuer.UUID, w parity.Window) ([]PairSpec, error) {
 	candidates, err := traceCandidates(ctx, r.ClickHouse.Querier, org, w, r.Seed)
 	if err != nil {
 		return nil, err
@@ -126,7 +126,6 @@ func (r Round) tenantSpecs(ctx context.Context, t *tally, sampler parity.Sampler
 	}
 	var specs []PairSpec
 	for _, tr := range traces {
-		t.plan(base.Org, ViewSummary, ViewWaterfall)
 		trace := base
 		trace.TraceID, trace.Spans, trace.Reason = tr.ID, spans[tr.ID], tr.Reason
 		specs = append(specs, with(trace, ViewSummary, w), with(trace, ViewWaterfall, w))
@@ -136,7 +135,6 @@ func (r Round) tenantSpecs(ctx context.Context, t *tally, sampler parity.Sampler
 		return specs, err
 	}
 	for _, c := range sampler.AbsentKeyCases(base.Org, columns) {
-		t.plan(base.Org, ViewAbsentKey)
 		absent := base
 		absent.Case = &c
 		specs = append(specs, with(absent, ViewAbsentKey, w))
