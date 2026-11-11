@@ -136,7 +136,7 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 	}
 
 	// Prepare phase
-	queryRangeReq, startMs, endMs, err := m.buildQueryRangeRequest(req)
+	queryRangeReq, startMs, endMs, err := ServicesRequest(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -173,7 +173,7 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
-	qr, err := m.buildTopOpsQueryRangeRequest(req)
+	qr, err := TopOperationsRequest(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -194,7 +194,7 @@ func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUI
 		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
 
-	qr, err := m.buildEntryPointOpsQueryRangeRequest(req)
+	qr, err := EntryPointOperationsRequest(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -208,8 +208,8 @@ func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUI
 	return items, warningsOf(resp), nil
 }
 
-// buildQueryRangeRequest constructs the QBv5 QueryRangeRequest and computes the time window.
-func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.QueryRangeRequest, uint64, uint64, error) {
+// ServicesRequest is the QBv5 request of the services list, and its window in milliseconds.
+func ServicesRequest(req *servicetypesv1.Request) (*qbtypes.QueryRangeRequest, uint64, uint64, error) {
 	// Parse start/end (nanoseconds) from strings and convert to milliseconds for QBv5
 	startNs, err := strconv.ParseUint(req.Start, 10, 64)
 	if err != nil {
@@ -362,7 +362,8 @@ func (m *module) attachTopLevelOps(ctx context.Context, orgID valuer.UUID, servi
 	return warnings, nil
 }
 
-func (m *module) buildTopOpsQueryRangeRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
+// TopOperationsRequest is the QBv5 request of a service's top operations.
+func TopOperationsRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
 	if req.Service == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "service is required")
 	}
@@ -470,7 +471,8 @@ func (m *module) mapTopOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []ser
 	return out
 }
 
-func (m *module) buildEntryPointOpsQueryRangeRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
+// EntryPointOperationsRequest is the QBv5 request of a service's entry point operations.
+func EntryPointOperationsRequest(req *servicetypesv1.OperationsRequest) (*qbtypes.QueryRangeRequest, error) {
 	if req.Service == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "service is required")
 	}

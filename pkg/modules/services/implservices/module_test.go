@@ -10,7 +10,6 @@ import (
 )
 
 func TestBuildQueryRangeRequest(t *testing.T) {
-	m := &module{}
 
 	tests := []struct {
 		name     string
@@ -138,7 +137,7 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			qr, startMs, endMs, err := m.buildQueryRangeRequest(&tt.req)
+			qr, startMs, endMs, err := ServicesRequest(&tt.req)
 			if tt.wantErr != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr)
@@ -291,7 +290,6 @@ func TestMapQueryRangeRespToServices(t *testing.T) {
 }
 
 func TestBuildTopOpsQueryRangeRequest(t *testing.T) {
-	m := &module{}
 
 	tests := []struct {
 		name    string
@@ -468,7 +466,7 @@ func TestBuildTopOpsQueryRangeRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			qr, err := m.buildTopOpsQueryRangeRequest(&tt.req)
+			qr, err := TopOperationsRequest(&tt.req)
 			if tt.wantErr != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr)
@@ -538,7 +536,6 @@ func TestMapTopOpsQueryRangeResp(t *testing.T) {
 }
 
 func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
-	m := &module{}
 
 	tests := []struct {
 		name    string
@@ -703,7 +700,7 @@ func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			qr, err := m.buildEntryPointOpsQueryRangeRequest(&tt.req)
+			qr, err := EntryPointOperationsRequest(&tt.req)
 			if tt.wantErr != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr)

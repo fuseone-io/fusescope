@@ -17,7 +17,7 @@ func evidence(values []float64, q, v float64) QuantileEvidence {
 		return e
 	}
 	low, high := orderStatisticRanks(q, int64(n))
-	e.Low, e.High = values[low-1], values[high-1]
+	e.Bounds = &OrderStatistics{Low: values[low-1], High: values[high-1]}
 	for _, x := range values {
 		if x < v {
 			e.Below++
@@ -135,16 +135,48 @@ func TestInvalidEvidenceIsInconclusiveNeverAccepted(t *testing.T) {
 		"q above 1":          {1.1, 2, valid},
 		"q not a number":     {math.NaN(), 2, valid},
 		"v not finite":       {0.5, math.Inf(1), valid},
-		"negative size":      {0.5, 2, QuantileEvidence{N: -1, Low: 1, High: 2}},
-		"more at or below":   {0.5, 2, QuantileEvidence{N: 4, Low: 2, High: 3, Below: 1, AtOrBelow: 5}},
-		"below past at":      {0.5, 2, QuantileEvidence{N: 4, Low: 2, High: 3, Below: 3, AtOrBelow: 2}},
-		"negative below":     {0.5, 2, QuantileEvidence{N: 4, Low: 2, High: 3, Below: -1, AtOrBelow: 2}},
-		"low past high":      {0.5, 2, QuantileEvidence{N: 4, Low: 3, High: 2, Below: 1, AtOrBelow: 2}},
-		"low not finite":     {0.5, 2, QuantileEvidence{N: 4, Low: math.NaN(), High: 3, Below: 1, AtOrBelow: 2}},
-		"rank past the size": {0.5, 2, QuantileEvidence{N: 100_000, Low: 2, High: 2, Below: 100_001, AtOrBelow: 200_000}},
+		"negative size":      {0.5, 2, QuantileEvidence{N: -1, Bounds: &OrderStatistics{Low: 1, High: 2}}},
+		"more at or below":   {0.5, 2, QuantileEvidence{N: 4, Bounds: &OrderStatistics{Low: 2, High: 3}, Below: 1, AtOrBelow: 5}},
+		"below past at":      {0.5, 2, QuantileEvidence{N: 4, Bounds: &OrderStatistics{Low: 2, High: 3}, Below: 3, AtOrBelow: 2}},
+		"negative below":     {0.5, 2, QuantileEvidence{N: 4, Bounds: &OrderStatistics{Low: 2, High: 3}, Below: -1, AtOrBelow: 2}},
+		"low past high":      {0.5, 2, QuantileEvidence{N: 4, Bounds: &OrderStatistics{Low: 3, High: 2}, Below: 1, AtOrBelow: 2}},
+		"low not finite":     {0.5, 2, QuantileEvidence{N: 4, Bounds: &OrderStatistics{Low: math.NaN(), High: 3}, Below: 1, AtOrBelow: 2}},
+		"rank past the size": {0.5, 2, QuantileEvidence{N: 100_000, Bounds: &OrderStatistics{Low: 2, High: 2}, Below: 100_001, AtOrBelow: 200_000}},
 	}
 	for name, c := range cases {
 		assert.Equal(t, inconclusive, JudgeQuantile(c.q, c.v, c.e), name)
 	}
 	assert.Equal(t, Verdict{Category: CategoryRows, Disposition: Blocking}, JudgeQuantile(0.5, 2, QuantileEvidence{}), "an empty group is still a row difference")
+}
+
+func TestTheRuleIsChosenByTheSampleResolution(t *testing.T) {
+	for _, c := range []struct {
+		q    float64
+		n    int64
+		rule QuantileRule
+	}{
+		{0.99, 6, RuleOrderStatistics},
+		{0.99, 1_000, RuleOrderStatistics}, // 1/n = 0.001 is not under 0.00099
+		{0.99, 2_000, RuleRank},
+		{0.5, 40, RuleOrderStatistics},
+		{0.5, 41, RuleRank},
+		{0.999, 10_000, RuleOrderStatistics},
+	} {
+		rule, _, _ := QuantileRuleFor(c.q, c.n)
+		assert.Equal(t, c.rule, rule, "q=%v n=%v", c.q, c.n)
+	}
+}
+
+func TestTheRankRuleNeedsNoOrderStatistics(t *testing.T) {
+	values := sequence(100_000)
+	e := evidence(values, 0.5, 50_000)
+	e.Bounds = nil
+	assert.Equal(t, Verdict{Category: CategoryApproximation, Disposition: Accepted}, JudgeQuantile(0.5, 50_000, e))
+}
+
+func TestTheOrderStatisticRuleWithoutThemIsInconclusive(t *testing.T) {
+	values := []float64{200, 200, 200, 400, 400, 800}
+	e := evidence(values, 0.99, 780)
+	e.Bounds = nil
+	assert.Equal(t, Verdict{Category: CategoryApproximation, Disposition: Inconclusive}, JudgeQuantile(0.99, 780, e), "never accepted on counts it cannot read that finely")
 }
