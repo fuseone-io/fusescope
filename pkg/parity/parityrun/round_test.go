@@ -231,7 +231,9 @@ func kindsOf(records []map[string]any) map[string]int {
 }
 
 func TestARoundThatMatchesQualifies(t *testing.T) {
-	r, keys, push, dir := round(t, &store{p99: 5}, &store{p99: 5})
+	// Both sides take the same few milliseconds, so the latency ratio is about 1 whatever the
+	// scheduler adds; calls of microseconds would make it noise.
+	r, keys, push, dir := round(t, &store{p99: 5, delay: 5 * time.Millisecond}, &store{p99: 5, delay: 5 * time.Millisecond})
 	summary, err := r.Run(context.Background())
 	require.NoError(t, err)
 	assert.True(t, summary.Qualifying, "%v", summary.Reasons)
