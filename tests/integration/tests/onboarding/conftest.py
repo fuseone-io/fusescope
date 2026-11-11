@@ -27,7 +27,7 @@ def signoz_onboarding(  # pylint: disable=too-many-arguments,too-many-positional
         request=request,
         pytestconfig=pytestconfig,
         cache_key="signoz_onboarding",
-        env_overrides={
+        env_overrides=lambda: {
             "SIGNOZ_GLOBAL_INGESTION__URL": "https://ingest.fusescope.test",
             "SIGNOZ_ONBOARDING_COLLECTOR__ENDPOINT": otel_collector.container_configs["4318"].base(),
         },

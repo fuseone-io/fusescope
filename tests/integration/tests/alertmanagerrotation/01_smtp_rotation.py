@@ -78,7 +78,7 @@ def test_smtp_rotation_applies_to_existing_channels(  # pylint: disable=too-many
         request=request,
         pytestconfig=pytestconfig,
         cache_key="signoz_smtp_rotation_new",
-        env_overrides=signoz_smtp_env(maildev_new, password=NEW_PROVIDER_SMTP_PASS),
+        env_overrides=lambda: signoz_smtp_env(maildev_new, password=NEW_PROVIDER_SMTP_PASS),
     )
     token_new = token_getter(signoz_new)(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 

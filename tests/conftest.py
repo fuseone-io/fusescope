@@ -3,6 +3,7 @@ import subprocess
 import pytest
 
 pytest_plugins = [
+    "fixtures.reuse",
     "fixtures.auth",
     "fixtures.clickhouse",
     "fixtures.fs",

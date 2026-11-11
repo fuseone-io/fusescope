@@ -29,7 +29,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         request=request,
         pytestconfig=pytestconfig,
         cache_key="signoz_alertmanager",
-        env_overrides={
+        env_overrides=lambda: {
             **signoz_smtp_env(maildev),
             "SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_PAGERDUTY__URL": notification_channel.container_configs["8080"].get("/v2/enqueue"),
             "SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_OPSGENIE__API__URL": notification_channel.container_configs["8080"].get("/"),

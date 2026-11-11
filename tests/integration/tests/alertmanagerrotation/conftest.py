@@ -36,5 +36,5 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         request=request,
         pytestconfig=pytestconfig,
         cache_key="signoz_smtp_rotation",
-        env_overrides=signoz_smtp_env(maildev_old, password=OLD_PROVIDER_SMTP_PASS),
+        env_overrides=lambda: signoz_smtp_env(maildev_old, password=OLD_PROVIDER_SMTP_PASS),
     )

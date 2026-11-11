@@ -37,6 +37,7 @@ def test_setup(  # pylint: disable=too-many-arguments,too-many-positional-argume
             f.write(f"SIGNOZ_E2E_BASE_PATH={base_path}\n")
 
 
+@pytest.mark.run_on_teardown
 def test_teardown(
     signoz: types.SigNoz,  # pylint: disable=unused-argument
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
