@@ -75,7 +75,7 @@ func run(args []string, stdout, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintln(stderr, "parity: the run key is kept in memory and no dual-write health source is set (D5 PR 4b): this round does not qualify")
+	fmt.Fprintln(stderr, "parity: the run key and the requeue are kept in memory and no dual-write health source is set (D5 PR 4b): this round does not qualify")
 	summary, err := round.Run(ctx)
 	fmt.Fprintf(stdout, "qualifying=%t reasons=%v\n", summary.Qualifying, summary.Reasons)
 	return err
@@ -131,7 +131,7 @@ func assemble(ctx context.Context, settings parityrun.Settings, tenants parityru
 	}
 	return parityrun.Round{
 		Engine: engine, ClickHouse: clickhouse, Refuser: refuser, Keys: clickhouse.Keys, Tenants: tenants,
-		KeyStore: parityrun.NewMemoryKeyStore(), Reports: parityrun.FileSink{Dir: reports}, Metrics: pusher,
+		KeyStore: parityrun.NewMemoryKeyStore(), Reports: parityrun.FileSink{Dir: reports}, Metrics: pusher, Requeue: parityrun.NewMemoryRequeue(),
 		Config: settings.Round, Seed: seed, Now: time.Now,
 	}, nil
 }

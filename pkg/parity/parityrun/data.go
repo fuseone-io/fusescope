@@ -2,6 +2,11 @@ package parityrun
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
+	"encoding/hex"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
@@ -16,7 +21,7 @@ import (
 var ErrCodeData = errors.MustNewCode("parity_data")
 
 const (
-	// traceCandidateLimit caps the traces a round samples from, the largest first.
+	// traceCandidateLimit caps each of the trace candidate queries.
 	traceCandidateLimit = 1000
 	// presentValueLimit caps the present values of an absent key the cases are written with.
 	presentValueLimit = 20
@@ -78,14 +83,65 @@ func serviceCounts(ctx context.Context, q querier.Querier, org valuer.UUID, w pa
 	return out, nil
 }
 
-// traceCandidates are the traces of w, the largest first, with their span counts and errors.
-func traceCandidates(ctx context.Context, q querier.Querier, org valuer.UUID, w parity.Window) ([]parity.TraceCandidate, error) {
-	resp, err := q.QueryRange(ctx, org, builderRequest(qbtypes.RequestTypeScalar, w, qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+// traceCandidates are the traces a round samples from, so that no quota is drawn from a biased
+// set: the largest of w, a run of the trace id space from a point the seed picks (trace ids are
+// random, so the run is a uniform sample), and the traces with an error from the same point, each
+// with every one of its spans counted.
+func traceCandidates(ctx context.Context, q querier.Querier, org valuer.UUID, w parity.Window, seed parity.Seed) ([]parity.TraceCandidate, error) {
+	from := "trace_id >= '" + randomTraceStart(seed, w) + "'"
+	largest, err := candidateQuery(ctx, q, org, w, "", "spans", qbtypes.OrderDirectionDesc)
+	if err != nil {
+		return nil, err
+	}
+	random, err := candidateQuery(ctx, q, org, w, from, "trace_id", qbtypes.OrderDirectionAsc)
+	if err != nil {
+		return nil, err
+	}
+	failing, err := candidateQuery(ctx, q, org, w, "has_error = true AND "+from, "trace_id", qbtypes.OrderDirectionAsc)
+	if err != nil {
+		return nil, err
+	}
+	var ids []string
+	for _, c := range failing {
+		if traceID.MatchString(c.ID) {
+			ids = append(ids, "'"+c.ID+"'")
+		}
+	}
+	out := append(largest, random...)
+	if len(ids) == 0 {
+		return out, nil
+	}
+	whole, err := candidateQuery(ctx, q, org, w, "trace_id IN ("+strings.Join(ids, ", ")+")", "spans", qbtypes.OrderDirectionDesc)
+	if err != nil {
+		return nil, err
+	}
+	return append(out, whole...), nil
+}
+
+// traceID is the trace id the queries write as a literal: nothing else is written into a filter.
+var traceID = regexp.MustCompile(`^[0-9a-f]{32}$`)
+
+// randomTraceStart is the point of the trace id space a round's random traces start from.
+func randomTraceStart(seed parity.Seed, w parity.Window) string {
+	var b [24]byte
+	binary.BigEndian.PutUint64(b[0:], uint64(seed))
+	binary.BigEndian.PutUint64(b[8:], uint64(w.Start))
+	binary.BigEndian.PutUint64(b[16:], uint64(w.End))
+	sum := sha256.Sum256(b[:])
+	return hex.EncodeToString(sum[:16])
+}
+
+func candidateQuery(ctx context.Context, q querier.Querier, org valuer.UUID, w parity.Window, filter, order string, direction qbtypes.OrderDirection) ([]parity.TraceCandidate, error) {
+	spec := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		GroupBy:      []qbtypes.GroupByKey{{TelemetryFieldKey: traceKey}},
 		Aggregations: []qbtypes.TraceAggregation{{Expression: "count()", Alias: "spans"}, {Expression: "countIf(has_error = true)", Alias: "errors"}},
-		Order:        []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "spans"}}, Direction: qbtypes.OrderDirectionDesc}},
+		Order:        []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: order}}, Direction: direction}},
 		Limit:        traceCandidateLimit,
-	}))
+	}
+	if filter != "" {
+		spec.Filter = &qbtypes.Filter{Expression: filter}
+	}
+	resp, err := q.QueryRange(ctx, org, builderRequest(qbtypes.RequestTypeScalar, w, spec))
 	if err != nil {
 		return nil, err
 	}

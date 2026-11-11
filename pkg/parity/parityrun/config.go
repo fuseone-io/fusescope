@@ -121,3 +121,7 @@ func (t Tenants) Serves(instance, org string) bool {
 	}
 	return false
 }
+
+func (t Tenants) has(org string) bool {
+	return slices.ContainsFunc(t.Tenants, func(tenant Tenant) bool { return tenant.Org.StringValue() == org })
+}

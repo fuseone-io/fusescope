@@ -124,3 +124,36 @@ func (m *Metrics) Divergent(class parity.WindowClass) {
 }
 
 func (m *Metrics) Registry() *prometheus.Registry { return m.registry }
+
+// RequeueStore keeps the specs of pairs to run again in a later round, such as a partial engine
+// answer. Specs name tenant data, so the store must be as protected as the run key.
+type RequeueStore interface {
+	// Take returns and removes every queued spec.
+	Take(ctx context.Context) ([]PairSpec, error)
+	// Put queues specs.
+	Put(ctx context.Context, specs []PairSpec) error
+}
+
+// MemoryRequeue queues specs in the process only, so a queue does not outlive it: like the memory
+// key store, it is not deployable.
+type MemoryRequeue struct {
+	mu    sync.Mutex
+	specs []PairSpec
+}
+
+func NewMemoryRequeue() *MemoryRequeue { return &MemoryRequeue{} }
+
+func (q *MemoryRequeue) Take(context.Context) ([]PairSpec, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	out := q.specs
+	q.specs = nil
+	return out, nil
+}
+
+func (q *MemoryRequeue) Put(_ context.Context, specs []PairSpec) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	q.specs = append(q.specs, specs...)
+	return nil
+}

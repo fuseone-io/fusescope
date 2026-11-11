@@ -2,25 +2,21 @@ package parityrun
 
 import (
 	"context"
-	"slices"
 
 	"github.com/fuseone-io/fusescope/pkg/parity"
-	"github.com/fuseone-io/fusescope/pkg/parity/parityexec"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/servicetypes/servicetypesv1"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
 // subject is who the parity is to both stores.
 const subject = "parity"
 
-// servicePairViews are the views planned for each sampled service, whether or not the gate keeps it.
-var servicePairViews = []string{"top_operations", "entry_operations", "span_list", "time_series", "scalar"}
-
-// plan reads one window's gate and sample data and plans its pairs. A window whose data cannot be
-// read plans nothing and keeps the round from qualifying.
-func (r Round) plan(ctx context.Context, ev parityexec.Evidencer, fp *parity.Fingerprinter, report ReportWriter, t *tally, win window) ([]pair, error) {
+// plan reads one window's gate and sample data and plans its pair specs. A window whose data cannot
+// be read plans nothing and makes the round unusable.
+func (r Round) plan(ctx context.Context, fp *parity.Fingerprinter, report ReportWriter, t *tally, win window) ([]PairSpec, error) {
 	ctx = telemetrystore.WithService(ctx, subject)
 	org, class := win.tenant.Org, win.class
-	ev.Org = org
 	unhealthy, err := unhealthyMinutes(ctx, r.Health, r.Tenants, org.StringValue(), win.w, int64(r.Config.Window.Step))
 	if err != nil {
 		t.addReason(ReasonHealthUnavailable)
@@ -42,62 +38,110 @@ func (r Round) plan(ctx context.Context, ev parityexec.Evidencer, fp *parity.Fin
 	if err != nil {
 		return nil, err
 	}
-	services := sampler.Services(org.StringValue(), slices.Collect(mapKeys(clickhouse)))
-	if gate.Tenant == nil {
-		t.plan("services", "summary", "waterfall")
-		for range services {
-			t.plan(servicePairViews...)
-		}
-		return nil, nil
-	}
-	pairs := []pair{servicesPair(ev, org, class, *gate.Tenant)}
-	t.plan("services")
-	for _, service := range services {
-		t.plan(servicePairViews...)
-		w, ok := gate.Services[service]
-		if !ok {
-			continue
-		}
-		pairs = append(pairs, operationsPair(ev, org, class, w, service, r.Config.OperationsLimit, false), operationsPair(ev, org, class, w, service, r.Config.OperationsLimit, true))
-		pairs = append(pairs, servicePairs(ev, org, class, w, service, r.Config.ListLimit)...)
-	}
-	more, err := r.tenantPairs(ctx, ev, t, sampler, win, *gate.Tenant)
-	if err != nil {
-		return nil, err
-	}
-	return append(pairs, more...), nil
-}
-
-// tenantPairs are the trace and absent-key pairs of a tenant's clean window.
-func (r Round) tenantPairs(ctx context.Context, ev parityexec.Evidencer, t *tally, sampler parity.Sampler, win window, w parity.Window) ([]pair, error) {
-	org := win.tenant.Org
-	candidates, err := traceCandidates(ctx, r.ClickHouse.Querier, org, w)
+	services, err := r.serviceNames(ctx, win)
 	if err != nil {
 		t.addReason(ReasonDataUnavailable)
 		return nil, nil
 	}
-	traces, err := sampler.Traces(org.StringValue(), candidates, r.Config.Limits)
+	base := PairSpec{Org: org.StringValue(), Class: class}
+	tenant := org.StringValue()
+	t.plan(tenant, ViewServices)
+	var specs []PairSpec
+	if gate.Tenant != nil {
+		specs = append(specs, with(base, ViewServices, *gate.Tenant))
+	}
+	for _, service := range sampler.Services(tenant, services) {
+		more, err := r.serviceSpecs(ctx, t, sampler, base, org, gate, service)
+		if err != nil {
+			t.addReason(ReasonDataUnavailable)
+			return specs, nil
+		}
+		specs = append(specs, more...)
+	}
+	if gate.Tenant == nil {
+		t.plan(tenant, ViewSummary, ViewWaterfall, ViewAbsentKey)
+		return specs, nil
+	}
+	more, err := r.tenantSpecs(ctx, t, sampler, base, org, *gate.Tenant)
+	if err != nil {
+		t.addReason(ReasonDataUnavailable)
+	}
+	return append(specs, more...), nil
+}
+
+func with(base PairSpec, view string, w parity.Window) PairSpec {
+	base.View, base.Window = view, w
+	return base
+}
+
+// serviceNames are the services ClickHouse's services view lists for the window.
+func (r Round) serviceNames(ctx context.Context, win window) ([]string, error) {
+	items, _, err := r.ClickHouse.Services.Get(ctx, win.tenant.Org, &servicetypesv1.Request{Start: nanos(win.w.Start), End: nanos(win.w.End)})
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(items))
+	for _, item := range items {
+		names = append(names, item.ServiceName)
+	}
+	return names, nil
+}
+
+// serviceSpecs are a sampled service's operations views and its sampled operations' views, over
+// the service's clean window; a service the gate left out is planned and not compared.
+func (r Round) serviceSpecs(ctx context.Context, t *tally, sampler parity.Sampler, base PairSpec, org valuer.UUID, gate parity.GateResult, service string) ([]PairSpec, error) {
+	t.plan(base.Org, ViewTopOperations, ViewEntryOperations)
+	w, clean := gate.Services[service]
+	if !clean {
+		t.plan(base.Org, ViewSpanList, ViewTimeSeries, ViewScalar)
+		return nil, nil
+	}
+	base.Service = service
+	specs := []PairSpec{with(base, ViewTopOperations, w), with(base, ViewEntryOperations, w)}
+	ops, err := operations(ctx, r.ClickHouse.Querier, org, w, service)
+	if err != nil {
+		return nil, err
+	}
+	for _, op := range sampler.Operations(base.Org, service, ops) {
+		t.plan(base.Org, ViewSpanList, ViewTimeSeries, ViewScalar)
+		base.Operation = op
+		specs = append(specs, with(base, ViewSpanList, w), with(base, ViewTimeSeries, w), with(base, ViewScalar, w))
+	}
+	return specs, nil
+}
+
+// tenantSpecs are the trace and absent-key specs of a tenant's clean window.
+func (r Round) tenantSpecs(ctx context.Context, t *tally, sampler parity.Sampler, base PairSpec, org valuer.UUID, w parity.Window) ([]PairSpec, error) {
+	candidates, err := traceCandidates(ctx, r.ClickHouse.Querier, org, w, r.Seed)
+	if err != nil {
+		return nil, err
+	}
+	traces, err := sampler.Traces(base.Org, candidates, r.Config.Limits)
 	if err != nil {
 		return nil, err
 	}
 	spans := map[string]int64{}
 	for _, c := range candidates {
-		spans[c.ID] = c.Spans
+		spans[c.ID] = max(spans[c.ID], c.Spans)
 	}
-	pairs := tracePairs(org, win.class, traces, spans, r.Config.Limits.MaxRows)
-	for range traces {
-		t.plan("summary", "waterfall")
+	var specs []PairSpec
+	for _, tr := range traces {
+		t.plan(base.Org, ViewSummary, ViewWaterfall)
+		trace := base
+		trace.TraceID, trace.Spans, trace.Reason = tr.ID, spans[tr.ID], tr.Reason
+		specs = append(specs, with(trace, ViewSummary, w), with(trace, ViewWaterfall, w))
 	}
 	columns, err := absentColumns(ctx, r.ClickHouse.Querier, org, w)
 	if err != nil {
-		t.addReason(ReasonDataUnavailable)
-		return pairs, nil
+		return specs, err
 	}
-	cases := sampler.AbsentKeyCases(org.StringValue(), columns)
-	for range cases {
-		t.plan("absent_key")
+	for _, c := range sampler.AbsentKeyCases(base.Org, columns) {
+		t.plan(base.Org, ViewAbsentKey)
+		absent := base
+		absent.Case = &c
+		specs = append(specs, with(absent, ViewAbsentKey, w))
 	}
-	return append(pairs, absentKeyPairs(ev, org, win.class, w, cases, r.Config.ListLimit)...), nil
+	return specs, nil
 }
 
 func (r Round) gateRecords(fp *parity.Fingerprinter, report ReportWriter, t *tally, win window, gate parity.GateResult) error {
@@ -110,22 +154,15 @@ func (r Round) gateRecords(fp *parity.Fingerprinter, report ReportWriter, t *tal
 		if err := report.Write(rec); err != nil {
 			return err
 		}
-		if f.Verdict.Category == parity.CategoryDivergentData || f.Verdict.Category == parity.CategoryIngestionDuplicate {
+		switch f.Verdict.Category {
+		case parity.CategoryDivergentData, parity.CategoryIngestionDuplicate:
 			t.divergent[win.class]++
+		case parity.CategoryDualWriteUnhealthy:
+			t.addReason(ReasonDualWriteUnhealthy)
 		}
 		if f.Verdict.Disposition == parity.Blocking {
 			t.addReason(ReasonSettledDivergence)
 		}
 	}
 	return nil
-}
-
-func mapKeys[V any](m map[string]V) func(func(string) bool) {
-	return func(yield func(string) bool) {
-		for k := range m {
-			if !yield(k) {
-				return
-			}
-		}
-	}
 }

@@ -131,7 +131,7 @@ func (s Settings) validate() error {
 		return invalid("the ClickHouse graph needs the clickhouse provider and a DSN")
 	}
 	r := s.Round
-	if r.Deadline <= 0 || r.Budget <= 0 || r.RetryWait < 0 || r.Concurrency <= 0 || r.MaxPairs <= 0 || r.ListLimit <= 0 || r.OperationsLimit < 1 || r.OperationsLimit > 5000 {
+	if r.Deadline <= 0 || r.Budget <= 0 || r.PushTimeout <= 0 || r.RetryWait < 0 || r.Concurrency <= 0 || r.MaxPairs <= 0 || r.ListLimit <= 0 || r.OperationsLimit < 1 || r.OperationsLimit > 5000 {
 		return invalid("the round's bounds must be positive, and its operations limit at most 5000")
 	}
 	if r.Limits.WindowedAbove < 0 || r.Limits.WindowedAbove >= r.Limits.MaxRows {

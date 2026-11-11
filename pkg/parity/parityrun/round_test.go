@@ -22,6 +22,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/parity"
 	"github.com/fuseone-io/fusescope/pkg/parity/parityexec"
 	"github.com/fuseone-io/fusescope/pkg/querier"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/servicetypes/servicetypesv1"
 	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
@@ -40,12 +41,18 @@ const (
 // store answers every query of the round the same way on both sides, unless p99 is changed.
 type store struct {
 	querier.Querier
-	p99   float64
-	extra uint64
-	drift bool
+	p99         float64
+	extra       uint64
+	drift       bool
+	partial     bool
+	delay       time.Duration
+	services    []string
+	ops         []string
+	extraCounts bool
 }
 
 func (s *store) QueryRange(_ context.Context, _ valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+	time.Sleep(s.delay)
 	q, _ := req.CompositeQuery.Queries[0].Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
 	switch req.RequestType {
 	case qbtypes.RequestTypeTimeSeries:
@@ -55,7 +62,7 @@ func (s *store) QueryRange(_ context.Context, _ valuer.UUID, req *qbtypes.QueryR
 				var values []*qbtypes.TimeSeriesValue
 				for ts := req.Start - req.Start%60_000; ts < req.End; ts += 60_000 {
 					v := 10.0
-					if s.drift && ts == req.Start {
+					if s.drift && ts == req.Start || s.extraCounts {
 						v = 11
 					}
 					values = append(values, &qbtypes.TimeSeriesValue{Timestamp: int64(ts), Value: v})
@@ -74,6 +81,13 @@ func (s *store) QueryRange(_ context.Context, _ valuer.UUID, req *qbtypes.QueryR
 			case "trace_id":
 				row = append(row, secretTrace)
 			case "name":
+				if len(s.ops) > 0 {
+					var rows [][]any
+					for _, op := range s.ops {
+						rows = append(rows, []any{op, uint64(5)})
+					}
+					return &qbtypes.QueryRangeResponse{Type: req.RequestType, Data: qbtypes.QueryData{Results: []any{&qbtypes.ScalarData{QueryName: "A", Data: rows}}}}, nil
+				}
 				row = append(row, "GET")
 			default:
 				row = append(row, secretRoute)
@@ -88,7 +102,12 @@ func (s *store) QueryRange(_ context.Context, _ valuer.UUID, req *qbtypes.QueryR
 }
 
 func (f svcFake) Get(context.Context, valuer.UUID, *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, []string, error) {
-	return []*servicetypesv1.ResponseItem{{ServiceName: secretService, Percentile99: f.s.p99, NumCalls: 5 + f.s.extra}}, nil, nil
+	time.Sleep(f.s.delay)
+	items := []*servicetypesv1.ResponseItem{{ServiceName: secretService, Percentile99: f.s.p99, NumCalls: 5 + f.s.extra}}
+	for _, name := range f.s.services {
+		items = append(items, &servicetypesv1.ResponseItem{ServiceName: name, Percentile99: f.s.p99, NumCalls: 5})
+	}
+	return items, nil, nil
 }
 
 func (f svcFake) GetTopOperations(context.Context, valuer.UUID, *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, []string, error) {
@@ -99,7 +118,10 @@ func (f svcFake) GetEntryPointOperations(ctx context.Context, org valuer.UUID, r
 	return f.GetTopOperations(ctx, org, req)
 }
 
-func (traceFake) GetTraceSummary(context.Context, valuer.UUID, string) (*spantypes.TraceStats, []string, error) {
+func (f traceFake) GetTraceSummary(context.Context, valuer.UUID, string) (*spantypes.TraceStats, []string, error) {
+	if f.s.partial {
+		return &spantypes.TraceStats{TotalSpans: 5}, []string{telemetrystore.PartialWarning(telemetrystore.PartialIngesterUnavailable)}, nil
+	}
 	return &spantypes.TraceStats{TotalSpans: 5}, nil, nil
 }
 
@@ -112,10 +134,13 @@ type svcFake struct {
 	s *store
 }
 
-type traceFake struct{ tracedetail.Module }
+type traceFake struct {
+	tracedetail.Module
+	s *store
+}
 
 func graphOf(s *store) *parityexec.Graph {
-	return &parityexec.Graph{Querier: s, Services: svcFake{s: s}, TraceDetail: traceFake{}}
+	return &parityexec.Graph{Querier: s, Services: svcFake{s: s}, TraceDetail: traceFake{s: s}}
 }
 
 type healthy struct{}
@@ -163,7 +188,7 @@ func round(t *testing.T, engine, clickhouse *store) (Round, *capturedKeys, *push
 	return Round{
 		Engine: graphOf(engine), ClickHouse: graphOf(clickhouse), Refuser: parityexec.NewRefuser(),
 		Keys: numericKeys{}, Tenants: tenants,
-		KeyStore: keys, Reports: FileSink{Dir: dir}, Health: healthy{}, Metrics: push,
+		KeyStore: keys, Reports: FileSink{Dir: dir}, Health: healthy{}, Metrics: push, Requeue: NewMemoryRequeue(),
 		Config: cfg, Seed: 7,
 		Now: func() time.Time { return time.Date(2026, 11, 10, 12, 0, 30, 0, time.UTC) },
 	}, keys, push, dir
@@ -295,4 +320,82 @@ func TestAPairTakesItsWorstDisposition(t *testing.T) {
 		takeWorst(&rec, parity.Verdict{Category: parity.Category(d), Disposition: d})
 	}
 	assert.Equal(t, PairRecord{Outcome: "differ", Category: "blocking", Disposition: parity.Blocking}, rec)
+}
+
+func pairsOf(records []map[string]any, view string) []map[string]any {
+	var out []map[string]any
+	for _, r := range records {
+		if r["kind"] == "pair" && r["view"] == view {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+func TestAPartialPairRunsAgainNextRound(t *testing.T) {
+	engine := &store{p99: 5, partial: true}
+	r, _, _, dir := round(t, engine, &store{p99: 5})
+	_, err := r.Run(context.Background())
+	require.NoError(t, err)
+	_, records := lines(t, dir)
+	summaries := pairsOf(records, "summary")
+	require.NotEmpty(t, summaries)
+	assert.Equal(t, "partial", summaries[0]["category"])
+
+	queued, err := r.Requeue.Take(context.Background())
+	require.NoError(t, err)
+	require.NotEmpty(t, queued, "the partial pair is queued, whole")
+	assert.Equal(t, "summary", queued[0].View)
+	require.NoError(t, r.Requeue.Put(context.Background(), queued))
+
+	engine.partial = false
+	next := r
+	next.Now = func() time.Time { return r.Now().Add(time.Hour) }
+	next.Reports = FileSink{Dir: t.TempDir()}
+	_, err = next.Run(context.Background())
+	require.NoError(t, err)
+	_, records = lines(t, next.Reports.(FileSink).Dir)
+	var requeued int
+	for _, rec := range pairsOf(records, "summary") {
+		if rec["requeued"] == true {
+			requeued++
+			assert.Equal(t, "match", rec["outcome"])
+		}
+	}
+	assert.Equal(t, len(queued), requeued)
+}
+
+type brokenQueue struct{ take, put error }
+
+func (b brokenQueue) Take(context.Context) ([]PairSpec, error) { return nil, b.take }
+func (b brokenQueue) Put(context.Context, []PairSpec) error    { return b.put }
+
+func TestARequeueThatFailsMakesTheRoundUnusable(t *testing.T) {
+	r, _, _, _ := round(t, &store{p99: 5}, &store{p99: 5})
+	r.Requeue = brokenQueue{take: errors.Newf(errors.TypeInternal, errors.CodeInternal, "down")}
+	summary, err := r.Run(context.Background())
+	require.NoError(t, err)
+	assert.False(t, summary.Usable)
+	assert.Contains(t, summary.Reasons, ReasonRequeueUnavailable)
+
+	r, _, _, _ = round(t, &store{p99: 5, partial: true}, &store{p99: 5})
+	r.Requeue = brokenQueue{put: errors.Newf(errors.TypeInternal, errors.CodeInternal, "down")}
+	summary, err = r.Run(context.Background())
+	require.NoError(t, err)
+	assert.False(t, summary.Usable)
+	assert.Contains(t, summary.Reasons, ReasonRequeueFailed)
+}
+
+func TestARequeuedPairOfAnotherTenantIsRefused(t *testing.T) {
+	r, _, _, dir := round(t, &store{p99: 5}, &store{p99: 5})
+	q := NewMemoryRequeue()
+	require.NoError(t, q.Put(context.Background(), []PairSpec{{View: "summary", Org: orgB, Class: parity.Settled, TraceID: secretTrace, Window: minuteWindow}}))
+	r.Requeue = q
+	summary, err := r.Run(context.Background())
+	require.NoError(t, err)
+	assert.Contains(t, summary.Reasons, ReasonRequeueInvalid)
+	_, records := lines(t, dir)
+	for _, rec := range pairsOf(records, "summary") {
+		assert.NotEqual(t, true, rec["requeued"])
+	}
 }

@@ -46,6 +46,7 @@ type PairRecord struct {
 	Tenant       string             `json:"tenant"`
 	Params       string             `json:"params"`
 	WindowClass  parity.WindowClass `json:"window_class"`
+	Requeued     bool               `json:"requeued,omitempty"`
 	EngineFirst  bool               `json:"engine_first"`
 	Attempts     int                `json:"attempts"`
 	Outcome      string             `json:"outcome"`
@@ -88,11 +89,13 @@ type ErrorRecord struct {
 
 // Summary closes a round's report; only a report with one is published.
 type Summary struct {
-	Kind       string         `json:"kind"`
-	Counts     []CountRecord  `json:"counts"`
-	Coverage   []CoverageView `json:"coverage"`
-	Qualifying bool           `json:"qualifying"`
-	// Reasons are fixed codes for a round that does not qualify, such as health_unavailable.
+	Kind     string         `json:"kind"`
+	Counts   []CountRecord  `json:"counts"`
+	Coverage []CoverageView `json:"coverage"`
+	// Usable says the round ran as planned; Qualifying, that it also met every round criterion.
+	Usable     bool `json:"usable"`
+	Qualifying bool `json:"qualifying"`
+	// Reasons are fixed codes for a round that is not usable or does not qualify.
 	Reasons []string `json:"reasons,omitempty"`
 }
 
@@ -105,11 +108,13 @@ type CountRecord struct {
 	Pairs       int                `json:"pairs"`
 }
 
-// CoverageView is a view's planned and reached pairs, and the p95 latency of each side.
+// CoverageView is a view's planned, reached and successful pairs, and the p95 latency of each side
+// over the successful ones: both sides answered whole.
 type CoverageView struct {
 	View            string  `json:"view"`
 	Planned         int     `json:"planned"`
 	Reached         int     `json:"reached"`
+	Successful      int     `json:"successful"`
 	EngineP95Ms     float64 `json:"engine_p95_ms"`
 	ClickHouseP95Ms float64 `json:"clickhouse_p95_ms"`
 }
