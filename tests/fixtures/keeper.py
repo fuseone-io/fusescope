@@ -58,24 +58,25 @@ def create_clickhouse_keeper(
         container.with_exposed_ports(9181)
         container.with_network(network=network)
 
-        container.start()
-        return types.TestContainerDocker(
-            id=container.get_wrapped_container().id,
-            host_configs={
-                "9181": types.TestContainerUrlConfig(
-                    scheme="tcp",
-                    address=container.get_container_host_ip(),
-                    port=container.get_exposed_port(9181),
-                )
-            },
-            container_configs={
-                "9181": types.TestContainerUrlConfig(
-                    scheme="tcp",
-                    address=container.get_wrapped_container().name,
-                    port=9181,
-                )
-            },
-        )
+        with reuse.removed_on_failure(container):
+            container.start()
+            return types.TestContainerDocker(
+                id=container.get_wrapped_container().id,
+                host_configs={
+                    "9181": types.TestContainerUrlConfig(
+                        scheme="tcp",
+                        address=container.get_container_host_ip(),
+                        port=container.get_exposed_port(9181),
+                    )
+                },
+                container_configs={
+                    "9181": types.TestContainerUrlConfig(
+                        scheme="tcp",
+                        address=container.get_wrapped_container().name,
+                        port=9181,
+                    )
+                },
+            )
 
     def delete(container: types.TestContainerDocker):
         client = docker.from_env()

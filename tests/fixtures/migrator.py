@@ -53,11 +53,13 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
         container.with_command(f"migrate --config={FUSESCOPE_SCHEMA_DIR}/config.json")
         container.with_envs(**(env_overrides or {}))
         container.with_network(network=network)
-        container.start()
-
-        wrapped = container.get_wrapped_container()
-        result = wrapped.wait()
-        logs = wrapped.logs().decode(encoding="utf-8")
+        # Up to the logs: a failure while it runs or exits removes it; the
+        # normal removal below runs after a zero or a non-zero exit.
+        with reuse.removed_on_failure(container):
+            container.start()
+            wrapped = container.get_wrapped_container()
+            result = wrapped.wait()
+            logs = wrapped.logs().decode(encoding="utf-8")
         wrapped.remove()
         if result["StatusCode"] != 0:
             print(logs)

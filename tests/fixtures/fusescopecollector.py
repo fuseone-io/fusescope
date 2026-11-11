@@ -239,26 +239,27 @@ def create_otlp_collector(  # pylint: disable=too-many-arguments,too-many-positi
         container.with_command(f"--config={COLLECTOR_DIR}/config/config.yaml")
         container.with_exposed_ports(4318, HEALTH_PORT)
         container.with_network(network=network)
-        container.start()
+        with reuse.removed_on_failure(container):
+            container.start()
 
-        for _ in range(60):
-            try:
-                response = requests.get(f"http://{container.get_container_host_ip()}:{container.get_exposed_port(HEALTH_PORT)}/health/status", timeout=2)
-                if response.status_code == HTTPStatus.OK:
-                    break
-            except requests.RequestException:
-                pass
-            time.sleep(1)
-        else:
-            stdout, stderr = container.get_logs()
-            logger.error("fusescope collector logs:\n%s\n%s", stdout.decode(errors="replace")[-20000:], stderr.decode(errors="replace")[-20000:])
-            raise TimeoutError("fusescope collector did not become healthy")
+            for _ in range(60):
+                try:
+                    response = requests.get(f"http://{container.get_container_host_ip()}:{container.get_exposed_port(HEALTH_PORT)}/health/status", timeout=2)
+                    if response.status_code == HTTPStatus.OK:
+                        break
+                except requests.RequestException:
+                    pass
+                time.sleep(1)
+            else:
+                stdout, stderr = container.get_logs()
+                logger.error("fusescope collector logs:\n%s\n%s", stdout.decode(errors="replace")[-20000:], stderr.decode(errors="replace")[-20000:])
+                raise TimeoutError("fusescope collector did not become healthy")
 
-        return types.TestContainerDocker(
-            id=container.get_wrapped_container().id,
-            host_configs={"4318": types.TestContainerUrlConfig("http", container.get_container_host_ip(), container.get_exposed_port(4318))},
-            container_configs={"4318": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 4318)},
-        )
+            return types.TestContainerDocker(
+                id=container.get_wrapped_container().id,
+                host_configs={"4318": types.TestContainerUrlConfig("http", container.get_container_host_ip(), container.get_exposed_port(4318))},
+                container_configs={"4318": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 4318)},
+            )
 
     def delete(container: types.TestContainerDocker) -> None:
         client = docker.from_env()
@@ -348,29 +349,30 @@ def create_fusescope_collector(  # pylint: disable=too-many-arguments,too-many-p
         container.with_exposed_ports(RUM_PORT, HEALTH_PORT)
         container.with_network(network=network)
         container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls)})
-        container.start()
+        with reuse.removed_on_failure(container):
+            container.start()
 
-        for _ in range(60):
-            try:
-                response = requests.get(f"http://{container.get_container_host_ip()}:{container.get_exposed_port(HEALTH_PORT)}/health/status", timeout=2)
-                if response.status_code == HTTPStatus.OK:
-                    break
-            except requests.RequestException:
-                pass
-            time.sleep(1)
-        else:
-            stdout, stderr = container.get_logs()
-            logger.error("fusescope collector logs:\n%s\n%s", stdout.decode(errors="replace")[-20000:], stderr.decode(errors="replace")[-20000:])
-            raise TimeoutError("fusescope collector never held an ingest policy")
+            for _ in range(60):
+                try:
+                    response = requests.get(f"http://{container.get_container_host_ip()}:{container.get_exposed_port(HEALTH_PORT)}/health/status", timeout=2)
+                    if response.status_code == HTTPStatus.OK:
+                        break
+                except requests.RequestException:
+                    pass
+                time.sleep(1)
+            else:
+                stdout, stderr = container.get_logs()
+                logger.error("fusescope collector logs:\n%s\n%s", stdout.decode(errors="replace")[-20000:], stderr.decode(errors="replace")[-20000:])
+                raise TimeoutError("fusescope collector never held an ingest policy")
 
-        return types.FuseScopeCollector(
-            self=types.TestContainerDocker(
-                id=container.get_wrapped_container().id,
-                host_configs={str(RUM_PORT): types.TestContainerUrlConfig("https", container.get_container_host_ip(), container.get_exposed_port(RUM_PORT))},
-                container_configs={str(RUM_PORT): types.TestContainerUrlConfig("https", container.get_wrapped_container().name, RUM_PORT)},
-            ),
-            ca_cert_path=tls.ca_cert_path,
-        )
+            return types.FuseScopeCollector(
+                self=types.TestContainerDocker(
+                    id=container.get_wrapped_container().id,
+                    host_configs={str(RUM_PORT): types.TestContainerUrlConfig("https", container.get_container_host_ip(), container.get_exposed_port(RUM_PORT))},
+                    container_configs={str(RUM_PORT): types.TestContainerUrlConfig("https", container.get_wrapped_container().name, RUM_PORT)},
+                ),
+                ca_cert_path=tls.ca_cert_path,
+            )
 
     def delete(collector: types.FuseScopeCollector) -> None:
         client = docker.from_env()

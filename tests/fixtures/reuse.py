@@ -1,5 +1,6 @@
-from collections.abc import Callable
-from typing import TypeVar
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from typing import Protocol, TypeVar
 
 import pytest
 
@@ -8,6 +9,34 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 T = TypeVar("T")
+
+
+class Stoppable(Protocol):  # pylint: disable=too-few-public-methods
+    def stop(self) -> None: ...
+
+
+@contextmanager
+def removed_on_failure(*containers: Stoppable) -> Iterator[Callable[[Stoppable], None]]:
+    """Wraps a create() from the first container it starts to the resource it
+    returns. reuse.wrap registers its finalizer only after create() returns,
+    so if anything in the block raises, inside start() (a readiness probe) or
+    after it, every container passed in or tracked with the yielded callable is
+    removed here, and the original error is raised. A removal that fails too
+    is logged and added to that error as a note, never raised in its place,
+    even a KeyboardInterrupt, and the remaining containers are still removed
+    (#373). Track a container before its start(): testcontainers' stop() is
+    safe on one that was never created."""
+    tracked = list(containers)
+    try:
+        yield tracked.append
+    except BaseException as error:
+        for container in reversed(tracked):
+            try:
+                container.stop()
+            except BaseException as cleanup:  # pylint: disable=broad-exception-caught
+                logger.error("Removing %s after a failed create also failed: %r", container, cleanup)
+                error.add_note(f"removing {container!r} after the failed create also failed: {cleanup!r}")
+        raise
 
 
 def reuse(request: pytest.FixtureRequest) -> bool:

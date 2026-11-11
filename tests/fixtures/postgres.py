@@ -26,35 +26,36 @@ def postgres(network: Network, request: pytest.FixtureRequest, pytestconfig: pyt
             driver="psycopg2",
         )
         container.with_network(network)
-        container.start()
+        with reuse.removed_on_failure(container):
+            container.start()
 
-        engine = create_engine(f"postgresql+psycopg2://{container.username}:{container.password}@{container.get_container_host_ip()}:{container.get_exposed_port(5432)}/{container.dbname}")
+            engine = create_engine(f"postgresql+psycopg2://{container.username}:{container.password}@{container.get_container_host_ip()}:{container.get_exposed_port(5432)}/{container.dbname}")
 
-        with engine.connect() as conn:
-            result = conn.execute(sql.text("SELECT 1"))
-            assert result.fetchone()[0] == 1
+            with engine.connect() as conn:
+                result = conn.execute(sql.text("SELECT 1"))
+                assert result.fetchone()[0] == 1
 
-        return types.TestContainerSQL(
-            container=types.TestContainerDocker(
-                id=container.get_wrapped_container().id,
-                host_configs={
-                    "5432": types.TestContainerUrlConfig(
-                        "postgresql",
-                        container.get_container_host_ip(),
-                        container.get_exposed_port(5432),
-                    )
+            return types.TestContainerSQL(
+                container=types.TestContainerDocker(
+                    id=container.get_wrapped_container().id,
+                    host_configs={
+                        "5432": types.TestContainerUrlConfig(
+                            "postgresql",
+                            container.get_container_host_ip(),
+                            container.get_exposed_port(5432),
+                        )
+                    },
+                    container_configs={"5432": types.TestContainerUrlConfig("postgresql", container.get_wrapped_container().name, 5432)},
+                ),
+                conn=engine,
+                env={
+                    "SIGNOZ_SQLSTORE_PROVIDER": "postgres",
+                    "SIGNOZ_SQLSTORE_POSTGRES_DSN": f"postgresql://{container.username}:{container.password}@{container.get_wrapped_container().name}:{5432}/{container.dbname}",
+                    "SIGNOZ_SQLSTORE_POSTGRES_DBNAME": container.dbname,
+                    "SIGNOZ_SQLSTORE_POSTGRES_USER": container.username,
+                    "SIGNOZ_SQLSTORE_POSTGRES_PASSWORD": container.password,
                 },
-                container_configs={"5432": types.TestContainerUrlConfig("postgresql", container.get_wrapped_container().name, 5432)},
-            ),
-            conn=engine,
-            env={
-                "SIGNOZ_SQLSTORE_PROVIDER": "postgres",
-                "SIGNOZ_SQLSTORE_POSTGRES_DSN": f"postgresql://{container.username}:{container.password}@{container.get_wrapped_container().name}:{5432}/{container.dbname}",
-                "SIGNOZ_SQLSTORE_POSTGRES_DBNAME": container.dbname,
-                "SIGNOZ_SQLSTORE_POSTGRES_USER": container.username,
-                "SIGNOZ_SQLSTORE_POSTGRES_PASSWORD": container.password,
-            },
-        )
+            )
 
     def delete(container: types.TestContainerSQL):
         client = docker.from_env()

@@ -39,31 +39,32 @@ def seeder(
         container.with_env("CH_CLUSTER", clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"])
         container.with_exposed_ports(8080)
         container.with_network(network=network)
-        container.start()
+        with reuse.removed_on_failure(container):
+            container.start()
 
-        host = container.get_container_host_ip()
-        host_port = container.get_exposed_port(8080)
+            host = container.get_container_host_ip()
+            host_port = container.get_exposed_port(8080)
 
-        for attempt in range(20):
-            try:
-                response = requests.get(f"http://{host}:{host_port}/healthz", timeout=2)
-                if response.status_code == HTTPStatus.OK:
-                    break
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                logger.info("seeder attempt %d: %s", attempt + 1, e)
-            time.sleep(1)
-        else:
-            raise TimeoutError("seeder container did not become ready")
+            for attempt in range(20):
+                try:
+                    response = requests.get(f"http://{host}:{host_port}/healthz", timeout=2)
+                    if response.status_code == HTTPStatus.OK:
+                        break
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    logger.info("seeder attempt %d: %s", attempt + 1, e)
+                time.sleep(1)
+            else:
+                raise TimeoutError("seeder container did not become ready")
 
-        return types.TestContainerDocker(
-            id=container.get_wrapped_container().id,
-            host_configs={
-                "8080": types.TestContainerUrlConfig("http", host, host_port),
-            },
-            container_configs={
-                "8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080),
-            },
-        )
+            return types.TestContainerDocker(
+                id=container.get_wrapped_container().id,
+                host_configs={
+                    "8080": types.TestContainerUrlConfig("http", host, host_port),
+                },
+                container_configs={
+                    "8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080),
+                },
+            )
 
     def delete(container: types.TestContainerDocker) -> None:
         client = docker.from_env()

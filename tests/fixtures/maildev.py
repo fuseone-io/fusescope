@@ -45,35 +45,36 @@ def create_maildev(
         container.with_env("MAILDEV_INCOMING_PASS", incoming_pass)
         container.with_exposed_ports(1025, 1080)
         container.with_network(network=network)
-        container.start()
+        with reuse.removed_on_failure(container):
+            container.start()
 
-        return types.TestContainerDocker(
-            id=container.get_wrapped_container().id,
-            host_configs={
-                "1025": types.TestContainerUrlConfig(
-                    scheme="smtp",
-                    address=container.get_container_host_ip(),
-                    port=container.get_exposed_port(1025),
-                ),
-                "1080": types.TestContainerUrlConfig(
-                    scheme="http",
-                    address=container.get_container_host_ip(),
-                    port=container.get_exposed_port(1080),
-                ),
-            },
-            container_configs={
-                "1025": types.TestContainerUrlConfig(
-                    scheme="smtp",
-                    address=container.get_wrapped_container().name,
-                    port=1025,
-                ),
-                "1080": types.TestContainerUrlConfig(
-                    scheme="http",
-                    address=container.get_wrapped_container().name,
-                    port=1080,
-                ),
-            },
-        )
+            return types.TestContainerDocker(
+                id=container.get_wrapped_container().id,
+                host_configs={
+                    "1025": types.TestContainerUrlConfig(
+                        scheme="smtp",
+                        address=container.get_container_host_ip(),
+                        port=container.get_exposed_port(1025),
+                    ),
+                    "1080": types.TestContainerUrlConfig(
+                        scheme="http",
+                        address=container.get_container_host_ip(),
+                        port=container.get_exposed_port(1080),
+                    ),
+                },
+                container_configs={
+                    "1025": types.TestContainerUrlConfig(
+                        scheme="smtp",
+                        address=container.get_wrapped_container().name,
+                        port=1025,
+                    ),
+                    "1080": types.TestContainerUrlConfig(
+                        scheme="http",
+                        address=container.get_wrapped_container().name,
+                        port=1080,
+                    ),
+                },
+            )
 
     def delete(container: types.TestContainerDocker):
         client = docker.from_env()

@@ -181,24 +181,21 @@ def googleidp(  # pylint: disable=too-many-arguments,too-many-positional-argumen
         container.with_network_aliases(ISSUER_HOST)
         container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls)})
 
-        try:
+        # Ryuk is disabled: a started-but-unready container would survive
+        # and keep squatting on the accounts.google.com alias, poisoning
+        # DNS for any replacement on the shared network.
+        with reuse.removed_on_failure(container):
             container.start(f"--port 8080 --https-port 443 --https-keystore /certs/keystore.p12 --keystore-type PKCS12 --keystore-password {KEYSTORE_PASSWORD} --local-response-templating")
-        except Exception:
-            # Ryuk is disabled: a started-but-unready container would survive
-            # and keep squatting on the accounts.google.com alias, poisoning
-            # DNS for any replacement on the shared network.
-            container.stop()
-            raise
 
-        return types.TestContainerDocker(
-            id=container.get_wrapped_container().id,
-            host_configs={
-                "8080": types.TestContainerUrlConfig("http", container.get_container_host_ip(), container.get_exposed_port(8080)),
-            },
-            container_configs={
-                "443": types.TestContainerUrlConfig("https", ISSUER_HOST, 443),
-            },
-        )
+            return types.TestContainerDocker(
+                id=container.get_wrapped_container().id,
+                host_configs={
+                    "8080": types.TestContainerUrlConfig("http", container.get_container_host_ip(), container.get_exposed_port(8080)),
+                },
+                container_configs={
+                    "443": types.TestContainerUrlConfig("https", ISSUER_HOST, 443),
+                },
+            )
 
     def delete(container: types.TestContainerDocker) -> None:
         client = docker.from_env()
