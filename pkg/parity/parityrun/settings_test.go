@@ -68,3 +68,32 @@ func TestASecondSettingsDocumentIsASettingsError(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errors.Asc(err, ErrCodeSettings), "%v", err)
 }
+
+const deploymentYAML = `bucket: {name: parity-staging, kms_key_id: "arn:aws:kms:us-east-1:1:key/requeue"}
+secret: {namespace: parity}
+health: {url: "https://prometheus:9090", token_file: /prom/token, exporters: [fusescope_clickhouse, otlp/engine]}
+investigate:
+  issuer: https://idp.example.com
+  audience: fusescope-parity-investigate
+  group: staging-oncall
+  audit_endpoint: https://audit-collector:4318
+  audit_token_file: /audit/token
+`
+
+func TestTheDeploymentSectionsReadWithTheirDefaults(t *testing.T) {
+	s, err := ParseSettings(strings.NewReader(settingsYAML + deploymentYAML))
+	require.NoError(t, err)
+	assert.Equal(t, "parity-staging", s.Bucket.Name)
+	assert.Equal(t, int64(8<<20), s.Bucket.MaxQueueBytes)
+	assert.Equal(t, 10_000, s.Bucket.MaxQueueSpecs)
+	assert.Equal(t, "parity", s.Secret.Namespace)
+	assert.Equal(t, "/var/run/secrets/kubernetes.io/serviceaccount/token", s.Secret.TokenFile)
+	assert.Equal(t, "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt", s.Secret.CAFile)
+	assert.Equal(t, 90*24*time.Hour, s.Secret.Expiry)
+	assert.Equal(t, "pod", s.Health.InstanceLabel)
+	assert.Equal(t, []string{"fusescope_clickhouse", "otlp/engine"}, s.Health.Exporters)
+	assert.Equal(t, "groups", s.Investigate.GroupsClaim)
+	assert.Equal(t, 10*time.Minute, s.Investigate.MaxAge)
+	assert.Equal(t, 30*time.Second, s.Investigate.ClockSkew)
+	assert.Equal(t, "https://audit-collector:4318", s.Investigate.AuditEndpoint)
+}

@@ -1,6 +1,7 @@
 package parityrun
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -24,6 +25,7 @@ type Header struct {
 	Format        int                 `json:"format"`
 	RunID         string              `json:"run_id"`
 	RunKeyID      string              `json:"run_key_id"`
+	RunKeyCheck   string              `json:"run_key_check"`
 	BackendCommit string              `json:"backend_commit"`
 	ImageDigest   string              `json:"image_digest"`
 	EngineVersion string              `json:"engine_version"`
@@ -133,7 +135,7 @@ type ReportWriter interface {
 	// Write appends a Header, PairRecord or GateRecord.
 	Write(line any) error
 	// Publish appends the summary and makes the report visible; it never replaces another.
-	Publish(Summary) error
+	Publish(ctx context.Context, summary Summary) error
 	// Abort discards an unpublished report.
 	Abort() error
 }
@@ -197,7 +199,7 @@ func (w *fileWriter) Write(line any) error {
 	return nil
 }
 
-func (w *fileWriter) Publish(summary Summary) error {
+func (w *fileWriter) Publish(_ context.Context, summary Summary) error {
 	if w.done {
 		return errors.Newf(errors.TypeInternal, ErrCodeReport, "the report is closed")
 	}

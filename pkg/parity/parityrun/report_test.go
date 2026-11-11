@@ -36,7 +36,7 @@ func TestAReportIsPublishedOnlyWithItsSummary(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, os.FileMode(0o600), info.Mode().Perm())
 	}
-	require.NoError(t, w.Publish(Summary{Qualifying: true}))
+	require.NoError(t, w.Publish(t.Context(), Summary{Qualifying: true}))
 	assert.Equal(t, []string{"run-1.jsonl"}, published(t, dir), "the temporary file was renamed")
 	info, err := os.Stat(filepath.Join(dir, "run-1.jsonl"))
 	require.NoError(t, err)
@@ -54,7 +54,7 @@ func TestAReportIsPublishedOnlyWithItsSummary(t *testing.T) {
 	}
 	assert.Equal(t, []string{"header", "pair", "summary"}, kinds)
 	assert.Error(t, w.Write(PairRecord{}), "nothing after the summary")
-	assert.Error(t, w.Publish(Summary{}))
+	assert.Error(t, w.Publish(t.Context(), Summary{}))
 }
 
 func TestAnAbandonedReportLeavesNothing(t *testing.T) {
@@ -71,7 +71,7 @@ func TestAReportNeverOverwritesAnother(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "run-3.jsonl"), []byte("earlier"), 0o600))
 	w, err := FileSink{Dir: dir}.Create("run-3")
 	require.NoError(t, err)
-	assert.Error(t, w.Publish(Summary{}))
+	assert.Error(t, w.Publish(t.Context(), Summary{}))
 	got, err := os.ReadFile(filepath.Join(dir, "run-3.jsonl"))
 	require.NoError(t, err)
 	assert.Equal(t, "earlier", string(got))

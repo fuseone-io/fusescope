@@ -34,6 +34,7 @@ const (
 	ReasonTenantViewUncovered = "tenant_view_uncovered"
 	ReasonLatency             = "latency_over_limit"
 	ReasonNothingCompared     = "nothing_compared"
+	ReasonReportUnpublished   = "report_unpublished"
 )
 
 // errBudget is the cause of a round's budget running out, told apart from a cancelled round.
@@ -100,8 +101,10 @@ func RunID(start time.Time, seed parity.Seed) string {
 	return start.UTC().Format("20060102t150405z") + "-" + strconv.FormatUint(uint64(seed), 10)
 }
 
-// Run runs the round and publishes its report. The run key is stored before anything is read, and
-// the budget bounds every read from then on. A cancelled round publishes nothing.
+// Run runs the round and publishes its report. The report is started, then the run key stored,
+// before anything is read, so a round that cannot report leaves no key; the budget bounds every
+// read from then on. A cancelled round publishes nothing, and one whose report is not published is
+// not usable.
 //
 // # Errors
 //
@@ -118,9 +121,6 @@ func (r Round) Run(ctx context.Context) (Summary, error) {
 		return Summary{}, errors.WrapInternalf(err, ErrCodeRound, "error making the run key")
 	}
 	keyID := "parity-run-" + runID
-	if err := r.KeyStore.Store(ctx, keyID, key); err != nil {
-		return Summary{}, err
-	}
 	fp, err := parity.NewFingerprinter(key)
 	if err != nil {
 		return Summary{}, err
@@ -129,8 +129,12 @@ func (r Round) Run(ctx context.Context) (Summary, error) {
 	if err != nil {
 		return Summary{}, err
 	}
+	if err := r.KeyStore.Store(ctx, keyID, key); err != nil {
+		_ = report.Abort()
+		return Summary{}, err
+	}
 	budget, cancel := context.WithTimeoutCause(ctx, r.Config.Budget, errBudget)
-	out, err := r.run(budget, start, runID, keyID, fp, report)
+	out, err := r.run(budget, start, runID, keyID, RunKeyCheck(key, runID), fp, report)
 	cancel()
 	if err == nil && ctx.Err() != nil {
 		err = ctx.Err()
@@ -163,7 +167,9 @@ func (r Round) Run(ctx context.Context) (Summary, error) {
 		_ = report.Abort()
 		return Summary{}, err
 	}
-	if err := report.Publish(t.Summary); err != nil {
+	if err := report.Publish(ctx, t.Summary); err != nil {
+		t.addReason(ReasonReportUnpublished)
+		t.settle()
 		return t.Summary, err
 	}
 	return t.Summary, pushErr
@@ -185,12 +191,12 @@ type outcome struct {
 	queue   []PairSpec
 }
 
-func (r Round) run(ctx context.Context, start time.Time, runID, keyID string, fp *parity.Fingerprinter, report ReportWriter) (outcome, error) {
+func (r Round) run(ctx context.Context, start time.Time, runID, keyID, keyCheck string, fp *parity.Fingerprinter, report ReportWriter) (outcome, error) {
 	windows, header, err := r.windows(start, fp)
 	if err != nil {
 		return outcome{}, err
 	}
-	header.RunID, header.RunKeyID = runID, keyID
+	header.RunID, header.RunKeyID, header.RunKeyCheck = runID, keyID, keyCheck
 	if err := report.Write(header); err != nil {
 		return outcome{}, err
 	}

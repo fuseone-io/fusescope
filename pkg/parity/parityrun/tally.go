@@ -19,7 +19,7 @@ const (
 // The reasons that make a round unusable: it did not run as planned.
 var unusableReasons = map[string]bool{
 	ReasonHealthUnavailable: true, ReasonDataUnavailable: true, ReasonBudgetExhausted: true, ReasonMetricsPushFailed: true,
-	ReasonRequeueUnavailable: true, ReasonRequeueFailed: true, ReasonRequeueInvalid: true,
+	ReasonRequeueUnavailable: true, ReasonRequeueFailed: true, ReasonRequeueInvalid: true, ReasonReportUnpublished: true,
 }
 
 type tenantView struct{ tenant, view string }
