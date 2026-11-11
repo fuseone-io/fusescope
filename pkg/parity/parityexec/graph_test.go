@@ -18,6 +18,7 @@ import (
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/spantypes"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -53,7 +54,7 @@ func (e *fakeEngine) Do(_ context.Context, action string, _ []byte) (telemetryst
 func engineGraph(t *testing.T) (*Graph, *fakeEngine) {
 	t.Helper()
 	store := &fakeEngine{Refuser: NewRefuser()}
-	cfg := Config{Org: org, Querier: querier.Config{MaxConcurrentQueries: 2}, TraceDetail: tracedetail.NewConfigFactory().New().(tracedetail.Config)}
+	cfg := Config{Orgs: []valuer.UUID{org}, Querier: querier.Config{MaxConcurrentQueries: 2}, TraceDetail: tracedetail.NewConfigFactory().New().(tracedetail.Config)}
 	g, err := newEngineGraph(instrumentationtest.New().ToProviderSettings(), flaggertest.New(t), store, store.Refuser, cfg)
 	require.NoError(t, err)
 	return g, store
@@ -129,4 +130,19 @@ func TestATraceDetailViewTheEngineDoesNotServeIsRefusedNotAPanic(t *testing.T) {
 	})
 	assert.Error(t, err)
 	assert.Positive(t, store.Touches(1), "they reach ClickHouse, which refuses")
+}
+
+func TestTheEngineGraphResolvesKeysFromTheEngine(t *testing.T) {
+	g, store := engineGraph(t)
+	require.NotNil(t, g.Keys)
+	_, _, err := g.Keys.GetKeysMulti(pairContext(), org, []*telemetrytypes.FieldKeySelector{{Name: "http.route", Signal: telemetrytypes.SignalTraces, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact}})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"metadata.keys"}, store.actions)
+}
+
+func TestTheEngineGraphRoutesOnlyTheOrgsCompared(t *testing.T) {
+	g, store := engineGraph(t)
+	_, _ = g.Querier.QueryRange(pairContext(), valuer.GenerateUUID(), request(qbtypes.RequestTypeScalar, "count()"))
+	assert.Empty(t, store.statements, "another org never reaches the engine")
+	assert.Positive(t, store.Touches(1), "it is built for ClickHouse, and refused")
 }

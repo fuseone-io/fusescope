@@ -1,6 +1,7 @@
 package parity
 
 import (
+	"maps"
 	"slices"
 	"strings"
 	"unicode"
@@ -124,4 +125,9 @@ func literalPattern(v string) string {
 		b.WriteRune(r)
 	}
 	return b.String()
+}
+
+// AbsentKeyAttributes are the promoted text keys whose absence the round tests, in name order.
+func AbsentKeyAttributes() []string {
+	return slices.Sorted(maps.Keys(absentKeyAttributes))
 }
