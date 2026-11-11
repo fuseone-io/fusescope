@@ -34,6 +34,7 @@ func prometheusFake(t *testing.T, series map[string][]promSeries, status int) (*
 		queries = append(queries, q)
 		if status != http.StatusOK {
 			w.WriteHeader(status)
+			_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[]}}`))
 			return
 		}
 		var result []map[string]any
@@ -77,8 +78,11 @@ func up(pod string, minutes ...int64) promSeries {
 
 func TestAFailedExportInvalidatesItsInstancesMinute(t *testing.T) {
 	server, queries := prometheusFake(t, map[string][]promSeries{
-		"up":                                 {up("c-0", 0, 1, 2), up("c-1", 0, 1, 2)},
-		"otelcol_exporter_send_failed_spans": {{labels: map[string]string{"pod": "c-1", "exporter": "otlp/engine"}, values: map[int64]float64{promStart.Unix() + 60: 3}}},
+		"up": {up("c-0", 0, 1, 2), up("c-1", 0, 1, 2)},
+		"otelcol_exporter_send_failed_spans": {
+			{labels: map[string]string{"pod": "c-1", "exporter": "otlp/engine"}, values: map[int64]float64{promStart.Unix() + 60: 3}},
+			{labels: map[string]string{"pod": "c-9", "exporter": "otlp/engine"}, values: map[int64]float64{promStart.Unix() + 60: 3}},
+		},
 	}, http.StatusOK)
 	got, err := health(t, server).Failures(t.Context(), promStart, promStart.Add(3*time.Minute))
 	require.NoError(t, err)

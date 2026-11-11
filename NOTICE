@@ -37,3 +37,15 @@ github.com/apache/arrow-go/v18 v18.8.0
   This product includes software developed at
   The Apache Software Foundation (http://www.apache.org/).
   Licensed under the Apache License, Version 2.0.
+
+-------------------------------------------------------------------------------
+
+The parity binary (cmd/parity) also links these Go modules, whose NOTICE is
+reproduced as their license requires.
+
+github.com/aws/aws-sdk-go-v2 v1.48.0 (and its service/s3, config and
+credentials modules)
+  AWS SDK for Go
+  Copyright 2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+  Copyright 2014-2015 Stripe, Inc.
+  Licensed under the Apache License, Version 2.0.
