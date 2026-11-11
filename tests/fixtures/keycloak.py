@@ -31,29 +31,30 @@ def idp(
         container.with_env("KC_HTTP_PORT", "6060")
         container.with_env("KC_HTTP_MANAGEMENT_PORT", "6061")
         container.with_network(network)
-        container.start()
 
-        return types.TestContainerIDP(
-            container=types.TestContainerDocker(
-                id=container.get_wrapped_container().id,
-                host_configs={
-                    "6060": types.TestContainerUrlConfig(
-                        "http",
-                        container.get_container_host_ip(),
-                        container.get_exposed_port(6060),
-                    ),
-                    "6061": types.TestContainerUrlConfig(
-                        "http",
-                        container.get_container_host_ip(),
-                        container.get_exposed_port(6061),
-                    ),
-                },
-                container_configs={
-                    "6060": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 6060),
-                    "6061": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 6061),
-                },
-            ),
-        )
+        with reuse.removed_on_failure(container):
+            container.start()
+            return types.TestContainerIDP(
+                container=types.TestContainerDocker(
+                    id=container.get_wrapped_container().id,
+                    host_configs={
+                        "6060": types.TestContainerUrlConfig(
+                            "http",
+                            container.get_container_host_ip(),
+                            container.get_exposed_port(6060),
+                        ),
+                        "6061": types.TestContainerUrlConfig(
+                            "http",
+                            container.get_container_host_ip(),
+                            container.get_exposed_port(6061),
+                        ),
+                    },
+                    container_configs={
+                        "6060": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 6060),
+                        "6061": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 6061),
+                    },
+                ),
+            )
 
     def delete(container: types.TestContainerIDP):
         client = docker.from_env()

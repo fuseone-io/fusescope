@@ -245,45 +245,46 @@ def create_clickhouse(  # pylint: disable=too-many-arguments,too-many-positional
             "/etc/clickhouse-server/custom-function.xml",
         )
         container.with_network(network)
-        container.start()
+        with reuse.removed_on_failure(container):
+            container.start()
 
-        install_histogram_quantile(container)
+            install_histogram_quantile(container)
 
-        connection = clickhouse_connect.get_client(
-            user=container.username,
-            password=container.password,
-            host=container.get_container_host_ip(),
-            port=container.get_exposed_port(8123),
-        )
+            connection = clickhouse_connect.get_client(
+                user=container.username,
+                password=container.password,
+                host=container.get_container_host_ip(),
+                port=container.get_exposed_port(8123),
+            )
 
-        return types.TestContainerClickhouse(
-            container=types.TestContainerDocker(
-                id=container.get_wrapped_container().id,
-                host_configs={
-                    "9000": types.TestContainerUrlConfig(
-                        "tcp",
-                        container.get_container_host_ip(),
-                        container.get_exposed_port(9000),
-                    ),
-                    "8123": types.TestContainerUrlConfig(
-                        "tcp",
-                        container.get_container_host_ip(),
-                        container.get_exposed_port(8123),
-                    ),
+            return types.TestContainerClickhouse(
+                container=types.TestContainerDocker(
+                    id=container.get_wrapped_container().id,
+                    host_configs={
+                        "9000": types.TestContainerUrlConfig(
+                            "tcp",
+                            container.get_container_host_ip(),
+                            container.get_exposed_port(9000),
+                        ),
+                        "8123": types.TestContainerUrlConfig(
+                            "tcp",
+                            container.get_container_host_ip(),
+                            container.get_exposed_port(8123),
+                        ),
+                    },
+                    container_configs={
+                        "9000": types.TestContainerUrlConfig("tcp", container.get_wrapped_container().name, 9000),
+                        "8123": types.TestContainerUrlConfig("tcp", container.get_wrapped_container().name, 8123),
+                    },
+                ),
+                conn=connection,
+                env={
+                    "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN": f"tcp://{container.username}:{container.password}@{container.get_wrapped_container().name}:{9000}",
+                    "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME": container.username,
+                    "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD": container.password,
+                    "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER": "cluster",
                 },
-                container_configs={
-                    "9000": types.TestContainerUrlConfig("tcp", container.get_wrapped_container().name, 9000),
-                    "8123": types.TestContainerUrlConfig("tcp", container.get_wrapped_container().name, 8123),
-                },
-            ),
-            conn=connection,
-            env={
-                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN": f"tcp://{container.username}:{container.password}@{container.get_wrapped_container().name}:{9000}",
-                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME": container.username,
-                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD": container.password,
-                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER": "cluster",
-            },
-        )
+            )
 
     def delete(container: types.TestContainerClickhouse) -> None:
         client = docker.from_env()
@@ -404,8 +405,7 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
         keeper_map_path_prefix = f"/fusescope/{cache_key}-{suffix}/keeper_map"
 
         nodes: list[types.TestContainerDocker] = []
-        started: list[ClickHouseContainer] = []
-        try:
+        with reuse.removed_on_failure() as track:
             for i, alias in enumerate(aliases, start=1):
                 node_config = render_node_config(
                     keeper_address=coordinator.address,
@@ -438,8 +438,8 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
                 container.with_volume_mapping(users_config_file_path, "/etc/clickhouse-server/users.d/integration-cluster.xml")
                 container.with_network(network)
                 container.with_network_aliases(alias)
+                track(container)
                 container.start()
-                started.append(container)
 
                 install_histogram_quantile(container)
 
@@ -464,29 +464,25 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
                         },
                     )
                 )
-        except Exception:
-            for container in started:
-                container.stop()
-            raise
 
-        connection = clickhouse_connect.get_client(
-            user=CLICKHOUSE_USERNAME,
-            password=CLICKHOUSE_PASSWORD,
-            host=nodes[0].host_configs["8123"].address,
-            port=nodes[0].host_configs["8123"].port,
-        )
+            connection = clickhouse_connect.get_client(
+                user=CLICKHOUSE_USERNAME,
+                password=CLICKHOUSE_PASSWORD,
+                host=nodes[0].host_configs["8123"].address,
+                port=nodes[0].host_configs["8123"].port,
+            )
 
-        return types.TestContainerClickhouse(
-            container=nodes[0],
-            conn=connection,
-            env={
-                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN": f"tcp://{CLICKHOUSE_USERNAME}:{CLICKHOUSE_PASSWORD}@{aliases[0]}:{9000}",
-                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME": CLICKHOUSE_USERNAME,
-                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD": CLICKHOUSE_PASSWORD,
-                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER": "cluster",
-            },
-            nodes=nodes,
-        )
+            return types.TestContainerClickhouse(
+                container=nodes[0],
+                conn=connection,
+                env={
+                    "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN": f"tcp://{CLICKHOUSE_USERNAME}:{CLICKHOUSE_PASSWORD}@{aliases[0]}:{9000}",
+                    "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME": CLICKHOUSE_USERNAME,
+                    "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD": CLICKHOUSE_PASSWORD,
+                    "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER": "cluster",
+                },
+                nodes=nodes,
+            )
 
     def delete(resource: types.TestContainerClickhouse) -> None:
         client = docker.from_env()

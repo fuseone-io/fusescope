@@ -155,68 +155,69 @@ def create_signoz(
             container.with_volume_mapping(tls.ca_cert_path, CA_CONTAINER_PATH, "ro")
             container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls)})
 
-        container.start()
+        with reuse.removed_on_failure(container):
+            container.start()
 
-        def ready(container: DockerContainer) -> None:
-            for attempt in range(10):
-                try:
-                    response = requests.get(
-                        f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v2/healthz",
-                        timeout=2,
-                    )
-                    if response.status_code == HTTPStatus.OK:
-                        return
-                    if response.status_code == HTTPStatus.SERVICE_UNAVAILABLE:
+            def ready(container: DockerContainer) -> None:
+                for attempt in range(10):
+                    try:
+                        response = requests.get(
+                            f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v2/healthz",
+                            timeout=2,
+                        )
+                        if response.status_code == HTTPStatus.OK:
+                            return
+                        if response.status_code == HTTPStatus.SERVICE_UNAVAILABLE:
+                            logger.error(
+                                "Attempt %s: SigNoz container %s not ready yet:\n%s",
+                                attempt + 1,
+                                container,
+                                response.text,
+                            )
+                    except Exception as e:  # pylint: disable=broad-exception-caught
                         logger.error(
-                            "Attempt %s: SigNoz container %s not ready yet:\n%s",
+                            "Attempt %s at readiness check for SigNoz container %s failed: %s",
                             attempt + 1,
                             container,
-                            response.text,
+                            e,
                         )
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    logger.error(
-                        "Attempt %s at readiness check for SigNoz container %s failed: %s",
-                        attempt + 1,
-                        container,
-                        e,
-                    )
-                time.sleep(2)
-            raise TimeoutError("timeout exceeded while waiting")
+                    time.sleep(2)
+                raise TimeoutError("timeout exceeded while waiting")
 
-        try:
-            ready(container=container)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            stdout, stderr = container.get_logs()
-            logger.error(
-                "FuseScope container logs:\n%s\n%s",
-                stdout.decode(errors="replace")[-20000:],
-                stderr.decode(errors="replace")[-20000:],
+            try:
+                ready(container=container)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                stdout, stderr = container.get_logs()
+                logger.error(
+                    "FuseScope container logs:\n%s\n%s",
+                    stdout.decode(errors="replace")[-20000:],
+                    stderr.decode(errors="replace")[-20000:],
+                )
+                raise e
+
+            return types.SigNoz(
+                self=types.TestContainerDocker(
+                    id=container.get_wrapped_container().id,
+                    host_configs={
+                        "8080": types.TestContainerUrlConfig(
+                            "http",
+                            container.get_container_host_ip(),
+                            container.get_exposed_port(8080),
+                        )
+                    },
+                    container_configs={
+                        "8080": types.TestContainerUrlConfig(
+                            "http",
+                            container.get_wrapped_container().name,
+                            8080,
+                        )
+                    },
+                ),
+                sqlstore=sqlstore,
+                telemetrystore=clickhouse,
+                zeus=zeus,
+                gateway=gateway,
             )
-            raise e
-
-        return types.SigNoz(
-            self=types.TestContainerDocker(
-                id=container.get_wrapped_container().id,
-                host_configs={
-                    "8080": types.TestContainerUrlConfig(
-                        "http",
-                        container.get_container_host_ip(),
-                        container.get_exposed_port(8080),
-                    )
-                },
-                container_configs={
-                    "8080": types.TestContainerUrlConfig(
-                        "http",
-                        container.get_wrapped_container().name,
-                        8080,
-                    )
-                },
-            ),
-            sqlstore=sqlstore,
-            telemetrystore=clickhouse,
-            zeus=zeus,
-            gateway=gateway,
-        )
 
     def delete(container: types.SigNoz) -> None:
         client = docker.from_env()

@@ -28,19 +28,20 @@ def zeus(
     def create() -> types.TestContainerDocker:
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_network(network)
-        container.start()
+        with reuse.removed_on_failure(container):
+            container.start()
 
-        return types.TestContainerDocker(
-            id=container.get_wrapped_container().id,
-            host_configs={
-                "8080": types.TestContainerUrlConfig(
-                    "http",
-                    container.get_container_host_ip(),
-                    container.get_exposed_port(8080),
-                )
-            },
-            container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
-        )
+            return types.TestContainerDocker(
+                id=container.get_wrapped_container().id,
+                host_configs={
+                    "8080": types.TestContainerUrlConfig(
+                        "http",
+                        container.get_container_host_ip(),
+                        container.get_exposed_port(8080),
+                    )
+                },
+                container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
+            )
 
     def delete(container: types.TestContainerDocker):
         client = docker.from_env()
@@ -78,19 +79,20 @@ def gateway(
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_exposed_ports(8080)
         container.with_network(network)
-        container.start()
+        with reuse.removed_on_failure(container):
+            container.start()
 
-        return types.TestContainerDocker(
-            id=container.get_wrapped_container().id,
-            host_configs={
-                "8080": types.TestContainerUrlConfig(
-                    "http",
-                    container.get_container_host_ip(),
-                    container.get_exposed_port(8080),
-                )
-            },
-            container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
-        )
+            return types.TestContainerDocker(
+                id=container.get_wrapped_container().id,
+                host_configs={
+                    "8080": types.TestContainerUrlConfig(
+                        "http",
+                        container.get_container_host_ip(),
+                        container.get_exposed_port(8080),
+                    )
+                },
+                container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
+            )
 
     def delete(container: types.TestContainerDocker):
         client = docker.from_env()

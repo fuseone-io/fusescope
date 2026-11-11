@@ -547,28 +547,25 @@ def notification_channel(  # pylint: disable=too-many-arguments,too-many-positio
         container.with_network_aliases(*TLS_HOSTS)
         container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls), TLS_HOSTS_LABEL: ",".join(TLS_HOSTS)})
 
-        try:
+        # Ryuk is disabled: a started-but-unready container would survive and
+        # keep squatting on the api.atlassian.com alias, poisoning DNS for
+        # any replacement on the shared network.
+        with reuse.removed_on_failure(container):
             container.start(f"--port 8080 --https-port 443 --https-keystore /certs/keystore.p12 --keystore-type PKCS12 --keystore-password {KEYSTORE_PASSWORD}")
-        except Exception:
-            # Ryuk is disabled: a started-but-unready container would survive and
-            # keep squatting on the api.atlassian.com alias, poisoning DNS for
-            # any replacement on the shared network.
-            container.stop()
-            raise
 
-        return types.TestContainerDocker(
-            id=container.get_wrapped_container().id,
-            host_configs={
-                "8080": types.TestContainerUrlConfig(
-                    "http",
-                    container.get_container_host_ip(),
-                    container.get_exposed_port(8080),
-                )
-            },
-            container_configs={
-                "8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080),
-            },
-        )
+            return types.TestContainerDocker(
+                id=container.get_wrapped_container().id,
+                host_configs={
+                    "8080": types.TestContainerUrlConfig(
+                        "http",
+                        container.get_container_host_ip(),
+                        container.get_exposed_port(8080),
+                    )
+                },
+                container_configs={
+                    "8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080),
+                },
+            )
 
     def delete(container: types.TestContainerDocker):
         client = docker.from_env()
