@@ -4,8 +4,6 @@ import (
 	"io"
 	"time"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/fuseone-io/fusescope/pkg/config"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/modules/tracedetail"
@@ -22,11 +20,12 @@ const settingsVersion = 1
 // settingsSections are the sections of the settings file; any other is refused.
 var settingsSections = map[string]bool{
 	"version": true, "engine": true, "clickhouse": true, "querier": true, "traces": true, "round": true, "pushgateway": true,
-	"bucket": true, "secret": true, "health": true, "investigate": true,
+	"bucket": true, "secret": true, "health": true, "investigate": true, "credentials": true,
 }
 
 // Settings are the parity's own: its two stores, decoded as the backend decodes them and over the
-// backend's defaults, the modules' configurations, the round's bounds and the Pushgateway.
+// backend's defaults, the modules' configurations, the round's bounds, the Pushgateway and the
+// files its credentials are read from.
 type Settings struct {
 	Engine      telemetrystore.Config
 	ClickHouse  telemetrystore.Config
@@ -38,6 +37,7 @@ type Settings struct {
 	Secret      SecretSettings
 	Health      HealthSettings
 	Investigate InvestigateSettings
+	Credentials CredentialsSettings
 }
 
 // BucketSettings name the staging bucket and the requeue's KMS key and bounds.
@@ -100,26 +100,19 @@ type roundSettings struct {
 // # Errors
 //
 // A file of another version or with an unknown section, an engine that is not the flight provider,
-// a ClickHouse without a DSN, bounds that are not positive, or a Pushgateway not over https.
+// a ClickHouse DSN without exactly one source, bounds that are not positive, or a Pushgateway not over https.
 func ParseSettings(r io.Reader) (Settings, error) {
 	invalid := func(format string, args ...any) (Settings, error) {
 		return Settings{}, errors.Newf(errors.TypeInvalidInput, ErrCodeSettings, format, args...)
 	}
-	var raw map[string]any
-	dec := yaml.NewDecoder(r)
-	if err := dec.Decode(&raw); err != nil {
-		return invalid("the settings file does not decode: %v", err)
-	}
-	if err := oneDocument(dec, ErrCodeSettings); err != nil {
+	raw, err := decodeSettingsDocument(r)
+	if err != nil {
 		return Settings{}, err
 	}
 	for section := range raw {
 		if !settingsSections[section] {
 			return invalid("the settings file has an unknown section %q", section)
 		}
-	}
-	if v, _ := raw["version"].(int); v != settingsVersion {
-		return invalid("the settings file is not version %d", settingsVersion)
 	}
 	conf, err := config.NewConfFromMap(raw)
 	if err != nil {
@@ -132,26 +125,33 @@ func ParseSettings(r io.Reader) (Settings, error) {
 		TraceDetail: tracedetail.NewConfigFactory().New().(tracedetail.Config),
 		Round:       DefaultConfig(),
 		Bucket:      BucketSettings{MaxQueueBytes: 8 << 20, MaxQueueSpecs: 10_000},
-		Secret: SecretSettings{
-			TokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
-			CAFile:    "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
-			Expiry:    90 * 24 * time.Hour,
-		},
+		Secret:      defaultSecretSettings(),
 		Health:      HealthSettings{InstanceLabel: "pod"},
 		Investigate: InvestigateSettings{GroupsClaim: "groups", MaxAge: 10 * time.Minute, ClockSkew: 30 * time.Second},
 	}
 	round := roundSettingsOf(s.Round)
 	for path, target := range map[string]any{"engine": &s.Engine, "clickhouse": &s.ClickHouse, "querier": &s.Querier, "traces": &s.TraceDetail, "round": &round, "pushgateway": &s.Pushgateway,
-		"bucket": &s.Bucket, "secret": &s.Secret, "health": &s.Health, "investigate": &s.Investigate} {
+		"bucket": &s.Bucket, "secret": &s.Secret, "health": &s.Health, "investigate": &s.Investigate, "credentials": &s.Credentials} {
 		if err := conf.Unmarshal(path, target); err != nil {
 			return invalid("the %s settings do not decode: %v", path, err)
 		}
 	}
 	s.Round = round.apply(s.Round)
+	if s, err = s.dsnSource(inlineDSN(raw)); err != nil {
+		return Settings{}, err
+	}
 	if err := s.validate(); err != nil {
 		return Settings{}, err
 	}
 	return s, nil
+}
+
+func defaultSecretSettings() SecretSettings {
+	return SecretSettings{
+		TokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
+		CAFile:    "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+		Expiry:    90 * 24 * time.Hour,
+	}
 }
 
 func roundSettingsOf(c Config) roundSettings {
@@ -178,9 +178,10 @@ func (s Settings) validate() error {
 	if err := s.Engine.ValidateFlight(); err != nil {
 		return err
 	}
-	if s.ClickHouse.Provider != "clickhouse" || s.ClickHouse.Clickhouse.DSN == "" {
-		return invalid("the ClickHouse graph needs the clickhouse provider and a DSN")
+	if s.ClickHouse.Provider != "clickhouse" {
+		return invalid("the ClickHouse graph needs the clickhouse provider")
 	}
+
 	r := s.Round
 	if r.Deadline <= 0 || r.Budget <= 0 || r.PushTimeout <= 0 || r.RetryWait < 0 || r.Concurrency <= 0 || r.MaxPairs <= 0 || r.ListLimit <= 0 || r.OperationsLimit < 1 || r.OperationsLimit > 5000 {
 		return invalid("the round's bounds must be positive, and its operations limit at most 5000")
