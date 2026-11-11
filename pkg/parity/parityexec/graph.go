@@ -2,6 +2,7 @@ package parityexec
 
 import (
 	"context"
+	"slices"
 
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/flagger"
@@ -15,6 +16,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore/flighttelemetrystore"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
@@ -24,12 +26,16 @@ type Graph struct {
 	Querier     querier.Querier
 	Services    services.Module
 	TraceDetail tracedetail.Module
+	// Keys resolves field keys as the graph's builders do: ClickHouse's metadata, or the engine's
+	// metadata.keys.
+	Keys telemetrytypes.KeyResolver
 }
 
 // Config is what both graphs take besides their store. Neither has a bucket cache.
 type Config struct {
-	// Org is the organisation compared; the engine graph routes it, and only it, to the engine.
-	Org         valuer.UUID
+	// Orgs are the organisations compared; the engine graph routes them, and only them, to the
+	// engine.
+	Orgs        []valuer.UUID
 	Querier     querier.Config
 	TraceDetail tracedetail.Config
 }
@@ -51,7 +57,7 @@ func NewEngineGraph(ctx context.Context, ps factory.ProviderSettings, fl flagger
 }
 
 func newEngineGraph(ps factory.ProviderSettings, fl flagger.Flagger, ts telemetrystore.TelemetryStore, refuser *Refuser, cfg Config) (*Graph, error) {
-	serves := func(_ telemetrystore.Route, org valuer.UUID) bool { return org == cfg.Org }
+	serves := func(_ telemetrystore.Route, org valuer.UUID) bool { return slices.Contains(cfg.Orgs, org) }
 	keys := telemetrymetadata.NewEngineKeyStore(ts)
 	builder := tracesstatementbuilder.NewEngineTraceQueryStatementBuilder(ps, keys, fl)
 	q := querier.New(ps, ts, nil, nil, refuser.Builder(), nil, nil, nil, nil, nil, refuser.TraceOperatorBuilder(), nil, fl, cfg.Querier.LogTraceIDWindowPadding, cfg.Querier.MaxConcurrentQueries)
@@ -62,6 +68,7 @@ func newEngineGraph(ps factory.ProviderSettings, fl flagger.Flagger, ts telemetr
 		Querier:     q,
 		Services:    implservices.NewModule(q, ts, serves),
 		TraceDetail: impltracedetail.NewModule(impltracedetail.NewTraceStore(ts, keys, fl), impltracedetail.NewEngineReader(ts, fl, serves), ps, cfg.TraceDetail),
+		Keys:        keys,
 	}, nil
 }
 
@@ -85,5 +92,6 @@ func NewClickHouseGraph(ctx context.Context, ps factory.ProviderSettings, fl fla
 		Querier:     q,
 		Services:    implservices.NewModule(q, ts, nil),
 		TraceDetail: impltracedetail.NewModule(impltracedetail.NewTraceStore(ts, metadata, fl), nil, ps, cfg.TraceDetail),
+		Keys:        metadata,
 	}, nil
 }
