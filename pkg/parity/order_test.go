@@ -15,6 +15,7 @@ var distributions = map[string][]float64{
 	"b": append(repeat(200, 98), 295, 310),
 	"c": repeat(10, 100),
 	"d": repeat(1000, 100),
+	"e": append(repeat(200, 98), 295, 310),
 }
 
 func repeat(v float64, n int) []float64 {
@@ -101,7 +102,7 @@ func TestACutIsJudgedOnlyBetweenFullListsOfUniqueOperations(t *testing.T) {
 	rows := Verdict{Category: CategoryRows, Disposition: Blocking}
 	assert.Equal(t, rows, JudgeOperationCut(within, clickhouse, 3, exact(nil)), "lists under the limit were not cut")
 	assert.Equal(t, rows, JudgeOperationCut(within, clickhouse, 0, exact(nil)))
-	assert.Equal(t, rows, JudgeOperationCut(operations(`{"name":"a","p99":301},{"name":"a","p99":301}`), clickhouse, 2, exact(nil)), "a repeated operation")
+	assert.Equal(t, rows, JudgeOperationCut(operations(`{"name":"a","p99":301},{"name":"a","p99":301}`), operations(`{"name":"b","p99":300},{"name":"e","p99":300}`), 2, exact(nil)), "a repeated operation, which would otherwise pair")
 	assert.Equal(t, rows, JudgeOperationCut(operations(`{"name":"a","p99":301},{"name":"d","p99":1000}`), clickhouse, 2, exact(nil)), "the engine out of its own order")
 	assert.Equal(t, rows, JudgeOperationCut(clickhouse, clickhouse, 2, exact(nil)), "nothing was cut")
 	rejected := operations(`{"name":"c","p99":400},{"name":"a","p99":301}`)
