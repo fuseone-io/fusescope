@@ -40,12 +40,12 @@ func cleanup(args []string, stdout, stderr io.Writer) error {
 		return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "the settings file does not open")
 	}
 	defer f.Close()
-	settings, err := parityrun.ParseSettings(f)
+	secret, err := parityrun.ParseCleanupSettings(f)
 	if err != nil {
 		return err
 	}
 	apiServer := "https://" + net.JoinHostPort(os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT"))
-	cleaner, err := parityrun.NewSecretCleaner(parityrun.SecretKeyStoreConfig{APIServer: apiServer, Namespace: settings.Secret.Namespace, TokenFile: settings.Secret.TokenFile, CAFile: settings.Secret.CAFile, Expiry: settings.Secret.Expiry})
+	cleaner, err := parityrun.NewSecretCleaner(parityrun.SecretKeyStoreConfig{APIServer: apiServer, Namespace: secret.Namespace, TokenFile: secret.TokenFile, CAFile: secret.CAFile, Expiry: secret.Expiry})
 	if err != nil {
 		return err
 	}

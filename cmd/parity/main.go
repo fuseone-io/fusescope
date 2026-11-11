@@ -50,6 +50,8 @@ func run(args []string, stdout, stderr io.Writer) error {
 	return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unknown command")
 }
 
+// load reads the settings, the credential files they name and the tenants file; run and investigate
+// call it before any external effect.
 func load(settingsFile, tenantsFile string) (parityrun.Settings, parityrun.Tenants, error) {
 	sf, err := os.Open(settingsFile)
 	if err != nil {
@@ -58,6 +60,9 @@ func load(settingsFile, tenantsFile string) (parityrun.Settings, parityrun.Tenan
 	defer sf.Close()
 	settings, err := parityrun.ParseSettings(sf)
 	if err != nil {
+		return parityrun.Settings{}, parityrun.Tenants{}, err
+	}
+	if settings, err = settings.LoadCredentials(); err != nil {
 		return parityrun.Settings{}, parityrun.Tenants{}, err
 	}
 	tf, err := os.Open(tenantsFile)
