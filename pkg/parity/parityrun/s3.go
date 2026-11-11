@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -56,14 +57,28 @@ func statusOf(err error) int {
 	return 0
 }
 
-// S3Sink publishes a round's report to reports/<yyyy>/<mm>/<dd>/<run id>.jsonl, once: it is built
-// in Local, then uploaded with If-None-Match and its SHA-256, and published only once the bucket
-// took it.
+// runIDDate is the UTC start date a run id opens with.
+var runIDDate = regexp.MustCompile(`^(\d{4})(\d{2})(\d{2})t\d{6}z-\d+$`)
+
+// ReportKey is where the report of runID lives: under the UTC day the round started.
+//
+// # Errors
+//
+// A run id that is not one.
+func ReportKey(runID string) (string, error) {
+	m := runIDDate.FindStringSubmatch(runID)
+	if m == nil {
+		return "", errors.Newf(errors.TypeInvalidInput, ErrCodeBucket, "not a run id")
+	}
+	return "reports/" + m[1] + "/" + m[2] + "/" + m[3] + "/" + runID + ".jsonl", nil
+}
+
+// S3Sink publishes a round's report to ReportKey, once: it is built in Local, then uploaded with
+// If-None-Match and its SHA-256, and published only once the bucket took it.
 type S3Sink struct {
 	Client *s3.Client
 	Config S3Config
 	Local  FileSink
-	Now    func() time.Time
 }
 
 // Create starts the report of runID locally.
@@ -75,11 +90,14 @@ func (s S3Sink) Create(runID string) (ReportWriter, error) {
 	if err := s.Config.validate(); err != nil {
 		return nil, err
 	}
+	key, err := ReportKey(runID)
+	if err != nil {
+		return nil, err
+	}
 	local, err := s.Local.Create(runID)
 	if err != nil {
 		return nil, err
 	}
-	key := "reports/" + s.Now().UTC().Format("2006/01/02") + "/" + runID + ".jsonl"
 	return &s3Writer{ReportWriter: local, sink: s, file: filepath.Join(s.Local.Dir, runID+".jsonl"), key: key}, nil
 }
 
@@ -195,4 +213,22 @@ func (q S3Requeue) Replace(ctx context.Context, version string, specs []PairSpec
 		return errors.Newf(errors.TypeInternal, ErrCodeBucket, "the requeue was not replaced: %d", statusOf(err))
 	}
 	return nil
+}
+
+// ReadReport reads the published report of runID back from the bucket.
+//
+// # Errors
+//
+// A run id that is not one, a report the bucket does not give, or one that is not whole.
+func ReadReport(ctx context.Context, client *s3.Client, bucket, runID string) (Header, []PairRecord, error) {
+	key, err := ReportKey(runID)
+	if err != nil {
+		return Header{}, nil, err
+	}
+	out, err := client.GetObject(ctx, &s3.GetObjectInput{Bucket: aws.String(bucket), Key: aws.String(key)})
+	if err != nil {
+		return Header{}, nil, errors.Newf(errors.TypeNotFound, ErrCodeBucket, "the report is not in the bucket: %d", statusOf(err))
+	}
+	defer out.Body.Close()
+	return ParseReport(out.Body)
 }

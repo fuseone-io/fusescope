@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -85,19 +84,26 @@ var s3cfg = S3Config{Bucket: "parity-staging", KMSKeyID: "arn:aws:kms:us-east-1:
 
 func TestAReportIsUploadedOnceWithItsChecksum(t *testing.T) {
 	b, client := s3Client(t)
-	sink := S3Sink{Client: client, Config: s3cfg, Local: FileSink{Dir: t.TempDir()}, Now: func() time.Time { return time.Date(2026, 11, 11, 3, 0, 0, 0, time.UTC) }}
-	w, err := sink.Create("run-1")
+	sink := S3Sink{Client: client, Config: s3cfg, Local: FileSink{Dir: t.TempDir()}}
+	w, err := sink.Create("20261111t235959z-7")
 	require.NoError(t, err)
 	require.NoError(t, w.Write(Header{Seed: 7}))
 	require.NoError(t, w.Publish(Summary{Usable: true}))
-	o := b.objects["reports/2026/11/11/run-1.jsonl"]
-	require.NotNil(t, o, "under its day")
+	o := b.objects["reports/2026/11/11/20261111t235959z-7.jsonl"]
+	require.NotNil(t, o, "under the day the round started, whenever it is uploaded")
 	sum := sha256.Sum256(o.body)
 	assert.Equal(t, base64.StdEncoding.EncodeToString(sum[:]), o.headers.Get("X-Amz-Checksum-Sha256"))
 	assert.Equal(t, "*", o.headers.Get("If-None-Match"), "created once")
 	assert.Contains(t, string(o.body), `"kind":"summary"`)
 
-	again, err := sink.Create("run-1")
+	header, records, err := ReadReport(t.Context(), client, s3cfg.Bucket, "20261111t235959z-7")
+	require.NoError(t, err, "read back by its run id")
+	assert.Equal(t, uint64(7), header.Seed)
+	assert.Empty(t, records)
+	_, _, err = ReadReport(t.Context(), client, s3cfg.Bucket, "not-a-run-id")
+	assert.Error(t, err)
+
+	again, err := sink.Create("20261111t235959z-7")
 	require.NoError(t, err)
 	assert.Error(t, again.Publish(Summary{}), "never over an earlier report")
 }
@@ -105,8 +111,8 @@ func TestAReportIsUploadedOnceWithItsChecksum(t *testing.T) {
 func TestAReportTheBucketRefusesIsNotPublished(t *testing.T) {
 	b, client := s3Client(t)
 	b.fail = http.StatusForbidden
-	sink := S3Sink{Client: client, Config: s3cfg, Local: FileSink{Dir: t.TempDir()}, Now: time.Now}
-	w, err := sink.Create("run-2")
+	sink := S3Sink{Client: client, Config: s3cfg, Local: FileSink{Dir: t.TempDir()}}
+	w, err := sink.Create("20261111t000000z-2")
 	require.NoError(t, err)
 	assert.Error(t, w.Publish(Summary{}))
 }

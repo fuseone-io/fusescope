@@ -112,7 +112,7 @@ func (f svcFake) Get(context.Context, valuer.UUID, *servicetypesv1.Request) ([]*
 }
 
 func (f svcFake) GetTopOperations(context.Context, valuer.UUID, *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, []string, error) {
-	return []servicetypesv1.OperationItem{{Name: "GET", P99: 5, NumCalls: 5}}, nil, nil
+	return []servicetypesv1.OperationItem{{Name: "GET", P99: 5, NumCalls: 5 + f.s.extra}}, nil, nil
 }
 
 func (f svcFake) GetEntryPointOperations(ctx context.Context, org valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, []string, error) {

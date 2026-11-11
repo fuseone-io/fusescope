@@ -10,13 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/parity"
 )
 
 // investigated runs a round where the engine counts one more call, and reads its report back.
 func investigated(t *testing.T) (Round, []byte, Header, []PairRecord) {
 	t.Helper()
-	r, keys, _, dir := round(t, &store{p99: 5, extra: 1}, &store{p99: 5})
+	// Ten services and a sample of two: another seed would sample others.
+	services := []string{"s-0", "s-1", "s-2", "s-3", "s-4", "s-5", "s-6", "s-7", "s-8", "s-9"}
+	r, keys, _, dir := round(t, &store{p99: 5, extra: 1, services: services}, &store{p99: 5, services: services})
 	_, err := r.Run(t.Context())
 	require.NoError(t, err)
 	files, err := filepath.Glob(filepath.Join(dir, "*.jsonl"))
@@ -31,6 +34,7 @@ func investigated(t *testing.T) (Round, []byte, Header, []PairRecord) {
 
 func TestAnInvestigationShowsTheValuesBehindTheReportsDifferences(t *testing.T) {
 	r, key, header, records := investigated(t)
+	r.Seed = 999
 	var out bytes.Buffer
 	shown, err := r.Investigate(t.Context(), key, Investigation{Header: header, Records: records, Tenant: r.Tenants.Tenants[0], Class: parity.Settled}, &out)
 	require.NoError(t, err)
@@ -40,6 +44,19 @@ func TestAnInvestigationShowsTheValuesBehindTheReportsDifferences(t *testing.T) 
 	assert.Contains(t, text, "numCalls")
 	assert.Contains(t, text, "engine: 6")
 	assert.Contains(t, text, "clickhouse: 5")
+	assert.NotContains(t, text, "not reproduced", "the report's seed and sample, not the round's own, plan the window again")
+}
+
+func TestAnInvestigationShowsOnlyWhatTheReportRecorded(t *testing.T) {
+	r, key, header, records := investigated(t)
+	for i := range records {
+		records[i].Differences = nil
+	}
+	var out bytes.Buffer
+	shown, err := r.Investigate(t.Context(), key, Investigation{Header: header, Records: records, Tenant: r.Tenants.Tenants[0], Class: parity.Settled}, &out)
+	require.NoError(t, err)
+	assert.Zero(t, shown)
+	assert.NotContains(t, out.String(), "engine: 6")
 }
 
 func TestAnInvestigationRefusesAWrongKeyBeforeAnyQuery(t *testing.T) {
@@ -49,7 +66,8 @@ func TestAnInvestigationRefusesAWrongKeyBeforeAnyQuery(t *testing.T) {
 	engine := &store{p99: 5}
 	r.Engine = graphOf(engine)
 	_, err := r.Investigate(t.Context(), wrong, Investigation{Header: header, Records: records, Tenant: r.Tenants.Tenants[0], Class: parity.Settled}, &bytes.Buffer{})
-	assert.Error(t, err)
+	require.Error(t, err)
+	assert.True(t, errors.Ast(err, errors.TypeForbidden), "refused as a wrong key: %v", err)
 }
 
 func TestAnInvestigationFlagsWhatItCannotReproduce(t *testing.T) {

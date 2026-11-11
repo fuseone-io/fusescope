@@ -22,6 +22,7 @@ const settingsVersion = 1
 // settingsSections are the sections of the settings file; any other is refused.
 var settingsSections = map[string]bool{
 	"version": true, "engine": true, "clickhouse": true, "querier": true, "traces": true, "round": true, "pushgateway": true,
+	"bucket": true, "secret": true, "health": true, "investigate": true,
 }
 
 // Settings are the parity's own: its two stores, decoded as the backend decodes them and over the
@@ -33,6 +34,47 @@ type Settings struct {
 	TraceDetail tracedetail.Config
 	Round       Config
 	Pushgateway PushgatewaySettings
+	Bucket      BucketSettings
+	Secret      SecretSettings
+	Health      HealthSettings
+	Investigate InvestigateSettings
+}
+
+// BucketSettings name the staging bucket and the requeue's KMS key and bounds.
+type BucketSettings struct {
+	Name          string `mapstructure:"name"`
+	KMSKeyID      string `mapstructure:"kms_key_id"`
+	MaxQueueBytes int64  `mapstructure:"max_queue_bytes"`
+	MaxQueueSpecs int    `mapstructure:"max_queue_specs"`
+}
+
+// SecretSettings name where run keys are written; the token and CA default to the pod's own.
+type SecretSettings struct {
+	Namespace string        `mapstructure:"namespace"`
+	TokenFile string        `mapstructure:"token_file"`
+	CAFile    string        `mapstructure:"ca_file"`
+	Expiry    time.Duration `mapstructure:"expiry"`
+}
+
+// HealthSettings name the staging Prometheus the dual-write health is read from.
+type HealthSettings struct {
+	URL           string   `mapstructure:"url"`
+	TokenFile     string   `mapstructure:"token_file"`
+	InstanceLabel string   `mapstructure:"instance_label"`
+	Exporters     []string `mapstructure:"exporters"`
+}
+
+// InvestigateSettings are the company IdP operators prove who they are with, and the audit
+// pipeline every investigation reports to.
+type InvestigateSettings struct {
+	Issuer         string        `mapstructure:"issuer"`
+	Audience       string        `mapstructure:"audience"`
+	GroupsClaim    string        `mapstructure:"groups_claim"`
+	Group          string        `mapstructure:"group"`
+	MaxAge         time.Duration `mapstructure:"max_age"`
+	ClockSkew      time.Duration `mapstructure:"clock_skew"`
+	AuditEndpoint  string        `mapstructure:"audit_endpoint"`
+	AuditTokenFile string        `mapstructure:"audit_token_file"`
 }
 
 // PushgatewaySettings name where a round's metrics are pushed and the token file to push with.
@@ -89,9 +131,18 @@ func ParseSettings(r io.Reader) (Settings, error) {
 		Querier:     querier.NewConfigFactory().New().(querier.Config),
 		TraceDetail: tracedetail.NewConfigFactory().New().(tracedetail.Config),
 		Round:       DefaultConfig(),
+		Bucket:      BucketSettings{MaxQueueBytes: 8 << 20, MaxQueueSpecs: 10_000},
+		Secret: SecretSettings{
+			TokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
+			CAFile:    "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+			Expiry:    90 * 24 * time.Hour,
+		},
+		Health:      HealthSettings{InstanceLabel: "pod"},
+		Investigate: InvestigateSettings{GroupsClaim: "groups", MaxAge: 10 * time.Minute, ClockSkew: 30 * time.Second},
 	}
 	round := roundSettingsOf(s.Round)
-	for path, target := range map[string]any{"engine": &s.Engine, "clickhouse": &s.ClickHouse, "querier": &s.Querier, "traces": &s.TraceDetail, "round": &round, "pushgateway": &s.Pushgateway} {
+	for path, target := range map[string]any{"engine": &s.Engine, "clickhouse": &s.ClickHouse, "querier": &s.Querier, "traces": &s.TraceDetail, "round": &round, "pushgateway": &s.Pushgateway,
+		"bucket": &s.Bucket, "secret": &s.Secret, "health": &s.Health, "investigate": &s.Investigate} {
 		if err := conf.Unmarshal(path, target); err != nil {
 			return invalid("the %s settings do not decode: %v", path, err)
 		}
