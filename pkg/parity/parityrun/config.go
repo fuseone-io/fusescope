@@ -67,7 +67,7 @@ func ParseTenants(r io.Reader) (Tenants, error) {
 	if err := dec.Decode(&file); err != nil {
 		return invalid("the tenants file does not decode: %v", err)
 	}
-	if err := oneDocument(dec); err != nil {
+	if err := oneDocument(dec, ErrCodeTenants); err != nil {
 		return Tenants{}, err
 	}
 	if file.Version != tenantsVersion {
@@ -104,10 +104,10 @@ func ParseTenants(r io.Reader) (Tenants, error) {
 }
 
 // oneDocument refuses a second YAML document after the first: a file is one configuration.
-func oneDocument(dec *yaml.Decoder) error {
+func oneDocument(dec *yaml.Decoder, code errors.Code) error {
 	var extra any
 	if err := dec.Decode(&extra); err != io.EOF {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeTenants, "a configuration file holds one YAML document")
+		return errors.Newf(errors.TypeInvalidInput, code, "a configuration file holds one YAML document")
 	}
 	return nil
 }
@@ -122,6 +122,10 @@ func (t Tenants) Serves(instance, org string) bool {
 	return false
 }
 
-func (t Tenants) has(org string) bool {
-	return slices.ContainsFunc(t.Tenants, func(tenant Tenant) bool { return tenant.Org.StringValue() == org })
+func (t Tenants) tenant(org string) (Tenant, bool) {
+	i := slices.IndexFunc(t.Tenants, func(tenant Tenant) bool { return tenant.Org.StringValue() == org })
+	if i < 0 {
+		return Tenant{}, false
+	}
+	return t.Tenants[i], true
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -84,38 +85,68 @@ func serviceCounts(ctx context.Context, q querier.Querier, org valuer.UUID, w pa
 }
 
 // traceCandidates are the traces a round samples from, so that no quota is drawn from a biased
-// set: the largest of w, a run of the trace id space from a point the seed picks (trace ids are
-// random, so the run is a uniform sample), and the traces with an error from the same point, each
-// with every one of its spans counted.
+// set: the largest of w, a circular run of the trace id space from a point the seed picks (trace
+// ids are random, so the run is a uniform sample), and the traces with an error from the same
+// point, each with every one of its spans counted.
 func traceCandidates(ctx context.Context, q querier.Querier, org valuer.UUID, w parity.Window, seed parity.Seed) ([]parity.TraceCandidate, error) {
-	from := "trace_id >= '" + randomTraceStart(seed, w) + "'"
-	largest, err := candidateQuery(ctx, q, org, w, "", "spans", qbtypes.OrderDirectionDesc)
+	start := randomTraceStart(seed, w)
+	largest, err := candidateQuery(ctx, q, org, w, "", "spans", qbtypes.OrderDirectionDesc, traceCandidateLimit)
 	if err != nil {
 		return nil, err
 	}
-	random, err := candidateQuery(ctx, q, org, w, from, "trace_id", qbtypes.OrderDirectionAsc)
+	random, err := traceRun(ctx, q, org, w, "", start)
 	if err != nil {
 		return nil, err
 	}
-	failing, err := candidateQuery(ctx, q, org, w, "has_error = true AND "+from, "trace_id", qbtypes.OrderDirectionAsc)
+	failing, err := traceRun(ctx, q, org, w, "has_error = true AND ", start)
 	if err != nil {
 		return nil, err
 	}
 	var ids []string
 	for _, c := range failing {
-		if traceID.MatchString(c.ID) {
-			ids = append(ids, "'"+c.ID+"'")
+		if quoted := "'" + c.ID + "'"; traceID.MatchString(c.ID) && !slices.Contains(ids, quoted) {
+			ids = append(ids, quoted)
 		}
 	}
 	out := append(largest, random...)
 	if len(ids) == 0 {
-		return out, nil
+		return mergeCandidates(out), nil
 	}
-	whole, err := candidateQuery(ctx, q, org, w, "trace_id IN ("+strings.Join(ids, ", ")+")", "spans", qbtypes.OrderDirectionDesc)
+	whole, err := candidateQuery(ctx, q, org, w, "trace_id IN ("+strings.Join(ids, ", ")+")", "spans", qbtypes.OrderDirectionDesc, len(ids))
 	if err != nil {
 		return nil, err
 	}
-	return append(out, whole...), nil
+	return mergeCandidates(append(out, whole...)), nil
+}
+
+// mergeCandidates keeps one candidate a trace, at its larger count, with any error.
+func mergeCandidates(candidates []parity.TraceCandidate) []parity.TraceCandidate {
+	at := map[string]int{}
+	var out []parity.TraceCandidate
+	for _, c := range candidates {
+		i, ok := at[c.ID]
+		if !ok {
+			at[c.ID] = len(out)
+			out = append(out, c)
+			continue
+		}
+		out[i].Spans, out[i].HasError = max(out[i].Spans, c.Spans), out[i].HasError || c.HasError
+	}
+	return out
+}
+
+// traceRun is a run of the trace id space from start, wrapping past the highest id to the lowest
+// until the limit, so every trace has the same chance whatever its id.
+func traceRun(ctx context.Context, q querier.Querier, org valuer.UUID, w parity.Window, filter, start string) ([]parity.TraceCandidate, error) {
+	run, err := candidateQuery(ctx, q, org, w, filter+"trace_id >= '"+start+"'", "trace_id", qbtypes.OrderDirectionAsc, traceCandidateLimit)
+	if err != nil || len(run) >= traceCandidateLimit {
+		return run, err
+	}
+	wrapped, err := candidateQuery(ctx, q, org, w, filter+"trace_id < '"+start+"'", "trace_id", qbtypes.OrderDirectionAsc, traceCandidateLimit-len(run))
+	if err != nil {
+		return nil, err
+	}
+	return append(run, wrapped...), nil
 }
 
 // traceID is the trace id the queries write as a literal: nothing else is written into a filter.
@@ -131,12 +162,12 @@ func randomTraceStart(seed parity.Seed, w parity.Window) string {
 	return hex.EncodeToString(sum[:16])
 }
 
-func candidateQuery(ctx context.Context, q querier.Querier, org valuer.UUID, w parity.Window, filter, order string, direction qbtypes.OrderDirection) ([]parity.TraceCandidate, error) {
+func candidateQuery(ctx context.Context, q querier.Querier, org valuer.UUID, w parity.Window, filter, order string, direction qbtypes.OrderDirection, limit int) ([]parity.TraceCandidate, error) {
 	spec := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		GroupBy:      []qbtypes.GroupByKey{{TelemetryFieldKey: traceKey}},
 		Aggregations: []qbtypes.TraceAggregation{{Expression: "count()", Alias: "spans"}, {Expression: "countIf(has_error = true)", Alias: "errors"}},
 		Order:        []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: order}}, Direction: direction}},
-		Limit:        traceCandidateLimit,
+		Limit:        limit,
 	}
 	if filter != "" {
 		spec.Filter = &qbtypes.Filter{Expression: filter}

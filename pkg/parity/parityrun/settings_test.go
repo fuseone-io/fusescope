@@ -2,6 +2,8 @@ package parityrun
 
 import (
 	"strings"
+
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"testing"
 	"time"
 
@@ -59,4 +61,10 @@ func TestParitySettingsAreRefusedWhole(t *testing.T) {
 		_, err := ParseSettings(strings.NewReader(body))
 		assert.Error(t, err, name)
 	}
+}
+
+func TestASecondSettingsDocumentIsASettingsError(t *testing.T) {
+	_, err := ParseSettings(strings.NewReader(settingsYAML + "---\nversion: 1\n"))
+	require.Error(t, err)
+	assert.True(t, errors.Asc(err, ErrCodeSettings), "%v", err)
 }

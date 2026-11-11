@@ -27,6 +27,9 @@ const (
 	ViewWaterfall       = "waterfall"
 )
 
+// Views are every view a round compares, the ones the period needs pairs of.
+var Views = []string{ViewServices, ViewTopOperations, ViewEntryOperations, ViewSpanList, ViewTimeSeries, ViewScalar, ViewAbsentKey, ViewSummary, ViewWaterfall}
+
 // PairSpec is everything a pair is built from, over an absolute window, so a pair can run again in
 // a later round. It names tenant data: it travels through the RequeueStore only, and the report
 // keeps its fingerprint.

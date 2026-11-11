@@ -44,6 +44,9 @@ func EvaluatePeriod(days []DayRounds) (bool, []string) {
 	}
 	last := sorted[len(sorted)-periodDays:]
 	successful := map[string]int{}
+	for _, view := range Views {
+		successful[view] = 0
+	}
 	for i, d := range last {
 		day := d.Day.UTC().Truncate(24 * time.Hour)
 		if i > 0 && !day.Equal(last[i-1].Day.UTC().Truncate(24*time.Hour).AddDate(0, 0, 1)) {

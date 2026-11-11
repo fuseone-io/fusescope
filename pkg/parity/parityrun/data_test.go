@@ -90,8 +90,8 @@ func TestTraceCandidatesAreTheLargestARandomRunAndTheFailedOnes(t *testing.T) {
 	got, err := traceCandidates(context.Background(), q, org, minuteWindow, 7)
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []parity.TraceCandidate{{ID: big, Spans: 900}, {ID: small, Spans: 3}, {ID: failed, Spans: 2, HasError: true}}, got, "a failed trace counts all its spans")
-	require.Len(t, q.requests, 4)
-	largest, random, failures, totals := spec(q.requests[0]), spec(q.requests[1]), spec(q.requests[2]), spec(q.requests[3])
+	require.Len(t, q.requests, 6, "each run short of the limit wraps")
+	largest, random, failures, totals := spec(q.requests[0]), spec(q.requests[1]), spec(q.requests[3]), spec(q.requests[5])
 	assert.Equal(t, "spans", largest.Order[0].Key.Name)
 	assert.Equal(t, qbtypes.OrderDirectionDesc, largest.Order[0].Direction)
 	start := randomTraceStart(7, minuteWindow)
@@ -131,4 +131,35 @@ func TestAbsentKeyColumnsAreTheKeysSomeSpansLack(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []parity.AbsentKeyColumn{{Attribute: "http.route", Present: []string{"/cart", "/pay"}}}, got)
 	assert.Len(t, q.requests, len(parity.AbsentKeyAttributes())+1, "a count per key, values for the one lacking")
+}
+
+func TestTheRandomRunWrapsAroundTheTraceIDSpace(t *testing.T) {
+	low, failedLow := "0100000000000000000000000000000a", "0200000000000000000000000000000b"
+	q := &answering{answer: func(req *qbtypes.QueryRangeRequest) *qbtypes.QueryRangeResponse {
+		s := spec(req)
+		switch {
+		case s.Filter == nil:
+			return scalar()
+		case strings.Contains(s.Filter.Expression, " IN "):
+			return scalar([]any{failedLow, uint64(4), uint64(1)})
+		case strings.Contains(s.Filter.Expression, "trace_id < "):
+			if strings.Contains(s.Filter.Expression, "has_error") {
+				return scalar([]any{failedLow, uint64(1), uint64(1)})
+			}
+			return scalar([]any{low, uint64(2), uint64(0)})
+		}
+		return scalar() // nothing at or after the point
+	}}
+	got, err := traceCandidates(context.Background(), q, org, minuteWindow, 7)
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []parity.TraceCandidate{{ID: low, Spans: 2}, {ID: failedLow, Spans: 4, HasError: true}}, got, "a point after every id wraps to the lowest")
+	start := randomTraceStart(7, minuteWindow)
+	var wraps []string
+	for _, req := range q.requests {
+		if s := spec(req); s.Filter != nil && strings.Contains(s.Filter.Expression, "trace_id < ") {
+			wraps = append(wraps, s.Filter.Expression)
+			assert.Equal(t, traceCandidateLimit, s.Limit, "the wrap fills up to the limit")
+		}
+	}
+	assert.ElementsMatch(t, []string{"trace_id < '" + start + "'", "has_error = true AND trace_id < '" + start + "'"}, wraps)
 }

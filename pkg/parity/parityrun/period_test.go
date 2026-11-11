@@ -66,3 +66,18 @@ func TestEveryViewNeedsTwoHundredSuccessfulPairsOverThePeriod(t *testing.T) {
 	assert.False(t, ok, "14 × 14 = 196")
 	assert.Contains(t, reasons, PeriodViewUnderMinimum)
 }
+
+func TestRoundsWithoutCoverageNeverPassThePeriod(t *testing.T) {
+	ok, reasons := EvaluatePeriod(days(14, func(int) []Summary { return []Summary{{Usable: true, Qualifying: true}} }))
+	assert.False(t, ok, "fourteen empty qualifying summaries")
+	assert.Contains(t, reasons, PeriodViewUnderMinimum)
+
+	missing := func(int) []Summary {
+		s := qualifyingRound(20)
+		s.Coverage = s.Coverage[1:]
+		return []Summary{s}
+	}
+	ok, reasons = EvaluatePeriod(days(14, missing))
+	assert.False(t, ok, "a view never compared")
+	assert.Contains(t, reasons, PeriodViewUnderMinimum)
+}

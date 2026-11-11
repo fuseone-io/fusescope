@@ -3,12 +3,15 @@ package parityrun
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"strconv"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/parity"
 	"github.com/fuseone-io/fusescope/pkg/parity/parityexec"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
+	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
@@ -30,6 +33,7 @@ const (
 	ReasonCoverage            = "coverage_below_limit"
 	ReasonTenantViewUncovered = "tenant_view_uncovered"
 	ReasonLatency             = "latency_over_limit"
+	ReasonNothingCompared     = "nothing_compared"
 )
 
 // errBudget is the cause of a round's budget running out, told apart from a cancelled round.
@@ -126,7 +130,7 @@ func (r Round) Run(ctx context.Context) (Summary, error) {
 		return Summary{}, err
 	}
 	budget, cancel := context.WithTimeoutCause(ctx, r.Config.Budget, errBudget)
-	t, requeue, err := r.run(budget, start, runID, keyID, fp, report)
+	out, err := r.run(budget, start, runID, keyID, fp, report)
 	cancel()
 	if err == nil && ctx.Err() != nil {
 		err = ctx.Err()
@@ -135,22 +139,29 @@ func (r Round) Run(ctx context.Context) (Summary, error) {
 		_ = report.Abort()
 		return Summary{}, err
 	}
+	t := out.tally
 	if errors.Is(context.Cause(budget), errBudget) {
 		t.addReason(ReasonBudgetExhausted)
 	}
-	after, done := context.WithTimeout(context.WithoutCancel(ctx), r.Config.PushTimeout)
-	defer done()
-	if len(requeue) > 0 {
-		if err := r.Requeue.Put(after, requeue); err != nil {
+	if out.loaded {
+		requeueCtx, done := context.WithTimeout(ctx, r.Config.PushTimeout)
+		if err := r.Requeue.Replace(requeueCtx, out.version, out.queue); err != nil {
 			t.addReason(ReasonRequeueFailed)
 		}
+		done()
 	}
 	metrics := NewMetrics()
 	t.finish(metrics)
-	pushErr := r.Metrics.Push(after, metrics.Registry())
+	pushCtx, done := context.WithTimeout(ctx, r.Config.PushTimeout)
+	pushErr := r.Metrics.Push(pushCtx, metrics.Registry())
+	done()
 	if pushErr != nil {
 		t.addReason(ReasonMetricsPushFailed)
 		t.settle()
+	}
+	if err := ctx.Err(); err != nil {
+		_ = report.Abort()
+		return Summary{}, err
 	}
 	if err := report.Publish(t.Summary); err != nil {
 		return t.Summary, err
@@ -165,68 +176,135 @@ type window struct {
 	w      parity.Window
 }
 
-func (r Round) run(ctx context.Context, start time.Time, runID, keyID string, fp *parity.Fingerprinter, report ReportWriter) (*tally, []PairSpec, error) {
+// outcome is what the round's core leaves for its end: the tally and the queue to replace the
+// loaded one with, if it was loaded.
+type outcome struct {
+	tally   *tally
+	loaded  bool
+	version string
+	queue   []PairSpec
+}
+
+func (r Round) run(ctx context.Context, start time.Time, runID, keyID string, fp *parity.Fingerprinter, report ReportWriter) (outcome, error) {
 	windows, header, err := r.windows(start, fp)
 	if err != nil {
-		return nil, nil, err
+		return outcome{}, err
 	}
 	header.RunID, header.RunKeyID = runID, keyID
 	if err := report.Write(header); err != nil {
-		return nil, nil, err
+		return outcome{}, err
 	}
-	t := newTally()
-	pairs := r.requeued(ctx, t)
+	out := outcome{tally: newTally()}
+	t := out.tally
+	pairs, carried := r.requeued(ctx, start, t, &out)
+	seen := map[string]bool{}
+	for _, p := range pairs {
+		seen[specKey(p.spec)] = true
+	}
 	for _, win := range windows {
 		if ctx.Err() != nil {
 			break
 		}
 		specs, err := r.plan(ctx, fp, report, t, win)
 		if err != nil {
-			return nil, nil, err
+			return outcome{}, err
 		}
 		for _, spec := range specs {
+			if seen[specKey(spec)] {
+				continue
+			}
+			seen[specKey(spec)] = true
 			p, err := r.build(r.evidencer(), spec)
 			if err != nil {
-				return nil, nil, err
+				return outcome{}, err
 			}
 			pairs = append(pairs, p)
 		}
 	}
+	queue := carried
 	if len(pairs) > r.Config.MaxPairs {
+		for _, p := range pairs[r.Config.MaxPairs:] {
+			if p.requeued {
+				queue = append(queue, p.spec)
+			}
+		}
 		pairs = pairs[:r.Config.MaxPairs]
 		t.addReason(ReasonBudgetExhausted)
 	}
-	var requeue []PairSpec
-	for i, d := range r.execute(ctx, fp, pairs) {
-		if d == nil {
+	results := r.execute(ctx, fp, pairs)
+	for i, p := range pairs {
+		d := results[i]
+		switch {
+		case d == nil && p.requeued:
+			queue = append(queue, p.spec)
+			continue
+		case d == nil:
 			continue
 		}
-		t.add(pairs[i].spec.Org, d.record)
+		t.add(p.spec.Org, d.record)
 		if d.requeue {
-			requeue = append(requeue, pairs[i].spec)
+			queue = append(queue, p.spec)
 		}
 		if err := report.Write(d.record); err != nil {
-			return nil, nil, err
+			return outcome{}, err
 		}
 	}
-	return t, requeue, nil
+	out.queue = queue
+	return out, nil
 }
 
 func (r Round) evidencer() parityexec.Evidencer {
 	return parityexec.Evidencer{Querier: r.ClickHouse.Querier, Keys: r.Keys}
 }
 
-// requeued are the pairs queued by earlier rounds, of tenants of the file only, planned again.
-func (r Round) requeued(ctx context.Context, t *tally) []pair {
-	specs, err := r.Requeue.Take(ctx)
+// specKey names a spec whatever its span count, which is read again.
+func specKey(spec PairSpec) string {
+	spec.Spans = 0
+	raw, _ := json.Marshal(spec)
+	return string(raw)
+}
+
+func uniqueSpecs(specs []PairSpec) []PairSpec {
+	seen := map[string]bool{}
+	out := make([]PairSpec, 0, len(specs))
+	for _, spec := range specs {
+		if k := specKey(spec); !seen[k] {
+			seen[k] = true
+			out = append(out, spec)
+		}
+	}
+	return out
+}
+
+// requeued loads the queue and builds the pairs it can run now: specs of tenants of the file,
+// within retention, whose window passes its gate again. Trace specs have their span count read
+// again. Specs the gate does not pass now are carried to the next round; the others leave the queue
+// once they ran.
+func (r Round) requeued(ctx context.Context, now time.Time, t *tally, out *outcome) ([]pair, []PairSpec) {
+	specs, version, err := r.Requeue.Load(ctx)
 	if err != nil {
 		t.addReason(ReasonRequeueUnavailable)
-		return nil
+		return nil, nil
 	}
+	out.loaded, out.version = true, version
 	var pairs []pair
-	for _, spec := range specs {
-		if !r.Tenants.has(spec.Org) {
+	var carried []PairSpec
+	for _, spec := range uniqueSpecs(specs) {
+		tenant, ok := r.Tenants.tenant(spec.Org)
+		if !ok {
 			t.addReason(ReasonRequeueInvalid)
+			continue
+		}
+		if spec.Window.Start < now.Add(-min(tenant.Retention.ClickHouse, tenant.Retention.Engine)).UnixNano() {
+			continue
+		}
+		clean, err := r.specClean(ctx, tenant, spec)
+		if err != nil || !clean {
+			carried = append(carried, spec)
+			continue
+		}
+		if spec, err = r.refreshSpans(ctx, tenant, spec); err != nil {
+			carried = append(carried, spec)
 			continue
 		}
 		p, err := r.build(r.evidencer(), spec)
@@ -238,7 +316,54 @@ func (r Round) requeued(ctx context.Context, t *tally) []pair {
 		t.plan(spec.Org, spec.View)
 		pairs = append(pairs, p)
 	}
-	return pairs
+	return pairs, carried
+}
+
+// specClean tells whether a spec's whole window passes its gate now, for its service when it has
+// one and for the tenant otherwise.
+func (r Round) specClean(ctx context.Context, tenant Tenant, spec PairSpec) (bool, error) {
+	ctx = telemetrystore.WithService(ctx, subject)
+	unhealthy, err := unhealthyMinutes(ctx, r.Health, r.Tenants, spec.Org, spec.Window, int64(r.Config.Window.Step))
+	if err != nil {
+		return false, err
+	}
+	clickhouse, err := serviceCounts(ctx, r.ClickHouse.Querier, tenant.Org, spec.Window)
+	if err != nil {
+		return false, err
+	}
+	engine, err := serviceCounts(ctx, r.Engine.Querier, tenant.Org, spec.Window)
+	if err != nil {
+		return false, err
+	}
+	gate, err := parity.Gate(r.Config.Window, parity.GateInput{Class: spec.Class, Window: spec.Window, Engine: engine, ClickHouse: clickhouse, Unhealthy: unhealthy})
+	if err != nil {
+		return false, err
+	}
+	switch spec.View {
+	case ViewServices, ViewSummary, ViewWaterfall, ViewAbsentKey:
+		return gate.Tenant != nil && *gate.Tenant == spec.Window, nil
+	}
+	w, ok := gate.Services[spec.Service]
+	return ok && w == spec.Window, nil
+}
+
+// refreshSpans reads a trace spec's span count again, since late data may have changed it.
+func (r Round) refreshSpans(ctx context.Context, tenant Tenant, spec PairSpec) (PairSpec, error) {
+	if spec.TraceID == "" {
+		return spec, nil
+	}
+	if !traceID.MatchString(spec.TraceID) {
+		return spec, errors.Newf(errors.TypeInvalidInput, ErrCodeRound, "a requeued trace id is malformed")
+	}
+	got, err := candidateQuery(telemetrystore.WithService(ctx, subject), r.ClickHouse.Querier, tenant.Org, spec.Window, "trace_id IN ('"+spec.TraceID+"')", "spans", qbtypes.OrderDirectionDesc, 1)
+	if err != nil {
+		return spec, err
+	}
+	spec.Spans = 0
+	for _, c := range got {
+		spec.Spans = max(spec.Spans, c.Spans)
+	}
+	return spec, nil
 }
 
 // windows are the round's windows of every tenant, and the header that names them.

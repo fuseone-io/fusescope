@@ -2,6 +2,8 @@ package parityrun
 
 import (
 	"context"
+	"slices"
+	"strconv"
 	"sync"
 	"time"
 
@@ -126,34 +128,40 @@ func (m *Metrics) Divergent(class parity.WindowClass) {
 func (m *Metrics) Registry() *prometheus.Registry { return m.registry }
 
 // RequeueStore keeps the specs of pairs to run again in a later round, such as a partial engine
-// answer. Specs name tenant data, so the store must be as protected as the run key.
+// answer. Specs name tenant data, so the store must be as protected as the run key. A round loads
+// the queue and replaces it whole once it is done, only if no one changed it since: a round that
+// fails or is cancelled leaves it as it was, so every spec is delivered at least once.
 type RequeueStore interface {
-	// Take returns and removes every queued spec.
-	Take(ctx context.Context) ([]PairSpec, error)
-	// Put queues specs.
-	Put(ctx context.Context, specs []PairSpec) error
+	// Load returns the queued specs and the version they were read at.
+	Load(ctx context.Context) ([]PairSpec, string, error)
+	// Replace makes specs the queue if it is still at version.
+	Replace(ctx context.Context, version string, specs []PairSpec) error
 }
+
+var ErrCodeRequeueConflict = errors.MustNewCode("parity_requeue_conflict")
 
 // MemoryRequeue queues specs in the process only, so a queue does not outlive it: like the memory
 // key store, it is not deployable.
 type MemoryRequeue struct {
-	mu    sync.Mutex
-	specs []PairSpec
+	mu      sync.Mutex
+	specs   []PairSpec
+	version int
 }
 
 func NewMemoryRequeue() *MemoryRequeue { return &MemoryRequeue{} }
 
-func (q *MemoryRequeue) Take(context.Context) ([]PairSpec, error) {
+func (q *MemoryRequeue) Load(context.Context) ([]PairSpec, string, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	out := q.specs
-	q.specs = nil
-	return out, nil
+	return slices.Clone(q.specs), strconv.Itoa(q.version), nil
 }
 
-func (q *MemoryRequeue) Put(_ context.Context, specs []PairSpec) error {
+func (q *MemoryRequeue) Replace(_ context.Context, version string, specs []PairSpec) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	q.specs = append(q.specs, specs...)
+	if version != strconv.Itoa(q.version) {
+		return errors.Newf(errors.TypeAlreadyExists, ErrCodeRequeueConflict, "the queue changed since it was loaded")
+	}
+	q.specs, q.version = slices.Clone(specs), q.version+1
 	return nil
 }

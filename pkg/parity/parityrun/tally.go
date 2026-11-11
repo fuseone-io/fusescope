@@ -113,6 +113,9 @@ func (t *tally) finish(m *Metrics) {
 	if reached > 0 && float64(inconclusive) >= maxInconclusiveRatio*float64(reached) {
 		t.addReason(ReasonInconclusive)
 	}
+	if reached == 0 {
+		t.addReason(ReasonNothingCompared)
+	}
 	if planned > 0 && float64(reached) < minCoverageRatio*float64(planned) {
 		t.addReason(ReasonCoverage)
 	}

@@ -45,6 +45,7 @@ type store struct {
 	extra       uint64
 	drift       bool
 	partial     bool
+	traceDelay  time.Duration
 	delay       time.Duration
 	services    []string
 	ops         []string
@@ -119,6 +120,7 @@ func (f svcFake) GetEntryPointOperations(ctx context.Context, org valuer.UUID, r
 }
 
 func (f traceFake) GetTraceSummary(context.Context, valuer.UUID, string) (*spantypes.TraceStats, []string, error) {
+	time.Sleep(f.s.traceDelay)
 	if f.s.partial {
 		return &spantypes.TraceStats{TotalSpans: 5}, []string{telemetrystore.PartialWarning(telemetrystore.PartialIngesterUnavailable)}, nil
 	}
@@ -322,10 +324,10 @@ func TestAPairTakesItsWorstDisposition(t *testing.T) {
 	assert.Equal(t, PairRecord{Outcome: "differ", Category: "blocking", Disposition: parity.Blocking}, rec)
 }
 
-func pairsOf(records []map[string]any, view string) []map[string]any {
+func summaryPairs(records []map[string]any) []map[string]any {
 	var out []map[string]any
 	for _, r := range records {
-		if r["kind"] == "pair" && r["view"] == view {
+		if r["kind"] == "pair" && r["view"] == ViewSummary {
 			out = append(out, r)
 		}
 	}
@@ -338,15 +340,14 @@ func TestAPartialPairRunsAgainNextRound(t *testing.T) {
 	_, err := r.Run(context.Background())
 	require.NoError(t, err)
 	_, records := lines(t, dir)
-	summaries := pairsOf(records, "summary")
+	summaries := summaryPairs(records)
 	require.NotEmpty(t, summaries)
 	assert.Equal(t, "partial", summaries[0]["category"])
 
-	queued, err := r.Requeue.Take(context.Background())
+	queued, _, err := r.Requeue.Load(context.Background())
 	require.NoError(t, err)
 	require.NotEmpty(t, queued, "the partial pair is queued, whole")
 	assert.Equal(t, "summary", queued[0].View)
-	require.NoError(t, r.Requeue.Put(context.Background(), queued))
 
 	engine.partial = false
 	next := r
@@ -356,30 +357,33 @@ func TestAPartialPairRunsAgainNextRound(t *testing.T) {
 	require.NoError(t, err)
 	_, records = lines(t, next.Reports.(FileSink).Dir)
 	var requeued int
-	for _, rec := range pairsOf(records, "summary") {
+	for _, rec := range summaryPairs(records) {
 		if rec["requeued"] == true {
 			requeued++
 			assert.Equal(t, "match", rec["outcome"])
 		}
 	}
 	assert.Equal(t, len(queued), requeued)
+	left, _, err := next.Requeue.Load(context.Background())
+	require.NoError(t, err)
+	assert.Empty(t, left, "a pair that ran whole leaves the queue")
 }
 
-type brokenQueue struct{ take, put error }
+type brokenQueue struct{ load, replace error }
 
-func (b brokenQueue) Take(context.Context) ([]PairSpec, error) { return nil, b.take }
-func (b brokenQueue) Put(context.Context, []PairSpec) error    { return b.put }
+func (b brokenQueue) Load(context.Context) ([]PairSpec, string, error)  { return nil, "v", b.load }
+func (b brokenQueue) Replace(context.Context, string, []PairSpec) error { return b.replace }
 
 func TestARequeueThatFailsMakesTheRoundUnusable(t *testing.T) {
 	r, _, _, _ := round(t, &store{p99: 5}, &store{p99: 5})
-	r.Requeue = brokenQueue{take: errors.Newf(errors.TypeInternal, errors.CodeInternal, "down")}
+	r.Requeue = brokenQueue{load: errors.Newf(errors.TypeInternal, errors.CodeInternal, "down")}
 	summary, err := r.Run(context.Background())
 	require.NoError(t, err)
 	assert.False(t, summary.Usable)
 	assert.Contains(t, summary.Reasons, ReasonRequeueUnavailable)
 
 	r, _, _, _ = round(t, &store{p99: 5, partial: true}, &store{p99: 5})
-	r.Requeue = brokenQueue{put: errors.Newf(errors.TypeInternal, errors.CodeInternal, "down")}
+	r.Requeue = brokenQueue{replace: errors.Newf(errors.TypeInternal, errors.CodeInternal, "down")}
 	summary, err = r.Run(context.Background())
 	require.NoError(t, err)
 	assert.False(t, summary.Usable)
@@ -388,14 +392,144 @@ func TestARequeueThatFailsMakesTheRoundUnusable(t *testing.T) {
 
 func TestARequeuedPairOfAnotherTenantIsRefused(t *testing.T) {
 	r, _, _, dir := round(t, &store{p99: 5}, &store{p99: 5})
-	q := NewMemoryRequeue()
-	require.NoError(t, q.Put(context.Background(), []PairSpec{{View: "summary", Org: orgB, Class: parity.Settled, TraceID: secretTrace, Window: minuteWindow}}))
-	r.Requeue = q
+	r.Requeue = queueOf(t, PairSpec{View: "summary", Org: orgB, Class: parity.Settled, TraceID: secretTrace, Window: minuteWindow})
 	summary, err := r.Run(context.Background())
 	require.NoError(t, err)
 	assert.Contains(t, summary.Reasons, ReasonRequeueInvalid)
 	_, records := lines(t, dir)
-	for _, rec := range pairsOf(records, "summary") {
+	for _, rec := range summaryPairs(records) {
 		assert.NotEqual(t, true, rec["requeued"])
 	}
+}
+
+func queueOf(t *testing.T, specs ...PairSpec) *MemoryRequeue {
+	t.Helper()
+	q := NewMemoryRequeue()
+	_, version, err := q.Load(context.Background())
+	require.NoError(t, err)
+	require.NoError(t, q.Replace(context.Background(), version, specs))
+	return q
+}
+
+// queuedSummary is a summary pair of the settled window an hour before the round.
+func queuedSummary(t *testing.T, r Round) PairSpec {
+	t.Helper()
+	w, ok, err := parity.PlanWindow(r.Config.Window, parity.Settled, r.Now().Add(-time.Hour), r.Tenants.Tenants[0].DualWriteEpoch, r.Tenants.Tenants[0].Retention)
+	require.NoError(t, err)
+	require.True(t, ok)
+	return PairSpec{View: ViewSummary, Org: orgA, Class: parity.Settled, Window: w, TraceID: "1111111111111111111111111111111a", Spans: 1, Reason: parity.ReasonRandom}
+}
+
+func TestACancelledRoundLeavesTheQueueAsItWas(t *testing.T) {
+	r, _, _, _ := round(t, &store{p99: 5, delay: 30 * time.Millisecond}, &store{p99: 5})
+	spec := queuedSummary(t, r)
+	r.Requeue = queueOf(t, spec)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	_, err := r.Run(ctx)
+	require.Error(t, err)
+	left, _, err := r.Requeue.Load(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, []PairSpec{spec}, left, "nothing is lost")
+}
+
+// staleQueue is a queue another writer changed since it was loaded.
+type staleQueue struct{ *MemoryRequeue }
+
+func (q *staleQueue) Replace(ctx context.Context, _ string, specs []PairSpec) error {
+	return q.MemoryRequeue.Replace(ctx, "stale", specs)
+}
+
+func TestAQueueThatCannotBeReplacedKeepsItsSpecs(t *testing.T) {
+	r, _, _, _ := round(t, &store{p99: 5, partial: true}, &store{p99: 5})
+	spec := queuedSummary(t, r)
+	q := &staleQueue{MemoryRequeue: queueOf(t, spec)}
+	r.Requeue = q
+	summary, err := r.Run(context.Background())
+	require.NoError(t, err)
+	assert.Contains(t, summary.Reasons, ReasonRequeueFailed)
+	left, _, err := q.Load(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, []PairSpec{spec}, left)
+}
+
+func TestARequeuedPairGoesThroughItsWindowsGateFirst(t *testing.T) {
+	r, _, _, dir := round(t, &store{p99: 5, extraCounts: true}, &store{p99: 5})
+	spec := queuedSummary(t, r)
+	r.Requeue = queueOf(t, spec)
+	_, err := r.Run(context.Background())
+	require.NoError(t, err)
+	_, records := lines(t, dir)
+	for _, rec := range summaryPairs(records) {
+		assert.NotEqual(t, true, rec["requeued"], "its window diverges now: it does not run")
+	}
+	left, _, err := r.Requeue.Load(context.Background())
+	require.NoError(t, err)
+	assert.Contains(t, left, spec, "and stays queued")
+}
+
+func TestARequeuedPairBeyondRetentionLeavesTheQueue(t *testing.T) {
+	r, _, _, dir := round(t, &store{p99: 5}, &store{p99: 5})
+	spec := queuedSummary(t, r)
+	spec.Window = parity.Window{Start: spec.Window.Start - int64(800*time.Hour), End: spec.Window.End - int64(800*time.Hour)}
+	r.Requeue = queueOf(t, spec)
+	_, err := r.Run(context.Background())
+	require.NoError(t, err)
+	left, _, err := r.Requeue.Load(context.Background())
+	require.NoError(t, err)
+	assert.NotContains(t, left, spec)
+	_, records := lines(t, dir)
+	for _, rec := range summaryPairs(records) {
+		assert.NotEqual(t, true, rec["requeued"], "an expired pair does not run")
+	}
+}
+
+func TestARequeuedTraceIsCountedAgainAndQueuedOnce(t *testing.T) {
+	r, _, _, _ := round(t, &store{p99: 5, partial: true}, &store{p99: 5})
+	spec := queuedSummary(t, r)
+	r.Requeue = queueOf(t, spec, spec)
+	_, err := r.Run(context.Background())
+	require.NoError(t, err)
+	left, _, err := r.Requeue.Load(context.Background())
+	require.NoError(t, err)
+	refreshed := spec
+	refreshed.Spans = 5
+	var copies int
+	for _, s := range left {
+		if s.TraceID == spec.TraceID && s.Window == spec.Window {
+			copies++
+			assert.Equal(t, refreshed, s, "its span count read again")
+		}
+	}
+	assert.Equal(t, 1, copies, "a repeated spec is queued once")
+}
+
+func TestARequeuedPairTheRoundDoesNotReachStaysQueued(t *testing.T) {
+	r, _, _, _ := round(t, &store{p99: 5}, &store{p99: 5})
+	first, second := queuedSummary(t, r), queuedSummary(t, r)
+	second.TraceID = "2222222222222222222222222222222b"
+	r.Requeue = queueOf(t, first, second)
+	r.Config.MaxPairs = 1
+	_, err := r.Run(context.Background())
+	require.NoError(t, err)
+	left, _, err := r.Requeue.Load(context.Background())
+	require.NoError(t, err)
+	var ids []string
+	for _, s := range left {
+		ids = append(ids, s.TraceID)
+	}
+	assert.Equal(t, []string{second.TraceID}, ids, "the first ran and left; the second waits for a later round")
+}
+
+func TestARequeuedPairTheBudgetCutsStaysQueued(t *testing.T) {
+	r, _, _, _ := round(t, &store{p99: 5, traceDelay: 400 * time.Millisecond}, &store{p99: 5})
+	spec := queuedSummary(t, r)
+	r.Requeue = queueOf(t, spec)
+	r.Config.Budget = 200 * time.Millisecond
+	_, err := r.Run(context.Background())
+	require.NoError(t, err)
+	left, _, err := r.Requeue.Load(context.Background())
+	require.NoError(t, err)
+	spec.Spans = 5
+	assert.Contains(t, left, spec, "it was cut while it ran, its span count read again")
 }

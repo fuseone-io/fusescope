@@ -68,7 +68,7 @@ func ParseSettings(r io.Reader) (Settings, error) {
 	if err := dec.Decode(&raw); err != nil {
 		return invalid("the settings file does not decode: %v", err)
 	}
-	if err := oneDocument(dec); err != nil {
+	if err := oneDocument(dec, ErrCodeSettings); err != nil {
 		return Settings{}, err
 	}
 	for section := range raw {

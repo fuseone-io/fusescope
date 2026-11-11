@@ -148,3 +148,64 @@ func TestAPushHasItsOwnDeadline(t *testing.T) {
 	assert.Less(t, time.Since(start), 5*time.Second)
 	assert.Contains(t, summary.Reasons, ReasonMetricsPushFailed)
 }
+
+func TestARoundWithNothingToCompareDoesNotQualify(t *testing.T) {
+	tl := newTally()
+	tl.finish(NewMetrics())
+	assert.False(t, tl.Qualifying)
+	assert.Contains(t, tl.Reasons, ReasonNothingCompared)
+}
+
+// slowQueue takes the whole of its deadline to replace the queue.
+type slowQueue struct{ *MemoryRequeue }
+
+func (q slowQueue) Replace(ctx context.Context, _ string, _ []PairSpec) error {
+	<-ctx.Done()
+	return ctx.Err()
+}
+
+type deadlines struct {
+	pusher
+	left time.Duration
+}
+
+func (d *deadlines) Push(ctx context.Context, r *prometheus.Registry) error {
+	if deadline, ok := ctx.Deadline(); ok {
+		d.left = time.Until(deadline)
+	}
+	return d.pusher.Push(ctx, r)
+}
+
+func TestTheRequeueAndThePushHaveADeadlineEach(t *testing.T) {
+	r, _, _, _ := round(t, &store{p99: 5}, &store{p99: 5})
+	r.Config.PushTimeout = 300 * time.Millisecond
+	r.Requeue = slowQueue{NewMemoryRequeue()}
+	push := &deadlines{}
+	r.Metrics = push
+	summary, err := r.Run(context.Background())
+	require.NoError(t, err)
+	assert.Contains(t, summary.Reasons, ReasonRequeueFailed)
+	assert.Greater(t, push.left, 200*time.Millisecond, "the slow requeue used none of the push's time")
+}
+
+// cancelling cancels the round as soon as the metrics are pushed.
+type cancelling struct {
+	pusher
+	cancel context.CancelFunc
+}
+
+func (c *cancelling) Push(ctx context.Context, r *prometheus.Registry) error {
+	c.cancel()
+	return c.pusher.Push(ctx, r)
+}
+
+func TestARoundCancelledWhileItEndsPublishesNothing(t *testing.T) {
+	r, _, _, dir := round(t, &store{p99: 5}, &store{p99: 5})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	r.Metrics = &cancelling{cancel: cancel}
+	_, err := r.Run(ctx)
+	require.Error(t, err)
+	files, _ := filepath.Glob(filepath.Join(dir, "*"))
+	assert.Empty(t, files)
+}
