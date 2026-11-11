@@ -40,6 +40,9 @@ type Context struct {
 	// OperationOrder judges the order of a top or entry point operations pair, as
 	// JudgeOperationOrder does.
 	OperationOrder func() Verdict
+	// OperationCut judges the operations present on one side only of a pair cut at its limit, as
+	// JudgeOperationCut does.
+	OperationCut func() Verdict
 	// QuantileOf is the quantile a path holds.
 	QuantileOf func(Path) (float64, bool)
 	// QuantileEvidence is ClickHouse's exact distribution of the path's group for the engine's
@@ -60,6 +63,9 @@ func Classify(d Difference, ctx Context) Verdict {
 		}
 		return Verdict{Category: CategoryOrder, Disposition: Blocking}
 	case KindRows:
+		if ctx.OperationCut != nil && len(d.Path) == 2 && d.Path[0] == "items" {
+			return ctx.OperationCut()
+		}
 		if ctx.AbsentKeyCase {
 			return Verdict{Category: CategoryAbsentKey, Disposition: Blocking}
 		}

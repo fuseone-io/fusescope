@@ -10,11 +10,25 @@ const rankTolerance = 0.1
 // value v fusescope-engine answered: the group's size, the order statistics around the exact rank
 // of the quantile, and how many values are below v and at or below it.
 type QuantileEvidence struct {
-	N         int64
-	Low, High float64
+	N int64
+	// Bounds are read only by the order statistic rule; the rank rule judges on the counts.
+	Bounds    *OrderStatistics
 	Below     int64
 	AtOrBelow int64
 }
+
+// OrderStatistics are the two values of a group around the exact rank of its quantile.
+type OrderStatistics struct {
+	Low, High float64
+}
+
+// QuantileRule is how a quantile over a sample is judged.
+type QuantileRule string
+
+const (
+	RuleOrderStatistics QuantileRule = "order_statistics"
+	RuleRank            QuantileRule = "rank"
+)
 
 // JudgeQuantile judges the engine's value v of the quantile q against ClickHouse's exact
 // distribution, chosen by the sample's resolution: when the rank tolerance is wider than one
@@ -30,9 +44,13 @@ func JudgeQuantile(q, v float64, e QuantileEvidence) Verdict {
 	if !validQuantile(q, v) || !e.valid() {
 		return Verdict{Category: CategoryApproximation, Disposition: Inconclusive}
 	}
-	accepted := e.Low <= v && v <= e.High
-	if tolerance := rankTolerance * q * (1 - q); tolerance > 1/float64(e.N) {
-		accepted = rankError(q, e) <= tolerance
+	rule, _, _ := QuantileRuleFor(q, e.N)
+	accepted := rankError(q, e) <= rankTolerance*q*(1-q)
+	if rule == RuleOrderStatistics {
+		if e.Bounds == nil {
+			return Verdict{Category: CategoryApproximation, Disposition: Inconclusive}
+		}
+		accepted = e.Bounds.Low <= v && v <= e.Bounds.High
 	}
 	if accepted {
 		return Verdict{Category: CategoryApproximation, Disposition: Accepted}
@@ -46,10 +64,12 @@ func validQuantile(q, v float64) bool {
 }
 
 // valid tells whether the evidence describes a distribution: a positive size, finite order
-// statistics in order, and counts that fit the size. Anything else never judges a quantile.
+// statistics in order when given, and counts that fit the size. Anything else never judges a quantile.
 func (e QuantileEvidence) valid() bool {
-	finite := !math.IsNaN(e.Low) && !math.IsInf(e.Low, 0) && !math.IsNaN(e.High) && !math.IsInf(e.High, 0)
-	return e.N > 0 && finite && e.Low <= e.High && 0 <= e.Below && e.Below <= e.AtOrBelow && e.AtOrBelow <= e.N
+	if b := e.Bounds; b != nil && (math.IsNaN(b.Low) || math.IsInf(b.Low, 0) || math.IsNaN(b.High) || math.IsInf(b.High, 0) || b.Low > b.High) {
+		return false
+	}
+	return e.N > 0 && 0 <= e.Below && e.Below <= e.AtOrBelow && e.AtOrBelow <= e.N
 }
 
 // rankError is how far q is from the ranks v covers, [F(v⁻), F(v)]: below v and at or below it,
@@ -72,4 +92,15 @@ func orderStatisticRanks(q float64, n int64) (int64, int64) {
 	h := q*float64(n-1) + 1
 	low, high := int64(math.Floor(h)), int64(math.Ceil(h))
 	return min(max(low, 1), n), min(max(high, 1), n)
+}
+
+// QuantileRuleFor is the rule that judges the quantile q over n values, by resolution: the order
+// statistics when one value is no finer than the rank tolerance, the rank error otherwise. For the
+// order statistics it also gives their 1-based ranks, which may be equal.
+func QuantileRuleFor(q float64, n int64) (QuantileRule, int64, int64) {
+	if rankTolerance*q*(1-q) > 1/float64(n) {
+		return RuleRank, 0, 0
+	}
+	low, high := orderStatisticRanks(q, n)
+	return RuleOrderStatistics, low, high
 }
