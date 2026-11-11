@@ -143,3 +143,17 @@ func TestASwapWithNoEvidenceFunctionIsInconclusive(t *testing.T) {
 	assert.Equal(t, Verdict{Category: CategoryApproximation, Disposition: Inconclusive}, JudgeOperationOrder(engine, clickhouse, nil))
 	assert.Equal(t, Verdict{Category: CategoryOrder, Disposition: Blocking}, JudgeOperationOrder(operations(`{"name":"b","p99":301},{"name":"a","p99":309}`), clickhouse, nil), "an engine out of its own order still blocks")
 }
+
+func TestKnownCausesComeBeforeTheCut(t *testing.T) {
+	cut := func() Verdict { return Verdict{Category: CategoryApproximation, Disposition: Accepted} }
+	onlyClickHouse := Difference{Path: p("items", Dynamic("x.handle")), Kind: KindRows, ClickHouse: []any{map[string]any{"name": "x.handle"}}}
+	boundary := func(service, operation string) bool { return service == "back" && operation == "x.handle" }
+	ctx := Context{Service: "back", ServiceBoundary: boundary, OperationCut: cut}
+	assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Blocking}, Classify(onlyClickHouse, ctx), "a confirmed boundary is never a cut")
+	assert.Equal(t, Verdict{Category: CategoryAbsentKey, Disposition: Blocking}, Classify(onlyClickHouse, Context{AbsentKeyCase: true, OperationCut: cut}))
+
+	onlyEngine := Difference{Path: p("items", Dynamic("x.handle")), Kind: KindRows, Engine: []any{map[string]any{"name": "x.handle"}}}
+	assert.Equal(t, cut(), Classify(onlyEngine, ctx), "an engine row is no boundary: the cut judges it")
+	unconfirmed := Difference{Path: p("items", Dynamic("other")), Kind: KindRows, ClickHouse: []any{}}
+	assert.Equal(t, cut(), Classify(unconfirmed, ctx))
+}

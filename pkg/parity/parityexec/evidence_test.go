@@ -210,3 +210,19 @@ func TestABucketIsItsStepWithinTheWindow(t *testing.T) {
 	_, ok = window.Bucket(60_000, 0)
 	assert.False(t, ok)
 }
+
+// partial resolves duration_nano as one numeric key, in a listing it says is incomplete.
+type partial struct{ numeric }
+
+func (p partial) GetKeysMulti(ctx context.Context, org valuer.UUID, selectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+	keys, _, err := p.numeric.GetKeysMulti(ctx, org, selectors)
+	return keys, false, err
+}
+
+func TestAnIncompleteKeyListingProvesNoUniqueField(t *testing.T) {
+	d := &distribution{values: []float64{1}}
+	_, ok, err := Evidencer{Querier: d, Keys: partial{}, Org: org}.Quantile(context.Background(), group(), 0.5, 1)
+	require.NoError(t, err)
+	assert.False(t, ok, "another variant may be among the keys not listed")
+	assert.Empty(t, d.requests)
+}

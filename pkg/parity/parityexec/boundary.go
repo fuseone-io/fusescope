@@ -18,16 +18,17 @@ var (
 )
 
 // Boundary confirms that operation of service is a top-level operation in ClickHouse only because
-// a span of it has its parent in another service with its remoteness unknown (D7): no span of the
-// operation in the window is a root, and among a deterministic sample of its spans with is_remote
-// unknown at least one has its parent, found by (trace_id, parent_span_id), in another service.
-// Spans whose parent is missing or in the same service are no witnesses; they deny nothing.
+// a span of it has its parent in another service with its remoteness unknown (D7): within the
+// view's filter, no span of the operation is a root, and among a deterministic sample of its spans
+// with is_remote unknown at least one has its parent, found by (trace_id, parent_span_id) in the
+// window alone, in another named service. Spans whose parent is missing, unnamed or in the same
+// service are no witnesses; they deny nothing.
 //
 // # Errors
 //
 // A query ClickHouse refused, or an answer of another shape.
-func (e Evidencer) Boundary(ctx context.Context, window Group, service, operation string) (bool, error) {
-	spans := Group{Start: window.Start, End: window.End}.Where(serviceKey, service).Where(operationKey, operation)
+func (e Evidencer) Boundary(ctx context.Context, view Group, service, operation string) (bool, error) {
+	spans := view.Where(serviceKey, service).Where(operationKey, operation)
 	roots := spans.Where(telemetrytypes.TelemetryFieldKey{Name: "isRoot"}, true)
 	count := e.query(roots)
 	count.Aggregations = []qbtypes.TraceAggregation{{Expression: "count()"}}
@@ -63,7 +64,7 @@ func (e Evidencer) Boundary(ctx context.Context, window Group, service, operatio
 	if len(parents) == 0 {
 		return false, nil
 	}
-	return e.parentElsewhere(ctx, window, service, parents)
+	return e.parentElsewhere(ctx, Group{Start: view.Start, End: view.End}, service, parents)
 }
 
 func (e Evidencer) parentElsewhere(ctx context.Context, window Group, service string, parents []string) (bool, error) {
@@ -80,7 +81,7 @@ func (e Evidencer) parentElsewhere(ctx context.Context, window Group, service st
 		if !ok {
 			return false, errors.NewInternalf(errors.CodeInternal, "a parent span has no service")
 		}
-		if other != service {
+		if other != "" && other != service {
 			return true, nil
 		}
 	}

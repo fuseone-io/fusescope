@@ -19,10 +19,9 @@ const operationsQuantile = 0.99
 // the numCalls ClickHouse answered. A top-level operation ClickHouse alone counts is confirmed as a
 // service boundary by Boundary.
 func (e Evidencer) ServicesContext(ctx context.Context, req servicetypesv1.Request, clickhouse any) parity.Context {
-	view, start, end, err := implservices.ServicesRequest(&req)
+	view, _, _, err := implservices.ServicesRequest(&req)
 	base, fields := baseGroup(view)
 	calls := numCalls(clickhouse, "serviceName")
-	window := Group{Start: start, End: end}
 	return parity.Context{
 		QuantileOf: func(path parity.Path) (float64, bool) {
 			f, ok := fields[path.Last()]
@@ -39,7 +38,7 @@ func (e Evidencer) ServicesContext(ctx context.Context, req servicetypesv1.Reque
 			return e.stable(ctx, g, q, v, calls[string(service)])
 		},
 		ServiceBoundary: func(service, operation string) bool {
-			confirmed, err := e.Boundary(ctx, window, service, operation)
+			confirmed, err := e.Boundary(ctx, base, service, operation)
 			return err == nil && confirmed
 		},
 	}
@@ -47,7 +46,8 @@ func (e Evidencer) ServicesContext(ctx context.Context, req servicetypesv1.Reque
 
 // OperationsContext is how a top or entry point operations pair's differences are classified: a
 // quantile is judged on the module's request narrowed to the operation, its order by
-// JudgeOperationOrder, and the operations at its limit by JudgeOperationCut.
+// JudgeOperationOrder, and the operations at its limit by JudgeOperationCut. An entry point
+// ClickHouse alone lists is confirmed as a service boundary by Boundary first.
 func (e Evidencer) OperationsContext(ctx context.Context, entry bool, req servicetypesv1.OperationsRequest, engine, clickhouse any) parity.Context {
 	build := implservices.TopOperationsRequest
 	if entry {
@@ -74,7 +74,7 @@ func (e Evidencer) OperationsContext(ctx context.Context, entry bool, req servic
 		return evidence(operation, operationsQuantile, v, "p99")
 	}
 	engineAnswer, clickhouseAnswer := copyOf(engine), copyOf(clickhouse)
-	return parity.Context{
+	c := parity.Context{
 		QuantileOf: func(path parity.Path) (float64, bool) {
 			f, ok := fields[path.Last()]
 			return f.q, ok && len(path) == 4 && path[0] == "items"
@@ -91,6 +91,14 @@ func (e Evidencer) OperationsContext(ctx context.Context, entry bool, req servic
 			return parity.JudgeOperationCut(engineAnswer, clickhouseAnswer, req.Limit, byP99)
 		},
 	}
+	if entry {
+		c.Service = req.Service
+		c.ServiceBoundary = func(service, operation string) bool {
+			confirmed, err := e.Boundary(ctx, base, service, operation)
+			return err == nil && confirmed
+		}
+	}
+	return c
 }
 
 // stable is g's evidence when its row count is still rows, the group's size in the view's answer:

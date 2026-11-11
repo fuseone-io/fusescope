@@ -165,8 +165,8 @@ func (e Evidencer) numericField(ctx context.Context, field string) (bool, error)
 	for _, prefix := range []string{"attribute.", "resource.", "span.", "scope."} {
 		name = strings.TrimPrefix(name, prefix)
 	}
-	keys, _, err := e.Keys.GetKeysMulti(ctx, e.Org, []*telemetrytypes.FieldKeySelector{{Name: name, Signal: telemetrytypes.SignalTraces, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact}})
-	if err != nil {
+	keys, complete, err := e.Keys.GetKeysMulti(ctx, e.Org, []*telemetrytypes.FieldKeySelector{{Name: name, Signal: telemetrytypes.SignalTraces, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact}})
+	if err != nil || !complete {
 		return false, err
 	}
 	matching := keys[name]

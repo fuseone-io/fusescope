@@ -63,14 +63,15 @@ func Classify(d Difference, ctx Context) Verdict {
 		}
 		return Verdict{Category: CategoryOrder, Disposition: Blocking}
 	case KindRows:
-		if ctx.OperationCut != nil && len(d.Path) == 2 && d.Path[0] == "items" {
-			return ctx.OperationCut()
-		}
+		// The known causes come first: a cut never hides an absent key or a service boundary.
 		if ctx.AbsentKeyCase {
 			return Verdict{Category: CategoryAbsentKey, Disposition: Blocking}
 		}
 		if d.Engine == nil && ctx.ServiceBoundary != nil && atServiceBoundary(d, ctx) {
 			return Verdict{Category: CategoryServiceBoundary, Disposition: Blocking}
+		}
+		if ctx.OperationCut != nil && len(d.Path) == 2 && d.Path[0] == "items" {
+			return ctx.OperationCut()
 		}
 		return Verdict{Category: CategoryRows, Disposition: Blocking}
 	case KindField:

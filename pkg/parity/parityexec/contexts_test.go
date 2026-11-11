@@ -148,3 +148,22 @@ func navigate(t *testing.T, normalized any) map[string]any {
 	require.True(t, ok)
 	return map[string]any(got.(parity.Keyed))
 }
+
+func TestEntryPointOperationsConfirmTheirServiceBoundary(t *testing.T) {
+	req := servicetypesv1.OperationsRequest{Start: "1000000000", End: "61000000000", Service: "back", Limit: 2}
+	answer := decoded(t, `{"data":[]}`)
+	entry := evidencer(sixValues()).OperationsContext(context.Background(), true, req, answer, answer)
+	assert.Equal(t, "back", entry.Service)
+	assert.NotNil(t, entry.ServiceBoundary)
+	top := evidencer(sixValues()).OperationsContext(context.Background(), false, req, answer, answer)
+	assert.Nil(t, top.ServiceBoundary, "a parent elsewhere changes no top operation")
+}
+
+func TestAServicesBoundaryIsConfirmedWithinTheViewsFilter(t *testing.T) {
+	s := &spans{all: []span{{"t1", "b1", "", "back", "handle", "unknown", ""}}}
+	req := servicetypesv1.Request{Start: "1000000000", End: "61000000000"}
+	c := Evidencer{Querier: s, Org: org}.ServicesContext(context.Background(), req, decoded(t, `{"data":[]}`))
+	c.ServiceBoundary("back", "handle")
+	require.NotEmpty(t, s.requests)
+	assert.Contains(t, s.requests[0].Filter.Expression, "(isRoot = true OR isEntryPoint = true)", "the roots counted are the view's")
+}
