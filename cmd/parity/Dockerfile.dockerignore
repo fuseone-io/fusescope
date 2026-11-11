@@ -1,6 +1,8 @@
 *
 !go.mod
 !go.sum
-!cmd
+!LICENSE
+!NOTICE
+!cmd/parity
 !pkg
 **/node_modules
