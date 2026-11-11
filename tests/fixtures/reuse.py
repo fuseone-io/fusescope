@@ -18,12 +18,17 @@ def teardown(request: pytest.FixtureRequest) -> bool:
     return request.config.getoption("--teardown")
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line("markers", "run_on_teardown: the body runs under --teardown too, before the finalizers remove the resources")
+
+
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_call(item: pytest.Item) -> None:
     """Under --teardown the fixtures are set up, so each registers the finalizer
     that removes its parked resource, but the body is skipped: run against the
-    empty stack it could only fail, and the run would exit 1 (#345)."""
-    if item.config.getoption("--teardown"):
+    empty stack it could only fail, and the run would exit 1 (#345). A body
+    marked run_on_teardown has teardown work of its own and runs."""
+    if item.config.getoption("--teardown") and item.get_closest_marker("run_on_teardown") is None:
         pytest.skip("--teardown: fixtures set up for removal, body not run")
 
 
