@@ -70,7 +70,7 @@ def create_signoz(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
     cache_key: str = "signoz",
-    env_overrides: dict | None = None,
+    env_overrides: dict | Callable[[], dict] | None = None,
     tls: types.TLS | None = None,
     config_file: str | None = None,
     files: Callable[[], dict[str, bytes]] | None = None,
@@ -78,8 +78,10 @@ def create_signoz(
 ) -> types.SigNoz:
     """
     Factory function for creating a SigNoz container.
-    Accepts optional env_overrides to customize the container environment, an
-    optional integration CA (tls) to trust in addition to the system roots,
+    Accepts optional env_overrides to customize the container environment (a
+    callable when they read another resource's ports: it is called only on
+    creation and on the staleness check, since under --teardown every resource
+    is empty, #345), an optional integration CA (tls) to trust in addition to the system roots,
     files (called on creation: container path to content, copied in before it
     starts) and network aliases other containers reach it by.
     """
@@ -87,6 +89,9 @@ def create_signoz(
     # Before reuse.wrap: a stack restored under --reuse still checks that its
     # migration matches this run's migrator.
     request.getfixturevalue("migrator")
+
+    def overrides() -> dict:
+        return (env_overrides() if callable(env_overrides) else env_overrides) or {}
 
     def create() -> types.SigNoz:
 
@@ -118,8 +123,7 @@ def create_signoz(
         if with_web:
             env["SIGNOZ_WEB_ENABLED"] = True
 
-        if env_overrides:
-            env = env | env_overrides
+        env = env | overrides()
 
         container = DockerContainer(image)
         for k, v in env.items():
@@ -236,7 +240,8 @@ def create_signoz(
         )
 
     def stale(container: types.SigNoz) -> bool:
-        if not tls and not env_overrides:
+        wanted = overrides()
+        if not tls and not wanted:
             return False
         client = docker.from_env()
         try:
@@ -247,7 +252,7 @@ def create_signoz(
             return True
         # A setting that points at another resource, such as a collector
         # recreated with another image, must not reuse the cached backend.
-        return bool(env_overrides) and reuse.env_differs(attrs, env_overrides)
+        return bool(wanted) and reuse.env_differs(attrs, wanted)
 
     return reuse.wrap(
         request,
