@@ -7,8 +7,9 @@ import pytest
 import requests
 from keycloak import KeycloakAdmin
 from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import StaleElementReferenceException, WebDriverException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -351,29 +352,47 @@ def create_user_idp(
         client.delete_user(user_id)
 
 
+# How long idp_login waits for each element and for the browser to leave the idp.
+IDP_WAIT_SECONDS = 10
+# Attempts at one action whose element Keycloak's page replaced in between (#346).
+STALE_ATTEMPTS = 3
+
+
+def act_on_fresh(wait: WebDriverWait, locator: tuple[str, str], action: Callable[[WebElement, bool], None]) -> None:
+    """Runs action on the clickable element at locator. On a
+    StaleElementReferenceException, element_to_be_clickable can hand back a node
+    the page replaces before the action, so only this element is looked up
+    again, up to STALE_ATTEMPTS times; the last stale error is raised. Any other
+    error, a TimeoutException finding the element included, is not retried.
+    action gets retry=True from the second attempt on."""
+    for attempt in range(1, STALE_ATTEMPTS + 1):
+        element = wait.until(EC.element_to_be_clickable(locator))
+        try:
+            action(element, attempt > 1)
+            return
+        except StaleElementReferenceException:
+            if attempt == STALE_ATTEMPTS:
+                raise
+
+
+def fill_field(element: WebElement, text: str, retry: bool) -> None:
+    """On a retry the field is a fresh node: it is cleared first, so a value the
+    stale node already took is not typed twice."""
+    if retry:
+        element.clear()
+    element.send_keys(text)
+
+
 @pytest.fixture(name="idp_login", scope="function")
 def idp_login(driver: webdriver.Chrome) -> Callable[[str, str], None]:
     def _idp_login(email: str, password: str) -> None:
-        # wait for the elements to be clickable before interacting with them
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, IDP_WAIT_SECONDS)
 
-        # NOTE: `element_to_be_clickable` ensures the element is visible and enabled before interaction
-        # there could be scenarios where the DOM may change between the time we find the element
-        # and the time we start interacting with it
-        # this avoids the race conditions
+        act_on_fresh(wait, (By.ID, "username"), lambda element, retry: fill_field(element, email, retry))
+        act_on_fresh(wait, (By.ID, "password"), lambda element, retry: fill_field(element, password, retry))
 
-        # Fill the email in username field
-        username_field = wait.until(EC.element_to_be_clickable((By.ID, "username")))
-        username_field.send_keys(email)
-
-        # Fill the password in password field
-        password_field = wait.until(EC.element_to_be_clickable((By.ID, "password")))
-        password_field.send_keys(password)
-
-        # Click the login button
         idp_host = urlparse(driver.current_url).netloc
-        login_button = wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
-        login_button.click()
+        act_on_fresh(wait, (By.ID, "kc-login"), lambda element, _: element.click())
 
         # Wait till the browser has left the idp host — not just the login page: keycloak's SAML flow inserts an
         # auto-submitting interstitial on the idp whose POST is what creates the user in signoz. The button is
