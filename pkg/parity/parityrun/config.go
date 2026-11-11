@@ -5,6 +5,7 @@ package parityrun
 import (
 	"io"
 	"slices"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -66,6 +67,9 @@ func ParseTenants(r io.Reader) (Tenants, error) {
 	if err := dec.Decode(&file); err != nil {
 		return invalid("the tenants file does not decode: %v", err)
 	}
+	if err := oneDocument(dec); err != nil {
+		return Tenants{}, err
+	}
 	if file.Version != tenantsVersion {
 		return invalid("the tenants file is version %d, not %d", file.Version, tenantsVersion)
 	}
@@ -85,7 +89,7 @@ func ParseTenants(r io.Reader) (Tenants, error) {
 			return invalid("tenant %d: no dual_write_epoch", i)
 		case t.Retention.ClickHouse <= 0 || t.Retention.Engine <= 0:
 			return invalid("tenant %d: both retentions must be positive", i)
-		case len(t.Collectors) == 0 || len(slices.Compact(slices.Sorted(slices.Values(t.Collectors)))) != len(t.Collectors):
+		case len(t.Collectors) == 0 || slices.ContainsFunc(t.Collectors, func(c string) bool { return strings.TrimSpace(c) == "" }) || len(slices.Compact(slices.Sorted(slices.Values(t.Collectors)))) != len(t.Collectors):
 			return invalid("tenant %d: collector_instances must name distinct instances", i)
 		}
 		seen[org.StringValue()] = true
@@ -97,6 +101,15 @@ func ParseTenants(r io.Reader) (Tenants, error) {
 		})
 	}
 	return out, nil
+}
+
+// oneDocument refuses a second YAML document after the first: a file is one configuration.
+func oneDocument(dec *yaml.Decoder) error {
+	var extra any
+	if err := dec.Decode(&extra); err != io.EOF {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeTenants, "a configuration file holds one YAML document")
+	}
+	return nil
 }
 
 // Serves tells whether the collector instance writes the spans of org, for parity.Health.

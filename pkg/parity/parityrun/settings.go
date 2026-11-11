@@ -64,8 +64,12 @@ func ParseSettings(r io.Reader) (Settings, error) {
 		return Settings{}, errors.Newf(errors.TypeInvalidInput, ErrCodeSettings, format, args...)
 	}
 	var raw map[string]any
-	if err := yaml.NewDecoder(r).Decode(&raw); err != nil {
+	dec := yaml.NewDecoder(r)
+	if err := dec.Decode(&raw); err != nil {
 		return invalid("the settings file does not decode: %v", err)
+	}
+	if err := oneDocument(dec); err != nil {
+		return Settings{}, err
 	}
 	for section := range raw {
 		if !settingsSections[section] {

@@ -55,3 +55,13 @@ func TestAPushThePushgatewayRefusesIsAnError(t *testing.T) {
 	require.NoError(t, err)
 	assert.Error(t, p.Push(context.Background(), NewMetrics().Registry()))
 }
+
+func TestABlankTokenIsNoToken(t *testing.T) {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }))
+	defer server.Close()
+	token := filepath.Join(t.TempDir(), "token")
+	require.NoError(t, os.WriteFile(token, []byte(" \n"), 0o600))
+	p, err := NewPushgateway(server.URL, token, server.Client())
+	require.NoError(t, err)
+	assert.Error(t, p.Push(context.Background(), NewMetrics().Registry()), "never pushed unauthenticated")
+}

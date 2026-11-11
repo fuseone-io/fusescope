@@ -56,8 +56,12 @@ func (p Pushgateway) Push(ctx context.Context, registry *prometheus.Registry) er
 	if err != nil {
 		return errors.WrapInternalf(err, ErrCodePushgateway, "error reading the Pushgateway token")
 	}
+	bearer := strings.TrimSpace(string(token))
+	if bearer == "" {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodePushgateway, "the Pushgateway token is empty")
+	}
 	header := http.Header{}
-	header.Set("Authorization", "Bearer "+strings.TrimSpace(string(token)))
+	header.Set("Authorization", "Bearer "+bearer)
 	if err := push.New(p.url, pushJob).Gatherer(registry).Client(p.client).Header(header).PushContext(ctx); err != nil {
 		return errors.WrapInternalf(err, ErrCodePushgateway, "error pushing the round's metrics")
 	}

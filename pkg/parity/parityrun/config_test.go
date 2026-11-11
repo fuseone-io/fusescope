@@ -50,6 +50,8 @@ func TestATenantsFileIsRefusedWhole(t *testing.T) {
 		"no retention":         tenantsYAML(strings.ReplaceAll(tenantA, "engine: 168h", "engine: 0s")),
 		"no collector":         tenantsYAML(strings.ReplaceAll(tenantA, "[c-0, c-1]", "[]")),
 		"a repeated collector": tenantsYAML(strings.ReplaceAll(tenantA, "[c-0, c-1]", "[c-0, c-0]")),
+		"a blank collector":    tenantsYAML(strings.ReplaceAll(tenantA, "[c-0, c-1]", `[c-0, "  "]`)),
+		"another document":     tenantsYAML(tenantA) + "---\nversion: 1\n",
 		"one bad of two":       tenantsYAML(tenantA + strings.ReplaceAll(tenantB, "720h", "-1h")),
 	}
 	for name, body := range cases {

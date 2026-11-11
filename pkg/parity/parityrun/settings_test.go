@@ -52,6 +52,7 @@ func TestParitySettingsAreRefusedWhole(t *testing.T) {
 		"no clickhouse dsn":    strings.Replace(settingsYAML, `dsn: "tcp://parity:secret@clickhouse:9000"`, `dsn: ""`, 1),
 		"a plain pushgateway":  strings.Replace(settingsYAML, "https://pushgateway", "http://pushgateway", 1),
 		"no concurrency":       strings.Replace(settingsYAML, "  deadline: 20s\n", "  deadline: 20s\n  concurrency: 0\n", 1),
+		"another document":     settingsYAML + "---\nversion: 1\n",
 		"limits out of order":  strings.Replace(settingsYAML, "windowed_above: 20", "windowed_above: 600", 1),
 	}
 	for name, body := range cases {
