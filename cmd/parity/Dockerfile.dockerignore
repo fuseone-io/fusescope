@@ -1,0 +1,8 @@
+*
+!go.mod
+!go.sum
+!LICENSE
+!NOTICE
+!cmd/parity
+!pkg
+**/node_modules

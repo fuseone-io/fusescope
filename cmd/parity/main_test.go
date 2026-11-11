@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"io"
 	"os"
@@ -93,4 +94,33 @@ func TestADeploymentIsCheckedBeforeAnyEffect(t *testing.T) {
 	file := filepath.Join(dir, "file")
 	require.NoError(t, os.WriteFile(file, nil, 0o600))
 	assert.Error(t, checkDeployment(deploymentSettings(t), file), "not a directory")
+}
+
+func TestWaitReturnsWhenItsPodIsStopped(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+	go func() { done <- waitUntilStopped(ctx) }()
+	select {
+	case err := <-done:
+		t.Fatalf("wait returned before it was stopped: %v", err)
+	case <-time.After(50 * time.Millisecond):
+	}
+	cancel()
+	select {
+	case err := <-done:
+		assert.NoError(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("wait did not return once stopped")
+	}
+}
+
+func TestACleanupThatKeepsAKeyFails(t *testing.T) {
+	var out bytes.Buffer
+	assert.NoError(t, reportCleanup(parityrun.CleanupReport{Deleted: []string{"parity-run-a"}}, &out))
+	assert.Contains(t, out.String(), "deleted parity-run-a")
+	out.Reset()
+	assert.Error(t, reportCleanup(parityrun.CleanupReport{Kept: []string{"parity-run-b"}}, &out), "a key the cleanup cannot judge is an alert, not a log line")
+	assert.Contains(t, out.String(), "kept parity-run-b")
+	assert.Error(t, reportCleanup(parityrun.CleanupReport{Conflicts: []string{"parity-run-c"}}, &out))
+	assert.Contains(t, out.String(), "changed parity-run-c")
 }

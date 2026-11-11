@@ -1,0 +1,131 @@
+name: parity-image
+
+# The parity's staging image (D5): built on every push to main, since its binary links much of the
+# backend, signed, attested and given an SBOM per platform by digest. Pull requests that touch
+# anything it is built from only build it. It is never part of a release.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - go.mod
+      - go.sum
+      - LICENSE
+      - NOTICE
+      - cmd/parity/**
+      - pkg/**
+      - .github/workflows/parity-image.yaml
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/fusescope-parity
+
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - if: github.event_name != 'pull_request'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=sha,format=long,prefix=sha-
+      - id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: cmd/parity/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  sign:
+    if: github.event_name != 'pull_request'
+    needs: image
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
+      packages: write
+      attestations: write
+    steps:
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+      # --recursive also signs each platform manifest, which is what a pull resolves to.
+      - name: sign image
+        run: cosign sign --yes --recursive "${IMAGE}@${DIGEST}"
+        env:
+          DIGEST: ${{ needs.image.outputs.digest }}
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ needs.image.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+
+  sbom:
+    if: github.event_name != 'pull_request'
+    needs: image
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
+      packages: write
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # Each platform's SBOM is attested on that platform's manifest, the digest a pull of it
+      # resolves to.
+      - id: manifest
+        name: resolve platform manifest
+        run: |
+          os="${PLATFORM%/*}" arch="${PLATFORM#*/}"
+          digest=$(docker buildx imagetools inspect --raw "${IMAGE}@${DIGEST}" \
+            | jq -er --arg os "$os" --arg arch "$arch" \
+              '[.manifests[] | select(.platform.os == $os and .platform.architecture == $arch)] | if length == 1 then .[0].digest else error("not exactly one manifest for the platform") end')
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "name=${os}-${arch}" >> "$GITHUB_OUTPUT"
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+      - uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.manifest.outputs.digest }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          format: spdx-json
+          output-file: fusescope-parity-${{ steps.manifest.outputs.name }}.spdx.json
+          artifact-name: fusescope-parity-${{ steps.manifest.outputs.name }}.spdx.json
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+      - name: attest SBOM
+        run: cosign attest --yes --type spdxjson --predicate "fusescope-parity-${NAME}.spdx.json" "${IMAGE}@${DIGEST}"
+        env:
+          NAME: ${{ steps.manifest.outputs.name }}
+          DIGEST: ${{ steps.manifest.outputs.digest }}
