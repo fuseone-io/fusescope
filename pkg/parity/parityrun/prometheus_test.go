@@ -156,7 +156,7 @@ func observedAs(t *testing.T, values ...float64) []parity.ExporterFailure {
 	require.NoError(t, err)
 	for _, q := range *queries {
 		if strings.Contains(q, "up{") {
-			assert.True(t, strings.HasPrefix(q, "min by"), "an aggregation that never hides a 0: %s", q)
+			assert.True(t, strings.HasPrefix(q, "up{"), "every series, unaggregated, so no sample is hidden: %s", q)
 		}
 	}
 	return got
@@ -173,7 +173,7 @@ func TestOnlyAnUpOfExactlyOneIsObserved(t *testing.T) {
 	assert.ElementsMatch(t, []int64{1, 2, 3, 4}, unobserved, "NaN, infinity, a negative and a fraction are not up")
 }
 
-func TestTwoUpSeriesOfOneInstanceAreReadAtTheirLowest(t *testing.T) {
+func TestTwoUpSeriesOfOneInstanceMustBothBeOne(t *testing.T) {
 	server, _ := prometheusFake(t, map[string][]promSeries{"up": {{labels: map[string]string{"pod": "c-0"}, values: map[int64]float64{promStart.Unix(): 0}}, up("c-0", 0), up("c-1", 0)}}, http.StatusOK)
 	got, err := health(t, server).Failures(t.Context(), promStart, promStart.Add(time.Minute))
 	require.NoError(t, err)
@@ -195,4 +195,17 @@ func TestACounterThatIsNotANumberIsAFailure(t *testing.T) {
 func TestTheExportersAreDistinct(t *testing.T) {
 	_, err := NewPrometheusHealth(PrometheusHealthConfig{URL: "https://prom", TokenFile: "/t", InstanceLabel: "pod", Exporters: []string{"otlp/engine", "otlp/engine"}, Instances: []string{"c-0"}}, nil)
 	assert.Error(t, err)
+}
+
+func TestAnyUpSampleOtherThanOneLeavesTheMinuteOut(t *testing.T) {
+	for _, other := range []float64{math.Inf(1), 2} {
+		server, _ := prometheusFake(t, map[string][]promSeries{"up": {
+			up("c-0", 0),
+			{labels: map[string]string{"pod": "c-0"}, values: map[int64]float64{promStart.Unix(): other}},
+			up("c-1", 0),
+		}}, http.StatusOK)
+		got, err := health(t, server).Failures(t.Context(), promStart, promStart.Add(time.Minute))
+		require.NoError(t, err)
+		assert.Equal(t, []parity.ExporterFailure{{Instance: "c-0", Minute: promStart.UnixNano(), Reason: parity.ReasonUnobserved}}, got, "[1, %v]: every sample must be exactly 1", other)
+	}
 }

@@ -40,7 +40,7 @@ type PrometheusHealthConfig struct {
 // PrometheusHealth reads the collector's exporter failures from Prometheus, a minute at a time: a
 // send or enqueue failure of either exporter, or a ClickHouse insert error, leaves its instance's
 // minute out, and so does a counter sample that is not a finite non-negative number, and a minute
-// whose lowest up sample is not exactly 1. A failure series that does not exist is no failure,
+// with no up sample, or one of any of its series that is not exactly 1. A failure series that does not exist is no failure,
 // since the collector creates it on the first one.
 type PrometheusHealth struct {
 	cfg    PrometheusHealthConfig
@@ -124,24 +124,25 @@ func (h PrometheusHealth) Failures(ctx context.Context, start, end time.Time) ([
 			}
 		}
 	}
-	observed, err := h.query(ctx, `min by (`+label+`) (up{`+label+`=~"`+instances+`"})`, start, end)
+	observed, err := h.query(ctx, `up{`+label+`=~"`+instances+`"}`, start, end)
 	if err != nil {
 		return nil, err
 	}
-	upAt := map[string]map[int64]float64{}
+	// up holds, per instance minute, whether every sample of every series was exactly 1: one other
+	// sample, of any series, leaves the minute out for good.
+	upAt := map[string]map[int64]bool{}
 	for _, s := range observed {
 		if upAt[s.instance] == nil {
-			upAt[s.instance] = map[int64]float64{}
+			upAt[s.instance] = map[int64]bool{}
 		}
 		for ts, v := range s.values {
-			if prev, seen := upAt[s.instance][ts]; !seen || v < prev || math.IsNaN(v) {
-				upAt[s.instance][ts] = v
-			}
+			ok, seen := upAt[s.instance][ts]
+			upAt[s.instance][ts] = v == 1 && (!seen || ok)
 		}
 	}
 	for _, instance := range h.cfg.Instances {
 		for minute := start.UnixNano(); minute < end.UnixNano(); minute += step {
-			if v, ok := upAt[instance][minute]; !ok || v != 1 {
+			if !upAt[instance][minute] {
 				add(parity.ExporterFailure{Instance: instance, Minute: minute, Reason: parity.ReasonUnobserved})
 			}
 		}
