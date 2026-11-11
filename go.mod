@@ -26,6 +26,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy v0.1.0
 	github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestreport v0.1.0
+	github.com/fuseone-io/fusescope-collector-server/components/pkg/logspipeline v0.6.1
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-openapi/runtime v0.33.4
 	github.com/go-openapi/strfmt v0.27.4

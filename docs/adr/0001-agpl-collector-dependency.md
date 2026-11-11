@@ -155,6 +155,10 @@ On 2026-11-10 the `simulatorcontract` suite moved to the FuseScope collector ima
 pinned by digest), whose outputs equal the golden corpus recorded from the earlier collector. The chart's
 `migrator: fork` was removed in chart 0.164.0; `otelCollector.enabled: true` is the one opt-in path left.
 
+On 2026-11-11 the suite moved to `fusescope-collector` 0.6.1, pinned by digest, and the logs pipeline preview to
+that collector's `logspipeline` library (collector ADR 0012, fusescope#54); the 212 observations and the golden corpus
+are unchanged.
+
 **Guard.** `make agpl-check AGPL_CHART=<fusescope-charts>/charts/fusescope` renders the chart with its default values and fails if any image comes from one of those repositories, besides the existing check on the backend binary. It runs in two places:
 
 - **Gate on chart changes.** `fusescope-charts`' `agpl-guard` workflow (fusescope-charts#41) runs it on every PR and push to `main` that touches `charts/**`. It renders the chart with its nested dependencies built, using this repo's `main`, so an AGPL image is caught before it merges.

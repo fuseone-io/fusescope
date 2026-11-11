@@ -264,6 +264,10 @@ integrations-catalog: ## Fetch and verify the pinned integration catalog release
 rum-browser-sdk: ## Fetch and verify the pinned @fusescope/browser bundle the backend serves (SDK_VERSION=x.y.z moves the pin)
 	@go run ./scripts/rumbrowsersdk $(if $(SDK_VERSION),-version $(SDK_VERSION))
 
+.PHONY: logspipeline-compat
+logspipeline-compat: ## Check the collector's log pipelines library in this module's graph: versions selected here against its requirements (approved drifts in scripts/logspipelinecompat/approved.txt), then its tests
+	@go run ./scripts/logspipelinecompat
+
 # AGPL_CHART: a fusescope-charts checkout's charts/fusescope; when set, agpl-check also
 # fails if the chart's default install runs an AGPL image (needs helm).
 AGPL_CHART ?=
