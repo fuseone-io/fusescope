@@ -130,7 +130,7 @@ func (r Round) Run(ctx context.Context) (Summary, error) {
 		return Summary{}, err
 	}
 	budget, cancel := context.WithTimeoutCause(ctx, r.Config.Budget, errBudget)
-	out, err := r.run(budget, start, runID, keyID, fp, report)
+	out, err := r.run(budget, start, runID, keyID, RunKeyCheck(key, runID), fp, report)
 	cancel()
 	if err == nil && ctx.Err() != nil {
 		err = ctx.Err()
@@ -185,12 +185,12 @@ type outcome struct {
 	queue   []PairSpec
 }
 
-func (r Round) run(ctx context.Context, start time.Time, runID, keyID string, fp *parity.Fingerprinter, report ReportWriter) (outcome, error) {
+func (r Round) run(ctx context.Context, start time.Time, runID, keyID, keyCheck string, fp *parity.Fingerprinter, report ReportWriter) (outcome, error) {
 	windows, header, err := r.windows(start, fp)
 	if err != nil {
 		return outcome{}, err
 	}
-	header.RunID, header.RunKeyID = runID, keyID
+	header.RunID, header.RunKeyID, header.RunKeyCheck = runID, keyID, keyCheck
 	if err := report.Write(header); err != nil {
 		return outcome{}, err
 	}

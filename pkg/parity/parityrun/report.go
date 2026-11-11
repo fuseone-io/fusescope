@@ -24,6 +24,7 @@ type Header struct {
 	Format        int                 `json:"format"`
 	RunID         string              `json:"run_id"`
 	RunKeyID      string              `json:"run_key_id"`
+	RunKeyCheck   string              `json:"run_key_check"`
 	BackendCommit string              `json:"backend_commit"`
 	ImageDigest   string              `json:"image_digest"`
 	EngineVersion string              `json:"engine_version"`
