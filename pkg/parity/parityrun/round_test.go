@@ -595,3 +595,37 @@ func TestAQueuedSpecTheRoundAlsoSamplesIsPlannedOnce(t *testing.T) {
 	assert.Equal(t, 1, requeued)
 	assert.Equal(t, 1, settled, "one pair for the settled window's trace, not one a reason")
 }
+
+func TestAQueuedWindowShorterThanItsClassMinimumIsInvalid(t *testing.T) {
+	for _, class := range []parity.WindowClass{parity.Settled, parity.Recent} {
+		r, _, _, dir := round(t, &store{p99: 5}, &store{p99: 5})
+		spec := queuedSummary(t, r)
+		minimum := r.Config.Window.MinSettled
+		if class == parity.Recent {
+			minimum = r.Config.Window.MinRecent
+		}
+		spec.Class = class
+		spec.Window.End = spec.Window.Start + int64(minimum-r.Config.Window.Step)
+		r.Requeue = queueOf(t, spec)
+		summary, err := r.Run(context.Background())
+		require.NoError(t, err, class)
+		assert.Contains(t, summary.Reasons, ReasonRequeueInvalid, class)
+		left, _, err := r.Requeue.Load(context.Background())
+		require.NoError(t, err)
+		assert.NotContains(t, left, spec, "%s: a window the gate can never pass leaves the queue", class)
+		_, records := lines(t, dir)
+		for _, rec := range summaryPairs(records) {
+			assert.NotEqual(t, true, rec["requeued"], class)
+		}
+	}
+}
+
+func TestAQueuedWindowOfItsClassMinimumIsValid(t *testing.T) {
+	r, _, _, _ := round(t, &store{p99: 5}, &store{p99: 5})
+	for _, class := range []parity.WindowClass{parity.Settled, parity.Recent} {
+		spec := queuedSummary(t, r)
+		spec.Class = class
+		spec.Window.End = spec.Window.Start + int64(classMinimum(r.Config.Window, class))
+		assert.NoError(t, r.validSpec(spec, r.Tenants.Tenants[0]), class)
+	}
+}

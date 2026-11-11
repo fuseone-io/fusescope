@@ -181,8 +181,8 @@ func absentKeyRequest(spec PairSpec, listLimit int) *qbtypes.QueryRangeRequest {
 //
 // # Errors
 //
-// An unknown class or view, a window that is empty, misaligned or before the tenant's dual write,
-// or a spec without what its view asks for.
+// An unknown class or view, a window that is empty, misaligned, shorter than its class's minimum
+// or before the tenant's dual write, or a spec without what its view asks for.
 func (r Round) validSpec(spec PairSpec, tenant Tenant) error {
 	invalid := func(format string, args ...any) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeRound, format, args...)
@@ -194,6 +194,8 @@ func (r Round) validSpec(spec PairSpec, tenant Tenant) error {
 		return invalid("a spec of no window class")
 	case step <= 0 || w.Start >= w.End || w.Start%step != 0 || w.End%step != 0:
 		return invalid("a spec window must be non-empty and aligned to the step")
+	case w.End-w.Start < int64(classMinimum(r.Config.Window, spec.Class)):
+		return invalid("a spec window is shorter than its class's minimum, which the gate never passes")
 	case w.Start < tenant.DualWriteEpoch.UnixNano():
 		return invalid("a spec window starts before the tenant's dual write")
 	}
@@ -238,4 +240,11 @@ func validCase(c *parity.AbsentKeyCase) error {
 		return invalid
 	}
 	return nil
+}
+
+func classMinimum(cfg parity.WindowConfig, class parity.WindowClass) time.Duration {
+	if class == parity.Recent {
+		return cfg.MinRecent
+	}
+	return cfg.MinSettled
 }
