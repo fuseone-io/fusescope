@@ -1,16 +1,20 @@
 name: parity-image
 
 # The parity's staging image (D5): built on every push to main, since its binary links much of the
-# backend, signed, attested and given an SBOM by digest. Pull requests that touch its build only
-# build it. It is never part of a release.
+# backend, signed, attested and given an SBOM per platform by digest. Pull requests that touch
+# anything it is built from only build it. It is never part of a release.
 on:
   push:
     branches:
       - main
   pull_request:
     paths:
-      - cmd/parity/Dockerfile
-      - cmd/parity/Dockerfile.dockerignore
+      - go.mod
+      - go.sum
+      - LICENSE
+      - NOTICE
+      - cmd/parity/**
+      - pkg/**
       - .github/workflows/parity-image.yaml
   workflow_dispatch:
 
@@ -78,17 +82,50 @@ jobs:
           subject-digest: ${{ needs.image.outputs.digest }}
           push-to-registry: true
           create-storage-record: false
-      - uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
-        env:
-          SYFT_PLATFORM: linux/amd64
+
+  sbom:
+    if: github.event_name != 'pull_request'
+    needs: image
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
+      packages: write
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
-          image: ${{ env.IMAGE }}@${{ needs.image.outputs.digest }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # Each platform's SBOM is attested on that platform's manifest, the digest a pull of it
+      # resolves to.
+      - id: manifest
+        name: resolve platform manifest
+        run: |
+          os="${PLATFORM%/*}" arch="${PLATFORM#*/}"
+          digest=$(docker buildx imagetools inspect --raw "${IMAGE}@${DIGEST}" \
+            | jq -er --arg os "$os" --arg arch "$arch" \
+              '[.manifests[] | select(.platform.os == $os and .platform.architecture == $arch)] | if length == 1 then .[0].digest else error("not exactly one manifest for the platform") end')
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "name=${os}-${arch}" >> "$GITHUB_OUTPUT"
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+      - uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.manifest.outputs.digest }}
           registry-username: ${{ github.actor }}
           registry-password: ${{ secrets.GITHUB_TOKEN }}
           format: spdx-json
-          output-file: fusescope-parity.spdx.json
-          artifact-name: fusescope-parity.spdx.json
+          output-file: fusescope-parity-${{ steps.manifest.outputs.name }}.spdx.json
+          artifact-name: fusescope-parity-${{ steps.manifest.outputs.name }}.spdx.json
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
       - name: attest SBOM
-        run: cosign attest --yes --type spdxjson --predicate fusescope-parity.spdx.json "${IMAGE}@${DIGEST}"
+        run: cosign attest --yes --type spdxjson --predicate "fusescope-parity-${NAME}.spdx.json" "${IMAGE}@${DIGEST}"
         env:
-          DIGEST: ${{ needs.image.outputs.digest }}
+          NAME: ${{ steps.manifest.outputs.name }}
+          DIGEST: ${{ steps.manifest.outputs.digest }}
