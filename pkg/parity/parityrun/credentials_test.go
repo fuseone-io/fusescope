@@ -1,6 +1,7 @@
 package parityrun
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -112,4 +113,25 @@ func TestTheCleanupsSectionIsChecked(t *testing.T) {
 		require.Error(t, err, name)
 		assert.True(t, errors.Asc(err, ErrCodeSettings), "%s: %v", name, err)
 	}
+}
+
+const unparsableDSN = "tcp://parity:leaked-password%zz@clickhouse:9000"
+
+func TestAnUnparsableDSNIsRefusedWithoutItsContent(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dsn")
+	require.NoError(t, os.WriteFile(path, []byte(unparsableDSN+"\n"), 0o600))
+	s, err := ParseSettings(strings.NewReader(withDSNFile(path)))
+	require.NoError(t, err)
+	_, err = s.LoadCredentials()
+	require.Error(t, err)
+	assert.True(t, errors.Asc(err, ErrCodeCredentials), "%v", err)
+	assert.Contains(t, err.Error(), path)
+	assert.NotContains(t, fmt.Sprintf("%+v", err), "leaked-password")
+	_, _, _, cause, _, _ := errors.Unwrapb(err)
+	assert.Nil(t, cause, "the parser's error is dropped, not wrapped")
+
+	_, err = ParseSettings(strings.NewReader(strings.Replace(settingsYAML, "tcp://parity:secret@clickhouse:9000", unparsableDSN, 1)))
+	require.Error(t, err, "an inline DSN is parsed the same way")
+	assert.True(t, errors.Asc(err, ErrCodeSettings), "%v", err)
+	assert.NotContains(t, fmt.Sprintf("%+v", err), "leaked-password")
 }

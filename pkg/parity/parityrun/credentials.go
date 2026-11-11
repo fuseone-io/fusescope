@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"gopkg.in/yaml.v3"
 
 	"github.com/fuseone-io/fusescope/pkg/config"
@@ -34,7 +35,8 @@ type CredentialsSettings struct {
 //
 // # Errors
 //
-// A DSN file that does not open, is not a regular file, is empty, or exceeds maxDSNBytes.
+// A DSN file that does not open, is not a regular file, is empty, exceeds maxDSNBytes, or does not
+// hold a DSN the ClickHouse driver parses.
 func (s Settings) LoadCredentials() (Settings, error) {
 	path := s.Credentials.ClickHouseDSNFile
 	if path == "" {
@@ -60,8 +62,18 @@ func (s Settings) LoadCredentials() (Settings, error) {
 	if len(dsn) == 0 {
 		return s, errors.Newf(errors.TypeInvalidInput, ErrCodeCredentials, "the ClickHouse DSN file %s is empty", path)
 	}
+	if !parsesAsDSN(string(dsn)) {
+		return s, errors.Newf(errors.TypeInvalidInput, ErrCodeCredentials, "the ClickHouse DSN file %s does not hold a valid DSN", path)
+	}
 	s.ClickHouse.Clickhouse.DSN = string(dsn)
 	return s, nil
+}
+
+// parsesAsDSN tells whether the ClickHouse driver parses dsn, as the provider will. The driver's
+// error can quote the whole DSN, password included, so it is dropped.
+func parsesAsDSN(dsn string) bool {
+	_, err := clickhouse.ParseDSN(dsn)
+	return err == nil
 }
 
 // inlineDSN tells whether the settings document itself sets clickhouse.clickhouse.dsn: the
@@ -79,6 +91,9 @@ func (s Settings) dsnSource(inline bool) (Settings, error) {
 	file := s.Credentials.ClickHouseDSNFile
 	if inline == (file != "") {
 		return s, errors.Newf(errors.TypeInvalidInput, ErrCodeSettings, "the ClickHouse DSN comes from exactly one of clickhouse.clickhouse.dsn and credentials.clickhouse_dsn_file")
+	}
+	if inline && !parsesAsDSN(s.ClickHouse.Clickhouse.DSN) {
+		return s, errors.Newf(errors.TypeInvalidInput, ErrCodeSettings, "clickhouse.clickhouse.dsn is not a valid DSN")
 	}
 	if file != "" {
 		if !filepath.IsAbs(file) {
