@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -56,3 +57,5 @@ func TestATenantsFileIsRefusedWhole(t *testing.T) {
 		assert.Error(t, err, name)
 	}
 }
+
+var org = valuer.MustNewUUID(orgA)
