@@ -1,6 +1,7 @@
 package parityrun
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -32,9 +34,19 @@ type bucket struct {
 	objects map[string]*object
 	version int
 	fail    int
+	// hang holds every PUT until its request ends.
+	hang bool
 }
 
 func (b *bucket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if b.hang && r.Method == http.MethodPut {
+		// The client gives up first; the cap only lets the test server close.
+		select {
+		case <-r.Context().Done():
+		case <-time.After(2 * time.Second):
+		}
+		return
+	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.fail != 0 {
@@ -88,7 +100,7 @@ func TestAReportIsUploadedOnceWithItsChecksum(t *testing.T) {
 	w, err := sink.Create("20261111t235959z-7")
 	require.NoError(t, err)
 	require.NoError(t, w.Write(Header{Seed: 7}))
-	require.NoError(t, w.Publish(Summary{Usable: true}))
+	require.NoError(t, w.Publish(t.Context(), Summary{Usable: true}))
 	o := b.objects["reports/2026/11/11/20261111t235959z-7.jsonl"]
 	require.NotNil(t, o, "under the day the round started, whenever it is uploaded")
 	sum := sha256.Sum256(o.body)
@@ -105,7 +117,7 @@ func TestAReportIsUploadedOnceWithItsChecksum(t *testing.T) {
 
 	again, err := sink.Create("20261111t235959z-7")
 	require.NoError(t, err)
-	assert.Error(t, again.Publish(Summary{}), "never over an earlier report")
+	assert.Error(t, again.Publish(t.Context(), Summary{}), "never over an earlier report")
 }
 
 func TestAReportTheBucketRefusesIsNotPublished(t *testing.T) {
@@ -114,7 +126,7 @@ func TestAReportTheBucketRefusesIsNotPublished(t *testing.T) {
 	sink := S3Sink{Client: client, Config: s3cfg, Local: FileSink{Dir: t.TempDir()}}
 	w, err := sink.Create("20261111t000000z-2")
 	require.NoError(t, err)
-	assert.Error(t, w.Publish(Summary{}))
+	assert.Error(t, w.Publish(t.Context(), Summary{}))
 }
 
 func queued(trace string) PairSpec {
@@ -174,4 +186,40 @@ func TestAQueueTheBucketDoesNotAnswerIsAnError(t *testing.T) {
 	_, _, err := q.Load(t.Context())
 	assert.Error(t, err, "only 404 is an empty queue")
 	assert.Error(t, q.Replace(t.Context(), "", nil))
+}
+
+func TestACancelledUploadPublishesNothing(t *testing.T) {
+	b, client := s3Client(t)
+	b.hang = true
+	sink := S3Sink{Client: client, Config: s3cfg, Local: FileSink{Dir: t.TempDir()}}
+	w, err := sink.Create("20261111t000000z-3")
+	require.NoError(t, err)
+	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+	defer cancel()
+	assert.Error(t, w.Publish(ctx, Summary{}), "the round's cancellation reaches the upload")
+	assert.Empty(t, b.objects)
+}
+
+func TestAQueueOfMoreThanOneDocumentIsRefused(t *testing.T) {
+	b, client := s3Client(t)
+	b.objects["requeue/queue.json"] = &object{body: []byte(`{"format":1,"specs":[]}{"format":1,"specs":[]}`), etag: `"x"`}
+	_, _, err := S3Requeue{Client: client, Config: s3cfg}.Load(t.Context())
+	assert.Error(t, err)
+	b.objects["requeue/queue.json"] = &object{body: []byte("{\"format\":1,\"specs\":[]}\n"), etag: `"y"`}
+	_, _, err = S3Requeue{Client: client, Config: s3cfg}.Load(t.Context())
+	assert.NoError(t, err, "a trailing newline is no second document")
+}
+
+func TestABucketIsValidatedBeforeAnyEffect(t *testing.T) {
+	assert.NoError(t, s3cfg.Validate())
+	for name, change := range map[string]func(*S3Config){
+		"no bucket": func(c *S3Config) { c.Bucket = "" },
+		"no key":    func(c *S3Config) { c.KMSKeyID = "" },
+		"no bytes":  func(c *S3Config) { c.MaxQueueBytes = 0 },
+		"no specs":  func(c *S3Config) { c.MaxQueueSpecs = 0 },
+	} {
+		c := s3cfg
+		change(&c)
+		assert.Error(t, c.Validate(), name)
+	}
 }

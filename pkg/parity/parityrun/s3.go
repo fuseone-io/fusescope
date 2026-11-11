@@ -41,7 +41,12 @@ type S3Config struct {
 	MaxQueueSpecs int
 }
 
-func (c S3Config) validate() error {
+// Validate checks the bucket configuration, before anything is written.
+//
+// # Errors
+//
+// A missing bucket or KMS key, or bounds that are not positive.
+func (c S3Config) Validate() error {
 	if c.Bucket == "" || c.KMSKeyID == "" || c.MaxQueueBytes <= 0 || c.MaxQueueSpecs <= 0 {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeBucket, "the bucket needs a name, the requeue's KMS key and positive queue bounds")
 	}
@@ -87,7 +92,7 @@ type S3Sink struct {
 //
 // An invalid bucket configuration, or a local file that cannot be created.
 func (s S3Sink) Create(runID string) (ReportWriter, error) {
-	if err := s.Config.validate(); err != nil {
+	if err := s.Config.Validate(); err != nil {
 		return nil, err
 	}
 	key, err := ReportKey(runID)
@@ -108,8 +113,8 @@ type s3Writer struct {
 	key  string
 }
 
-func (w *s3Writer) Publish(summary Summary) error {
-	if err := w.ReportWriter.Publish(summary); err != nil {
+func (w *s3Writer) Publish(ctx context.Context, summary Summary) error {
+	if err := w.ReportWriter.Publish(ctx, summary); err != nil {
 		return err
 	}
 	body, err := os.ReadFile(w.file)
@@ -117,7 +122,7 @@ func (w *s3Writer) Publish(summary Summary) error {
 		return errors.WrapInternalf(err, ErrCodeBucket, "error reading the report to upload")
 	}
 	sum := sha256.Sum256(body)
-	ctx, cancel := context.WithTimeout(context.Background(), uploadTimeout)
+	ctx, cancel := context.WithTimeout(ctx, uploadTimeout)
 	defer cancel()
 	_, err = w.sink.Client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(w.sink.Config.Bucket), Key: aws.String(w.key), Body: bytes.NewReader(body),
@@ -149,7 +154,7 @@ type queueEnvelope struct {
 // An invalid configuration, any other failure, an object over the byte bound, an envelope that
 // does not decode or of another format, or more specs than the bound.
 func (q S3Requeue) Load(ctx context.Context) ([]PairSpec, string, error) {
-	if err := q.Config.validate(); err != nil {
+	if err := q.Config.Validate(); err != nil {
 		return nil, "", err
 	}
 	out, err := q.Client.GetObject(ctx, &s3.GetObjectInput{Bucket: aws.String(q.Config.Bucket), Key: aws.String(queueKey)})
@@ -173,6 +178,9 @@ func (q S3Requeue) Load(ctx context.Context) ([]PairSpec, string, error) {
 	if err := dec.Decode(&envelope); err != nil || envelope.Format != queueFormat {
 		return nil, "", errors.Newf(errors.TypeInternal, ErrCodeBucket, "the requeue is not a queue of format %d", queueFormat)
 	}
+	if dec.Decode(&struct{}{}) != io.EOF {
+		return nil, "", errors.Newf(errors.TypeInternal, ErrCodeBucket, "the requeue holds more than one document")
+	}
 	if len(envelope.Specs) > q.Config.MaxQueueSpecs {
 		return nil, "", errors.Newf(errors.TypeInternal, ErrCodeBucket, "the requeue holds more specs than its bound")
 	}
@@ -186,7 +194,7 @@ func (q S3Requeue) Load(ctx context.Context) ([]PairSpec, string, error) {
 // An invalid configuration, more specs or bytes than the bounds, a queue changed since version
 // (412), or any other failure.
 func (q S3Requeue) Replace(ctx context.Context, version string, specs []PairSpec) error {
-	if err := q.Config.validate(); err != nil {
+	if err := q.Config.Validate(); err != nil {
 		return err
 	}
 	if len(specs) > q.Config.MaxQueueSpecs {

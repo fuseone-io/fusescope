@@ -107,19 +107,29 @@ func bucketClient(ctx context.Context) (*s3.Client, error) {
 	return s3.NewFromConfig(cfg), nil
 }
 
-// deploy gives the round its deployable ports: the run key in a Secret, the report and the requeue
-// in the bucket, the health from Prometheus and the metrics to the Pushgateway.
-func deploy(ctx context.Context, round parityrun.Round, settings parityrun.Settings, tenants parityrun.Tenants, reports string) (parityrun.Round, error) {
-	client, err := bucketClient(ctx)
-	if err != nil {
-		return round, err
+func bucketConfig(settings parityrun.Settings) parityrun.S3Config {
+	return parityrun.S3Config{Bucket: settings.Bucket.Name, KMSKeyID: settings.Bucket.KMSKeyID, MaxQueueBytes: settings.Bucket.MaxQueueBytes, MaxQueueSpecs: settings.Bucket.MaxQueueSpecs}
+}
+
+// checkDeployment checks what a round writes to before it writes anything: the bucket and the
+// requeue's bounds, and the local directory its report is built in.
+//
+// # Errors
+//
+// An incomplete bucket configuration, or a local directory that is not one.
+func checkDeployment(settings parityrun.Settings, reports string) error {
+	if err := bucketConfig(settings).Validate(); err != nil {
+		return err
 	}
-	bucket := parityrun.S3Config{Bucket: settings.Bucket.Name, KMSKeyID: settings.Bucket.KMSKeyID, MaxQueueBytes: settings.Bucket.MaxQueueBytes, MaxQueueSpecs: settings.Bucket.MaxQueueSpecs}
-	apiServer := "https://" + net.JoinHostPort(os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT"))
-	keys, err := parityrun.NewSecretKeyStore(parityrun.SecretKeyStoreConfig{APIServer: apiServer, Namespace: settings.Secret.Namespace, TokenFile: settings.Secret.TokenFile, CAFile: settings.Secret.CAFile, Expiry: settings.Secret.Expiry})
-	if err != nil {
-		return round, err
+	if info, err := os.Stat(reports); err != nil || !info.IsDir() {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the reports directory is not one")
 	}
+	return nil
+}
+
+// withHealth gives the round its dual-write health from Prometheus, over the collector instances
+// of the tenants file: a round, or an investigation, without it sees every minute unobserved.
+func withHealth(round parityrun.Round, settings parityrun.Settings, tenants parityrun.Tenants) (parityrun.Round, error) {
 	var instances []string
 	for _, t := range tenants.Tenants {
 		instances = append(instances, t.CollectorInstances...)
@@ -128,11 +138,36 @@ func deploy(ctx context.Context, round parityrun.Round, settings parityrun.Setti
 	if err != nil {
 		return round, err
 	}
+	round.Health = health
+	return round, nil
+}
+
+// deploy gives the round its deployable ports: the run key in a Secret, the report and the requeue
+// in the bucket, the health from Prometheus and the metrics to the Pushgateway. Everything is
+// checked before the first of them is built.
+func deploy(ctx context.Context, round parityrun.Round, settings parityrun.Settings, tenants parityrun.Tenants, reports string) (parityrun.Round, error) {
+	if err := checkDeployment(settings, reports); err != nil {
+		return round, err
+	}
+	round, err := withHealth(round, settings, tenants)
+	if err != nil {
+		return round, err
+	}
+	client, err := bucketClient(ctx)
+	if err != nil {
+		return round, err
+	}
+	bucket := bucketConfig(settings)
+	apiServer := "https://" + net.JoinHostPort(os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT"))
+	keys, err := parityrun.NewSecretKeyStore(parityrun.SecretKeyStoreConfig{APIServer: apiServer, Namespace: settings.Secret.Namespace, TokenFile: settings.Secret.TokenFile, CAFile: settings.Secret.CAFile, Expiry: settings.Secret.Expiry})
+	if err != nil {
+		return round, err
+	}
 	pusher, err := parityrun.NewPushgateway(settings.Pushgateway.URL, settings.Pushgateway.TokenFile, nil)
 	if err != nil {
 		return round, err
 	}
-	round.KeyStore, round.Health, round.Metrics = keys, health, pusher
+	round.KeyStore, round.Metrics = keys, pusher
 	round.Reports = parityrun.S3Sink{Client: client, Config: bucket, Local: parityrun.FileSink{Dir: reports}}
 	round.Requeue = parityrun.S3Requeue{Client: client, Config: bucket}
 	return round, nil

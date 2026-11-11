@@ -92,3 +92,17 @@ func TestAReportIsReadBackWhole(t *testing.T) {
 	_, _, err = ParseReport(strings.NewReader(`{"kind":"header","format":1}` + "\n"))
 	assert.Error(t, err, "and closes with its summary")
 }
+
+func TestTheInvestigatedWindowIsTheReportsOnceTheKeyIsChecked(t *testing.T) {
+	r, key, header, _ := investigated(t)
+	w, err := InvestigatedWindow(key, header, r.Tenants.Tenants[0], parity.Settled)
+	require.NoError(t, err)
+	assert.Equal(t, *header.Tenants[0].Settled, w)
+	wrong := bytes.Clone(key)
+	wrong[0] ^= 1
+	_, err = InvestigatedWindow(wrong, header, r.Tenants.Tenants[0], parity.Settled)
+	assert.True(t, errors.Ast(err, errors.TypeForbidden), "%v", err)
+	header.Tenants[0].Recent = nil
+	_, err = InvestigatedWindow(key, header, r.Tenants.Tenants[0], parity.Recent)
+	assert.Error(t, err)
+}

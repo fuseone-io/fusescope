@@ -98,11 +98,30 @@ func investigate(args []string, stdout, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	session := parityinvestigate.Session{ID: sessionID(), Operator: operator, RunID: *runID, Tenant: tenant.Org.StringValue(), Class: string(windowClass)}
+	client, err := bucketClient(ctx)
+	if err != nil {
+		return err
+	}
+	header, records, err := parityrun.ReadReport(ctx, client, settings.Bucket.Name, *runID)
+	if err != nil {
+		return err
+	}
+	if header.RunID != *runID {
+		return errors.Newf(errors.TypeForbidden, parityrun.ErrCodeInvestigation, "the report is not this round's")
+	}
+	w, err := parityrun.InvestigatedWindow(key, header, tenant, windowClass)
+	if err != nil {
+		return err
+	}
+	session, err := newSession(rand.Reader, operator, *runID, tenant.Org.StringValue(), windowClass, w)
+	if err != nil {
+		return err
+	}
 	if err := audit.Emit(ctx, session, parityinvestigate.PhaseStarted, 0); err != nil {
 		return err
 	}
-	shown, err := look(ctx, settings, tenants, tenant, windowClass, *runID, key, stdout)
+	inv := parityrun.Investigation{Header: header, Records: records, Tenant: tenant, Class: windowClass}
+	shown, err := look(ctx, settings, tenants, inv, key, stdout)
 	phase := parityinvestigate.PhaseCompleted
 	switch {
 	case ctx.Err() != nil:
@@ -157,28 +176,36 @@ func readKey(fd string, stderr io.Writer) ([]byte, error) {
 	return key[:n], nil
 }
 
-func sessionID() string {
+// newSession is the audit session of an investigation of w, its id drawn from random.
+//
+// # Errors
+//
+// A random source that fails.
+func newSession(random io.Reader, operator parityinvestigate.Operator, runID, tenant string, class parity.WindowClass, w parity.Window) (parityinvestigate.Session, error) {
 	var b [16]byte
-	_, _ = rand.Read(b[:])
-	return hex.EncodeToString(b[:])
+	if _, err := io.ReadFull(random, b[:]); err != nil {
+		return parityinvestigate.Session{}, errors.WrapInternalf(err, parityrun.ErrCodeInvestigation, "error drawing a session id")
+	}
+	return parityinvestigate.Session{
+		ID: hex.EncodeToString(b[:]), Operator: operator, RunID: runID, Tenant: tenant, Class: string(class),
+		Start: time.Unix(0, w.Start), End: time.Unix(0, w.End),
+	}, nil
 }
 
-// look reads the round's report and shows the tenant's differences behind it.
-func look(ctx context.Context, settings parityrun.Settings, tenants parityrun.Tenants, tenant parityrun.Tenant, class parity.WindowClass, runID string, key []byte, stdout io.Writer) (int, error) {
-	client, err := bucketClient(ctx)
-	if err != nil {
-		return 0, err
-	}
-	header, records, err := parityrun.ReadReport(ctx, client, settings.Bucket.Name, runID)
-	if err != nil {
-		return 0, err
-	}
-	if !parityrun.VerifyRunKey(key, header.RunID, header.RunKeyCheck) || header.RunID != runID {
-		return 0, errors.Newf(errors.TypeForbidden, parityrun.ErrCodeInvestigation, "the key is not this round's")
-	}
+// investigationRound is the round an investigation plans again with: the round's own graphs and
+// its dual-write health.
+func investigationRound(round parityrun.Round, settings parityrun.Settings, tenants parityrun.Tenants) (parityrun.Round, error) {
+	return withHealth(round, settings, tenants)
+}
+
+// look shows the tenant's differences behind the report.
+func look(ctx context.Context, settings parityrun.Settings, tenants parityrun.Tenants, inv parityrun.Investigation, key []byte, stdout io.Writer) (int, error) {
 	round, err := assemble(ctx, settings, tenants)
 	if err != nil {
 		return 0, err
 	}
-	return round.Investigate(ctx, key, parityrun.Investigation{Header: header, Records: records, Tenant: tenant, Class: class}, stdout)
+	if round, err = investigationRound(round, settings, tenants); err != nil {
+		return 0, err
+	}
+	return round.Investigate(ctx, key, inv, stdout)
 }

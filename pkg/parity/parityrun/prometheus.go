@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -37,8 +39,9 @@ type PrometheusHealthConfig struct {
 
 // PrometheusHealth reads the collector's exporter failures from Prometheus, a minute at a time: a
 // send or enqueue failure of either exporter, or a ClickHouse insert error, leaves its instance's
-// minute out, and so does a minute with no up sample or up == 0. A failure series that does not
-// exist is no failure, since the collector creates it on the first one.
+// minute out, and so does a counter sample that is not a finite non-negative number, and a minute
+// whose lowest up sample is not exactly 1. A failure series that does not exist is no failure,
+// since the collector creates it on the first one.
 type PrometheusHealth struct {
 	cfg    PrometheusHealthConfig
 	client *http.Client
@@ -52,7 +55,8 @@ type PrometheusHealth struct {
 // instance, or a name that cannot be written into a selector.
 func NewPrometheusHealth(cfg PrometheusHealthConfig, client *http.Client) (PrometheusHealth, error) {
 	u, err := url.Parse(cfg.URL)
-	valid := err == nil && u.Scheme == "https" && u.Host != "" && cfg.TokenFile != "" && labelValue.MatchString(cfg.InstanceLabel) && len(cfg.Exporters) >= 2 && len(cfg.Instances) > 0
+	distinct := len(slices.Compact(slices.Sorted(slices.Values(cfg.Exporters)))) == len(cfg.Exporters)
+	valid := err == nil && u.Scheme == "https" && u.Host != "" && cfg.TokenFile != "" && labelValue.MatchString(cfg.InstanceLabel) && len(cfg.Exporters) >= 2 && distinct && len(cfg.Instances) > 0
 	for _, name := range append(append([]string(nil), cfg.Exporters...), cfg.Instances...) {
 		valid = valid && labelValue.MatchString(name)
 	}
@@ -108,24 +112,36 @@ func (h PrometheusHealth) Failures(ctx context.Context, start, end time.Time) ([
 				continue
 			}
 			for ts, v := range s.values {
-				if v > 0 {
-					add(parity.ExporterFailure{Instance: s.instance, Minute: ts - step, Reason: reason})
-					add(parity.ExporterFailure{Instance: s.instance, Minute: ts, Reason: reason})
+				if finite(v) && v == 0 {
+					continue
 				}
+				why := reason
+				if !finite(v) || v < 0 {
+					why = parity.ReasonUnobserved
+				}
+				add(parity.ExporterFailure{Instance: s.instance, Minute: ts - step, Reason: why})
+				add(parity.ExporterFailure{Instance: s.instance, Minute: ts, Reason: why})
 			}
 		}
 	}
-	observed, err := h.query(ctx, `max by (`+label+`) (up{`+label+`=~"`+instances+`"})`, start, end)
+	observed, err := h.query(ctx, `min by (`+label+`) (up{`+label+`=~"`+instances+`"})`, start, end)
 	if err != nil {
 		return nil, err
 	}
 	upAt := map[string]map[int64]float64{}
 	for _, s := range observed {
-		upAt[s.instance] = s.values
+		if upAt[s.instance] == nil {
+			upAt[s.instance] = map[int64]float64{}
+		}
+		for ts, v := range s.values {
+			if prev, seen := upAt[s.instance][ts]; !seen || v < prev || math.IsNaN(v) {
+				upAt[s.instance][ts] = v
+			}
+		}
 	}
 	for _, instance := range h.cfg.Instances {
 		for minute := start.UnixNano(); minute < end.UnixNano(); minute += step {
-			if v, ok := upAt[instance][minute]; !ok || v == 0 {
+			if v, ok := upAt[instance][minute]; !ok || v != 1 {
 				add(parity.ExporterFailure{Instance: instance, Minute: minute, Reason: parity.ReasonUnobserved})
 			}
 		}
@@ -186,3 +202,5 @@ func (h PrometheusHealth) query(ctx context.Context, query string, start, end ti
 	}
 	return out, nil
 }
+
+func finite(v float64) bool { return !math.IsNaN(v) && !math.IsInf(v, 0) }

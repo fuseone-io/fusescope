@@ -631,3 +631,41 @@ func TestAQueuedWindowOfItsClassMinimumIsValid(t *testing.T) {
 		assert.NoError(t, r.validSpec(spec, r.Tenants.Tenants[0]), class)
 	}
 }
+
+// unpublishable fails every report it is asked to publish, or to create.
+type unpublishable struct {
+	FileSink
+	create bool
+}
+
+func (u unpublishable) Create(runID string) (ReportWriter, error) {
+	if u.create {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no local directory")
+	}
+	w, err := u.FileSink.Create(runID)
+	return failingPublish{w}, err
+}
+
+type failingPublish struct{ ReportWriter }
+
+func (failingPublish) Publish(context.Context, Summary) error {
+	return errors.Newf(errors.TypeInternal, errors.CodeInternal, "the bucket refused")
+}
+
+func TestARoundWhoseReportIsNotPublishedIsUnusable(t *testing.T) {
+	r, _, _, dir := round(t, &store{p99: 5}, &store{p99: 5})
+	r.Reports = unpublishable{FileSink: FileSink{Dir: dir}}
+	summary, err := r.Run(t.Context())
+	require.Error(t, err)
+	assert.False(t, summary.Usable)
+	assert.False(t, summary.Qualifying)
+	assert.Contains(t, summary.Reasons, ReasonReportUnpublished)
+}
+
+func TestAReportThatCannotBeStartedLeavesNoKey(t *testing.T) {
+	r, keys, _, dir := round(t, &store{p99: 5}, &store{p99: 5})
+	r.Reports = unpublishable{FileSink: FileSink{Dir: dir}, create: true}
+	_, err := r.Run(t.Context())
+	require.Error(t, err)
+	assert.Empty(t, keys.ids, "no Secret is left for a round that never started")
+}

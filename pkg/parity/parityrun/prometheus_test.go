@@ -2,6 +2,7 @@ package parityrun
 
 import (
 	"encoding/json"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -56,7 +57,18 @@ func prometheusFake(t *testing.T, series map[string][]promSeries, status int) (*
 	return server, &queries
 }
 
-func strconvFloat(v float64) string { b, _ := json.Marshal(v); return string(b) }
+func strconvFloat(v float64) string {
+	switch {
+	case math.IsNaN(v):
+		return "NaN"
+	case math.IsInf(v, 1):
+		return "+Inf"
+	case math.IsInf(v, -1):
+		return "-Inf"
+	}
+	b, _ := json.Marshal(v)
+	return string(b)
+}
 
 func health(t *testing.T, server *httptest.Server) PrometheusHealth {
 	t.Helper()
@@ -131,4 +143,56 @@ func TestAHealthSourceIsConfiguredWhole(t *testing.T) {
 		_, err := NewPrometheusHealth(c, nil)
 		assert.Error(t, err, name)
 	}
+}
+
+func observedAs(t *testing.T, values ...float64) []parity.ExporterFailure {
+	t.Helper()
+	series := promSeries{labels: map[string]string{"pod": "c-0"}, values: map[int64]float64{}}
+	for i, v := range values {
+		series.values[promStart.Unix()+60*int64(i)] = v
+	}
+	server, queries := prometheusFake(t, map[string][]promSeries{"up": {series, up("c-1", 0, 1, 2, 3, 4)}}, http.StatusOK)
+	got, err := health(t, server).Failures(t.Context(), promStart, promStart.Add(time.Duration(len(values))*time.Minute))
+	require.NoError(t, err)
+	for _, q := range *queries {
+		if strings.Contains(q, "up{") {
+			assert.True(t, strings.HasPrefix(q, "min by"), "an aggregation that never hides a 0: %s", q)
+		}
+	}
+	return got
+}
+
+func TestOnlyAnUpOfExactlyOneIsObserved(t *testing.T) {
+	got := observedAs(t, 1, math.NaN(), math.Inf(1), -1, 0.5)
+	var unobserved []int64
+	for _, f := range got {
+		if f.Instance == "c-0" {
+			unobserved = append(unobserved, (f.Minute-promStart.UnixNano())/int64(time.Minute))
+		}
+	}
+	assert.ElementsMatch(t, []int64{1, 2, 3, 4}, unobserved, "NaN, infinity, a negative and a fraction are not up")
+}
+
+func TestTwoUpSeriesOfOneInstanceAreReadAtTheirLowest(t *testing.T) {
+	server, _ := prometheusFake(t, map[string][]promSeries{"up": {{labels: map[string]string{"pod": "c-0"}, values: map[int64]float64{promStart.Unix(): 0}}, up("c-0", 0), up("c-1", 0)}}, http.StatusOK)
+	got, err := health(t, server).Failures(t.Context(), promStart, promStart.Add(time.Minute))
+	require.NoError(t, err)
+	assert.Equal(t, []parity.ExporterFailure{{Instance: "c-0", Minute: promStart.UnixNano(), Reason: parity.ReasonUnobserved}}, got)
+}
+
+func TestACounterThatIsNotANumberIsAFailure(t *testing.T) {
+	for _, v := range []float64{math.NaN(), math.Inf(1), -1} {
+		server, _ := prometheusFake(t, map[string][]promSeries{
+			"up":                                    {up("c-0", 0, 1), up("c-1", 0, 1)},
+			"otelcol_exporter_enqueue_failed_spans": {{labels: map[string]string{"pod": "c-0", "exporter": "otlp/engine"}, values: map[int64]float64{promStart.Unix() + 60: v}}},
+		}, http.StatusOK)
+		got, err := health(t, server).Failures(t.Context(), promStart, promStart.Add(2*time.Minute))
+		require.NoError(t, err)
+		assert.NotEmpty(t, got, "%v is no proof the export went through", v)
+	}
+}
+
+func TestTheExportersAreDistinct(t *testing.T) {
+	_, err := NewPrometheusHealth(PrometheusHealthConfig{URL: "https://prom", TokenFile: "/t", InstanceLabel: "pod", Exporters: []string{"otlp/engine", "otlp/engine"}, Instances: []string{"c-0"}}, nil)
+	assert.Error(t, err)
 }

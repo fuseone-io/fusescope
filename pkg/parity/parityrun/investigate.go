@@ -126,6 +126,24 @@ func (r Round) Investigate(ctx context.Context, key []byte, inv Investigation, o
 	return shown, nil
 }
 
+// InvestigatedWindow is the window of tenant and class the report of header holds, once key is
+// checked against the report: nothing is queried, so it can name the window in the audit event
+// that opens the session.
+//
+// # Errors
+//
+// A key that is not the report's, or a window the report does not hold.
+func InvestigatedWindow(key []byte, header Header, tenant Tenant, class parity.WindowClass) (parity.Window, error) {
+	if !VerifyRunKey(key, header.RunID, header.RunKeyCheck) {
+		return parity.Window{}, errors.Newf(errors.TypeForbidden, ErrCodeInvestigation, "the key is not this round's")
+	}
+	fp, err := parity.NewFingerprinter(key)
+	if err != nil {
+		return parity.Window{}, err
+	}
+	return investigatedWindow(Investigation{Header: header, Class: class}, fp.Segment(tenant.Org.StringValue()))
+}
+
 func investigatedWindow(inv Investigation, tenant string) (parity.Window, error) {
 	i := slices.IndexFunc(inv.Header.Tenants, func(t TenantHeader) bool { return t.Tenant == tenant })
 	if i >= 0 {
@@ -205,6 +223,6 @@ func plainPath(path parity.Path) string {
 // discardReport is the report of a plan made again: nothing of it is kept.
 type discardReport struct{}
 
-func (discardReport) Write(any) error       { return nil }
-func (discardReport) Publish(Summary) error { return nil }
-func (discardReport) Abort() error          { return nil }
+func (discardReport) Write(any) error                        { return nil }
+func (discardReport) Publish(context.Context, Summary) error { return nil }
+func (discardReport) Abort() error                           { return nil }
