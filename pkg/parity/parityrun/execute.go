@@ -75,12 +75,33 @@ func (r Round) record(ctx context.Context, fp *parity.Fingerprinter, p pair, res
 	engine, rule := view.Normalize(result.Engine.Answer)
 	clickhouse, _ := view.Normalize(result.ClickHouse.Answer)
 	rec.Outcome = "match"
-	for _, d := range parity.Compare(engine, clickhouse, rule) {
+	classified(&rec, fp, parity.Compare(engine, clickhouse, rule), classify)
+	return rec
+}
+
+// classified records diffs on rec, each classified, the pair taking the worst verdict, and the
+// errors the evidence met while classifying them.
+func classified(rec *PairRecord, fp *parity.Fingerprinter, diffs []parity.Difference, classify parity.Context) {
+	for _, d := range diffs {
 		v := parity.Classify(d, classify)
 		rec.Differences = append(rec.Differences, DifferenceRecord{Path: fp.Path(d.Path...), Kind: d.Kind, Category: v.Category, Disposition: v.Disposition})
-		takeWorst(&rec, v)
+		takeWorst(rec, v)
 	}
-	return rec
+	keepEvidenceErrors(rec, classify)
+}
+
+// keepEvidenceErrors adds to the pair's errors, once per kind, those its evidence met while its
+// differences were classified, under the side "evidence".
+func keepEvidenceErrors(rec *PairRecord, classify parity.Context) {
+	if classify.EvidenceErrors == nil {
+		return
+	}
+	for _, err := range classify.EvidenceErrors() {
+		if e := ErrorOf("evidence", err); e != nil && !slices.Contains(rec.Errors, *e) {
+			rec.Errors = append(rec.Errors, *e)
+		}
+	}
+	slices.SortStableFunc(rec.Errors, func(a, b ErrorRecord) int { return strings.Compare(a.Side, b.Side) })
 }
 
 // takeWorst makes v the pair's verdict when it is the pair's first difference or worse than the

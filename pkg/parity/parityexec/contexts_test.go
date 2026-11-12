@@ -8,10 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/parity"
+	"github.com/fuseone-io/fusescope/pkg/querier"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/fuseone-io/fusescope/pkg/types/servicetypes/servicetypesv1"
 	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -158,6 +161,32 @@ func TestEntryPointOperationsConfirmTheirServiceBoundary(t *testing.T) {
 	assert.NotNil(t, entry.ServiceBoundary)
 	top := evidencer(sixValues()).OperationsContext(context.Background(), false, req, answer, answer)
 	assert.Nil(t, top.ServiceBoundary, "a parent elsewhere changes no top operation")
+}
+
+// failing answers every query with an error.
+type failing struct{ querier.Querier }
+
+func (failing) QueryRange(context.Context, valuer.UUID, *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+	return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "the evidence did not run")
+}
+
+func TestABoundaryEvidenceErrorIsUnavailableAndKept(t *testing.T) {
+	req := servicetypesv1.Request{Start: "1000000000", End: "61000000000"}
+	c := Evidencer{Querier: failing{}, Org: org}.ServicesContext(context.Background(), req, decoded(t, `{"data":[]}`))
+	assert.Equal(t, parity.BoundaryUnavailable, c.ServiceBoundary("back", "handle"), "an error is no denial")
+	require.Len(t, c.EvidenceErrors(), 1, "the error the evidence met is kept for the pair's record")
+
+	ops := servicetypesv1.OperationsRequest{Start: "1000000000", End: "61000000000", Service: "back", Limit: 2}
+	entry := Evidencer{Querier: failing{}, Org: org}.OperationsContext(context.Background(), true, ops, decoded(t, `{"data":[]}`), decoded(t, `{"data":[]}`))
+	assert.Equal(t, parity.BoundaryUnavailable, entry.ServiceBoundary("back", "handle"))
+	assert.Len(t, entry.EvidenceErrors(), 1)
+}
+
+func TestAServicesBoundaryWithoutTheViewsRequestIsUnavailable(t *testing.T) {
+	s := &spans{all: []span{{"t1", "b1", "", "back", "handle", "unknown", ""}}}
+	c := Evidencer{Querier: s, Org: org}.ServicesContext(context.Background(), servicetypesv1.Request{Start: "not a time"}, decoded(t, `{"data":[]}`))
+	assert.Equal(t, parity.BoundaryUnavailable, c.ServiceBoundary("back", "handle"), "no evidence on a view that did not build")
+	assert.Empty(t, s.requests)
 }
 
 func TestAServicesBoundaryIsConfirmedWithinTheViewsFilter(t *testing.T) {

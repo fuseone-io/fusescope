@@ -22,7 +22,12 @@ func (e Evidencer) ServicesContext(ctx context.Context, req servicetypesv1.Reque
 	view, _, _, err := implservices.ServicesRequest(&req)
 	base, fields := baseGroup(view)
 	calls := numCalls(clickhouse, "serviceName")
+	errs := &evidenceErrors{}
+	if err != nil {
+		errs.add(err)
+	}
 	return parity.Context{
+		EvidenceErrors: errs.all,
 		QuantileOf: func(path parity.Path) (float64, bool) {
 			f, ok := fields[path.Last()]
 			return f.q, ok && len(path) == 4 && path[0] == "data"
@@ -37,11 +42,33 @@ func (e Evidencer) ServicesContext(ctx context.Context, req servicetypesv1.Reque
 			g.Field = f.field
 			return e.stable(ctx, g, q, v, calls[string(service)])
 		},
-		ServiceBoundary: func(service, operation string) bool {
-			confirmed, err := e.Boundary(ctx, base, service, operation)
-			return err == nil && confirmed
+		ServiceBoundary: func(service, operation string) parity.Boundary {
+			if err != nil {
+				return parity.BoundaryUnavailable
+			}
+			return errs.boundary(e.Boundary(ctx, base, service, operation))
 		},
 	}
+}
+
+// evidenceErrors keeps the errors a pair's evidence met, for the pair's record.
+type evidenceErrors struct{ errs []error }
+
+func (e *evidenceErrors) add(err error) { e.errs = append(e.errs, err) }
+
+func (e *evidenceErrors) all() []error { return e.errs }
+
+// boundary is Boundary's answer as a classification reads it: an error is unavailable evidence,
+// kept, and never a denial.
+func (e *evidenceErrors) boundary(confirmed bool, err error) parity.Boundary {
+	switch {
+	case err != nil:
+		e.add(err)
+		return parity.BoundaryUnavailable
+	case confirmed:
+		return parity.BoundaryConfirmed
+	}
+	return parity.BoundaryDenied
 }
 
 // OperationsContext is how a top or entry point operations pair's differences are classified: a
@@ -92,10 +119,10 @@ func (e Evidencer) OperationsContext(ctx context.Context, entry bool, req servic
 		},
 	}
 	if entry {
-		c.Service = req.Service
-		c.ServiceBoundary = func(service, operation string) bool {
-			confirmed, err := e.Boundary(ctx, base, service, operation)
-			return err == nil && confirmed
+		errs := &evidenceErrors{}
+		c.Service, c.EvidenceErrors = req.Service, errs.all
+		c.ServiceBoundary = func(service, operation string) parity.Boundary {
+			return errs.boundary(e.Boundary(ctx, base, service, operation))
 		}
 	}
 	return c
