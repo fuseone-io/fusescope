@@ -1,0 +1,8 @@
+# Drifts from the versions the collector's log pipelines library requires that
+# this module has approved (collector ADR 0012, decision 4). One per line:
+#   path required => selected
+# where selected is a version or a replacement "path version".
+#
+# The query builder's expr flavour (go.mod replace, #9246). The library's tests
+# and TestSimulatorCorpus run under it.
+github.com/expr-lang/expr v1.17.8 => github.com/SigNoz/expr v1.17.7-beta

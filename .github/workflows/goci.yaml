@@ -142,6 +142,24 @@ jobs:
           go-version-file: go.mod
       - name: check-semconv-generated-files
         run: make semconv-check
+  logspipeline-compat:
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          persist-credentials: false
+      - name: go-install
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      # The collector's log pipelines library in this module's graph, its
+      # replace directives included (collector ADR 0012, decision 4).
+      - name: check-logspipeline-in-this-graph
+        run: make logspipeline-compat
   agpl-guard:
     needs: changes
     if: needs.changes.outputs.go == 'true'

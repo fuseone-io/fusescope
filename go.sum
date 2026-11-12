@@ -303,6 +303,8 @@ github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy v0.
 github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestpolicy v0.1.0/go.mod h1:GIWlAUgFSBz9EH3DYobIeuNqk54IVUmLZsh8cyJcNao=
 github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestreport v0.1.0 h1:5VBCpTs6koR6q9gHZcc0bW/awrcJdINXBMqd2s4vS1Q=
 github.com/fuseone-io/fusescope-collector-server/components/pkg/ingestreport v0.1.0/go.mod h1:7k4XYMff/GgqsPLWjmLxoRuf3QGtMRBVarg/f4d1F9M=
+github.com/fuseone-io/fusescope-collector-server/components/pkg/logspipeline v0.6.1 h1:gnzWJtNKEkZT6ZP2A4pvJXImVyKgV02Qyuiu/RXRDUc=
+github.com/fuseone-io/fusescope-collector-server/components/pkg/logspipeline v0.6.1/go.mod h1:3nh5lplmh0lHOnq0UX3rGZNvlrL/c0HspvuzYcLGeOg=
 github.com/fxamacker/cbor/v2 v2.9.4 h1:xwjVlxEMR3S605oUlgBjKLTTeGFciYPGYCtF/35LKGo=
 github.com/fxamacker/cbor/v2 v2.9.4/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gabriel-vasile/mimetype v1.4.16 h1:5izNFuvA37st1dDRAcA7TtmngBmRgiIPDmTtiEvjx1E=

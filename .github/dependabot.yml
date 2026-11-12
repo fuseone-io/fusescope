@@ -72,6 +72,10 @@ updates:
         update-types:
           - version-update:semver-minor
           - version-update:semver-major
+      # The preview runs the collector's log pipelines library at the version of
+      # the collector the chart pins (collector ADR 0012), so it moves with
+      # that pin, and make logspipeline-compat checks it.
+      - dependency-name: github.com/fuseone-io/fusescope-collector-server/components/pkg/logspipeline
       # Needs the alertmanager v0.34 migration (#290).
       - dependency-name: github.com/prometheus/alertmanager
         versions:
