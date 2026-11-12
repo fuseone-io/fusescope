@@ -176,6 +176,20 @@ func TestSelectorsSharingAPrefixShareACall(t *testing.T) {
 	assert.Len(t, engine.calls, 2)
 }
 
+func TestABuildCallsTheEngineOncePerDistinctPrefix(t *testing.T) {
+	engine := &keysEngine{rows: []keyRow{{"http.route", "span", "string"}, {"db.name", "span", "string"}}}
+	fuzzy := func(name string) *telemetrytypes.FieldKeySelector {
+		return &telemetrytypes.FieldKeySelector{Signal: telemetrytypes.SignalTraces, Name: name, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy}
+	}
+	resolve(t, engine, exact("http.route"), fuzzy("route"), exact("db.name"), exact("http.route"), fuzzy("name"))
+	prefixes := map[string]int{}
+	for _, call := range engine.calls {
+		prefixes[call.Prefix]++
+	}
+	assert.Equal(t, map[string]int{"http.route": 1, "db.name": 1, "": 1}, prefixes,
+		"an exact selector lists by its name, every fuzzy one shares the whole listing, and none is asked twice")
+}
+
 func TestATruncatedListingIsIncomplete(t *testing.T) {
 	var rows []keyRow
 	for i := 0; i < 3; i++ {
