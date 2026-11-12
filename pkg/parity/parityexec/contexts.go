@@ -42,7 +42,7 @@ func (e Evidencer) ServicesContext(ctx context.Context, req servicetypesv1.Reque
 			return e.stable(ctx, g, q, v, calls[string(service)])
 		},
 		ServiceBoundary: func(service, operation string) parity.Boundary {
-			return st.boundary(service, operation, func() (bool, error) {
+			return st.boundary(ctx, service, operation, func() (bool, error) {
 				if err != nil {
 					return false, err
 				}
@@ -74,7 +74,7 @@ func (s *evidence) all() []error { return s.errs }
 // boundary is check's answer for operation of service as a classification reads it: an error is
 // unavailable evidence, kept and logged whole, never a denial. After an error other than a timeout
 // or a cancellation, which may not recur, the pair's other operations are not queried.
-func (s *evidence) boundary(service, operation string, check func() (bool, error)) parity.Boundary {
+func (s *evidence) boundary(ctx context.Context, service, operation string, check func() (bool, error)) parity.Boundary {
 	key := [2]string{service, operation}
 	if b, ok := s.answers[key]; ok {
 		return b
@@ -89,7 +89,7 @@ func (s *evidence) boundary(service, operation string, check func() (bool, error
 		b = parity.BoundaryUnavailable
 		s.errs = append(s.errs, err)
 		_, code, _, _, _, _ := errors.Unwrapb(err)
-		s.logger.Warn("service-boundary evidence unavailable", slog.String("code", code.String()), slog.Any("error", err))
+		s.logger.WarnContext(ctx, "service-boundary evidence unavailable", slog.String("code", code.String()), slog.Any("error", err))
 		s.stopped = !errors.Ast(err, errors.TypeTimeout) && !errors.Ast(err, errors.TypeCanceled)
 	case confirmed:
 		b = parity.BoundaryConfirmed
@@ -149,7 +149,7 @@ func (e Evidencer) OperationsContext(ctx context.Context, entry bool, req servic
 		st := e.evidenceState()
 		c.Service, c.EvidenceErrors = req.Service, st.all
 		c.ServiceBoundary = func(service, operation string) parity.Boundary {
-			return st.boundary(service, operation, func() (bool, error) { return e.Boundary(ctx, base, service, operation) })
+			return st.boundary(ctx, service, operation, func() (bool, error) { return e.Boundary(ctx, base, service, operation) })
 		}
 	}
 	return c
