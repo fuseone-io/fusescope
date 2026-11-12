@@ -78,6 +78,8 @@ Add `#### Screenshots / Screen Recordings` for visible UI changes and `#### Addi
 - `safe-to-integrate` when Go, SQL or integration tests changed (integration CI only runs with it).
 - `safe-to-e2e` when e2e should run and the diff doesn't touch `frontend/` or `tests/e2e/`.
 
+On a PR from this repository the labels stay across pushes. On fork and Dependabot PRs, they authorise one head and need an approving review on it.
+
 ## 7. Report
 
 Branch, commits (sha + title), checks with results, PR URL, labels to add. Mention anything skipped and why.

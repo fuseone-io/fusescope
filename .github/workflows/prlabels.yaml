@@ -1,0 +1,42 @@
+name: prlabels
+
+# On a fork or dependabot pull request, a safe-to-* label authorises only the
+# head it was added to. When such a pull request gets a new head, or is
+# reopened, this removes the labels, so the PR shows that a new authorisation
+# is needed. It is housekeeping: the gate in goci, e2eci and integrationci
+# ignores any label added before the head appeared. On a pull request from
+# this repository the labels are a cost gate and stay.
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions: {}
+
+concurrency:
+  group: prlabels-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  remove:
+    if: github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    # No checkout: nothing from the pull request runs here.
+    steps:
+      - name: remove-safe-to-labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          current=$(gh api "repos/$REPO/issues/$NUMBER/labels" --paginate --jq '.[].name')
+          for label in safe-to-test safe-to-e2e safe-to-integrate; do
+            if grep -qx "$label" <<<"$current"; then
+              gh api -X DELETE "repos/$REPO/issues/$NUMBER/labels/$label" >/dev/null
+              echo "removed $label"
+            fi
+          done

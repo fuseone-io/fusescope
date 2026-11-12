@@ -26,7 +26,8 @@ runs:
         EVENT: ${{ github.event_name }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
         CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
-        LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        # Only the label of this event: a label in the payload may predate the head.
+        LABELS: ${{ github.event.action == 'labeled' && github.event.label.name || '' }}
       run: |
         python3 -m unittest discover -s "$GITHUB_ACTION_PATH" -p '*_test.py'
         python3 "$GITHUB_ACTION_PATH/changes.py"

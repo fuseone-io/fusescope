@@ -2,21 +2,12 @@ name: integrationci
 
 on:
   pull_request:
-    paths-ignore:
-      - "**/*.md"
-      - "docs/adr/**"
-      - "docs/brand/**"
-      - "docs/contributing/**"
-      - "docs/img/**"
     types:
+      - opened
+      - synchronize
+      - reopened
       - labeled
   pull_request_target:
-    paths-ignore:
-      - "**/*.md"
-      - "docs/adr/**"
-      - "docs/brand/**"
-      - "docs/contributing/**"
-      - "docs/img/**"
     types:
       - labeled
   schedule:
@@ -28,30 +19,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The gate. Its code comes from the base commit, or from the head of a pull
+  # request from this repository, never from a fork or dependabot head.
   changes:
-    if: |
-      !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-integrate' && github.event.label.name != 'safe-to-test') && (
-      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
-      )
     runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+      issues: read
+      pull-requests: read
     outputs:
       integration: ${{ steps.changes.outputs.integration }}
+      sha: ${{ steps.authorize.outputs.sha }}
+      ignored: ${{ steps.authorize.outputs.ignored }}
+      run: ${{ steps.authorize.outputs.run }}
+      pass: ${{ steps.authorize.outputs.pass }}
+      reason: ${{ steps.authorize.outputs.reason }}
     steps:
       - name: checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.head.sha || github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
       - name: changes
         id: changes
         uses: ./.github/actions/changes
+      - name: authorize
+        id: authorize
+        uses: ./.github/actions/authorize
+        with:
+          relevant: ${{ steps.changes.outputs.integration != '' }}
+          triggers: safe-to-integrate,safe-to-test
+          trusted-requires: safe-to-integrate
+          untrusted-requires: safe-to-test,safe-to-integrate
   fmtlint:
     needs: changes
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: python
         uses: actions/setup-python@v7
@@ -73,13 +82,13 @@ jobs:
   # runs fork code and must not hold a write token.
   build:
     needs: changes
-    if: needs.changes.outputs.integration != ''
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       # Restore-only: the cacheci workflow owns cache saves. Seeds the
       # BuildKit cache mounts so the image build is incremental.
@@ -126,6 +135,7 @@ jobs:
           retention-days: 1
   groups:
     needs: changes
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
@@ -133,7 +143,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: matrix
         id: matrix
@@ -143,7 +153,7 @@ jobs:
           echo "matrix=$(python3 tests/integration/groups.py "$SELECTION")" >> "$GITHUB_OUTPUT"
   test:
     name: test (${{ matrix.group.name }}, ${{ matrix.sqlstore-provider }})
-    needs: [build, groups]
+    needs: [changes, build, groups]
     strategy:
       fail-fast: false
       matrix:
@@ -165,7 +175,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: python
         uses: actions/setup-python@v7
@@ -227,3 +237,32 @@ jobs:
               || { status=1; echo "::error title=integration failed::${suites[*]}"; }
           done <<< "$RUNS"
           exit $status
+  # Required status check. Always runs, so the check exists on every head.
+  # Runs that do not decide the verdict report as "integrationci (ignored)", a name
+  # the required check does not match. Fails when an integration suite was needed but did
+  # not pass, including when a safe-to-* label is missing for this head.
+  integrationci:
+    name: ${{ needs.changes.outputs.ignored == 'true' && 'integrationci (ignored)' || 'integrationci' }}
+    if: always()
+    needs: [changes, fmtlint, build, groups, test]
+    runs-on: ubuntu-24.04
+    permissions: {}
+    steps:
+      - name: verdict
+        env:
+          GATE: ${{ needs.changes.result }}
+          IGNORED: ${{ needs.changes.outputs.ignored }}
+          RUN: ${{ needs.changes.outputs.run }}
+          PASS: ${{ needs.changes.outputs.pass }}
+          REASON: ${{ needs.changes.outputs.reason }}
+          SHA: ${{ needs.changes.outputs.sha }}
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "sha: $SHA"
+          if [ "$IGNORED" = true ]; then echo "this run does not decide: $REASON"; exit 0; fi
+          if [ "$GATE" != success ]; then echo "::error::the gate did not decide ($GATE)"; exit 1; fi
+          if [ "$PASS" = true ]; then echo "passes: $REASON"; exit 0; fi
+          if [ "$RUN" != true ]; then echo "::error::integrationci did not run: $REASON"; exit 1; fi
+          failed=$(jq -r 'to_entries[] | select(.key != "changes" and .value.result != "success" and .value.result != "skipped") | "\(.key)=\(.value.result)"' <<<"$NEEDS")
+          if [ -n "$failed" ]; then echo "::error::integrationci did not pass: $failed"; exit 1; fi
+          echo "passed: $REASON"

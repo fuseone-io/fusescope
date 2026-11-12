@@ -37,10 +37,19 @@ Thanks for helping. This page is the short version of how we work; the engineeri
   | Integration tests | `make py-fmt`, `make py-lint`, the affected suite on both stores |
 
 - Fill in the [PR template](.github/pull_request_template.md), keeping only the headings that apply. Put `Closes #<n>` in the description, not in commits.
-- CI labels, added by maintainers: `safe-to-integrate` runs the integration matrix, `safe-to-e2e` runs Playwright when the diff doesn't touch Go, `frontend/`, `docs/api/` or `tests/e2e/`, and `safe-to-test` lets CI run on fork and bot PRs. `safe-to-test` runs the PR's code with the repository's secrets (`pull_request_target`), so add it only after reading the diff.
-- Dependabot opens grouped PRs weekly (`.github/dependabot.yml`). They get no CI until a maintainer adds `safe-to-test`, plus `safe-to-integrate` for the integration matrix.
+- CI labels, added by maintainers:
+  - `safe-to-integrate` runs the integration matrix.
+  - `safe-to-e2e` runs Playwright when the diff doesn't touch Go, `frontend/`, `docs/api/` or `tests/e2e/`.
+  - `safe-to-test` lets CI run on fork and bot PRs. It runs the PR's code with the repository's secrets (`pull_request_target`), so add it only after reading the diff.
+- **On a fork or Dependabot PR, a label authorises one head.**
+  - The run also needs an approving review on that head by someone with write or admin permission on the repository.
+  - Read the diff, check the head SHA in the PR header, approve, then add the label.
+  - The label counts only if it was added after that head was pushed. Each new push or reopen removes the labels (`prlabels`), and an older one is ignored even if it stays.
+- **On a PR from this repository, the labels stay across pushes.** `safe-to-integrate` decides whether the integration matrix runs, and it runs again on every push while the label is on.
+- **Every PR gets the required verdicts `goci`, `e2e` and `integrationci`.** Each passes without running tests when the diff has nothing for it to test. It fails when tests were needed and either did not pass or lacked a label for the head. A run that does not decide reports as `<name> (ignored)`.
+- Dependabot opens grouped PRs weekly (`.github/dependabot.yml`). They get no CI until a maintainer approves the head and adds `safe-to-test`, plus `safe-to-integrate` for the integration matrix. Do both again after Dependabot rebases.
 - CI runs what the diff affects, decided by [`.github/actions/changes`](.github/actions/changes/changes.py): a frontend-only PR skips `goci` and runs only the integration suites that drive the UI; a Go-only PR skips the frontend unit and Storybook tests but runs e2e; a suite-only PR runs just that suite's group. Workflows, dependency manifests, test fixtures, Dockerfiles, the Makefile and any unclassified path run everything. Each workflow's `changes` job summary says what ran and why.
-- PRs that only change documentation (Markdown files, `docs/` except `docs/api/`) skip the Go, frontend, e2e and integration workflows; only the commit check runs. No `[skip ci]` needed.
+- PRs that only change documentation (Markdown files, `docs/` except `docs/api/`) still run the workflows, and their verdicts pass without tests. Don't use `[skip ci]`: a skipped workflow leaves its required check pending and blocks the merge.
 - PRs merge by rebase, with CI green.
 
 ## Report a problem
