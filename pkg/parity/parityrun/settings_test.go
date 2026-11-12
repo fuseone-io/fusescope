@@ -71,7 +71,7 @@ func TestASecondSettingsDocumentIsASettingsError(t *testing.T) {
 
 const deploymentYAML = `bucket: {name: parity-staging, kms_key_id: "arn:aws:kms:us-east-1:1:key/requeue"}
 secret: {namespace: parity}
-health: {url: "https://prometheus:9090", token_file: /prom/token, exporters: [fusescope_clickhouse, otlp/engine]}
+health: {url: "https://prometheus:9090", token_file: /prom/token, exporters: [fusescope_clickhouse, otlp_grpc/engine]}
 investigate:
   issuer: https://idp.example.com
   audience: fusescope-parity-investigate
@@ -100,7 +100,7 @@ func TestTheDeploymentSectionsReadWithTheirDefaults(t *testing.T) {
 	assert.Equal(t, "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt", s.Secret.CAFile)
 	assert.Equal(t, 90*24*time.Hour, s.Secret.Expiry)
 	assert.Equal(t, "pod", s.Health.InstanceLabel)
-	assert.Equal(t, []string{"fusescope_clickhouse", "otlp/engine"}, s.Health.Exporters)
+	assert.Equal(t, []string{"fusescope_clickhouse", "otlp_grpc/engine"}, s.Health.Exporters)
 	assert.Equal(t, "groups", s.Investigate.GroupsClaim)
 	assert.Equal(t, 10*time.Minute, s.Investigate.MaxAge)
 	assert.Equal(t, 30*time.Second, s.Investigate.ClockSkew)

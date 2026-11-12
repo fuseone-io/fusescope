@@ -75,7 +75,7 @@ func health(t *testing.T, server *httptest.Server) PrometheusHealth {
 	token := filepath.Join(t.TempDir(), "token")
 	require.NoError(t, os.WriteFile(token, []byte("prom-token"), 0o600))
 	h, err := NewPrometheusHealth(PrometheusHealthConfig{URL: server.URL, TokenFile: token, InstanceLabel: "pod",
-		Exporters: []string{"fusescope_clickhouse", "otlp/engine"}, Instances: []string{"c-0", "c-1"}}, server.Client())
+		Exporters: []string{"fusescope_clickhouse", "otlp_grpc/engine"}, Instances: []string{"c-0", "c-1"}}, server.Client())
 	require.NoError(t, err)
 	return h
 }
@@ -92,8 +92,8 @@ func TestAFailedExportInvalidatesItsInstancesMinute(t *testing.T) {
 	server, queries := prometheusFake(t, map[string][]promSeries{
 		"up": {up("c-0", 0, 1, 2), up("c-1", 0, 1, 2)},
 		"otelcol_exporter_send_failed_spans": {
-			{labels: map[string]string{"pod": "c-1", "exporter": "otlp/engine"}, values: map[int64]float64{promStart.Unix() + 60: 3}},
-			{labels: map[string]string{"pod": "c-9", "exporter": "otlp/engine"}, values: map[int64]float64{promStart.Unix() + 60: 3}},
+			{labels: map[string]string{"pod": "c-1", "exporter": "otlp_grpc/engine"}, values: map[int64]float64{promStart.Unix() + 60: 3}},
+			{labels: map[string]string{"pod": "c-9", "exporter": "otlp_grpc/engine"}, values: map[int64]float64{promStart.Unix() + 60: 3}},
 		},
 	}, http.StatusOK)
 	got, err := health(t, server).Failures(t.Context(), promStart, promStart.Add(3*time.Minute))
@@ -129,7 +129,7 @@ func TestAFailingPrometheusIsAnError(t *testing.T) {
 }
 
 func TestAHealthSourceIsConfiguredWhole(t *testing.T) {
-	good := PrometheusHealthConfig{URL: "https://prom", TokenFile: "/t", InstanceLabel: "pod", Exporters: []string{"fusescope_clickhouse", "otlp/engine"}, Instances: []string{"c-0"}}
+	good := PrometheusHealthConfig{URL: "https://prom", TokenFile: "/t", InstanceLabel: "pod", Exporters: []string{"fusescope_clickhouse", "otlp_grpc/engine"}, Instances: []string{"c-0"}}
 	for name, change := range map[string]func(*PrometheusHealthConfig){
 		"plain http":     func(c *PrometheusHealthConfig) { c.URL = "http://prom" },
 		"no token":       func(c *PrometheusHealthConfig) { c.TokenFile = "" },
@@ -184,7 +184,7 @@ func TestACounterThatIsNotANumberIsAFailure(t *testing.T) {
 	for _, v := range []float64{math.NaN(), math.Inf(1), -1} {
 		server, _ := prometheusFake(t, map[string][]promSeries{
 			"up":                                    {up("c-0", 0, 1), up("c-1", 0, 1)},
-			"otelcol_exporter_enqueue_failed_spans": {{labels: map[string]string{"pod": "c-0", "exporter": "otlp/engine"}, values: map[int64]float64{promStart.Unix() + 60: v}}},
+			"otelcol_exporter_enqueue_failed_spans": {{labels: map[string]string{"pod": "c-0", "exporter": "otlp_grpc/engine"}, values: map[int64]float64{promStart.Unix() + 60: v}}},
 		}, http.StatusOK)
 		got, err := health(t, server).Failures(t.Context(), promStart, promStart.Add(2*time.Minute))
 		require.NoError(t, err)
@@ -193,7 +193,7 @@ func TestACounterThatIsNotANumberIsAFailure(t *testing.T) {
 }
 
 func TestTheExportersAreDistinct(t *testing.T) {
-	_, err := NewPrometheusHealth(PrometheusHealthConfig{URL: "https://prom", TokenFile: "/t", InstanceLabel: "pod", Exporters: []string{"otlp/engine", "otlp/engine"}, Instances: []string{"c-0"}}, nil)
+	_, err := NewPrometheusHealth(PrometheusHealthConfig{URL: "https://prom", TokenFile: "/t", InstanceLabel: "pod", Exporters: []string{"otlp_grpc/engine", "otlp_grpc/engine"}, Instances: []string{"c-0"}}, nil)
 	assert.Error(t, err)
 }
 
