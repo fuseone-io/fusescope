@@ -2,6 +2,7 @@ package parityexec
 
 import (
 	"context"
+	"log/slog"
 	"regexp"
 	"strconv"
 	"strings"
@@ -117,6 +118,9 @@ type Evidencer struct {
 	Querier querier.Querier
 	Keys    telemetrytypes.KeyResolver
 	Org     valuer.UUID
+	// Logger takes the whole error of evidence that failed; the report keeps its type and code
+	// alone. Nil is slog's default.
+	Logger *slog.Logger
 }
 
 // Quantile is the evidence of g for the engine's value v of the quantile q. It counts the rows,

@@ -12,6 +12,22 @@ import (
 // boundarySample is how many spans of an operation are looked at for a witness.
 const boundarySample = 50
 
+// The steps of Boundary, each naming the error it returns, so a report tells which one failed.
+var (
+	errCodeBoundaryRoots  = errors.MustNewCode("parity_boundary_roots")
+	errCodeBoundarySample = errors.MustNewCode("parity_boundary_sample")
+	errCodeBoundaryParent = errors.MustNewCode("parity_boundary_parent")
+)
+
+// step is err named by the step of Boundary it failed in, of its cause's type.
+func step(err error, code errors.Code) error {
+	if err == nil {
+		return nil
+	}
+	t, _, _, _, _, _ := errors.Unwrapb(err)
+	return errors.Wrapf(err, t, code, "the service-boundary evidence failed")
+}
+
 var (
 	serviceKey   = telemetrytypes.TelemetryFieldKey{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource}
 	operationKey = telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextSpan}
@@ -26,7 +42,9 @@ var (
 //
 // # Errors
 //
-// A query ClickHouse refused, or an answer of another shape.
+// A query ClickHouse refused, or an answer of another shape, named by its step: the roots' count
+// (errCodeBoundaryRoots), the sample (errCodeBoundarySample) or the parents' lookup
+// (errCodeBoundaryParent).
 func (e Evidencer) Boundary(ctx context.Context, view Group, service, operation string) (bool, error) {
 	spans := view.Where(serviceKey, service).Where(operationKey, operation)
 	roots := spans.Where(telemetrytypes.TelemetryFieldKey{Name: "isRoot"}, true)
@@ -34,11 +52,14 @@ func (e Evidencer) Boundary(ctx context.Context, view Group, service, operation 
 	count.Aggregations = []qbtypes.TraceAggregation{{Expression: "count()"}}
 	resp, err := e.Querier.QueryRange(ctx, e.Org, e.request(roots, qbtypes.RequestTypeScalar, count))
 	if err != nil {
-		return false, err
+		return false, step(err, errCodeBoundaryRoots)
 	}
 	row, err := scalarRow(resp, 1)
-	if err != nil || row[0] != 0 {
-		return false, err
+	if err != nil {
+		return false, step(err, errCodeBoundaryRoots)
+	}
+	if row[0] != 0 {
+		return false, nil
 	}
 
 	unknown := spans.Where(telemetrytypes.TelemetryFieldKey{Name: "is_remote"}, "unknown")
@@ -51,7 +72,7 @@ func (e Evidencer) Boundary(ctx context.Context, view Group, service, operation 
 	sample.Limit = boundarySample
 	resp, err = e.Querier.QueryRange(ctx, e.Org, e.request(unknown, qbtypes.RequestTypeRaw, sample))
 	if err != nil {
-		return false, err
+		return false, step(err, errCodeBoundarySample)
 	}
 	var parents []string
 	for _, r := range rawRows(resp) {
@@ -64,7 +85,8 @@ func (e Evidencer) Boundary(ctx context.Context, view Group, service, operation 
 	if len(parents) == 0 {
 		return false, nil
 	}
-	return e.parentElsewhere(ctx, Group{Start: view.Start, End: view.End}, service, parents)
+	confirmed, err := e.parentElsewhere(ctx, Group{Start: view.Start, End: view.End}, service, parents)
+	return confirmed, step(err, errCodeBoundaryParent)
 }
 
 func (e Evidencer) parentElsewhere(ctx context.Context, window Group, service string, parents []string) (bool, error) {

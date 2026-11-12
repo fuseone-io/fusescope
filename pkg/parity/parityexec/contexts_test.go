@@ -1,9 +1,11 @@
 package parityexec
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"testing"
 	"time"
@@ -163,21 +165,31 @@ func TestEntryPointOperationsConfirmTheirServiceBoundary(t *testing.T) {
 	assert.Nil(t, top.ServiceBoundary, "a parent elsewhere changes no top operation")
 }
 
-// failing answers every query with an error.
-type failing struct{ querier.Querier }
+// failing answers every query with an error of its type, counting the queries.
+type failing struct {
+	querier.Querier
+	timeout bool
+	queries int
+}
 
-func (failing) QueryRange(context.Context, valuer.UUID, *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+func (f *failing) QueryRange(context.Context, valuer.UUID, *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+	f.queries++
+	if f.timeout {
+		return nil, errors.Newf(errors.TypeTimeout, errors.CodeInternal, "the evidence timed out")
+	}
 	return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "the evidence did not run")
 }
 
 func TestABoundaryEvidenceErrorIsUnavailableAndKept(t *testing.T) {
 	req := servicetypesv1.Request{Start: "1000000000", End: "61000000000"}
-	c := Evidencer{Querier: failing{}, Org: org}.ServicesContext(context.Background(), req, decoded(t, `{"data":[]}`))
+	c := Evidencer{Querier: &failing{}, Org: org}.ServicesContext(context.Background(), req, decoded(t, `{"data":[]}`))
 	assert.Equal(t, parity.BoundaryUnavailable, c.ServiceBoundary("back", "handle"), "an error is no denial")
 	require.Len(t, c.EvidenceErrors(), 1, "the error the evidence met is kept for the pair's record")
+	assert.True(t, errors.Asc(c.EvidenceErrors()[0], errCodeBoundaryRoots), "named by the step that failed: %v", c.EvidenceErrors()[0])
+	assert.True(t, errors.Ast(c.EvidenceErrors()[0], errors.TypeInternal), "of the cause's type")
 
 	ops := servicetypesv1.OperationsRequest{Start: "1000000000", End: "61000000000", Service: "back", Limit: 2}
-	entry := Evidencer{Querier: failing{}, Org: org}.OperationsContext(context.Background(), true, ops, decoded(t, `{"data":[]}`), decoded(t, `{"data":[]}`))
+	entry := Evidencer{Querier: &failing{}, Org: org}.OperationsContext(context.Background(), true, ops, decoded(t, `{"data":[]}`), decoded(t, `{"data":[]}`))
 	assert.Equal(t, parity.BoundaryUnavailable, entry.ServiceBoundary("back", "handle"))
 	assert.Len(t, entry.EvidenceErrors(), 1)
 }
@@ -185,8 +197,40 @@ func TestABoundaryEvidenceErrorIsUnavailableAndKept(t *testing.T) {
 func TestAServicesBoundaryWithoutTheViewsRequestIsUnavailable(t *testing.T) {
 	s := &spans{all: []span{{"t1", "b1", "", "back", "handle", "unknown", ""}}}
 	c := Evidencer{Querier: s, Org: org}.ServicesContext(context.Background(), servicetypesv1.Request{Start: "not a time"}, decoded(t, `{"data":[]}`))
+	assert.Empty(t, c.EvidenceErrors(), "nothing to record while no difference asks for evidence")
 	assert.Equal(t, parity.BoundaryUnavailable, c.ServiceBoundary("back", "handle"), "no evidence on a view that did not build")
+	assert.Equal(t, parity.BoundaryUnavailable, c.ServiceBoundary("back", "other"))
 	assert.Empty(t, s.requests)
+	assert.Len(t, c.EvidenceErrors(), 1, "recorded once, when the evidence was asked for")
+}
+
+func TestAPairsBoundaryEvidenceStopsAtAnErrorThatWouldRecur(t *testing.T) {
+	req := servicetypesv1.Request{Start: "1000000000", End: "61000000000"}
+	f := &failing{}
+	c := Evidencer{Querier: f, Org: org}.ServicesContext(context.Background(), req, decoded(t, `{"data":[]}`))
+	for _, op := range []string{"a", "b", "c", "a"} {
+		assert.Equal(t, parity.BoundaryUnavailable, c.ServiceBoundary("back", op))
+	}
+	assert.Equal(t, 1, f.queries, "an internal error is the pair's: the other operations are not queried")
+	assert.Len(t, c.EvidenceErrors(), 1)
+
+	slow := &failing{timeout: true}
+	c = Evidencer{Querier: slow, Org: org}.ServicesContext(context.Background(), req, decoded(t, `{"data":[]}`))
+	for _, op := range []string{"a", "b", "a"} {
+		assert.Equal(t, parity.BoundaryUnavailable, c.ServiceBoundary("back", op))
+	}
+	assert.Equal(t, 2, slow.queries, "a timeout may not recur: each operation once, never twice")
+}
+
+func TestABoundaryEvidenceErrorIsLoggedWithItsStep(t *testing.T) {
+	var logged bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logged, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	req := servicetypesv1.Request{Start: "1000000000", End: "61000000000"}
+	c := Evidencer{Querier: &failing{}, Org: org, Logger: logger}.ServicesContext(context.Background(), req, decoded(t, `{"data":[]}`))
+	c.ServiceBoundary("back", "handle")
+	assert.Contains(t, logged.String(), "level=WARN")
+	assert.Contains(t, logged.String(), "parity_boundary_roots")
+	assert.Contains(t, logged.String(), "the evidence did not run", "the whole error, for the operator")
 }
 
 func TestAServicesBoundaryIsConfirmedWithinTheViewsFilter(t *testing.T) {

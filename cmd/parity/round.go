@@ -94,7 +94,7 @@ func assemble(ctx context.Context, settings parityrun.Settings, tenants parityru
 	}
 	return parityrun.Round{
 		Engine: engine, ClickHouse: clickhouse, Refuser: refuser, Keys: clickhouse.Keys, Tenants: tenants,
-		Config: settings.Round, Now: time.Now,
+		Config: settings.Round, Now: time.Now, Logger: ps.Logger,
 	}, nil
 }
 
