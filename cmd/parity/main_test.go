@@ -56,7 +56,7 @@ func deploymentSettings(t *testing.T) parityrun.Settings {
 	t.Helper()
 	return parityrun.Settings{
 		Bucket:      parityrun.BucketSettings{Name: "parity-staging", KMSKeyID: "arn:aws:kms:us-east-1:1:key/q", MaxQueueBytes: 1 << 20, MaxQueueSpecs: 10},
-		Health:      parityrun.HealthSettings{URL: "https://prometheus:9090", TokenFile: "/prom/token", InstanceLabel: "pod", Exporters: []string{"fusescope_clickhouse", "otlp/engine"}},
+		Health:      parityrun.HealthSettings{URL: "https://prometheus:9090", TokenFile: "/prom/token", InstanceLabel: "pod", Exporters: []string{"fusescope_clickhouse", "otlp_grpc/engine"}},
 		Pushgateway: parityrun.PushgatewaySettings{URL: "https://pushgateway:9091", TokenFile: "/push/token"},
 	}
 }
