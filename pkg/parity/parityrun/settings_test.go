@@ -80,12 +80,21 @@ investigate:
   audit_token_file: /audit/token
 `
 
+func TestPathStyleIsReadFromTheBucketSettings(t *testing.T) {
+	yaml := strings.Replace(deploymentYAML, `kms_key_id: "arn:aws:kms:us-east-1:1:key/requeue"}`, `kms_key_id: "arn:aws:kms:us-east-1:1:key/requeue", path_style: true}`, 1)
+	require.NotEqual(t, deploymentYAML, yaml)
+	s, err := ParseSettings(strings.NewReader(settingsYAML + yaml))
+	require.NoError(t, err)
+	assert.True(t, s.Bucket.PathStyle)
+}
+
 func TestTheDeploymentSectionsReadWithTheirDefaults(t *testing.T) {
 	s, err := ParseSettings(strings.NewReader(settingsYAML + deploymentYAML))
 	require.NoError(t, err)
 	assert.Equal(t, "parity-staging", s.Bucket.Name)
 	assert.Equal(t, int64(8<<20), s.Bucket.MaxQueueBytes)
 	assert.Equal(t, 10_000, s.Bucket.MaxQueueSpecs)
+	assert.False(t, s.Bucket.PathStyle, "virtual-hosted unless asked, as AWS addresses buckets")
 	assert.Equal(t, "parity", s.Secret.Namespace)
 	assert.Equal(t, "/var/run/secrets/kubernetes.io/serviceaccount/token", s.Secret.TokenFile)
 	assert.Equal(t, "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt", s.Secret.CAFile)

@@ -40,12 +40,14 @@ type Settings struct {
 	Credentials CredentialsSettings
 }
 
-// BucketSettings name the staging bucket and the requeue's KMS key and bounds.
+// BucketSettings name the staging bucket and the requeue's KMS key and bounds. PathStyle puts the
+// bucket in the request path rather than the host, for stores without a host name per bucket.
 type BucketSettings struct {
 	Name          string `mapstructure:"name"`
 	KMSKeyID      string `mapstructure:"kms_key_id"`
 	MaxQueueBytes int64  `mapstructure:"max_queue_bytes"`
 	MaxQueueSpecs int    `mapstructure:"max_queue_specs"`
+	PathStyle     bool   `mapstructure:"path_style"`
 }
 
 // SecretSettings name where run keys are written; the token and CA default to the pod's own.

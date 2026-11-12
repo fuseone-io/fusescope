@@ -98,7 +98,7 @@ func investigate(args []string, stdout, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	client, err := bucketClient(ctx)
+	client, err := bucketClient(ctx, settings.Bucket)
 	if err != nil {
 		return err
 	}

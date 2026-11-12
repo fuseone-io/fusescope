@@ -99,12 +99,12 @@ func assemble(ctx context.Context, settings parityrun.Settings, tenants parityru
 }
 
 // bucketClient is the staging bucket's client, with the pod's workload identity.
-func bucketClient(ctx context.Context) (*s3.Client, error) {
+func bucketClient(ctx context.Context, settings parityrun.BucketSettings) (*s3.Client, error) {
 	cfg, err := awsconfig.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, parityrun.ErrCodeBucket, "the bucket's credentials do not load")
 	}
-	return s3.NewFromConfig(cfg), nil
+	return parityrun.NewBucketClient(cfg, settings), nil
 }
 
 func bucketConfig(settings parityrun.Settings) parityrun.S3Config {
@@ -153,7 +153,7 @@ func deploy(ctx context.Context, round parityrun.Round, settings parityrun.Setti
 	if err != nil {
 		return round, err
 	}
-	client, err := bucketClient(ctx)
+	client, err := bucketClient(ctx, settings.Bucket)
 	if err != nil {
 		return round, err
 	}
