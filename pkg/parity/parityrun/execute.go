@@ -61,7 +61,7 @@ func (r Round) record(ctx context.Context, fp *parity.Fingerprinter, p pair, res
 			rec.Errors = append(rec.Errors, *e)
 		}
 	}
-	slices.SortFunc(rec.Errors, func(a, b ErrorRecord) int { return strings.Compare(a.Side, b.Side) })
+	slices.SortStableFunc(rec.Errors, func(a, b ErrorRecord) int { return strings.Compare(a.Side, b.Side) })
 	o := result.Outcome
 	switch {
 	case o.BothFailed != "":
@@ -98,10 +98,10 @@ func keepEvidenceErrors(rec *PairRecord, classify parity.Context) {
 	}
 	for _, err := range classify.EvidenceErrors() {
 		if e := ErrorOf("evidence", err); e != nil && !slices.Contains(rec.Errors, *e) {
+			// "evidence" sorts after the sides', which record sorted: the list stays sorted.
 			rec.Errors = append(rec.Errors, *e)
 		}
 	}
-	slices.SortStableFunc(rec.Errors, func(a, b ErrorRecord) int { return strings.Compare(a.Side, b.Side) })
 }
 
 // takeWorst makes v the pair's verdict when it is the pair's first difference or worse than the

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -94,6 +95,9 @@ type Round struct {
 	Config   Config
 	Seed     parity.Seed
 	Now      func() time.Time
+	// Logger takes what the report keeps only by code, such as evidence that failed. Nil is slog's
+	// default.
+	Logger *slog.Logger
 }
 
 // RunID is a round's id: its start, to the second, and its seed, as a Secret name may hold them.
@@ -261,7 +265,7 @@ func (r Round) run(ctx context.Context, start time.Time, runID, keyID, keyCheck 
 }
 
 func (r Round) evidencer() parityexec.Evidencer {
-	return parityexec.Evidencer{Querier: r.ClickHouse.Querier, Keys: r.Keys}
+	return parityexec.Evidencer{Querier: r.ClickHouse.Querier, Keys: r.Keys, Logger: r.Logger}
 }
 
 // specKey names a spec whatever its span count, which is read again, and why its trace was

@@ -3,7 +3,9 @@ package parityexec
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/modules/services/implservices"
 	"github.com/fuseone-io/fusescope/pkg/parity"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -22,12 +24,9 @@ func (e Evidencer) ServicesContext(ctx context.Context, req servicetypesv1.Reque
 	view, _, _, err := implservices.ServicesRequest(&req)
 	base, fields := baseGroup(view)
 	calls := numCalls(clickhouse, "serviceName")
-	errs := &evidenceErrors{}
-	if err != nil {
-		errs.add(err)
-	}
+	st := e.evidenceState()
 	return parity.Context{
-		EvidenceErrors: errs.all,
+		EvidenceErrors: st.all,
 		QuantileOf: func(path parity.Path) (float64, bool) {
 			f, ok := fields[path.Last()]
 			return f.q, ok && len(path) == 4 && path[0] == "data"
@@ -43,32 +42,60 @@ func (e Evidencer) ServicesContext(ctx context.Context, req servicetypesv1.Reque
 			return e.stable(ctx, g, q, v, calls[string(service)])
 		},
 		ServiceBoundary: func(service, operation string) parity.Boundary {
-			if err != nil {
-				return parity.BoundaryUnavailable
-			}
-			return errs.boundary(e.Boundary(ctx, base, service, operation))
+			return st.boundary(service, operation, func() (bool, error) {
+				if err != nil {
+					return false, err
+				}
+				return e.Boundary(ctx, base, service, operation)
+			})
 		},
 	}
 }
 
-// evidenceErrors keeps the errors a pair's evidence met, for the pair's record.
-type evidenceErrors struct{ errs []error }
+// evidence is one pair's service-boundary evidence: each operation's answer once, the errors it
+// met for the pair's record, and no more queries after an error that would recur.
+type evidence struct {
+	logger  *slog.Logger
+	errs    []error
+	answers map[[2]string]parity.Boundary
+	stopped bool
+}
 
-func (e *evidenceErrors) add(err error) { e.errs = append(e.errs, err) }
+func (e Evidencer) evidenceState() *evidence {
+	logger := e.Logger
+	if logger == nil {
+		logger = slog.Default()
+	}
+	return &evidence{logger: logger, answers: map[[2]string]parity.Boundary{}}
+}
 
-func (e *evidenceErrors) all() []error { return e.errs }
+func (s *evidence) all() []error { return s.errs }
 
-// boundary is Boundary's answer as a classification reads it: an error is unavailable evidence,
-// kept, and never a denial.
-func (e *evidenceErrors) boundary(confirmed bool, err error) parity.Boundary {
+// boundary is check's answer for operation of service as a classification reads it: an error is
+// unavailable evidence, kept and logged whole, never a denial. After an error other than a timeout
+// or a cancellation, which may not recur, the pair's other operations are not queried.
+func (s *evidence) boundary(service, operation string, check func() (bool, error)) parity.Boundary {
+	key := [2]string{service, operation}
+	if b, ok := s.answers[key]; ok {
+		return b
+	}
+	if s.stopped {
+		return parity.BoundaryUnavailable
+	}
+	confirmed, err := check()
+	b := parity.BoundaryDenied
 	switch {
 	case err != nil:
-		e.add(err)
-		return parity.BoundaryUnavailable
+		b = parity.BoundaryUnavailable
+		s.errs = append(s.errs, err)
+		_, code, _, _, _, _ := errors.Unwrapb(err)
+		s.logger.Warn("service-boundary evidence unavailable", slog.String("code", code.String()), slog.Any("error", err))
+		s.stopped = !errors.Ast(err, errors.TypeTimeout) && !errors.Ast(err, errors.TypeCanceled)
 	case confirmed:
-		return parity.BoundaryConfirmed
+		b = parity.BoundaryConfirmed
 	}
-	return parity.BoundaryDenied
+	s.answers[key] = b
+	return b
 }
 
 // OperationsContext is how a top or entry point operations pair's differences are classified: a
@@ -119,10 +146,10 @@ func (e Evidencer) OperationsContext(ctx context.Context, entry bool, req servic
 		},
 	}
 	if entry {
-		errs := &evidenceErrors{}
-		c.Service, c.EvidenceErrors = req.Service, errs.all
+		st := e.evidenceState()
+		c.Service, c.EvidenceErrors = req.Service, st.all
 		c.ServiceBoundary = func(service, operation string) parity.Boundary {
-			return errs.boundary(e.Boundary(ctx, base, service, operation))
+			return st.boundary(service, operation, func() (bool, error) { return e.Boundary(ctx, base, service, operation) })
 		}
 	}
 	return c
