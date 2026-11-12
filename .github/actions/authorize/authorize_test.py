@@ -1,6 +1,6 @@
 import unittest
 
-from authorize import Context, decide, head_time, is_fresh
+from authorize import Context, approved_at, decide, head_time, is_fresh
 
 HEAD = "a" * 40
 BASE = dict(repo="fuseone-io/fusescope", number="1", head_sha=HEAD, sha="m" * 40, label="", fork=False, user="klinux", relevant=True, merge_group="run")
@@ -32,9 +32,26 @@ class DecideTest(unittest.TestCase):
         self.assertEqual((d.ignored, d.run), (False, False))
         self.assertIn("safe-to-test", d.reason)
 
-    def test_untrusted_labeled_target_with_fresh_label_runs(self) -> None:
+    def test_untrusted_labeled_target_with_fresh_label_and_approval_runs(self) -> None:
         c = ctx(event="pull_request_target", action="labeled", label="safe-to-test", fork=True)
-        self.assertTrue(decide(c, fresh={"safe-to-test": True}).run)
+        self.assertTrue(decide(c, fresh={"safe-to-test": True}, approved=True).run)
+
+    def test_untrusted_needs_an_approving_review_on_the_head(self) -> None:
+        c = ctx(event="pull_request_target", action="labeled", label="safe-to-test", fork=True)
+        d = decide(c, fresh={"safe-to-test": True}, approved=False)
+        self.assertEqual((d.authorized, d.run), (False, False))
+        self.assertIn("approving review", d.reason)
+        self.assertIn(HEAD, d.reason)
+
+    def test_trusted_needs_no_review(self) -> None:
+        c = ctx(trusted_requires=("safe-to-integrate",), triggers=("safe-to-integrate",))
+        self.assertTrue(decide(c, fresh={"safe-to-integrate": True}, approved=False).run)
+
+    def test_unknown_head_time_has_its_own_reason(self) -> None:
+        c = ctx(event="pull_request_target", action="labeled", label="safe-to-test", fork=True)
+        d = decide(c, fresh={"safe-to-test": False}, approved=True, head_known=False)
+        self.assertFalse(d.run)
+        self.assertIn("head time unknown", d.reason)
 
     def test_untrusted_labeled_target_with_stale_label_does_not_run(self) -> None:
         c = ctx(event="pull_request_target", action="labeled", label="safe-to-test", fork=True)
@@ -44,8 +61,8 @@ class DecideTest(unittest.TestCase):
     def test_untrusted_needs_every_required_label(self) -> None:
         c = ctx(event="pull_request_target", action="labeled", label="safe-to-integrate", user="dependabot[bot]",
                 triggers=("safe-to-test", "safe-to-integrate"), untrusted_requires=("safe-to-test", "safe-to-integrate"))
-        self.assertFalse(decide(c, fresh={"safe-to-test": False, "safe-to-integrate": True}).run)
-        self.assertTrue(decide(c, fresh={"safe-to-test": True, "safe-to-integrate": True}).run)
+        self.assertFalse(decide(c, fresh={"safe-to-test": False, "safe-to-integrate": True}, approved=True).run)
+        self.assertTrue(decide(c, fresh={"safe-to-test": True, "safe-to-integrate": True}, approved=True).run)
 
     def test_other_label_events_are_ignored(self) -> None:
         self.assertTrue(decide(ctx(action="labeled", label="bug"), fresh={}).ignored)
@@ -65,6 +82,32 @@ class DecideTest(unittest.TestCase):
     def test_merge_group_can_pass_without_running(self) -> None:
         d = decide(ctx(event="merge_group", action="", merge_group="pass"), fresh={})
         self.assertEqual((d.run, d.passes_without_tests), (False, True))
+
+
+class ApprovalTest(unittest.TestCase):
+    def review(self, user, state, commit, when, association="MEMBER"):
+        return {"user": user, "state": state, "commit_id": commit, "submitted_at": when, "author_association": association}
+
+    def test_a_maintainer_approval_on_the_head_counts(self) -> None:
+        self.assertTrue(approved_at([self.review("m", "APPROVED", HEAD, "2026-11-12T10:00:00Z")], HEAD))
+
+    def test_an_approval_on_an_earlier_head_does_not_count(self) -> None:
+        self.assertFalse(approved_at([self.review("m", "APPROVED", "b" * 40, "2026-11-12T10:00:00Z")], HEAD))
+
+    def test_an_approval_from_outside_the_organisation_does_not_count(self) -> None:
+        for association in ("CONTRIBUTOR", "COLLABORATOR", "NONE", "FIRST_TIME_CONTRIBUTOR"):
+            self.assertFalse(approved_at([self.review("x", "APPROVED", HEAD, "2026-11-12T10:00:00Z", association)], HEAD), association)
+
+    def test_a_later_change_request_by_the_same_reviewer_withdraws_it(self) -> None:
+        reviews = [self.review("m", "APPROVED", HEAD, "2026-11-12T10:00:00Z"), self.review("m", "CHANGES_REQUESTED", HEAD, "2026-11-12T10:05:00Z")]
+        self.assertFalse(approved_at(reviews, HEAD))
+
+    def test_a_comment_after_an_approval_keeps_it(self) -> None:
+        reviews = [self.review("m", "APPROVED", HEAD, "2026-11-12T10:00:00Z"), self.review("m", "COMMENTED", HEAD, "2026-11-12T10:05:00Z")]
+        self.assertTrue(approved_at(reviews, HEAD))
+
+    def test_a_dismissed_approval_does_not_count(self) -> None:
+        self.assertFalse(approved_at([self.review("m", "DISMISSED", HEAD, "2026-11-12T10:00:00Z")], HEAD))
 
 
 class FreshTest(unittest.TestCase):

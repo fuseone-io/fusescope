@@ -2,12 +2,18 @@
 that decides the workflow's verdict, and whether its pull request is
 authorised to run tests at that SHA.
 
-A safe-to-* label authorises only the head it was added to: it counts when
-it is on the pull request now and its last "labeled" event came after the
-head appeared, the earliest pull request run GitHub created for that SHA.
-The labels in the event payload are never read, so a label added to an
-earlier head never authorises a later one. The data comes from the API, and
-no pull request code runs here.
+For a pull request from this repository, a required safe-to-* label is a
+cost gate: it counts while it is on the pull request.
+
+For a fork or dependabot pull request it is a trust gate, bound to one head.
+It counts when it is on the pull request now and its last "labeled" event
+came after the head appeared, measured as the earliest pull request run
+GitHub created for that SHA. The run also needs an approving review by an
+organisation member whose commit_id is that SHA, which is the head the
+maintainer read.
+
+The labels in the event payload are never read. The data comes from the
+API, and no pull request code runs here.
 """
 
 import json
@@ -18,6 +24,7 @@ from dataclasses import dataclass, field
 
 PR_EVENTS = {"pull_request", "pull_request_target"}
 DEPENDABOT = "dependabot[bot]"
+MAINTAINERS = {"OWNER", "MEMBER"}
 
 
 @dataclass(frozen=True)
@@ -63,7 +70,7 @@ class Decision:
         }
 
 
-def decide(c: Context, fresh: dict[str, bool]) -> Decision:
+def decide(c: Context, fresh: dict[str, bool], approved: bool = True, head_known: bool = True) -> Decision:
     if c.event not in PR_EVENTS:
         if c.event == "merge_group" and c.merge_group == "pass":
             return Decision(sha=c.sha, passes_without_tests=True, reason="merge_group: this workflow does not run in the merge queue")
@@ -88,11 +95,18 @@ def decide(c: Context, fresh: dict[str, bool]) -> Decision:
         return d
 
     missing = [label for label in d.required if not fresh.get(label, False)]
-    d.authorized = not missing
+    unreviewed = not trusted and not approved
+    d.authorized = not missing and not unreviewed
     tests_here = c.event == ("pull_request" if trusted else "pull_request_target")
     d.run = d.authorized and tests_here
-    if missing:
-        d.reason = f"needs {', '.join(missing)} added to {c.head_sha[:12]} after it was pushed"
+    if missing and trusted:
+        d.reason = f"needs the {', '.join(missing)} label"
+    elif missing and not head_known:
+        d.reason = f"head time unknown: no pull request run for {c.head_sha} yet; re-add {', '.join(missing)} once one exists"
+    elif missing:
+        d.reason = f"needs {', '.join(missing)} added to {c.head_sha} after it was pushed"
+    elif unreviewed:
+        d.reason = f"needs an approving review by a maintainer on {c.head_sha}, the head being labeled"
     elif not tests_here:
         d.reason = f"a fork or dependabot pull request runs tests only on the labeled event; add {', '.join(d.required)} to {c.head_sha[:12]}"
     else:
@@ -104,6 +118,17 @@ def head_time(runs: list[tuple[str, str]]) -> str | None:
     """When the head appeared: the earliest pull request run for its SHA."""
     times = [created for event, created in runs if event in PR_EVENTS]
     return min(times) if times else None
+
+
+def approved_at(reviews: list[dict], sha: str) -> bool:
+    """A maintainer's latest approve or request-changes review of this commit approves it."""
+    latest: dict[str, dict] = {}
+    for r in sorted(reviews, key=lambda r: r.get("submitted_at") or ""):
+        if r.get("commit_id") != sha or r.get("author_association") not in MAINTAINERS:
+            continue
+        if r.get("state") in ("APPROVED", "CHANGES_REQUESTED", "DISMISSED"):
+            latest[r["user"]] = r
+    return any(r["state"] == "APPROVED" for r in latest.values())
 
 
 def is_fresh(label: str, current: set[str], events: list[tuple[str, str]], since: str | None) -> bool:
@@ -118,13 +143,24 @@ def gh(*args: str) -> list[str]:
     return [line for line in out.splitlines() if line]
 
 
-def freshness(c: Context, labels: tuple[str, ...]) -> dict[str, bool]:
+def labels_now(c: Context) -> set[str]:
+    return set(gh(f"repos/{c.repo}/issues/{c.number}/labels", "--paginate", "--jq", ".[].name"))
+
+
+def freshness(c: Context, labels: tuple[str, ...]) -> tuple[dict[str, bool], bool]:
     runs = [tuple(json.loads(line)) for line in gh(f"repos/{c.repo}/actions/runs?head_sha={c.head_sha}&per_page=100", "--paginate", "--jq", ".workflow_runs[] | [.event, .created_at] | @json")]
     since = head_time(runs)
-    current = set(gh(f"repos/{c.repo}/issues/{c.number}/labels", "--paginate", "--jq", ".[].name"))
+    current = labels_now(c)
     events = [tuple(json.loads(line)) for line in gh(f"repos/{c.repo}/issues/{c.number}/events?per_page=100", "--paginate", "--jq", '.[] | select(.event == "labeled") | [.label.name, .created_at] | @json')]
-    print(f"head {c.head_sha[:12]} appeared at {since}; labels now: {sorted(current) or '-'}")
-    return {label: is_fresh(label, current, events, since) for label in labels}
+    print(f"head {c.head_sha} appeared at {since}; labels now: {sorted(current) or '-'}")
+    return {label: is_fresh(label, current, events, since) for label in labels}, since is not None
+
+
+def approval(c: Context) -> bool:
+    reviews = [json.loads(line) for line in gh(f"repos/{c.repo}/pulls/{c.number}/reviews?per_page=100", "--paginate", "--jq", ".[] | {user: .user.login, state, commit_id, submitted_at, author_association} | @json")]
+    ok = approved_at(reviews, c.head_sha)
+    print(f"maintainer approval on {c.head_sha}: {ok}")
+    return ok
 
 
 def split(value: str) -> tuple[str, ...]:
@@ -155,9 +191,16 @@ def main() -> int:
     c = context()
     preliminary = decide(c, fresh={})
     fresh: dict[str, bool] = {}
-    if not preliminary.ignored and preliminary.required and c.relevant:
-        fresh = freshness(c, preliminary.required)
-    d = decide(c, fresh)
+    approved, head_known = True, True
+    if not preliminary.ignored and c.relevant and c.event in PR_EVENTS:
+        if preliminary.trusted:
+            current = labels_now(c)
+            fresh = {label: label in current for label in preliminary.required}
+        else:
+            fresh, head_known = freshness(c, preliminary.required)
+            approved = approval(c)
+    d = decide(c, fresh, approved, head_known)
+    print(f"::notice title=gate {d.sha[:12]}::{d.reason}")
     text = "\n".join([f"### Authorize ({c.event} {c.action})", ""] + [f"- {k}: `{v}`" for k, v in d.outputs().items()]) + "\n"
     print(text)
     for env, content in (("GITHUB_OUTPUT", "".join(f"{k}={v}\n" for k, v in d.outputs().items())), ("GITHUB_STEP_SUMMARY", text)):
