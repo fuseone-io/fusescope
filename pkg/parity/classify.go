@@ -28,6 +28,18 @@ var promotedColumns = map[string]bool{
 	"peer_service": true, "peer.service": true,
 }
 
+// Boundary is what the service-boundary evidence found for one operation of a service.
+type Boundary int
+
+const (
+	// BoundaryDenied is an operation with a root of its own, or no witness of a parent elsewhere.
+	BoundaryDenied Boundary = iota
+	// BoundaryConfirmed is an operation whose parent was found in another service.
+	BoundaryConfirmed
+	// BoundaryUnavailable is evidence that could not be read: neither confirmed nor denied.
+	BoundaryUnavailable
+)
+
 // Context is what classifying a pair's differences needs beyond the differences: what the pair
 // tests and how to confirm a known difference.
 type Context struct {
@@ -35,8 +47,11 @@ type Context struct {
 	Service string
 	// AbsentKeyCase marks a pair that filters or selects a promoted key absent from some spans.
 	AbsentKeyCase bool
-	// ServiceBoundary confirms that operation of service has a parent in another service.
-	ServiceBoundary func(service, operation string) bool
+	// ServiceBoundary tells whether operation of service has a parent in another service, or that
+	// the evidence could not tell.
+	ServiceBoundary func(service, operation string) Boundary
+	// EvidenceErrors are the errors the evidence met while the pair was classified, for its record.
+	EvidenceErrors func() []error
 	// OperationOrder judges the order of a top or entry point operations pair, as
 	// JudgeOperationOrder does.
 	OperationOrder func() Verdict
@@ -67,8 +82,14 @@ func Classify(d Difference, ctx Context) Verdict {
 		if ctx.AbsentKeyCase {
 			return Verdict{Category: CategoryAbsentKey, Disposition: Blocking}
 		}
-		if d.Engine == nil && ctx.ServiceBoundary != nil && atServiceBoundary(d, ctx) {
-			return Verdict{Category: CategoryServiceBoundary, Disposition: Blocking}
+		if d.Engine == nil && ctx.ServiceBoundary != nil {
+			switch atServiceBoundary(d, ctx) {
+			case BoundaryConfirmed:
+				return Verdict{Category: CategoryServiceBoundary, Disposition: Blocking}
+			case BoundaryUnavailable:
+				return Verdict{Category: CategoryServiceBoundary, Disposition: Inconclusive}
+			case BoundaryDenied:
+			}
 		}
 		if ctx.OperationCut != nil && len(d.Path) == 2 && d.Path[0] == "items" {
 			return ctx.OperationCut()
@@ -103,25 +124,31 @@ func classifyQuantile(d Difference, ctx Context) Verdict {
 
 // atServiceBoundary tells whether what ClickHouse has and the engine lacks is the service-boundary
 // rule: a top-level operation or entry point confirmed to have its parent in another service, or a
-// whole service every top-level operation of which is.
-func atServiceBoundary(d Difference, ctx Context) bool {
+// whole service every top-level operation of which is. Over a service's operations a denied one
+// decides; without one, an unavailable one leaves it unavailable.
+func atServiceBoundary(d Difference, ctx Context) Boundary {
 	if service, operation, ok := serviceAndOperation(d.Path, ctx); ok {
 		return ctx.ServiceBoundary(service, operation)
 	}
 	service, ok := onlyDynamic(d.Path)
 	if !ok {
-		return false
+		return BoundaryDenied
 	}
 	operations := missingServiceOperations(d.ClickHouse)
 	if len(operations) == 0 {
-		return false
+		return BoundaryDenied
 	}
+	found := BoundaryConfirmed
 	for _, operation := range operations {
-		if !ctx.ServiceBoundary(service, operation) {
-			return false
+		switch ctx.ServiceBoundary(service, operation) {
+		case BoundaryDenied:
+			return BoundaryDenied
+		case BoundaryUnavailable:
+			found = BoundaryUnavailable
+		case BoundaryConfirmed:
 		}
 	}
-	return true
+	return found
 }
 
 // missingServiceOperations are the top-level operations of a service as the services view

@@ -147,7 +147,12 @@ func TestASwapWithNoEvidenceFunctionIsInconclusive(t *testing.T) {
 func TestKnownCausesComeBeforeTheCut(t *testing.T) {
 	cut := func() Verdict { return Verdict{Category: CategoryApproximation, Disposition: Accepted} }
 	onlyClickHouse := Difference{Path: p("items", Dynamic("x.handle")), Kind: KindRows, ClickHouse: []any{map[string]any{"name": "x.handle"}}}
-	boundary := func(service, operation string) bool { return service == "back" && operation == "x.handle" }
+	boundary := func(service, operation string) Boundary {
+		if service == "back" && operation == "x.handle" {
+			return BoundaryConfirmed
+		}
+		return BoundaryDenied
+	}
 	ctx := Context{Service: "back", ServiceBoundary: boundary, OperationCut: cut}
 	assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Blocking}, Classify(onlyClickHouse, ctx), "a confirmed boundary is never a cut")
 	assert.Equal(t, Verdict{Category: CategoryAbsentKey, Disposition: Blocking}, Classify(onlyClickHouse, Context{AbsentKeyCase: true, OperationCut: cut}))

@@ -108,6 +108,16 @@ func TestAReportIsReadBackWhole(t *testing.T) {
 	assert.Error(t, err, "and closes with its summary")
 }
 
+func TestAReportWithAnEvidenceErrorReads(t *testing.T) {
+	report := `{"kind":"header","format":1,"run_id":"r"}` + "\n" +
+		`{"kind":"pair","view":"services","outcome":"differ","category":"service_boundary","disposition":"inconclusive","errors":[{"side":"evidence","type":"internal","code":"internal"}]}` + "\n" +
+		`{"kind":"summary","usable":true}` + "\n"
+	_, records, err := ParseReport(strings.NewReader(report))
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+	assert.Equal(t, []ErrorRecord{{Side: "evidence", Type: "internal", Code: "internal"}}, records[0].Errors)
+}
+
 func TestTheInvestigatedWindowIsTheReportsOnceTheKeyIsChecked(t *testing.T) {
 	r, key, header, _ := investigated(t)
 	w, err := InvestigatedWindow(key, header, r.Tenants.Tenants[0], parity.Settled)
@@ -120,4 +130,34 @@ func TestTheInvestigatedWindowIsTheReportsOnceTheKeyIsChecked(t *testing.T) {
 	header.Tenants[0].Recent = nil
 	_, err = InvestigatedWindow(key, header, r.Tenants.Tenants[0], parity.Recent)
 	assert.Error(t, err)
+}
+
+func TestAPairKeepsTheErrorsItsEvidenceMet(t *testing.T) {
+	rec := PairRecord{Errors: []ErrorRecord{{Side: "engine", Type: "internal", Code: "internal"}}}
+	failed := errors.Newf(errors.TypeInternal, errors.CodeInternal, "the evidence did not run")
+	keepEvidenceErrors(&rec, parity.Context{EvidenceErrors: func() []error { return []error{failed, failed} }})
+	assert.Equal(t, []ErrorRecord{{Side: "engine", Type: "internal", Code: "internal"}, {Side: "evidence", Type: "internal", Code: "internal"}}, rec.Errors,
+		"once per kind of error, beside the sides' own")
+	keepEvidenceErrors(&rec, parity.Context{})
+	assert.Len(t, rec.Errors, 2, "a view without evidence adds nothing")
+}
+
+func TestAPairWhoseBoundaryEvidenceFailedIsInconclusiveWithItsError(t *testing.T) {
+	fp, err := parity.NewFingerprinter(make([]byte, parity.MinRunKeyBytes))
+	require.NoError(t, err)
+	var errs []error
+	classify := parity.Context{
+		ServiceBoundary: func(string, string) parity.Boundary {
+			errs = append(errs, errors.Newf(errors.TypeInternal, errors.CodeInternal, "the evidence did not run"))
+			return parity.BoundaryUnavailable
+		},
+		EvidenceErrors: func() []error { return errs },
+	}
+	missing := parity.Difference{Path: parity.Path{"data", parity.Dynamic("d5r-b"), "topLevelOps", parity.Dynamic("d7-local-child")}, Kind: parity.KindRows, ClickHouse: float64(1)}
+	rec := PairRecord{Outcome: "match"}
+	classified(&rec, fp, []parity.Difference{missing}, classify)
+	assert.Equal(t, "differ", rec.Outcome)
+	assert.Equal(t, parity.CategoryServiceBoundary, rec.Category)
+	assert.Equal(t, parity.Inconclusive, rec.Disposition, "an error is never a denial, so never rows")
+	assert.Equal(t, []ErrorRecord{{Side: "evidence", Type: "internal", Code: "internal"}}, rec.Errors)
 }

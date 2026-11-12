@@ -29,7 +29,12 @@ func TestARowDifferenceInAnAbsentKeyCaseIsKnownAndBlocking(t *testing.T) {
 }
 
 func TestAnExtraTopLevelOperationAtAServiceBoundaryIsKnownAndBlocking(t *testing.T) {
-	boundary := func(service, operation string) bool { return service == "eng-x-back" && operation == "x.handle" }
+	boundary := func(service, operation string) Boundary {
+		if service == "eng-x-back" && operation == "x.handle" {
+			return BoundaryConfirmed
+		}
+		return BoundaryDenied
+	}
 	d := Difference{Path: p("services", Dynamic("eng-x-back"), "topLevelOps", Dynamic("x.handle")), Kind: KindRows, ClickHouse: float64(1)}
 	assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Blocking}, Classify(d, Context{ServiceBoundary: boundary}))
 
@@ -78,7 +83,12 @@ func TestNullAgainstTheEmptyStringOutsideAPromotedColumnIsUnknown(t *testing.T) 
 
 func TestAServiceMissingFromTheEngineAtAServiceBoundaryIsKnownAndBlocking(t *testing.T) {
 	// The D4 case: eng-x-back's only call has a parent in eng-x-front and no remote flag.
-	boundary := func(service, operation string) bool { return service == "eng-x-back" && operation == "x.handle" }
+	boundary := func(service, operation string) Boundary {
+		if service == "eng-x-back" && operation == "x.handle" {
+			return BoundaryConfirmed
+		}
+		return BoundaryDenied
+	}
 	engine := decode(t, `{"data":[]}`)
 	clickhouse := decode(t, `{"data":[{"serviceName":"eng-x-back","p99":1,"numCalls":1,"dataWarning":{"topLevelOps":["overflow_operation","x.handle"]}}]}`)
 	ne, rule := Services.Normalize(engine)
@@ -86,7 +96,7 @@ func TestAServiceMissingFromTheEngineAtAServiceBoundaryIsKnownAndBlocking(t *tes
 	diffs := Compare(ne, nc, rule)
 	if assert.Len(t, diffs, 1) {
 		assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Blocking}, Classify(diffs[0], Context{ServiceBoundary: boundary}))
-		assert.Equal(t, Verdict{Category: CategoryRows, Disposition: Blocking}, Classify(diffs[0], Context{ServiceBoundary: func(string, string) bool { return false }}), "unconfirmed, a missing service is a row difference")
+		assert.Equal(t, Verdict{Category: CategoryRows, Disposition: Blocking}, Classify(diffs[0], Context{ServiceBoundary: func(string, string) Boundary { return BoundaryDenied }}), "unconfirmed, a missing service is a row difference")
 	}
 
 	mixed := decode(t, `{"data":[{"serviceName":"eng-x-back","p99":1,"numCalls":2,"dataWarning":{"topLevelOps":["overflow_operation","x.handle","x.other"]}}]}`)
@@ -95,4 +105,35 @@ func TestAServiceMissingFromTheEngineAtAServiceBoundaryIsKnownAndBlocking(t *tes
 	if assert.Len(t, diffs, 1) {
 		assert.Equal(t, Verdict{Category: CategoryRows, Disposition: Blocking}, Classify(diffs[0], Context{ServiceBoundary: boundary}), "only a service every operation of which is a confirmed boundary")
 	}
+}
+
+func TestABoundaryWhoseEvidenceIsUnavailableIsInconclusiveNeverRows(t *testing.T) {
+	unavailable := func(string, string) Boundary { return BoundaryUnavailable }
+	d := Difference{Path: p("services", Dynamic("eng-x-back"), "topLevelOps", Dynamic("x.handle")), Kind: KindRows, ClickHouse: float64(1)}
+	assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Inconclusive}, Classify(d, Context{ServiceBoundary: unavailable}))
+}
+
+func TestAMissingServiceTakesItsOperationsBoundariesTogether(t *testing.T) {
+	engine := decode(t, `{"data":[]}`)
+	clickhouse := decode(t, `{"data":[{"serviceName":"back","p99":1,"numCalls":3,"dataWarning":{"topLevelOps":["overflow_operation","a","b"]}}]}`)
+	ne, rule := Services.Normalize(engine)
+	nc, _ := Services.Normalize(clickhouse)
+	diffs := Compare(ne, nc, rule)
+	if !assert.Len(t, diffs, 1) {
+		return
+	}
+	of := func(a, b Boundary) Context {
+		return Context{ServiceBoundary: func(_, operation string) Boundary {
+			if operation == "a" {
+				return a
+			}
+			return b
+		}}
+	}
+	sb := func(d Disposition) Verdict { return Verdict{Category: CategoryServiceBoundary, Disposition: d} }
+	rows := Verdict{Category: CategoryRows, Disposition: Blocking}
+	assert.Equal(t, sb(Blocking), Classify(diffs[0], of(BoundaryConfirmed, BoundaryConfirmed)), "every operation confirmed")
+	assert.Equal(t, sb(Inconclusive), Classify(diffs[0], of(BoundaryConfirmed, BoundaryUnavailable)), "one unavailable, none denied")
+	assert.Equal(t, rows, Classify(diffs[0], of(BoundaryUnavailable, BoundaryDenied)), "a denied one decides, whatever the others")
+	assert.Equal(t, rows, Classify(diffs[0], of(BoundaryDenied, BoundaryConfirmed)))
 }
