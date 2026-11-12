@@ -32,6 +32,12 @@ const (
 	uploadTimeout = 2 * time.Minute
 )
 
+// NewBucketClient is the one client the report, the requeue and the investigation's read go
+// through, addressing the bucket as its settings say; the endpoint is never inspected to decide it.
+func NewBucketClient(cfg aws.Config, settings BucketSettings) *s3.Client {
+	return s3.NewFromConfig(cfg, func(o *s3.Options) { o.UsePathStyle = settings.PathStyle })
+}
+
 // S3Config names the staging bucket, the KMS key the requeue is written under, and the bounds of
 // the queue, checked on load before decoding and on replace before writing.
 type S3Config struct {
