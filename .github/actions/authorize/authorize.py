@@ -53,7 +53,8 @@ class Decision:
     ignored: bool = False
     trusted: bool = True
     required: tuple[str, ...] = ()
-    authorized: bool = True
+    # None when the run needs no authorisation or does not decide.
+    authorized: bool | None = None
     run: bool = False
     passes_without_tests: bool = False
     reason: str = ""
@@ -65,7 +66,7 @@ class Decision:
             "ignored": b(self.ignored),
             "trusted": b(self.trusted),
             "required": ",".join(self.required),
-            "authorized": b(self.authorized),
+            "authorized": "n/a" if self.authorized is None else b(self.authorized),
             "run": b(self.run),
             "pass": b(self.passes_without_tests),
             "reason": self.reason,
@@ -89,7 +90,6 @@ def decide(c: Context, fresh: dict[str, bool], approved: bool = True, head_known
     else:
         d.ignored, d.reason = True, f"pull_request_target {c.action} {c.label or '-'} does not decide this workflow for a {'trusted' if trusted else 'fork or dependabot'} pull request"
     if d.ignored:
-        d.authorized = False
         return d
 
     if not c.relevant:

@@ -22,6 +22,21 @@ class DecideTest(unittest.TestCase):
         self.assertEqual((d.ignored, d.run), (False, False))
         self.assertTrue(d.passes_without_tests)
 
+    def test_irrelevant_change_reports_authorization_as_not_evaluated(self) -> None:
+        for kw in (dict(), dict(fork=True), dict(user="dependabot[bot]", untrusted_requires=("safe-to-test", "safe-to-integrate"))):
+            d = decide(ctx(relevant=False, **kw), fresh={})
+            self.assertIsNone(d.authorized, kw)
+            self.assertEqual(d.outputs()["authorized"], "n/a", kw)
+
+    def test_ignored_run_reports_authorization_as_not_evaluated(self) -> None:
+        d = decide(ctx(action="labeled", label="bug"), fresh={})
+        self.assertEqual(d.outputs()["authorized"], "n/a")
+
+    def test_evaluated_authorization_is_reported(self) -> None:
+        self.assertEqual(decide(ctx(), fresh={}).outputs()["authorized"], "true")
+        c = ctx(event="pull_request_target", action="labeled", label="safe-to-test", fork=True)
+        self.assertEqual(decide(c, fresh={"safe-to-test": False}).outputs()["authorized"], "false")
+
     def test_trusted_needs_a_fresh_label_when_required(self) -> None:
         c = ctx(trusted_requires=("safe-to-integrate",), triggers=("safe-to-integrate",))
         self.assertFalse(decide(c, fresh={"safe-to-integrate": False}).run)
