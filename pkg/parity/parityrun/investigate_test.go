@@ -70,6 +70,21 @@ func TestAnInvestigationRefusesAWrongKeyBeforeAnyQuery(t *testing.T) {
 	assert.True(t, errors.Ast(err, errors.TypeForbidden), "refused as a wrong key: %v", err)
 }
 
+func TestAnInvestigationSaysWhenARecordedDifferenceIsNotFoundNow(t *testing.T) {
+	r, key, header, records := investigated(t)
+	for i := range records {
+		for j := range records[i].Differences {
+			// A path an older comparison recorded, which this one no longer produces.
+			records[i].Differences[j].Path = "data[3].numCalls"
+		}
+	}
+	var out bytes.Buffer
+	shown, err := r.Investigate(t.Context(), key, Investigation{Header: header, Records: records, Tenant: r.Tenants.Tenants[0], Class: parity.Settled}, &out)
+	require.NoError(t, err)
+	assert.Zero(t, shown)
+	assert.Contains(t, out.String(), "recorded differences not found now", "never silent, as if the differences were gone")
+}
+
 func TestAnInvestigationFlagsWhatItCannotReproduce(t *testing.T) {
 	r, key, header, records := investigated(t)
 	for i := range records {

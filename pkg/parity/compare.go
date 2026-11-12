@@ -52,6 +52,9 @@ type Difference struct {
 
 // Compare walks the engine's and ClickHouse's answers of one view, already normalized by the view,
 // and returns where they differ. Every list left is ordered by contract.
+//
+// A rule's Reconcile adjusts both answers in place, as Normalize already rewrites them: pass
+// answers that are the caller's to change.
 func Compare(engine, clickhouse any, rule Rule) []Difference {
 	if rule.Reconcile != nil {
 		rule.Reconcile(engine, clickhouse)

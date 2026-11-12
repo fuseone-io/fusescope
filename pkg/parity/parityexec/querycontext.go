@@ -5,6 +5,7 @@ import (
 
 	"github.com/fuseone-io/fusescope/pkg/parity"
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
 )
 
 // QueryRangeView is the view a query range pair of req is compared with: its quantile
@@ -32,11 +33,15 @@ func QueryRangeView(req *qbtypes.QueryRangeRequest) parity.View {
 	return parity.SpanList
 }
 
-// latestFirst tells whether order is timestamp descending, then span_id ascending.
+// latestFirst tells whether order is the span's timestamp descending, then its span_id ascending:
+// those names as attributes or resources order otherwise.
 func latestFirst(order []qbtypes.OrderBy) bool {
+	spanField := func(o qbtypes.OrderBy, name string) bool {
+		return o.Key.Name == name && o.Key.FieldContext == telemetrytypes.FieldContextSpan
+	}
 	return len(order) == 2 &&
-		order[0].Key.Name == "timestamp" && order[0].Direction == qbtypes.OrderDirectionDesc &&
-		order[1].Key.Name == "span_id" && order[1].Direction == qbtypes.OrderDirectionAsc
+		spanField(order[0], "timestamp") && order[0].Direction == qbtypes.OrderDirectionDesc &&
+		spanField(order[1], "span_id") && order[1].Direction == qbtypes.OrderDirectionAsc
 }
 
 func onlyTraceQuery(req *qbtypes.QueryRangeRequest) (qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], bool) {

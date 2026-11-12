@@ -176,15 +176,21 @@ func (r Round) reinvestigate(ctx context.Context, fp *parity.Fingerprinter, inde
 	engine, rule := view.Normalize(result.Engine.Answer)
 	clickhouse, _ := view.Normalize(result.ClickHouse.Answer)
 	shown := 0
+	found := map[string]bool{}
 	for _, d := range parity.Compare(engine, clickhouse, rule) {
-		if !slices.ContainsFunc(rec.Differences, func(rd DifferenceRecord) bool { return rd.Path == fp.Path(d.Path...) }) {
+		path := fp.Path(d.Path...)
+		if !slices.ContainsFunc(rec.Differences, func(rd DifferenceRecord) bool { return rd.Path == path }) {
 			continue
 		}
+		found[path] = true
 		v := parity.Classify(d, classify)
 		e, _ := json.Marshal(d.Engine)
 		c, _ := json.Marshal(d.ClickHouse)
 		fmt.Fprintf(out, "  %s (%s, %s %s)\n    engine: %s\n    clickhouse: %s\n", plainPath(d.Path), d.Kind, v.Category, v.Disposition, e, c)
 		shown++
+	}
+	if missing := len(rec.Differences) - len(found); missing > 0 {
+		fmt.Fprintf(out, "  %d recorded differences not found now: the data or the comparison changed since the round\n", missing)
 	}
 	return shown, nil
 }
