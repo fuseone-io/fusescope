@@ -2,24 +2,12 @@ name: e2eci
 
 on:
   pull_request:
-    paths-ignore:
-      - "**/*.md"
-      - "docs/adr/**"
-      - "docs/brand/**"
-      - "docs/contributing/**"
-      - "docs/img/**"
     types:
       - opened
       - synchronize
       - reopened
       - labeled
   pull_request_target:
-    paths-ignore:
-      - "**/*.md"
-      - "docs/adr/**"
-      - "docs/brand/**"
-      - "docs/contributing/**"
-      - "docs/img/**"
     types:
       - labeled
   merge_group:
@@ -31,28 +19,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The gate. Its code comes from the base commit, or from the head of a pull
+  # request from this repository, never from a fork or dependabot head.
   changes:
-    if: github.event_name != 'merge_group' && !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-e2e' && github.event.label.name != 'safe-to-test')
     runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+      issues: read
+      pull-requests: read
     outputs:
       e2e: ${{ steps.changes.outputs.e2e }}
+      sha: ${{ steps.authorize.outputs.sha }}
+      ignored: ${{ steps.authorize.outputs.ignored }}
+      run: ${{ steps.authorize.outputs.run }}
+      pass: ${{ steps.authorize.outputs.pass }}
+      reason: ${{ steps.authorize.outputs.reason }}
     steps:
       - name: checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.head.sha || github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
       - name: changes
         id: changes
         uses: ./.github/actions/changes
+      - name: authorize
+        id: authorize
+        uses: ./.github/actions/authorize
+        with:
+          relevant: ${{ steps.changes.outputs.e2e }}
+          triggers: safe-to-test,safe-to-e2e
+          untrusted-requires: safe-to-test
+          merge-group: pass
   fmtlint:
     needs: changes
-    if: |
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && needs.changes.outputs.e2e == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: node
         uses: actions/setup-node@v7
@@ -75,15 +83,13 @@ jobs:
   # runs fork code and must not hold a write token.
   build:
     needs: changes
-    if: |
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && needs.changes.outputs.e2e == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       # Restore-only: the cacheci workflow owns cache saves. Seeds the
       # BuildKit cache mounts so the image build is incremental.
@@ -135,16 +141,14 @@ jobs:
           - chromium
         shard: [1, 2, 3, 4]
     needs: [changes, build]
-    if: |
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && needs.changes.outputs.e2e == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       # Images bring-up-stack would otherwise pull, at the tests/conftest.py
       # defaults. A stale tag only loses the head start.
@@ -236,23 +240,32 @@ jobs:
           name: playwright-artifacts-${{ matrix.project }}-${{ matrix.shard }}
           path: tests/e2e/artifacts/
           retention-days: 5
-  # Required status check. Fails when e2e was needed but did not pass,
-  # including fork and dependabot PRs still waiting on safe-to-test.
-  # Skipped on runs superseded or ignored by the concurrency group, so they
-  # don't shadow the run that decides.
+  # Required status check. Always runs, so the check exists on every head.
+  # Runs that do not decide the verdict report as "e2e (ignored)", a name
+  # the required check does not match. Fails when e2e was needed but did
+  # not pass, including when a safe-to-* label is missing for this head.
   e2e:
-    if: |
-      !cancelled() &&
-      !(github.event.action == 'labeled' && github.event.label.name != 'safe-to-e2e' && github.event.label.name != 'safe-to-test')
-    needs: [changes, fmtlint, test]
+    name: ${{ needs.changes.outputs.ignored == 'true' && 'e2e (ignored)' || 'e2e' }}
+    if: always()
+    needs: [changes, fmtlint, build, test]
     runs-on: ubuntu-24.04
+    permissions: {}
     steps:
       - name: verdict
-        if: |
-          github.event_name != 'merge_group' &&
-          !(github.event_name == 'pull_request_target' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]') &&
-          (needs.changes.result != 'success' ||
-          (needs.changes.outputs.e2e == 'true' && (needs.fmtlint.result != 'success' || needs.test.result != 'success')))
+        env:
+          GATE: ${{ needs.changes.result }}
+          IGNORED: ${{ needs.changes.outputs.ignored }}
+          RUN: ${{ needs.changes.outputs.run }}
+          PASS: ${{ needs.changes.outputs.pass }}
+          REASON: ${{ needs.changes.outputs.reason }}
+          SHA: ${{ needs.changes.outputs.sha }}
+          NEEDS: ${{ toJSON(needs) }}
         run: |
-          echo "::error::e2e did not pass. Fork and dependabot PRs need the safe-to-test label."
-          exit 1
+          echo "sha: $SHA"
+          if [ "$IGNORED" = true ]; then echo "this run does not decide: $REASON"; exit 0; fi
+          if [ "$GATE" != success ]; then echo "::error::the gate did not decide ($GATE)"; exit 1; fi
+          if [ "$PASS" = true ]; then echo "passes: $REASON"; exit 0; fi
+          if [ "$RUN" != true ]; then echo "::error::e2e did not run: $REASON"; exit 1; fi
+          failed=$(jq -r 'to_entries[] | select(.key != "changes" and .value.result != "success" and .value.result != "skipped") | "\(.key)=\(.value.result)"' <<<"$NEEDS")
+          if [ -n "$failed" ]; then echo "::error::e2e did not pass: $failed"; exit 1; fi
+          echo "passed: $REASON"

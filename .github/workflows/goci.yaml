@@ -2,21 +2,9 @@ name: goci
 
 on:
   pull_request:
-    paths-ignore:
-      - "**/*.md"
-      - "docs/adr/**"
-      - "docs/brand/**"
-      - "docs/contributing/**"
-      - "docs/img/**"
     branches:
       - main
   pull_request_target:
-    paths-ignore:
-      - "**/*.md"
-      - "docs/adr/**"
-      - "docs/brand/**"
-      - "docs/contributing/**"
-      - "docs/img/**"
     types:
       - labeled
   merge_group:
@@ -24,23 +12,41 @@ on:
       - checks_requested
 
 jobs:
+  # The gate. Its code comes from the base commit, or from the head of a pull
+  # request from this repository, never from a fork or dependabot head.
   changes:
-    if: |
-      github.event_name == 'merge_group' ||
-      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+      issues: read
+      pull-requests: read
     outputs:
       go: ${{ steps.changes.outputs.go }}
+      sha: ${{ steps.authorize.outputs.sha }}
+      ignored: ${{ steps.authorize.outputs.ignored }}
+      run: ${{ steps.authorize.outputs.run }}
+      pass: ${{ steps.authorize.outputs.pass }}
+      reason: ${{ steps.authorize.outputs.reason }}
     steps:
       - name: checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.head.sha || github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
       - name: changes
         id: changes
         uses: ./.github/actions/changes
+      - name: authorize
+        id: authorize
+        uses: ./.github/actions/authorize
+        with:
+          relevant: ${{ steps.changes.outputs.go }}
+          triggers: safe-to-test
+          untrusted-requires: safe-to-test
   test:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     # Go tests that must hold on PostgreSQL as on SQLite run against this
     # database; without FUSESCOPE_TEST_POSTGRES_DSN they skip.
@@ -63,7 +69,7 @@ jobs:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -73,13 +79,13 @@ jobs:
         run: go test ./...
   fmt:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -91,13 +97,13 @@ jobs:
           test -z "$files" || (echo "$files"; exit 1)
   lint:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -110,13 +116,13 @@ jobs:
           args: --timeout=15m
   deps:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -128,13 +134,13 @@ jobs:
           git diff --compact-summary --exit-code || (echo; echo "go.mod/go.sum are not tidy. Run go mod tidy locally and commit."; exit 1)
   semconv-generated:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -144,13 +150,13 @@ jobs:
         run: make semconv-check
   logspipeline-compat:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -162,13 +168,13 @@ jobs:
         run: make logspipeline-compat
   agpl-guard:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -192,13 +198,13 @@ jobs:
         run: make agpl-check AGPL_CHART=fusescope-charts/charts/fusescope
   build:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -225,13 +231,13 @@ jobs:
           make docker-build-community
   openapi:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -243,13 +249,13 @@ jobs:
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in openapi spec. Run go run ./cmd/community generate openapi locally and commit."; exit 1)
   authz:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -261,13 +267,13 @@ jobs:
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in authz permissions. Run go run ./cmd/community generate authz locally and commit."; exit 1)
   web-settings:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -279,13 +285,13 @@ jobs:
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in web settings schema. Run go run ./cmd/community generate config web-settings locally and commit."; exit 1)
   transaction-groups:
     needs: changes
-    if: needs.changes.outputs.go == 'true'
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: self-checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
+          ref: ${{ needs.changes.outputs.sha }}
           persist-credentials: false
       - name: go-install
         uses: actions/setup-go@v7
@@ -295,3 +301,32 @@ jobs:
         run: |
           go run ./cmd/community generate config transaction-groups
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in transaction groups schema. Run go run ./cmd/community generate config transaction-groups locally and commit."; exit 1)
+  # Required status check. Always runs, so the check exists on every head.
+  # Runs that do not decide the verdict report as "goci (ignored)", a name
+  # the required check does not match. Fails when a Go job was needed but did
+  # not pass, including when a safe-to-* label is missing for this head.
+  goci:
+    name: ${{ needs.changes.outputs.ignored == 'true' && 'goci (ignored)' || 'goci' }}
+    if: always()
+    needs: [changes, test, fmt, lint, deps, semconv-generated, logspipeline-compat, agpl-guard, build, openapi, authz, web-settings, transaction-groups]
+    runs-on: ubuntu-24.04
+    permissions: {}
+    steps:
+      - name: verdict
+        env:
+          GATE: ${{ needs.changes.result }}
+          IGNORED: ${{ needs.changes.outputs.ignored }}
+          RUN: ${{ needs.changes.outputs.run }}
+          PASS: ${{ needs.changes.outputs.pass }}
+          REASON: ${{ needs.changes.outputs.reason }}
+          SHA: ${{ needs.changes.outputs.sha }}
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "sha: $SHA"
+          if [ "$IGNORED" = true ]; then echo "this run does not decide: $REASON"; exit 0; fi
+          if [ "$GATE" != success ]; then echo "::error::the gate did not decide ($GATE)"; exit 1; fi
+          if [ "$PASS" = true ]; then echo "passes: $REASON"; exit 0; fi
+          if [ "$RUN" != true ]; then echo "::error::goci did not run: $REASON"; exit 1; fi
+          failed=$(jq -r 'to_entries[] | select(.key != "changes" and .value.result != "success" and .value.result != "skipped") | "\(.key)=\(.value.result)"' <<<"$NEEDS")
+          if [ -n "$failed" ]; then echo "::error::goci did not pass: $failed"; exit 1; fi
+          echo "passed: $REASON"

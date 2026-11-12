@@ -1,0 +1,63 @@
+name: authorize
+description: Decides which SHA a run tests, whether it decides the workflow's verdict, and whether a fresh safe-to-* label authorises it at that SHA.
+inputs:
+  relevant:
+    description: "true when the changes need this workflow's tests"
+    required: true
+  triggers:
+    description: Labels whose labeled event this workflow runs on, comma separated
+    required: false
+    default: ""
+  trusted-requires:
+    description: Labels a pull request from this repository needs at its head, comma separated
+    required: false
+    default: ""
+  untrusted-requires:
+    description: Labels a fork or dependabot pull request needs at its head, comma separated
+    required: false
+    default: safe-to-test
+  merge-group:
+    description: "run, or pass to let merge_group pass without tests"
+    required: false
+    default: run
+outputs:
+  sha:
+    description: The commit to check out and test
+    value: ${{ steps.authorize.outputs.sha }}
+  ignored:
+    description: "true when this run does not decide the workflow's verdict"
+    value: ${{ steps.authorize.outputs.ignored }}
+  run:
+    description: "true when this run tests"
+    value: ${{ steps.authorize.outputs.run }}
+  pass:
+    description: "true when the verdict passes without tests"
+    value: ${{ steps.authorize.outputs.pass }}
+  reason:
+    description: Why
+    value: ${{ steps.authorize.outputs.reason }}
+runs:
+  using: composite
+  steps:
+    # Reads the API only and runs no pull request code, so it is safe under
+    # pull_request_target. Run it from the base commit's checkout.
+    - name: authorize
+      id: authorize
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        EVENT: ${{ github.event_name }}
+        ACTION: ${{ github.event.action }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        HEAD_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        PR_USER: ${{ github.event.pull_request.user.login }}
+        LABEL: ${{ github.event.action == 'labeled' && github.event.label.name || '' }}
+        RELEVANT: ${{ inputs.relevant }}
+        TRIGGERS: ${{ inputs.triggers }}
+        TRUSTED_REQUIRES: ${{ inputs.trusted-requires }}
+        UNTRUSTED_REQUIRES: ${{ inputs.untrusted-requires }}
+        MERGE_GROUP: ${{ inputs.merge-group }}
+      run: |
+        python3 -m unittest discover -s "$GITHUB_ACTION_PATH" -p '*_test.py'
+        python3 "$GITHUB_ACTION_PATH/authorize.py"

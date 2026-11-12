@@ -78,6 +78,8 @@ Add `#### Screenshots / Screen Recordings` for visible UI changes and `#### Addi
 - `safe-to-integrate` when Go, SQL or integration tests changed (integration CI only runs with it).
 - `safe-to-e2e` when e2e should run and the diff doesn't touch `frontend/` or `tests/e2e/`.
 
+A label authorises only the head it was added to. Push first, then add the labels; add them again after every push.
+
 ## 7. Report
 
 Branch, commits (sha + title), checks with results, PR URL, labels to add. Mention anything skipped and why.
