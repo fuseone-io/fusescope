@@ -36,6 +36,9 @@ type Keyed map[string]any
 type Rule struct {
 	Quantile func(Path) bool
 	Excluded func(Path) bool
+	// Reconcile, when set, adjusts both normalized answers in place before they are compared, for
+	// what only the pair can tell, such as a row a limit cut from one side.
+	Reconcile func(engine, clickhouse any)
 }
 
 // Difference is one place two answers differ, with both values. The values stay in memory: a
@@ -50,6 +53,9 @@ type Difference struct {
 // Compare walks the engine's and ClickHouse's answers of one view, already normalized by the view,
 // and returns where they differ. Every list left is ordered by contract.
 func Compare(engine, clickhouse any, rule Rule) []Difference {
+	if rule.Reconcile != nil {
+		rule.Reconcile(engine, clickhouse)
+	}
 	var diffs []Difference
 	compare(Path{}, engine, clickhouse, rule, &diffs)
 	return diffs
