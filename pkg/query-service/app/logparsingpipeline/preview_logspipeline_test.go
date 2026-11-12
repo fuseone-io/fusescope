@@ -34,6 +34,34 @@ func TestPreviewReportsOperatorErrors(t *testing.T) {
 	assert.Regexp(t, `^operator re: .+`, messages[0])
 }
 
+// A grok pattern that does not compile is logged once when the pipeline is
+// built and then fails each record. The preview reports only what happens to
+// the records, as pipelinesim did: one message per record with on_error send,
+// none with send_quiet.
+func TestPreviewReportsOnlyRecordErrorsForUnknownGrokPattern(t *testing.T) {
+	tests := []struct {
+		onError string
+		want    int
+	}{
+		{"send", 1},
+		{"send_quiet", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.onError, func(t *testing.T) {
+			processors := []previewProcessor{{Name: "p", Operators: []map[string]any{
+				{"type": "grok_parser", "id": "g", "pattern": "%{NOT_A_PATTERN:x}", "parse_from": "body", "on_error": tt.onError},
+			}}}
+			out, messages, err := simulateWithLogspipeline(context.Background(), processors, previewLogs("x"))
+			require.NoError(t, err)
+			assert.Equal(t, 1, out[0].LogRecordCount())
+			require.Len(t, messages, tt.want, "%q", messages)
+			for _, m := range messages {
+				assert.Regexp(t, `^operator g: .+`, m)
+			}
+		})
+	}
+}
+
 // The processors run in order, each on what the one before let through.
 func TestPreviewRunsProcessorsInOrder(t *testing.T) {
 	processors := []previewProcessor{

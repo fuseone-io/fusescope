@@ -40,6 +40,9 @@ func simulateWithLogspipeline(ctx context.Context, processors []previewProcessor
 		}
 		built = append(built, b)
 	}
+	// What the library logs while building, such as a grok pattern that does
+	// not compile, is not about a record; the preview reports only records.
+	recorded.TakeAll()
 
 	ld := plog.NewLogs()
 	for _, in := range logs {
