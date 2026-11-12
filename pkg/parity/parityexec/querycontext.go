@@ -8,7 +8,8 @@ import (
 )
 
 // QueryRangeView is the view a query range pair of req is compared with: its quantile
-// aggregations are left for the judgement, and a scalar keeps its rows' order only when ordered.
+// aggregations are left for the judgement, a scalar keeps its rows' order only when ordered, and a
+// raw list asked latest first is compared row by row by identity, at its limit.
 func QueryRangeView(req *qbtypes.QueryRangeRequest) parity.View {
 	spec, ok := onlyTraceQuery(req)
 	quantiles := map[int]float64{}
@@ -25,7 +26,17 @@ func QueryRangeView(req *qbtypes.QueryRangeRequest) parity.View {
 	case qbtypes.RequestTypeTimeSeries:
 		return parity.TimeSeriesView(quantiles)
 	}
+	if ok && latestFirst(spec.Order) {
+		return parity.SpanListView(spec.Limit)
+	}
 	return parity.SpanList
+}
+
+// latestFirst tells whether order is timestamp descending, then span_id ascending.
+func latestFirst(order []qbtypes.OrderBy) bool {
+	return len(order) == 2 &&
+		order[0].Key.Name == "timestamp" && order[0].Direction == qbtypes.OrderDirectionDesc &&
+		order[1].Key.Name == "span_id" && order[1].Direction == qbtypes.OrderDirectionAsc
 }
 
 func onlyTraceQuery(req *qbtypes.QueryRangeRequest) (qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], bool) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -166,4 +167,41 @@ func TestAServicesBoundaryIsConfirmedWithinTheViewsFilter(t *testing.T) {
 	c.ServiceBoundary("back", "handle")
 	require.NotEmpty(t, s.requests)
 	assert.Contains(t, s.requests[0].Filter.Expression, "(isRoot = true OR isEntryPoint = true)", "the roots counted are the view's")
+}
+
+func rawRequest(limit int, order []qbtypes.OrderBy) *qbtypes.QueryRangeRequest {
+	req := request(qbtypes.RequestTypeRaw, "")
+	spec := req.CompositeQuery.Queries[0].Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+	spec.Aggregations, spec.Limit, spec.Order = nil, limit, order
+	req.CompositeQuery.Queries[0].Spec = spec
+	return req
+}
+
+func TestALatestFirstRawListIsComparedByIdentityAtItsLimit(t *testing.T) {
+	key := func(name string) qbtypes.OrderByKey {
+		return qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name, FieldContext: telemetrytypes.FieldContextSpan}}
+	}
+	latestFirst := []qbtypes.OrderBy{{Key: key("timestamp"), Direction: qbtypes.OrderDirectionDesc}, {Key: key("span_id"), Direction: qbtypes.OrderDirectionAsc}}
+	answer := func(rows ...string) string {
+		var out []string
+		for _, r := range rows {
+			span, second, _ := strings.Cut(r, "@")
+			out = append(out, fmt.Sprintf(`{"timestamp":"2026-11-12T07:15:%sZ","data":{"trace_id":"t","span_id":%q}}`, second, span))
+		}
+		return fmt.Sprintf(`{"type":"raw","data":{"results":[{"queryName":"A","nextCursor":"x","rows":[%s]}]}}`, strings.Join(out, ","))
+	}
+	diffs := func(req *qbtypes.QueryRangeRequest, engine, clickhouse string) []string {
+		view := QueryRangeView(req)
+		ne, rule := view.Normalize(decoded(t, engine))
+		nc, _ := view.Normalize(decoded(t, clickhouse))
+		var paths []string
+		for _, d := range parity.Compare(ne, nc, rule) {
+			paths = append(paths, d.Path.String())
+		}
+		return paths
+	}
+	// The engine holds a newer span: n, a against a, b, both at the limit of two.
+	engine, clickhouse := answer("n@50", "a@40"), answer("a@40", "b@30")
+	assert.Equal(t, []string{"data.results[0].rows[t/n]"}, diffs(rawRequest(2, latestFirst), engine, clickhouse), "latest first at a limit: only the newer span differs")
+	assert.NotEqual(t, []string{"data.results[0].rows[t/n]"}, diffs(rawRequest(2, nil), engine, clickhouse), "another order stays positional")
 }
