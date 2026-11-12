@@ -109,3 +109,23 @@ func TestARawListWithoutIdentityStaysPositional(t *testing.T) {
 	clickhouse := `{"type":"raw","data":{"results":[{"rows":[{"data":{"name":"a"}},{"data":{"name":"b"}}]}]}}`
 	assert.Equal(t, map[string]Kind{"data.results[0].rows": KindOrder}, diffOf(t, view, engine, clickhouse))
 }
+
+func TestARowWithoutIdentityOnOneSideKeepsBothSidesPositional(t *testing.T) {
+	view := SpanListView(5)
+	engine := list("", row("t", "a", 30, ""), `{"timestamp":"2026-11-12T07:15:20.000000001Z","data":{"name":"x"}}`)
+	clickhouse := list("", row("t", "a", 30, ""), row("t", "b", 20, ""))
+	assert.Equal(t, map[string]Kind{"data.results[0].rows[1].data.name": KindRows, "data.results[0].rows[1].data.span_id": KindRows, "data.results[0].rows[1].data.trace_id": KindRows},
+		diffOf(t, view, engine, clickhouse), "row by row, as before, not one difference of the whole list")
+}
+
+func TestARawListWithoutALimitIsCutAtTheQueriersDefault(t *testing.T) {
+	rows := make([]string, 0, 10_000)
+	for i := range 10_000 {
+		rows = append(rows, fmt.Sprintf(`{"timestamp":"2026-11-12T07:15:30.%09dZ","data":{"trace_id":"t","span_id":"s%05d"}}`, 999_999_999-i, i))
+	}
+	newer := `{"timestamp":"2026-11-12T07:15:31.000000000Z","data":{"trace_id":"t","span_id":"new"}}`
+	engine := list("c", append([]string{newer}, rows[:9_999]...)...)
+	clickhouse := list("c", rows...)
+	assert.Equal(t, map[string]Kind{"data.results[0].rows[t/new]": KindRows}, diffOf(t, SpanListView(0), engine, clickhouse),
+		"no limit asked: the querier's 10000 rows")
+}

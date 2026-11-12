@@ -204,4 +204,9 @@ func TestALatestFirstRawListIsComparedByIdentityAtItsLimit(t *testing.T) {
 	engine, clickhouse := answer("n@50", "a@40"), answer("a@40", "b@30")
 	assert.Equal(t, []string{"data.results[0].rows[t/n]"}, diffs(rawRequest(2, latestFirst), engine, clickhouse), "latest first at a limit: only the newer span differs")
 	assert.NotEqual(t, []string{"data.results[0].rows[t/n]"}, diffs(rawRequest(2, nil), engine, clickhouse), "another order stays positional")
+	attribute := func(name string) qbtypes.OrderByKey {
+		return qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name, FieldContext: telemetrytypes.FieldContextAttribute}}
+	}
+	byAttributes := []qbtypes.OrderBy{{Key: attribute("timestamp"), Direction: qbtypes.OrderDirectionDesc}, {Key: attribute("span_id"), Direction: qbtypes.OrderDirectionAsc}}
+	assert.NotEqual(t, []string{"data.results[0].rows[t/n]"}, diffs(rawRequest(2, byAttributes), engine, clickhouse), "attributes of those names are not the span's own fields")
 }

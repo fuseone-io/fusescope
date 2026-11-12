@@ -15,8 +15,15 @@ import (
 // Before comparing, a row on one side only is dropped when it is the limit's cut: the other side's
 // list is full and the row sorts after that list's last row by the whole order key. The order is
 // then compared over the identities both sides hold, rows of equal order keys taken in either
-// sequence.
+// sequence. When only one side's result has every row's identity, both are compared by position.
+// A limit of 0 is the querier's own default, defaultRawLimit.
+//
+// Both stores answer timestamps in nanoseconds; a store that truncated them could put a row at
+// exactly the cut's instant on the wrong side of it.
 func SpanListView(limit int) View {
+	if limit <= 0 {
+		limit = defaultRawLimit
+	}
 	return View{Name: "span_list", normalize: func(answer any) (any, Rule) {
 		forEachResult(answer, normalizeRawResult)
 		return answer, Rule{Excluded: isMeta, Reconcile: func(engine, clickhouse any) {
@@ -27,6 +34,9 @@ func SpanListView(limit int) View {
 
 // rawOrder is the field a raw result's sequence of identities is kept under.
 const rawOrder = "order"
+
+// defaultRawLimit is the rows the querier reads for a raw list asked without a limit.
+const defaultRawLimit = 10_000
 
 func normalizeRawResult(result map[string]any) {
 	cursor, _ := result["nextCursor"].(string)
@@ -107,7 +117,16 @@ func reconcileRawResults(engine, clickhouse map[string]any, limit int) {
 	cRows, cok := clickhouse["rows"].(Keyed)
 	eOrder, _ := engine[rawOrder].([]any)
 	cOrder, _ := clickhouse[rawOrder].([]any)
-	if !eok || !cok {
+	if eok != cok {
+		// One side has a row of no identity: both are compared by position.
+		if eok {
+			positional(engine, eRows, eOrder)
+		} else {
+			positional(clickhouse, cRows, cOrder)
+		}
+		return
+	}
+	if !eok {
 		return
 	}
 	// Each side's last row, read before either side drops anything.
@@ -121,6 +140,22 @@ func reconcileRawResults(engine, clickhouse map[string]any, limit int) {
 	}
 	engine[rawOrder] = commonOrder(eRows, eOrder, cRows)
 	clickhouse[rawOrder] = commonOrder(cRows, cOrder, eRows)
+}
+
+// positional puts a keyed result's rows back in their sequence, as a list.
+func positional(result map[string]any, rows Keyed, order []any) {
+	taken := map[string]int{}
+	list := make([]any, 0, len(order))
+	for _, v := range order {
+		id, _ := v.(string)
+		occurrences, _ := rows[id].([]any)
+		if taken[id] < len(occurrences) {
+			list = append(list, occurrences[taken[id]])
+			taken[id]++
+		}
+	}
+	result["rows"] = list
+	delete(result, rawOrder)
 }
 
 // lastKey is the key of a full list's last row; false when the list is not full or the key does
