@@ -160,8 +160,8 @@ that collector's `logspipeline` library (collector ADR 0012, fusescope#54); the 
 are unchanged.
 
 On 2026-11-12, after v0.163.0 shipped that preview and it was validated on the demo, the phase 3b log pipeline
-simulator (`pipelinesim`) was removed (collector ADR 0012, step 3). Its tests moved to the preview, which now runs only
-on `logspipeline`.
+simulator (`pipelinesim`) was removed (collector ADR 0012, step 3), with `pkg/grok`, the `vjeantet/grok` copy only it
+used, and its `NOTICE` entry. Its tests moved to the preview, which now runs only on `logspipeline`.
 
 **Guard.** `make agpl-check AGPL_CHART=<fusescope-charts>/charts/fusescope` renders the chart with its default values and fails if any image comes from one of those repositories, besides the existing check on the backend binary. It runs in two places:
 
