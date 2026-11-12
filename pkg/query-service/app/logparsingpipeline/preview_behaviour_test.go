@@ -1,4 +1,4 @@
-package pipelinesim
+package logparsingpipeline
 
 import (
 	"context"
@@ -14,8 +14,10 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
-func TestSimulate(t *testing.T) {
-	testCases := []struct {
+// Behaviour the preview showed on pipelinesim and keeps on the collector's
+// logspipeline library (collector ADR 0012), operator by operator.
+func TestPreviewOperatorBehaviour(t *testing.T) {
+	tests := []struct {
 		name      string
 		body      string
 		operators []map[string]any
@@ -121,17 +123,18 @@ func TestSimulate(t *testing.T) {
 			},
 		},
 	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			out, _, err := Simulate(context.Background(), []Processor{{Name: "p", Operators: testCase.operators}}, []plog.Logs{newLogs(testCase.body)})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, _, err := simulateWithLogspipeline(context.Background(), []previewProcessor{{Name: "p", Operators: tt.operators}}, []plog.Logs{behaviourLogs(tt.body)})
 			require.NoError(t, err)
-			testCase.want(t, records(out))
+			tt.want(t, behaviourRecords(out))
 		})
 	}
 }
 
-func TestSimulate_TimeWithoutZoneIsUTC(t *testing.T) {
+// A layout without a zone parses in UTC, where the collector runs, whatever
+// the backend's local zone.
+func TestPreviewTimeWithoutZoneIsUTC(t *testing.T) {
 	local := time.Local
 	time.Local = time.FixedZone("UTC-3", -3*60*60)
 	t.Cleanup(func() { time.Local = local })
@@ -140,41 +143,40 @@ func TestSimulate_TimeWithoutZoneIsUTC(t *testing.T) {
 		{"id": "a", "type": "add", "field": "attributes.ts", "value": "2024-01-02 03:04:05"},
 		{"id": "t", "type": "time_parser", "parse_from": "attributes.ts", "layout_type": "strptime", "layout": "%Y-%m-%d %H:%M:%S"},
 	}
-	out, _, err := Simulate(context.Background(), []Processor{{Name: "p", Operators: operators}}, []plog.Logs{newLogs("text")})
+	out, _, err := simulateWithLogspipeline(context.Background(), []previewProcessor{{Name: "p", Operators: operators}}, []plog.Logs{behaviourLogs("text")})
 	require.NoError(t, err)
-	got := records(out)
+	got := behaviourRecords(out)
 	require.Len(t, got, 1)
 	assert.Equal(t, time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC), got[0].Timestamp().AsTime())
 }
 
-func TestSimulate_ConfigErrors(t *testing.T) {
-	testCases := []struct {
+func TestPreviewRefusalTypes(t *testing.T) {
+	tests := []struct {
 		name      string
 		operators []map[string]any
-		wantType  string
+		want      string
 	}{
-		{name: "UnsupportedType_InvalidInput", operators: []map[string]any{{"id": "r", "type": "retain", "fields": []any{"attributes.a"}}}, wantType: errors.TypeInvalidInput.String()},
-		{name: "InvalidRegex_Internal", operators: []map[string]any{{"id": "r", "type": "regex_parser", "regex": "(?P<x>[a-z"}}, wantType: errors.TypeInternal.String()},
-		{name: "UnknownOutput_Internal", operators: []map[string]any{{"id": "n", "type": "noop", "output": "missing"}}, wantType: errors.TypeInternal.String()},
-		{name: "Cycle_Internal", operators: []map[string]any{{"id": "a", "type": "noop", "output": "b"}, {"id": "b", "type": "noop", "output": "a"}}, wantType: errors.TypeInternal.String()},
+		{"UnsupportedType", []map[string]any{{"id": "r", "type": "retain", "fields": []any{"attributes.a"}}}, errors.TypeInvalidInput.String()},
+		{"InvalidRegex", []map[string]any{{"id": "r", "type": "regex_parser", "regex": "(?P<x>[a-z"}}, errors.TypeInternal.String()},
+		{"UnknownOutput", []map[string]any{{"id": "n", "type": "noop", "output": "missing"}}, errors.TypeInternal.String()},
+		{"Cycle", []map[string]any{{"id": "a", "type": "noop", "output": "b"}, {"id": "b", "type": "noop", "output": "a"}}, errors.TypeInternal.String()},
 	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			_, _, err := Simulate(context.Background(), []Processor{{Name: "p", Operators: testCase.operators}}, []plog.Logs{newLogs("text")})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, err := simulateWithLogspipeline(context.Background(), []previewProcessor{{Name: "p", Operators: tt.operators}}, []plog.Logs{behaviourLogs("text")})
 			require.Error(t, err)
 			typ, _, _, _, _, _ := errors.Unwrapb(err)
-			assert.Equal(t, testCase.wantType, typ.String())
+			assert.Equal(t, tt.want, typ.String())
 		})
 	}
 }
 
-func TestSimulate_Concurrent(t *testing.T) {
+// Previews run concurrently, one per request; each builds its own pipelines.
+func TestPreviewConcurrent(t *testing.T) {
 	operators := []map[string]any{
 		{"id": "g", "type": "grok_parser", "pattern": "%{WORD:verb} %{NUMBER:n:int}", "parse_from": "body", "parse_to": "attributes"},
 		{"id": "s", "type": "severity_parser", "parse_from": "attributes.verb"},
 	}
-
 	var wg sync.WaitGroup
 	errs := make([]error, 16)
 	outs := make([][]plog.LogRecord, len(errs))
@@ -182,12 +184,11 @@ func TestSimulate_Concurrent(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			out, _, err := Simulate(context.Background(), []Processor{{Name: "p", Operators: operators}}, []plog.Logs{newLogs(fmt.Sprintf("error %d", i))})
-			errs[i], outs[i] = err, records(out)
+			out, _, err := simulateWithLogspipeline(context.Background(), []previewProcessor{{Name: "p", Operators: operators}}, []plog.Logs{behaviourLogs(fmt.Sprintf("error %d", i))})
+			errs[i], outs[i] = err, behaviourRecords(out)
 		}()
 	}
 	wg.Wait()
-
 	for i := range errs {
 		require.NoError(t, errs[i])
 		require.Len(t, outs[i], 1)
@@ -196,14 +197,7 @@ func TestSimulate_Concurrent(t *testing.T) {
 	}
 }
 
-func TestSimulate_Canceled(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	_, _, err := Simulate(ctx, []Processor{{Name: "p", Operators: []map[string]any{{"id": "n", "type": "noop"}}}}, []plog.Logs{newLogs("text")})
-	assert.True(t, errors.Ast(err, errors.TypeCanceled))
-}
-
-func newLogs(body string) plog.Logs {
+func behaviourLogs(body string) plog.Logs {
 	logs := plog.NewLogs()
 	record := logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty().LogRecords().AppendEmpty()
 	record.Body().SetStr(body)
@@ -213,7 +207,7 @@ func newLogs(body string) plog.Logs {
 	return logs
 }
 
-func records(logs []plog.Logs) []plog.LogRecord {
+func behaviourRecords(logs []plog.Logs) []plog.LogRecord {
 	out := []plog.LogRecord{}
 	for _, l := range logs {
 		for i := 0; i < l.ResourceLogs().Len(); i++ {

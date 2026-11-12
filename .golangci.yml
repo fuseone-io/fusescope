@@ -50,7 +50,6 @@ linters:
       - legacy
       - std-error-handling
     paths:
-      - pkg/grok/
       - pkg/query-service
       - scripts/
       - tmp/

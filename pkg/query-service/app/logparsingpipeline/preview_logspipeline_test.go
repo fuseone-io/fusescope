@@ -36,8 +36,8 @@ func TestPreviewReportsOperatorErrors(t *testing.T) {
 
 // A grok pattern that does not compile is logged once when the pipeline is
 // built and then fails each record. The preview reports only what happens to
-// the records, as pipelinesim did: one message per record with on_error send,
-// none with send_quiet.
+// the records: one message per record with on_error send, none with
+// send_quiet.
 func TestPreviewReportsOnlyRecordErrorsForUnknownGrokPattern(t *testing.T) {
 	tests := []struct {
 		onError string

@@ -60,10 +60,12 @@ updates:
       - dependency-name: github.com/ClickHouse/clickhouse-go/v2
         versions:
           - ">= 2.48.0"
-      # The log pipeline simulator stays on the versions fusescope-collector
+      # The pipeline builder, operator expressions and the logspipeline
+      # library the preview runs stay on the versions fusescope-collector
       # builds with (its builder-config.yaml: core v0.164.0, stable v1.70.0,
-      # contrib v0.164.1), bumped together with a collector release and checked
-      # by the simulatorcontract integration suite.
+      # contrib v0.164.1). They are bumped together with a collector release
+      # and checked by make logspipeline-compat and the simulatorcontract
+      # integration suite.
       - dependency-name: go.opentelemetry.io/collector*
         update-types:
           - version-update:semver-minor
