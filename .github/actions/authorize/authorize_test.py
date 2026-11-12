@@ -85,29 +85,41 @@ class DecideTest(unittest.TestCase):
 
 
 class ApprovalTest(unittest.TestCase):
-    def review(self, user, state, commit, when, association="MEMBER"):
-        return {"user": user, "state": state, "commit_id": commit, "submitted_at": when, "author_association": association}
+    WRITERS = {"m": "write", "a": "admin", "r": "read", "t": "triage", "x": "none"}
 
-    def test_a_maintainer_approval_on_the_head_counts(self) -> None:
-        self.assertTrue(approved_at([self.review("m", "APPROVED", HEAD, "2026-11-12T10:00:00Z")], HEAD))
+    def review(self, user, state, commit, when):
+        return {"user": user, "state": state, "commit_id": commit, "submitted_at": when}
+
+    def approved(self, reviews) -> bool:
+        return approved_at(reviews, HEAD, lambda user: self.WRITERS.get(user, "none"))
+
+    def test_an_approval_on_the_head_by_a_writer_counts(self) -> None:
+        self.assertTrue(self.approved([self.review("m", "APPROVED", HEAD, "2026-11-12T10:00:00Z")]))
+        self.assertTrue(self.approved([self.review("a", "APPROVED", HEAD, "2026-11-12T10:00:00Z")]))
 
     def test_an_approval_on_an_earlier_head_does_not_count(self) -> None:
-        self.assertFalse(approved_at([self.review("m", "APPROVED", "b" * 40, "2026-11-12T10:00:00Z")], HEAD))
+        self.assertFalse(self.approved([self.review("m", "APPROVED", "b" * 40, "2026-11-12T10:00:00Z")]))
 
-    def test_an_approval_from_outside_the_organisation_does_not_count(self) -> None:
-        for association in ("CONTRIBUTOR", "COLLABORATOR", "NONE", "FIRST_TIME_CONTRIBUTOR"):
-            self.assertFalse(approved_at([self.review("x", "APPROVED", HEAD, "2026-11-12T10:00:00Z", association)], HEAD), association)
+    def test_an_approval_without_write_permission_does_not_count(self) -> None:
+        for user in ("r", "t", "x", "stranger"):
+            self.assertFalse(self.approved([self.review(user, "APPROVED", HEAD, "2026-11-12T10:00:00Z")]), user)
 
     def test_a_later_change_request_by_the_same_reviewer_withdraws_it(self) -> None:
         reviews = [self.review("m", "APPROVED", HEAD, "2026-11-12T10:00:00Z"), self.review("m", "CHANGES_REQUESTED", HEAD, "2026-11-12T10:05:00Z")]
-        self.assertFalse(approved_at(reviews, HEAD))
+        self.assertFalse(self.approved(reviews))
 
     def test_a_comment_after_an_approval_keeps_it(self) -> None:
         reviews = [self.review("m", "APPROVED", HEAD, "2026-11-12T10:00:00Z"), self.review("m", "COMMENTED", HEAD, "2026-11-12T10:05:00Z")]
-        self.assertTrue(approved_at(reviews, HEAD))
+        self.assertTrue(self.approved(reviews))
 
     def test_a_dismissed_approval_does_not_count(self) -> None:
-        self.assertFalse(approved_at([self.review("m", "DISMISSED", HEAD, "2026-11-12T10:00:00Z")], HEAD))
+        self.assertFalse(self.approved([self.review("m", "DISMISSED", HEAD, "2026-11-12T10:00:00Z")]))
+
+    def test_permissions_are_only_looked_up_for_approvals_on_the_head(self) -> None:
+        asked = []
+        reviews = [self.review("r", "COMMENTED", HEAD, "2026-11-12T10:00:00Z"), self.review("x", "APPROVED", "b" * 40, "2026-11-12T10:00:00Z")]
+        approved_at(reviews, HEAD, lambda user: asked.append(user) or "write")
+        self.assertEqual(asked, [])
 
 
 class FreshTest(unittest.TestCase):

@@ -42,7 +42,7 @@ Thanks for helping. This page is the short version of how we work; the engineeri
   - `safe-to-e2e` runs Playwright when the diff doesn't touch Go, `frontend/`, `docs/api/` or `tests/e2e/`.
   - `safe-to-test` lets CI run on fork and bot PRs. It runs the PR's code with the repository's secrets (`pull_request_target`), so add it only after reading the diff.
 - **On a fork or Dependabot PR, a label authorises one head.**
-  - The run also needs your approving review on that head.
+  - The run also needs an approving review on that head by someone with write or admin permission on the repository.
   - Read the diff, check the head SHA in the PR header, approve, then add the label.
   - The label counts only if it was added after that head was pushed. Each new push or reopen removes the labels (`prlabels`), and an older one is ignored even if it stays.
 - **On a PR from this repository, the labels stay across pushes.** `safe-to-integrate` decides whether the integration matrix runs, and it runs again on every push while the label is on.

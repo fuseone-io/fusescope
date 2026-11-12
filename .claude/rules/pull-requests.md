@@ -9,5 +9,5 @@
 - **Keep the commit body short and human readable** focused on decision made if any. Commit body must not re-iterate the changes done, skip if title is sufficient in conveying the change.
 - **Use conventional commit format** for commits and PR title.
 - **Never use `[skip ci]` or `paths-ignore` on `goci`, `e2eci` or `integrationci`.** Their verdicts are required checks; a skipped workflow leaves them pending and blocks the merge. Docs-only PRs pass because `.github/actions/changes` finds nothing to test.
-- **On fork and Dependabot PRs, a `safe-to-*` label authorises one head.** It needs a maintainer's approving review on that head, and each push removes it. On PRs from this repository the labels stay.
+- **On fork and Dependabot PRs, a `safe-to-*` label authorises one head.** It needs an approving review on that head by someone with write permission on the repository, and each push removes it. On PRs from this repository the labels stay.
 - **Amending and force-pushing are fine on PR branches** before merge. Never rewrite `main`; merges are fast-forward and only with CI green.

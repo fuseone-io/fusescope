@@ -8,9 +8,11 @@ cost gate: it counts while it is on the pull request.
 For a fork or dependabot pull request it is a trust gate, bound to one head.
 It counts when it is on the pull request now and its last "labeled" event
 came after the head appeared, measured as the earliest pull request run
-GitHub created for that SHA. The run also needs an approving review by an
-organisation member whose commit_id is that SHA, which is the head the
-maintainer read.
+GitHub created for that SHA. The run also needs an approving review whose
+commit_id is that SHA, the head the maintainer read, by someone with write
+or admin permission on the repository. The permission comes from the
+repository, not from author_association, which hides private org
+membership from some tokens.
 
 The labels in the event payload are never read. The data comes from the
 API, and no pull request code runs here.
@@ -24,7 +26,7 @@ from dataclasses import dataclass, field
 
 PR_EVENTS = {"pull_request", "pull_request_target"}
 DEPENDABOT = "dependabot[bot]"
-MAINTAINERS = {"OWNER", "MEMBER"}
+WRITERS = {"admin", "write"}
 
 
 @dataclass(frozen=True)
@@ -106,7 +108,7 @@ def decide(c: Context, fresh: dict[str, bool], approved: bool = True, head_known
     elif missing:
         d.reason = f"needs {', '.join(missing)} added to {c.head_sha} after it was pushed"
     elif unreviewed:
-        d.reason = f"needs an approving review by a maintainer on {c.head_sha}, the head being labeled"
+        d.reason = f"needs an approving review on {c.head_sha}, the head being labeled, by someone with write permission"
     elif not tests_here:
         d.reason = f"a fork or dependabot pull request runs tests only on the labeled event; add {', '.join(d.required)} to {c.head_sha[:12]}"
     else:
@@ -120,15 +122,18 @@ def head_time(runs: list[tuple[str, str]]) -> str | None:
     return min(times) if times else None
 
 
-def approved_at(reviews: list[dict], sha: str) -> bool:
-    """A maintainer's latest approve or request-changes review of this commit approves it."""
+def approved_at(reviews: list[dict], sha: str, permission) -> bool:
+    """Whether a writer approves this commit.
+
+    Each reviewer's latest approve, request-changes or dismiss on the commit
+    counts. permission(user) returns the user's repository permission, and
+    it is called only for the approvals left.
+    """
     latest: dict[str, dict] = {}
     for r in sorted(reviews, key=lambda r: r.get("submitted_at") or ""):
-        if r.get("commit_id") != sha or r.get("author_association") not in MAINTAINERS:
-            continue
-        if r.get("state") in ("APPROVED", "CHANGES_REQUESTED", "DISMISSED"):
+        if r.get("commit_id") == sha and r.get("state") in ("APPROVED", "CHANGES_REQUESTED", "DISMISSED"):
             latest[r["user"]] = r
-    return any(r["state"] == "APPROVED" for r in latest.values())
+    return any(permission(user) in WRITERS for user, r in latest.items() if r["state"] == "APPROVED")
 
 
 def is_fresh(label: str, current: set[str], events: list[tuple[str, str]], since: str | None) -> bool:
@@ -156,10 +161,21 @@ def freshness(c: Context, labels: tuple[str, ...]) -> tuple[dict[str, bool], boo
     return {label: is_fresh(label, current, events, since) for label in labels}, since is not None
 
 
+def repo_permission(c: Context, user: str) -> str:
+    try:
+        out = gh(f"repos/{c.repo}/collaborators/{user}/permission", "--jq", ".permission")
+    except subprocess.CalledProcessError as err:
+        print(f"::warning::cannot read {user}'s permission, not counting the approval: {err.stderr.strip()}")
+        return "none"
+    permission = out[0] if out else "none"
+    print(f"{user}: {permission}")
+    return permission
+
+
 def approval(c: Context) -> bool:
-    reviews = [json.loads(line) for line in gh(f"repos/{c.repo}/pulls/{c.number}/reviews?per_page=100", "--paginate", "--jq", ".[] | {user: .user.login, state, commit_id, submitted_at, author_association} | @json")]
-    ok = approved_at(reviews, c.head_sha)
-    print(f"maintainer approval on {c.head_sha}: {ok}")
+    reviews = [json.loads(line) for line in gh(f"repos/{c.repo}/pulls/{c.number}/reviews?per_page=100", "--paginate", "--jq", ".[] | {user: .user.login, state, commit_id, submitted_at} | @json")]
+    ok = approved_at(reviews, c.head_sha, lambda user: repo_permission(c, user))
+    print(f"approval by a writer on {c.head_sha}: {ok}")
     return ok
 
 
