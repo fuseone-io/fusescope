@@ -159,6 +159,10 @@ On 2026-11-11 the suite moved to `fusescope-collector` 0.6.1, pinned by digest, 
 that collector's `logspipeline` library (collector ADR 0012, fusescope#54); the 212 observations and the golden corpus
 are unchanged.
 
+On 2026-11-12, after v0.163.0 shipped that preview and it was validated on the demo, the phase 3b log pipeline
+simulator (`pipelinesim`) was removed (collector ADR 0012, step 3). Its tests moved to the preview, which now runs only
+on `logspipeline`.
+
 **Guard.** `make agpl-check AGPL_CHART=<fusescope-charts>/charts/fusescope` renders the chart with its default values and fails if any image comes from one of those repositories, besides the existing check on the backend binary. It runs in two places:
 
 - **Gate on chart changes.** `fusescope-charts`' `agpl-guard` workflow (fusescope-charts#41) runs it on every PR and push to `main` that touches `charts/**`. It renders the chart with its nested dependencies built, using this repo's `main`, so an AGPL image is caught before it merges.
