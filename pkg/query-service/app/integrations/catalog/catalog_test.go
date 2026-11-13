@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"strings"
 	"testing"
@@ -147,6 +148,11 @@ func TestLoadRejects(t *testing.T) {
 		{name: "PathTraversal", archive: withFiles(func(f map[string]string) { f["../escape.md"] = "x" })},
 		{name: "Symlink", archive: tarball(t, testPackageFiles(), &tar.Header{Name: "link", Linkname: "/etc/passwd", Typeflag: tar.TypeSymlink})},
 		{name: "NotGzip", archive: []byte("not a tarball")},
+		{name: "V1AlertWithID", archive: withAlerts(t, 1, "    - {id: high-memory, definition: assets/alerts/high_memory.json}\n")},
+		{name: "V2AlertAsFile", archive: withAlerts(t, 2, "    - assets/alerts/high_memory.json\n"), entry: func(e *Entry) { e.ManifestVersion = 2 }},
+		{name: "V2AlertWithoutID", archive: withAlerts(t, 2, "    - {definition: assets/alerts/high_memory.json}\n"), entry: func(e *Entry) { e.ManifestVersion = 2 }},
+		{name: "V2AlertIDTwice", archive: withAlerts(t, 2, "    - {id: a, definition: assets/alerts/high_memory.json}\n    - {id: a, definition: assets/alerts/high_memory.json}\n"), entry: func(e *Entry) { e.ManifestVersion = 2 }},
+		{name: "V2AlertUnknownField", archive: withAlerts(t, 2, "    - {id: a, definition: assets/alerts/high_memory.json, extra: 1}\n"), entry: func(e *Entry) { e.ManifestVersion = 2 }},
 	}
 
 	for _, testCase := range testCases {
@@ -172,7 +178,7 @@ func TestLoadSkipsPackagesThisBackendCannotServe(t *testing.T) {
 		{name: "Compatible", backendVersion: "v0.154.0", expectedLoaded: 1},
 		{name: "DevelopmentBuild_Loaded", backendVersion: "main-abc1234", expectedLoaded: 1},
 		{name: "BackendTooOld_Skipped", entry: func(e *Entry) { e.FuseScope = ">=0.200.0" }, backendVersion: "v0.154.0", expectedLoaded: 0},
-		{name: "UnknownManifestVersion_Skipped", entry: func(e *Entry) { e.ManifestVersion = 2 }, backendVersion: "v0.154.0", expectedLoaded: 0},
+		{name: "UnknownManifestVersion_Skipped", entry: func(e *Entry) { e.ManifestVersion = 3 }, backendVersion: "v0.154.0", expectedLoaded: 0},
 	}
 
 	for _, testCase := range testCases {
@@ -220,20 +226,51 @@ func TestSatisfies(t *testing.T) {
 	}
 }
 
-func TestLoadRendersAlertsWithTheirIDs(t *testing.T) {
+// withAlerts packages the test manifest at manifestVersion with the given
+// alerts YAML list items.
+func withAlerts(t *testing.T, manifestVersion int, alerts string) []byte {
+	t.Helper()
 	files := testPackageFiles()
-	files["manifest.yaml"] = strings.Replace(testManifest, "data_collected:", "  alerts:\n    - {id: high-memory, definition: assets/alerts/high_memory.json}\ndata_collected:", 1)
+	manifest := strings.Replace(testManifest, "manifest_version: 1", fmt.Sprintf("manifest_version: %d", manifestVersion), 1)
+	files["manifest.yaml"] = strings.Replace(manifest, "data_collected:", "  alerts:\n"+alerts+"data_collected:", 1)
 	files["assets/alerts/high_memory.json"] = `{"alert": "High memory"}`
-	fsys, sum := testCatalog(t, tarball(t, files), nil)
-	catalog, err := Load(slog.Default(), fsys, sum, "v0.154.0")
-	require.NoError(t, err)
-	require.Len(t, catalog.Packages, 1)
+	return tarball(t, files)
+}
 
-	var document struct {
-		Assets struct {
-			Alerts json.RawMessage `json:"alerts"`
-		} `json:"assets"`
+func TestLoadRendersAlertsByManifestVersion(t *testing.T) {
+	testCases := []struct {
+		name            string
+		manifestVersion int
+		alerts          string
+		expected        string
+	}{
+		{
+			name:            "V1_DefinitionFiles",
+			manifestVersion: 1,
+			alerts:          "    - assets/alerts/high_memory.json\n",
+			expected:        `[{"definition": {"alert": "High memory"}}]`,
+		},
+		{
+			name:            "V2_StableIDs",
+			manifestVersion: 2,
+			alerts:          "    - {id: high-memory, definition: assets/alerts/high_memory.json}\n",
+			expected:        `[{"id": "high-memory", "definition": {"alert": "High memory"}}]`,
+		},
 	}
-	require.NoError(t, json.Unmarshal(catalog.Packages[0].Document, &document))
-	assert.JSONEq(t, `[{"id": "high-memory", "definition": {"alert": "High memory"}}]`, string(document.Assets.Alerts))
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			fsys, sum := testCatalog(t, withAlerts(t, testCase.manifestVersion, testCase.alerts), func(e *Entry) { e.ManifestVersion = testCase.manifestVersion })
+			catalog, err := Load(slog.Default(), fsys, sum, "v0.154.0")
+			require.NoError(t, err)
+			require.Len(t, catalog.Packages, 1)
+
+			var document struct {
+				Assets struct {
+					Alerts json.RawMessage `json:"alerts"`
+				} `json:"assets"`
+			}
+			require.NoError(t, json.Unmarshal(catalog.Packages[0].Document, &document))
+			assert.JSONEq(t, testCase.expected, string(document.Assets.Alerts))
+		})
+	}
 }

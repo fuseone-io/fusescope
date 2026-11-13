@@ -32,7 +32,11 @@ func render(m *Manifest, files map[string][]byte) ([]byte, error) {
 	if m.Assets.Alerts != nil {
 		alerts = make([]any, 0, len(m.Assets.Alerts))
 		for _, ref := range m.Assets.Alerts {
-			alerts = append(alerts, map[string]any{"id": ref.ID, "definition": r.object(ref.Definition)})
+			alert := map[string]any{"definition": r.object(ref.Definition)}
+			if ref.ID != "" {
+				alert["id"] = ref.ID
+			}
+			alerts = append(alerts, alert)
 		}
 	}
 

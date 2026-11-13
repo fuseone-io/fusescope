@@ -172,7 +172,7 @@ func loadPackage(fsys fs.FS, entry Entry) (*Package, error) {
 }
 
 func unsupported(entry Entry, backendVersion string) string {
-	if entry.ManifestVersion != ManifestVersion {
+	if !supportedManifestVersion(entry.ManifestVersion) {
 		return "unsupported manifest_version"
 	}
 	ok, err := satisfies(backendVersion, entry.FuseScope)

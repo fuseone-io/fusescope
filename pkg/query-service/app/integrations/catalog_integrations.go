@@ -122,8 +122,10 @@ func validateIntegration(i IntegrationDetails) error {
 	}
 	seenAlertIDs := map[string]struct{}{}
 	for _, alert := range i.Assets.Alerts {
+		// Alerts of a version 1 manifest have no id and are not provisioned,
+		// so they are served as they always were.
 		if alert.ID == "" {
-			return fmt.Errorf("id is required for alert %q in integration %s", alert.Definition.AlertName.StringValue(), i.Id)
+			continue
 		}
 		if _, seen := seenAlertIDs[alert.ID]; seen {
 			return fmt.Errorf("multiple alerts found with id %s in integration %s", alert.ID, i.Id)
