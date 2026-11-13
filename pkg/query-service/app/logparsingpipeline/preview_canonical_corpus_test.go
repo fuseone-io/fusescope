@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"strings"
 	"testing"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"golang.org/x/mod/modfile"
 )
 
 // The canonical log pipelines corpus is the collector's, published by its
@@ -45,20 +45,43 @@ var knownDivergences = []knownDivergence{{
 		" | ....................^",
 }}
 
-// The known divergences exist because of the expr replace: once it is gone,
-// the test asks for them to be removed.
+// The known divergences exist because of the expr replace: once it leaves
+// go.mod, the test asks for them to be removed.
 func TestKnownDivergencesNeedTheExprReplace(t *testing.T) {
-	info, ok := debug.ReadBuildInfo()
-	require.True(t, ok)
-	replaced := false
-	for _, dep := range info.Deps {
-		if dep.Path == "github.com/expr-lang/expr" && dep.Replace != nil && dep.Replace.Path == "github.com/SigNoz/expr" {
-			replaced = true
-		}
-	}
+	data, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "go.mod"))
+	require.NoError(t, err)
+	module, replaced := exprReplaced(t, data)
+	require.Equal(t, "github.com/fuseone-io/fusescope", module, "read this module's go.mod")
 	if !replaced {
 		assert.Empty(t, knownDivergences, "github.com/expr-lang/expr is no longer replaced by SigNoz/expr: remove knownDivergences")
 	}
+}
+
+// exprReplaced reports go.mod's module path and whether it replaces
+// expr-lang/expr with SigNoz/expr. modfile.Parse, not ParseLax: only Parse
+// reads replace directives.
+func exprReplaced(t *testing.T, gomod []byte) (string, bool) {
+	t.Helper()
+	f, err := modfile.Parse("go.mod", gomod, nil)
+	require.NoError(t, err)
+	for _, r := range f.Replace {
+		if r.Old.Path == "github.com/expr-lang/expr" && r.New.Path == "github.com/SigNoz/expr" {
+			return f.Module.Mod.Path, true
+		}
+	}
+	return f.Module.Mod.Path, false
+}
+
+func TestExprReplaced(t *testing.T) {
+	with := []byte("module m\n\nrequire github.com/expr-lang/expr v1.17.8\n\nreplace github.com/expr-lang/expr => github.com/SigNoz/expr v1.17.7-beta\n")
+	without := []byte("module m\n\nrequire github.com/expr-lang/expr v1.17.8\n")
+	other := []byte("module m\n\nreplace github.com/expr-lang/expr => github.com/other/expr v1.0.0\n")
+	_, ok := exprReplaced(t, with)
+	assert.True(t, ok)
+	_, ok = exprReplaced(t, without)
+	assert.False(t, ok)
+	_, ok = exprReplaced(t, other)
+	assert.False(t, ok)
 }
 
 // Every message the preview logs for a record is the canonical one: the
