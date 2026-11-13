@@ -19,31 +19,27 @@ const DataFusionSpansTable = "spans"
 
 var (
 	// dataFusionPromoted maps a key to the flat column fusescope-engine
-	// promotes it to, every semconv spelling the engine tries included
-	// (fs-schema PROMOTED). The key also stays in its map.
+	// promotes it to alone (fs-schema PROMOTED). A key the engine folds into
+	// one column with another spelling is not here: that column answers the
+	// other key too, while ClickHouse reads each key alone, so such a key reads
+	// its map, where it also stays.
 	dataFusionPromotedResource = map[string]string{
-		"service.name":                "service_name",
-		"deployment.environment.name": "deployment_environment",
-		"deployment.environment":      "deployment_environment",
+		"service.name": "service_name",
 	}
 	dataFusionPromotedAttribute = map[string]string{
-		"http.route":               "http_route",
-		"http.request.method":      "http_method",
-		"http.method":              "http_method",
-		"db.system.name":           "db_system",
-		"db.system":                "db_system",
-		"db.namespace":             "db_name",
-		"db.name":                  "db_name",
-		"db.operation.name":        "db_operation",
-		"db.operation":             "db_operation",
-		"rpc.system":               "rpc_system",
-		"rpc.service":              "rpc_service",
-		"rpc.method":               "rpc_method",
-		"messaging.system":         "messaging_system",
-		"messaging.operation.type": "messaging_operation",
-		"messaging.operation.name": "messaging_operation",
-		"messaging.operation":      "messaging_operation",
-		"peer.service":             "peer_service",
+		"http.route":       "http_route",
+		"rpc.system":       "rpc_system",
+		"rpc.service":      "rpc_service",
+		"rpc.method":       "rpc_method",
+		"messaging.system": "messaging_system",
+		"peer.service":     "peer_service",
+	}
+
+	// dataFusionFoldedLegacy are the ClickHouse materialized names of keys the
+	// engine folds, each read as its key in the map.
+	dataFusionFoldedLegacy = map[string]string{
+		"attribute_string_db$$system":           "db.system",
+		"attribute_string_messaging$$operation": "messaging.operation",
 	}
 
 	// dataFusionSpanColumns are the span columns of the engine that read as
@@ -94,19 +90,17 @@ var (
 	// has none of their keys, that read as the ClickHouse column that
 	// held '' then.
 	dataFusionNullableColumns = map[string]string{
-		"response_status_code":                  "response_status_code",
-		"http_method":                           "http_method",
-		"db_name":                               "db_name",
-		"db_operation":                          "db_operation",
-		"resource_string_service$$name":         "service_name",
-		"attribute_string_http$$route":          "http_route",
-		"attribute_string_messaging$$system":    "messaging_system",
-		"attribute_string_messaging$$operation": "messaging_operation",
-		"attribute_string_db$$system":           "db_system",
-		"attribute_string_rpc$$system":          "rpc_system",
-		"attribute_string_rpc$$service":         "rpc_service",
-		"attribute_string_rpc$$method":          "rpc_method",
-		"attribute_string_peer$$service":        "peer_service",
+		"response_status_code":               "response_status_code",
+		"http_method":                        "http_method",
+		"db_name":                            "db_name",
+		"db_operation":                       "db_operation",
+		"resource_string_service$$name":      "service_name",
+		"attribute_string_http$$route":       "http_route",
+		"attribute_string_messaging$$system": "messaging_system",
+		"attribute_string_rpc$$system":       "rpc_system",
+		"attribute_string_rpc$$service":      "rpc_service",
+		"attribute_string_rpc$$method":       "rpc_method",
+		"attribute_string_peer$$service":     "peer_service",
 	}
 
 	// dataFusionIDs are the identity columns, stored as bytes and read as
@@ -157,12 +151,12 @@ func (m *dataFusionStorage) Read(ctx context.Context, q qbtypes.QueryInfo, key *
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		if column, ok := dataFusionPromotedResource[key.Name]; ok {
-			return nullableRead(column), nil
+			return promotedRead(column), nil
 		}
 		return mapRead(SpanResourcesStringColumn, key.Name, "''")
 	case telemetrytypes.FieldContextAttribute:
 		if column, ok := dataFusionPromotedAttribute[key.Name]; ok && key.FieldDataType == telemetrytypes.FieldDataTypeString {
-			return nullableRead(column), nil
+			return promotedRead(column), nil
 		}
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
@@ -215,6 +209,9 @@ func spanColumnRead(name string) (qbtypes.Read, error) {
 	if column, ok := dataFusionNullableColumns[name]; ok {
 		return presentRead(fmt.Sprintf("coalesce(%s, '')", column), "''"), nil
 	}
+	if key, ok := dataFusionFoldedLegacy[name]; ok {
+		return mapRead(SpanAttributesStringColumn, key, "''")
+	}
 	return qbtypes.Read{}, qbtypes.ErrColumnNotFound
 }
 
@@ -229,8 +226,17 @@ func presentRead(sql, empty string) qbtypes.Read {
 	}
 }
 
-func nullableRead(column string) qbtypes.Read {
-	return qbtypes.Read{SQL: column, Presence: column + " IS NOT NULL", Absence: column + " IS NULL", WhenAbsent: qbtypes.AbsentIsNull}
+// promotedRead reads a promoted column, NULL for a span without its key, as
+// ClickHouse reads a map key: the empty string when absent, so a negative
+// operator keeps that span, and presence from the column itself, so an empty
+// value still exists.
+func promotedRead(column string) qbtypes.Read {
+	return qbtypes.Read{
+		SQL:        fmt.Sprintf("coalesce(%s, '')", column),
+		Presence:   column + " IS NOT NULL",
+		Absence:    column + " IS NULL",
+		WhenAbsent: qbtypes.AbsentIsSentinel,
+	}
 }
 
 // mapRead reads a map key with the map's empty value for an absent key, as
@@ -258,8 +264,10 @@ func (m *dataFusionStorage) Traits() qbtypes.Traits {
 }
 
 // Compile keeps the trace rules ahead of the shared condition: a span
-// scope key is a structural predicate, an identity compares as bytes, and
-// a duration operand accepts duration syntax.
+// scope key is a structural predicate, an identity compares as bytes, a
+// duration operand accepts duration syntax, and a positive operator on a
+// promoted key compares the bare column, which drops a span without the
+// key as ClickHouse's guarded map read does and which the engine prunes by.
 func (m *dataFusionStorage) Compile(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
 	if isSpanSearchScopeField(logical.Name) {
 		condition, err := dataFusionSpanScopeCondition(logical.Single(), operator, value, q.StartNs)
@@ -273,6 +281,10 @@ func (m *dataFusionStorage) Compile(ctx context.Context, q qbtypes.QueryInfo, lo
 			return qbtypes.Compiled{Condition: condition}, err
 		}
 	}
+	if column, ok := promotedColumn(logical); ok && operator.AddDefaultExistsFilter() {
+		bare := qbtypes.Read{SQL: column, Presence: column + " IS NOT NULL", Absence: column + " IS NULL", WhenAbsent: qbtypes.AbsentIsNull}
+		return querybuilder.SharedConditionForRead(ctx, q, m, logical, bare, operator, value, sb)
+	}
 	if logical.Name == "duration_nano" || logical.Name == "durationNano" {
 		coerced, err := querybuilder.CoerceDurationValue(value)
 		if err != nil {
@@ -281,6 +293,23 @@ func (m *dataFusionStorage) Compile(ctx context.Context, q qbtypes.QueryInfo, lo
 		value = coerced
 	}
 	return querybuilder.SharedCondition(ctx, q, m, logical, operator, value, sb)
+}
+
+// promotedColumn is the column a key alone is promoted to.
+func promotedColumn(logical *telemetrytypes.LogicalField) (string, bool) {
+	if logical.IsFamily() {
+		return "", false
+	}
+	key := logical.Single()
+	switch key.FieldContext {
+	case telemetrytypes.FieldContextResource:
+		column, ok := dataFusionPromotedResource[key.Name]
+		return column, ok
+	case telemetrytypes.FieldContextAttribute:
+		column, ok := dataFusionPromotedAttribute[key.Name]
+		return column, ok && key.FieldDataType == telemetrytypes.FieldDataTypeString
+	}
+	return "", false
 }
 
 func idColumn(logical *telemetrytypes.LogicalField) (string, int, bool) {
