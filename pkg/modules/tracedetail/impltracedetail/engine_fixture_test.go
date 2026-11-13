@@ -51,6 +51,9 @@ type engineSpan struct {
 	links                    []engineLink
 	httpMethod, responseCode *string
 	dbName, dbOperation      *string
+	httpURL, httpHost        string
+	externalMethod           string
+	externalURL              string
 }
 
 var (
@@ -77,7 +80,7 @@ func mapOf(item arrow.DataType) *arrow.MapType {
 	return m
 }
 
-// fullSchema is the engine's span schema v1, in its order.
+// fullSchema is the engine's spans table: span schema v1, in its order, then the derived columns.
 func fullSchema() *arrow.Schema {
 	field := func(name string, typ arrow.DataType) arrow.Field { return arrow.Field{Name: name, Type: typ} }
 	fields := []arrow.Field{
@@ -95,6 +98,9 @@ func fullSchema() *arrow.Schema {
 	}
 	for _, promoted := range []string{"service_name", "deployment_environment", "http_route", "http_method", "response_status_code", "db_system", "db_name", "db_operation"} {
 		fields = append(fields, arrow.Field{Name: promoted, Type: dict, Nullable: true})
+	}
+	for _, derived := range []string{"http_url", "http_host", "external_http_method", "external_http_url"} {
+		fields = append(fields, field(derived, arrow.BinaryTypes.String))
 	}
 	return arrow.NewSchema(fields, nil)
 }
@@ -123,6 +129,7 @@ func (s engineSpan) value(column string) any {
 		"status_message": s.statusMessage, "has_error": s.hasError, "is_remote": s.isRemote, "resource_fingerprint": uint64(7),
 		"resources_string": s.resources, "attributes_string": s.attrs, "attributes_number": s.numbers, "attributes_bool": s.bools,
 		"scope_name": "scope", "scope_version": "1", "scope_string": map[string]string{}, "events": s.events, "links": s.links,
+		"http_url": s.httpURL, "http_host": s.httpHost, "external_http_method": s.externalMethod, "external_http_url": s.externalURL,
 	}
 	if s.parentSpanID != "" {
 		values["parent_span_id"] = s.parentSpanID

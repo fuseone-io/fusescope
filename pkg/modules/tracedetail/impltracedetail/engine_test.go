@@ -45,6 +45,7 @@ func richSpan() engineSpan {
 		events:     []engineEvent{{at: t0.Add(200), name: "exception", attributes: map[string]string{"exception.type": "IOError"}}},
 		links:      []engineLink{{traceID: "5b8efff798038103d269b633813fc60c", spanID: "eee19b7ec3c1b174", traceState: "x=1"}},
 		httpMethod: ptr("GET"), responseCode: ptr("500"), dbName: ptr("carts"), dbOperation: ptr("SELECT"),
+		httpURL: "https://pay.example/charge", httpHost: "pay.example", externalMethod: "POST", externalURL: "pay.example",
 	}
 }
 
@@ -65,8 +66,9 @@ func TestTheMapperReadsEveryColumnOfAnEngineSpan(t *testing.T) {
 		StatusMessage:    "boom", StatusCodeString: "Error", SpanKind: "Server", ParentSpanID: "53995c3f42cd8ad8",
 		Flags: 1, IsRemote: "yes", TraceState: "rojo=00f067aa0ba902b7", StatusCode: 2,
 		DBName: "carts", DBOperation: "SELECT", HTTPMethod: "GET", ResponseStatusCode: "500",
+		HTTPURL: "https://pay.example/charge", HTTPHost: "pay.example", ExternalHTTPMethod: "POST", ExternalHTTPURL: "pay.example",
 		References: `[{"traceId":"` + testTraceID + `","spanId":"53995c3f42cd8ad8","refType":"CHILD_OF"},{"traceId":"5b8efff798038103d269b633813fc60c","spanId":"eee19b7ec3c1b174","refType":"FOLLOWS_FROM"}]`,
-	}, spans[0], "the columns the engine does not store, http_url, http_host and the external_http pair, read empty")
+	}, spans[0])
 }
 
 func TestARootAndUnsetPromotedColumnsReadEmpty(t *testing.T) {

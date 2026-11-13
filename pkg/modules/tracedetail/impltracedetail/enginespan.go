@@ -39,8 +39,8 @@ func get[T any](row map[string]any, column string) T {
 
 // storableSpanOf maps a row of the engine's spans table to the span the ClickHouse reader scans,
 // with the JSON attributes document when withJSON, as the ClickHouse reader reads it under
-// use_trace_attributes_json. http_url, http_host and the external_http pair are not stored by the
-// engine and read empty.
+// use_trace_attributes_json. http_url, http_host and the external_http pair are the columns the
+// engine derives when read, empty in an engine before 0.0.5.
 func storableSpanOf(row map[string]any, withJSON bool) spantypes.StorableSpan {
 	span := spantypes.StorableSpan{
 		StartTime:          get[time.Time](row, "timestamp"),
@@ -67,6 +67,10 @@ func storableSpanOf(row map[string]any, withJSON bool) spantypes.StorableSpan {
 		DBOperation:        get[string](row, "db_operation"),
 		HTTPMethod:         get[string](row, "http_method"),
 		ResponseStatusCode: get[string](row, "response_status_code"),
+		HTTPURL:            get[string](row, "http_url"),
+		HTTPHost:           get[string](row, "http_host"),
+		ExternalHTTPMethod: get[string](row, "external_http_method"),
+		ExternalHTTPURL:    get[string](row, "external_http_url"),
 		References:         spantypes.LegacyReferences(get[string](row, "trace_id"), get[string](row, "parent_span_id"), get[[]any](row, "links")),
 	}
 	if withJSON {
