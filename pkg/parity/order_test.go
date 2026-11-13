@@ -158,7 +158,9 @@ func TestKnownCausesComeBeforeTheCut(t *testing.T) {
 	assert.Equal(t, Verdict{Category: CategoryAbsentKey, Disposition: Blocking}, Classify(onlyClickHouse, Context{AbsentKeyCase: true, OperationCut: cut}))
 
 	onlyEngine := Difference{Path: p("items", Dynamic("x.handle")), Kind: KindRows, Engine: []any{map[string]any{"name": "x.handle"}}}
-	assert.Equal(t, cut(), Classify(onlyEngine, ctx), "an engine row is no boundary: the cut judges it")
+	assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Accepted}, Classify(onlyEngine, ctx), "an engine row at a confirmed boundary, before the cut")
+	engineOther := Difference{Path: p("items", Dynamic("other")), Kind: KindRows, Engine: []any{map[string]any{"name": "other"}}}
+	assert.Equal(t, cut(), Classify(engineOther, ctx), "an engine row at no boundary: the cut judges it")
 	unconfirmed := Difference{Path: p("items", Dynamic("other")), Kind: KindRows, ClickHouse: []any{}}
 	assert.Equal(t, cut(), Classify(unconfirmed, ctx))
 }

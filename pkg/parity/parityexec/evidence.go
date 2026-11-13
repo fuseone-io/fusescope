@@ -30,7 +30,11 @@ type Group struct {
 // Where narrows g to the spans whose key holds value, as the view's group by does. An empty string
 // is kept: ClickHouse's group of the empty value holds the spans without the key too.
 func (g Group) Where(key telemetrytypes.TelemetryFieldKey, value any) Group {
-	condition := key.Text() + " = " + literal(value)
+	return g.And(key.Text() + " = " + literal(value))
+}
+
+// And narrows g to the rows that also meet condition, a filter expression.
+func (g Group) And(condition string) Group {
 	switch {
 	case g.Filter == "":
 		g.Filter = condition

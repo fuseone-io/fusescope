@@ -12,19 +12,14 @@ func TestDataFusionTopLevelOperations(t *testing.T) {
 	start := time.Unix(0, 1_747_947_419_000_000_000)
 	sql, err := DataFusionTopLevelOperations(start, []string{"frontend", "o'k"})
 	require.NoError(t, err)
-	assert.Equal(t, "SELECT name, service_name, max(seen) AS ts FROM ("+
-		"SELECT name, service_name, last_seen AS seen FROM top_level_operations "+
+	assert.Equal(t, "SELECT name, service_name, max(last_seen) AS ts FROM top_level_operations "+
 		"WHERE last_seen >= to_timestamp_nanos(1747947419000000000) AND service_name IN ('frontend', 'o''k') "+
-		"UNION ALL "+
-		"SELECT CAST(name AS VARCHAR) AS name, CAST(service_name AS VARCHAR) AS service_name, timestamp AS seen FROM spans "+
-		"WHERE timestamp >= to_timestamp_nanos(1747947419000000000) AND service_name IN ('frontend', 'o''k') "+
-		"AND (parent_span_id IS NULL OR is_remote = 'true')"+
-		") AS operations GROUP BY name, service_name ORDER BY ts DESC LIMIT 5000", sql)
+		"GROUP BY name, service_name ORDER BY ts DESC LIMIT 5000", sql, "the engine's table is complete: no span is read here")
 
 	every, err := DataFusionTopLevelOperations(start, nil)
 	require.NoError(t, err)
 	assert.NotContains(t, every, "IN (")
-	assert.Contains(t, every, "service_name IS NOT NULL", "a span without a service is no operation of one")
+	assert.NotContains(t, every, "spans")
 
 	_, err = DataFusionTopLevelOperations(start, []string{"a\x00b"})
 	require.Error(t, err)

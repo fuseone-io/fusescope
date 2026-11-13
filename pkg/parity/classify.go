@@ -66,8 +66,10 @@ type Context struct {
 }
 
 // Classify gives a difference its category and disposition. Knowing a difference does not accept
-// it: the derived columns, the service boundary, the absent key and a contractual order are known
-// and blocking. Only a quantile within its rule is accepted.
+// it: the derived columns, the absent key, a contractual order and a boundary ClickHouse alone
+// lists are known and blocking. Accepted are a quantile within its rule and an operation or service
+// only the engine lists at a confirmed service boundary, which ClickHouse misses when parent and
+// child reach it in separate export batches.
 func Classify(d Difference, ctx Context) Verdict {
 	switch d.Kind {
 	case KindQuantile:
@@ -82,14 +84,8 @@ func Classify(d Difference, ctx Context) Verdict {
 		if ctx.AbsentKeyCase {
 			return Verdict{Category: CategoryAbsentKey, Disposition: Blocking}
 		}
-		if d.Engine == nil && ctx.ServiceBoundary != nil {
-			switch atServiceBoundary(d, ctx) {
-			case BoundaryConfirmed:
-				return Verdict{Category: CategoryServiceBoundary, Disposition: Blocking}
-			case BoundaryUnavailable:
-				return Verdict{Category: CategoryServiceBoundary, Disposition: Inconclusive}
-			case BoundaryDenied:
-			}
+		if verdict, ok := classifyBoundary(d, ctx); ok {
+			return verdict
 		}
 		if ctx.OperationCut != nil && len(d.Path) == 2 && d.Path[0] == "items" {
 			return ctx.OperationCut()
@@ -104,6 +100,31 @@ func Classify(d Difference, ctx Context) Verdict {
 		}
 	}
 	return Verdict{Category: CategoryUnknown, Disposition: Blocking}
+}
+
+// classifyBoundary judges a row one side alone has at the service boundary, by its direction: the
+// engine alone, confirmed, is accepted; ClickHouse alone, confirmed, blocks; evidence that could
+// not be read is inconclusive either way. A denied boundary is no verdict here.
+func classifyBoundary(d Difference, ctx Context) (Verdict, bool) {
+	if ctx.ServiceBoundary == nil {
+		return Verdict{}, false
+	}
+	confirmed := Blocking
+	present := d.ClickHouse
+	switch {
+	case d.ClickHouse == nil && d.Engine != nil:
+		confirmed, present = Accepted, d.Engine
+	case d.Engine != nil:
+		return Verdict{}, false
+	}
+	switch atServiceBoundary(d, ctx, present) {
+	case BoundaryConfirmed:
+		return Verdict{Category: CategoryServiceBoundary, Disposition: confirmed}, true
+	case BoundaryUnavailable:
+		return Verdict{Category: CategoryServiceBoundary, Disposition: Inconclusive}, true
+	case BoundaryDenied:
+	}
+	return Verdict{}, false
 }
 
 func classifyQuantile(d Difference, ctx Context) Verdict {
@@ -122,11 +143,11 @@ func classifyQuantile(d Difference, ctx Context) Verdict {
 	return JudgeQuantile(q, v, evidence)
 }
 
-// atServiceBoundary tells whether what ClickHouse has and the engine lacks is the service-boundary
-// rule: a top-level operation or entry point confirmed to have its parent in another service, or a
-// whole service every top-level operation of which is. Over a service's operations a denied one
-// decides; without one, an unavailable one leaves it unavailable.
-func atServiceBoundary(d Difference, ctx Context) Boundary {
+// atServiceBoundary tells whether what one side alone has, present, is the service-boundary rule: a
+// top-level operation or entry point confirmed to have its parent in another service, or a whole
+// service every top-level operation of which is. Over a service's operations a denied one decides;
+// without one, an unavailable one leaves it unavailable.
+func atServiceBoundary(d Difference, ctx Context, present any) Boundary {
 	if service, operation, ok := serviceAndOperation(d.Path, ctx); ok {
 		return ctx.ServiceBoundary(service, operation)
 	}
@@ -134,7 +155,7 @@ func atServiceBoundary(d Difference, ctx Context) Boundary {
 	if !ok {
 		return BoundaryDenied
 	}
-	operations := missingServiceOperations(d.ClickHouse)
+	operations := listedServiceOperations(present)
 	if len(operations) == 0 {
 		return BoundaryDenied
 	}
@@ -151,9 +172,9 @@ func atServiceBoundary(d Difference, ctx Context) Boundary {
 	return found
 }
 
-// missingServiceOperations are the top-level operations of a service as the services view
+// listedServiceOperations are the top-level operations of a service as the services view
 // normalizes it, past the sentinel.
-func missingServiceOperations(occurrences any) []string {
+func listedServiceOperations(occurrences any) []string {
 	var operations []string
 	list, _ := occurrences.([]any)
 	for _, occurrence := range list {

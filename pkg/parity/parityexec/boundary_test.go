@@ -46,7 +46,8 @@ func (s *spans) QueryRange(_ context.Context, _ valuer.UUID, req *qbtypes.QueryR
 		if strings.Contains(filter, "span_id = ") {
 			keep = strings.Contains(filter, "(trace_id = '"+sp.trace+"' AND span_id = '"+sp.id+"')")
 		} else {
-			keep = sp.parent != "" && sp.remote == "unknown" && inView(sp) && strings.Contains(filter, "'"+sp.service+"'") && strings.Contains(filter, "'"+sp.name+"'")
+			remote := !strings.Contains(filter, "is_remote") || strings.Contains(filter, "is_remote = '"+sp.remote+"'")
+			keep = sp.parent != "" && remote && inView(sp) && strings.Contains(filter, "'"+sp.service+"'") && strings.Contains(filter, "'"+sp.name+"'")
 		}
 		if keep && len(rows) < spec.Limit {
 			rows = append(rows, &qbtypes.RawRow{Data: map[string]any{"trace_id": sp.trace, "span_id": sp.id, "parent_span_id": sp.parent, "service.name": sp.service}})
@@ -79,7 +80,8 @@ func TestOneWitnessInAnotherServiceConfirmsTheBoundary(t *testing.T) {
 	assert.True(t, ok)
 	require.Len(t, s.requests, 3)
 	sample := s.requests[1]
-	assert.Contains(t, sample.Filter.Expression, "is_remote = 'unknown'")
+	assert.Contains(t, sample.Filter.Expression, "parent_span_id != ''")
+	assert.NotContains(t, sample.Filter.Expression, "is_remote", "a child of any remoteness is a witness")
 	assert.Equal(t, 50, sample.Limit)
 	require.Len(t, sample.Order, 2, "a deterministic sample")
 	parents := s.requests[2].Filter.Expression
@@ -101,8 +103,8 @@ func TestWithoutAWitnessTheBoundaryIsNotConfirmed(t *testing.T) {
 	ok, _ := confirm(t, []span{
 		{"t2", "b2", "b0", "back", "handle", "unknown", ""},
 		{"t2", "b0", "", "back", "start", "unknown", ""},
-		{"t3", "b3", "f3", "back", "handle", "yes", ""}, // a remote parent is top-level on the engine
-		{"t3", "f3", "", "front", "GET", "unknown", ""},
+		{"t3", "b3", "b4", "back", "handle", "yes", ""}, // a remote flag under its own service is no boundary
+		{"t3", "b4", "", "back", "start", "unknown", ""},
 	})
 	assert.False(t, ok)
 }
@@ -129,10 +131,20 @@ func TestAWitnessOutsideTheViewConfirmsNothing(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestAParentWithoutAServiceIsNoWitness(t *testing.T) {
+func TestAParentWithoutAServiceIsAWitness(t *testing.T) {
 	ok, _ := confirm(t, []span{
 		{"t1", "f1", "", "", "GET", "unknown", ""},
 		{"t1", "b1", "f1", "back", "handle", "unknown", ""},
 	})
-	assert.False(t, ok, "an empty service proves no other service")
+	assert.True(t, ok, "an unnamed parent is another service, as both stores decide")
+}
+
+func TestAChildFlaggedRemoteOrLocalIsAWitnessToo(t *testing.T) {
+	for _, remote := range []string{"yes", "no"} {
+		ok, _ := confirm(t, []span{
+			{"t1", "f1", "", "front", "GET", "unknown", ""},
+			{"t1", "b1", "f1", "back", "handle", remote, ""},
+		})
+		assert.True(t, ok, remote)
+	}
 }

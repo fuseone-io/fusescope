@@ -219,12 +219,12 @@ func TestDataFusionStorageCompile(t *testing.T) {
 			want:     "parent_span_id IS NULL",
 		},
 		{
-			name:     "an entry point has a remote parent or a top-level operation",
+			name:     "an entry point has a parent and a top-level operation, whatever its remoteness",
 			key:      telemetrytypes.TelemetryFieldKey{Name: SpanSearchScopeEntryPoint, FieldContext: telemetrytypes.FieldContextSpan},
 			operator: qbtypes.FilterOperatorEqual,
 			value:    "true",
-			want: "(parent_span_id IS NOT NULL AND (is_remote = 'true' OR EXISTS (SELECT 1 FROM top_level_operations t " +
-				"WHERE t.service_name = spans.service_name AND t.name = spans.name AND t.last_seen >= to_timestamp_nanos(1747947419000000000))))",
+			want: "(parent_span_id IS NOT NULL AND EXISTS (SELECT 1 FROM top_level_operations t " +
+				"WHERE t.service_name = spans.service_name AND t.name = spans.name AND t.last_seen >= to_timestamp_nanos(1747947419000000000)))",
 		},
 		{
 			name:     "a trace id compares as bytes",

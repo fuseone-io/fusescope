@@ -1,8 +1,6 @@
-"""A span whose parent is in another service and whose remoteness is unknown: ClickHouse
-counts it as a top-level operation of its service, the engine does not. The engine's
-rule (no parent, or a remote one) was approved for D4; matching ClickHouse needs the
-parent's service, across compaction passes and hours, and is left for D5. This test
-records both answers so a change to either shows; it is not a parity check."""
+"""A span whose parent is in another service, whatever its remoteness, is a top-level
+operation of its service in both stores (D7): ClickHouse finds the parent in the same
+export batch, the engine in the same hour, compacted or recent."""
 
 import datetime
 import uuid
@@ -22,7 +20,7 @@ def services(backend: Backend, body: dict) -> requests.Response:
     return requests.post(backend.signoz.self.host_configs["8080"].get("/api/v2/services"), json=body, headers={"authorization": f"Bearer {backend.token()}"}, timeout=30)
 
 
-def test_a_child_of_another_service_is_top_level_only_for_clickhouse(
+def test_a_child_of_another_service_is_top_level_in_both_stores(
     engine: EngineStack,
     engine_collector: EngineCollector,
     clickhouse: types.TestContainerClickhouse,
@@ -52,4 +50,4 @@ def test_a_child_of_another_service_is_top_level_only_for_clickhouse(
         return [item for item in response.json()["data"] if item["serviceName"] == "eng-x-back"]
 
     assert [item["dataWarning"]["topLevelOps"] for item in back(off)] == [["overflow_operation", "x.handle"]], "ClickHouse: a service boundary makes a top-level operation"
-    assert back(on) == [], "the engine: no parent nor a remote one, so no call of eng-x-back (D5)"
+    assert [item["dataWarning"]["topLevelOps"] for item in back(on)] == [["overflow_operation", "x.handle"]], "the engine: the same boundary, before compaction"

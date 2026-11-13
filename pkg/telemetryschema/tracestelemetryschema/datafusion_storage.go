@@ -350,10 +350,10 @@ func idCondition(column string, width int, operator qbtypes.FilterOperator, valu
 }
 
 // dataFusionSpanScopeCondition is the span scope predicate on the engine.
-// An entry point is a span with a parent, either remote, read from the span
-// itself for data still in the hot window, or of an operation the compacted
-// top_level_operations holds, as ClickHouse matches it by operation. The
-// table holds root operations too, so the parent test covers both parts.
+// An entry point is a span with a parent, of an operation the engine's
+// top_level_operations holds, compacted and recent alike, as ClickHouse
+// matches it by operation. The table holds root operations too, so the
+// parent test leaves them out.
 func dataFusionSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, startNs uint64) (string, error) {
 	if err := checkSpanScopeOperand(key, operator, value); err != nil {
 		return "", err
@@ -366,8 +366,8 @@ func dataFusionSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operato
 		if startNs > 0 {
 			since = fmt.Sprintf(" AND t.last_seen >= to_timestamp_nanos(%d)", startNs)
 		}
-		return "(parent_span_id IS NOT NULL AND (is_remote = 'true' OR EXISTS (SELECT 1 FROM top_level_operations t " +
-			"WHERE t.service_name = spans.service_name AND t.name = spans.name" + since + ")))", nil
+		return "(parent_span_id IS NOT NULL AND EXISTS (SELECT 1 FROM top_level_operations t " +
+			"WHERE t.service_name = spans.service_name AND t.name = spans.name" + since + "))", nil
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid span search scope: %s", key.Name)
 }

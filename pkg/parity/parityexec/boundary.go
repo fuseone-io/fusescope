@@ -33,12 +33,12 @@ var (
 	operationKey = telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextSpan}
 )
 
-// Boundary confirms that operation of service is a top-level operation in ClickHouse only because
-// a span of it has its parent in another service with its remoteness unknown (D7): within the
-// view's filter, no span of the operation is a root, and among a deterministic sample of its spans
-// with is_remote unknown at least one has its parent, found by (trace_id, parent_span_id) in the
-// window alone, in another named service. Spans whose parent is missing, unnamed or in the same
-// service are no witnesses; they deny nothing.
+// Boundary confirms that operation of service is a top-level operation in one store only because a
+// span of it has its parent in another service (D7): within the view's filter, no span of the
+// operation is a root, and among a deterministic sample of its spans with a parent, of any
+// remoteness, at least one has its parent, found by (trace_id, parent_span_id) in the window alone,
+// in another service, an unnamed one included, as both stores decide. Spans whose parent is missing
+// or in the same service are no witnesses; they deny nothing.
 //
 // # Errors
 //
@@ -62,15 +62,15 @@ func (e Evidencer) Boundary(ctx context.Context, view Group, service, operation 
 		return false, nil
 	}
 
-	unknown := spans.Where(telemetrytypes.TelemetryFieldKey{Name: "is_remote"}, "unknown")
-	sample := e.query(unknown)
+	children := spans.And("parent_span_id != ''")
+	sample := e.query(children)
 	sample.SelectFields = []telemetrytypes.TelemetryFieldKey{{Name: "trace_id"}, {Name: "parent_span_id"}}
 	sample.Order = []qbtypes.OrderBy{
 		{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp"}}, Direction: qbtypes.OrderDirectionAsc},
 		{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "span_id"}}, Direction: qbtypes.OrderDirectionAsc},
 	}
 	sample.Limit = boundarySample
-	resp, err = e.Querier.QueryRange(ctx, e.Org, e.request(unknown, qbtypes.RequestTypeRaw, sample))
+	resp, err = e.Querier.QueryRange(ctx, e.Org, e.request(children, qbtypes.RequestTypeRaw, sample))
 	if err != nil {
 		return false, step(err, errCodeBoundarySample)
 	}
@@ -103,7 +103,7 @@ func (e Evidencer) parentElsewhere(ctx context.Context, window Group, service st
 		if !ok {
 			return false, errors.NewInternalf(errors.CodeInternal, "a parent span has no service")
 		}
-		if other != "" && other != service {
+		if other != service {
 			return true, nil
 		}
 	}

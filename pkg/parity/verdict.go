@@ -30,8 +30,9 @@ const (
 	// CategoryDerivedColumn is a derived span column the engine does not keep yet, empty where
 	// ClickHouse has a value (D6).
 	CategoryDerivedColumn Category = "derived_column"
-	// CategoryServiceBoundary is a top-level operation or entry point ClickHouse counts for a span
-	// whose parent is in another service (D7).
+	// CategoryServiceBoundary is a top-level operation or entry point one store counts for a span
+	// whose parent is in another service and the other does not (D7): ClickHouse finds the parent
+	// only within one export batch, the engine within a compaction pass.
 	CategoryServiceBoundary Category = "service_boundary"
 	// CategoryAbsentKey is an absent promoted key read differently: a null against an empty string,
 	// or the rows a filter on it keeps (D8).
