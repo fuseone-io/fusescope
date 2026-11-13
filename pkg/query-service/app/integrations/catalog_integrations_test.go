@@ -13,7 +13,8 @@ import (
 
 func embeddedIntegrations(t *testing.T) *CatalogIntegrations {
 	t.Helper()
-	embedded, err := catalog.LoadEmbedded(slog.Default(), "v0.154.0")
+	// The first release that serves every package of the pinned catalog.
+	embedded, err := catalog.LoadEmbedded(slog.Default(), "v0.164.0")
 	require.NoError(t, err)
 	integrations, err := NewCatalogIntegrations(embedded)
 	require.NoError(t, err)

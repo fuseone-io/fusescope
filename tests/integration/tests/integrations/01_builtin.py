@@ -14,6 +14,7 @@ BUILTIN_VERSIONS = {
     "builtin-aws_rds_mysql": "1.0.0",
     "builtin-aws_rds_postgresql": "1.0.0",
     "builtin-clickhouse": "1.0.0",
+    "builtin-fusescope_collector": "1.0.0",
     "builtin-gcp_cloudsql": "1.0.1",
     "builtin-mongo": "1.0.0",
     "builtin-mysql": "1.0.1",

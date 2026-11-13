@@ -2,8 +2,8 @@
   "catalog_version": 1,
   "source": {
     "repository": "fuseone-io/fusescope-integrations",
-    "ref": "v1.1.1",
-    "commit": "43938f1beafb70fe48893f5bf6427b239e9ef345"
+    "ref": "v1.2.0",
+    "commit": "a2238c4e6289519a3f8071087b851e939d17ee6c"
   },
   "integrations": [
     {
@@ -77,6 +77,23 @@
       "package": "builtin-clickhouse-1.0.0.tar.gz",
       "sha256": "dae67b1c94f61d73e997062b7a65f0dae3734958e3e851cabac2b5a7e5b32746",
       "size": 44864
+    },
+    {
+      "id": "builtin-fusescope_collector",
+      "version": "1.0.0",
+      "manifest_version": 2,
+      "fusescope": ">=0.164.0",
+      "title": "FuseScope Collector",
+      "description": "Monitor the FuseScope Collector itself: refused and dropped data, export queues, ClickHouse inserts and RUM refusals",
+      "categories": [
+        "Observability"
+      ],
+      "signals": [
+        "metrics"
+      ],
+      "package": "builtin-fusescope_collector-1.0.0.tar.gz",
+      "sha256": "9e0a3625fc69df4b8146ea9621444548ce9b83546a7189a8905941ae2d0b923f",
+      "size": 6308
     },
     {
       "id": "builtin-gcp_cloudsql",

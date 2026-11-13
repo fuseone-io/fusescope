@@ -1,0 +1,1790 @@
+{
+  "id": "builtin-fusescope_collector",
+  "title": "FuseScope Collector",
+  "description": "Monitor the FuseScope Collector itself: refused and dropped data, export queues, ClickHouse inserts and RUM refusals",
+  "author": {
+    "name": "FuseScope",
+    "email": "",
+    "homepage": "https://github.com/fuseone-io/fusescope"
+  },
+  "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRmNDZlNSIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTE0IDIyaDM2TDM2IDM4djEybC04LTR2LTh6IiBmaWxsPSIjNGY0NmU1Ii8+PC9zdmc+Cg==",
+  "categories": [
+    "Observability"
+  ],
+  "overview": "### Monitor the FuseScope Collector\n\nThe FuseScope Collector writes its own telemetry, the `otelcol_*` metrics of its receivers, exporters and queues, to the same storage as the data it receives, under `service.name` `fusescope-collector`. This integration reads it.\n\n#### What you get\n\n- **Alerts** on data the collector refuses, fails to receive or drops on export, on ClickHouse insert errors, on export queues over half full, on RUM refusals that point at the collector rather than at clients, and on the collector's telemetry going missing. Each alert names the replica (`host.name`) and the receiver, exporter, table or reason involved.\n- **A dashboard** with the same signals per replica and component, the collector's memory, and how many replicas report.\n\nThe alerts follow the notification policies of your organization.\n",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "The FuseScope Collector of the FuseScope chart writes its own telemetry while `fusescopeCollector.selfMetrics.enabled` is `true`, the default:\n\n```yaml\nfusescopeCollector:\n  selfMetrics:\n    enabled: true\n    scrapeInterval: 60s\n```\n\nThe alerts compare two 10-minute windows, so keep `scrapeInterval` at 5 minutes or less.\n\nOnly the gateway's telemetry is covered. Traffic from FuseScope agents shows on the gateway as the receiver `otlp/agents`; the agents' own telemetry is not collected yet.\n"
+    },
+    {
+      "title": "Alerts",
+      "instructions": "Each alert compares two adjacent 10-minute windows, so a single blip does not fire, and is evaluated per replica (`host.name`) and component; one replica in trouble alerts on its own.\n\n| Alert | Severity | Fires when |\n|---|---|---|\n| receiver-refused | critical | a receiver refuses data, by the memory limiter among others, in both windows |\n| receiver-failed | critical | a receiver fails to take data in, in both windows |\n| export-dropped | critical | `fusescope_clickhouse` or `fusescope_clickhouse/meter` fails to send or enqueue data |\n| clickhouse-insert-errors | warning | INSERT attempts into a table fail in both windows |\n| queue-backing-up | warning | an exporter queue is over half full in both windows |\n| rum-policy-unavailable | critical | RUM requests are refused because the collector holds no ingest policy, in both windows |\n| rum-backpressure | warning | RUM requests are refused because the collector or its pipeline is busy, in both windows |\n| no-telemetry | critical | no telemetry from the collector for 10 minutes, including when it never reported |\n\nThere is no default memory alert: the memory limiter's limit is a share of the container's memory limit, which the collector does not report, and its refusals already raise receiver-refused. RUM refusals by key, origin, signal or rate limit depend on the clients and have no portable baseline: the dashboard shows them by reason.\n"
+    }
+  ],
+  "data_collected": {
+    "logs": [],
+    "metrics": [
+      {
+        "name": "otelcol_process_uptime",
+        "type": "Sum",
+        "unit": "s",
+        "description": "Seconds since the collector started; its absence means no telemetry."
+      },
+      {
+        "name": "otelcol_process_memory_rss",
+        "type": "Gauge",
+        "unit": "bytes",
+        "description": "Resident memory of the collector process."
+      },
+      {
+        "name": "otelcol_receiver_accepted_spans",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Spans a receiver accepted."
+      },
+      {
+        "name": "otelcol_receiver_accepted_log_records",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Log records a receiver accepted."
+      },
+      {
+        "name": "otelcol_receiver_accepted_metric_points",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Metric points a receiver accepted."
+      },
+      {
+        "name": "otelcol_receiver_refused_spans",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Spans a receiver refused."
+      },
+      {
+        "name": "otelcol_receiver_refused_log_records",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Log records a receiver refused."
+      },
+      {
+        "name": "otelcol_receiver_refused_metric_points",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Metric points a receiver refused."
+      },
+      {
+        "name": "otelcol_receiver_failed_spans",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Spans a receiver failed to take in."
+      },
+      {
+        "name": "otelcol_receiver_failed_log_records",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Log records a receiver failed to take in."
+      },
+      {
+        "name": "otelcol_receiver_failed_metric_points",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Metric points a receiver failed to take in."
+      },
+      {
+        "name": "otelcol_exporter_sent_spans",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Spans an exporter sent."
+      },
+      {
+        "name": "otelcol_exporter_sent_log_records",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Log records an exporter sent."
+      },
+      {
+        "name": "otelcol_exporter_sent_metric_points",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Metric points an exporter sent."
+      },
+      {
+        "name": "otelcol_exporter_send_failed_spans",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Spans an exporter failed to send, so dropped."
+      },
+      {
+        "name": "otelcol_exporter_send_failed_log_records",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Log records an exporter failed to send, so dropped."
+      },
+      {
+        "name": "otelcol_exporter_send_failed_metric_points",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Metric points an exporter failed to send, so dropped."
+      },
+      {
+        "name": "otelcol_exporter_enqueue_failed_spans",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Spans that did not fit an exporter's queue, so dropped."
+      },
+      {
+        "name": "otelcol_exporter_enqueue_failed_log_records",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Log records that did not fit an exporter's queue, so dropped."
+      },
+      {
+        "name": "otelcol_exporter_enqueue_failed_metric_points",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Metric points that did not fit an exporter's queue, so dropped."
+      },
+      {
+        "name": "otelcol_exporter_queue_size",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Items in an exporter's queue."
+      },
+      {
+        "name": "otelcol_exporter_queue_capacity",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Capacity of an exporter's queue."
+      },
+      {
+        "name": "otelcol_exporter_fusescope_clickhouse_insert_errors",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Failed INSERT attempts into ClickHouse, by table and outcome."
+      },
+      {
+        "name": "otelcol_exporter_fusescope_clickhouse_insert_duration",
+        "type": "Histogram",
+        "unit": "s",
+        "description": "Duration of each INSERT attempt into ClickHouse, by table and outcome."
+      },
+      {
+        "name": "otelcol_receiver_rum_requests_refused",
+        "type": "Sum",
+        "unit": "number",
+        "description": "RUM requests refused, by reason."
+      }
+    ]
+  },
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      {
+        "id": "overview",
+        "definition": {
+          "schemaVersion": "v6",
+          "image": "",
+          "name": "",
+          "generateName": true,
+          "tags": [],
+          "spec": {
+            "display": {
+              "name": "FuseScope Collector Overview",
+              "description": "The FuseScope Collector's own telemetry: receivers, exporters, queues, ClickHouse inserts, memory and RUM refusals."
+            },
+            "variables": [],
+            "panels": {
+              "095b64e0-8baa-5d7e-bf6c-5b4ea3aeda69": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Resident memory by replica",
+                    "description": "No default alert: the memory limiter's limit is a share of the container limit, which is not reported; its refusals show above."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "bytes",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "max by (\"host.name\") (otelcol_process_memory_rss{\"service.name\"=\"fusescope-collector\"})",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{host.name}}"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              },
+              "447e54eb-9a1a-550b-94a3-822b376bb7a1": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "ClickHouse insert duration p95 by table",
+                    "description": "95th percentile of each INSERT attempt's duration, retries included."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "s",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "histogram_quantile(0.95, sum by (le, table) (rate({\"otelcol_exporter_fusescope_clickhouse_insert_duration.bucket\", \"service.name\"=\"fusescope-collector\"}[5m])))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{table}}"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              },
+              "7badb28f-f0ae-5332-b6d7-635762b295f8": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Failed by receiver",
+                    "description": "Items a receiver failed to take in; alerted by receiver-failed."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "sum by (\"host.name\", receiver) (rate(otelcol_receiver_failed_spans{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{receiver} spans"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "B",
+                                  "query": "sum by (\"host.name\", receiver) (rate(otelcol_receiver_failed_log_records{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{receiver} log_records"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "C",
+                                  "query": "sum by (\"host.name\", receiver) (rate(otelcol_receiver_failed_metric_points{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{receiver} metric_points"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              },
+              "813fa73d-8496-5523-aa4c-b610188f5645": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Export failures by exporter",
+                    "description": "Items an exporter failed to send or enqueue, so dropped; alerted by export-dropped."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "sum by (exporter) (rate(otelcol_exporter_send_failed_spans{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{exporter}} send_failed_spans"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "B",
+                                  "query": "sum by (exporter) (rate(otelcol_exporter_send_failed_log_records{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{exporter}} send_failed_log_records"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "C",
+                                  "query": "sum by (exporter) (rate(otelcol_exporter_send_failed_metric_points{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{exporter}} send_failed_metric_points"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "D",
+                                  "query": "sum by (exporter) (rate(otelcol_exporter_enqueue_failed_spans{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{exporter}} enqueue_failed_spans"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "E",
+                                  "query": "sum by (exporter) (rate(otelcol_exporter_enqueue_failed_log_records{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{exporter}} enqueue_failed_log_records"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "F",
+                                  "query": "sum by (exporter) (rate(otelcol_exporter_enqueue_failed_metric_points{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{exporter}} enqueue_failed_metric_points"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              },
+              "9cfda601-85dd-575d-a2a6-7a58f1085bb6": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "ClickHouse insert errors by table",
+                    "description": "Failed INSERT attempts, retryable or permanent; alerted by clickhouse-insert-errors. distributed_samples is the meter's table."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "sum by (table, outcome) (rate(otelcol_exporter_fusescope_clickhouse_insert_errors{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{table}} {{outcome}}"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              },
+              "b47efb8d-6c2b-5278-bdb0-bd542cacf9f5": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "RUM requests refused by reason",
+                    "description": "no_policy, busy and consumer_retryable are alerted; the other reasons depend on clients and limits, with no portable baseline."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "sum by (reason) (rate(otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{reason}}"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              },
+              "c91216d2-8b37-5532-b59a-d60dbc052fd8": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Replicas reporting",
+                    "description": "Collector replicas whose telemetry arrives; the no-telemetry alert fires when none does."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "count(max by (\"host.name\") (otelcol_process_uptime{\"service.name\"=\"fusescope-collector\"}))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "replicas"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              },
+              "cc7c5637-0dd7-526f-9875-fa90e4b19ca8": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Refused by receiver",
+                    "description": "Items refused, by the memory limiter among others; alerted by receiver-refused."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "sum by (\"host.name\", receiver) (rate(otelcol_receiver_refused_spans{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{receiver} spans"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "B",
+                                  "query": "sum by (\"host.name\", receiver) (rate(otelcol_receiver_refused_log_records{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{receiver} log_records"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "C",
+                                  "query": "sum by (\"host.name\", receiver) (rate(otelcol_receiver_refused_metric_points{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{receiver} metric_points"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              },
+              "dbf4f057-11af-583c-a5d4-1cb55a32a71c": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Sent by exporter",
+                    "description": "Items each exporter sent, per second."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "sum by (exporter) (rate(otelcol_exporter_sent_spans{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{exporter} spans"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "B",
+                                  "query": "sum by (exporter) (rate(otelcol_exporter_sent_log_records{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{exporter} log_records"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "C",
+                                  "query": "sum by (exporter) (rate(otelcol_exporter_sent_metric_points{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{exporter} metric_points"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              },
+              "e51ad74c-cbf5-5f18-839c-8706999e4813": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Accepted by receiver",
+                    "description": "Items each receiver accepted, per second."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "short",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "sum by (receiver) (rate(otelcol_receiver_accepted_spans{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{receiver} spans"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "B",
+                                  "query": "sum by (receiver) (rate(otelcol_receiver_accepted_log_records{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{receiver} log_records"
+                                }
+                              },
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "C",
+                                  "query": "sum by (receiver) (rate(otelcol_receiver_accepted_metric_points{\"service.name\"=\"fusescope-collector\"}[5m]))",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{receiver} metric_points"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              },
+              "ebfa8cdb-0fc5-539b-926e-40785dccb9c9": {
+                "kind": "Panel",
+                "spec": {
+                  "display": {
+                    "name": "Export queue usage",
+                    "description": "Share of each exporter queue in use; alerted by queue-backing-up above 50%."
+                  },
+                  "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                      "visualization": {
+                        "timePreference": "global_time",
+                        "fillSpans": false
+                      },
+                      "formatting": {
+                        "unit": "percentunit",
+                        "decimalPrecision": "2"
+                      },
+                      "chartAppearance": {
+                        "lineInterpolation": "spline",
+                        "showPoints": false,
+                        "lineStyle": "solid",
+                        "fillMode": "none",
+                        "spanGaps": {
+                          "fillOnlyBelow": false,
+                          "fillLessThan": ""
+                        }
+                      },
+                      "axes": {
+                        "softMin": 0,
+                        "softMax": 0,
+                        "isLogScale": false
+                      },
+                      "legend": {
+                        "position": "bottom",
+                        "mode": "list",
+                        "customColors": null
+                      },
+                      "thresholds": null
+                    }
+                  },
+                  "queries": [
+                    {
+                      "kind": "time_series",
+                      "spec": {
+                        "plugin": {
+                          "kind": "signoz/CompositeQuery",
+                          "spec": {
+                            "queries": [
+                              {
+                                "type": "promql",
+                                "spec": {
+                                  "name": "A",
+                                  "query": "max by (\"host.name\", exporter, data_type) (otelcol_exporter_queue_size{\"service.name\"=\"fusescope-collector\"}) / max by (\"host.name\", exporter, data_type) (otelcol_exporter_queue_capacity{\"service.name\"=\"fusescope-collector\"} \u003e 0)",
+                                  "disabled": false,
+                                  "step": 0,
+                                  "stats": false,
+                                  "legend": "{{exporter}} {{data_type}}"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "links": null
+                }
+              }
+            },
+            "layouts": [
+              {
+                "kind": "Grid",
+                "spec": {
+                  "items": [
+                    {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/e51ad74c-cbf5-5f18-839c-8706999e4813"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/cc7c5637-0dd7-526f-9875-fa90e4b19ca8"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 3,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/7badb28f-f0ae-5332-b6d7-635762b295f8"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 3,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/dbf4f057-11af-583c-a5d4-1cb55a32a71c"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 6,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/813fa73d-8496-5523-aa4c-b610188f5645"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 6,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/ebfa8cdb-0fc5-539b-926e-40785dccb9c9"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 9,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/9cfda601-85dd-575d-a2a6-7a58f1085bb6"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 9,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/447e54eb-9a1a-550b-94a3-822b376bb7a1"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 12,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/095b64e0-8baa-5d7e-bf6c-5b4ea3aeda69"
+                      }
+                    },
+                    {
+                      "x": 6,
+                      "y": 12,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/b47efb8d-6c2b-5278-bdb0-bd542cacf9f5"
+                      }
+                    },
+                    {
+                      "x": 0,
+                      "y": 15,
+                      "width": 6,
+                      "height": 3,
+                      "content": {
+                        "$ref": "#/spec/panels/c91216d2-8b37-5532-b59a-d60dbc052fd8"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "duration": "",
+            "refreshInterval": "",
+            "links": []
+          }
+        }
+      }
+    ],
+    "alerts": [
+      {
+        "alert": "FuseScope Collector refusing data",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "promql_rule",
+        "condition": {
+          "compositeQuery": {
+            "queries": [
+              {
+                "type": "promql",
+                "spec": {
+                  "name": "A",
+                  "query": "(\n  max by (\"host.name\", receiver) (increase(otelcol_receiver_refused_spans{\"service.name\"=\"fusescope-collector\"}[10m]) \u003e 0 or (otelcol_receiver_refused_spans{\"service.name\"=\"fusescope-collector\"} \u003e 0 unless otelcol_receiver_refused_spans{\"service.name\"=\"fusescope-collector\"} offset 10m))\n  or max by (\"host.name\", receiver) (increase(otelcol_receiver_refused_log_records{\"service.name\"=\"fusescope-collector\"}[10m]) \u003e 0 or (otelcol_receiver_refused_log_records{\"service.name\"=\"fusescope-collector\"} \u003e 0 unless otelcol_receiver_refused_log_records{\"service.name\"=\"fusescope-collector\"} offset 10m))\n  or max by (\"host.name\", receiver) (increase(otelcol_receiver_refused_metric_points{\"service.name\"=\"fusescope-collector\"}[10m]) \u003e 0 or (otelcol_receiver_refused_metric_points{\"service.name\"=\"fusescope-collector\"} \u003e 0 unless otelcol_receiver_refused_metric_points{\"service.name\"=\"fusescope-collector\"} offset 10m))\n)\nand\n(\n  max by (\"host.name\", receiver) (increase(otelcol_receiver_refused_spans{\"service.name\"=\"fusescope-collector\"}[10m] offset 10m) \u003e 0 or (otelcol_receiver_refused_spans{\"service.name\"=\"fusescope-collector\"} offset 10m \u003e 0 unless otelcol_receiver_refused_spans{\"service.name\"=\"fusescope-collector\"} offset 20m))\n  or max by (\"host.name\", receiver) (increase(otelcol_receiver_refused_log_records{\"service.name\"=\"fusescope-collector\"}[10m] offset 10m) \u003e 0 or (otelcol_receiver_refused_log_records{\"service.name\"=\"fusescope-collector\"} offset 10m \u003e 0 unless otelcol_receiver_refused_log_records{\"service.name\"=\"fusescope-collector\"} offset 20m))\n  or max by (\"host.name\", receiver) (increase(otelcol_receiver_refused_metric_points{\"service.name\"=\"fusescope-collector\"}[10m] offset 10m) \u003e 0 or (otelcol_receiver_refused_metric_points{\"service.name\"=\"fusescope-collector\"} offset 10m \u003e 0 unless otelcol_receiver_refused_metric_points{\"service.name\"=\"fusescope-collector\"} offset 20m))\n)",
+                  "disabled": false,
+                  "step": 0,
+                  "stats": false,
+                  "legend": ""
+                }
+              }
+            ],
+            "panelType": "graph",
+            "queryType": "promql"
+          },
+          "selectedQueryName": "A",
+          "thresholds": {
+            "kind": "basic",
+            "spec": [
+              {
+                "name": "critical",
+                "target": 0,
+                "targetUnit": "",
+                "recoveryTarget": null,
+                "matchType": "1",
+                "op": "1",
+                "channels": null
+              }
+            ]
+          }
+        },
+        "labels": {
+          "integration": "fusescope-collector",
+          "severity": "critical"
+        },
+        "annotations": {
+          "description": "Refused by the memory limiter: increases in two 10-minute checks in a row (CUTOVER.md §4).",
+          "summary": "Receiver {{index $labels \"receiver\"}} on {{index $labels \"host.name\"}} is refusing data"
+        },
+        "disabled": false,
+        "version": "v5",
+        "evaluation": {
+          "kind": "rolling",
+          "spec": {
+            "evalWindow": "5m",
+            "frequency": "5m"
+          }
+        },
+        "schemaVersion": "v2alpha1",
+        "notificationSettings": {
+          "renotify": {
+            "enabled": true,
+            "interval": "4h",
+            "alertStates": [
+              "firing"
+            ]
+          },
+          "usePolicy": true
+        }
+      },
+      {
+        "alert": "FuseScope Collector failing to receive",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "promql_rule",
+        "condition": {
+          "compositeQuery": {
+            "queries": [
+              {
+                "type": "promql",
+                "spec": {
+                  "name": "A",
+                  "query": "(\n  max by (\"host.name\", receiver) (increase(otelcol_receiver_failed_spans{\"service.name\"=\"fusescope-collector\"}[10m]) \u003e 0 or (otelcol_receiver_failed_spans{\"service.name\"=\"fusescope-collector\"} \u003e 0 unless otelcol_receiver_failed_spans{\"service.name\"=\"fusescope-collector\"} offset 10m))\n  or max by (\"host.name\", receiver) (increase(otelcol_receiver_failed_log_records{\"service.name\"=\"fusescope-collector\"}[10m]) \u003e 0 or (otelcol_receiver_failed_log_records{\"service.name\"=\"fusescope-collector\"} \u003e 0 unless otelcol_receiver_failed_log_records{\"service.name\"=\"fusescope-collector\"} offset 10m))\n  or max by (\"host.name\", receiver) (increase(otelcol_receiver_failed_metric_points{\"service.name\"=\"fusescope-collector\"}[10m]) \u003e 0 or (otelcol_receiver_failed_metric_points{\"service.name\"=\"fusescope-collector\"} \u003e 0 unless otelcol_receiver_failed_metric_points{\"service.name\"=\"fusescope-collector\"} offset 10m))\n)\nand\n(\n  max by (\"host.name\", receiver) (increase(otelcol_receiver_failed_spans{\"service.name\"=\"fusescope-collector\"}[10m] offset 10m) \u003e 0 or (otelcol_receiver_failed_spans{\"service.name\"=\"fusescope-collector\"} offset 10m \u003e 0 unless otelcol_receiver_failed_spans{\"service.name\"=\"fusescope-collector\"} offset 20m))\n  or max by (\"host.name\", receiver) (increase(otelcol_receiver_failed_log_records{\"service.name\"=\"fusescope-collector\"}[10m] offset 10m) \u003e 0 or (otelcol_receiver_failed_log_records{\"service.name\"=\"fusescope-collector\"} offset 10m \u003e 0 unless otelcol_receiver_failed_log_records{\"service.name\"=\"fusescope-collector\"} offset 20m))\n  or max by (\"host.name\", receiver) (increase(otelcol_receiver_failed_metric_points{\"service.name\"=\"fusescope-collector\"}[10m] offset 10m) \u003e 0 or (otelcol_receiver_failed_metric_points{\"service.name\"=\"fusescope-collector\"} offset 10m \u003e 0 unless otelcol_receiver_failed_metric_points{\"service.name\"=\"fusescope-collector\"} offset 20m))\n)",
+                  "disabled": false,
+                  "step": 0,
+                  "stats": false,
+                  "legend": ""
+                }
+              }
+            ],
+            "panelType": "graph",
+            "queryType": "promql"
+          },
+          "selectedQueryName": "A",
+          "thresholds": {
+            "kind": "basic",
+            "spec": [
+              {
+                "name": "critical",
+                "target": 0,
+                "targetUnit": "",
+                "recoveryTarget": null,
+                "matchType": "1",
+                "op": "1",
+                "channels": null
+              }
+            ]
+          }
+        },
+        "labels": {
+          "integration": "fusescope-collector",
+          "severity": "critical"
+        },
+        "annotations": {
+          "description": "Failed receiving: increases in two checks in a row (CUTOVER.md §4).",
+          "summary": "Receiver {{index $labels \"receiver\"}} on {{index $labels \"host.name\"}} is failing to receive data"
+        },
+        "disabled": false,
+        "version": "v5",
+        "evaluation": {
+          "kind": "rolling",
+          "spec": {
+            "evalWindow": "5m",
+            "frequency": "5m"
+          }
+        },
+        "schemaVersion": "v2alpha1",
+        "notificationSettings": {
+          "renotify": {
+            "enabled": true,
+            "interval": "4h",
+            "alertStates": [
+              "firing"
+            ]
+          },
+          "usePolicy": true
+        }
+      },
+      {
+        "alert": "FuseScope Collector dropping data on export",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "promql_rule",
+        "condition": {
+          "compositeQuery": {
+            "queries": [
+              {
+                "type": "promql",
+                "spec": {
+                  "name": "A",
+                  "query": "(\n  max by (\"host.name\", exporter) (increase(otelcol_exporter_send_failed_spans{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"}[10m]) \u003e 0 or (otelcol_exporter_send_failed_spans{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} \u003e 0 unless otelcol_exporter_send_failed_spans{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} offset 10m))\n  or max by (\"host.name\", exporter) (increase(otelcol_exporter_send_failed_log_records{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"}[10m]) \u003e 0 or (otelcol_exporter_send_failed_log_records{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} \u003e 0 unless otelcol_exporter_send_failed_log_records{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} offset 10m))\n  or max by (\"host.name\", exporter) (increase(otelcol_exporter_send_failed_metric_points{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"}[10m]) \u003e 0 or (otelcol_exporter_send_failed_metric_points{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} \u003e 0 unless otelcol_exporter_send_failed_metric_points{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} offset 10m))\n  or max by (\"host.name\", exporter) (increase(otelcol_exporter_enqueue_failed_spans{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"}[10m]) \u003e 0 or (otelcol_exporter_enqueue_failed_spans{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} \u003e 0 unless otelcol_exporter_enqueue_failed_spans{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} offset 10m))\n  or max by (\"host.name\", exporter) (increase(otelcol_exporter_enqueue_failed_log_records{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"}[10m]) \u003e 0 or (otelcol_exporter_enqueue_failed_log_records{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} \u003e 0 unless otelcol_exporter_enqueue_failed_log_records{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} offset 10m))\n  or max by (\"host.name\", exporter) (increase(otelcol_exporter_enqueue_failed_metric_points{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"}[10m]) \u003e 0 or (otelcol_exporter_enqueue_failed_metric_points{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} \u003e 0 unless otelcol_exporter_enqueue_failed_metric_points{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} offset 10m))\n)",
+                  "disabled": false,
+                  "step": 0,
+                  "stats": false,
+                  "legend": ""
+                }
+              }
+            ],
+            "panelType": "graph",
+            "queryType": "promql"
+          },
+          "selectedQueryName": "A",
+          "thresholds": {
+            "kind": "basic",
+            "spec": [
+              {
+                "name": "critical",
+                "target": 0,
+                "targetUnit": "",
+                "recoveryTarget": null,
+                "matchType": "1",
+                "op": "1",
+                "channels": null
+              }
+            ]
+          }
+        },
+        "labels": {
+          "integration": "fusescope-collector",
+          "severity": "critical"
+        },
+        "annotations": {
+          "description": "Dropped on export: send_failed or enqueue_failed appears for fusescope_clickhouse (and, by decision, fusescope_clickhouse/meter) (CUTOVER.md §4).",
+          "summary": "Exporter {{index $labels \"exporter\"}} on {{index $labels \"host.name\"}} dropped data"
+        },
+        "disabled": false,
+        "version": "v5",
+        "evaluation": {
+          "kind": "rolling",
+          "spec": {
+            "evalWindow": "5m",
+            "frequency": "5m"
+          }
+        },
+        "schemaVersion": "v2alpha1",
+        "notificationSettings": {
+          "renotify": {
+            "enabled": true,
+            "interval": "4h",
+            "alertStates": [
+              "firing"
+            ]
+          },
+          "usePolicy": true
+        }
+      },
+      {
+        "alert": "FuseScope Collector ClickHouse insert errors",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "promql_rule",
+        "condition": {
+          "compositeQuery": {
+            "queries": [
+              {
+                "type": "promql",
+                "spec": {
+                  "name": "A",
+                  "query": "(\n  max by (\"host.name\", table) (increase(otelcol_exporter_fusescope_clickhouse_insert_errors{\"service.name\"=\"fusescope-collector\"}[10m]) \u003e 0 or (otelcol_exporter_fusescope_clickhouse_insert_errors{\"service.name\"=\"fusescope-collector\"} \u003e 0 unless otelcol_exporter_fusescope_clickhouse_insert_errors{\"service.name\"=\"fusescope-collector\"} offset 10m))\n)\nand\n(\n  max by (\"host.name\", table) (increase(otelcol_exporter_fusescope_clickhouse_insert_errors{\"service.name\"=\"fusescope-collector\"}[10m] offset 10m) \u003e 0 or (otelcol_exporter_fusescope_clickhouse_insert_errors{\"service.name\"=\"fusescope-collector\"} offset 10m \u003e 0 unless otelcol_exporter_fusescope_clickhouse_insert_errors{\"service.name\"=\"fusescope-collector\"} offset 20m))\n)",
+                  "disabled": false,
+                  "step": 0,
+                  "stats": false,
+                  "legend": ""
+                }
+              }
+            ],
+            "panelType": "graph",
+            "queryType": "promql"
+          },
+          "selectedQueryName": "A",
+          "thresholds": {
+            "kind": "basic",
+            "spec": [
+              {
+                "name": "warning",
+                "target": 0,
+                "targetUnit": "",
+                "recoveryTarget": null,
+                "matchType": "1",
+                "op": "1",
+                "channels": null
+              }
+            ]
+          }
+        },
+        "labels": {
+          "integration": "fusescope-collector",
+          "severity": "warning"
+        },
+        "annotations": {
+          "description": "ClickHouse insert errors: increases in two checks in a row (CUTOVER.md §4).",
+          "summary": "Inserts into {{index $labels \"table\"}} from {{index $labels \"host.name\"}} are failing"
+        },
+        "disabled": false,
+        "version": "v5",
+        "evaluation": {
+          "kind": "rolling",
+          "spec": {
+            "evalWindow": "5m",
+            "frequency": "5m"
+          }
+        },
+        "schemaVersion": "v2alpha1",
+        "notificationSettings": {
+          "renotify": {
+            "enabled": true,
+            "interval": "4h",
+            "alertStates": [
+              "firing"
+            ]
+          },
+          "usePolicy": true
+        }
+      },
+      {
+        "alert": "FuseScope Collector export queue backing up",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "promql_rule",
+        "condition": {
+          "compositeQuery": {
+            "queries": [
+              {
+                "type": "promql",
+                "spec": {
+                  "name": "A",
+                  "query": "(\n  max by (\"host.name\", exporter, data_type) (otelcol_exporter_queue_size{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"})\n  / max by (\"host.name\", exporter, data_type) (otelcol_exporter_queue_capacity{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} \u003e 0)\n)\nand\n(\n  max by (\"host.name\", exporter, data_type) (otelcol_exporter_queue_size{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} offset 10m)\n  / max by (\"host.name\", exporter, data_type) (otelcol_exporter_queue_capacity{\"service.name\"=\"fusescope-collector\", exporter=~\"fusescope_clickhouse|fusescope_clickhouse/meter\"} offset 10m \u003e 0)\n) \u003e 0.5",
+                  "disabled": false,
+                  "step": 0,
+                  "stats": false,
+                  "legend": ""
+                }
+              }
+            ],
+            "panelType": "graph",
+            "queryType": "promql"
+          },
+          "selectedQueryName": "A",
+          "thresholds": {
+            "kind": "basic",
+            "spec": [
+              {
+                "name": "warning",
+                "target": 0.5,
+                "targetUnit": "",
+                "recoveryTarget": null,
+                "matchType": "1",
+                "op": "1",
+                "channels": null
+              }
+            ]
+          }
+        },
+        "labels": {
+          "integration": "fusescope-collector",
+          "severity": "warning"
+        },
+        "annotations": {
+          "description": "Queue backing up: queue_size / queue_capacity above 50% in two checks in a row, for fusescope_clickhouse and fusescope_clickhouse/meter (CUTOVER.md §4).",
+          "summary": "The {{index $labels \"data_type\"}} queue of exporter {{index $labels \"exporter\"}} on {{index $labels \"host.name\"}} is over half full"
+        },
+        "disabled": false,
+        "version": "v5",
+        "evaluation": {
+          "kind": "rolling",
+          "spec": {
+            "evalWindow": "5m",
+            "frequency": "5m"
+          }
+        },
+        "schemaVersion": "v2alpha1",
+        "notificationSettings": {
+          "renotify": {
+            "enabled": true,
+            "interval": "4h",
+            "alertStates": [
+              "firing"
+            ]
+          },
+          "usePolicy": true
+        }
+      },
+      {
+        "alert": "FuseScope Collector RUM without ingest policy",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "promql_rule",
+        "condition": {
+          "compositeQuery": {
+            "queries": [
+              {
+                "type": "promql",
+                "spec": {
+                  "name": "A",
+                  "query": "(\n  max by (\"host.name\", reason) (increase(otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=\"no_policy\"}[10m]) \u003e 0 or (otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=\"no_policy\"} \u003e 0 unless otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=\"no_policy\"} offset 10m))\n)\nand\n(\n  max by (\"host.name\", reason) (increase(otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=\"no_policy\"}[10m] offset 10m) \u003e 0 or (otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=\"no_policy\"} offset 10m \u003e 0 unless otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=\"no_policy\"} offset 20m))\n)",
+                  "disabled": false,
+                  "step": 0,
+                  "stats": false,
+                  "legend": ""
+                }
+              }
+            ],
+            "panelType": "graph",
+            "queryType": "promql"
+          },
+          "selectedQueryName": "A",
+          "thresholds": {
+            "kind": "basic",
+            "spec": [
+              {
+                "name": "critical",
+                "target": 0,
+                "targetUnit": "",
+                "recoveryTarget": null,
+                "matchType": "1",
+                "op": "1",
+                "channels": null
+              }
+            ]
+          }
+        },
+        "labels": {
+          "integration": "fusescope-collector",
+          "severity": "critical"
+        },
+        "annotations": {
+          "description": "RUM refused with reason no_policy: increases in two checks in a row (structural, needs no baseline) (CUTOVER.md §4).",
+          "summary": "RUM requests on {{index $labels \"host.name\"}} are refused: {{index $labels \"reason\"}}"
+        },
+        "disabled": false,
+        "version": "v5",
+        "evaluation": {
+          "kind": "rolling",
+          "spec": {
+            "evalWindow": "5m",
+            "frequency": "5m"
+          }
+        },
+        "schemaVersion": "v2alpha1",
+        "notificationSettings": {
+          "renotify": {
+            "enabled": true,
+            "interval": "4h",
+            "alertStates": [
+              "firing"
+            ]
+          },
+          "usePolicy": true
+        }
+      },
+      {
+        "alert": "FuseScope Collector RUM back-pressure",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "promql_rule",
+        "condition": {
+          "compositeQuery": {
+            "queries": [
+              {
+                "type": "promql",
+                "spec": {
+                  "name": "A",
+                  "query": "(\n  max by (\"host.name\", reason) (increase(otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=~\"busy|consumer_retryable\"}[10m]) \u003e 0 or (otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=~\"busy|consumer_retryable\"} \u003e 0 unless otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=~\"busy|consumer_retryable\"} offset 10m))\n)\nand\n(\n  max by (\"host.name\", reason) (increase(otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=~\"busy|consumer_retryable\"}[10m] offset 10m) \u003e 0 or (otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=~\"busy|consumer_retryable\"} offset 10m \u003e 0 unless otelcol_receiver_rum_requests_refused{\"service.name\"=\"fusescope-collector\", reason=~\"busy|consumer_retryable\"} offset 20m))\n)",
+                  "disabled": false,
+                  "step": 0,
+                  "stats": false,
+                  "legend": ""
+                }
+              }
+            ],
+            "panelType": "graph",
+            "queryType": "promql"
+          },
+          "selectedQueryName": "A",
+          "thresholds": {
+            "kind": "basic",
+            "spec": [
+              {
+                "name": "warning",
+                "target": 0,
+                "targetUnit": "",
+                "recoveryTarget": null,
+                "matchType": "1",
+                "op": "1",
+                "channels": null
+              }
+            ]
+          }
+        },
+        "labels": {
+          "integration": "fusescope-collector",
+          "severity": "warning"
+        },
+        "annotations": {
+          "description": "RUM refused with reason busy or consumer_retryable: increases in two checks in a row (structural, needs no baseline) (CUTOVER.md §4).",
+          "summary": "RUM requests on {{index $labels \"host.name\"}} are refused: {{index $labels \"reason\"}}"
+        },
+        "disabled": false,
+        "version": "v5",
+        "evaluation": {
+          "kind": "rolling",
+          "spec": {
+            "evalWindow": "5m",
+            "frequency": "5m"
+          }
+        },
+        "schemaVersion": "v2alpha1",
+        "notificationSettings": {
+          "renotify": {
+            "enabled": true,
+            "interval": "4h",
+            "alertStates": [
+              "firing"
+            ]
+          },
+          "usePolicy": true
+        }
+      },
+      {
+        "alert": "FuseScope Collector telemetry missing",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "promql_rule",
+        "condition": {
+          "compositeQuery": {
+            "queries": [
+              {
+                "type": "promql",
+                "spec": {
+                  "name": "A",
+                  "query": "absent_over_time(otelcol_process_uptime{\"service.name\"=\"fusescope-collector\"}[10m])",
+                  "disabled": false,
+                  "step": 0,
+                  "stats": false,
+                  "legend": ""
+                }
+              }
+            ],
+            "panelType": "graph",
+            "queryType": "promql"
+          },
+          "selectedQueryName": "A",
+          "thresholds": {
+            "kind": "basic",
+            "spec": [
+              {
+                "name": "critical",
+                "target": 0,
+                "targetUnit": "",
+                "recoveryTarget": null,
+                "matchType": "1",
+                "op": "1",
+                "channels": null
+              }
+            ]
+          }
+        },
+        "labels": {
+          "integration": "fusescope-collector",
+          "severity": "critical"
+        },
+        "annotations": {
+          "description": "No telemetry: no row for fusescope-collector for 10 minutes; also fires when it never reported (CUTOVER.md §4).",
+          "summary": "No telemetry from fusescope-collector for 10 minutes: the collector or its self-metrics are down"
+        },
+        "disabled": false,
+        "version": "v5",
+        "evaluation": {
+          "kind": "rolling",
+          "spec": {
+            "evalWindow": "5m",
+            "frequency": "5m"
+          }
+        },
+        "schemaVersion": "v2alpha1",
+        "notificationSettings": {
+          "renotify": {
+            "enabled": true,
+            "interval": "4h",
+            "alertStates": [
+              "firing"
+            ]
+          },
+          "usePolicy": true
+        }
+      }
+    ]
+  },
+  "connection_tests": {
+    "logs": null,
+    "metrics": [
+      "otelcol_process_uptime",
+      "otelcol_process_memory_rss",
+      "otelcol_receiver_accepted_spans",
+      "otelcol_receiver_accepted_log_records",
+      "otelcol_receiver_accepted_metric_points",
+      "otelcol_receiver_refused_spans",
+      "otelcol_receiver_refused_log_records",
+      "otelcol_receiver_refused_metric_points",
+      "otelcol_receiver_failed_spans",
+      "otelcol_receiver_failed_log_records",
+      "otelcol_receiver_failed_metric_points",
+      "otelcol_exporter_sent_spans",
+      "otelcol_exporter_sent_log_records",
+      "otelcol_exporter_sent_metric_points",
+      "otelcol_exporter_send_failed_spans",
+      "otelcol_exporter_send_failed_log_records",
+      "otelcol_exporter_send_failed_metric_points",
+      "otelcol_exporter_enqueue_failed_spans",
+      "otelcol_exporter_enqueue_failed_log_records",
+      "otelcol_exporter_enqueue_failed_metric_points",
+      "otelcol_exporter_queue_size",
+      "otelcol_exporter_queue_capacity",
+      "otelcol_exporter_fusescope_clickhouse_insert_errors",
+      "otelcol_exporter_fusescope_clickhouse_insert_duration",
+      "otelcol_receiver_rum_requests_refused"
+    ]
+  },
+  "version": "1.0.0",
+  "latest_version": "1.0.0",
+  "installation": null
+}
