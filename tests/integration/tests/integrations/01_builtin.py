@@ -243,7 +243,7 @@ def test_upgrade_moves_a_dropped_pin_and_updates_dashboards_in_place(
 
     with signoz.sqlstore.conn.connect() as conn:
         assert conn.execute(sql.text("SELECT resource_id FROM integration_asset WHERE integration = 'builtin-mysql' AND kind = 'dashboard' AND slug = 'overview'")).scalar() == dashboard_id
-        version = conn.execute(sql.text("SELECT version FROM integration_asset WHERE integration = 'builtin-mysql' AND slug = 'overview'")).scalar()
+        version = conn.execute(sql.text("SELECT version FROM integration_asset WHERE integration = 'builtin-mysql' AND kind = 'dashboard' AND slug = 'overview'")).scalar()
         assert version == BUILTIN_VERSIONS["builtin-mysql"]
         dashboard = conn.execute(sql.text("SELECT locked, updated_by FROM dashboard WHERE id = :id"), {"id": dashboard_id}).mappings().one()
     assert bool(dashboard["locked"]) is True
