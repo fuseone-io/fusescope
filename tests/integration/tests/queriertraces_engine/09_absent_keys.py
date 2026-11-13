@@ -20,9 +20,20 @@ ATTRIBUTES = ["db.name", "http.route", "peer.service", "rpc.method"]
 RESOURCES = ["deployment.environment"]
 STATES = {"absent": None, "empty": "", "v1": "v1", "v2": "v2"}
 OPERATORS = [
-    "= 'v1'", "!= 'v1'", "IN ('v1', 'v2')", "NOT IN ('v1', 'v2')", "LIKE 'v%'", "NOT LIKE 'v%'",
-    "REGEXP '^v'", "NOT REGEXP '^v'", "CONTAINS 'v'", "NOT CONTAINS 'v'", "EXISTS", "NOT EXISTS",
-    "= ''", "!= ''",
+    "= 'v1'",
+    "!= 'v1'",
+    "IN ('v1', 'v2')",
+    "NOT IN ('v1', 'v2')",
+    "LIKE 'v%'",
+    "NOT LIKE 'v%'",
+    "REGEXP '^v'",
+    "NOT REGEXP '^v'",
+    "CONTAINS 'v'",
+    "NOT CONTAINS 'v'",
+    "EXISTS",
+    "NOT EXISTS",
+    "= ''",
+    "!= ''",
 ]
 
 
@@ -33,15 +44,17 @@ def spans(service: str, now: datetime.datetime) -> list[Traces]:
             attributes, resources = {}, {"service.name": service}
             if value is not None:
                 (resources if key in RESOURCES else attributes)[key] = value
-            out.append(Traces(
-                timestamp=now + datetime.timedelta(milliseconds=10 * i + j),
-                trace_id=uuid.uuid4().hex,
-                span_id=span_id(),
-                name=f"{key}:{state}",
-                kind=TracesKind.SPAN_KIND_SERVER,
-                resources=resources,
-                attributes=attributes,
-            ))
+            out.append(
+                Traces(
+                    timestamp=now + datetime.timedelta(milliseconds=10 * i + j),
+                    trace_id=uuid.uuid4().hex,
+                    span_id=span_id(),
+                    name=f"{key}:{state}",
+                    kind=TracesKind.SPAN_KIND_SERVER,
+                    resources=resources,
+                    attributes=attributes,
+                )
+            )
     return out
 
 
@@ -76,4 +89,65 @@ def test_absent_promoted_keys_read_alike(engine: EngineStack, engine_collector: 
             off = answer(off_engine(engine.a, lambda e=expression, s=select: rows(clickhouse_backend, tokens["off"], window, e, s)), selected)
             if on != off:
                 differences.append(f"{label}\n    engine:     {on}\n    clickhouse: {off}")
+    assert not differences, f"{len(differences)} differences:\n" + "\n".join(differences)
+
+
+# Keys the engine folds into one promoted column: the legacy name, the stable name and whether
+# they are resource keys.
+FOLDED = [
+    ("db.name", "db.namespace", False),
+    ("http.method", "http.request.method", False),
+    ("db.operation", "db.operation.name", False),
+    ("db.system", "db.system.name", False),
+    ("messaging.operation", "messaging.operation.type", False),
+    ("deployment.environment", "deployment.environment.name", True),
+]
+FOLDED_STATES = {
+    "legacy_only": lambda legacy, stable: {legacy: "a"},
+    "stable_only": lambda legacy, stable: {stable: "b"},
+    "both_same": lambda legacy, stable: {legacy: "a", stable: "a"},
+    "legacy_then_stable": lambda legacy, stable: {legacy: "a", stable: "b"},
+    "stable_then_legacy": lambda legacy, stable: {stable: "b", legacy: "a"},
+}
+FOLDED_OPERATORS = ["= 'a'", "= 'b'", "!= 'a'", "EXISTS", "NOT EXISTS"]
+
+
+def folded_spans(service: str, now: datetime.datetime) -> list[Traces]:
+    out = []
+    for i, (legacy, stable, resource) in enumerate(FOLDED):
+        for j, (state, values) in enumerate(FOLDED_STATES.items()):
+            keys = values(legacy, stable)
+            resources = {"service.name": service, **(keys if resource else {})}
+            out.append(
+                Traces(
+                    timestamp=now + datetime.timedelta(milliseconds=10 * i + j),
+                    trace_id=uuid.uuid4().hex,
+                    span_id=span_id(),
+                    name=f"{legacy}|{state}",
+                    kind=TracesKind.SPAN_KIND_SERVER,
+                    resources=resources,
+                    attributes={} if resource else keys,
+                )
+            )
+    return out
+
+
+def test_folded_promoted_keys_read_alike(engine: EngineStack, engine_collector: EngineCollector, clickhouse: types.TestContainerClickhouse, engine_backend: Backend, clickhouse_backend: Backend) -> None:
+    now = datetime.datetime.now(datetime.UTC)
+    service = f"eng-d8f-{uuid.uuid4().hex[:8]}"
+    send_and_wait(engine_collector, clickhouse, engine_backend, folded_spans(service, now))
+    window = (int((now - datetime.timedelta(minutes=5)).timestamp() * 1000), int((now + datetime.timedelta(minutes=1)).timestamp() * 1000))
+    tokens = {"on": engine_backend.token(), "off": clickhouse_backend.token()}
+
+    differences = []
+    for legacy, stable, _ in FOLDED:
+        base = f"service.name = '{service}' AND name LIKE '{legacy}|%'"
+        for key in (legacy, stable):
+            cases = [(f"{key} {op}", f"{base} AND {key} {op}", ["name"], None) for op in FOLDED_OPERATORS]
+            cases.append((f"select {key}", base, ["name", key], key))
+            for label, expression, select, selected in cases:
+                on = answer(on_engine(engine.a, lambda e=expression, s=select: rows(engine_backend, tokens["on"], window, e, s)), selected)
+                off = answer(off_engine(engine.a, lambda e=expression, s=select: rows(clickhouse_backend, tokens["off"], window, e, s)), selected)
+                if on != off:
+                    differences.append(f"{label}\n    engine:     {on}\n    clickhouse: {off}")
     assert not differences, f"{len(differences)} differences:\n" + "\n".join(differences)
