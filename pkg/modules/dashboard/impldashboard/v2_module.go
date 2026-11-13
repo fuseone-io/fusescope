@@ -14,6 +14,27 @@ import (
 )
 
 func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	return m.createV2(ctx, orgID, nil, createdBy, creator, source, postable)
+}
+
+func (m *module) CreateWithIDV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	if existing, err := m.GetV2(ctx, orgID, id); err == nil {
+		return existing, nil
+	} else if !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
+	created, err := m.createV2(ctx, orgID, &id, createdBy, creator, source, postable)
+	if err != nil {
+		// Another caller created it in between.
+		if existing, getErr := m.GetV2(ctx, orgID, id); getErr == nil {
+			return existing, nil
+		}
+		return nil, err
+	}
+	return created, nil
+}
+
+func (m *module) createV2(ctx context.Context, orgID valuer.UUID, id *valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	if !source.IsValid() {
 		return nil, errors.Newf(errors.TypeInvalidInput, dashboardtypes.ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", source.StringValue())
 	}
@@ -24,6 +45,9 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 	dashboard, err := postable.NewDashboardV2(orgID, createdBy, source)
 	if err != nil {
 		return nil, err
+	}
+	if id != nil {
+		dashboard.ID = *id
 	}
 
 	err = m.store.RunInTx(ctx, func(ctx context.Context) error {

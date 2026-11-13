@@ -2,12 +2,15 @@ package impldashboard
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/analytics/analyticstest"
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 	"github.com/fuseone-io/fusescope/pkg/modules/tag/impltag"
 	"github.com/fuseone-io/fusescope/pkg/queryparser"
@@ -189,4 +192,42 @@ func TestGetRejectsANonSystemDashboard(t *testing.T) {
 	_, err = dashboardModule.GetSystemDashboard(ctx, orgID, dashboardtypes.SystemDashboardNamePrefix+testDashboardName)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "must not carry")
+}
+
+func TestCreateWithIDV2IsIdempotentByID(t *testing.T) {
+	ctx := context.Background()
+	store := newTestSQLStore(t)
+	for _, model := range []any{(*dashboardtypes.UserDashboardPreference)(nil), (*dashboardtypes.StorablePublicDashboard)(nil)} {
+		_, err := store.BunDB().NewCreateTable().Model(model).Exec(ctx)
+		require.NoError(t, err)
+	}
+	module := newTestModule(t, store)
+	orgID := valuer.GenerateUUID()
+	id := valuer.GenerateUUID()
+	postable := func(title string) dashboardtypes.PostableDashboardV2 {
+		var p dashboardtypes.PostableDashboardV2
+		require.NoError(t, json.Unmarshal(fmt.Appendf(nil, `{"schemaVersion": "v6", "generateName": true, "tags": [], "spec": {"display": {"name": %q}, "links": [], "variables": [], "panels": {}, "layouts": []}}`, title), &p))
+		return p
+	}
+
+	created, err := module.CreateWithIDV2(ctx, orgID, id, "a@example.com", valuer.GenerateUUID(), dashboardtypes.SourceIntegration, postable("First"))
+	require.NoError(t, err)
+	assert.Equal(t, id, created.ID, "the dashboard takes the chosen ID")
+	assert.True(t, created.Locked)
+
+	again, err := module.CreateWithIDV2(ctx, orgID, id, "b@example.com", valuer.GenerateUUID(), dashboardtypes.SourceIntegration, postable("Second"))
+	require.NoError(t, err)
+	assert.Equal(t, id, again.ID)
+	assert.Equal(t, "First", again.Spec.Display.Name, "an existing dashboard is returned unchanged")
+	count, err := store.BunDB().NewSelect().Model((*dashboardtypes.StorableDashboard)(nil)).Where("id = ?", id).Count(ctx)
+	require.NoError(t, err)
+	assert.EqualValues(t, 1, count)
+
+	_, err = module.CreateWithIDV2(ctx, valuer.GenerateUUID(), id, "c@example.com", valuer.GenerateUUID(), dashboardtypes.SourceIntegration, postable("Other org"))
+	assert.Error(t, err, "another organization's dashboard is neither returned nor overwritten")
+
+	require.NoError(t, module.DeleteUnsafeV2(ctx, orgID, id))
+	require.NoError(t, module.DeleteUnsafeV2(ctx, orgID, id), "deleting a missing dashboard succeeds")
+	_, err = module.GetV2(ctx, orgID, id)
+	assert.True(t, errors.Ast(err, errors.TypeNotFound))
 }
