@@ -63,22 +63,31 @@ var (
 		"events":             "events",
 		"links":              "links",
 		"ts_bucket_start":    "ts_bucket_start",
+		// Derived by the engine when read, from kind and the attribute maps.
+		"http_url":             "http_url",
+		"http_host":            "http_host",
+		"external_http_method": "external_http_method",
+		"external_http_url":    "external_http_url",
 	}
 
 	// dataFusionEmpty is the value a plain span column holds when it is unset.
 	dataFusionEmpty = map[string]string{
-		"timestamp":          "to_timestamp_nanos(0)",
-		"trace_state":        "''",
-		"flags":              "0",
-		"name":               "''",
-		"kind":               "0",
-		"kind_string":        "''",
-		"duration_nano":      "0",
-		"status_code":        "0",
-		"status_message":     "''",
-		"status_code_string": "''",
-		"has_error":          "false",
-		"ts_bucket_start":    "0",
+		"timestamp":            "to_timestamp_nanos(0)",
+		"trace_state":          "''",
+		"flags":                "0",
+		"name":                 "''",
+		"kind":                 "0",
+		"kind_string":          "''",
+		"duration_nano":        "0",
+		"status_code":          "0",
+		"status_message":       "''",
+		"status_code_string":   "''",
+		"has_error":            "false",
+		"ts_bucket_start":      "0",
+		"http_url":             "''",
+		"http_host":            "''",
+		"external_http_method": "''",
+		"external_http_url":    "''",
 	}
 
 	// dataFusionNullableColumns are promoted columns, NULL when the span
@@ -98,15 +107,6 @@ var (
 		"attribute_string_rpc$$service":         "rpc_service",
 		"attribute_string_rpc$$method":          "rpc_method",
 		"attribute_string_peer$$service":        "peer_service",
-	}
-
-	// dataFusionAbsentColumns are derived ClickHouse columns the engine does
-	// not keep; they read as their empty value.
-	dataFusionAbsentColumns = map[string]bool{
-		"external_http_url":    true,
-		"http_url":             true,
-		"external_http_method": true,
-		"http_host":            true,
 	}
 
 	// dataFusionIDs are the identity columns, stored as bytes and read as
@@ -214,9 +214,6 @@ func spanColumnRead(name string) (qbtypes.Read, error) {
 	}
 	if column, ok := dataFusionNullableColumns[name]; ok {
 		return presentRead(fmt.Sprintf("coalesce(%s, '')", column), "''"), nil
-	}
-	if dataFusionAbsentColumns[name] {
-		return qbtypes.Read{SQL: "''", Presence: "false", Absence: "true", WhenAbsent: qbtypes.AlwaysPresent}, nil
 	}
 	return qbtypes.Read{}, qbtypes.ErrColumnNotFound
 }
