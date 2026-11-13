@@ -1,7 +1,7 @@
 package parity
 
-// derivedColumns are the span columns ClickHouse derives from attributes and fusescope-engine does
-// not keep yet.
+// derivedColumns are the span columns ClickHouse derives from attributes at ingest and
+// fusescope-engine derives when read, from 0.0.5 on.
 var derivedColumns = map[string]bool{
 	"http_url":             true,
 	"http_host":            true,

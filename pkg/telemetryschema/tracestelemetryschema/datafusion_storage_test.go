@@ -125,11 +125,11 @@ func TestDataFusionStorageRead(t *testing.T) {
 			whenAbsent: qbtypes.AlwaysPresent,
 		},
 		{
-			name:       "a derived column the engine does not keep reads empty",
+			name:       "a column the engine derives when read reads bare",
 			key:        telemetrytypes.TelemetryFieldKey{Name: "http_url", FieldContext: telemetrytypes.FieldContextSpan},
-			sql:        "''",
-			presence:   "false",
-			absence:    "true",
+			sql:        "http_url",
+			presence:   "http_url <> ''",
+			absence:    "http_url = ''",
 			whenAbsent: qbtypes.AlwaysPresent,
 		},
 		{
@@ -172,10 +172,14 @@ func TestDataFusionStorageReadsLinksWithTheirSpansIDs(t *testing.T) {
 
 func TestDataFusionStorageSpanColumnPresence(t *testing.T) {
 	cases := map[string][2]string{
-		"has_error": {"has_error <> false", "has_error = false"},
-		"timestamp": {"timestamp <> to_timestamp_nanos(0)", "timestamp = to_timestamp_nanos(0)"},
-		"events":    {"cardinality(events) > 0", "cardinality(events) = 0"},
-		"name":      {"name <> ''", "name = ''"},
+		"has_error":            {"has_error <> false", "has_error = false"},
+		"timestamp":            {"timestamp <> to_timestamp_nanos(0)", "timestamp = to_timestamp_nanos(0)"},
+		"events":               {"cardinality(events) > 0", "cardinality(events) = 0"},
+		"name":                 {"name <> ''", "name = ''"},
+		"http_url":             {"http_url <> ''", "http_url = ''"},
+		"http_host":            {"http_host <> ''", "http_host = ''"},
+		"external_http_method": {"external_http_method <> ''", "external_http_method = ''"},
+		"external_http_url":    {"external_http_url <> ''", "external_http_url = ''"},
 	}
 	storage := NewDataFusionStorage()
 	for name, want := range cases {
