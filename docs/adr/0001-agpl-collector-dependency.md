@@ -163,6 +163,11 @@ On 2026-11-12, after v0.163.0 shipped that preview and it was validated on the d
 simulator (`pipelinesim`) was removed (collector ADR 0012, step 3), with `pkg/grok`, the `vjeantet/grok` copy only it
 used, and its `NOTICE` entry. Its tests moved to the preview, which now runs only on `logspipeline`.
 
+On 2026-11-13 the log pipelines corpus became the collector's (collector ADR 0012, step 4). The `logspipeline`
+module v0.6.2 publishes it, with the library's messages per record. The backend's golden is held equal to it, and
+its preview's messages are compared with it, the one `SigNoz/expr` divergence listed. `simulatorcontract` moved to
+`fusescope-collector` 0.6.2.
+
 **Guard.** `make agpl-check AGPL_CHART=<fusescope-charts>/charts/fusescope` renders the chart with its default values and fails if any image comes from one of those repositories, besides the existing check on the backend binary. It runs in two places:
 
 - **Gate on chart changes.** `fusescope-charts`' `agpl-guard` workflow (fusescope-charts#41) runs it on every PR and push to `main` that touches `charts/**`. It renders the chart with its nested dependencies built, using this repo's `main`, so an AGPL image is caught before it merges.
