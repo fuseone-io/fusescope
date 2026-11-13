@@ -1,6 +1,9 @@
-"""An ingester that does not answer makes the answer partial: the engine says so,
-and the backend reports it as ingester_unavailable in the query range warnings and
-in the success envelope. The engine counts a paused ingester as live only until its
+"""An ingester that does not answer fails the reads that need a complete listing:
+metadata.keys, which the routed builder reads, and top_level_operations, which the
+services read. A partial listing would change the SQL or the services silently, so
+the engine answers UNAVAILABLE and the backend refuses, not a partial result. The
+suite's engines keep no listing (`recent_keys_ttl_secs = 0`), so no earlier read
+can answer from a cache. The engine counts a paused ingester as live only until its
 heartbeat is 10 s old, so the reads follow the pause at once."""
 
 import datetime
@@ -18,7 +21,7 @@ from fixtures.querier import build_order_by, build_raw_query, make_query_request
 from fixtures.traces import Traces
 from integration.tests.queriertraces_engine.conftest import Backend, span_id
 
-UNAVAILABLE = "Some recent data may be missing: an engine ingester did not answer."
+UNAVAILABLE = "fusescope-engine refused the call: Unavailable"
 
 
 @pytest.fixture(name="paused_engine_b")
@@ -27,7 +30,7 @@ def paused_engine_b(engine: EngineStack):
     engine.b.unpause()
 
 
-def test_a_paused_ingester_makes_the_answer_partial(engine: EngineStack, engine_b_collector: EngineCollector, engine_backend: Backend, paused_engine_b) -> None:
+def test_a_paused_ingester_fails_the_reads_that_need_a_complete_listing(engine: EngineStack, engine_b_collector: EngineCollector, engine_backend: Backend, paused_engine_b) -> None:
     now = datetime.datetime.now(datetime.UTC)
     trace_id = uuid.uuid4().hex
     engine_b_collector.send([Traces(timestamp=now, trace_id=trace_id, span_id=span_id(), name="GET /partial", resources={"service.name": "eng-partial"})])
@@ -53,9 +56,8 @@ def test_a_paused_ingester_makes_the_answer_partial(engine: EngineStack, engine_
     envelope = on_engine(engine.a, lambda: requests.post(engine_backend.signoz.self.host_configs["8080"].get("/api/v2/services"), json=services, headers={"authorization": f"Bearer {token}"}, timeout=30))
     paused_engine_b.unpause()
 
-    assert response.status_code == HTTPStatus.OK, response.text
-    warnings = [w["message"] for w in (response.json()["data"].get("warning") or {}).get("warnings") or []]
-    assert warnings == [UNAVAILABLE]
+    assert response.status_code != HTTPStatus.OK, response.text
+    assert UNAVAILABLE in response.text, "the routed query: its keys listing needs every ingester"
 
-    assert envelope.status_code == HTTPStatus.OK, envelope.text
-    assert envelope.json()["warnings"] == [UNAVAILABLE]
+    assert envelope.status_code != HTTPStatus.OK, envelope.text
+    assert UNAVAILABLE in envelope.text, "the services: top_level_operations needs every ingester"
