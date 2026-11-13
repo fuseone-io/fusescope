@@ -2,6 +2,7 @@ package integrations
 
 import (
 	"context"
+	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	"github.com/fuseone-io/fusescope/pkg/types/cloudintegrationtypes"
@@ -26,15 +27,23 @@ type InstalledIntegrationsRepo interface {
 
 	updateVersion(ctx context.Context, orgID string, integrationType string, version string) error
 
-	createIntegrationDashboard(ctx context.Context, row *cloudintegrationtypes.StorableIntegrationDashboard) error
+	claimIntegrationAsset(ctx context.Context, orgID string, integration string, kind cloudintegrationtypes.IntegrationAssetKind, slug string, now time.Time, lease time.Duration) (*cloudintegrationtypes.StorableIntegrationAsset, assetClaim, error)
 
-	getIntegrationDashboardBySlug(ctx context.Context, orgID string, slug string) (*cloudintegrationtypes.StorableIntegrationDashboard, error)
+	finalizeIntegrationAsset(ctx context.Context, id string, generation int64, version string, now time.Time) (bool, error)
 
-	listIntegrationDashboardsBySlugPrefix(ctx context.Context, orgID string, slugPrefix string) ([]*cloudintegrationtypes.StorableIntegrationDashboard, error)
+	setIntegrationAssetVersion(ctx context.Context, id string, generation int64, version string, now time.Time) (bool, error)
 
-	deleteIntegrationDashboardBySlug(ctx context.Context, orgID string, slug string) error
+	releaseIntegrationAssetLease(ctx context.Context, id string, generation int64, now time.Time) error
 
-	runInTx(ctx context.Context, fn func(ctx context.Context) error) error
+	markIntegrationAssetDeleting(ctx context.Context, id string, now time.Time) error
+
+	markIntegrationAssetsDeleting(ctx context.Context, orgID string, integration string, now time.Time) error
+
+	deleteIntegrationAsset(ctx context.Context, id string) error
+
+	getIntegrationAsset(ctx context.Context, id string) (*cloudintegrationtypes.StorableIntegrationAsset, error)
+
+	listIntegrationAssets(ctx context.Context, orgID string, integration string) ([]*cloudintegrationtypes.StorableIntegrationAsset, error)
 }
 
 type AvailableIntegrationsRepo interface {

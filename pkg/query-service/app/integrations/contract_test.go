@@ -10,13 +10,12 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 	"github.com/fuseone-io/fusescope/pkg/modules/dashboard/dashboardtest"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
-	"github.com/fuseone-io/fusescope/pkg/sqlstore/sqlitesqlstore"
 	"github.com/fuseone-io/fusescope/pkg/types"
 	"github.com/fuseone-io/fusescope/pkg/types/cloudintegrationtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/dashboardtypes"
@@ -48,9 +47,8 @@ func TestAPIContract(t *testing.T) {
 	var created []provisionedDashboard
 	dashboards := dashboardtest.NewMockModule(t)
 	dashboards.EXPECT().
-		CreateV2(mock.Anything, orgID, "admin@example.com", creator, dashboardtypes.SourceIntegration, mock.Anything).
-		RunAndReturn(func(ctx context.Context, orgID valuer.UUID, _ string, _ valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
-			id := valuer.GenerateUUID()
+		CreateWithIDV2(mock.Anything, orgID, mock.Anything, "admin@example.com", creator, dashboardtypes.SourceIntegration, mock.Anything).
+		RunAndReturn(func(ctx context.Context, orgID valuer.UUID, id valuer.UUID, _ string, _ valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 			_, err := store.BunDBCtx(ctx).ExecContext(ctx, "INSERT INTO dashboard (id, org_id) VALUES (?, ?)", id.StringValue(), orgID.StringValue())
 			require.NoError(t, err)
 			created = append(created, provisionedDashboard{Source: source.StringValue(), DefinitionSHA256: sha256Hex(t, postable), dashboardID: id.StringValue()})
@@ -78,11 +76,13 @@ func TestAPIContract(t *testing.T) {
 			_, apiErr = manager.InstallIntegration(ctx, orgID.StringValue(), item.Id, cloudintegrationtypes.InstalledIntegrationConfig{}, "admin@example.com", creator)
 			require.Nil(t, apiErr)
 
-			rows, err := manager.installedIntegrationsRepo.listIntegrationDashboardsBySlugPrefix(ctx, orgID.StringValue(), "")
+			assets, err := manager.installedIntegrationsRepo.listIntegrationAssets(ctx, orgID.StringValue(), item.Id)
 			require.NoError(t, err)
+			// The goldens keep the slugs integration_dashboard had, so they
+			// show the provisioned dashboards did not change with the table.
 			slugs := map[string]string{}
-			for _, row := range rows {
-				slugs[row.DashboardID] = row.Slug
+			for _, asset := range assets {
+				slugs[asset.ResourceID] = strings.TrimPrefix(item.Id, "builtin-") + "-" + asset.Slug
 			}
 			provisioned := []provisionedDashboard{}
 			for _, dashboard := range created {
@@ -113,37 +113,15 @@ func newTestManager(t *testing.T, store sqlstore.SQLStore, dashboards *dashboard
 		availableIntegrationsRepo: embeddedIntegrations(t),
 		installedIntegrationsRepo: repo,
 		dashboardModule:           dashboards,
+		rules:                     newMemoryRules(),
 		logger:                    slog.Default(),
+		now:                       time.Now,
 	}
 }
 
 func newTestSQLStore(t *testing.T) sqlstore.SQLStore {
 	t.Helper()
-
-	store, err := sqlitesqlstore.New(context.Background(), factorytest.NewSettings(), sqlstore.Config{
-		Provider:   "sqlite",
-		Connection: sqlstore.ConnectionConfig{MaxOpenConns: 1},
-		Sqlite: sqlstore.SqliteConfig{
-			Path:            filepath.Join(t.TempDir(), "test.db"),
-			Mode:            "wal",
-			BusyTimeout:     5 * time.Second,
-			TransactionMode: "deferred",
-		},
-	})
-	require.NoError(t, err)
-
-	for _, model := range []any{
-		(*cloudintegrationtypes.InstalledIntegration)(nil),
-		(*cloudintegrationtypes.StorableIntegrationDashboard)(nil),
-	} {
-		_, err := store.BunDB().NewCreateTable().Model(model).IfNotExists().Exec(context.Background())
-		require.NoError(t, err)
-	}
-	// integration_dashboard rows are scoped to an org through the dashboard table.
-	_, err = store.BunDB().Exec(`CREATE TABLE IF NOT EXISTS dashboard (id TEXT PRIMARY KEY, org_id TEXT)`)
-	require.NoError(t, err)
-
-	return store
+	return newSQLiteTestStore(t, 1)
 }
 
 func encodeLikeAPI(t *testing.T, v any) []byte {

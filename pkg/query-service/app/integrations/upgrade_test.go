@@ -19,7 +19,7 @@ import (
 func TestUpgradeIntegration(t *testing.T) {
 	demoV1 := testPackage("builtin-demo", "1.0.0", "Demo v1", "parse v1", testDashboard{id: "overview", title: "Overview v1"}, testDashboard{id: "legacy", title: "Legacy"})
 	demoV11 := testPackage("builtin-demo", "1.1.0", "Demo v1.1", "parse v1.1", testDashboard{id: "overview", title: "Overview v1.1"}, testDashboard{id: "queries", title: "Queries"})
-	latestDashboards := map[string]string{"demo-overview": "Overview v1.1", "demo-queries": "Queries"}
+	latestDashboards := map[string]string{"overview": "Overview v1.1", "queries": "Queries"}
 
 	testCases := []struct {
 		name           string
@@ -144,11 +144,15 @@ func newDashboardsInMemory(t *testing.T, store sqlstore.SQLStore, dashboards map
 	t.Helper()
 	module := dashboardtest.NewMockModule(t)
 	module.EXPECT().
-		CreateV2(mock.Anything, mock.Anything, mock.Anything, mock.Anything, dashboardtypes.SourceIntegration, mock.Anything).
-		RunAndReturn(func(ctx context.Context, orgID valuer.UUID, createdBy string, _ valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+		CreateWithIDV2(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, dashboardtypes.SourceIntegration, mock.Anything).
+		RunAndReturn(func(ctx context.Context, orgID valuer.UUID, id valuer.UUID, createdBy string, _ valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+			if existing, ok := dashboards[id]; ok {
+				return existing, nil
+			}
 			require.NoError(t, postable.Validate())
 			created, err := postable.NewDashboardV2(orgID, createdBy, source)
 			require.NoError(t, err)
+			created.ID = id
 			_, err = store.BunDBCtx(ctx).ExecContext(ctx, "INSERT INTO dashboard (id, org_id) VALUES (?, ?)", created.ID.StringValue(), orgID.StringValue())
 			require.NoError(t, err)
 			dashboards[created.ID] = created
@@ -193,11 +197,13 @@ func dashboardIDsBySlug(t *testing.T, store sqlstore.SQLStore, orgID valuer.UUID
 	t.Helper()
 	repo, err := NewInstalledIntegrationsSqliteRepo(store)
 	require.NoError(t, err)
-	rows, err := repo.listIntegrationDashboardsBySlugPrefix(context.Background(), orgID.StringValue(), "")
+	assets, err := repo.listIntegrationAssets(context.Background(), orgID.StringValue(), "builtin-demo")
 	require.NoError(t, err)
 	ids := map[string]valuer.UUID{}
-	for _, row := range rows {
-		ids[row.Slug] = valuer.MustNewUUID(row.DashboardID)
+	for _, asset := range assets {
+		if asset.Kind == cloudintegrationtypes.IntegrationAssetKindDashboard {
+			ids[asset.Slug] = valuer.MustNewUUID(asset.ResourceID)
+		}
 	}
 	return ids
 }

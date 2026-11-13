@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/sqlschema"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
@@ -157,7 +158,7 @@ func (migration *addIntegrationAsset) backfill(ctx context.Context, tx bun.Tx) e
 	}
 	if len(problems) > 0 {
 		sort.Strings(problems)
-		return fmt.Errorf("add_integration_asset: %d installed integration dashboard(s) cannot be moved; nothing was changed:\n  %s", len(problems), strings.Join(problems, "\n  "))
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "add_integration_asset: %d installed integration dashboard(s) cannot be moved; nothing was changed:\n  %s", len(problems), strings.Join(problems, "\n  "))
 	}
 
 	for _, a := range assets {

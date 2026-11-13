@@ -20,7 +20,7 @@ type Controller struct {
 	mgr *Manager
 }
 
-func NewController(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module, logger *slog.Logger) (*Controller, error) {
+func NewController(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module, rules Rules, logger *slog.Logger) (*Controller, error) {
 	embedded, err := catalog.LoadEmbedded(logger, version.Info.Version())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't load the integration catalog: %w", err)
@@ -30,7 +30,7 @@ func NewController(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module,
 		return nil, fmt.Errorf("couldn't load the integration catalog: %w", err)
 	}
 
-	mgr, err := NewManager(sqlStore, dashboardModule, available, logger)
+	mgr, err := NewManager(sqlStore, dashboardModule, rules, available, logger)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations manager: %w", err)
 	}

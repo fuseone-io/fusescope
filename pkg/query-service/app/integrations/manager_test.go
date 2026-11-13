@@ -47,7 +47,7 @@ func newCatalogManager(t *testing.T, store sqlstore.SQLStore, packages ...catalo
 	t.Helper()
 	available, err := NewCatalogIntegrations(&catalog.Catalog{Packages: packages})
 	require.NoError(t, err)
-	manager, err := NewManager(store, dashboardtest.NewMockModule(t), available, slog.Default())
+	manager, err := NewManager(store, dashboardtest.NewMockModule(t), newMemoryRules(), available, slog.Default())
 	require.NoError(t, err)
 	return manager
 }

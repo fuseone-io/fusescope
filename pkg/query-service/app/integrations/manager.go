@@ -7,6 +7,9 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"time"
+
+	"github.com/fuseone-io/fusescope/pkg/errors"
 
 	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
@@ -39,7 +42,14 @@ type IntegrationAssets struct {
 	Logs       LogsAssets  `json:"logs"`
 	Dashboards []Dashboard `json:"dashboards"`
 
-	Alerts []ruletypes.PostableRule `json:"alerts"`
+	Alerts []Alert `json:"alerts"`
+}
+
+// Alert pairs a built-in alert rule's stable id with its definition; the id
+// is the slug an installation owns the rule by.
+type Alert struct {
+	ID         string                 `json:"id"`
+	Definition ruletypes.PostableRule `json:"definition"`
 }
 
 // Dashboard pairs a built-in dashboard's stable id with its v2 definition. The id
@@ -136,10 +146,12 @@ type Manager struct {
 	availableIntegrationsRepo AvailableIntegrationsRepo
 	installedIntegrationsRepo InstalledIntegrationsRepo
 	dashboardModule           dashboard.Module
+	rules                     Rules
 	logger                    *slog.Logger
+	now                       func() time.Time
 }
 
-func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module, availableIntegrations AvailableIntegrationsRepo, logger *slog.Logger) (*Manager, error) {
+func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module, rules Rules, availableIntegrations AvailableIntegrationsRepo, logger *slog.Logger) (*Manager, error) {
 	iiRepo, err := NewInstalledIntegrationsSqliteRepo(store)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -151,7 +163,9 @@ func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module, avail
 		availableIntegrationsRepo: availableIntegrations,
 		installedIntegrationsRepo: iiRepo,
 		dashboardModule:           dashboardModule,
+		rules:                     rules,
 		logger:                    logger,
+		now:                       time.Now,
 	}, nil
 }
 
@@ -272,18 +286,16 @@ func (m *Manager) InstallIntegration(
 	}
 
 	// A new installation pins the latest version; reinstalling keeps the pin.
-	var served IntegrationDetails
-	err = m.installedIntegrationsRepo.runInTx(ctx, func(ctx context.Context) error {
-		installation, apiErr := m.installedIntegrationsRepo.upsert(ctx, orgId, integrationId, integrationDetails.version, config)
-		if apiErr != nil {
-			return model.WrapApiError(apiErr, "could not insert installed integration")
-		}
-
-		served = m.servedDetails(ctx, *integrationDetails, installation.Version)
-		return m.provisionDashboards(ctx, orgUUID, createdBy, creator, integrationId, &served)
-	})
-	if err != nil {
-		return nil, model.WrapApiError(model.InternalError(err), "could not install integration")
+	// The installation is recorded before its resources are made, so a
+	// failure leaves it installed and installing again, or uninstalling,
+	// completes the work.
+	installation, apiErr := m.installedIntegrationsRepo.upsert(ctx, orgId, integrationId, integrationDetails.version, config)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "could not insert installed integration")
+	}
+	served := m.servedDetails(ctx, *integrationDetails, installation.Version)
+	if err := m.reconcileAssets(ctx, orgUUID, integrationId, &served, assetActor{name: createdBy, id: creator}); err != nil {
+		return nil, assetsApiError(err, "could not install integration")
 	}
 
 	return &IntegrationsListItem{
@@ -304,21 +316,36 @@ func (m *Manager) UninstallIntegration(
 		return model.BadRequest(fmt.Errorf("invalid org id: %w", err))
 	}
 
-	err = m.installedIntegrationsRepo.runInTx(ctx, func(ctx context.Context) error {
-		if err := m.deprovisionDashboards(ctx, orgUUID, integrationId); err != nil {
-			return model.InternalError(fmt.Errorf("could not deprovision dashboards: %w", err))
-		}
-		apiErr := m.installedIntegrationsRepo.delete(ctx, orgId, integrationId)
-		if apiErr != nil {
-			return model.WrapApiError(apiErr, "could not delete installed integration")
-		}
-
-		return nil
-	})
-	if err != nil {
-		return model.WrapApiError(model.InternalError(err), "could not uninstall integration")
+	// The installation goes last, so an uninstallation that fails midway
+	// still shows it installed, and uninstalling again finishes.
+	if err := m.removeAllAssets(ctx, orgUUID, integrationId); err != nil {
+		return assetsApiError(err, "could not uninstall integration")
+	}
+	if apiErr := m.installedIntegrationsRepo.delete(ctx, orgId, integrationId); apiErr != nil {
+		return model.WrapApiError(apiErr, "could not delete installed integration")
 	}
 	return nil
+}
+
+// assetsApiError reports a conflict when every failure is a conflict with
+// another request, which retrying resolves, and an internal error otherwise.
+func assetsApiError(err error, msg string) *model.ApiError {
+	if onlyConflicts(err) {
+		return model.WrapApiError(&model.ApiError{Typ: model.ErrorConflict, Err: err}, msg)
+	}
+	return model.WrapApiError(model.InternalError(err), msg)
+}
+
+func onlyConflicts(err error) bool {
+	if joined, ok := err.(interface{ Unwrap() []error }); ok {
+		for _, e := range joined.Unwrap() {
+			if !onlyConflicts(e) {
+				return false
+			}
+		}
+		return len(joined.Unwrap()) > 0
+	}
+	return errors.Ast(err, errors.TypeAlreadyExists)
 }
 
 func (m *Manager) GetPipelinesForInstalledIntegrations(
@@ -457,57 +484,4 @@ func (m *Manager) servedDetails(ctx context.Context, latest IntegrationDetails, 
 	}
 	m.logger.WarnContext(ctx, "pinned integration version is not in the catalog, serving the latest", slog.String("integration", latest.Id), slog.String("pinned_version", pin), slog.String("latest_version", latest.version))
 	return latest
-}
-
-func (m *Manager) provisionDashboards(
-	ctx context.Context,
-	orgID valuer.UUID,
-	createdBy string,
-	creator valuer.UUID,
-	integrationID string,
-	integration *IntegrationDetails,
-) error {
-	bareIntegrationID := strings.TrimPrefix(integrationID, "builtin-")
-	for _, dd := range integration.Assets.Dashboards {
-		if dd.ID == "" {
-			continue
-		}
-		slug := cloudintegrationtypes.InstalledIntegrationDashboardSlug(bareIntegrationID, dd.ID)
-
-		existing, err := m.installedIntegrationsRepo.getIntegrationDashboardBySlug(ctx, orgID.StringValue(), slug)
-		if err == nil && existing != nil {
-			continue
-		}
-
-		createdDashboard, err := m.dashboardModule.CreateV2(ctx, orgID, createdBy, creator, dashboardtypes.SourceIntegration, dd.Definition)
-		if err != nil {
-			return fmt.Errorf("could not create dashboard for slug %s: %w", slug, err)
-		}
-
-		row := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID.StringValue(), cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider, slug)
-		if err := m.installedIntegrationsRepo.createIntegrationDashboard(ctx, row); err != nil {
-			return fmt.Errorf("could not create integration_dashboard row for slug %s: %w", slug, err)
-		}
-	}
-	return nil
-}
-
-func (m *Manager) deprovisionDashboards(
-	ctx context.Context,
-	orgID valuer.UUID,
-	integrationID string,
-) error {
-	integrationID = strings.TrimPrefix(integrationID, "builtin-")
-	slugPrefix := cloudintegrationtypes.InstalledIntegrationDashboardSlugPrefix(integrationID)
-	rows, err := m.installedIntegrationsRepo.listIntegrationDashboardsBySlugPrefix(ctx, orgID.StringValue(), slugPrefix)
-	if err != nil {
-		return err
-	}
-
-	for _, row := range rows {
-		if err := m.deleteProvisionedDashboard(ctx, orgID, row); err != nil {
-			return err
-		}
-	}
-	return nil
 }
