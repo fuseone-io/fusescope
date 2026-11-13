@@ -2,6 +2,7 @@ package integrations
 
 import (
 	"context"
+	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	"github.com/fuseone-io/fusescope/pkg/types/cloudintegrationtypes"
@@ -26,15 +27,23 @@ type InstalledIntegrationsRepo interface {
 
 	updateVersion(ctx context.Context, orgID string, integrationType string, version string) error
 
-	createIntegrationDashboard(ctx context.Context, row *cloudintegrationtypes.StorableIntegrationDashboard) error
+	acquireIntegrationOperation(ctx context.Context, orgID string, integration string, state cloudintegrationtypes.IntegrationOperationState, now time.Time, lease time.Duration) (*integrationOperation, error)
 
-	getIntegrationDashboardBySlug(ctx context.Context, orgID string, slug string) (*cloudintegrationtypes.StorableIntegrationDashboard, error)
+	runInOperation(ctx context.Context, op *integrationOperation, now time.Time, lease time.Duration, fn func(ctx context.Context) error) error
 
-	listIntegrationDashboardsBySlugPrefix(ctx context.Context, orgID string, slugPrefix string) ([]*cloudintegrationtypes.StorableIntegrationDashboard, error)
+	releaseIntegrationOperation(ctx context.Context, op *integrationOperation, now time.Time) error
 
-	deleteIntegrationDashboardBySlug(ctx context.Context, orgID string, slug string) error
+	finishUninstallation(ctx context.Context, op *integrationOperation, now time.Time) error
 
-	runInTx(ctx context.Context, fn func(ctx context.Context) error) error
+	reserveIntegrationAsset(ctx context.Context, orgID string, integration string, kind cloudintegrationtypes.IntegrationAssetKind, slug string, now time.Time) (*cloudintegrationtypes.StorableIntegrationAsset, error)
+
+	markIntegrationAssetReady(ctx context.Context, id string, version string, now time.Time) error
+
+	setIntegrationAssetVersion(ctx context.Context, id string, version string, now time.Time) error
+
+	deleteIntegrationAsset(ctx context.Context, id string) error
+
+	listIntegrationAssets(ctx context.Context, orgID string, integration string) ([]*cloudintegrationtypes.StorableIntegrationAsset, error)
 }
 
 type AvailableIntegrationsRepo interface {

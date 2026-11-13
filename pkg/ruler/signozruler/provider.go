@@ -161,6 +161,18 @@ func (provider *provider) DeleteRule(ctx context.Context, idStr string) error {
 	return provider.manager.DeleteRule(ctx, idStr)
 }
 
+func (provider *provider) CreateRuleInOrg(ctx context.Context, orgID valuer.UUID, id valuer.UUID, actor string, rule *ruletypes.PostableRule) error {
+	return provider.manager.CreateRuleInOrg(ctx, orgID, id, actor, rule)
+}
+
+func (provider *provider) EditRuleInOrg(ctx context.Context, orgID valuer.UUID, id valuer.UUID, actor string, rule *ruletypes.PostableRule) error {
+	return provider.manager.EditRuleInOrg(ctx, orgID, id, actor, rule)
+}
+
+func (provider *provider) DeleteRuleInOrg(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return provider.manager.DeleteRuleInOrg(ctx, orgID, id)
+}
+
 func (provider *provider) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID) (*ruletypes.GettableRule, error) {
 	return provider.manager.PatchRule(ctx, ruleStr, id)
 }

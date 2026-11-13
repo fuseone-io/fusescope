@@ -83,13 +83,16 @@ type Alertmanager interface {
 
 	// Notification Policy CRUD
 	CreateRoutePolicy(ctx context.Context, route *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error)
-	CreateRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error)
+	// CreateRoutePolicies, DeleteAllRoutePoliciesByRuleId and
+	// UpdateAllRoutePoliciesByRuleId serve the ruler, which authorizes its
+	// callers, so they take the organization and actor explicitly.
+	CreateRoutePolicies(ctx context.Context, orgID valuer.UUID, actor string, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error)
 	GetRoutePolicyByID(ctx context.Context, routeID string) (*alertmanagertypes.GettableRoutePolicy, error)
 	GetAllRoutePolicies(ctx context.Context) ([]*alertmanagertypes.GettableRoutePolicy, error)
 	UpdateRoutePolicyByID(ctx context.Context, routeID string, route *alertmanagertypes.PostableRoutePolicy) (*alertmanagertypes.GettableRoutePolicy, error)
 	DeleteRoutePolicyByID(ctx context.Context, routeID string) error
-	DeleteAllRoutePoliciesByRuleId(ctx context.Context, ruleId string) error
-	UpdateAllRoutePoliciesByRuleId(ctx context.Context, ruleId string, routes []*alertmanagertypes.PostableRoutePolicy) error
+	DeleteAllRoutePoliciesByRuleId(ctx context.Context, orgID valuer.UUID, ruleId string) error
+	UpdateAllRoutePoliciesByRuleId(ctx context.Context, orgID valuer.UUID, actor string, ruleId string, routes []*alertmanagertypes.PostableRoutePolicy) error
 
 	CreateInhibitRules(ctx context.Context, orgID valuer.UUID, rules []amConfig.InhibitRule) error
 	DeleteAllInhibitRulesByRuleId(ctx context.Context, orgID valuer.UUID, ruleId string) error

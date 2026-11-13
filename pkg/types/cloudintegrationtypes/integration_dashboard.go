@@ -11,8 +11,7 @@ import (
 type IntegrationDashboardProviderType struct{ valuer.String }
 
 var (
-	IntegrationDashboardProviderCloudIntegration     = IntegrationDashboardProviderType{valuer.NewString("cloud_integration")}
-	IntegrationDashboardInstalledIntegrationProvider = IntegrationDashboardProviderType{valuer.NewString("installed_integration")}
+	IntegrationDashboardProviderCloudIntegration = IntegrationDashboardProviderType{valuer.NewString("cloud_integration")}
 )
 
 type StorableIntegrationDashboard struct {
@@ -46,12 +45,4 @@ func CloudIntegrationDashboardSlug(provider CloudProviderType, serviceID Service
 
 func CloudIntegrationDashboardSlugPrefix(provider CloudProviderType, serviceID ServiceID) string {
 	return fmt.Sprintf("%s-%s-", provider.StringValue(), serviceID.StringValue())
-}
-
-func InstalledIntegrationDashboardSlug(integrationID, dashboardName string) string {
-	return fmt.Sprintf("%s-%s", integrationID, dashboardName)
-}
-
-func InstalledIntegrationDashboardSlugPrefix(integrationID string) string {
-	return fmt.Sprintf("%s-", integrationID)
 }

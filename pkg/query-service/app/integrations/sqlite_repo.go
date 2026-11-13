@@ -15,6 +15,9 @@ import (
 
 type InstalledIntegrationsSqliteRepo struct {
 	store sqlstore.SQLStore
+	// beforeTakeOver, when set, runs after an acquisition decided to take an
+	// operation over and before it does, so tests can interleave a renewal.
+	beforeTakeOver func()
 }
 
 func NewInstalledIntegrationsSqliteRepo(store sqlstore.SQLStore) (
@@ -144,72 +147,4 @@ func (r *InstalledIntegrationsSqliteRepo) updateVersion(ctx context.Context, org
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not update the version of installed integration %s", integrationType)
 	}
 	return nil
-}
-
-func (r *InstalledIntegrationsSqliteRepo) runInTx(ctx context.Context, fn func(ctx context.Context) error) error {
-	return r.store.RunInTxCtx(ctx, nil, fn)
-}
-
-func (r *InstalledIntegrationsSqliteRepo) createIntegrationDashboard(
-	ctx context.Context, row *cloudintegrationtypes.StorableIntegrationDashboard,
-) error {
-	_, err := r.store.BunDBCtx(ctx).NewInsert().Model(row).Exec(ctx)
-	return err
-}
-
-func (r *InstalledIntegrationsSqliteRepo) getIntegrationDashboardBySlug(
-	ctx context.Context, orgID string, slug string,
-) (*cloudintegrationtypes.StorableIntegrationDashboard, error) {
-	row := new(cloudintegrationtypes.StorableIntegrationDashboard)
-	err := r.store.BunDBCtx(ctx).
-		NewSelect().
-		Model(row).
-		Join("JOIN dashboard AS d ON storable_integration_dashboard.dashboard_id = d.id").
-		Where("d.org_id = ?", orgID).
-		Where("storable_integration_dashboard.provider = ?", cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider).
-		Where("storable_integration_dashboard.slug = ?", slug).
-		Scan(ctx)
-	if err != nil {
-		return nil, r.store.WrapNotFoundErrf(err, errors.CodeNotFound, "integration dashboard with slug %s not found", slug)
-	}
-	return row, nil
-}
-
-func (r *InstalledIntegrationsSqliteRepo) listIntegrationDashboardsBySlugPrefix(
-	ctx context.Context, orgID string, slugPrefix string,
-) ([]*cloudintegrationtypes.StorableIntegrationDashboard, error) {
-	var rows []*cloudintegrationtypes.StorableIntegrationDashboard
-	err := r.store.BunDBCtx(ctx).
-		NewSelect().
-		Model(&rows).
-		Join("JOIN dashboard AS d ON storable_integration_dashboard.dashboard_id = d.id").
-		Where("d.org_id = ?", orgID).
-		Where("storable_integration_dashboard.provider = ?", cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider).
-		Where("storable_integration_dashboard.slug LIKE ?", slugPrefix+"%").
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-func (r *InstalledIntegrationsSqliteRepo) deleteIntegrationDashboardBySlug(
-	ctx context.Context, orgID string, slug string,
-) error {
-	cte := r.store.BunDBCtx(ctx).
-		NewSelect().
-		TableExpr("integration_dashboard AS id_inner").
-		ColumnExpr("id_inner.id").
-		Join("JOIN dashboard AS d ON id_inner.dashboard_id = d.id").
-		Where("d.org_id = ?", orgID).
-		Where("id_inner.provider = ?", cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider).
-		Where("id_inner.slug = ?", slug)
-
-	_, err := r.store.BunDBCtx(ctx).
-		NewDelete().
-		Model(new(cloudintegrationtypes.StorableIntegrationDashboard)).
-		With("target", cte).
-		Where("id IN (SELECT id FROM target)").
-		Exec(ctx)
-	return err
 }

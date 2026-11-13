@@ -7,11 +7,20 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const ManifestFile = "manifest.yaml"
+
+// The manifest formats this backend reads. A backend skips a package whose
+// format it does not read, by the catalog index, before decoding it.
+//   - 1: alerts are definition files, listed and not provisioned.
+//   - 2: alerts are {id, definition}, provisioned and owned by their id.
 const (
-	// ManifestVersion is the manifest format this backend reads.
-	ManifestVersion = 1
-	ManifestFile    = "manifest.yaml"
+	ManifestVersion1 = 1
+	ManifestVersion2 = 2
 )
+
+func supportedManifestVersion(v int) bool {
+	return v == ManifestVersion1 || v == ManifestVersion2
+}
 
 // Manifest is a package's manifest.yaml. The schema lives in
 // fuseone-io/fusescope-integrations, which validates every package before
@@ -50,7 +59,7 @@ type ConfigStepRef struct {
 type AssetRefs struct {
 	Logs       LogAssetRefs   `yaml:"logs"`
 	Dashboards []DashboardRef `yaml:"dashboards"`
-	Alerts     []string       `yaml:"alerts"`
+	Alerts     []AlertRef     `yaml:"alerts"`
 }
 
 type LogAssetRefs struct {
@@ -60,6 +69,40 @@ type LogAssetRefs struct {
 type DashboardRef struct {
 	ID         string `yaml:"id"`
 	Definition string `yaml:"definition"`
+}
+
+// AlertRef is an alert rule a manifest lists: in version 1 a definition
+// file, in version 2 {id, definition}, the id stable across the
+// integration's versions so installations own the rule by it.
+type AlertRef struct {
+	ID         string
+	Definition string
+	// file is true for the version 1 form.
+	file bool
+}
+
+func (ref *AlertRef) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind == yaml.ScalarNode {
+		ref.file = true
+		return node.Decode(&ref.Definition)
+	}
+	var fields struct {
+		ID         string `yaml:"id"`
+		Definition string `yaml:"definition"`
+	}
+	if node.Kind != yaml.MappingNode {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "line %d: an alert is a definition file or {id, definition}", node.Line)
+	}
+	for i := 0; i < len(node.Content); i += 2 {
+		if key := node.Content[i].Value; key != "id" && key != "definition" {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "line %d: field %s not found in alert", node.Content[i].Line, key)
+		}
+	}
+	if err := node.Decode(&fields); err != nil {
+		return err
+	}
+	ref.ID, ref.Definition = fields.ID, fields.Definition
+	return nil
 }
 
 type ConnectionTests struct {
@@ -82,5 +125,29 @@ func parseManifest(files map[string][]byte) (*Manifest, error) {
 	if err := dec.Decode(&manifest); err != nil {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "%s: %s", ManifestFile, err.Error())
 	}
+	if err := manifest.validateAlerts(); err != nil {
+		return nil, err
+	}
 	return &manifest, nil
+}
+
+// validateAlerts holds each manifest version to its form of alerts.
+func (m *Manifest) validateAlerts() error {
+	seen := map[string]bool{}
+	for _, ref := range m.Assets.Alerts {
+		switch {
+		case m.ManifestVersion == ManifestVersion1 && !ref.file:
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "%s: manifest_version 1 lists alerts as definition files; {id, definition} needs manifest_version 2", ManifestFile)
+		case m.ManifestVersion == ManifestVersion1:
+			continue
+		case ref.file:
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "%s: manifest_version %d lists alerts as {id, definition}, not %q", ManifestFile, m.ManifestVersion, ref.Definition)
+		case ref.ID == "" || ref.Definition == "":
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "%s: an alert needs an id and a definition", ManifestFile)
+		case seen[ref.ID]:
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "%s: alert id %s is listed twice", ManifestFile, ref.ID)
+		}
+		seen[ref.ID] = true
+	}
+	return nil
 }

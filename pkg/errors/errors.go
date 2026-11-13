@@ -269,6 +269,17 @@ func Unwrapb(cause error) (typ, Code, string, error, string, []additional) {
 	return TypeInternal, CodeUnknown, cause.Error(), cause, "", []additional{}
 }
 
+// AdditionalMessages returns the messages cause carries besides its own,
+// such as each failure a validation found; none for another error.
+func AdditionalMessages(cause error) []string {
+	_, _, _, _, _, a := Unwrapb(cause)
+	messages := make([]string, 0, len(a))
+	for _, v := range a {
+		messages = append(messages, v.message)
+	}
+	return messages
+}
+
 // Ast checks if the provided error matches the specified custom error type.
 func Ast(cause error, typ typ) bool {
 	t, _, _, _, _, _ := Unwrapb(cause)

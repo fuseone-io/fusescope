@@ -375,8 +375,8 @@ func (_c *MockAlertmanager_CreateNotificationChannel_Call) RunAndReturn(run func
 }
 
 // CreateRoutePolicies provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) CreateRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error) {
-	ret := _mock.Called(ctx, routeRequests)
+func (_mock *MockAlertmanager) CreateRoutePolicies(ctx context.Context, orgID valuer.UUID, actor string, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error) {
+	ret := _mock.Called(ctx, orgID, actor, routeRequests)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateRoutePolicies")
@@ -384,18 +384,18 @@ func (_mock *MockAlertmanager) CreateRoutePolicies(ctx context.Context, routeReq
 
 	var r0 []*alertmanagertypes.GettableRoutePolicy
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error)); ok {
-		return returnFunc(ctx, routeRequests)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID, string, []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error)); ok {
+		return returnFunc(ctx, orgID, actor, routeRequests)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []*alertmanagertypes.PostableRoutePolicy) []*alertmanagertypes.GettableRoutePolicy); ok {
-		r0 = returnFunc(ctx, routeRequests)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID, string, []*alertmanagertypes.PostableRoutePolicy) []*alertmanagertypes.GettableRoutePolicy); ok {
+		r0 = returnFunc(ctx, orgID, actor, routeRequests)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*alertmanagertypes.GettableRoutePolicy)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, []*alertmanagertypes.PostableRoutePolicy) error); ok {
-		r1 = returnFunc(ctx, routeRequests)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, valuer.UUID, string, []*alertmanagertypes.PostableRoutePolicy) error); ok {
+		r1 = returnFunc(ctx, orgID, actor, routeRequests)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -409,24 +409,36 @@ type MockAlertmanager_CreateRoutePolicies_Call struct {
 
 // CreateRoutePolicies is a helper method to define mock.On call
 //   - ctx context.Context
+//   - orgID valuer.UUID
+//   - actor string
 //   - routeRequests []*alertmanagertypes.PostableRoutePolicy
-func (_e *MockAlertmanager_Expecter) CreateRoutePolicies(ctx any, routeRequests any) *MockAlertmanager_CreateRoutePolicies_Call {
-	return &MockAlertmanager_CreateRoutePolicies_Call{Call: _e.mock.On("CreateRoutePolicies", ctx, routeRequests)}
+func (_e *MockAlertmanager_Expecter) CreateRoutePolicies(ctx any, orgID any, actor any, routeRequests any) *MockAlertmanager_CreateRoutePolicies_Call {
+	return &MockAlertmanager_CreateRoutePolicies_Call{Call: _e.mock.On("CreateRoutePolicies", ctx, orgID, actor, routeRequests)}
 }
 
-func (_c *MockAlertmanager_CreateRoutePolicies_Call) Run(run func(ctx context.Context, routeRequests []*alertmanagertypes.PostableRoutePolicy)) *MockAlertmanager_CreateRoutePolicies_Call {
+func (_c *MockAlertmanager_CreateRoutePolicies_Call) Run(run func(ctx context.Context, orgID valuer.UUID, actor string, routeRequests []*alertmanagertypes.PostableRoutePolicy)) *MockAlertmanager_CreateRoutePolicies_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 []*alertmanagertypes.PostableRoutePolicy
+		var arg1 valuer.UUID
 		if args[1] != nil {
-			arg1 = args[1].([]*alertmanagertypes.PostableRoutePolicy)
+			arg1 = args[1].(valuer.UUID)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []*alertmanagertypes.PostableRoutePolicy
+		if args[3] != nil {
+			arg3 = args[3].([]*alertmanagertypes.PostableRoutePolicy)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -437,7 +449,7 @@ func (_c *MockAlertmanager_CreateRoutePolicies_Call) Return(gettableRoutePolicys
 	return _c
 }
 
-func (_c *MockAlertmanager_CreateRoutePolicies_Call) RunAndReturn(run func(ctx context.Context, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error)) *MockAlertmanager_CreateRoutePolicies_Call {
+func (_c *MockAlertmanager_CreateRoutePolicies_Call) RunAndReturn(run func(ctx context.Context, orgID valuer.UUID, actor string, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error)) *MockAlertmanager_CreateRoutePolicies_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -574,16 +586,16 @@ func (_c *MockAlertmanager_DeleteAllInhibitRulesByRuleId_Call) RunAndReturn(run 
 }
 
 // DeleteAllRoutePoliciesByRuleId provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) DeleteAllRoutePoliciesByRuleId(ctx context.Context, ruleId string) error {
-	ret := _mock.Called(ctx, ruleId)
+func (_mock *MockAlertmanager) DeleteAllRoutePoliciesByRuleId(ctx context.Context, orgID valuer.UUID, ruleId string) error {
+	ret := _mock.Called(ctx, orgID, ruleId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteAllRoutePoliciesByRuleId")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, ruleId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID, string) error); ok {
+		r0 = returnFunc(ctx, orgID, ruleId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -597,24 +609,30 @@ type MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call struct {
 
 // DeleteAllRoutePoliciesByRuleId is a helper method to define mock.On call
 //   - ctx context.Context
+//   - orgID valuer.UUID
 //   - ruleId string
-func (_e *MockAlertmanager_Expecter) DeleteAllRoutePoliciesByRuleId(ctx any, ruleId any) *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call {
-	return &MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call{Call: _e.mock.On("DeleteAllRoutePoliciesByRuleId", ctx, ruleId)}
+func (_e *MockAlertmanager_Expecter) DeleteAllRoutePoliciesByRuleId(ctx any, orgID any, ruleId any) *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call {
+	return &MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call{Call: _e.mock.On("DeleteAllRoutePoliciesByRuleId", ctx, orgID, ruleId)}
 }
 
-func (_c *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call) Run(run func(ctx context.Context, ruleId string)) *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call {
+func (_c *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call) Run(run func(ctx context.Context, orgID valuer.UUID, ruleId string)) *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 valuer.UUID
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(valuer.UUID)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -625,7 +643,7 @@ func (_c *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call) Return(err error
 	return _c
 }
 
-func (_c *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call) RunAndReturn(run func(ctx context.Context, ruleId string) error) *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call {
+func (_c *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call) RunAndReturn(run func(ctx context.Context, orgID valuer.UUID, ruleId string) error) *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1987,16 +2005,16 @@ func (_c *MockAlertmanager_TestReceiver_Call) RunAndReturn(run func(context1 con
 }
 
 // UpdateAllRoutePoliciesByRuleId provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) UpdateAllRoutePoliciesByRuleId(ctx context.Context, ruleId string, routes []*alertmanagertypes.PostableRoutePolicy) error {
-	ret := _mock.Called(ctx, ruleId, routes)
+func (_mock *MockAlertmanager) UpdateAllRoutePoliciesByRuleId(ctx context.Context, orgID valuer.UUID, actor string, ruleId string, routes []*alertmanagertypes.PostableRoutePolicy) error {
+	ret := _mock.Called(ctx, orgID, actor, ruleId, routes)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateAllRoutePoliciesByRuleId")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []*alertmanagertypes.PostableRoutePolicy) error); ok {
-		r0 = returnFunc(ctx, ruleId, routes)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID, string, string, []*alertmanagertypes.PostableRoutePolicy) error); ok {
+		r0 = returnFunc(ctx, orgID, actor, ruleId, routes)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -2010,30 +2028,42 @@ type MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call struct {
 
 // UpdateAllRoutePoliciesByRuleId is a helper method to define mock.On call
 //   - ctx context.Context
+//   - orgID valuer.UUID
+//   - actor string
 //   - ruleId string
 //   - routes []*alertmanagertypes.PostableRoutePolicy
-func (_e *MockAlertmanager_Expecter) UpdateAllRoutePoliciesByRuleId(ctx any, ruleId any, routes any) *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call {
-	return &MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call{Call: _e.mock.On("UpdateAllRoutePoliciesByRuleId", ctx, ruleId, routes)}
+func (_e *MockAlertmanager_Expecter) UpdateAllRoutePoliciesByRuleId(ctx any, orgID any, actor any, ruleId any, routes any) *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call {
+	return &MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call{Call: _e.mock.On("UpdateAllRoutePoliciesByRuleId", ctx, orgID, actor, ruleId, routes)}
 }
 
-func (_c *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call) Run(run func(ctx context.Context, ruleId string, routes []*alertmanagertypes.PostableRoutePolicy)) *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call {
+func (_c *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call) Run(run func(ctx context.Context, orgID valuer.UUID, actor string, ruleId string, routes []*alertmanagertypes.PostableRoutePolicy)) *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 valuer.UUID
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(valuer.UUID)
 		}
-		var arg2 []*alertmanagertypes.PostableRoutePolicy
+		var arg2 string
 		if args[2] != nil {
-			arg2 = args[2].([]*alertmanagertypes.PostableRoutePolicy)
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []*alertmanagertypes.PostableRoutePolicy
+		if args[4] != nil {
+			arg4 = args[4].([]*alertmanagertypes.PostableRoutePolicy)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -2044,7 +2074,7 @@ func (_c *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call) Return(err error
 	return _c
 }
 
-func (_c *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call) RunAndReturn(run func(ctx context.Context, ruleId string, routes []*alertmanagertypes.PostableRoutePolicy) error) *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call {
+func (_c *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call) RunAndReturn(run func(ctx context.Context, orgID valuer.UUID, actor string, ruleId string, routes []*alertmanagertypes.PostableRoutePolicy) error) *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call {
 	_c.Call.Return(run)
 	return _c
 }

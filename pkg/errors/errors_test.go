@@ -199,3 +199,10 @@ func TestWrapPreservesContextSentinels(t *testing.T) {
 	assert.True(t, Is(deadline, context.DeadlineExceeded))
 	assert.False(t, Is(deadline, context.Canceled))
 }
+
+func TestAdditionalMessages(t *testing.T) {
+	err := NewInvalidInputf(CodeInvalidInput, "rule is not valid").WithAdditional("alert: field is required", "version: only v5 is supported")
+	assert.Equal(t, []string{"alert: field is required", "version: only v5 is supported"}, AdditionalMessages(err))
+	assert.Empty(t, AdditionalMessages(NewInvalidInputf(CodeInvalidInput, "plain")))
+	assert.Empty(t, AdditionalMessages(errors.New("stdlib")))
+}

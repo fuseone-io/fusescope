@@ -1,7 +1,8 @@
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from http import HTTPStatus
 
+import pytest
 import requests
 from sqlalchemy import sql
 
@@ -20,6 +21,31 @@ BUILTIN_VERSIONS = {
     "builtin-postgres": "1.0.0",
     "builtin-redis": "1.0.0",
 }
+
+
+@pytest.fixture(autouse=True)
+def uninstall_all_after(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> Iterator[None]:
+    """Uninstalls every integration a test left installed, even when one of
+    its assertions failed, so a failure does not leak into the suites that
+    share this backend, such as logspipelines."""
+    yield
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
+    listed = requests.get(signoz.self.host_configs["8080"].get("/api/v1/integrations"), headers=headers, timeout=10)
+    assert listed.status_code == HTTPStatus.OK, listed.text
+    for integration in listed.json()["data"]["integrations"]:
+        if not integration["is_installed"]:
+            continue
+        uninstall = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/integrations/uninstall"),
+            json={"integration_id": integration["id"]},
+            headers=headers,
+            timeout=10,
+        )
+        assert uninstall.status_code == HTTPStatus.OK, uninstall.text
 
 
 def test_list_serves_the_embedded_catalog(
@@ -75,8 +101,8 @@ def test_install_pins_the_version_and_provisions_dashboards(
     assert [d["id"] for d in data["assets"]["dashboards"]] == ["overview"]
 
     with signoz.sqlstore.conn.connect() as conn:
-        slugs = [row["slug"] for row in conn.execute(sql.text("SELECT slug FROM integration_dashboard WHERE provider = 'installed_integration'")).mappings().fetchall()]
-    assert "redis-overview" in slugs
+        assets = conn.execute(sql.text("SELECT kind, slug, state, version FROM integration_asset WHERE integration = 'builtin-redis'")).mappings().fetchall()
+    assert [dict(row) for row in assets] == [{"kind": "dashboard", "slug": "overview", "state": "ready", "version": "1.0.0"}]
 
     status = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/integrations/builtin-redis/connection_status"),
@@ -94,7 +120,7 @@ def test_install_pins_the_version_and_provisions_dashboards(
     assert uninstall.status_code == HTTPStatus.OK, uninstall.text
 
     with signoz.sqlstore.conn.connect() as conn:
-        remaining = conn.execute(sql.text("SELECT COUNT(*) FROM integration_dashboard WHERE slug = 'redis-overview'")).scalar()
+        remaining = conn.execute(sql.text("SELECT COUNT(*) FROM integration_asset WHERE integration = 'builtin-redis'")).scalar()
     assert remaining == 0
 
 
@@ -148,7 +174,8 @@ def test_upgrade_on_the_latest_version_is_a_noop(
     assert install.status_code == HTTPStatus.OK, install.text
 
     with signoz.sqlstore.conn.connect() as conn:
-        dashboard_id = conn.execute(sql.text("SELECT dashboard_id FROM integration_dashboard WHERE slug = 'redis-overview'")).scalar()
+        dashboard_id = conn.execute(sql.text("SELECT resource_id FROM integration_asset WHERE integration = 'builtin-redis' AND kind = 'dashboard' AND slug = 'overview'")).scalar()
+    assert dashboard_id is not None
 
     upgrade = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/integrations/upgrade"),
@@ -162,7 +189,7 @@ def test_upgrade_on_the_latest_version_is_a_noop(
     assert upgrade.json()["data"]["latest_version"] == "1.0.0"
 
     with signoz.sqlstore.conn.connect() as conn:
-        assert conn.execute(sql.text("SELECT dashboard_id FROM integration_dashboard WHERE slug = 'redis-overview'")).scalar() == dashboard_id
+        assert conn.execute(sql.text("SELECT resource_id FROM integration_asset WHERE integration = 'builtin-redis' AND kind = 'dashboard' AND slug = 'overview'")).scalar() == dashboard_id
 
     uninstall = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/integrations/uninstall"),
@@ -191,8 +218,11 @@ def test_upgrade_moves_a_dropped_pin_and_updates_dashboards_in_place(
     assert install.json()["data"]["version"] == BUILTIN_VERSIONS["builtin-mysql"]
 
     with signoz.sqlstore.conn.begin() as conn:
+        # An installation made on 1.0.0: its pin and its resources.
         conn.execute(sql.text("UPDATE installed_integration SET version = '1.0.0' WHERE type = 'builtin-mysql'"))
-        dashboard_id = conn.execute(sql.text("SELECT dashboard_id FROM integration_dashboard WHERE slug = 'mysql-overview'")).scalar()
+        conn.execute(sql.text("UPDATE integration_asset SET version = '1.0.0' WHERE integration = 'builtin-mysql'"))
+        dashboard_id = conn.execute(sql.text("SELECT resource_id FROM integration_asset WHERE integration = 'builtin-mysql' AND kind = 'dashboard' AND slug = 'overview'")).scalar()
+    assert dashboard_id is not None
 
     upgrade = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/integrations/upgrade"),
@@ -212,7 +242,9 @@ def test_upgrade_moves_a_dropped_pin_and_updates_dashboards_in_place(
     assert detail.json()["data"]["installation"]["version"] == BUILTIN_VERSIONS["builtin-mysql"]
 
     with signoz.sqlstore.conn.connect() as conn:
-        assert conn.execute(sql.text("SELECT dashboard_id FROM integration_dashboard WHERE slug = 'mysql-overview'")).scalar() == dashboard_id
+        assert conn.execute(sql.text("SELECT resource_id FROM integration_asset WHERE integration = 'builtin-mysql' AND kind = 'dashboard' AND slug = 'overview'")).scalar() == dashboard_id
+        version = conn.execute(sql.text("SELECT version FROM integration_asset WHERE integration = 'builtin-mysql' AND kind = 'dashboard' AND slug = 'overview'")).scalar()
+        assert version == BUILTIN_VERSIONS["builtin-mysql"]
         dashboard = conn.execute(sql.text("SELECT locked, updated_by FROM dashboard WHERE id = :id"), {"id": dashboard_id}).mappings().one()
     assert bool(dashboard["locked"]) is True
     assert dashboard["updated_by"] == USER_ADMIN_EMAIL

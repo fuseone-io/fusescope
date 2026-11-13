@@ -40,6 +40,16 @@ type Ruler interface {
 	// TODO: accept valuer.UUID instead of string for consistency with other methods.
 	DeleteRule(ctx context.Context, idStr string) error
 
+	// CreateRuleInOrg, EditRuleInOrg and DeleteRuleInOrg manage a rule of
+	// orgID for a caller that authorized the operation itself, such as an
+	// integration managing the rules it owns; they read no claims and no
+	// handler serves them. CreateRuleInOrg takes the rule's ID and does
+	// nothing when the organization has a rule with it; DeleteRuleInOrg
+	// succeeds when there is no such rule.
+	CreateRuleInOrg(ctx context.Context, orgID valuer.UUID, id valuer.UUID, actor string, rule *ruletypes.PostableRule) error
+	EditRuleInOrg(ctx context.Context, orgID valuer.UUID, id valuer.UUID, actor string, rule *ruletypes.PostableRule) error
+	DeleteRuleInOrg(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
 	// PatchRule applies a partial update to the rule identified by id.
 	// TODO: same as CreateRule — accept PostableRule instead of raw string.
 	PatchRule(ctx context.Context, ruleStr string, id valuer.UUID) (*ruletypes.GettableRule, error)

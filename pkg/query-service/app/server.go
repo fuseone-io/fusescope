@@ -32,7 +32,7 @@ type Server struct {
 
 // NewServer creates and initializes Server
 func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) {
-	integrationsController, err := integrations.NewController(signoz.SQLStore, signoz.Modules.Dashboard, signoz.Instrumentation.Logger())
+	integrationsController, err := integrations.NewController(signoz.SQLStore, signoz.Modules.Dashboard, signoz.Ruler, signoz.Instrumentation.Logger())
 	if err != nil {
 		return nil, err
 	}

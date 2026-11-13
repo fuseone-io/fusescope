@@ -434,6 +434,104 @@ func (_c *MockModule_CreateView_Call) RunAndReturn(run func(ctx context.Context,
 	return _c
 }
 
+// CreateWithIDV2 provides a mock function for the type MockModule
+func (_mock *MockModule) CreateWithIDV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	ret := _mock.Called(ctx, orgID, id, createdBy, creator, source, postable)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateWithIDV2")
+	}
+
+	var r0 *dashboardtypes.DashboardV2
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID, valuer.UUID, string, valuer.UUID, dashboardtypes.Source, dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error)); ok {
+		return returnFunc(ctx, orgID, id, createdBy, creator, source, postable)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID, valuer.UUID, string, valuer.UUID, dashboardtypes.Source, dashboardtypes.PostableDashboardV2) *dashboardtypes.DashboardV2); ok {
+		r0 = returnFunc(ctx, orgID, id, createdBy, creator, source, postable)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dashboardtypes.DashboardV2)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, valuer.UUID, valuer.UUID, string, valuer.UUID, dashboardtypes.Source, dashboardtypes.PostableDashboardV2) error); ok {
+		r1 = returnFunc(ctx, orgID, id, createdBy, creator, source, postable)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockModule_CreateWithIDV2_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateWithIDV2'
+type MockModule_CreateWithIDV2_Call struct {
+	*mock.Call
+}
+
+// CreateWithIDV2 is a helper method to define mock.On call
+//   - ctx context.Context
+//   - orgID valuer.UUID
+//   - id valuer.UUID
+//   - createdBy string
+//   - creator valuer.UUID
+//   - source dashboardtypes.Source
+//   - postable dashboardtypes.PostableDashboardV2
+func (_e *MockModule_Expecter) CreateWithIDV2(ctx any, orgID any, id any, createdBy any, creator any, source any, postable any) *MockModule_CreateWithIDV2_Call {
+	return &MockModule_CreateWithIDV2_Call{Call: _e.mock.On("CreateWithIDV2", ctx, orgID, id, createdBy, creator, source, postable)}
+}
+
+func (_c *MockModule_CreateWithIDV2_Call) Run(run func(ctx context.Context, orgID valuer.UUID, id valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2)) *MockModule_CreateWithIDV2_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 valuer.UUID
+		if args[1] != nil {
+			arg1 = args[1].(valuer.UUID)
+		}
+		var arg2 valuer.UUID
+		if args[2] != nil {
+			arg2 = args[2].(valuer.UUID)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 valuer.UUID
+		if args[4] != nil {
+			arg4 = args[4].(valuer.UUID)
+		}
+		var arg5 dashboardtypes.Source
+		if args[5] != nil {
+			arg5 = args[5].(dashboardtypes.Source)
+		}
+		var arg6 dashboardtypes.PostableDashboardV2
+		if args[6] != nil {
+			arg6 = args[6].(dashboardtypes.PostableDashboardV2)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+			arg6,
+		)
+	})
+	return _c
+}
+
+func (_c *MockModule_CreateWithIDV2_Call) Return(dashboardV2 *dashboardtypes.DashboardV2, err error) *MockModule_CreateWithIDV2_Call {
+	_c.Call.Return(dashboardV2, err)
+	return _c
+}
+
+func (_c *MockModule_CreateWithIDV2_Call) RunAndReturn(run func(ctx context.Context, orgID valuer.UUID, id valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error)) *MockModule_CreateWithIDV2_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeletePreferencesForUser provides a mock function for the type MockModule
 func (_mock *MockModule) DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
 	ret := _mock.Called(ctx, orgID, userID)

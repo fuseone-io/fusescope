@@ -36,6 +36,11 @@ type Module interface {
 
 	CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
+	// CreateWithIDV2 creates the dashboard with a given ID, or returns the
+	// organization's dashboard that already has it, unchanged; a caller that
+	// chose the ID before creating can retry after an interruption.
+	CreateWithIDV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error)
+
 	CloneV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
