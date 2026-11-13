@@ -1,8 +1,11 @@
 package integrations
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -34,7 +37,83 @@ func (f *assetsFixture) autoInstaller(t *testing.T, packages []catalog.Package) 
 
 func (f *assetsFixture) autoInstall(t *testing.T, m *Manager, org valuer.UUID) (AutoInstallOutcome, error) {
 	t.Helper()
-	return m.AutoInstall(context.Background(), org, "builtin-demo", autoInstallInterval)
+	result, err := m.AutoInstall(context.Background(), org, "builtin-demo", autoInstallInterval)
+	return result.Outcome, err
+}
+
+// failingFailedRecord fails to record a failed auto-install.
+type failingFailedRecord struct {
+	InstalledIntegrationsRepo
+}
+
+func (r failingFailedRecord) saveAutoInstall(ctx context.Context, row *cloudintegrationtypes.StorableIntegrationAutoInstall) error {
+	if row.State == cloudintegrationtypes.IntegrationAutoInstallStateFailed {
+		return errors.New("disk full")
+	}
+	return r.InstalledIntegrationsRepo.saveAutoInstall(ctx, row)
+}
+
+// A failure that cannot be recorded is not lost: both errors come back, and
+// the record shows no failure it did not keep.
+func TestAutoInstallFailureThatCannotBeRecorded(t *testing.T) {
+	for name, open := range newTestStores() {
+		t.Run(name, func(t *testing.T) {
+			f := newAssetsFixture(open(t))
+			m := f.autoInstaller(t, autoInstallDemo(t))
+			m.installedIntegrationsRepo = failingFailedRecord{m.installedIntegrationsRepo}
+			f.rules.failOrg = f.org
+
+			result, err := m.AutoInstall(context.Background(), f.org, "builtin-demo", autoInstallInterval)
+			assert.Equal(t, AutoInstallFailed, result.Outcome)
+			assert.ErrorContains(t, err, "ruler unavailable")
+			assert.ErrorContains(t, err, "disk full")
+			assert.ErrorContains(t, err, "could not record the failed auto-install of builtin-demo")
+			assert.Nil(t, result.NextAttemptAt, "no backoff was recorded")
+			row := f.record(t, m, f.org)
+			assert.Equal(t, cloudintegrationtypes.IntegrationAutoInstallStatePending, row.State)
+			assert.Zero(t, row.Attempts)
+		})
+	}
+}
+
+func TestAutoInstallLogs(t *testing.T) {
+	var buf bytes.Buffer
+	settings := factorytest.NewSettings()
+	settings.Logger = slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	service, err := newAutoInstallService(settings, nil, nil, integration.Config{AutoInstall: []string{"builtin-demo"}, ReconcileInterval: autoInstallInterval})
+	require.NoError(t, err)
+	org := valuer.GenerateUUID()
+	next := time.Date(2026, 11, 13, 19, 0, 0, 0, time.UTC)
+	lines := func() []map[string]any {
+		var out []map[string]any
+		for _, line := range bytes.Split(bytes.TrimSpace(buf.Bytes()), []byte("\n")) {
+			var entry map[string]any
+			require.NoError(t, json.Unmarshal(line, &entry))
+			out = append(out, entry)
+		}
+		buf.Reset()
+		return out
+	}
+
+	service.log(context.Background(), org, "builtin-demo", AutoInstallResult{Outcome: AutoInstallFailed, Attempts: 3, NextAttemptAt: &next}, errors.New("ruler unavailable"))
+	logged := lines()
+	require.Len(t, logged, 1)
+	assert.Equal(t, "WARN", logged[0]["level"])
+	assert.Equal(t, org.StringValue(), logged[0]["org_id"])
+	assert.Equal(t, "builtin-demo", logged[0]["integration"])
+	assert.EqualValues(t, 3, logged[0]["attempt"])
+	assert.Equal(t, "2026-11-13T19:00:00Z", logged[0]["next_attempt_at"])
+
+	service.log(context.Background(), org, "builtin-demo", AutoInstallResult{Outcome: AutoInstallBusy}, nil)
+	logged = lines()
+	require.Len(t, logged, 1)
+	assert.Equal(t, "DEBUG", logged[0]["level"])
+	assert.Equal(t, org.StringValue(), logged[0]["org_id"])
+	assert.Equal(t, "builtin-demo", logged[0]["integration"])
+	assert.NotContains(t, logged[0], "attempt")
+
+	service.log(context.Background(), org, "builtin-demo", AutoInstallResult{Outcome: AutoInstallSkipped}, nil)
+	assert.Empty(t, buf.String(), "a pass with nothing to do logs nothing")
 }
 
 func (f *assetsFixture) record(t *testing.T, m *Manager, org valuer.UUID) *cloudintegrationtypes.StorableIntegrationAutoInstall {

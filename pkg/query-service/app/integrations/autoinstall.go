@@ -42,6 +42,19 @@ const (
 	AutoInstallBusy AutoInstallOutcome = "busy"
 )
 
+// AutoInstallResult is what one attempt did and, after a failure it
+// recorded, when the next attempt is due.
+type AutoInstallResult struct {
+	Outcome AutoInstallOutcome
+	// Attempts and NextAttemptAt are set once a failure is recorded.
+	Attempts      int64
+	NextAttemptAt *time.Time
+}
+
+func autoInstallResult(outcome AutoInstallOutcome) AutoInstallResult {
+	return AutoInstallResult{Outcome: outcome}
+}
+
 // autoInstallBackoff is the wait after the given number of failed attempts:
 // the interval, doubled on each further failure, at most an hour.
 func autoInstallBackoff(interval time.Duration, attempts int64) time.Duration {
@@ -116,20 +129,20 @@ func (m *Manager) suppressAutoInstall(ctx context.Context, orgID string, integra
 // backend, the way a user would; retryBase is the wait after the first
 // failure. It holds the integration's operation throughout, so it never
 // races a user's install or uninstall.
-func (m *Manager) AutoInstall(ctx context.Context, orgID valuer.UUID, integrationID string, retryBase time.Duration) (AutoInstallOutcome, error) {
+func (m *Manager) AutoInstall(ctx context.Context, orgID valuer.UUID, integrationID string, retryBase time.Duration) (AutoInstallResult, error) {
 	// Most passes find nothing to do; they need no operation.
 	if row, err := m.installedIntegrationsRepo.getAutoInstall(ctx, orgID.StringValue(), integrationID); err != nil {
-		return AutoInstallFailed, err
+		return autoInstallResult(AutoInstallFailed), err
 	} else if !m.dueForAutoInstall(row) {
-		return AutoInstallSkipped, nil
+		return autoInstallResult(AutoInstallSkipped), nil
 	}
 
 	op, err := m.startOperation(ctx, orgID, integrationID, cloudintegrationtypes.IntegrationOperationStateActive)
 	if err != nil {
 		if lostOperation(err) {
-			return AutoInstallBusy, nil
+			return autoInstallResult(AutoInstallBusy), nil
 		}
-		return AutoInstallFailed, err
+		return autoInstallResult(AutoInstallFailed), err
 	}
 	defer m.endOperation(ctx, op)
 
@@ -166,12 +179,12 @@ func (m *Manager) AutoInstall(ctx context.Context, orgID valuer.UUID, integratio
 		return nil
 	}); err != nil {
 		if lostOperation(err) {
-			return AutoInstallBusy, nil
+			return autoInstallResult(AutoInstallBusy), nil
 		}
-		return AutoInstallFailed, err
+		return autoInstallResult(AutoInstallFailed), err
 	}
 	if outcome != AutoInstallInstalled {
-		return outcome, nil
+		return autoInstallResult(outcome), nil
 	}
 
 	installErr := func() error {
@@ -188,19 +201,23 @@ func (m *Manager) AutoInstall(ctx context.Context, orgID valuer.UUID, integratio
 		})
 	}()
 	if installErr == nil {
-		return AutoInstallInstalled, nil
+		return autoInstallResult(AutoInstallInstalled), nil
 	}
 	if lostOperation(installErr) {
-		return AutoInstallBusy, nil
+		return autoInstallResult(AutoInstallBusy), nil
 	}
 
 	failed := m.failedAutoInstall(row, orgID, integrationID, installErr, retryBase)
 	if err := m.step(ctx, op, func(ctx context.Context) error {
 		return m.installedIntegrationsRepo.saveAutoInstall(ctx, failed)
-	}); err != nil && lostOperation(err) {
-		return AutoInstallBusy, nil
+	}); err != nil {
+		if lostOperation(err) {
+			return autoInstallResult(AutoInstallBusy), nil
+		}
+		// The failure was not recorded: no backoff, and the error says why.
+		return autoInstallResult(AutoInstallFailed), errors.Join(installErr, errors.Newf(errors.TypeInternal, errors.CodeInternal, "could not record the failed auto-install of %s: %s", integrationID, err.Error()))
 	}
-	return AutoInstallFailed, installErr
+	return AutoInstallResult{Outcome: AutoInstallFailed, Attempts: failed.Attempts, NextAttemptAt: failed.NextAttemptAt}, installErr
 }
 
 // dueForAutoInstall reports whether the record leaves an attempt to make now.
@@ -327,16 +344,26 @@ func (service *autoInstallService) reconcile(ctx context.Context) {
 	}
 	for _, org := range orgs {
 		for _, id := range service.config.AutoInstall {
-			outcome, err := service.manager.AutoInstall(ctx, org.ID, id, service.config.ReconcileInterval)
-			if outcome != AutoInstallSkipped {
-				service.attempts.Add(ctx, 1, metric.WithAttributes(attribute.String("integration", id), attribute.String("outcome", string(outcome))))
+			result, err := service.manager.AutoInstall(ctx, org.ID, id, service.config.ReconcileInterval)
+			if result.Outcome != AutoInstallSkipped {
+				service.attempts.Add(ctx, 1, metric.WithAttributes(attribute.String("integration", id), attribute.String("outcome", string(result.Outcome))))
 			}
-			switch outcome {
-			case AutoInstallInstalled, AutoInstallAlreadyInstalled:
-				service.settings.Logger().InfoContext(ctx, "integration auto-installed", slog.String("org_id", org.ID.StringValue()), slog.String("integration", id), slog.String("outcome", string(outcome)))
-			case AutoInstallFailed:
-				service.settings.Logger().WarnContext(ctx, "integration auto-install failed, retrying later", slog.String("org_id", org.ID.StringValue()), slog.String("integration", id), errors.Attr(err))
-			}
+			service.log(ctx, org.ID, id, result, err)
 		}
+	}
+}
+
+func (service *autoInstallService) log(ctx context.Context, orgID valuer.UUID, integrationID string, result AutoInstallResult, err error) {
+	attrs := []any{slog.String("org_id", orgID.StringValue()), slog.String("integration", integrationID)}
+	switch result.Outcome {
+	case AutoInstallInstalled, AutoInstallAlreadyInstalled:
+		service.settings.Logger().InfoContext(ctx, "integration auto-installed", append(attrs, slog.String("outcome", string(result.Outcome)))...)
+	case AutoInstallBusy:
+		service.settings.Logger().DebugContext(ctx, "integration auto-install deferred: another request holds the integration", attrs...)
+	case AutoInstallFailed:
+		if result.NextAttemptAt != nil {
+			attrs = append(attrs, slog.Int64("attempt", result.Attempts), slog.Time("next_attempt_at", *result.NextAttemptAt))
+		}
+		service.settings.Logger().WarnContext(ctx, "integration auto-install failed", append(attrs, errors.Attr(err))...)
 	}
 }
