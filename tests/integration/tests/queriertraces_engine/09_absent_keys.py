@@ -1,0 +1,79 @@
+"""D8 reproduction: promoted keys absent, empty or present, read through both stores
+under every operator the parity's absent-key cases use, and the key selected. Every
+difference is listed in one failure."""
+
+import datetime
+import uuid
+from http import HTTPStatus
+
+import requests
+
+from fixtures import types
+from fixtures.engine import EngineStack
+from fixtures.enginecollector import EngineCollector
+from fixtures.engineparity import off_engine, on_engine
+from fixtures.querier import build_order_by, build_raw_query, make_query_request
+from fixtures.traces import Traces, TracesKind
+from integration.tests.queriertraces_engine.conftest import Backend, send_and_wait, span_id
+
+ATTRIBUTES = ["db.name", "http.route", "peer.service", "rpc.method"]
+RESOURCES = ["deployment.environment"]
+STATES = {"absent": None, "empty": "", "v1": "v1", "v2": "v2"}
+OPERATORS = [
+    "= 'v1'", "!= 'v1'", "IN ('v1', 'v2')", "NOT IN ('v1', 'v2')", "LIKE 'v%'", "NOT LIKE 'v%'",
+    "REGEXP '^v'", "NOT REGEXP '^v'", "CONTAINS 'v'", "NOT CONTAINS 'v'", "EXISTS", "NOT EXISTS",
+    "= ''", "!= ''",
+]
+
+
+def spans(service: str, now: datetime.datetime) -> list[Traces]:
+    out = []
+    for i, key in enumerate(ATTRIBUTES + RESOURCES):
+        for j, (state, value) in enumerate(STATES.items()):
+            attributes, resources = {}, {"service.name": service}
+            if value is not None:
+                (resources if key in RESOURCES else attributes)[key] = value
+            out.append(Traces(
+                timestamp=now + datetime.timedelta(milliseconds=10 * i + j),
+                trace_id=uuid.uuid4().hex,
+                span_id=span_id(),
+                name=f"{key}:{state}",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                resources=resources,
+                attributes=attributes,
+            ))
+    return out
+
+
+def rows(backend: Backend, token: str, window: tuple[int, int], expression: str, select: list[str]) -> requests.Response:
+    query = build_raw_query("A", "traces", filter_expression=expression, order=[build_order_by("timestamp", "desc")], limit=100, select_fields=[{"name": n} for n in select])
+    return make_query_request(backend.signoz, token, window[0], window[1], [query], request_type="raw")
+
+
+def answer(response: requests.Response, key: str | None) -> object:
+    if response.status_code != HTTPStatus.OK:
+        return f"HTTP {response.status_code}: {response.text[:200]}"
+    found = response.json()["data"]["data"]["results"][0].get("rows") or []
+    if key is None:
+        return sorted(row["data"]["name"] for row in found)
+    return sorted((row["data"]["name"], repr(row["data"].get(key, "<missing>"))) for row in found)
+
+
+def test_absent_promoted_keys_read_alike(engine: EngineStack, engine_collector: EngineCollector, clickhouse: types.TestContainerClickhouse, engine_backend: Backend, clickhouse_backend: Backend) -> None:
+    now = datetime.datetime.now(datetime.UTC)
+    service = f"eng-d8-{uuid.uuid4().hex[:8]}"
+    send_and_wait(engine_collector, clickhouse, engine_backend, spans(service, now))
+    window = (int((now - datetime.timedelta(minutes=5)).timestamp() * 1000), int((now + datetime.timedelta(minutes=1)).timestamp() * 1000))
+    tokens = {"on": engine_backend.token(), "off": clickhouse_backend.token()}
+
+    differences = []
+    for key in ATTRIBUTES + RESOURCES:
+        base = f"service.name = '{service}' AND name LIKE '{key}:%'"
+        cases = [(f"{key} {op}", f"{base} AND {key} {op}", ["name"], None) for op in OPERATORS]
+        cases.append((f"select {key}", base, ["name", key], key))
+        for label, expression, select, selected in cases:
+            on = answer(on_engine(engine.a, lambda e=expression, s=select: rows(engine_backend, tokens["on"], window, e, s)), selected)
+            off = answer(off_engine(engine.a, lambda e=expression, s=select: rows(clickhouse_backend, tokens["off"], window, e, s)), selected)
+            if on != off:
+                differences.append(f"{label}\n    engine:     {on}\n    clickhouse: {off}")
+    assert not differences, f"{len(differences)} differences:\n" + "\n".join(differences)
