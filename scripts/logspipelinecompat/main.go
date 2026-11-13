@@ -24,6 +24,15 @@ import (
 
 const library = "github.com/fuseone-io/fusescope-collector-server/components/pkg/logspipeline"
 
+// libraryTestsReplacedHere are the library's tests that do not hold in this
+// module's graph by design, each with the backend test that checks the same
+// thing here. TestCorpusMessages compares the library's messages with the
+// corpus's text as expr-lang/expr words it; under the approved SigNoz/expr
+// drift the text differs, and TestPreviewMessagesMatchTheCanonicalCorpus
+// (pkg/query-service/app/logparsingpipeline) checks the same messages, with
+// the preview's narrow normalisation and its explicit known divergences.
+const libraryTestsReplacedHere = "^TestCorpusMessages$"
+
 // watched are the modules that decide the library's behaviour.
 var watched = []string{
 	"github.com/expr-lang/expr",
@@ -81,7 +90,7 @@ func run(approvedPath string, test bool) error {
 	if !test {
 		return nil
 	}
-	cmd := exec.Command("go", "test", "-count=1", library+"/...")
+	cmd := exec.Command("go", "test", "-count=1", "-skip", libraryTestsReplacedHere, library+"/...")
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("the library's tests in this module's graph: %w", err)

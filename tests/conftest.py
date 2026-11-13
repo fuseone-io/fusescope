@@ -129,7 +129,7 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--contract-collector-version",
         action="store",
-        default="0.6.1@sha256:bca9dd696fb69558dff92eb52fc7f3400f79b38ea645501acb7afc3394e53baf",
+        default="0.6.2@sha256:35b0ae88a6d7bb7735e82e63ee6f91d1e8fed158f24e23c13639577426c98909",
         help="ghcr.io/fuseone-io/fusescope-collector tag (pinned by digest), the reference the simulatorcontract suite replays its corpus through: its signozlogspipeline and signozspanmapper processors, with the file exporter",
     )
     parser.addoption(

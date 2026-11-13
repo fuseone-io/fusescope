@@ -69,7 +69,7 @@ func simulateWithLogspipeline(ctx context.Context, processors []previewProcessor
 		if msg == "" {
 			msg = entry.Message
 		}
-		messages = append(messages, "operator "+id+": "+msg)
+		messages = append(messages, "operator "+id+": "+normalizeExprMessage(msg))
 	}
 	return []plog.Logs{ld}, messages, nil
 }
