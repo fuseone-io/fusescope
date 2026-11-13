@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations/catalog"
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
 	"golang.org/x/mod/semver"
@@ -118,6 +119,22 @@ func validateIntegration(i IntegrationDetails) error {
 			return fmt.Errorf("multiple dashboards found with id %s", dd.ID)
 		}
 		seenDashboardIds[dd.ID] = struct{}{}
+	}
+	seenAlertIDs := map[string]struct{}{}
+	for _, alert := range i.Assets.Alerts {
+		if alert.ID == "" {
+			return fmt.Errorf("id is required for alert %q in integration %s", alert.Definition.AlertName.StringValue(), i.Id)
+		}
+		if _, seen := seenAlertIDs[alert.ID]; seen {
+			return fmt.Errorf("multiple alerts found with id %s in integration %s", alert.ID, i.Id)
+		}
+		seenAlertIDs[alert.ID] = struct{}{}
+		if err := alert.Definition.Validate(); err != nil {
+			if details := errors.AdditionalMessages(err); len(details) > 0 {
+				return fmt.Errorf("alert %s in integration %s: %w: %s", alert.ID, i.Id, err, strings.Join(details, "; "))
+			}
+			return fmt.Errorf("alert %s in integration %s: %w", alert.ID, i.Id, err)
+		}
 	}
 	return nil
 }

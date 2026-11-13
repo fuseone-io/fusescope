@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"log/slog"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -217,4 +218,22 @@ func TestSatisfies(t *testing.T) {
 			assert.Equal(t, testCase.expected, ok)
 		})
 	}
+}
+
+func TestLoadRendersAlertsWithTheirIDs(t *testing.T) {
+	files := testPackageFiles()
+	files["manifest.yaml"] = strings.Replace(testManifest, "data_collected:", "  alerts:\n    - {id: high-memory, definition: assets/alerts/high_memory.json}\ndata_collected:", 1)
+	files["assets/alerts/high_memory.json"] = `{"alert": "High memory"}`
+	fsys, sum := testCatalog(t, tarball(t, files), nil)
+	catalog, err := Load(slog.Default(), fsys, sum, "v0.154.0")
+	require.NoError(t, err)
+	require.Len(t, catalog.Packages, 1)
+
+	var document struct {
+		Assets struct {
+			Alerts json.RawMessage `json:"alerts"`
+		} `json:"assets"`
+	}
+	require.NoError(t, json.Unmarshal(catalog.Packages[0].Document, &document))
+	assert.JSONEq(t, `[{"id": "high-memory", "definition": {"alert": "High memory"}}]`, string(document.Assets.Alerts))
 }

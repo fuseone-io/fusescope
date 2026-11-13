@@ -28,6 +28,14 @@ func render(m *Manifest, files map[string][]byte) ([]byte, error) {
 		}
 	}
 
+	var alerts []any
+	if m.Assets.Alerts != nil {
+		alerts = make([]any, 0, len(m.Assets.Alerts))
+		for _, ref := range m.Assets.Alerts {
+			alerts = append(alerts, map[string]any{"id": ref.ID, "definition": r.object(ref.Definition)})
+		}
+	}
+
 	document := map[string]any{
 		"id":            m.ID,
 		"title":         m.Title,
@@ -40,7 +48,7 @@ func render(m *Manifest, files map[string][]byte) ([]byte, error) {
 		"assets": map[string]any{
 			"logs":       map[string]any{"pipelines": r.objects(m.Assets.Logs.Pipelines)},
 			"dashboards": dashboards,
-			"alerts":     r.objects(m.Assets.Alerts),
+			"alerts":     alerts,
 		},
 		"connection_tests": map[string]any{"logs": m.ConnectionTests.Logs},
 		"data_collected":   r.object(m.DataCollected),

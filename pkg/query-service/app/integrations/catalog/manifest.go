@@ -50,7 +50,7 @@ type ConfigStepRef struct {
 type AssetRefs struct {
 	Logs       LogAssetRefs   `yaml:"logs"`
 	Dashboards []DashboardRef `yaml:"dashboards"`
-	Alerts     []string       `yaml:"alerts"`
+	Alerts     []AlertRef     `yaml:"alerts"`
 }
 
 type LogAssetRefs struct {
@@ -58,6 +58,13 @@ type LogAssetRefs struct {
 }
 
 type DashboardRef struct {
+	ID         string `yaml:"id"`
+	Definition string `yaml:"definition"`
+}
+
+// AlertRef names an alert rule by an ID stable across the integration's
+// versions, which installations own the rule by.
+type AlertRef struct {
 	ID         string `yaml:"id"`
 	Definition string `yaml:"definition"`
 }
