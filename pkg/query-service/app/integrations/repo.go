@@ -27,21 +27,21 @@ type InstalledIntegrationsRepo interface {
 
 	updateVersion(ctx context.Context, orgID string, integrationType string, version string) error
 
-	claimIntegrationAsset(ctx context.Context, orgID string, integration string, kind cloudintegrationtypes.IntegrationAssetKind, slug string, now time.Time, lease time.Duration) (*cloudintegrationtypes.StorableIntegrationAsset, assetClaim, error)
+	acquireIntegrationOperation(ctx context.Context, orgID string, integration string, state cloudintegrationtypes.IntegrationOperationState, now time.Time, lease time.Duration) (*integrationOperation, error)
 
-	finalizeIntegrationAsset(ctx context.Context, id string, generation int64, version string, now time.Time) (bool, error)
+	runInOperation(ctx context.Context, op *integrationOperation, now time.Time, lease time.Duration, fn func(ctx context.Context) error) error
 
-	setIntegrationAssetVersion(ctx context.Context, id string, generation int64, version string, now time.Time) (bool, error)
+	releaseIntegrationOperation(ctx context.Context, op *integrationOperation, now time.Time) error
 
-	releaseIntegrationAssetLease(ctx context.Context, id string, generation int64, now time.Time) error
+	finishUninstallation(ctx context.Context, op *integrationOperation, now time.Time) error
 
-	markIntegrationAssetDeleting(ctx context.Context, id string, now time.Time) error
+	reserveIntegrationAsset(ctx context.Context, orgID string, integration string, kind cloudintegrationtypes.IntegrationAssetKind, slug string, now time.Time) (*cloudintegrationtypes.StorableIntegrationAsset, error)
 
-	markIntegrationAssetsDeleting(ctx context.Context, orgID string, integration string, now time.Time) error
+	markIntegrationAssetReady(ctx context.Context, id string, version string, now time.Time) error
+
+	setIntegrationAssetVersion(ctx context.Context, id string, version string, now time.Time) error
 
 	deleteIntegrationAsset(ctx context.Context, id string) error
-
-	getIntegrationAsset(ctx context.Context, id string) (*cloudintegrationtypes.StorableIntegrationAsset, error)
 
 	listIntegrationAssets(ctx context.Context, orgID string, integration string) ([]*cloudintegrationtypes.StorableIntegrationAsset, error)
 }

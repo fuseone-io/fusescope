@@ -18,7 +18,8 @@ import (
 // addIntegrationAsset records which dashboards and alerts an installed
 // integration owns, in one table for both kinds, unique on
 // (org_id, integration, kind, slug). The slug is the asset's ID in its
-// integration's manifest, without the integration's name.
+// integration's manifest, without the integration's name. integration_operation
+// serializes install, upgrade and uninstall per integration of an organization.
 //
 // It moves the installed integrations' rows of integration_dashboard here.
 // Their slug was "<integration>-<dashboard>"; the integration is recovered
@@ -61,10 +62,6 @@ func (migration *addIntegrationAsset) Up(ctx context.Context, db *bun.DB) error 
 			// The catalog version the resource reflects, behind the
 			// installation's pin while an upgrade is being applied.
 			{Name: "version", DataType: sqlschema.DataTypeText, Nullable: false, Default: "''"},
-			// Unix milliseconds, 0 without a lease, so both databases compare it
-			// with the clock the same way.
-			{Name: "lease_until", DataType: sqlschema.DataTypeBigInt, Nullable: false, Default: "0"},
-			{Name: "generation", DataType: sqlschema.DataTypeBigInt, Nullable: false, Default: "1"},
 			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 		},
@@ -77,6 +74,20 @@ func (migration *addIntegrationAsset) Up(ctx context.Context, db *bun.DB) error 
 	sqls = append(sqls, operator.CreateIndex(&sqlschema.UniqueIndex{
 		TableName:   "integration_asset",
 		ColumnNames: []sqlschema.ColumnName{"kind", "resource_id"},
+	})...)
+	sqls = append(sqls, operator.CreateTable(&sqlschema.Table{
+		Name: "integration_operation",
+		Columns: []*sqlschema.Column{
+			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "integration", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "state", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "generation", DataType: sqlschema.DataTypeBigInt, Nullable: false, Default: "1"},
+			// Unix milliseconds, 0 once released, so both databases compare
+			// it with the clock the same way.
+			{Name: "lease_until", DataType: sqlschema.DataTypeBigInt, Nullable: false, Default: "0"},
+			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+		},
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"org_id", "integration"}},
 	})...)
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
@@ -163,8 +174,8 @@ func (migration *addIntegrationAsset) backfill(ctx context.Context, tx bun.Tx) e
 
 	for _, a := range assets {
 		if _, err := tx.ExecContext(ctx, `INSERT INTO integration_asset
-			(id, org_id, integration, kind, slug, resource_id, state, version, generation, created_at, updated_at)
-			VALUES (?, ?, ?, 'dashboard', ?, ?, 'ready', ?, 1, ?, ?)`,
+			(id, org_id, integration, kind, slug, resource_id, state, version, created_at, updated_at)
+			VALUES (?, ?, ?, 'dashboard', ?, ?, 'ready', ?, ?, ?)`,
 			a.id, a.org, a.integration, a.slug, a.dashboardID, a.version, now, now); err != nil {
 			return err
 		}

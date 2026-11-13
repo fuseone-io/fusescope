@@ -1,7 +1,9 @@
 package integrations
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"maps"
@@ -46,10 +48,31 @@ type IntegrationAssets struct {
 }
 
 // Alert pairs a built-in alert rule's stable id with its definition; the id
-// is the slug an installation owns the rule by.
+// is the slug an installation owns the rule by, empty for an alert of a
+// version 1 manifest, which is listed but not provisioned. It is read from
+// the catalog document as {id, definition} and served as the bare rule, the
+// shape the integrations API has always served.
 type Alert struct {
-	ID         string                 `json:"id"`
-	Definition ruletypes.PostableRule `json:"definition"`
+	ID         string
+	Definition ruletypes.PostableRule
+}
+
+func (a *Alert) UnmarshalJSON(data []byte) error {
+	var fields struct {
+		ID         string                 `json:"id"`
+		Definition ruletypes.PostableRule `json:"definition"`
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&fields); err != nil {
+		return err
+	}
+	a.ID, a.Definition = fields.ID, fields.Definition
+	return nil
+}
+
+func (a Alert) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.Definition)
 }
 
 // Dashboard pairs a built-in dashboard's stable id with its v2 definition. The id
@@ -149,6 +172,9 @@ type Manager struct {
 	rules                     Rules
 	logger                    *slog.Logger
 	now                       func() time.Time
+	// beforeStep, when set, runs before each change an operation makes, so
+	// tests can interleave operations.
+	beforeStep func()
 }
 
 func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module, rules Rules, availableIntegrations AvailableIntegrationsRepo, logger *slog.Logger) (*Manager, error) {
@@ -285,16 +311,29 @@ func (m *Manager) InstallIntegration(
 		return nil, model.BadRequest(fmt.Errorf("invalid org id: %w", err))
 	}
 
+	op, err := m.startOperation(ctx, orgUUID, integrationId, cloudintegrationtypes.IntegrationOperationStateActive)
+	if err != nil {
+		return nil, assetsApiError(err, "could not install integration")
+	}
+	defer m.endOperation(ctx, op)
+
 	// A new installation pins the latest version; reinstalling keeps the pin.
 	// The installation is recorded before its resources are made, so a
 	// failure leaves it installed and installing again, or uninstalling,
 	// completes the work.
-	installation, apiErr := m.installedIntegrationsRepo.upsert(ctx, orgId, integrationId, integrationDetails.version, config)
-	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "could not insert installed integration")
+	var installation *cloudintegrationtypes.InstalledIntegration
+	if err := m.step(ctx, op, func(ctx context.Context) error {
+		var apiErr *model.ApiError
+		installation, apiErr = m.installedIntegrationsRepo.upsert(ctx, orgId, integrationId, integrationDetails.version, config)
+		if apiErr != nil {
+			return apiErr
+		}
+		return nil
+	}); err != nil {
+		return nil, assetsApiError(err, "could not insert installed integration")
 	}
 	served := m.servedDetails(ctx, *integrationDetails, installation.Version)
-	if err := m.reconcileAssets(ctx, orgUUID, integrationId, &served, assetActor{name: createdBy, id: creator}); err != nil {
+	if err := m.reconcileAssets(ctx, op, orgUUID, integrationId, &served, assetActor{name: createdBy, id: creator}); err != nil {
 		return nil, assetsApiError(err, "could not install integration")
 	}
 
@@ -316,13 +355,38 @@ func (m *Manager) UninstallIntegration(
 		return model.BadRequest(fmt.Errorf("invalid org id: %w", err))
 	}
 
-	// The installation goes last, so an uninstallation that fails midway
-	// still shows it installed, and uninstalling again finishes.
-	if err := m.removeAllAssets(ctx, orgUUID, integrationId); err != nil {
+	// While uninstalling, nothing installs or upgrades the integration. The
+	// installation goes last, so an uninstallation that fails midway still
+	// shows it installed, and uninstalling again finishes.
+	op, err := m.startOperation(ctx, orgUUID, integrationId, cloudintegrationtypes.IntegrationOperationStateUninstalling)
+	if err != nil {
 		return assetsApiError(err, "could not uninstall integration")
 	}
-	if apiErr := m.installedIntegrationsRepo.delete(ctx, orgId, integrationId); apiErr != nil {
-		return model.WrapApiError(apiErr, "could not delete installed integration")
+	defer m.endOperation(ctx, op)
+
+	owned, err := m.installedIntegrationsRepo.listIntegrationAssets(ctx, orgId, integrationId)
+	if err != nil {
+		return model.WrapApiError(model.InternalError(err), "could not list the assets of the integration")
+	}
+	var errs []error
+	for _, asset := range owned {
+		if err := m.removeAsset(ctx, op, orgUUID, asset); err != nil {
+			if lostOperation(err) {
+				return assetsApiError(err, "could not uninstall integration")
+			}
+			errs = append(errs, err)
+		}
+	}
+	if err := errors.Join(errs...); err != nil {
+		return assetsApiError(err, "could not uninstall integration")
+	}
+	if err := m.step(ctx, op, func(ctx context.Context) error {
+		if apiErr := m.installedIntegrationsRepo.delete(ctx, orgId, integrationId); apiErr != nil {
+			return apiErr
+		}
+		return m.installedIntegrationsRepo.finishUninstallation(ctx, op, m.now())
+	}); err != nil {
+		return assetsApiError(err, "could not delete installed integration")
 	}
 	return nil
 }

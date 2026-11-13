@@ -25,7 +25,7 @@ type migrationStore struct {
 
 // migrationStores returns an empty SQLite store and, when a PostgreSQL
 // database is configured, an empty PostgreSQL one.
-func migrationStores(t *testing.T) map[string]func(t *testing.T) migrationStore {
+func migrationStores() map[string]func(t *testing.T) migrationStore {
 	return map[string]func(t *testing.T) migrationStore{
 		"sqlite": func(t *testing.T) migrationStore {
 			ctx := context.Background()
@@ -89,11 +89,10 @@ type movedAsset struct {
 	ResourceID  string `bun:"resource_id"`
 	State       string `bun:"state"`
 	Version     string `bun:"version"`
-	Generation  int64  `bun:"generation"`
 }
 
 func TestAddIntegrationAssetMovesInstalledIntegrationDashboards(t *testing.T) {
-	for name, open := range migrationStores(t) {
+	for name, open := range migrationStores() {
 		t.Run(name, func(t *testing.T) {
 			ctx := context.Background()
 			s := open(t)
@@ -113,25 +112,31 @@ func TestAddIntegrationAssetMovesInstalledIntegrationDashboards(t *testing.T) {
 			require.NoError(t, migration.Up(ctx, db), "the migration is idempotent")
 
 			var moved []movedAsset
-			require.NoError(t, db.NewRaw(`SELECT org_id, integration, kind, slug, resource_id, state, version, generation FROM integration_asset ORDER BY resource_id`).Scan(ctx, &moved))
+			require.NoError(t, db.NewRaw(`SELECT org_id, integration, kind, slug, resource_id, state, version FROM integration_asset ORDER BY resource_id`).Scan(ctx, &moved))
 			assert.Equal(t, []movedAsset{
-				{"org1", "builtin-nginx", "dashboard", "overview", "d1", "ready", "1.0.0", 1},
-				{"org1", "builtin-redis", "dashboard", "overview", "d2", "ready", "2.1.0", 1},
-				{"org2", "builtin-nginx", "dashboard", "overview", "d3", "ready", "1.0.0", 1},
+				{"org1", "builtin-nginx", "dashboard", "overview", "d1", "ready", "1.0.0"},
+				{"org1", "builtin-redis", "dashboard", "overview", "d2", "ready", "2.1.0"},
+				{"org2", "builtin-nginx", "dashboard", "overview", "d3", "ready", "1.0.0"},
 			}, moved, "the slug no longer carries the integration's name; the version is the pin's")
 
 			var left []string
 			require.NoError(t, db.NewRaw(`SELECT id FROM integration_dashboard ORDER BY id`).Scan(ctx, &left))
 			assert.Equal(t, []string{"r4"}, left, "cloud integrations keep their rows")
 
-			insert := `INSERT INTO integration_asset (id, org_id, integration, kind, slug, resource_id, state, generation, created_at, updated_at)
-				VALUES (?, ?, ?, ?, ?, ?, 'creating', 1, current_timestamp, current_timestamp)`
+			insert := `INSERT INTO integration_asset (id, org_id, integration, kind, slug, resource_id, state, created_at, updated_at)
+				VALUES (?, ?, ?, ?, ?, ?, 'creating', current_timestamp, current_timestamp)`
 			_, err := db.ExecContext(ctx, insert, "x1", "org1", "builtin-nginx", "dashboard", "overview", "d9")
 			assert.Error(t, err, "one resource per asset of an integration in an organization")
 			_, err = db.ExecContext(ctx, insert, "x2", "org1", "builtin-nginx", "alert", "overview", "d9")
 			assert.NoError(t, err, "a dashboard and an alert may share a slug")
 			_, err = db.ExecContext(ctx, insert, "x3", "org1", "builtin-nginx", "dashboard", "other", "d1")
 			assert.Error(t, err, "a resource belongs to one asset")
+
+			operation := `INSERT INTO integration_operation (org_id, integration, state, updated_at) VALUES (?, ?, 'active', current_timestamp)`
+			_, err = db.ExecContext(ctx, operation, "org1", "builtin-nginx")
+			require.NoError(t, err)
+			_, err = db.ExecContext(ctx, operation, "org1", "builtin-nginx")
+			assert.Error(t, err, "one operation per integration of an organization")
 		})
 	}
 }
@@ -169,7 +174,7 @@ func TestAddIntegrationAssetRefusesRowsItCannotMove(t *testing.T) {
 			problem: `integration_dashboard r1 and r2: both own dashboard "overview" of builtin-nginx in org org1`,
 		},
 	}
-	for name, open := range migrationStores(t) {
+	for name, open := range migrationStores() {
 		t.Run(name, func(t *testing.T) {
 			for _, tc := range cases {
 				t.Run(tc.name, func(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/types/cloudintegrationtypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
@@ -32,6 +33,12 @@ func (m *Manager) UpgradeIntegration(ctx context.Context, orgID string, integrat
 		return nil, false, errors.Newf(errors.TypeNotFound, ErrCodeIntegrationNotFound, "integration %s not found", integrationID)
 	}
 
+	op, err := m.startOperation(ctx, orgUUID, integrationID, cloudintegrationtypes.IntegrationOperationStateActive)
+	if err != nil {
+		return nil, false, err
+	}
+	defer m.endOperation(ctx, op)
+
 	installation, apiErr := m.getInstalledIntegration(ctx, orgID, integrationID)
 	if apiErr != nil {
 		return nil, false, errors.Wrapf(apiErr, errors.TypeInternal, errors.CodeInternal, "could not fetch installed integration %s", integrationID)
@@ -41,13 +48,15 @@ func (m *Manager) UpgradeIntegration(ctx context.Context, orgID string, integrat
 	}
 	upgraded := installation.Version != latest.version
 	if upgraded {
-		if err := m.installedIntegrationsRepo.updateVersion(ctx, orgID, integrationID, latest.version); err != nil {
+		if err := m.step(ctx, op, func(ctx context.Context) error {
+			return m.installedIntegrationsRepo.updateVersion(ctx, orgID, integrationID, latest.version)
+		}); err != nil {
 			return nil, false, err
 		}
 	}
-	if err := m.reconcileAssets(ctx, orgUUID, integrationID, &latest, assetActor{name: updatedBy, id: updater}); err != nil {
+	if err := m.reconcileAssets(ctx, op, orgUUID, integrationID, &latest, assetActor{name: updatedBy, id: updater}); err != nil {
 		if onlyConflicts(err) {
-			return nil, upgraded, errors.Wrapf(err, errors.TypeAlreadyExists, ErrCodeIntegrationAssetBusy, "could not upgrade integration %s", integrationID)
+			return nil, upgraded, err
 		}
 		return nil, upgraded, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not upgrade integration %s", integrationID)
 	}

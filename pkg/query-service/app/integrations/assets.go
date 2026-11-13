@@ -11,19 +11,10 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
-var (
-	// ErrCodeIntegrationAssetBusy: another request is creating one of the
-	// integration's resources; retrying after it finishes, or after its lease
-	// passes, completes the installation.
-	ErrCodeIntegrationAssetBusy = errors.MustNewCode("integration_asset_busy")
-	// ErrCodeIntegrationUninstalling: the integration is being uninstalled;
-	// installing it again succeeds once the uninstallation finishes.
-	ErrCodeIntegrationUninstalling = errors.MustNewCode("integration_uninstalling")
-)
-
-// assetLease bounds how long an interrupted creation blocks the next
-// attempt: creating a dashboard or a rule takes well under it.
-const assetLease = 2 * time.Minute
+// operationLease bounds how long an interrupted operation blocks the next:
+// every step renews it, and one step, creating a dashboard or a rule, takes
+// well under it.
+const operationLease = 2 * time.Minute
 
 // Rules manages the alert rules of an organization for a caller that
 // authorized the operation itself.
@@ -56,14 +47,37 @@ type assetKey struct {
 	slug string
 }
 
+// startOperation takes the integration's operation over for state.
+func (m *Manager) startOperation(ctx context.Context, orgID valuer.UUID, integrationID string, state cloudintegrationtypes.IntegrationOperationState) (*integrationOperation, error) {
+	return m.installedIntegrationsRepo.acquireIntegrationOperation(ctx, orgID.StringValue(), integrationID, state, m.now(), operationLease)
+}
+
+// endOperation releases op's lease. A failure to release only delays the
+// next operation until the lease passes.
+func (m *Manager) endOperation(ctx context.Context, op *integrationOperation) {
+	if err := m.installedIntegrationsRepo.releaseIntegrationOperation(context.WithoutCancel(ctx), op, m.now()); err != nil {
+		m.logger.WarnContext(ctx, "could not release the integration operation", errors.Attr(err))
+	}
+}
+
+// step runs fn as one change of op: atomically, and only while op still
+// holds the integration's operation.
+func (m *Manager) step(ctx context.Context, op *integrationOperation, fn func(ctx context.Context) error) error {
+	if m.beforeStep != nil {
+		m.beforeStep()
+	}
+	return m.installedIntegrationsRepo.runInOperation(ctx, op, m.now(), operationLease, fn)
+}
+
 // reconcileAssets brings the resources an installation owns to what version
-// details ships: it creates those missing, updates those an earlier version
-// made and removes those the version dropped. Every step is recorded as it
-// is done, so after a failure or a crash calling it again finishes the work
-// without duplicating a resource; it changes nothing when the resources are
-// already in step. It goes on past an asset it cannot reconcile and returns
-// every failure.
-func (m *Manager) reconcileAssets(ctx context.Context, orgID valuer.UUID, integrationID string, details *IntegrationDetails, actor assetActor) error {
+// details ships, within op: it creates those missing, updates those an
+// earlier version made and removes those the version dropped. Each step
+// commits on its own, so after a failure or a crash running it again
+// finishes the work without duplicating a resource; it changes nothing when
+// the resources are already in step. A resource deleted since it was made
+// is not made again. It goes on past an asset it cannot reconcile, and stops
+// once op is taken over.
+func (m *Manager) reconcileAssets(ctx context.Context, op *integrationOperation, orgID valuer.UUID, integrationID string, details *IntegrationDetails, actor assetActor) error {
 	desired := m.desiredAssets(orgID, details, actor)
 	wanted := map[assetKey]bool{}
 	for _, d := range desired {
@@ -74,125 +88,84 @@ func (m *Manager) reconcileAssets(ctx context.Context, orgID valuer.UUID, integr
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not list the assets of integration %s", integrationID)
 	}
+	byKey := map[assetKey]*cloudintegrationtypes.StorableIntegrationAsset{}
 	var errs []error
 	for _, asset := range owned {
-		if wanted[assetKey{asset.Kind.StringValue(), asset.Slug}] {
+		key := assetKey{asset.Kind.StringValue(), asset.Slug}
+		if wanted[key] {
+			byKey[key] = asset
 			continue
 		}
-		// A dropped asset, or one whose removal was interrupted.
-		if err := m.removeAsset(ctx, orgID, asset, asset.State != cloudintegrationtypes.IntegrationAssetStateDeleting); err != nil {
+		if err := m.removeAsset(ctx, op, orgID, asset); err != nil {
+			if lostOperation(err) {
+				return err
+			}
 			errs = append(errs, err)
 		}
 	}
 	for _, d := range desired {
-		if err := m.reconcileAsset(ctx, orgID, integrationID, details.version, d); err != nil {
+		if err := m.reconcileAsset(ctx, op, orgID, integrationID, details.version, d, byKey[assetKey{d.kind.StringValue(), d.slug}]); err != nil {
+			if lostOperation(err) {
+				return err
+			}
 			errs = append(errs, err)
 		}
 	}
 	return errors.Join(errs...)
 }
 
-func (m *Manager) reconcileAsset(ctx context.Context, orgID valuer.UUID, integrationID string, version string, d desiredAsset) error {
-	asset, claim, err := m.installedIntegrationsRepo.claimIntegrationAsset(ctx, orgID.StringValue(), integrationID, d.kind, d.slug, m.now(), assetLease)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not claim %s %s of integration %s", d.kind.StringValue(), d.slug, integrationID)
+func (m *Manager) reconcileAsset(ctx context.Context, op *integrationOperation, orgID valuer.UUID, integrationID string, version string, d desiredAsset, asset *cloudintegrationtypes.StorableIntegrationAsset) error {
+	what := d.kind.StringValue() + " " + d.slug + " of integration " + integrationID
+	if asset == nil {
+		// The ID is recorded before the resource is made, so a creation
+		// interrupted after making it is finished with the same ID.
+		if err := m.step(ctx, op, func(ctx context.Context) error {
+			var err error
+			asset, err = m.installedIntegrationsRepo.reserveIntegrationAsset(ctx, orgID.StringValue(), integrationID, d.kind, d.slug, m.now())
+			return err
+		}); err != nil {
+			return wrapAssetErr(err, "could not reserve %s", what)
+		}
 	}
 	resourceID, err := valuer.NewUUID(asset.ResourceID)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "%s %s of integration %s has an invalid resource id", d.kind.StringValue(), d.slug, integrationID)
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "%s has an invalid resource id", what)
 	}
 
-	switch claim {
-	case assetBusy:
-		return errors.Newf(errors.TypeAlreadyExists, ErrCodeIntegrationAssetBusy, "%s %s of integration %s is being created by another request; retry once it finishes", d.kind.StringValue(), d.slug, integrationID)
-	case assetDeleting:
-		return errors.Newf(errors.TypeAlreadyExists, ErrCodeIntegrationUninstalling, "integration %s is being uninstalled; install it again once that finishes", integrationID)
-	case assetReady:
-		if asset.Version == version {
-			return nil
-		}
-		if err := d.update(ctx, resourceID); err != nil && !errors.Ast(err, errors.TypeNotFound) {
-			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not update %s %s of integration %s", d.kind.StringValue(), d.slug, integrationID)
-		}
-		// A resource someone deleted stays deleted. A version not recorded
-		// because the asset changed meanwhile is for its new holder to settle.
-		if _, err := m.installedIntegrationsRepo.setIntegrationAssetVersion(ctx, asset.ID, asset.Generation, version, m.now()); err != nil {
-			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not record %s %s of integration %s", d.kind.StringValue(), d.slug, integrationID)
-		}
-		return nil
-	}
-
-	if err := d.create(ctx, resourceID); err != nil {
-		if releaseErr := m.installedIntegrationsRepo.releaseIntegrationAssetLease(ctx, asset.ID, asset.Generation, m.now()); releaseErr != nil {
-			err = errors.Join(err, releaseErr)
-		}
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not create %s %s of integration %s", d.kind.StringValue(), d.slug, integrationID)
-	}
-	finalized, err := m.installedIntegrationsRepo.finalizeIntegrationAsset(ctx, asset.ID, asset.Generation, version, m.now())
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not record %s %s of integration %s", d.kind.StringValue(), d.slug, integrationID)
-	}
-	if finalized {
-		return nil
-	}
-
-	// The claim was lost while creating: taken over by another request, which
-	// creates the same resource, or ended by an uninstallation, which leaves
-	// the resource just made to its maker.
-	current, err := m.installedIntegrationsRepo.getIntegrationAsset(ctx, asset.ID)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not read %s %s of integration %s", d.kind.StringValue(), d.slug, integrationID)
-	}
 	switch {
-	case current != nil && current.State == cloudintegrationtypes.IntegrationAssetStateReady:
-		return nil
-	case current != nil && current.State == cloudintegrationtypes.IntegrationAssetStateCreating:
-		return errors.Newf(errors.TypeAlreadyExists, ErrCodeIntegrationAssetBusy, "%s %s of integration %s is being created by another request; retry once it finishes", d.kind.StringValue(), d.slug, integrationID)
-	}
-	if err := m.deleteAssetResource(ctx, orgID, asset.Kind, resourceID); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not remove %s %s of integration %s", d.kind.StringValue(), d.slug, integrationID)
-	}
-	return errors.Newf(errors.TypeAlreadyExists, ErrCodeIntegrationUninstalling, "integration %s was uninstalled during the installation", integrationID)
-}
-
-// removeAsset deletes an asset's resource and then its record. mark is false
-// when the asset is already deleting.
-func (m *Manager) removeAsset(ctx context.Context, orgID valuer.UUID, asset *cloudintegrationtypes.StorableIntegrationAsset, mark bool) error {
-	if mark {
-		if err := m.installedIntegrationsRepo.markIntegrationAssetDeleting(ctx, asset.ID, m.now()); err != nil {
-			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not mark %s %s of integration %s for removal", asset.Kind.StringValue(), asset.Slug, asset.Integration)
-		}
-	}
-	resourceID, err := valuer.NewUUID(asset.ResourceID)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "%s %s of integration %s has an invalid resource id", asset.Kind.StringValue(), asset.Slug, asset.Integration)
-	}
-	if err := m.deleteAssetResource(ctx, orgID, asset.Kind, resourceID); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not remove %s %s of integration %s", asset.Kind.StringValue(), asset.Slug, asset.Integration)
-	}
-	if err := m.installedIntegrationsRepo.deleteIntegrationAsset(ctx, asset.ID); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not forget %s %s of integration %s", asset.Kind.StringValue(), asset.Slug, asset.Integration)
+	case asset.State == cloudintegrationtypes.IntegrationAssetStateCreating:
+		return wrapAssetErr(m.step(ctx, op, func(ctx context.Context) error {
+			if err := d.create(ctx, resourceID); err != nil {
+				return err
+			}
+			return m.installedIntegrationsRepo.markIntegrationAssetReady(ctx, asset.ID, version, m.now())
+		}), "could not create %s", what)
+	case asset.Version != version:
+		return wrapAssetErr(m.step(ctx, op, func(ctx context.Context) error {
+			// A resource deleted since it was made stays deleted.
+			if err := d.update(ctx, resourceID); err != nil && !errors.Ast(err, errors.TypeNotFound) {
+				return err
+			}
+			return m.installedIntegrationsRepo.setIntegrationAssetVersion(ctx, asset.ID, version, m.now())
+		}), "could not update %s", what)
 	}
 	return nil
 }
 
-// removeAllAssets removes every resource an installation owns. Marking them
-// all deleting first stops a concurrent installation from finishing any.
-func (m *Manager) removeAllAssets(ctx context.Context, orgID valuer.UUID, integrationID string) error {
-	if err := m.installedIntegrationsRepo.markIntegrationAssetsDeleting(ctx, orgID.StringValue(), integrationID, m.now()); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not mark the assets of integration %s for removal", integrationID)
-	}
-	owned, err := m.installedIntegrationsRepo.listIntegrationAssets(ctx, orgID.StringValue(), integrationID)
+// removeAsset deletes an asset's resource, if it still exists, and its
+// record, within op.
+func (m *Manager) removeAsset(ctx context.Context, op *integrationOperation, orgID valuer.UUID, asset *cloudintegrationtypes.StorableIntegrationAsset) error {
+	what := asset.Kind.StringValue() + " " + asset.Slug + " of integration " + asset.Integration
+	resourceID, err := valuer.NewUUID(asset.ResourceID)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not list the assets of integration %s", integrationID)
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "%s has an invalid resource id", what)
 	}
-	var errs []error
-	for _, asset := range owned {
-		if err := m.removeAsset(ctx, orgID, asset, false); err != nil {
-			errs = append(errs, err)
+	return wrapAssetErr(m.step(ctx, op, func(ctx context.Context) error {
+		if err := m.deleteAssetResource(ctx, orgID, asset.Kind, resourceID); err != nil {
+			return err
 		}
-	}
-	return errors.Join(errs...)
+		return m.installedIntegrationsRepo.deleteIntegrationAsset(ctx, asset.ID)
+	}), "could not remove %s", what)
 }
 
 // deleteAssetResource deletes a resource, succeeding when there is none.
@@ -213,6 +186,23 @@ func (m *Manager) deleteAssetResource(ctx context.Context, orgID valuer.UUID, ki
 		return nil
 	}
 	return err
+}
+
+// wrapAssetErr keeps a conflict with another request a conflict, so it is
+// reported as one, and stops reconciling once the operation is lost.
+func wrapAssetErr(err error, format string, args ...any) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Ast(err, errors.TypeAlreadyExists) {
+		return err
+	}
+	return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, format, args...)
+}
+
+func lostOperation(err error) bool {
+	_, code, _, _, _, _ := errors.Unwrapb(err)
+	return errors.Ast(err, errors.TypeAlreadyExists) && (code == ErrCodeIntegrationBusy || code == ErrCodeIntegrationUninstalling)
 }
 
 func (m *Manager) desiredAssets(orgID valuer.UUID, details *IntegrationDetails, actor assetActor) []desiredAsset {
@@ -237,6 +227,11 @@ func (m *Manager) desiredAssets(orgID valuer.UUID, details *IntegrationDetails, 
 		})
 	}
 	for _, alert := range details.Assets.Alerts {
+		// Alerts of a v1 manifest have no stable id; they are listed but not
+		// provisioned.
+		if alert.ID == "" {
+			continue
+		}
 		definition := alert.Definition
 		desired = append(desired, desiredAsset{
 			kind: cloudintegrationtypes.IntegrationAssetKindAlert,

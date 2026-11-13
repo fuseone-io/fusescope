@@ -17,6 +17,9 @@ type memoryRules struct {
 	// beforeCreate, when set, runs before a rule is stored; an error fails
 	// the creation.
 	beforeCreate func(id valuer.UUID) error
+	// beforeDelete, when set, runs before a rule is deleted; an error fails
+	// the deletion.
+	beforeDelete func(id valuer.UUID) error
 	writes       int
 }
 
@@ -62,6 +65,11 @@ func (r *memoryRules) EditRuleInOrg(_ context.Context, orgID valuer.UUID, id val
 }
 
 func (r *memoryRules) DeleteRuleInOrg(_ context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	if r.beforeDelete != nil {
+		if err := r.beforeDelete(id); err != nil {
+			return err
+		}
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if existing, ok := r.rules[id]; ok && existing.org == orgID {
