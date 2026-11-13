@@ -56,6 +56,20 @@
     "latest_version": "1.0.0"
   },
   {
+    "id": "builtin-fusescope_collector",
+    "title": "FuseScope Collector",
+    "description": "Monitor the FuseScope Collector itself: refused and dropped data, export queues, ClickHouse inserts and RUM refusals",
+    "author": {
+      "name": "FuseScope",
+      "email": "",
+      "homepage": "https://github.com/fuseone-io/fusescope"
+    },
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRmNDZlNSIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTE0IDIyaDM2TDM2IDM4djEybC04LTR2LTh6IiBmaWxsPSIjNGY0NmU1Ii8+PC9zdmc+Cg==",
+    "is_installed": true,
+    "version": "1.0.0",
+    "latest_version": "1.0.0"
+  },
+  {
     "id": "builtin-gcp_cloudsql",
     "title": "Google Cloud SQL",
     "description": "Monitor Google Cloud SQL with metrics and logs",

@@ -1,0 +1,30 @@
+{
+  "logs": null,
+  "metrics": [
+    "otelcol_process_uptime",
+    "otelcol_process_memory_rss",
+    "otelcol_receiver_accepted_spans",
+    "otelcol_receiver_accepted_log_records",
+    "otelcol_receiver_accepted_metric_points",
+    "otelcol_receiver_refused_spans",
+    "otelcol_receiver_refused_log_records",
+    "otelcol_receiver_refused_metric_points",
+    "otelcol_receiver_failed_spans",
+    "otelcol_receiver_failed_log_records",
+    "otelcol_receiver_failed_metric_points",
+    "otelcol_exporter_sent_spans",
+    "otelcol_exporter_sent_log_records",
+    "otelcol_exporter_sent_metric_points",
+    "otelcol_exporter_send_failed_spans",
+    "otelcol_exporter_send_failed_log_records",
+    "otelcol_exporter_send_failed_metric_points",
+    "otelcol_exporter_enqueue_failed_spans",
+    "otelcol_exporter_enqueue_failed_log_records",
+    "otelcol_exporter_enqueue_failed_metric_points",
+    "otelcol_exporter_queue_size",
+    "otelcol_exporter_queue_capacity",
+    "otelcol_exporter_fusescope_clickhouse_insert_errors",
+    "otelcol_exporter_fusescope_clickhouse_insert_duration",
+    "otelcol_receiver_rum_requests_refused"
+  ]
+}

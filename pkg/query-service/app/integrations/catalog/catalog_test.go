@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -81,19 +82,32 @@ func testCatalog(t *testing.T, archive []byte, edit func(*Entry)) (fstest.MapFS,
 }
 
 func TestLoadEmbedded(t *testing.T) {
-	catalog, err := LoadEmbedded(slog.Default(), "v0.154.0")
-	require.NoError(t, err)
-
-	ids := []string{}
-	for _, pkg := range catalog.Packages {
-		ids = append(ids, pkg.ID+"@"+pkg.Version)
-		assert.True(t, json.Valid(pkg.Document), pkg.ID)
-	}
-	assert.ElementsMatch(t, []string{
+	released := []string{
 		"builtin-aws_elasticache_redis@1.0.0", "builtin-aws_rds_mysql@1.0.0", "builtin-aws_rds_postgresql@1.0.0", "builtin-clickhouse@1.0.0", "builtin-gcp_cloudsql@1.0.1",
 		"builtin-mongo@1.0.0", "builtin-mysql@1.0.1", "builtin-nginx@1.0.0", "builtin-postgres@1.0.0", "builtin-redis@1.0.0",
-	}, ids)
-	assert.Equal(t, "fuseone-io/fusescope-integrations", catalog.Source.Repository)
+	}
+	testCases := []struct {
+		backendVersion string
+		want           []string
+	}{
+		// builtin-fusescope_collector needs manifest_version 2, read from 0.164.0.
+		{backendVersion: "v0.163.0", want: released},
+		{backendVersion: "v0.164.0", want: append(slices.Clone(released), "builtin-fusescope_collector@1.0.0")},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.backendVersion, func(t *testing.T) {
+			catalog, err := LoadEmbedded(slog.Default(), tc.backendVersion)
+			require.NoError(t, err)
+
+			ids := []string{}
+			for _, pkg := range catalog.Packages {
+				ids = append(ids, pkg.ID+"@"+pkg.Version)
+				assert.True(t, json.Valid(pkg.Document), pkg.ID)
+			}
+			assert.ElementsMatch(t, tc.want, ids)
+			assert.Equal(t, "fuseone-io/fusescope-integrations", catalog.Source.Repository)
+		})
+	}
 }
 
 func TestLoadRendersThePackage(t *testing.T) {
