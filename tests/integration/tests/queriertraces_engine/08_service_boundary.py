@@ -1,6 +1,8 @@
 """A span whose parent is in another service, whatever its remoteness, is a top-level
 operation of its service in both stores (D7): ClickHouse finds the parent in the same
-export batch, the engine in the same hour, compacted or recent."""
+export batch, the engine in the same hour, compacted or recent. The engine
+keeps a complete listing for `query.recent_keys_ttl_secs` (30 by default), so
+its answer may trail the spans by that long."""
 
 import datetime
 import uuid
@@ -11,7 +13,7 @@ import requests
 from fixtures import types
 from fixtures.engine import EngineStack
 from fixtures.enginecollector import EngineCollector
-from fixtures.engineparity import off_engine, on_engine
+from fixtures.engineparity import off_engine, on_engine, wait_until
 from fixtures.traces import Traces, TracesKind
 from integration.tests.queriertraces_engine.conftest import Backend, send_and_wait, span_id
 
@@ -42,12 +44,19 @@ def test_a_child_of_another_service_is_top_level_in_both_stores(
     send_and_wait(engine_collector, clickhouse, engine_backend, [root, child])
     body = {"start": str(int((now - datetime.timedelta(minutes=5)).timestamp() * 1e9)), "end": str(int((now + datetime.timedelta(minutes=1)).timestamp() * 1e9)), "tags": []}
 
-    on = on_engine(engine.a, lambda: services(engine_backend, body))
-    off = off_engine(engine.a, lambda: services(clickhouse_backend, body))
-    assert on.status_code == off.status_code == HTTPStatus.OK, (on.text, off.text)
-
     def back(response: requests.Response) -> list[dict]:
         return [item for item in response.json()["data"] if item["serviceName"] == "eng-x-back"]
 
+    off = off_engine(engine.a, lambda: services(clickhouse_backend, body))
+    assert off.status_code == HTTPStatus.OK, off.text
     assert [item["dataWarning"]["topLevelOps"] for item in back(off)] == [["overflow_operation", "x.handle"]], "ClickHouse: a service boundary makes a top-level operation"
-    assert [item["dataWarning"]["topLevelOps"] for item in back(on)] == [["overflow_operation", "x.handle"]], "the engine: the same boundary, before compaction"
+
+    seen: list[requests.Response] = []
+
+    def engine_lists_it() -> bool:
+        on = on_engine(engine.a, lambda: services(engine_backend, body))
+        seen.append(on)
+        assert on.status_code == HTTPStatus.OK, on.text
+        return [item["dataWarning"]["topLevelOps"] for item in back(on)] == [["overflow_operation", "x.handle"]]
+
+    wait_until(engine_lists_it, "the engine: the same boundary, before compaction, once its cached listing expires", timeout=45, every=3, explain=lambda: seen[-1].text[:2000])
