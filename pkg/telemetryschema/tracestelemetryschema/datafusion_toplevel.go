@@ -12,12 +12,12 @@ import (
 const TopLevelOperationsLimit = 5000
 
 // DataFusionTopLevelOperations lists, on fusescope-engine, each operation of services seen at the
-// top of a service since start, latest first: the compacted top_level_operations together with
-// the spans still uncompacted, by the same rule, a span without a parent or with a remote one.
-// No services lists every service.
+// top of a service since start, latest first. The engine's top_level_operations is complete: its
+// compacted passes and its recent spans, resolved by the parent's service as ClickHouse resolves
+// them. No services lists every service.
 func DataFusionTopLevelOperations(start time.Time, services []string) (string, error) {
-	since := datafusionsql.Int(start.UnixNano())
-	byService := " AND service_name IS NOT NULL"
+	sql := "SELECT name, service_name, max(last_seen) AS ts FROM top_level_operations WHERE last_seen >= to_timestamp_nanos(" +
+		datafusionsql.Int(start.UnixNano()) + ")"
 	if len(services) > 0 {
 		literals := make([]string, len(services))
 		for i, service := range services {
@@ -27,14 +27,7 @@ func DataFusionTopLevelOperations(start time.Time, services []string) (string, e
 			}
 			literals[i] = literal
 		}
-		byService = " AND service_name IN (" + strings.Join(literals, ", ") + ")"
+		sql += " AND service_name IN (" + strings.Join(literals, ", ") + ")"
 	}
-	compacted := "SELECT name, service_name, last_seen AS seen FROM top_level_operations WHERE last_seen >= to_timestamp_nanos(" + since + ")"
-	if len(services) > 0 {
-		compacted += byService
-	}
-	hot := "SELECT CAST(name AS VARCHAR) AS name, CAST(service_name AS VARCHAR) AS service_name, timestamp AS seen FROM spans " +
-		"WHERE timestamp >= to_timestamp_nanos(" + since + ")" + byService + " AND (parent_span_id IS NULL OR is_remote = 'true')"
-	return fmt.Sprintf("SELECT name, service_name, max(seen) AS ts FROM (%s UNION ALL %s) AS operations GROUP BY name, service_name ORDER BY ts DESC LIMIT %d",
-		compacted, hot, TopLevelOperationsLimit), nil
+	return fmt.Sprintf("%s GROUP BY name, service_name ORDER BY ts DESC LIMIT %d", sql, TopLevelOperationsLimit), nil
 }

@@ -137,3 +137,35 @@ func TestAMissingServiceTakesItsOperationsBoundariesTogether(t *testing.T) {
 	assert.Equal(t, rows, Classify(diffs[0], of(BoundaryUnavailable, BoundaryDenied)), "a denied one decides, whatever the others")
 	assert.Equal(t, rows, Classify(diffs[0], of(BoundaryDenied, BoundaryConfirmed)))
 }
+
+func TestAnOperationOnlyTheEngineListsAtAConfirmedBoundaryIsAccepted(t *testing.T) {
+	of := func(found Boundary) Context {
+		return Context{ServiceBoundary: func(string, string) Boundary { return found }}
+	}
+	d := Difference{Path: p("services", Dynamic("eng-x-back"), "topLevelOps", Dynamic("x.handle")), Kind: KindRows, Engine: float64(1)}
+	assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Accepted}, Classify(d, of(BoundaryConfirmed)), "ClickHouse missed the boundary across export batches")
+	assert.Equal(t, Verdict{Category: CategoryRows, Disposition: Blocking}, Classify(d, of(BoundaryDenied)), "denied, an extra row blocks")
+	assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Inconclusive}, Classify(d, of(BoundaryUnavailable)))
+}
+
+func TestAServiceOnlyTheEngineListsTakesItsOperationsBoundariesTogether(t *testing.T) {
+	engine := decode(t, `{"data":[{"serviceName":"back","p99":1,"numCalls":3,"dataWarning":{"topLevelOps":["overflow_operation","a","b"]}}]}`)
+	clickhouse := decode(t, `{"data":[]}`)
+	ne, rule := Services.Normalize(engine)
+	nc, _ := Services.Normalize(clickhouse)
+	diffs := Compare(ne, nc, rule)
+	if !assert.Len(t, diffs, 1) {
+		return
+	}
+	of := func(a, b Boundary) Context {
+		return Context{ServiceBoundary: func(_, operation string) Boundary {
+			if operation == "a" {
+				return a
+			}
+			return b
+		}}
+	}
+	assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Accepted}, Classify(diffs[0], of(BoundaryConfirmed, BoundaryConfirmed)))
+	assert.Equal(t, Verdict{Category: CategoryRows, Disposition: Blocking}, Classify(diffs[0], of(BoundaryConfirmed, BoundaryDenied)))
+	assert.Equal(t, Verdict{Category: CategoryServiceBoundary, Disposition: Inconclusive}, Classify(diffs[0], of(BoundaryConfirmed, BoundaryUnavailable)))
+}
