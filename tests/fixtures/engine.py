@@ -76,6 +76,7 @@ persisted_retain_secs = 10
 [query]
 timeout_secs = 10
 max_rows = {max_rows}
+recent_keys_ttl_secs = 0
 spill_dir = "/var/lib/fusescope/spill"
 
 [compactor]
