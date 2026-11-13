@@ -141,7 +141,7 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--fusescope-engine-version",
         action="store",
-        default="0.0.5",
+        default="0.0.6",
         help="ghcr.io/fuseone-io/fusescope-engine tag the queriertraces_engine suite reads traces from",
     )
     parser.addoption(
