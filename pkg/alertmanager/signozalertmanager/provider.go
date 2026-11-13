@@ -565,17 +565,7 @@ func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *a
 	}, nil
 }
 
-func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error) {
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
+func (provider *provider) CreateRoutePolicies(ctx context.Context, orgID valuer.UUID, actor string, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error) {
 	if len(routeRequests) == 0 {
 		return []*alertmanagertypes.GettableRoutePolicy{}, nil
 	}
@@ -596,13 +586,13 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 			Enabled:        true,
 			Tags:           routeRequest.Tags,
 			Channels:       routeRequest.Channels,
-			OrgID:          claims.OrgID,
+			OrgID:          orgID.StringValue(),
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
 			UserAuditable: types.UserAuditable{
-				CreatedBy: claims.Email,
-				UpdatedBy: claims.Email,
+				CreatedBy: actor,
+				UpdatedBy: actor,
 			},
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: time.Now(),
@@ -621,8 +611,7 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 		})
 	}
 
-	err = provider.notificationManager.CreateRoutePolicies(ctx, orgID.String(), routes)
-	if err != nil {
+	if err := provider.notificationManager.CreateRoutePolicies(ctx, orgID.String(), routes); err != nil {
 		return nil, err
 	}
 
@@ -793,24 +782,16 @@ func (provider *provider) CreateInhibitRules(ctx context.Context, orgID valuer.U
 	return provider.configStore.Set(ctx, config)
 }
 
-func (provider *provider) DeleteAllRoutePoliciesByRuleId(ctx context.Context, names string) error {
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		return errors.NewInvalidInputf(errors.CodeUnauthenticated, "invalid claims: %v", err)
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return err
-	}
+func (provider *provider) DeleteAllRoutePoliciesByRuleId(ctx context.Context, orgID valuer.UUID, names string) error {
 	return provider.notificationManager.DeleteAllRoutePoliciesByName(ctx, orgID.String(), names)
 }
 
-func (provider *provider) UpdateAllRoutePoliciesByRuleId(ctx context.Context, names string, routes []*alertmanagertypes.PostableRoutePolicy) error {
-	err := provider.DeleteAllRoutePoliciesByRuleId(ctx, names)
+func (provider *provider) UpdateAllRoutePoliciesByRuleId(ctx context.Context, orgID valuer.UUID, actor string, names string, routes []*alertmanagertypes.PostableRoutePolicy) error {
+	err := provider.DeleteAllRoutePoliciesByRuleId(ctx, orgID, names)
 	if err != nil {
 		return errors.NewInvalidInputf(errors.CodeInternal, "error deleting the routes: %v", err)
 	}
-	_, err = provider.CreateRoutePolicies(ctx, routes)
+	_, err = provider.CreateRoutePolicies(ctx, orgID, actor, routes)
 	return err
 }
 

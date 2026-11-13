@@ -363,10 +363,25 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	if err != nil {
 		return err
 	}
+	return m.editRule(ctx, orgID, claims.Email, id, parsedRule, ruleStr)
+}
+
+// EditRuleInOrg replaces a rule of orgID on behalf of actor. It is for
+// callers that authorized the operation themselves, such as an integration
+// managing the rules it owns; handlers use EditRule.
+func (m *Manager) EditRuleInOrg(ctx context.Context, orgID valuer.UUID, id valuer.UUID, actor string, rule *ruletypes.PostableRule) error {
+	data, err := json.Marshal(rule)
+	if err != nil {
+		return err
+	}
+	return m.editRule(ctx, orgID, actor, id, *rule, string(data))
+}
+
+func (m *Manager) editRule(ctx context.Context, orgID valuer.UUID, actor string, id valuer.UUID, parsedRule ruletypes.PostableRule, ruleStr string) error {
 	if err := parsedRule.Validate(); err != nil {
 		return err
 	}
-	if err := m.validateChannels(ctx, claims.OrgID, &parsedRule); err != nil {
+	if err := m.validateChannels(ctx, orgID.StringValue(), &parsedRule); err != nil {
 		return err
 	}
 	existingRule, err := m.ruleStore.GetStoredRule(ctx, orgID, id)
@@ -375,7 +390,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	}
 
 	existingRule.UpdatedAt = time.Now()
-	existingRule.UpdatedBy = claims.Email
+	existingRule.UpdatedBy = actor
 	existingRule.Data = ruleStr
 
 	return m.ruleStore.EditRule(ctx, existingRule, func(ctx context.Context) error {
@@ -390,7 +405,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 				if err != nil {
 					return err
 				}
-				err = m.alertmanager.UpdateAllRoutePoliciesByRuleId(ctx, id.StringValue(), request)
+				err = m.alertmanager.UpdateAllRoutePoliciesByRuleId(ctx, orgID, actor, id.StringValue(), request)
 				if err != nil {
 					return err
 				}
@@ -489,8 +504,25 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
+	return m.deleteRule(ctx, orgID, id)
+}
+
+// DeleteRuleInOrg deletes a rule of orgID, succeeding when there is none. It
+// is for callers that authorized the operation themselves, such as an
+// integration removing the rules it owns; handlers use DeleteRule.
+func (m *Manager) DeleteRuleInOrg(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	if _, err := m.ruleStore.GetStoredRule(ctx, orgID, id); err != nil {
+		if errors.Ast(err, errors.TypeNotFound) {
+			return nil
+		}
+		return err
+	}
+	return m.deleteRule(ctx, orgID, id)
+}
+
+func (m *Manager) deleteRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	return m.ruleStore.DeleteRule(ctx, orgID, id, func(ctx context.Context) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
+		cfg, err := m.alertmanager.GetConfig(ctx, orgID.StringValue())
 		if err != nil {
 			return err
 		}
@@ -510,7 +542,7 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 			return err
 		}
 
-		err = m.alertmanager.DeleteAllRoutePoliciesByRuleId(ctx, id.String())
+		err = m.alertmanager.DeleteAllRoutePoliciesByRuleId(ctx, orgID, id.String())
 		if err != nil {
 			return err
 		}
@@ -573,28 +605,59 @@ func (m *Manager) createRule(ctx context.Context, parsedRule ruletypes.PostableR
 	if err != nil {
 		return nil, err
 	}
+	return m.createRuleInOrg(ctx, orgID, valuer.GenerateUUID(), claims.Email, parsedRule, data)
+}
+
+// CreateRuleInOrg creates a rule of orgID with the ID the caller chose, on
+// behalf of actor, or does nothing when the organization already has a rule
+// with that ID, so a caller can retry after an interruption. It is for
+// callers that authorized the operation themselves, such as an integration
+// provisioning the rules it owns; handlers use CreateRule.
+func (m *Manager) CreateRuleInOrg(ctx context.Context, orgID valuer.UUID, id valuer.UUID, actor string, rule *ruletypes.PostableRule) error {
+	if _, err := m.ruleStore.GetStoredRule(ctx, orgID, id); err == nil {
+		return nil
+	} else if !errors.Ast(err, errors.TypeNotFound) {
+		return err
+	}
+	data, err := json.Marshal(rule)
+	if err != nil {
+		return err
+	}
+	if _, err := m.createRuleInOrg(ctx, orgID, id, actor, *rule, string(data)); err != nil {
+		// Another caller created it in between.
+		if _, getErr := m.ruleStore.GetStoredRule(ctx, orgID, id); getErr == nil {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func (m *Manager) createRuleInOrg(ctx context.Context, orgID valuer.UUID, ruleID valuer.UUID, actor string, parsedRule ruletypes.PostableRule, data string) (*ruletypes.GettableRule, error) {
 	if err := parsedRule.Validate(); err != nil {
 		return nil, err
 	}
-	if err := m.validateChannels(ctx, claims.OrgID, &parsedRule); err != nil {
+	if err := m.validateChannels(ctx, orgID.StringValue(), &parsedRule); err != nil {
 		return nil, err
 	}
 	now := time.Now()
 	storedRule := &ruletypes.StorableRule{
 		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
+			ID: ruleID,
 		},
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: now,
 			UpdatedAt: now,
 		},
 		UserAuditable: types.UserAuditable{
-			CreatedBy: claims.Email,
-			UpdatedBy: claims.Email,
+			CreatedBy: actor,
+			UpdatedBy: actor,
 		},
 		Data:  data,
-		OrgID: claims.OrgID,
+		OrgID: orgID.StringValue(),
 	}
+
+	var err error
 
 	id, err := m.ruleStore.CreateRule(ctx, storedRule, func(ctx context.Context, id valuer.UUID) error {
 		if parsedRule.NotificationSettings != nil {
@@ -608,7 +671,7 @@ func (m *Manager) createRule(ctx context.Context, parsedRule ruletypes.PostableR
 				if err != nil {
 					return err
 				}
-				_, err = m.alertmanager.CreateRoutePolicies(ctx, request)
+				_, err = m.alertmanager.CreateRoutePolicies(ctx, orgID, actor, request)
 				if err != nil {
 					return err
 				}
