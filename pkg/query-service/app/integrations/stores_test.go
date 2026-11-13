@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/factory/factorytest"
 	"github.com/fuseone-io/fusescope/pkg/sqlmigration"
 	"github.com/fuseone-io/fusescope/pkg/sqlschema"
@@ -69,7 +70,12 @@ func prepareTestStore(t *testing.T, store sqlstore.SQLStore, schema sqlschema.SQ
 	_, err := store.BunDB().ExecContext(ctx, `CREATE TABLE IF NOT EXISTS dashboard (id TEXT PRIMARY KEY, org_id TEXT)`)
 	require.NoError(t, err)
 
-	migration, err := sqlmigration.NewAddIntegrationAssetFactory(schema).New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
-	require.NoError(t, err)
-	require.NoError(t, migration.Up(ctx, store.BunDB()))
+	for _, f := range []func(sqlschema.SQLSchema) factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]{
+		sqlmigration.NewAddIntegrationAssetFactory,
+		sqlmigration.NewAddIntegrationAutoInstallFactory,
+	} {
+		migration, err := f(schema).New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
+		require.NoError(t, err)
+		require.NoError(t, migration.Up(ctx, store.BunDB()))
+	}
 }

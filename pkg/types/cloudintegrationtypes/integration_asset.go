@@ -80,3 +80,39 @@ type StorableIntegrationOperation struct {
 	LeaseUntil int64     `bun:"lease_until"`
 	UpdatedAt  time.Time `bun:"updated_at"`
 }
+
+// IntegrationAutoInstallState is what the backend did about an integration
+// it is configured to install in an organization.
+//   - pending: not installed yet;
+//   - done: installed, by the backend or by a user before it; never acted
+//     on again;
+//   - failed: the last attempt failed; retried from NextAttemptAt;
+//   - suppressed: the organization uninstalled it; never installed again
+//     by the backend, whatever the configuration.
+type IntegrationAutoInstallState struct{ valuer.String }
+
+var (
+	IntegrationAutoInstallStatePending    = IntegrationAutoInstallState{valuer.NewString("pending")}
+	IntegrationAutoInstallStateDone       = IntegrationAutoInstallState{valuer.NewString("done")}
+	IntegrationAutoInstallStateFailed     = IntegrationAutoInstallState{valuer.NewString("failed")}
+	IntegrationAutoInstallStateSuppressed = IntegrationAutoInstallState{valuer.NewString("suppressed")}
+)
+
+// StorableIntegrationAutoInstall records an integration the backend installs
+// by itself in an organization. Only the holder of the integration's
+// operation changes it.
+type StorableIntegrationAutoInstall struct {
+	bun.BaseModel `bun:"table:integration_auto_install"`
+
+	OrgID         string                      `bun:"org_id,pk,type:text"`
+	Integration   string                      `bun:"integration,pk,type:text"`
+	State         IntegrationAutoInstallState `bun:"state,type:text"`
+	Attempts      int64                       `bun:"attempts"`
+	LastError     string                      `bun:"last_error,type:text"`
+	LastAttemptAt *time.Time                  `bun:"last_attempt_at,nullzero"`
+	NextAttemptAt *time.Time                  `bun:"next_attempt_at,nullzero"`
+	DoneAt        *time.Time                  `bun:"done_at,nullzero"`
+	// Version is the catalog version installed, once done.
+	Version   string    `bun:"version,type:text"`
+	UpdatedAt time.Time `bun:"updated_at"`
+}

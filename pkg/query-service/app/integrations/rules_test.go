@@ -20,7 +20,9 @@ type memoryRules struct {
 	// beforeDelete, when set, runs before a rule is deleted; an error fails
 	// the deletion.
 	beforeDelete func(id valuer.UUID) error
-	writes       int
+	// failOrg, when set, fails every creation in that organization.
+	failOrg valuer.UUID
+	writes  int
 }
 
 type memoryRule struct {
@@ -34,6 +36,9 @@ func newMemoryRules() *memoryRules {
 }
 
 func (r *memoryRules) CreateRuleInOrg(_ context.Context, orgID valuer.UUID, id valuer.UUID, actor string, rule *ruletypes.PostableRule) error {
+	if !r.failOrg.IsZero() && orgID == r.failOrg {
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "ruler unavailable for org %s", orgID)
+	}
 	if r.beforeCreate != nil {
 		if err := r.beforeCreate(id); err != nil {
 			return err

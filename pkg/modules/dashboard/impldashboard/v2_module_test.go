@@ -231,3 +231,36 @@ func TestCreateWithIDV2IsIdempotentByID(t *testing.T) {
 	_, err = module.GetV2(ctx, orgID, id)
 	assert.True(t, errors.Ast(err, errors.TypeNotFound))
 }
+
+type recordingAnalytics struct {
+	*analyticstest.Provider
+	users []string
+}
+
+func (a *recordingAnalytics) TrackUser(_ context.Context, _, user, _ string, _ map[string]any) {
+	a.users = append(a.users, user)
+}
+
+// The backend's own provisioning has no user: its zero creator is not
+// tracked, a user's creation still is.
+func TestCreateTracksOnlyAUser(t *testing.T) {
+	ctx := context.Background()
+	store := newTestSQLStore(t)
+	module := newTestModule(t, store)
+	recorder := &recordingAnalytics{Provider: analyticstest.New()}
+	module.analytics = recorder
+	postable := func() dashboardtypes.PostableDashboardV2 {
+		var p dashboardtypes.PostableDashboardV2
+		require.NoError(t, json.Unmarshal([]byte(`{"schemaVersion": "v6", "generateName": true, "tags": [], "spec": {"display": {"name": "D"}, "links": [], "variables": [], "panels": {}, "layouts": []}}`), &p))
+		return p
+	}
+	orgID := valuer.GenerateUUID()
+	_, err := module.CreateWithIDV2(ctx, orgID, valuer.GenerateUUID(), "fusescope:auto-install", valuer.UUID{}, dashboardtypes.SourceIntegration, postable())
+	require.NoError(t, err)
+	assert.Empty(t, recorder.users)
+
+	user := valuer.GenerateUUID()
+	_, err = module.CreateV2(ctx, orgID, "a@example.com", user, dashboardtypes.SourceUser, postable())
+	require.NoError(t, err)
+	assert.Equal(t, []string{user.String()}, recorder.users)
+}

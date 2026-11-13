@@ -44,6 +44,10 @@ type InstalledIntegrationsRepo interface {
 	deleteIntegrationAsset(ctx context.Context, id string) error
 
 	listIntegrationAssets(ctx context.Context, orgID string, integration string) ([]*cloudintegrationtypes.StorableIntegrationAsset, error)
+
+	getAutoInstall(ctx context.Context, orgID string, integration string) (*cloudintegrationtypes.StorableIntegrationAutoInstall, error)
+
+	saveAutoInstall(ctx context.Context, row *cloudintegrationtypes.StorableIntegrationAutoInstall) error
 }
 
 type AvailableIntegrationsRepo interface {

@@ -280,6 +280,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddIngestPolicyRevisionFactory(sqlschema),
 		sqlmigration.NewAddIngestReportFactory(sqlschema),
 		sqlmigration.NewAddIntegrationAssetFactory(sqlschema),
+		sqlmigration.NewAddIntegrationAutoInstallFactory(sqlschema),
 	)
 }
 

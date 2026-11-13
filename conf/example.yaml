@@ -668,6 +668,19 @@ retention:
   # the organization created at first sign-up.
   reconcile_interval: 1m
 
+##################### Integrations #####################
+integrations:
+  # Built-in integrations installed in every organization, existing and new, once,
+  # as fusescope:auto-install, through the same path as Integrations > Install.
+  # Each must be served by this release's catalog, or startup fails. Removing one
+  # installs nothing more and uninstalls nothing; an organization that uninstalls
+  # one is never given it again. Empty by default.
+  autoinstall: []
+  # How often organizations are checked for an integration to install. This also
+  # picks up the organizations created since, and paces retries after a failure,
+  # doubling up to an hour.
+  reconcile_interval: 1m
+
 ##################### Archive #####################
 # Long-term archive of telemetry to object storage, as Parquet (docs/adr/0002).
 archive:

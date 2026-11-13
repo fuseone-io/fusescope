@@ -6,7 +6,10 @@ import (
 	"log/slog"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/modules/dashboard"
+	"github.com/fuseone-io/fusescope/pkg/modules/integration"
+	"github.com/fuseone-io/fusescope/pkg/modules/organization"
 	"github.com/fuseone-io/fusescope/pkg/query-service/agentConf"
 	"github.com/fuseone-io/fusescope/pkg/query-service/app/integrations/catalog"
 	"github.com/fuseone-io/fusescope/pkg/query-service/model"
@@ -20,7 +23,7 @@ type Controller struct {
 	mgr *Manager
 }
 
-func NewController(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module, rules Rules, logger *slog.Logger) (*Controller, error) {
+func NewController(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module, rules Rules, autoInstall []string, logger *slog.Logger) (*Controller, error) {
 	embedded, err := catalog.LoadEmbedded(logger, version.Info.Version())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't load the integration catalog: %w", err)
@@ -30,14 +33,27 @@ func NewController(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module,
 		return nil, fmt.Errorf("couldn't load the integration catalog: %w", err)
 	}
 
+	// Before anything starts: an integration this release does not serve
+	// fails startup.
+	if err := ValidateAutoInstall(context.Background(), available, autoInstall); err != nil {
+		return nil, err
+	}
+
 	mgr, err := NewManager(sqlStore, dashboardModule, rules, available, logger)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations manager: %w", err)
 	}
+	mgr.setAutoInstall(autoInstall)
 
 	return &Controller{
 		mgr: mgr,
 	}, nil
+}
+
+// NewAutoInstallService returns the service that installs the configured
+// integrations in every owned organization.
+func (c *Controller) NewAutoInstallService(providerSettings factory.ProviderSettings, orgGetter organization.Getter, config integration.Config) (factory.ServiceWithHealthy, error) {
+	return newAutoInstallService(providerSettings, c.mgr, orgGetter, config)
 }
 
 type IntegrationsListResponse struct {

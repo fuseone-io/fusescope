@@ -32,8 +32,15 @@ type Server struct {
 
 // NewServer creates and initializes Server
 func NewServer(config signoz.Config, signoz *signoz.FuseScope) (*Server, error) {
-	integrationsController, err := integrations.NewController(signoz.SQLStore, signoz.Modules.Dashboard, signoz.Ruler, signoz.Instrumentation.Logger())
+	integrationsController, err := integrations.NewController(signoz.SQLStore, signoz.Modules.Dashboard, signoz.Ruler, config.Integrations.AutoInstall, signoz.Instrumentation.Logger())
 	if err != nil {
+		return nil, err
+	}
+	autoInstall, err := integrationsController.NewAutoInstallService(signoz.Instrumentation.ToProviderSettings(), signoz.Modules.OrgGetter, config.Integrations)
+	if err != nil {
+		return nil, err
+	}
+	if err := signoz.Registry.Add(context.Background(), factory.NewNamedService(factory.MustNewName("integrationsautoinstall"), autoInstall)); err != nil {
 		return nil, err
 	}
 
