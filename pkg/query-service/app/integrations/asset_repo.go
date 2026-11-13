@@ -214,3 +214,34 @@ func (r *InstalledIntegrationsSqliteRepo) listIntegrationAssets(ctx context.Cont
 		Scan(ctx)
 	return rows, err
 }
+
+type autoInstallStorable = cloudintegrationtypes.StorableIntegrationAutoInstall
+
+// getAutoInstall returns the auto-install record, or nil when there is none.
+func (r *InstalledIntegrationsSqliteRepo) getAutoInstall(ctx context.Context, orgID string, integration string) (*autoInstallStorable, error) {
+	row := new(autoInstallStorable)
+	err := r.store.BunDBCtx(ctx).NewSelect().Model(row).Where("org_id = ?", orgID).Where("integration = ?", integration).Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return row, nil
+}
+
+// saveAutoInstall writes the auto-install record whole.
+func (r *InstalledIntegrationsSqliteRepo) saveAutoInstall(ctx context.Context, row *autoInstallStorable) error {
+	_, err := r.store.BunDBCtx(ctx).NewInsert().Model(row).
+		On("CONFLICT (org_id, integration) DO UPDATE").
+		Set("state = EXCLUDED.state").
+		Set("attempts = EXCLUDED.attempts").
+		Set("last_error = EXCLUDED.last_error").
+		Set("last_attempt_at = EXCLUDED.last_attempt_at").
+		Set("next_attempt_at = EXCLUDED.next_attempt_at").
+		Set("done_at = EXCLUDED.done_at").
+		Set("version = EXCLUDED.version").
+		Set("updated_at = EXCLUDED.updated_at").
+		Exec(ctx)
+	return err
+}

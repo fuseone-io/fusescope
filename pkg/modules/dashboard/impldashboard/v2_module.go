@@ -67,7 +67,10 @@ func (m *module) createV2(ctx context.Context, orgID valuer.UUID, id *valuer.UUI
 		return nil, err
 	}
 
-	m.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromPostableDashboardV2(postable))
+	// A dashboard the backend provisions by itself has no user to track.
+	if !creator.IsZero() {
+		m.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromPostableDashboardV2(postable))
+	}
 	return dashboard, nil
 }
 

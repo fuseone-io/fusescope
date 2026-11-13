@@ -175,6 +175,8 @@ type Manager struct {
 	// beforeStep, when set, runs before each change an operation makes, so
 	// tests can interleave operations.
 	beforeStep func()
+	// autoInstall holds the integrations the backend installs by itself.
+	autoInstall map[string]bool
 }
 
 func NewManager(store sqlstore.SQLStore, dashboardModule dashboard.Module, rules Rules, availableIntegrations AvailableIntegrationsRepo, logger *slog.Logger) (*Manager, error) {
@@ -317,23 +319,8 @@ func (m *Manager) InstallIntegration(
 	}
 	defer m.endOperation(ctx, op)
 
-	// A new installation pins the latest version; reinstalling keeps the pin.
-	// The installation is recorded before its resources are made, so a
-	// failure leaves it installed and installing again, or uninstalling,
-	// completes the work.
-	var installation *cloudintegrationtypes.InstalledIntegration
-	if err := m.step(ctx, op, func(ctx context.Context) error {
-		var apiErr *model.ApiError
-		installation, apiErr = m.installedIntegrationsRepo.upsert(ctx, orgId, integrationId, integrationDetails.version, config)
-		if apiErr != nil {
-			return apiErr
-		}
-		return nil
-	}); err != nil {
-		return nil, assetsApiError(err, "could not insert installed integration")
-	}
-	served := m.servedDetails(ctx, *integrationDetails, installation.Version)
-	if err := m.reconcileAssets(ctx, op, orgUUID, integrationId, &served, assetActor{name: createdBy, id: creator}); err != nil {
+	served, err := m.install(ctx, op, orgUUID, integrationDetails, config, assetActor{name: createdBy, id: creator})
+	if err != nil {
 		return nil, assetsApiError(err, "could not install integration")
 	}
 
@@ -343,6 +330,30 @@ func (m *Manager) InstallIntegration(
 		Version:            served.version,
 		LatestVersion:      integrationDetails.version,
 	}, nil
+}
+
+// install installs an integration within op, which the caller holds: a new
+// installation pins the latest version and reinstalling keeps the pin. The
+// installation is recorded before its resources are made, so a failure
+// leaves it installed and installing again, or uninstalling, completes the
+// work. Users and the backend's own installations go through it alike.
+func (m *Manager) install(ctx context.Context, op *integrationOperation, orgID valuer.UUID, latest *IntegrationDetails, config cloudintegrationtypes.InstalledIntegrationConfig, actor assetActor) (*IntegrationDetails, error) {
+	var installation *cloudintegrationtypes.InstalledIntegration
+	if err := m.step(ctx, op, func(ctx context.Context) error {
+		var apiErr *model.ApiError
+		installation, apiErr = m.installedIntegrationsRepo.upsert(ctx, orgID.StringValue(), latest.Id, latest.version, config)
+		if apiErr != nil {
+			return apiErr
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	served := m.servedDetails(ctx, *latest, installation.Version)
+	if err := m.reconcileAssets(ctx, op, orgID, latest.Id, &served, actor); err != nil {
+		return nil, err
+	}
+	return &served, nil
 }
 
 func (m *Manager) UninstallIntegration(
@@ -363,6 +374,14 @@ func (m *Manager) UninstallIntegration(
 		return assetsApiError(err, "could not uninstall integration")
 	}
 	defer m.endOperation(ctx, op)
+
+	// The organization's choice outlives the configuration: an integration
+	// the backend installs, or would, is never installed by it again.
+	if err := m.step(ctx, op, func(ctx context.Context) error {
+		return m.suppressAutoInstall(ctx, orgId, integrationId)
+	}); err != nil {
+		return assetsApiError(err, "could not uninstall integration")
+	}
 
 	owned, err := m.installedIntegrationsRepo.listIntegrationAssets(ctx, orgId, integrationId)
 	if err != nil {
