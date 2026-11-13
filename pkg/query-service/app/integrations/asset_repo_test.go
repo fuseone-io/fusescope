@@ -163,3 +163,43 @@ func TestAcquireIntegrationOperationConcurrently(t *testing.T) {
 		})
 	}
 }
+
+// A candidate that read a passed lease does not take the operation over if
+// the holder renews it before the candidate's update: the update waits for
+// the holder's step to commit, then finds the lease live.
+func TestAcquireIntegrationOperationLosesToARenewal(t *testing.T) {
+	for name, open := range newTestStores() {
+		t.Run(name, func(t *testing.T) {
+			ctx := context.Background()
+			repo, err := NewInstalledIntegrationsSqliteRepo(open(t))
+			require.NoError(t, err)
+			org := valuer.GenerateUUID().StringValue()
+			start := time.Now()
+			later := start.Add(testLease)
+
+			holder, err := repo.acquireIntegrationOperation(ctx, org, "builtin-demo", activeOperation, start, testLease)
+			require.NoError(t, err)
+
+			stepDone := make(chan error, 1)
+			repo.beforeTakeOver = func() {
+				repo.beforeTakeOver = nil
+				renewed := make(chan struct{})
+				go func() {
+					stepDone <- repo.runInOperation(ctx, holder, later, testLease, func(context.Context) error {
+						close(renewed)
+						// Hold the renewed row locked while the candidate's
+						// update arrives.
+						time.Sleep(300 * time.Millisecond)
+						return nil
+					})
+				}()
+				<-renewed
+			}
+
+			_, err = repo.acquireIntegrationOperation(ctx, org, "builtin-demo", uninstallingOperation, later, testLease)
+			assertCode(t, err, ErrCodeIntegrationBusy)
+			require.NoError(t, <-stepDone, "the holder keeps the operation")
+			require.NoError(t, repo.runInOperation(ctx, holder, later, testLease, func(context.Context) error { return nil }), "and can go on")
+		})
+	}
+}

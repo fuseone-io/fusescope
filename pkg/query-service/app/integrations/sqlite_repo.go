@@ -15,6 +15,9 @@ import (
 
 type InstalledIntegrationsSqliteRepo struct {
 	store sqlstore.SQLStore
+	// beforeTakeOver, when set, runs after an acquisition decided to take an
+	// operation over and before it does, so tests can interleave a renewal.
+	beforeTakeOver func()
 }
 
 func NewInstalledIntegrationsSqliteRepo(store sqlstore.SQLStore) (

@@ -70,6 +70,12 @@ func (r *InstalledIntegrationsSqliteRepo) acquireIntegrationOperation(
 		if current.LeaseUntil > now.UnixMilli() {
 			return nil, errors.Newf(errors.TypeAlreadyExists, ErrCodeIntegrationBusy, "integration %s is being changed by another request; retry once it finishes", integration)
 		}
+		if r.beforeTakeOver != nil {
+			r.beforeTakeOver()
+		}
+		// The holder may renew its lease between the read and this update,
+		// without moving the generation: the update takes over only what was
+		// read, a lease still passed, and otherwise the row is read again.
 		res, err = db.NewUpdate().Model((*operationStorable)(nil)).
 			Set("state = ?", state).
 			Set("generation = ?", current.Generation+1).
@@ -78,6 +84,8 @@ func (r *InstalledIntegrationsSqliteRepo) acquireIntegrationOperation(
 			Where("org_id = ?", orgID).
 			Where("integration = ?", integration).
 			Where("generation = ?", current.Generation).
+			Where("state = ?", current.State).
+			Where("lease_until <= ?", now.UnixMilli()).
 			Exec(ctx)
 		if err != nil {
 			return nil, err
