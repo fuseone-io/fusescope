@@ -22,6 +22,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/query-service/utils"
 	"github.com/fuseone-io/fusescope/pkg/querybuilder"
 	"github.com/fuseone-io/fusescope/pkg/statsreporter"
+	"github.com/fuseone-io/fusescope/pkg/telemetrymetadata"
 	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/ctxtypes"
 	"github.com/fuseone-io/fusescope/pkg/types/instrumentationtypes"
@@ -113,6 +114,9 @@ func New(
 }
 
 func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+	// Every statement of the request, its routing decision and each window, resolves the same
+	// engine keys once.
+	ctx = telemetrymetadata.WithKeyMemo(ctx)
 
 	// Coerce the window to epoch milliseconds up front so every downstream
 	// consumer (TimeRange, narrowWindowByTraceID, step interval, etc.) can

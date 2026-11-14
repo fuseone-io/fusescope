@@ -146,3 +146,29 @@ func TestTheEngineGraphRoutesOnlyTheOrgsCompared(t *testing.T) {
 	assert.Empty(t, store.statements, "another org never reaches the engine")
 	assert.Positive(t, store.Touches(1), "it is built for ClickHouse, and refused")
 }
+
+func spanList(hours int) *qbtypes.QueryRangeRequest {
+	end := time.Now().Truncate(time.Minute)
+	return &qbtypes.QueryRangeRequest{
+		Start: uint64(end.Add(-time.Duration(hours) * time.Hour).UnixMilli()), End: uint64(end.UnixMilli()), RequestType: qbtypes.RequestTypeRaw, NoCache: true,
+		CompositeQuery: qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{{Type: qbtypes.QueryTypeBuilder, Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name: "A", Signal: telemetrytypes.SignalTraces, Limit: 100,
+			Filter: &qbtypes.Filter{Expression: Group{}.Where(serviceKey, "frontend").Where(operationKey, "HTTP GET /dispatch").Filter},
+			Order: []qbtypes.OrderBy{
+				{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp", FieldContext: telemetrytypes.FieldContextSpan}}, Direction: qbtypes.OrderDirectionDesc},
+				{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "span_id", FieldContext: telemetrytypes.FieldContextSpan}}, Direction: qbtypes.OrderDirectionAsc},
+			},
+		}}}},
+	}
+}
+
+// A span_list resolves its keys from one engine listing, however many statements it runs.
+func TestASpanListResolvesItsKeysOnce(t *testing.T) {
+	for _, testCase := range []struct{ hours, statements int }{{1, 1}, {7, 3}} {
+		g, store := engineGraph(t)
+		_, err := g.Querier.QueryRange(pairContext(), org, spanList(testCase.hours))
+		require.NoError(t, err)
+		assert.Equal(t, []string{"metadata.keys"}, store.actions, "%d h", testCase.hours)
+		assert.Len(t, store.statements, testCase.statements, "%d h", testCase.hours)
+	}
+}
