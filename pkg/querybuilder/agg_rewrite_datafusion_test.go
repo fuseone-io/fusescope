@@ -23,7 +23,7 @@ func TestDataFusionAggExprRewriter(t *testing.T) {
 		{expr: "count_distinct(name)", want: "count(DISTINCT name)"},
 		{expr: "sum(duration_nano)", want: "sum(TRY_CAST(duration_nano AS DOUBLE))"},
 		{expr: "avg(duration_nano)", want: "avg(TRY_CAST(duration_nano AS DOUBLE))"},
-		{expr: "p99(duration_nano)", want: "approx_percentile_cont(0.99) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE))"},
+		{expr: "p99(duration_nano)", want: "approx_percentile_cont(0.99, 1000) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE))"},
 		{
 			expr: "countIf(has_error = true)",
 			want: "count(*) FILTER (WHERE has_error = ?)",
@@ -31,7 +31,7 @@ func TestDataFusionAggExprRewriter(t *testing.T) {
 		},
 		{
 			expr: "p95if(duration_nano, has_error = true)",
-			want: "approx_percentile_cont(0.95) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = ?)",
+			want: "approx_percentile_cont(0.95, 1000) WITHIN GROUP (ORDER BY TRY_CAST(duration_nano AS DOUBLE)) FILTER (WHERE has_error = ?)",
 			args: []any{true},
 		},
 		{expr: "rate()", want: "(count(*) / 60)"},
