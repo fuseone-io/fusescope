@@ -443,3 +443,48 @@ func TestASpanListFromTheEngineCarriesEventsAndLinksAsStored(t *testing.T) {
 		assert.ElementsMatch(t, []string{"name", "events", "links"}, slices.Collect(maps.Keys(row)), "the ids links read with are not in the answer")
 	}
 }
+
+// spanListRequest is the parity's span_list over the hours before now: latest spans first, with
+// the default selection.
+func spanListRequest(hours int) *qbtypes.QueryRangeRequest {
+	end := time.Now().Truncate(time.Minute)
+	timestamp := telemetrytypes.TelemetryFieldKey{Name: "timestamp", FieldContext: telemetrytypes.FieldContextSpan}
+	spanID := telemetrytypes.TelemetryFieldKey{Name: "span_id", FieldContext: telemetrytypes.FieldContextSpan}
+	return &qbtypes.QueryRangeRequest{
+		Start: uint64(end.Add(-time.Duration(hours) * time.Hour).UnixMilli()), End: uint64(end.UnixMilli()), RequestType: qbtypes.RequestTypeRaw, NoCache: true,
+		CompositeQuery: qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{{Type: qbtypes.QueryTypeBuilder, Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name: "A", Signal: telemetrytypes.SignalTraces, Limit: 100,
+			Order: []qbtypes.OrderBy{
+				{Key: qbtypes.OrderByKey{TelemetryFieldKey: timestamp}, Direction: qbtypes.OrderDirectionDesc},
+				{Key: qbtypes.OrderByKey{TelemetryFieldKey: spanID}, Direction: qbtypes.OrderDirectionAsc},
+			},
+		}}}},
+	}
+}
+
+func TestARawListOfOneBucketBuildsOnce(t *testing.T) {
+	bed := newEngineBed(t, telemetrystore.RouteTracesRaw)
+	_, err := bed.querier.QueryRange(context.Background(), engineOrg, spanListRequest(1))
+	require.NoError(t, err)
+	assert.Equal(t, 1, bed.engine.calls, "the routing decision's statement runs")
+	assert.Len(t, bed.store.statements, 1)
+}
+
+func TestARawListOfThreeBucketsBuildsEachBucket(t *testing.T) {
+	bed := newEngineBed(t, telemetrystore.RouteTracesRaw)
+	_, err := bed.querier.QueryRange(context.Background(), engineOrg, spanListRequest(7))
+	require.NoError(t, err)
+	assert.Equal(t, 4, bed.engine.calls, "the decision over the window, then one per bucket: 1, 2 and 4 hours")
+	assert.Len(t, bed.store.statements, 3)
+}
+
+func TestARawListWithAnOffsetBuildsItsBucket(t *testing.T) {
+	bed := newEngineBed(t, telemetrystore.RouteTracesRaw)
+	req := spanListRequest(1)
+	spec := req.CompositeQuery.Queries[0].Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+	spec.Offset = 10
+	req.CompositeQuery.Queries[0].Spec = spec
+	_, err := bed.querier.QueryRange(context.Background(), engineOrg, req)
+	require.NoError(t, err)
+	assert.Equal(t, 2, bed.engine.calls, "the bucket asks for offset and limit together, not what the decision built")
+}

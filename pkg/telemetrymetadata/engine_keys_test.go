@@ -3,6 +3,7 @@ package telemetrymetadata
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -134,7 +135,7 @@ func TestAnExactSelectorReadsTheEngineKeysOfItsName(t *testing.T) {
 	}, keys["http.route"])
 	assert.NotContains(t, keys, "http.route.extra", "a prefix match is not an exact one")
 	require.Len(t, engine.calls, 1)
-	assert.Equal(t, keysCall{Signal: "traces", Prefix: "http.route", Limit: 1001, tenant: org}, engine.calls[0], "one more than the limit, to tell a truncated list")
+	assert.Equal(t, keysCall{Signal: "traces", Prefix: "", Limit: 1001, tenant: org}, engine.calls[0], "the whole listing, one more than the limit, to tell a truncated list")
 }
 
 func TestASelectorNarrowsByContextAndType(t *testing.T) {
@@ -170,24 +171,38 @@ func TestAFuzzySelectorMatchesASubstringOfAnyKey(t *testing.T) {
 	assert.Empty(t, engine.calls[0].Prefix, "a substring needs the whole listing")
 }
 
-func TestSelectorsSharingAPrefixShareACall(t *testing.T) {
-	engine := &keysEngine{rows: []keyRow{{"http.route", "span", "string"}}}
-	resolve(t, engine, exact("http.route"), exact("http.route"), exact("db.name"))
-	assert.Len(t, engine.calls, 2)
-}
-
-func TestABuildCallsTheEngineOncePerDistinctPrefix(t *testing.T) {
-	engine := &keysEngine{rows: []keyRow{{"http.route", "span", "string"}, {"db.name", "span", "string"}}}
+func TestOneListingResolvesEverySelector(t *testing.T) {
+	engine := &keysEngine{rows: []keyRow{{"http.route", "span", "string"}, {"db.name", "span", "string"}, {"retries", "span", "number"}}}
 	fuzzy := func(name string) *telemetrytypes.FieldKeySelector {
 		return &telemetrytypes.FieldKeySelector{Signal: telemetrytypes.SignalTraces, Name: name, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy}
 	}
-	resolve(t, engine, exact("http.route"), fuzzy("route"), exact("db.name"), exact("http.route"), fuzzy("name"))
-	prefixes := map[string]int{}
-	for _, call := range engine.calls {
-		prefixes[call.Prefix]++
+	keys, complete := resolve(t, engine, exact("http.route"), fuzzy("name"), exact("db.name"), exact("http.route"), exact("absent"))
+	assert.True(t, complete)
+	assert.Contains(t, keys, "http.route")
+	assert.Contains(t, keys, "db.name")
+	assert.NotContains(t, keys, "retries", "no selector matches it")
+	assert.NotContains(t, keys, "absent")
+	assert.Equal(t, []keysCall{{Signal: "traces", Prefix: "", Limit: 1001, tenant: org}}, engine.calls)
+}
+
+// A key past the whole listing's limit is found by its own prefix, never read as absent.
+func TestATruncatedListingFallsBackToEachPrefix(t *testing.T) {
+	var rows []keyRow
+	for i := range 1001 {
+		rows = append(rows, keyRow{fmt.Sprintf("bulk.%04d", i), "span", "string"})
 	}
-	assert.Equal(t, map[string]int{"http.route": 1, "db.name": 1, "": 1}, prefixes,
-		"an exact selector lists by its name, every fuzzy one shares the whole listing, and none is asked twice")
+	rows = append(rows, keyRow{"rare", "span", "string"})
+	engine := &keysEngine{rows: rows}
+	fuzzy := &telemetrytypes.FieldKeySelector{Signal: telemetrytypes.SignalTraces, Name: "bulk", SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy}
+	keys, complete := resolve(t, engine, exact("rare"), exact("bulk.0001"), fuzzy)
+	assert.Equal(t, []*telemetrytypes.TelemetryFieldKey{attribute("rare", telemetrytypes.FieldContextAttribute, telemetrytypes.FieldDataTypeString)}, keys["rare"])
+	assert.Contains(t, keys, "bulk.0001")
+	assert.False(t, complete, "the fuzzy selector's listing is truncated, as it was alone")
+	prefixes := []string{}
+	for _, call := range engine.calls {
+		prefixes = append(prefixes, call.Prefix)
+	}
+	assert.Equal(t, []string{"", "bulk.0001", "rare"}, prefixes, "the whole listing serves the fuzzy selector; each exact one lists its own prefix")
 }
 
 func TestATruncatedListingIsIncomplete(t *testing.T) {
@@ -197,15 +212,34 @@ func TestATruncatedListingIsIncomplete(t *testing.T) {
 	}
 	selector := exact("k")
 	selector.Limit = 2
-	keys, complete := resolve(t, &keysEngine{rows: rows}, selector)
+	engine := &keysEngine{rows: rows}
+	keys, complete := resolve(t, engine, selector)
 	assert.False(t, complete)
 	assert.Len(t, keys["k"], 2, "only the limit is kept")
+	assert.Len(t, engine.calls, 2, "the whole listing, then the prefix's own")
+}
+
+// A selector's own limit truncates its keys as its own listing would, though the whole listing,
+// asked for a larger limit, holds them all.
+func TestASelectorsLimitTruncatesWithinTheWholeListing(t *testing.T) {
+	var rows []keyRow
+	for _, source := range []string{"span", "resource", "scope"} {
+		rows = append(rows, keyRow{"k", source, "string"})
+	}
+	selector := exact("k")
+	selector.Limit = 2
+	engine := &keysEngine{rows: rows}
+	keys, complete := resolve(t, engine, selector, exact("other"))
+	assert.False(t, complete)
+	assert.Len(t, keys["k"], 2)
+	assert.Len(t, engine.calls, 1)
 }
 
 func TestTheEngineKeyStoreFailsClosed(t *testing.T) {
 	cases := map[string]*keysEngine{
 		"engine error":   {err: errors.Newf(errors.TypeInternal, errors.CodeInternal, "unreachable")},
 		"partial answer": {rows: []keyRow{{"k", "span", "string"}}, warnings: []string{"ingester_unavailable"}},
+		"max_rows cut":   {rows: []keyRow{{"k", "span", "string"}}, warnings: []string{"max_rows 1 left keys out of the listing"}},
 		"unknown source": {rows: []keyRow{{"k", "event", "string"}}},
 		"unknown type":   {rows: []keyRow{{"k", "span", "map"}}},
 	}

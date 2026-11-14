@@ -41,14 +41,25 @@ type keysRequest struct {
 
 // GetKeysMulti lists, for every selector, the engine keys it matches: an exact selector by its
 // name, case-sensitive, a fuzzy one by a substring of any key, case-insensitive, both narrowed by
-// an attribute, resource or scope context and by a data type when given. Selectors sharing a prefix
-// share one listing; the answer is incomplete when a listing reached its limit.
+// an attribute, resource or scope context and by a data type when given. Every selector is served
+// from one whole listing; only when that listing is truncated does each exact name list its own
+// prefix, so a key past the limit is never read as absent. The answer is incomplete when the
+// listing of a selector's prefix reached its limit. Within a request of WithKeyMemo the same
+// selectors of the same org are listed once.
 func (s *EngineKeyStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, selectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
-	limits := map[string]int{}
 	for _, selector := range selectors {
 		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {
 			return nil, false, errors.Newf(errors.TypeUnsupported, ErrCodeEngineKeys, "the engine key store lists trace keys only, not %s", selector.Signal.StringValue())
 		}
+	}
+	return memoized(ctx, orgID, selectors, func() (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+		return s.resolve(ctx, orgID, selectors)
+	})
+}
+
+func (s *EngineKeyStore) resolve(ctx context.Context, orgID valuer.UUID, selectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+	limits := map[string]int{}
+	for _, selector := range selectors {
 		prefix := ""
 		if selector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
 			prefix = selector.Name
@@ -58,6 +69,10 @@ func (s *EngineKeyStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, se
 			limit = engineKeysLimit
 		}
 		limits[prefix] = max(limits[prefix], limit)
+	}
+	listings, err := s.listings(ctx, orgID, limits)
+	if err != nil {
+		return nil, false, err
 	}
 
 	out := map[string][]*telemetrytypes.TelemetryFieldKey{}
@@ -71,12 +86,9 @@ func (s *EngineKeyStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, se
 	}
 	complete := true
 	for _, prefix := range slices.Sorted(maps.Keys(limits)) {
-		keys, truncated, err := s.list(ctx, orgID, prefix, limits[prefix])
-		if err != nil {
-			return nil, false, err
-		}
-		complete = complete && !truncated
-		for _, key := range keys {
+		listed := listings[prefix]
+		complete = complete && !listed.truncated
+		for _, key := range listed.keys {
 			if slices.ContainsFunc(selectors, func(selector *telemetrytypes.FieldKeySelector) bool { return engineKeyMatches(key, selector) }) {
 				add(key)
 			}
@@ -93,6 +105,43 @@ func (s *EngineKeyStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, se
 	}
 	applyBackwardCompatibleKeys(out)
 	return out, complete, nil
+}
+
+// listing is what the engine answers for one prefix and limit.
+type listing struct {
+	keys      []*telemetrytypes.TelemetryFieldKey
+	truncated bool
+}
+
+// listings answers every prefix of limits as its own listing would: from the whole listing, in
+// the engine's order, when that listing holds every key; otherwise the whole listing answers the
+// empty prefix and each other prefix is listed on its own.
+func (s *EngineKeyStore) listings(ctx context.Context, orgID valuer.UUID, limits map[string]int) (map[string]listing, error) {
+	whole := slices.Max(slices.Collect(maps.Values(limits)))
+	keys, truncated, err := s.list(ctx, orgID, "", whole)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]listing{}
+	for _, prefix := range slices.Sorted(maps.Keys(limits)) {
+		if truncated && prefix != "" {
+			own, ownTruncated, err := s.list(ctx, orgID, prefix, limits[prefix])
+			if err != nil {
+				return nil, err
+			}
+			out[prefix] = listing{keys: own, truncated: ownTruncated}
+			continue
+		}
+		var matched []*telemetrytypes.TelemetryFieldKey
+		for _, key := range keys {
+			if strings.HasPrefix(key.Name, prefix) {
+				matched = append(matched, key)
+			}
+		}
+		limit := limits[prefix]
+		out[prefix] = listing{keys: matched[:min(len(matched), limit)], truncated: len(matched) > limit || (truncated && len(matched) == limit)}
+	}
+	return out, nil
 }
 
 // engineKeyMatches mirrors the ClickHouse keys-table conditions for one listed key.

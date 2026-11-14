@@ -563,6 +563,13 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context, onEngine bool) 
 		}
 	}
 
+	// The routing decision built the statement of the whole window with the spec as asked: a
+	// bucket that is that window, asking for the same rows, runs it.
+	var decided *qbtypes.Statement
+	if onEngine && q.engine.decision != nil && q.spec.Offset == 0 && q.spec.Limit != 0 && fromMS == q.fromMS && toMS == q.toMS {
+		decided = q.engine.decision.stmt
+	}
+
 	reqLimit := q.spec.Limit
 	if reqLimit == 0 {
 		reqLimit = 10_000 // sane upper-bound default
@@ -620,7 +627,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context, onEngine bool) 
 		q.spec.Offset = 0
 		q.spec.Limit = need
 
-		stmt, err := q.build(ctx, r.fromNS/1e6, r.toNS/1e6, onEngine)
+		stmt, err := q.bucketStatement(ctx, r, onEngine, decided)
 		if err != nil {
 			return nil, err
 		}

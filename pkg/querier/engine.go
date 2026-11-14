@@ -143,6 +143,15 @@ func (q *builderQuery[T]) build(ctx context.Context, fromMS, toMS uint64, onEngi
 	return q.stmtBuilder.Build(ctx, q.orgID, fromMS, toMS, q.kind, q.spec, q.variables)
 }
 
+// bucketStatement is the statement of bucket r: decided when r is the whole window it was built
+// for, a new build otherwise.
+func (q *builderQuery[T]) bucketStatement(ctx context.Context, r tsRange, onEngine bool, decided *qbtypes.Statement) (*qbtypes.Statement, error) {
+	if decided != nil && r.fromNS == querybuilder.ToNanoSecs(q.fromMS) && r.toNS == querybuilder.ToNanoSecs(q.toMS) {
+		return decided, nil
+	}
+	return q.build(ctx, r.fromNS/1e6, r.toNS/1e6, onEngine)
+}
+
 // execute runs stmt where onEngine decided.
 func (q *builderQuery[T]) execute(ctx context.Context, stmt *qbtypes.Statement, onEngine bool) (*qbtypes.Result, error) {
 	if onEngine {
