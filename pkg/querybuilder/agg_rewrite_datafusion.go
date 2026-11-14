@@ -191,13 +191,6 @@ func (w *dataFusionAggWriter) predicate(arg chparser.Expr) (string, error) {
 	return strings.TrimSpace(strings.TrimPrefix(sql, "WHERE")), nil
 }
 
-// quantileCentroids is the t-digest size of every engine quantile. It is part of the parity with
-// ClickHouse's quantile, not a tuning knob: with it the estimate lies between the order statistics
-// around the exact rank wherever the parity judges by them. Each aggregate state holds about 16 KB
-// per group, and a query may hold one per partition and per quantile. A change needs the same
-// evidence again.
-const quantileCentroids = 1000
-
 // dataFusionAggregate is the DataFusion call of agg over its columns, without the filter.
 func dataFusionAggregate(agg AggrFunc, columns []string) (string, error) {
 	base := agg.FuncName
@@ -206,7 +199,9 @@ func dataFusionAggregate(agg AggrFunc, columns []string) (string, error) {
 		if open < 0 || end < open || len(columns) != 1 {
 			return "", errors.NewInternalf(errors.CodeInternal, "malformed quantile %q", base)
 		}
-		return fmt.Sprintf("approx_percentile_cont(%s, %d) WITHIN GROUP (ORDER BY %s)", base[open+1:end], quantileCentroids, columns[0]), nil
+		// quantile_compat is the engine's quantile under the parity's rules with ClickHouse's
+		// quantile (engine ADR 0011): exact up to 10,010 values per group, a t-digest above.
+		return fmt.Sprintf("quantile_compat(%s, %s)", columns[0], base[open+1:end]), nil
 	}
 	base = strings.TrimSuffix(base, "If")
 	switch base {

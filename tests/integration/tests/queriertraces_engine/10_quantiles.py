@@ -1,7 +1,7 @@
 """The engine's quantiles pass the parity's rule against the exact distribution of what was sent
 (#5): between the order statistics around the exact rank where one value is coarser than the rank
-tolerance, within the rank tolerance otherwise. Both stores are judged alike; every miss is listed
-in one failure."""
+tolerance, within the rank tolerance otherwise. ClickHouse is judged alike on the groups it reads
+exactly, up to 8,192 values; past them it samples. Every miss is listed in one failure."""
 
 import datetime
 import math
@@ -18,10 +18,13 @@ from fixtures.traces import Traces, TracesKind
 from integration.tests.queriertraces_engine.conftest import Backend, send_and_wait, span_id
 
 QUANTILES = {"p50": 0.50, "p95": 0.95, "p99": 0.99, "p999": 0.999}
-# Groups in the order statistics regime at the p99 and p999, and one in the rank regime at the p99.
-GROUPS = {"small": 800, "large": 5000}
+# Odd sizes, each in a band where a t-digest's rank q·n misses the order statistics around
+# q·(n − 1) (p95, p99, p999, p999), and the first size past the engine's exact limit.
+GROUPS = {"tiny": 43, "small": 137, "mid": 1231, "large": 5003, "past": 10011}
 # The parity's δ: a quantile q may be off by δ·q·(1 − q) in rank.
 RANK_TOLERANCE = 0.1
+# ClickHouse's quantile reads every value up to this many, a reservoir sample past it.
+CLICKHOUSE_EXACT = 8192
 
 
 def judge(values: list[int], q: float, v: float) -> bool:
@@ -80,6 +83,8 @@ def test_quantiles_pass_the_parity_rule(engine: EngineStack, engine_collector: E
         rows = response.json()["data"]["data"]["results"][0]["data"]
         assert sorted(row[0] for row in rows) == sorted(durations), f"{store}: {rows}"
         for row in rows:
+            if store == "clickhouse" and len(durations[row[0]]) > CLICKHOUSE_EXACT:
+                continue
             for (name, q), v in zip(QUANTILES.items(), row[1:], strict=True):
                 if not judge(durations[row[0]], q, v):
                     misses.append(f"{store} {row[0]} {name}: {v}")
