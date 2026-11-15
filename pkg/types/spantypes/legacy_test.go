@@ -17,7 +17,7 @@ func TestEngineEventsReadAsTheStoredJSON(t *testing.T) {
 	}
 	legacy := LegacyEvents(native)
 	assert.Equal(t, []string{
-		`{"name":"exception","timeUnixNano":1747950000000000123,"attributeMap":{"exception.type":"IOError"}}`,
+		`{"name":"exception","timeUnixNano":1747950000000000123,"attributeMap":{"exception.type":"IOError"},"isError":true}`,
 		`{"name":"retry","timeUnixNano":1747950000000000123}`,
 	}, legacy)
 	assert.Equal(t, []EventV2{

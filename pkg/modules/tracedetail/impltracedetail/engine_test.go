@@ -62,7 +62,7 @@ func TestTheMapperReadsEveryColumnOfAnEngineSpan(t *testing.T) {
 		AttributesNumber: map[string]float64{"http.response.status_code": 500},
 		AttributesBool:   map[string]bool{"retry": true},
 		ResourcesString:  map[string]string{"service.name": "cart", "host.name": "h1"},
-		Events:           []string{`{"name":"exception","timeUnixNano":1747950000000000200,"attributeMap":{"exception.type":"IOError"}}`},
+		Events:           []string{`{"name":"exception","timeUnixNano":1747950000000000200,"attributeMap":{"exception.type":"IOError"},"isError":true}`},
 		StatusMessage:    "boom", StatusCodeString: "Error", SpanKind: "Server", ParentSpanID: "53995c3f42cd8ad8",
 		Flags: 1, IsRemote: "yes", TraceState: "rojo=00f067aa0ba902b7", StatusCode: 2,
 		DBName: "carts", DBOperation: "SELECT", HTTPMethod: "GET", ResponseStatusCode: "500",

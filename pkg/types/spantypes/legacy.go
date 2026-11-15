@@ -10,7 +10,8 @@ import (
 
 // LegacyEvents writes events read natively from fusescope-engine, a list of structs of timestamp,
 // name and attributes as the Flight reader gives it, in the stored form the readers take: one
-// JSON Event per element.
+// JSON Event per element. The engine does not store isError: ClickHouse stores it true exactly on
+// events named "exception" (engine MAPPING.md, events).
 func LegacyEvents(native []any) []string {
 	out := make([]string, 0, len(native))
 	for _, element := range native {
@@ -20,6 +21,7 @@ func LegacyEvents(native []any) []string {
 		}
 		legacy := Event{}
 		legacy.Name, _ = event["name"].(string)
+		legacy.IsError = legacy.Name == "exception"
 		if at, ok := event["timestamp"].(time.Time); ok {
 			legacy.TimeUnixNano = uint64(at.UnixNano())
 		}
