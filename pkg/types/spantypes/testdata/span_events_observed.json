@@ -1,0 +1,1166 @@
+{
+ "runs": [
+  {
+   "source": {
+    "collector": "ghcr.io/fuseone-io/fusescope-collector:0.2.0@sha256:b9f8b298703d65452a9314ce9007473a6164adfc3fa56e65d97cf136f90322f3",
+    "clickhouse": "25.12.5.44",
+    "table": "signoz_traces.distributed_signoz_index_v3",
+    "run": "39c1c0a3"
+   },
+   "cases": [
+    {
+     "case": "exception_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501048094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_unset",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "UNSET",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 0,
+      "has_error": false,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501049094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_ok",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "OK",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 1,
+      "has_error": false,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501050094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_no_attrs_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {}
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501051094939,
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_no_attrs_unset",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "UNSET",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {}
+       }
+      ]
+     },
+     "row": {
+      "status_code": 0,
+      "has_error": false,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501052094939,
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_escaped_unset",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "UNSET",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m",
+         "exception.escaped": "true"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 0,
+      "has_error": false,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501053094939,
+        "attributeMap": {
+         "exception.escaped": "true",
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "Exception_case_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "Exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "Exception",
+        "timeUnixNano": 1794710501054094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "case": "exceptions_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exceptions",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exceptions",
+        "timeUnixNano": 1794710501055094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "case": "other_with_exc_attrs_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "failure",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "failure",
+        "timeUnixNano": 1794710501056094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "case": "other_with_exc_attrs_unset",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "UNSET",
+      "events": [
+       {
+        "name": "failure",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 0,
+      "has_error": false,
+      "events": [
+       {
+        "name": "failure",
+        "timeUnixNano": 1794710501057094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "case": "other_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "log",
+        "attributes": {
+         "level": "error"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "log",
+        "timeUnixNano": 1794710501058094939,
+        "attributeMap": {
+         "level": "error"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "case": "other_then_exception_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "log",
+        "attributes": {}
+       },
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       },
+       {
+        "name": "log",
+        "attributes": {}
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "log",
+        "timeUnixNano": 1794710501059094939
+       },
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501059094940,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       },
+       {
+        "name": "log",
+        "timeUnixNano": 1794710501059094941
+       }
+      ]
+     }
+    },
+    {
+     "case": "two_exceptions_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       },
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501060094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       },
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501060094940,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_error_server",
+     "sent": {
+      "kind": "SERVER",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501061094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_error_client",
+     "sent": {
+      "kind": "CLIENT",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501062094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_error_producer",
+     "sent": {
+      "kind": "PRODUCER",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501063094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_error_consumer",
+     "sent": {
+      "kind": "CONSUMER",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501064094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_unset_server",
+     "sent": {
+      "kind": "SERVER",
+      "status": "UNSET",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 0,
+      "has_error": false,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710501065094939,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "source": {
+    "collector": "ghcr.io/fuseone-io/fusescope-collector:0.6.1@sha256:bca9dd696fb69558dff92eb52fc7f3400f79b38ea645501acb7afc3394e53baf",
+    "clickhouse": "25.12.5.44",
+    "table": "signoz_traces.distributed_signoz_index_v3",
+    "run": "978f52b4"
+   },
+   "cases": [
+    {
+     "case": "exception_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512139920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_unset",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "UNSET",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 0,
+      "has_error": false,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512140920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_ok",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "OK",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 1,
+      "has_error": false,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512141920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_no_attrs_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {}
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512142920182,
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_no_attrs_unset",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "UNSET",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {}
+       }
+      ]
+     },
+     "row": {
+      "status_code": 0,
+      "has_error": false,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512143920182,
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_escaped_unset",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "UNSET",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m",
+         "exception.escaped": "true"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 0,
+      "has_error": false,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512144920182,
+        "attributeMap": {
+         "exception.escaped": "true",
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "Exception_case_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "Exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "Exception",
+        "timeUnixNano": 1794710512145920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "case": "exceptions_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exceptions",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exceptions",
+        "timeUnixNano": 1794710512146920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "case": "other_with_exc_attrs_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "failure",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "failure",
+        "timeUnixNano": 1794710512147920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "case": "other_with_exc_attrs_unset",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "UNSET",
+      "events": [
+       {
+        "name": "failure",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 0,
+      "has_error": false,
+      "events": [
+       {
+        "name": "failure",
+        "timeUnixNano": 1794710512148920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "case": "other_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "log",
+        "attributes": {
+         "level": "error"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "log",
+        "timeUnixNano": 1794710512149920182,
+        "attributeMap": {
+         "level": "error"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "case": "other_then_exception_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "log",
+        "attributes": {}
+       },
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       },
+       {
+        "name": "log",
+        "attributes": {}
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "log",
+        "timeUnixNano": 1794710512150920182
+       },
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512150920183,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       },
+       {
+        "name": "log",
+        "timeUnixNano": 1794710512150920184
+       }
+      ]
+     }
+    },
+    {
+     "case": "two_exceptions_error",
+     "sent": {
+      "kind": "INTERNAL",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       },
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512151920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       },
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512151920183,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_error_server",
+     "sent": {
+      "kind": "SERVER",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512152920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_error_client",
+     "sent": {
+      "kind": "CLIENT",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512153920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_error_producer",
+     "sent": {
+      "kind": "PRODUCER",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512154920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_error_consumer",
+     "sent": {
+      "kind": "CONSUMER",
+      "status": "ERROR",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 2,
+      "has_error": true,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512155920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    },
+    {
+     "case": "exception_unset_server",
+     "sent": {
+      "kind": "SERVER",
+      "status": "UNSET",
+      "events": [
+       {
+        "name": "exception",
+        "attributes": {
+         "exception.type": "E",
+         "exception.message": "m"
+        }
+       }
+      ]
+     },
+     "row": {
+      "status_code": 0,
+      "has_error": false,
+      "events": [
+       {
+        "name": "exception",
+        "timeUnixNano": 1794710512156920182,
+        "attributeMap": {
+         "exception.message": "m",
+         "exception.type": "E"
+        },
+        "isError": true
+       }
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}
