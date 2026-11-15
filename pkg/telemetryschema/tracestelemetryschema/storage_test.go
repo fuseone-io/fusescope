@@ -183,7 +183,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 		},
 		{
-			name: "Window fully after release - JSON column only",
+			name: "Window fully after release - JSON column, then the map",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
@@ -191,7 +191,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			},
 			tsStart:        uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:          uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedResult: "resource.`service.name`::String",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 		},
 		{
 			name: "Window fully before release - map column only",
@@ -215,7 +215,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			},
 			tsStart:        uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:          uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedResult: "resource.`deployment.environment`::String",
+			expectedResult: "multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, `resource_string_deployment$$environment_exists` = true, `resource_string_deployment$$environment`, NULL)",
 		},
 		{
 			name: "Window straddles release - materialized resource",

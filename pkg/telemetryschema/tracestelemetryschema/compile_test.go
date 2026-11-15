@@ -321,7 +321,7 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 		expectedSQL string
 	}{
 		{
-			name: "Exists - window after release - JSON only",
+			name: "Exists - window after release - JSON, then the map",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "service.name",
 				FieldContext:  telemetrytypes.FieldContextResource,
@@ -331,10 +331,10 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 			operator:    qbtypes.FilterOperatorExists,
 			tsStart:     uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:       uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedSQL: "WHERE resource.`service.name` IS NOT NULL",
+			expectedSQL: "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
 		},
 		{
-			name: "NotExists - window after release - JSON only",
+			name: "NotExists - window after release - JSON, then the map",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "service.name",
 				FieldContext:  telemetrytypes.FieldContextResource,
@@ -344,7 +344,7 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 			operator:    qbtypes.FilterOperatorNotExists,
 			tsStart:     uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:       uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedSQL: "WHERE resource.`service.name` IS NULL",
+			expectedSQL: "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NULL",
 		},
 		{
 			name: "Exists - window before release - map only",
