@@ -3,6 +3,7 @@ package tracestelemetryschema
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
@@ -241,7 +242,7 @@ func (m *storage) resolveColumnExprs(
 		return nil, nil, nil, err
 	}
 
-	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
+	newColumns, evolutionsEntries, err := selectColumns(q, key, columns)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -362,11 +363,29 @@ func (m *storage) columnIsTemporal(ctx context.Context, q qbtypes.QueryInfo, key
 	if err != nil {
 		return false, err
 	}
-	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
+	newColumns, _, err := selectColumns(q, key, columns)
 	if err != nil {
 		return false, err
 	}
 	return len(newColumns) == 1 && querybuilder.ColumnIsTemporal(newColumns[0]), nil
+}
+
+// selectColumns is the evolution selection of key's columns for the query window. A resource
+// key keeps resources_string behind the JSON column past its release: the JSON column cannot
+// hold a value at a path another key extends (deployment.environment beside
+// deployment.environment.name), and the map still holds it.
+func selectColumns(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*chschema.Column) ([]*chschema.Column, []*telemetrytypes.EvolutionEntry, error) {
+	selected, entries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(selected) != 1 || selected[0] != indexV3Columns["resource"] {
+		return selected, entries, nil
+	}
+	if entries != nil {
+		entries = append(slices.Clone(entries), nil)
+	}
+	return append(slices.Clone(selected), indexV3Columns["resources_string"]), entries, nil
 }
 
 // scopeJSONExistsExpression renders the existence predicate of a scope key on the scope
@@ -424,7 +443,7 @@ func (m *storage) read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 // string, because its ::String cast folds NULL. Every other column reads a
 // real value.
 func absentReads(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*chschema.Column) (qbtypes.Absent, error) {
-	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
+	newColumns, _, err := selectColumns(q, key, columns)
 	if err != nil {
 		return qbtypes.AlwaysPresent, err
 	}
@@ -480,6 +499,9 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 	case key.FieldContext == telemetrytypes.FieldContextScope:
 		read.Presence = scopeJSONExistsExpression(key, sql, true)
 		read.Absence = scopeJSONExistsExpression(key, sql, false)
+	case len(exprs) > 1:
+		// a multiIf over several columns reads NULL only where every column lacks the key
+		read.Presence, read.Absence = sql+" IS NOT NULL", sql+" IS NULL"
 	case len(exprs) == 1 && len(existExprs) == 1:
 		// one column with its own test: a map key, a materialized column, or
 		// a JSON path, where a numeric or bool attribute is present as its

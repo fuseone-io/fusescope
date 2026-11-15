@@ -59,6 +59,17 @@ def spans(service: str, now: datetime.datetime) -> list[Traces]:
     return out
 
 
+def window_after_resource_release(clickhouse: types.TestContainerClickhouse, now: datetime.datetime) -> tuple[int, int]:
+    """A window that starts after the traces resource JSON column's release, so ClickHouse
+    reads resource keys as it does past the release, not across it (fuseone-io/fusescope#406)."""
+    rows = clickhouse.conn.query("SELECT release_time FROM signoz_metadata.distributed_column_evolution_metadata WHERE signal = 'traces' AND column_name = 'resource' AND field_context = 'resource' AND field_name = '__all__'").result_rows
+    assert rows, "the traces resource JSON evolution is registered"
+    release_ms = max(int(row[0]) for row in rows) // 1_000_000
+    start = max(int((now - datetime.timedelta(minutes=5)).timestamp() * 1000), release_ms + 1)
+    assert release_ms < start <= int(now.timestamp() * 1000), f"window start {start} after the release {release_ms} and before the spans"
+    return start, int((now + datetime.timedelta(minutes=1)).timestamp() * 1000)
+
+
 def rows(backend: Backend, token: str, window: tuple[int, int], expression: str, select: list[str]) -> requests.Response:
     query = build_raw_query("A", "traces", filter_expression=expression, order=[build_order_by("timestamp", "desc")], limit=100, select_fields=[{"name": n} for n in select])
     return make_query_request(backend.signoz, token, window[0], window[1], [query], request_type="raw")
@@ -77,7 +88,7 @@ def test_absent_promoted_keys_read_alike(engine: EngineStack, engine_collector: 
     now = datetime.datetime.now(datetime.UTC)
     service = f"eng-d8-{uuid.uuid4().hex[:8]}"
     send_and_wait(engine_collector, clickhouse, engine_backend, spans(service, now))
-    window = (int((now - datetime.timedelta(minutes=5)).timestamp() * 1000), int((now + datetime.timedelta(minutes=1)).timestamp() * 1000))
+    window = window_after_resource_release(clickhouse, now)
     tokens = {"on": engine_backend.token(), "off": clickhouse_backend.token()}
 
     differences = []
@@ -139,7 +150,7 @@ def test_folded_promoted_keys_read_alike(engine: EngineStack, engine_collector: 
     now = datetime.datetime.now(datetime.UTC)
     service = f"eng-d8f-{uuid.uuid4().hex[:8]}"
     send_and_wait(engine_collector, clickhouse, engine_backend, folded_spans(service, now))
-    window = (int((now - datetime.timedelta(minutes=5)).timestamp() * 1000), int((now + datetime.timedelta(minutes=1)).timestamp() * 1000))
+    window = window_after_resource_release(clickhouse, now)
     tokens = {"on": engine_backend.token(), "off": clickhouse_backend.token()}
 
     differences = []
