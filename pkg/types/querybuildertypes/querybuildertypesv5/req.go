@@ -22,6 +22,29 @@ type QueryEnvelope struct {
 	Spec any `json:"spec"`
 }
 
+// Copy deep-copies the spec of every query type that has a Copy; any other spec is shared.
+func (e QueryEnvelope) Copy() QueryEnvelope {
+	switch spec := e.Spec.(type) {
+	case QueryBuilderQuery[TraceAggregation]:
+		e.Spec = spec.Copy()
+	case QueryBuilderQuery[LogAggregation]:
+		e.Spec = spec.Copy()
+	case QueryBuilderQuery[MetricAggregation]:
+		e.Spec = spec.Copy()
+	case QueryBuilderFormula:
+		e.Spec = spec.Copy()
+	case QueryBuilderJoin:
+		e.Spec = spec.Copy()
+	case QueryBuilderTraceOperator:
+		e.Spec = spec.Copy()
+	case PromQuery:
+		e.Spec = spec.Copy()
+	case ClickHouseQuery:
+		e.Spec = spec.Copy()
+	}
+	return e
+}
+
 // builderQuerySpec is a signal-discriminated oneOf of the three
 // QueryBuilderQuery[T]; schema-only (runtime dispatch is in QueryEnvelope.UnmarshalJSON).
 type builderQuerySpec struct{}
@@ -586,23 +609,42 @@ func (r *QueryRangeRequest) FuncsForQuery(name string) []Function {
 	return funcs
 }
 
-func (r *QueryRangeRequest) IsAnomalyRequest() (*QueryBuilderQuery[MetricAggregation], bool) {
-	hasAnomaly := false
-	var q QueryBuilderQuery[MetricAggregation]
-	for _, query := range r.CompositeQuery.Queries {
+// FunctionOccurrence is one use of a function: the query holding it and its position in that
+// query's functions.
+type FunctionOccurrence struct {
+	QueryIndex    int
+	QueryName     string
+	FunctionIndex int
+}
+
+// FindFunctions lists every use of name across the specs that carry functions, whatever their
+// signal or type: builder queries, formulas, joins and trace operators.
+func (r *QueryRangeRequest) FindFunctions(name FunctionName) []FunctionOccurrence {
+	var out []FunctionOccurrence
+	for idx, query := range r.CompositeQuery.Queries {
+		var queryName string
+		var functions []Function
 		switch spec := query.Spec.(type) {
-		// only metrics support anomaly right now
+		case QueryBuilderQuery[TraceAggregation]:
+			queryName, functions = spec.Name, spec.Functions
+		case QueryBuilderQuery[LogAggregation]:
+			queryName, functions = spec.Name, spec.Functions
 		case QueryBuilderQuery[MetricAggregation]:
-			for _, f := range spec.Functions {
-				if f.Name == FunctionNameAnomaly {
-					hasAnomaly = true
-					q = spec
-				}
+			queryName, functions = spec.Name, spec.Functions
+		case QueryBuilderFormula:
+			queryName, functions = spec.Name, spec.Functions
+		case QueryBuilderJoin:
+			queryName, functions = spec.Name, spec.Functions
+		case QueryBuilderTraceOperator:
+			queryName, functions = spec.Name, spec.Functions
+		}
+		for fnIdx, fn := range functions {
+			if fn.Name == name {
+				out = append(out, FunctionOccurrence{QueryIndex: idx, QueryName: queryName, FunctionIndex: fnIdx})
 			}
 		}
 	}
-
-	return &q, hasAnomaly
+	return out
 }
 
 func (r *QueryRangeRequest) TraceOperatorQueryIndex() int {

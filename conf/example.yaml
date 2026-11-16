@@ -681,6 +681,20 @@ integrations:
   # doubling up to an hour.
   reconcile_interval: 1m
 
+##################### Anomaly #####################
+# Anomaly evaluations run the current window, then the query alone over four
+# earlier seasons. These limits are checked once a window has returned, so they
+# bound responses, not the memory ClickHouse uses: set telemetrystore's
+# max_execution_time and max_bytes_to_read for that.
+anomaly:
+  # Evaluations running at once in this process. A preview past it gets 429; a
+  # rule waits for a slot.
+  max_concurrent: 4
+  # Series of each window, the current one and each baseline.
+  max_series: 1000
+  # Points of the five windows together; above it the request gets 413.
+  max_points: 2000000
+
 ##################### Archive #####################
 # Long-term archive of telemetry to object storage, as Parquet (docs/adr/0002).
 archive:

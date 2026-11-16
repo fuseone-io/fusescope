@@ -9,6 +9,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/nfmanager"
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
 	"github.com/fuseone-io/fusescope/pkg/analytics"
+	"github.com/fuseone-io/fusescope/pkg/anomaly/anomalyquerier"
 	"github.com/fuseone-io/fusescope/pkg/apiserver"
 	"github.com/fuseone-io/fusescope/pkg/auditor"
 	"github.com/fuseone-io/fusescope/pkg/authn"
@@ -83,6 +84,7 @@ type FuseScope struct {
 	Prometheus             prometheus.Prometheus
 	Alertmanager           alertmanager.Alertmanager
 	Querier                querier.Querier
+	AnomalyEvaluator       *anomalyquerier.Evaluator
 	APIServer              apiserver.APIServer
 	Zeus                   zeus.Zeus
 	Licensing              licensing.Licensing
@@ -341,6 +343,12 @@ func New(
 		return nil, err
 	}
 
+	// One evaluator for the process, so its concurrency limit bounds every caller together.
+	anomalyEvaluator, err := anomalyquerier.NewEvaluator(providerSettings, querier, config.Anomaly)
+	if err != nil {
+		return nil, err
+	}
+
 	sqlschema, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
@@ -554,7 +562,7 @@ func New(
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.UserGetter, modules.UserSetter, orgGetter, authz, config.User.Root)
 
 	// Initialize the querier handler via callback (allows EE to decorate with anomaly detection)
-	querierHandler := querierHandlerCallback(providerSettings, querier, analytics)
+	querierHandler := querierHandlerCallback(providerSettings, anomalyquerier.NewQuerier(querier, anomalyEvaluator), analytics)
 
 	// Create a list of all stats collectors
 	statsCollectors := []statsreporter.StatsCollector{
@@ -656,6 +664,7 @@ func New(
 		Prometheus:             prometheus,
 		Alertmanager:           alertmanager,
 		Querier:                querier,
+		AnomalyEvaluator:       anomalyEvaluator,
 		APIServer:              apiserverInstance,
 		Zeus:                   zeus,
 		Licensing:              licensing,

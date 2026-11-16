@@ -712,6 +712,14 @@ type Function struct {
 	Args []FunctionArg `json:"args,omitzero"`
 }
 
+var _ jsonschema.Preparer = Function{}
+
+// PrepareJSONSchema documents the arguments of the functions that take named ones.
+func (Function) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithDescription("A function applied to the query's series. `anomaly` must be the last function of a metrics builder query, and takes `z_score_threshold` (1 to 7, named or at position 0) and `seasonality` (`hourly`, `daily` or `weekly`, named or at position 1, default `hourly`). Its result fills `predictedSeries`, `upperBoundSeries`, `lowerBoundSeries` and `anomalyScores`.")
+	return nil
+}
+
 // Copy creates a deep copy of Function.
 func (f Function) Copy() Function {
 	c := f

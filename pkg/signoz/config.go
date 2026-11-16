@@ -10,6 +10,7 @@ import (
 
 	"github.com/fuseone-io/fusescope/pkg/alertmanager"
 	"github.com/fuseone-io/fusescope/pkg/analytics"
+	"github.com/fuseone-io/fusescope/pkg/anomaly"
 	"github.com/fuseone-io/fusescope/pkg/apiserver"
 	"github.com/fuseone-io/fusescope/pkg/auditor"
 	"github.com/fuseone-io/fusescope/pkg/authn"
@@ -177,6 +178,9 @@ type Config struct {
 	// Integrations config
 	Integrations integration.Config `mapstructure:"integrations"`
 
+	// Anomaly config
+	Anomaly anomaly.Config `mapstructure:"anomaly"`
+
 	// Archive config
 	Archive archive.Config `mapstructure:"archive"`
 }
@@ -222,6 +226,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		onboarding.NewConfigFactory(),
 		retention.NewConfigFactory(),
 		integration.NewConfigFactory(),
+		anomaly.NewConfigFactory(),
 		archive.NewConfigFactory(),
 	}
 
