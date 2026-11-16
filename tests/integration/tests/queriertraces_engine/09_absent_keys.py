@@ -19,7 +19,7 @@ from integration.tests.queriertraces_engine.conftest import Backend, send_and_wa
 
 ATTRIBUTES = ["db.name", "http.route", "peer.service", "rpc.method"]
 RESOURCES = ["deployment.environment"]
-STATES = {"absent": None, "empty": "", "v1": "v1", "v2": "v2"}
+STATES = {"absent": None, "empty": "", "v1": "v1", "v2": "v2", "v10": "v10"}
 OPERATORS = [
     "= 'v1'",
     "!= 'v1'",
@@ -94,9 +94,7 @@ def test_absent_promoted_keys_read_alike(engine: EngineStack, engine_collector: 
     differences = []
     for key in ATTRIBUTES + RESOURCES:
         base = f"service.name = '{service}' AND name LIKE '{key}:%'"
-        # ClickHouse's resource filter keeps no row for != '' (fuseone-io/fusescope#402).
-        operators = [op for op in OPERATORS if not (key in RESOURCES and op == "!= ''")]
-        cases = [(f"{key} {op}", f"{base} AND {key} {op}", ["name"], None) for op in operators]
+        cases = [(f"{key} {op}", f"{base} AND {key} {op}", ["name"], None) for op in OPERATORS]
         cases.append((f"select {key}", base, ["name", key], key))
         for label, expression, select, selected in cases:
             on = answer(on_engine(engine.a, lambda e=expression, s=select: rows(engine_backend, tokens["on"], window, e, s)), selected)

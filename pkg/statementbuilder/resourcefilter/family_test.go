@@ -112,7 +112,7 @@ func TestFamilyExistsIsAnyMemberPresence(t *testing.T) {
 }
 
 // With only one member in metadata the SQL keeps the exact pre-family shape,
-// including the negated value hint on !=.
+// which has no negated value hint on != (fuseone-io/fusescope#402).
 func TestSingleMemberShapesUnchanged(t *testing.T) {
 	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})
 	storage := newStorage()
@@ -131,6 +131,6 @@ func TestSingleMemberShapesUnchanged(t *testing.T) {
 	require.Len(t, conds, 1)
 	sb.Where(conds...)
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	require.Equal(t, "WHERE (simpleJSONExtractString(labels, 'deployment.environment.name') <> ? AND labels NOT LIKE ?)", sql)
-	require.Equal(t, []any{"production", "%deployment.environment.name\":\"production%"}, args)
+	require.Equal(t, "WHERE simpleJSONExtractString(labels, 'deployment.environment.name') <> ?", sql)
+	require.Equal(t, []any{"production"}, args)
 }
