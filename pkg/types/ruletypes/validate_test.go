@@ -414,7 +414,7 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			json: `{
 				"alert": "Test", "version": "v5", "ruleType": "anomaly_rule",
 				"condition": {
-					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m", "functions": [{"name": "anomaly", "args": [{"value": 2}]}]}}]},
 					"target": 2.0, "matchType": "1", "op": "1",
 					"seasonality": "hourly"
 				}
@@ -425,7 +425,7 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			json: `{
 				"alert": "Test", "version": "v5", "ruleType": "anomaly_rule",
 				"condition": {
-					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m", "functions": [{"name": "anomaly", "args": [{"value": 2}]}]}}]},
 					"target": 2.0, "matchType": "1", "op": "1",
 					"seasonality": "daily"
 				}
@@ -436,7 +436,7 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			json: `{
 				"alert": "Test", "version": "v5", "ruleType": "anomaly_rule",
 				"condition": {
-					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m", "functions": [{"name": "anomaly", "args": [{"value": 2}]}]}}]},
 					"target": 2.0, "matchType": "1", "op": "1",
 					"seasonality": "weekly"
 				}
@@ -447,7 +447,7 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			json: `{
 				"alert": "Test", "version": "v5", "ruleType": "anomaly_rule",
 				"condition": {
-					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m", "functions": [{"name": "anomaly", "args": [{"value": 2}]}]}}]},
 					"target": 2.0, "matchType": "1", "op": "1"
 				}
 			}`,
@@ -457,7 +457,7 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			json: `{
 				"alert": "Test", "version": "v5", "ruleType": "anomaly_rule",
 				"condition": {
-					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m", "functions": [{"name": "anomaly", "args": [{"value": 2}]}]}}]},
 					"target": 2.0, "matchType": "1", "op": "1",
 					"seasonality": "monthly"
 				}

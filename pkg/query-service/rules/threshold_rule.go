@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/url"
 	"reflect"
+	"slices"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/anomaly"
 	"github.com/fuseone-io/fusescope/pkg/contextlinks"
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/fuseone-io/fusescope/pkg/querier"
@@ -28,6 +31,8 @@ type ThresholdRule struct {
 	*BaseRule
 
 	querier querier.Querier
+	// anomaly is set on an anomaly rule.
+	anomaly *anomalyRule
 }
 
 var _ Rule = (*ThresholdRule)(nil)
@@ -57,6 +62,9 @@ func NewThresholdRule(
 }
 
 func (r *ThresholdRule) Type() ruletypes.RuleType {
+	if r.anomaly != nil {
+		return ruletypes.RuleTypeAnomaly
+	}
 	return ruletypes.RuleTypeThreshold
 }
 
@@ -148,9 +156,19 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		instrumentationtypes.CodeFunctionName: "buildAndRunQuery",
 	})
 
-	v5Result, err := r.querier.QueryRange(ctx, orgID, params)
-	if err != nil {
-		return nil, err
+	var v5Result *qbtypes.QueryRangeResponse
+	var perSeries map[string]anomaly.SeriesStatus
+	if r.anomaly != nil {
+		evaluation, err := r.runAnomaly(ctx, orgID, params)
+		if err != nil {
+			return nil, err
+		}
+		v5Result, perSeries = evaluation.Response, evaluation.PerSeries
+	} else {
+		v5Result, err = r.querier.QueryRange(ctx, orgID, params)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for _, item := range v5Result.Data.Results {
@@ -190,6 +208,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 
 	// Filter out new series if newGroupEvalDelay is configured
 	seriesToProcess := queryResult.Aggregations[0].Series
+	if r.anomaly != nil {
+		seriesToProcess = queryResult.Aggregations[0].AnomalyScores
+	}
 	if r.ShouldSkipNewGroups() {
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
 		// In case of error we log the error and continue with the original series
@@ -215,6 +236,11 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		})
 		if err != nil {
 			return nil, err
+		}
+		if r.anomaly != nil {
+			if err := annotateFlatBaselines(resultSeries, series, perSeries); err != nil {
+				return nil, err
+			}
 		}
 		resultVector = append(resultVector, resultSeries...)
 	}
@@ -257,6 +283,9 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		value := valueFormatter.Format(smpl.V, r.Unit())
 		// todo(aniket): handle different threshold
 		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
+		if r.anomaly != nil {
+			value, threshold = formatScore(smpl.V), formatScore(smpl.Target)
+		}
 		r.logger.DebugContext(
 			ctx, "alert template data for rule", slog.String("formatter.name", valueFormatter.Name()),
 			slog.String("alert.value", value), slog.String("alert.threshold", threshold),
@@ -298,6 +327,9 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		annotations := make(ruletypes.Labels, 0, len(r.annotations.Map()))
 		for name, value := range r.annotations.Map() {
 			annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
+		}
+		for _, name := range slices.Sorted(maps.Keys(smpl.ExtraAnnotations)) {
+			annotations = append(annotations, ruletypes.Label{Name: name, Value: smpl.ExtraAnnotations[name]})
 		}
 		if smpl.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())

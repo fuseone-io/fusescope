@@ -28,6 +28,9 @@ type Sample struct {
 	// CompareOperator and MatchType carry the threshold evaluation context
 	CompareOperator CompareOperator
 	MatchType       MatchType
+
+	// ExtraAnnotations are set by the rule on the alert built from this sample, never as labels.
+	ExtraAnnotations map[string]string `json:"-"`
 }
 
 func (s Sample) String() string {

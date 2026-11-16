@@ -9,6 +9,7 @@ import (
 	"github.com/fuseone-io/fusescope/cmd"
 	"github.com/fuseone-io/fusescope/pkg/alertmanager"
 	"github.com/fuseone-io/fusescope/pkg/analytics"
+	"github.com/fuseone-io/fusescope/pkg/anomaly/anomalyquerier"
 	"github.com/fuseone-io/fusescope/pkg/auditor"
 	"github.com/fuseone-io/fusescope/pkg/authn"
 	"github.com/fuseone-io/fusescope/pkg/authz"
@@ -130,8 +131,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(_ sqlstore.SQLStore, _ telemetrystore.TelemetryStore, _ dashboard.Module, _ queryparser.QueryParser, _ licensing.Licensing, _ flagger.Flagger, _ telemetrytypes.MetadataStore, _ factory.ProviderSettings, _ int) metricreductionrule.Module {
 			return implmetricreductionrule.NewModule()
 		},
-		func(c cache.Cache, am alertmanager.Alertmanager, ss sqlstore.SQLStore, ts telemetrystore.TelemetryStore, ms telemetrytypes.MetadataStore, p prometheus.Prometheus, og organization.Getter, rsh rulestatehistory.Module, q querier.Querier, qp queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
-			return factory.MustNewNamedMap(signozruler.NewFactory(c, am, ss, ts, ms, p, og, rsh, q, qp, nil, nil))
+		func(c cache.Cache, am alertmanager.Alertmanager, ss sqlstore.SQLStore, ts telemetrystore.TelemetryStore, ms telemetrytypes.MetadataStore, p prometheus.Prometheus, og organization.Getter, rsh rulestatehistory.Module, q querier.Querier, ae *anomalyquerier.Evaluator, qp queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
+			return factory.MustNewNamedMap(signozruler.NewFactory(c, am, ss, ts, ms, p, og, rsh, q, ae, qp, nil, nil))
 		},
 	)
 	if err != nil {

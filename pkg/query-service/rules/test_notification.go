@@ -17,7 +17,10 @@ import (
 // TestNotification prepares a dummy rule for given rule parameters and
 // sends a test notification. returns alert count and error (if any)
 func defaultTestNotification(opts PrepareTestRuleOptions) (int, error) {
-	ctx := context.Background()
+	ctx := opts.Context
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	if opts.Rule == nil {
 		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "rule is required")
@@ -37,26 +40,26 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, error) {
 	var rule Rule
 	var err error
 
-	if parsedRule.RuleType == ruletypes.RuleTypeThreshold {
+	if parsedRule.RuleType == ruletypes.RuleTypeThreshold || parsedRule.RuleType == ruletypes.RuleTypeAnomaly {
 
 		// add special labels for test alerts
 		parsedRule.Labels[ruletypes.RuleSourceLabel] = ""
 		parsedRule.Labels[ruletypes.AlertRuleIDLabel] = ""
 
-		// create a threshold rule
-		rule, err = NewThresholdRule(
-			alertname,
-			opts.OrgID,
-			parsedRule,
-			opts.Querier,
-			opts.Logger,
-			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
+		// create a threshold rule, over anomaly scores for an anomaly rule
+		ruleOpts := []RuleOption{
 			WithSendAlways(),
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
-		)
+		}
+		externalURL := opts.ManagerOpts.Alertmanager.Config().ExternalURL
+		if parsedRule.RuleType == ruletypes.RuleTypeAnomaly {
+			rule, err = NewAnomalyRule(alertname, opts.OrgID, parsedRule, opts.Querier, opts.ManagerOpts.AnomalyEvaluator, opts.Logger, externalURL, ruleOpts...)
+		} else {
+			rule, err = NewThresholdRule(alertname, opts.OrgID, parsedRule, opts.Querier, opts.Logger, externalURL, ruleOpts...)
+		}
 
 		if err != nil {
 			slog.Error("failed to prepare a new threshold rule for test", errors.Attr(err))

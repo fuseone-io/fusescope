@@ -260,6 +260,10 @@ func (r *PostableRule) processRuleDefaults() {
 			r.RuleType = RuleTypeProm
 		}
 
+		if r.RuleType == RuleTypeAnomaly {
+			r.processAnomalyDefaults()
+		}
+
 		if r.SchemaVersion == DefaultSchemaVersion {
 			thresholdName := CriticalThresholdName
 			if r.Labels != nil {
@@ -270,16 +274,20 @@ func (r *PostableRule) processRuleDefaults() {
 
 			// For anomaly detection with ValueIsBelow, negate the target
 			targetValue := r.RuleCondition.Target
-			if r.RuleType == RuleTypeAnomaly && r.RuleCondition.CompareOperator == ValueIsBelow && targetValue != nil {
-				negated := -1 * *targetValue
-				targetValue = &negated
+			targetUnit := r.RuleCondition.TargetUnit
+			if r.RuleType == RuleTypeAnomaly {
+				if r.RuleCondition.CompareOperator.Normalize() == ValueIsBelow && targetValue != nil {
+					negated := -1 * *targetValue
+					targetValue = &negated
+				}
+				targetUnit = ""
 			}
 
 			thresholdData := RuleThresholdData{
 				Kind: BasicThresholdKind,
 				Spec: BasicRuleThresholds{{
 					Name:            thresholdName,
-					TargetUnit:      r.RuleCondition.TargetUnit,
+					TargetUnit:      targetUnit,
 					TargetValue:     targetValue,
 					MatchType:       r.RuleCondition.MatchType,
 					CompareOperator: r.RuleCondition.CompareOperator,
@@ -435,6 +443,10 @@ func (r *PostableRule) Validate() error {
 		if err := r.RuleCondition.Seasonality.Validate(); err != nil {
 			errs = append(errs, err)
 		}
+	}
+
+	if r.RuleType == RuleTypeAnomaly && r.RuleCondition != nil {
+		errs = append(errs, r.validateAnomaly()...)
 	}
 
 	if r.RuleCondition.CompositeQuery == nil {
