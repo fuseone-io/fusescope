@@ -14,7 +14,8 @@ type WindowClass string
 const (
 	// Settled ends a margin before now, after both stores have taken in what was written.
 	Settled WindowClass = "settled"
-	// Recent is the last minutes, which the engine still serves from its hot window.
+	// Recent ends a short margin before now, past the minutes still in flight to either store, and
+	// the engine still serves it from its hot window.
 	Recent WindowClass = "recent"
 )
 
@@ -37,18 +38,21 @@ type WindowConfig struct {
 	Step          time.Duration
 	SettledMargin time.Duration
 	SettledLength time.Duration
+	RecentMargin  time.Duration
 	RecentLength  time.Duration
 	MinSettled    time.Duration
 	MinRecent     time.Duration
 }
 
-// DefaultWindowConfig is the design's: a step of 1 min, an hour settled 15 min before now, the
-// last 5 min recent, and at least 30 and 5 min of either kept.
+// DefaultWindowConfig is the design's: a step of 1 min, an hour settled 15 min before now, 5 min
+// recent 2 min before now, and at least 30 and 5 min of either kept. The margins are fixed here,
+// so changing one takes a new commit and image.
 func DefaultWindowConfig() WindowConfig {
 	return WindowConfig{
 		Step:          time.Minute,
 		SettledMargin: 15 * time.Minute,
 		SettledLength: time.Hour,
+		RecentMargin:  2 * time.Minute,
 		RecentLength:  5 * time.Minute,
 		MinSettled:    30 * time.Minute,
 		MinRecent:     5 * time.Minute,
@@ -59,13 +63,13 @@ func (c WindowConfig) validate() error {
 	if c.Step <= 0 {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeWindow, "the step must be positive, got %s", c.Step)
 	}
-	for _, d := range []time.Duration{c.SettledMargin, c.SettledLength, c.RecentLength, c.MinSettled, c.MinRecent} {
+	for _, d := range []time.Duration{c.SettledMargin, c.SettledLength, c.RecentMargin, c.RecentLength, c.MinSettled, c.MinRecent} {
 		if d%c.Step != 0 {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeWindow, "%s is not a multiple of the step %s", d, c.Step)
 		}
 	}
-	if c.MinSettled <= 0 || c.MinRecent <= 0 || c.SettledMargin < 0 {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeWindow, "the minimum lengths must be positive and the margin not negative")
+	if c.MinSettled <= 0 || c.MinRecent <= 0 || c.SettledMargin < 0 || c.RecentMargin < 0 {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeWindow, "the minimum lengths must be positive and the margins not negative")
 	}
 	if c.SettledLength < c.MinSettled || c.RecentLength < c.MinRecent {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeWindow, "a window cannot be shorter than its minimum")
@@ -106,7 +110,7 @@ func PlanWindow(cfg WindowConfig, class WindowClass, now, epoch time.Time, reten
 	if class == Settled {
 		end, length = floorTo(now.UnixNano()-int64(cfg.SettledMargin), step), int64(cfg.SettledLength)
 	} else {
-		end, length = floorTo(now.UnixNano(), step), int64(cfg.RecentLength)
+		end, length = floorTo(now.UnixNano()-int64(cfg.RecentMargin), step), int64(cfg.RecentLength)
 	}
 	floor := max(epoch.UnixNano(), now.UnixNano()-int64(min(retention.ClickHouse, retention.Engine)))
 	start := max(end-length, ceilTo(floor, step))
