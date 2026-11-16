@@ -1,6 +1,6 @@
 // Command parity runs a D5 parity round, the trace views on ClickHouse and on fusescope-engine
 // compared, classified and reported by fingerprint; investigates one round's differences; deletes
-// expired run keys; or waits, as the investigation's pod, for an operator.
+// expired run keys; judges the 14-day period from the published reports; or waits, as the investigation's pod, for an operator.
 package main
 
 import (
@@ -16,6 +16,7 @@ const usage = `usage:
   parity run -settings FILE -tenants FILE -reports DIR [-seed N]
   parity investigate -settings FILE -tenants FILE -run ID -tenant ORG -class settled|recent -identity-fd tty|N -key-fd tty|N
   parity cleanup -settings FILE
+  parity period -reports DIR [-end YYYY-MM-DD]
   parity wait`
 
 func main() {
@@ -42,6 +43,8 @@ func run(args []string, stdout, stderr io.Writer) error {
 			return investigate(args[1:], stdout, stderr)
 		case "cleanup":
 			return cleanup(args[1:], stdout, stderr)
+		case "period":
+			return period(args[1:], stdout, stderr)
 		case "wait":
 			return wait(stderr)
 		}

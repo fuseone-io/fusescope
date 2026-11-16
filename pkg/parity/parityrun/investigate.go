@@ -35,42 +35,52 @@ type Investigation struct {
 //
 // A report that does not open with a header of format 1, holds an unknown line, or has no summary.
 func ParseReport(r io.Reader) (Header, []PairRecord, error) {
+	header, pairs, _, err := parseReport(r)
+	return header, pairs, err
+}
+
+// parseReport reads a whole report: its header, its pairs and its summary.
+func parseReport(r io.Reader) (Header, []PairRecord, Summary, error) {
 	invalid := errors.Newf(errors.TypeInvalidInput, ErrCodeInvestigation, "the report is not a whole report of format %d", ReportFormat)
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(make([]byte, 0, 64<<10), maxReportLine)
 	var header Header
 	var pairs []PairRecord
+	var summary Summary
 	first, summarized := true, false
 	for scanner.Scan() {
 		var kind struct {
 			Kind string `json:"kind"`
 		}
 		if err := json.Unmarshal(scanner.Bytes(), &kind); err != nil || summarized {
-			return Header{}, nil, invalid
+			return Header{}, nil, Summary{}, invalid
 		}
 		switch {
 		case first && kind.Kind == "header":
 			if err := json.Unmarshal(scanner.Bytes(), &header); err != nil || header.Format != ReportFormat {
-				return Header{}, nil, invalid
+				return Header{}, nil, Summary{}, invalid
 			}
 		case !first && kind.Kind == "pair":
 			var p PairRecord
 			if err := json.Unmarshal(scanner.Bytes(), &p); err != nil {
-				return Header{}, nil, invalid
+				return Header{}, nil, Summary{}, invalid
 			}
 			pairs = append(pairs, p)
 		case !first && kind.Kind == "gate":
 		case !first && kind.Kind == "summary":
+			if err := json.Unmarshal(scanner.Bytes(), &summary); err != nil {
+				return Header{}, nil, Summary{}, invalid
+			}
 			summarized = true
 		default:
-			return Header{}, nil, invalid
+			return Header{}, nil, Summary{}, invalid
 		}
 		first = false
 	}
 	if scanner.Err() != nil || !summarized {
-		return Header{}, nil, invalid
+		return Header{}, nil, Summary{}, invalid
 	}
-	return header, pairs, nil
+	return header, pairs, summary, nil
 }
 
 // Investigate shows, on out, the values behind the differences the report recorded for inv's
