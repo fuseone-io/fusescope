@@ -34,7 +34,7 @@ type PeriodDay struct {
 }
 
 // PeriodVerdict is a period's verdict, day by day, and how many days up to its last qualified in a
-// row.
+// row on the last day's pins.
 type PeriodVerdict struct {
 	Passed           bool        `json:"passed"`
 	Reasons          []string    `json:"reasons,omitempty"`
@@ -80,6 +80,7 @@ func EvaluatePeriodRounds(end time.Time, rounds []PeriodRound) PeriodVerdict {
 	last := end.UTC().Truncate(24 * time.Hour)
 	first := last.AddDate(0, 0, 1-periodDays)
 	days := make([]DayRounds, periodDays)
+	dayPins := make([][]Pins, periodDays)
 	verdict := PeriodVerdict{Days: make([]PeriodDay, periodDays)}
 	for i := range days {
 		days[i].Day = first.AddDate(0, 0, i)
@@ -93,6 +94,9 @@ func EvaluatePeriodRounds(end time.Time, rounds []PeriodRound) PeriodVerdict {
 		i := int(day.Sub(first) / (24 * time.Hour))
 		days[i].Rounds = append(days[i].Rounds, round.Summary)
 		verdict.Days[i].RunIDs = append(verdict.Days[i].RunIDs, round.RunID)
+		if !slices.Contains(dayPins[i], round.Pins) {
+			dayPins[i] = append(dayPins[i], round.Pins)
+		}
 		if !slices.Contains(verdict.Pins, round.Pins) {
 			verdict.Pins = append(verdict.Pins, round.Pins)
 		}
@@ -105,8 +109,19 @@ func EvaluatePeriodRounds(end time.Time, rounds []PeriodRound) PeriodVerdict {
 	for i, day := range days {
 		verdict.Days[i].Qualifying = len(day.Rounds) > 0 && !slices.ContainsFunc(day.Rounds, func(s Summary) bool { return !s.Qualifying })
 	}
-	for i := len(verdict.Days) - 1; i >= 0 && verdict.Days[i].Qualifying; i-- {
-		verdict.QualifyingStreak++
-	}
+	verdict.QualifyingStreak = streak(verdict.Days, dayPins)
 	return verdict
+}
+
+// streak counts the qualifying days back from the last that ran only the last day's pins.
+func streak(days []PeriodDay, dayPins [][]Pins) int {
+	last := len(days) - 1
+	if len(dayPins[last]) != 1 {
+		return 0
+	}
+	n := 0
+	for i := last; i >= 0 && days[i].Qualifying && slices.Equal(dayPins[i], dayPins[last]); i-- {
+		n++
+	}
+	return n
 }

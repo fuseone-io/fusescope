@@ -82,6 +82,21 @@ func TestTheStreakCountsTheQualifyingDaysUpToTheLastDay(t *testing.T) {
 	assert.False(t, verdict.Days[9].Qualifying)
 }
 
+func TestTheStreakRestartsWhenThePinsChange(t *testing.T) {
+	end := time.Date(2026, 11, 30, 0, 0, 0, 0, time.UTC)
+	upgraded := Pins{BackendCommit: "09df65c7", ImageDigest: "sha256:8e11", EngineVersion: "0.0.9"}
+	rounds := fortnight(end, 15)
+	for i := 10; i < periodDays; i++ {
+		rounds[i].Pins = upgraded
+	}
+	verdict := EvaluatePeriodRounds(end, rounds)
+	assert.False(t, verdict.Passed)
+	assert.Equal(t, 4, verdict.QualifyingStreak, "10 days on the old pins, 4 on the new")
+
+	mixed := append(fortnight(end, 15), PeriodRound{RunID: "20261130t120500z-9", Pins: upgraded, Summary: qualifyingRound(15)})
+	assert.Equal(t, 0, EvaluatePeriodRounds(end, mixed).QualifyingStreak, "the last day ran two pin sets")
+}
+
 func TestAPeriodReadsAWholeReportOnly(t *testing.T) {
 	header := `{"kind":"header","format":1,"run_id":"20261130t030000z-1","backend_commit":"ed3d4c0e","image_digest":"sha256:5d3e","engine_version":"0.0.9"}`
 	summary := `{"kind":"summary","usable":true,"qualifying":true,"coverage":[{"view":"services","planned":1,"reached":1,"successful":1}]}`
