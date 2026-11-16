@@ -23,6 +23,7 @@ func TestGetFeatureFlags(t *testing.T) {
 		expectedActive bool
 	}{
 		{name: "SSO_Active", feature: licensetypes.SSO, expectedActive: true},
+		{name: "AnomalyDetection_Active", feature: licensetypes.AnomalyDetection, expectedActive: true},
 	}
 
 	for _, testCase := range testCases {
