@@ -3,6 +3,7 @@ package logstelemetryschema
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/fuseone-io/fusescope/pkg/clickhousesql"
@@ -120,7 +121,7 @@ func (m *storage) read(_ context.Context, q qbtypes.QueryInfo, key *telemetrytyp
 		return "", err
 	}
 
-	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
+	newColumns, evolutionsEntries, err := selectColumns(q, key, columns)
 	if err != nil {
 		return "", err
 	}
@@ -401,12 +402,30 @@ func searchColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) [
 	}
 }
 
+// selectColumns is the evolution selection of key's columns for the query window. A resource
+// key keeps resources_string behind the JSON column past its release: the JSON column cannot
+// hold a value at a path another key extends (deployment.environment beside
+// deployment.environment.name), and the map still holds it.
+func selectColumns(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*chschema.Column) ([]*chschema.Column, []*telemetrytypes.EvolutionEntry, error) {
+	selected, entries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(selected) != 1 || selected[0] != logsV2Columns["resource"] {
+		return selected, entries, nil
+	}
+	if entries != nil {
+		entries = append(slices.Clone(entries), nil)
+	}
+	return append(slices.Clone(selected), logsV2Columns["resources_string"]), entries, nil
+}
+
 // absentReads tells what a row without the key reads. A multi-era read
 // reads NULL. A map reads its empty value. A JSON path reads the empty
 // string, because its ::String cast folds NULL. Every other column reads a
 // real value.
 func absentReads(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*chschema.Column) qbtypes.Absent {
-	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
+	newColumns, _, err := selectColumns(q, key, columns)
 	if err != nil || len(newColumns) != 1 {
 		return qbtypes.AbsentIsNull
 	}
@@ -483,13 +502,18 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 		return read, nil
 	}
 
+	read.WhenAbsent = absentReads(q, key, columns)
+	if selected, _, err := selectColumns(q, key, columns); err == nil && len(selected) > 1 {
+		// a multiIf over several columns reads NULL only where every column lacks the key
+		read.Presence, read.Absence = sql+" IS NOT NULL", sql+" IS NULL"
+		return read, nil
+	}
 	if read.Presence, err = querybuilder.ExistsExpression(columns, key, q.StartNs, q.EndNs, sql, true); err != nil {
 		return qbtypes.Read{}, err
 	}
 	if read.Absence, err = querybuilder.ExistsExpression(columns, key, q.StartNs, q.EndNs, sql, false); err != nil {
 		return qbtypes.Read{}, err
 	}
-	read.WhenAbsent = absentReads(q, key, columns)
 	return read, nil
 }
 
