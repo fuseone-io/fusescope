@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/anomaly"
 	"github.com/fuseone-io/fusescope/pkg/config/configtest"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,4 +34,19 @@ func TestIntegrationsConfigRefusesAnInvalidID(t *testing.T) {
 	t.Setenv("SIGNOZ_INTEGRATIONS_AUTOINSTALL", "redis")
 	_, err := NewConfig(context.Background(), slog.New(slog.DiscardHandler), configtest.NewResolverConfig())
 	assert.ErrorContains(t, err, `"redis" is not a built-in integration id`)
+}
+
+func TestAnomalyConfigFromEnv(t *testing.T) {
+	t.Setenv("SIGNOZ_ANOMALY_MAX__CONCURRENT", "2")
+	t.Setenv("SIGNOZ_ANOMALY_MAX__SERIES", "500")
+	t.Setenv("SIGNOZ_ANOMALY_MAX__POINTS", "100000")
+	config, err := NewConfig(context.Background(), slog.New(slog.DiscardHandler), configtest.NewResolverConfig())
+	assert.NoError(t, err)
+	assert.Equal(t, anomaly.Config{MaxConcurrent: 2, MaxSeries: 500, MaxPoints: 100_000}, config.Anomaly)
+}
+
+func TestAnomalyConfigRefusesZeroLimits(t *testing.T) {
+	t.Setenv("SIGNOZ_ANOMALY_MAX__POINTS", "0")
+	_, err := NewConfig(context.Background(), slog.New(slog.DiscardHandler), configtest.NewResolverConfig())
+	assert.ErrorContains(t, err, "must be positive")
 }
