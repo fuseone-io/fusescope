@@ -26,11 +26,19 @@ func TestTheSettledWindowEndsAMarginBeforeNow(t *testing.T) {
 	assert.Equal(t, span(15, 75), w, "an hour ending at the minute 15 minutes before now")
 }
 
-func TestTheRecentWindowIsTheLastFiveWholeMinutes(t *testing.T) {
+func TestTheRecentWindowIsFiveWholeMinutesEndingAMarginBeforeNow(t *testing.T) {
 	now := at(90) + int64(30*time.Second)
 	w, ok := plan(t, Recent, now, 0, longRetention)
 	assert.True(t, ok)
-	assert.Equal(t, span(85, 90), w)
+	assert.Equal(t, span(83, 88), w, "five minutes ending at the minute 2 minutes before now")
+}
+
+func TestAScheduledRoundReadsNoMinuteStillInFlight(t *testing.T) {
+	now := at(65) + int64(3*time.Second)
+	w, ok := plan(t, Recent, now, 0, longRetention)
+	assert.True(t, ok)
+	assert.Equal(t, span(58, 63), w, "a round started at :05:03")
+	assert.GreaterOrEqual(t, now-w.End, int64(2*time.Minute), "its last minute ended at least the margin ago")
 }
 
 func TestAWindowStartsAfterTheDualWriteEpoch(t *testing.T) {
@@ -59,11 +67,13 @@ func TestAWindowStartsWithinTheShorterRetention(t *testing.T) {
 
 func TestPlanningRefusesAConfigurationItCannotHonour(t *testing.T) {
 	bad := map[string]func(*WindowConfig){
-		"no step":                   func(c *WindowConfig) { c.Step = 0 },
-		"margin off the step":       func(c *WindowConfig) { c.SettledMargin = 90 * time.Second },
-		"settled under its minimum": func(c *WindowConfig) { c.SettledLength = 20 * time.Minute },
-		"recent under its minimum":  func(c *WindowConfig) { c.RecentLength = 4 * time.Minute },
-		"no minimum":                func(c *WindowConfig) { c.MinRecent = 0 },
+		"no step":                    func(c *WindowConfig) { c.Step = 0 },
+		"margin off the step":        func(c *WindowConfig) { c.SettledMargin = 90 * time.Second },
+		"recent margin off the step": func(c *WindowConfig) { c.RecentMargin = 90 * time.Second },
+		"negative recent margin":     func(c *WindowConfig) { c.RecentMargin = -time.Minute },
+		"settled under its minimum":  func(c *WindowConfig) { c.SettledLength = 20 * time.Minute },
+		"recent under its minimum":   func(c *WindowConfig) { c.RecentLength = 4 * time.Minute },
+		"no minimum":                 func(c *WindowConfig) { c.MinRecent = 0 },
 	}
 	for name, mutate := range bad {
 		cfg := DefaultWindowConfig()
