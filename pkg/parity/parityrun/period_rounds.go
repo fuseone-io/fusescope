@@ -28,9 +28,16 @@ type PeriodRound struct {
 
 // PeriodDay is one UTC day of a period: the rounds started on it and whether they all qualified.
 type PeriodDay struct {
-	Day        time.Time `json:"day"`
-	RunIDs     []string  `json:"run_ids"`
-	Qualifying bool      `json:"qualifying"`
+	Day        time.Time        `json:"day"`
+	Rounds     []PeriodDayRound `json:"rounds"`
+	Qualifying bool             `json:"qualifying"`
+}
+
+// PeriodDayRound is one round of a day, as its summary judged it.
+type PeriodDayRound struct {
+	RunID      string   `json:"run_id"`
+	Qualifying bool     `json:"qualifying"`
+	Reasons    []string `json:"reasons,omitempty"`
 }
 
 // PeriodVerdict is a period's verdict, day by day, and how many days up to its last qualified in a
@@ -93,7 +100,9 @@ func EvaluatePeriodRounds(end time.Time, rounds []PeriodRound) PeriodVerdict {
 		}
 		i := int(day.Sub(first) / (24 * time.Hour))
 		days[i].Rounds = append(days[i].Rounds, round.Summary)
-		verdict.Days[i].RunIDs = append(verdict.Days[i].RunIDs, round.RunID)
+		verdict.Days[i].Rounds = append(verdict.Days[i].Rounds, PeriodDayRound{
+			RunID: round.RunID, Qualifying: round.Summary.Qualifying, Reasons: round.Summary.Reasons,
+		})
 		if !slices.Contains(dayPins[i], round.Pins) {
 			dayPins[i] = append(dayPins[i], round.Pins)
 		}

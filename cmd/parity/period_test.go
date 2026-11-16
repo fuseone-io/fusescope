@@ -50,7 +50,7 @@ func TestAPeriodOfFourteenQualifyingDaysPasses(t *testing.T) {
 	require.NoError(t, json.Unmarshal(out.Bytes(), &verdict))
 	assert.True(t, verdict.Passed)
 	assert.Equal(t, 14, verdict.QualifyingStreak)
-	assert.Len(t, verdict.Days[10].RunIDs, 2, "both rounds of 27 November")
+	assert.Len(t, verdict.Days[10].Rounds, 2, "both rounds of 27 November")
 }
 
 func TestAPeriodThatDoesNotPassFailsWithItsVerdict(t *testing.T) {

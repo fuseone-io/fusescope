@@ -53,7 +53,7 @@ func TestARoundCountsOnTheUTCDayItStarted(t *testing.T) {
 	rounds = append(rounds, PeriodRound{RunID: "20261201t000000z-8", Pins: periodPins})
 	verdict := EvaluatePeriodRounds(end, rounds)
 	assert.True(t, verdict.Passed, "a round of the next day is outside the period: %v", verdict.Reasons)
-	assert.Equal(t, []string{"20261130t235959z-7"}, verdict.Days[13].RunIDs)
+	assert.Equal(t, []PeriodDayRound{{RunID: "20261130t235959z-7", Qualifying: true}}, verdict.Days[13].Rounds)
 }
 
 func TestEveryRoundOfThePeriodKeepsTheSamePins(t *testing.T) {
@@ -80,6 +80,21 @@ func TestTheStreakCountsTheQualifyingDaysUpToTheLastDay(t *testing.T) {
 	assert.Contains(t, verdict.Reasons, PeriodDayNotQualifying)
 	assert.Equal(t, 4, verdict.QualifyingStreak, "days 10 to 13 qualify after day 9")
 	assert.False(t, verdict.Days[9].Qualifying)
+}
+
+func TestEachDayListsItsRoundsWithTheirReasons(t *testing.T) {
+	end := time.Date(2026, 11, 30, 0, 0, 0, 0, time.UTC)
+	rounds := fortnight(end, 15)
+	rounds = append(rounds, PeriodRound{
+		RunID: "20261130t120500z-2", Pins: periodPins,
+		Summary: Summary{Usable: true, Reasons: []string{"latency_ratio"}},
+	})
+	verdict := EvaluatePeriodRounds(end, rounds)
+	assert.Equal(t, []PeriodDayRound{
+		{RunID: "20261130t030000z-1", Qualifying: true},
+		{RunID: "20261130t120500z-2", Reasons: []string{"latency_ratio"}},
+	}, verdict.Days[13].Rounds)
+	assert.False(t, verdict.Days[13].Qualifying)
 }
 
 func TestTheStreakRestartsWhenThePinsChange(t *testing.T) {
