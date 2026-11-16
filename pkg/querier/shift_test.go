@@ -1,10 +1,19 @@
 package querier
 
 import (
+	"context"
+	"sync"
 	"testing"
+	"time"
+
+	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
 
 	qbtypes "github.com/fuseone-io/fusescope/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/fuseone-io/fusescope/pkg/types/telemetrytypes"
+	"github.com/fuseone-io/fusescope/pkg/valuer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestAdjustTimeRangeForShift tests the time range adjustment logic.
@@ -240,4 +249,78 @@ func TestExtractShiftFromBuilderQuery(t *testing.T) {
 			assert.Equal(t, tt.expectedShiftBy, shiftBy)
 		})
 	}
+}
+
+// A shifted query's window is already shifted, so the cache's missing ranges are too: a ranged
+// copy must read them as given, not shift them a second time.
+func TestCreateRangedQueryKeepsAShiftedQuerysMissingRange(t *testing.T) {
+	timeShift := []qbtypes.Function{{Name: qbtypes.FunctionNameTimeShift, Args: []qbtypes.FunctionArg{{Value: "3600"}}}}
+	window := qbtypes.TimeRange{From: 10_000_000, To: 20_000_000}
+	shifted := qbtypes.TimeRange{From: window.From - 3_600_000, To: window.To - 3_600_000}
+	missing := qbtypes.TimeRange{From: shifted.To - 600_000, To: shifted.To}
+	org := valuer.GenerateUUID()
+	q := &querier{}
+
+	testCases := []struct {
+		name  string
+		query qbtypes.Query
+	}{
+		{name: "Metrics", query: newBuilderQuery(nil, nil, org, nil, qbtypes.QueryTypeBuilder, qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{Name: "A", Signal: telemetrytypes.SignalMetrics, Functions: timeShift}, shifted, qbtypes.RequestTypeTimeSeries, nil, builderConfig{})},
+		{name: "Logs", query: newBuilderQuery(nil, nil, org, nil, qbtypes.QueryTypeBuilder, qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{Name: "B", Signal: telemetrytypes.SignalLogs, Functions: timeShift}, shifted, qbtypes.RequestTypeTimeSeries, nil, builderConfig{})},
+		{name: "Traces", query: newBuilderQuery(nil, nil, org, nil, qbtypes.QueryTypeBuilder, qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Name: "C", Signal: telemetrytypes.SignalTraces, Functions: timeShift}, shifted, qbtypes.RequestTypeScalar, nil, builderConfig{})},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			ranged := q.createRangedQuery(org, testCase.query, missing)
+			require.NotNil(t, ranged)
+			from, to := ranged.Window()
+			assert.Equal(t, missing.From, from)
+			assert.Equal(t, missing.To, to)
+		})
+	}
+}
+
+// windowRecorder records the window of each statement it is asked to build, then fails it; the
+// failure makes executeWithCache fall back to the whole window, recorded after the missing range.
+type windowRecorder struct {
+	mu      sync.Mutex
+	windows []qbtypes.TimeRange
+}
+
+func (r *windowRecorder) Build(_ context.Context, _ valuer.UUID, start, end uint64, _ qbtypes.RequestType, _ qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation], _ map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.windows = append(r.windows, qbtypes.TimeRange{From: start, To: end})
+	return nil, errors.NewInternalf(errors.CodeInternal, "recorded")
+}
+
+func TestExecuteWithCacheReadsAShiftedQuerysMissingRangeOnce(t *testing.T) {
+	const hourMS = uint64(3_600_000)
+	end := uint64(time.Now().Add(-2*time.Hour).Truncate(time.Minute).UnixMilli()) - hourMS
+	shifted := qbtypes.TimeRange{From: end - 2*hourMS, To: end}
+	step := qbtypes.Step{Duration: time.Minute}
+	spec := qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+		Name:         "A",
+		Signal:       telemetrytypes.SignalMetrics,
+		StepInterval: step,
+		Aggregations: []qbtypes.MetricAggregation{{MetricName: "requests"}},
+		Functions:    []qbtypes.Function{{Name: qbtypes.FunctionNameTimeShift, Args: []qbtypes.FunctionArg{{Value: "3600"}}}},
+	}
+	spec.ShiftBy = extractShiftFromBuilderQuery(spec)
+	org := valuer.GenerateUUID()
+	recorder := &windowRecorder{}
+	bc := createTestBucketCache(t)
+	q := &querier{logger: instrumentationtest.New().Logger(), bucketCache: bc, metricStmtBuilder: recorder}
+	query := newBuilderQuery[qbtypes.MetricAggregation](nil, nil, org, recorder, qbtypes.QueryTypeBuilder, spec, shifted, qbtypes.RequestTypeTimeSeries, nil, builderConfig{})
+
+	cachedEnd := shifted.From + hourMS
+	earlier := newBuilderQuery[qbtypes.MetricAggregation](nil, nil, org, recorder, qbtypes.QueryTypeBuilder, spec, qbtypes.TimeRange{From: shifted.From, To: cachedEnd}, qbtypes.RequestTypeTimeSeries, nil, builderConfig{})
+	bc.Put(context.Background(), org, earlier, step, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: createTestTimeSeries("A", shifted.From, cachedEnd, uint64(step.Milliseconds()))})
+
+	_, err := q.executeWithCache(context.Background(), org, query, step, make(chan struct{}, 1))
+	require.Error(t, err)
+
+	require.NotEmpty(t, recorder.windows)
+	assert.Equal(t, cachedEnd, recorder.windows[0].From)
+	assert.Equal(t, shifted.To, recorder.windows[0].To)
 }
