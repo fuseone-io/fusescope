@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/anomaly/anomalyquerier"
 	"github.com/fuseone-io/fusescope/pkg/querier"
 	"github.com/fuseone-io/fusescope/pkg/queryparser"
 
@@ -45,6 +46,8 @@ type PrepareTaskOptions struct {
 }
 
 type PrepareTestRuleOptions struct {
+	// Context is the request's: it bounds the test evaluation.
+	Context     context.Context
 	Rule        *ruletypes.PostableRule
 	RuleStore   ruletypes.RuleStore
 	Querier     querier.Querier
@@ -75,8 +78,10 @@ type ManagerOptions struct {
 	Context     context.Context
 	ResendDelay time.Duration
 	Querier     querier.Querier
-	Logger      *slog.Logger
-	Cache       cache.Cache
+	// AnomalyEvaluator evaluates anomaly rules; it is shared with the query API.
+	AnomalyEvaluator *anomalyquerier.Evaluator
+	Logger           *slog.Logger
+	Cache            cache.Cache
 
 	EvalDelay valuer.TextDuration
 
@@ -142,21 +147,22 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
 	}
 
-	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
-		// create a threshold rule
-		tr, err := NewThresholdRule(
-			ruleID,
-			opts.OrgID,
-			opts.Rule,
-			opts.Querier,
-			opts.Logger,
-			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
+	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold || opts.Rule.RuleType == ruletypes.RuleTypeAnomaly {
+		// create a threshold rule, over anomaly scores for an anomaly rule
+		ruleOpts := []RuleOption{
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
-		)
+		}
+		externalURL := opts.ManagerOpts.Alertmanager.Config().ExternalURL
+		var tr *ThresholdRule
+		if opts.Rule.RuleType == ruletypes.RuleTypeAnomaly {
+			tr, err = NewAnomalyRule(ruleID, opts.OrgID, opts.Rule, opts.Querier, opts.ManagerOpts.AnomalyEvaluator, opts.Logger, externalURL, ruleOpts...)
+		} else {
+			tr, err = NewThresholdRule(ruleID, opts.OrgID, opts.Rule, opts.Querier, opts.Logger, externalURL, ruleOpts...)
+		}
 		if err != nil {
 			return task, err
 		}
@@ -191,7 +197,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		task = newTask(TaskTypeProm, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc)
 
 	} else {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported rule type %s. Supported types: %s, %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold, ruletypes.RuleTypeAnomaly)
 	}
 
 	return task, nil
@@ -1188,6 +1194,7 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 	}
 
 	alertCount, err := m.prepareTestRuleFunc(PrepareTestRuleOptions{
+		Context:     ctx,
 		Rule:        &parsedRule,
 		RuleStore:   m.ruleStore,
 		Querier:     m.opts.Querier,

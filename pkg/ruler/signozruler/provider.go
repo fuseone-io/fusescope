@@ -5,6 +5,7 @@ import (
 
 	"github.com/fuseone-io/fusescope/pkg/alertmanager"
 	"github.com/fuseone-io/fusescope/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
+	"github.com/fuseone-io/fusescope/pkg/anomaly/anomalyquerier"
 	"github.com/fuseone-io/fusescope/pkg/cache"
 	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/modules/organization"
@@ -41,6 +42,7 @@ func NewFactory(
 	orgGetter organization.Getter,
 	ruleStateHistoryModule rulestatehistory.Module,
 	querier querier.Querier,
+	anomalyEvaluator *anomalyquerier.Evaluator,
 	queryParser queryparser.QueryParser,
 	prepareTaskFunc func(rules.PrepareTaskOptions) (rules.Task, error),
 	prepareTestRuleFunc func(rules.PrepareTestRuleOptions) (int, error),
@@ -55,6 +57,7 @@ func NewFactory(
 			Prometheus:             prometheus,
 			Context:                context.Background(),
 			Querier:                querier,
+			AnomalyEvaluator:       anomalyEvaluator,
 			Logger:                 providerSettings.Logger,
 			Cache:                  cache,
 			EvalDelay:              valuer.MustParseTextDuration(config.EvalDelay.String()),
