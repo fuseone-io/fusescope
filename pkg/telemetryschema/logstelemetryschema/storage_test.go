@@ -424,7 +424,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			key:            key,
 			tsStartTime:    time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "resource.`service.name`::String",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 			expectedError:  nil,
 		},
 		{
@@ -485,7 +485,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			key:            key,
 			tsStartTime:    time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
 			tsEndTime:      time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
-			expectedResult: "resource.`service.name`::String",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 			expectedError:  nil,
 		},
 		{
