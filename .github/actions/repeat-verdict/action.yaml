@@ -1,0 +1,26 @@
+name: repeat-verdict
+description: Repeats, under the required check's name, the verdict of the latest earlier check suite on this commit.
+inputs:
+  check:
+    description: The required check's name
+    required: true
+  sha:
+    description: The commit whose verdict is repeated
+    required: true
+  wait-minutes:
+    description: How long to wait for an earlier verdict still running
+    required: false
+    default: "80"
+runs:
+  using: composite
+  steps:
+    - name: repeat
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        CHECK: ${{ inputs.check }}
+        SHA: ${{ inputs.sha }}
+        WAIT_MINUTES: ${{ inputs.wait-minutes }}
+      run: |
+        python3 -m unittest discover -s "$GITHUB_ACTION_PATH" -p '*_test.py'
+        python3 "$GITHUB_ACTION_PATH/repeat_verdict.py"
