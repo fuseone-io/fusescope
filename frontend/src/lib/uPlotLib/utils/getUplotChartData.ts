@@ -6,6 +6,13 @@ import { QueryData } from 'types/api/widgets/getQuery';
 
 import { normalizePlotValue } from './dataUtils';
 import { assignSeriesColors } from './assignSeriesColors';
+import {
+	AnomalySeriesPoint,
+	indexByLabels,
+	seriesLabelsKey,
+	toChartValue,
+	valuesAt,
+} from './anomalySeries';
 
 function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 	const timestamps = new Set<number>();
@@ -113,14 +120,14 @@ const processAnomalyDetectionData = (
 	anomalyDetectionData: any,
 	isDarkMode: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
-): Record<string, { data: number[][]; color: string }> => {
+): Record<string, { data: (number | null)[][]; color: string }> => {
 	if (!anomalyDetectionData) {
 		return {};
 	}
 
 	const processedData: Record<
 		string,
-		{ data: number[][]; color: string; legendLabel: string }
+		{ data: (number | null)[][]; color: string; legendLabel: string }
 	> = {};
 
 	for (
@@ -137,6 +144,9 @@ const processAnomalyDetectionData = (
 			queryName,
 			legend,
 		} = queryData;
+		const predictedByLabels = indexByLabels(predictedSeries);
+		const upperByLabels = indexByLabels(upperBoundSeries);
+		const lowerByLabels = indexByLabels(lowerBoundSeries);
 
 		for (let index = 0; index < series?.length; index++) {
 			const label = getLabelName(
@@ -148,30 +158,16 @@ const processAnomalyDetectionData = (
 			const objKey =
 				anomalyDetectionData.length > 1 ? `${queryName}-${label}` : label;
 
-			// Single iteration instead of 5 separate map operations
-			const { values: seriesValues } = series[index] || { values: [] };
-			const { values: predictedValues } = predictedSeries[index] || { values: [] };
-			const { values: upperBoundValues } = upperBoundSeries[index] || {
-				values: [],
-			};
-			const { values: lowerBoundValues } = lowerBoundSeries[index] || {
-				values: [],
-			};
-			const length = seriesValues.length;
-
-			const timestamps: number[] = new Array(length);
-			const values: number[] = new Array(length);
-			const predicted: number[] = new Array(length);
-			const upperBound: number[] = new Array(length);
-			const lowerBound: number[] = new Array(length);
-
-			for (let i = 0; i < length; i++) {
-				timestamps[i] = seriesValues[i].timestamp / 1000;
-				values[i] = seriesValues[i]?.value ?? null;
-				predicted[i] = predictedValues[i]?.value ?? null;
-				upperBound[i] = upperBoundValues[i]?.value ?? null;
-				lowerBound[i] = lowerBoundValues[i]?.value ?? null;
-			}
+			// Bands are matched to the series by labels and projected onto its timestamps, so a
+			// missing or partial point leaves a gap instead of shifting the band.
+			const seriesValues: AnomalySeriesPoint[] = series[index]?.values || [];
+			const key = seriesLabelsKey(series[index]?.labels);
+			const pointTimestamps = seriesValues.map((point) => point.timestamp);
+			const timestamps = pointTimestamps.map((timestamp) => timestamp / 1000);
+			const values = seriesValues.map((point) => toChartValue(point?.value));
+			const predicted = valuesAt(pointTimestamps, predictedByLabels.get(key));
+			const upperBound = valuesAt(pointTimestamps, upperByLabels.get(key));
+			const lowerBound = valuesAt(pointTimestamps, lowerByLabels.get(key));
 
 			processedData[objKey] = {
 				data: [timestamps, values, predicted, upperBound, lowerBound],
@@ -195,7 +191,10 @@ const processAnomalyDetectionData = (
 export const getUplotChartDataForAnomalyDetection = (
 	apiResponse: MetricRangePayloadProps,
 	isDarkMode: boolean,
-): Record<string, { [x: string]: any; data: number[][]; color: string }> => {
+): Record<
+	string,
+	{ [x: string]: any; data: (number | null)[][]; color: string }
+> => {
 	const anomalyDetectionData = apiResponse?.data?.newResult?.data?.result;
 	return processAnomalyDetectionData(anomalyDetectionData, isDarkMode);
 };

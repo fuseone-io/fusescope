@@ -118,4 +118,11 @@ var DefaultFeatureSet = []*Feature{
 		UsageLimit: -1,
 		Route:      "",
 	},
+	{
+		Name:       AnomalyDetection,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }

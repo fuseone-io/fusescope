@@ -71,7 +71,7 @@ import {
 	StepHeading,
 } from './styles';
 import { usePrefillAlertConditions } from './usePrefillAlertConditions';
-import { getQueryNames } from './utils';
+import { anomalyFunction, getQueryNames } from './utils';
 
 import './FormAlertRules.styles.scss';
 
@@ -222,36 +222,22 @@ function FormAlertRules({
 	};
 
 	const updateFunctions = (data: IBuilderQuery): QueryFunction[] => {
-		const anomalyFunction: QueryFunction = {
-			name: 'anomaly' as any,
-			args: [
-				{
-					name: 'z_score_threshold',
-					value: alertDef.condition.target || 3,
-				},
-			],
-		};
+		const anomalyFunc = anomalyFunction(
+			alertDef.condition.target,
+			alertDef.condition.seasonality,
+		);
 
-		const functions = data.functions || [];
+		const functions = [...(data.functions || [])];
 
 		if (alertDef.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
 			// Add anomaly if not already present
-			if (!functions.some((func) => func.name === 'anomaly')) {
-				functions.push(anomalyFunction);
-			} else {
-				const anomalyFuncIndex = functions.findIndex(
-					(func) => func.name === 'anomaly',
-				);
-
-				if (anomalyFuncIndex !== -1) {
-					const anomalyFunc = {
-						...functions[anomalyFuncIndex],
-						namedArgs: { z_score_threshold: alertDef.condition.target || 3 },
-					};
-					functions.splice(anomalyFuncIndex, 1);
-					functions.push(anomalyFunc);
-				}
+			const anomalyFuncIndex = functions.findIndex(
+				(func) => func.name === 'anomaly',
+			);
+			if (anomalyFuncIndex !== -1) {
+				functions.splice(anomalyFuncIndex, 1);
 			}
+			functions.push(anomalyFunc);
 		} else {
 			// Remove anomaly if present
 			const index = functions.findIndex((func) => func.name === 'anomaly');
@@ -305,6 +291,7 @@ function FormAlertRules({
 	}, [
 		detectionMethod,
 		alertDef.condition.target,
+		alertDef.condition.seasonality,
 		currentQuery.builder.queryData.length,
 	]);
 

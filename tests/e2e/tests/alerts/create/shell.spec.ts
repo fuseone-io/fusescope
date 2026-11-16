@@ -12,7 +12,6 @@ import {
 	gotoAlertTypeSelection,
 	gotoCreateAlertV1,
 	gotoCreateAlertV2,
-	hasAnomalyAlertTypeCard,
 } from '../../../helpers/alert-forms/navigation';
 import { v1SaveButton } from '../../../helpers/alert-forms/v1';
 
@@ -55,10 +54,8 @@ test.describe('Alert create — shell & type selection', () => {
 	}) => {
 		await gotoAlertTypeSelection(page);
 
-		test.skip(
-			!(await hasAnomalyAlertTypeCard(page)),
-			'ANOMALY_DETECTION feature flag is inactive on this stack (see CS-01)',
-		);
+		// The community build evaluates anomaly rules, so its flag is always active.
+		await expect(alertTypeCard(page, AlertType.ANOMALY)).toBeVisible();
 
 		await alertTypeCard(page, AlertType.ANOMALY).click();
 

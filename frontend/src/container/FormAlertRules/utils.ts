@@ -12,6 +12,7 @@ import {
 	IPromQLQuery,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 
 // toChartInterval converts eval window to chart selection time interval
@@ -104,3 +105,16 @@ export function getQueryNames(currentQuery: Query): DefaultOptionType[] {
 
 	return queryConfig[currentQuery.queryType]() || [];
 }
+
+// anomalyFunction is the query's anomaly function for the rule's condition. Both arguments are
+// named: a positional list loses seasonality, so the preview would score another season.
+export const anomalyFunction = (
+	target: number | undefined,
+	seasonality: string | undefined,
+): QueryFunction => ({
+	name: 'anomaly',
+	namedArgs: {
+		z_score_threshold: target || 3,
+		seasonality: seasonality || 'hourly',
+	},
+});
