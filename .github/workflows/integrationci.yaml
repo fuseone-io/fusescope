@@ -238,16 +238,35 @@ jobs:
           done <<< "$RUNS"
           exit $status
   # Required status check. Always runs, so the check exists on every head.
-  # Runs that do not decide the verdict report as "integrationci (ignored)", a name
+  # A pull_request run that does not decide, such as one for an unrelated label,
+  # repeats the latest earlier verdict on its head: branch protection reads the
+  # latest pull_request suite. Other runs that do not decide report as "integrationci (ignored)", a name
   # the required check does not match. Fails when an integration suite was needed but did
   # not pass, including when a safe-to-* label is missing for this head.
   integrationci:
-    name: ${{ needs.changes.outputs.ignored == 'true' && 'integrationci (ignored)' || 'integrationci' }}
+    name: ${{ needs.changes.outputs.ignored == 'true' && github.event_name != 'pull_request' && 'integrationci (ignored)' || 'integrationci' }}
     if: always()
     needs: [changes, fmtlint, build, groups, test]
     runs-on: ubuntu-24.04
-    permissions: {}
+    timeout-minutes: 90
+    permissions:
+      actions: read
+      checks: read
+      contents: read
     steps:
+      - name: checkout
+        if: needs.changes.outputs.ignored == 'true' && github.event_name == 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.head.sha || github.event.pull_request.base.sha }}
+          sparse-checkout: .github/actions
+          persist-credentials: false
+      - name: repeat
+        if: needs.changes.outputs.ignored == 'true' && github.event_name == 'pull_request'
+        uses: ./.github/actions/repeat-verdict
+        with:
+          check: integrationci
+          sha: ${{ needs.changes.outputs.sha }}
       - name: verdict
         env:
           GATE: ${{ needs.changes.result }}
