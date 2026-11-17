@@ -126,30 +126,18 @@ test.describe('Alert create — v2 builder', () => {
 		expect(body.labels).toMatchObject({ team: 'payments' });
 	});
 
-	test('CV2-05 a rejected label key surfaces as a notification, not an inline message', async ({
+	test('CV2-05 a label added again under an existing key replaces its value', async ({
 		authedPage: page,
 	}) => {
 		await gotoCreateAlertV2(page, { alertType: AlertType.LOGS });
 
-		// Both rejection branches in `LabelsInput` — duplicate key and group-by key —
-		// raise an antd **notification**, so a spec looking for inline text fails. Only
-		// the duplicate branch is reachable here: the group-by branch needs a query that
-		// already groups by something, which the default logs query does not.
 		await addAlertLabel(page, 'team', 'payments');
-		await expect(labelPill(page, 'team', 'payments')).toBeVisible();
+		await addAlertLabel(page, 'team', 'checkout');
 
-		await page.getByTestId('alert-add-label-button').click();
-		const input = page.getByTestId('alert-add-label-input');
-		await input.fill('team');
-		await input.press('Enter');
-
-		await expect(
-			page.getByText('Label with this key already exists'),
-		).toBeVisible();
-		// Rejected, so no second pill appeared.
 		await expect(page.locator('[data-testid^="label-pill-team-"]')).toHaveCount(
 			1,
 		);
+		await expect(labelPill(page, 'team', 'checkout')).toBeVisible();
 	});
 
 	test('CV2-06 CV2-07 the operator and match-type selects offer the documented options', async ({

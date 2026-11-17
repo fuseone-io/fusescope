@@ -13,8 +13,6 @@ import { RotateCcw } from 'lucide-react';
 import { useCreateAlertState } from '../context';
 import AlertRuleFields from './AlertRuleFields';
 
-import './styles.scss';
-
 /**
  * The rule name and labels. Creating a rule, they sit in the page's header
  * band with the title, the rule type and the way back to the classic form.

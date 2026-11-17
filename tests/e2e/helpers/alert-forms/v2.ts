@@ -109,30 +109,19 @@ export async function selectThresholdChannel(
 }
 
 /**
- * Add a label through the v2 header editor. The input is a single field with two
- * phases — key, then value, each committed with Enter
- * (`CreateAlertHeader/LabelsInput.tsx:25-93`) — and a `key:value` string in the
- * first phase is accepted as a shortcut. This helper drives the two-phase path
- * because that is what a user does.
+ * Add a label through the header editor: the key field, then the value field,
+ * committed with Enter.
  */
 export async function addAlertLabel(
 	page: Page,
 	key: string,
 	value: string,
 ): Promise<void> {
-	await page.getByTestId('alert-add-label-button').click();
-	const input = page.getByTestId('alert-add-label-input');
-	await input.fill(key);
-	await input.press('Enter');
-	await input.fill(value);
-	await input.press('Enter');
-
-	// Committing a label does *not* close the editor — `isAdding` stays true so a
-	// user can type several in a row, which means `alert-add-label-button` is still
-	// unmounted. Escape (with both fields empty) is what closes it, and without this
-	// a second call to this helper waits forever for the add button.
-	await input.press('Escape');
-	await expect(page.getByTestId('alert-add-label-button')).toBeVisible();
+	await page.getByTestId('alert-labels-key-input').fill(key);
+	await page.getByTestId('alert-labels-key-input').press('Enter');
+	await page.getByTestId('alert-labels-value-input').fill(value);
+	await page.getByTestId('alert-labels-value-input').press('Enter');
+	await expect(labelPill(page, key, value)).toBeVisible();
 }
 
 /**
