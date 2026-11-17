@@ -125,9 +125,9 @@ export const editRulesMocks = defineStoryMocks({
 /** The page fetches the rule before it renders the form, which outlasts the 1s default. */
 const untilLoaded = { timeout: 15_000 };
 
-const LABEL_INPUT = 'alert-labels-input-v1';
+const LABEL_INPUT = 'alert-labels-key-input';
 
-/** The labels field, scrolled into view once the rule has loaded. */
+/** The label key field, scrolled into view once the rule has loaded. */
 export const findLabelInput = async (
 	canvasElement: HTMLElement,
 ): Promise<HTMLElement> => {
@@ -145,6 +145,6 @@ export const removeLabel = async (
 	key: string,
 ): Promise<void> => {
 	await userEvent.click(
-		within(canvasElement).getByRole('button', { name: `Remove ${key}` }),
+		within(canvasElement).getByRole('button', { name: `Remove label ${key}` }),
 	);
 };
