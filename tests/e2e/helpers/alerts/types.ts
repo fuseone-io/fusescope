@@ -189,3 +189,44 @@ export interface AlertRulesSeedOptions {
 	 */
 	teamSuffix?: string;
 }
+
+export interface AnomalySeedOptions {
+	metricName: string;
+	labels: Record<string, string>;
+	/** Season period in ms: the earlier seasons sit this far apart. */
+	periodMs: number;
+	/** Value of the last points of the current window; steady when absent. */
+	spike?: number;
+}
+
+/** The parts of a `/api/v5/query_range` anomaly preview the specs read. */
+export interface AnomalyPreviewPoint {
+	timestamp: number;
+	value: number;
+}
+
+export interface AnomalyPreviewSeries {
+	values: AnomalyPreviewPoint[];
+}
+
+export interface AnomalyPreviewAggregation {
+	series?: AnomalyPreviewSeries[];
+	predictedSeries?: AnomalyPreviewSeries[];
+	upperBoundSeries?: AnomalyPreviewSeries[];
+	lowerBoundSeries?: AnomalyPreviewSeries[];
+}
+
+export interface AnomalyPreviewRequest {
+	compositeQuery?: {
+		queries?: {
+			spec?: {
+				aggregations?: { metricName?: string }[];
+				functions?: { name: string; args?: { name: string; value: unknown }[] }[];
+			};
+		}[];
+	};
+}
+
+export interface AnomalyPreviewResponse {
+	data: { data: { results: { aggregations: AnomalyPreviewAggregation[] }[] } };
+}

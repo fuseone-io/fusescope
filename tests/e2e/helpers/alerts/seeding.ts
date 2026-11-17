@@ -5,9 +5,16 @@ import type { Page } from '@playwright/test';
 import { seederUrl } from '../common';
 
 import { createThresholdAlertViaApi } from './api';
-import { SEED_B_SEVERITIES } from './constants';
+import {
+	ANOMALY_BASELINE,
+	ANOMALY_SEASON_OFFSETS,
+	ANOMALY_SPAN_MINUTES,
+	ANOMALY_SPIKE_POINTS,
+	SEED_B_SEVERITIES,
+} from './constants';
 import type {
 	AlertRulesSeedOptions,
+	AnomalySeedOptions,
 	LogsSeedOptions,
 	MetricsSeedOptions,
 	TracesSeedOptions,
@@ -169,6 +176,66 @@ export async function seedAlertHistoryMetrics(
 		}
 	}
 	await postToSeeder(page, '/telemetry/metrics', points);
+}
+
+const MINUTE_MS = 60 * 1000;
+
+function gaugeSeries(
+	metricName: string,
+	labels: Record<string, string>,
+	values: number[],
+	startMs: number,
+): Record<string, unknown>[] {
+	return values.map((value, i) => ({
+		metric_name: metricName,
+		labels,
+		timestamp: new Date(startMs + i * MINUTE_MS).toISOString(),
+		value,
+		type_: 'Gauge',
+		temporality: 'Unspecified',
+		is_monotonic: false,
+	}));
+}
+
+/**
+ * Seed a gauge over four earlier seasons and the current window, one point a
+ * minute, mirroring `tests/integration/tests/ruler/09_anomaly_rule.py`. Season
+ * `k` holds `ANOMALY_BASELINE + ANOMALY_SEASON_OFFSETS[k - 1]` and runs a few
+ * minutes past `now - k * period`, so a preview fetched shortly after still
+ * finds a baseline for its last points.
+ */
+export async function seedAnomalyMetric(
+	page: Page,
+	{ metricName, labels, periodMs, spike }: AnomalySeedOptions,
+): Promise<void> {
+	const now = Math.floor(Date.now() / MINUTE_MS) * MINUTE_MS;
+	const points = ANOMALY_SPAN_MINUTES + 1;
+	const slack = 5;
+	const series: Record<string, unknown>[] = [];
+	ANOMALY_SEASON_OFFSETS.forEach((offset, i) => {
+		const seasonEnd = now - (i + 1) * periodMs;
+		series.push(
+			...gaugeSeries(
+				metricName,
+				labels,
+				Array.from({ length: points + slack }, () => ANOMALY_BASELINE + offset),
+				seasonEnd - ANOMALY_SPAN_MINUTES * MINUTE_MS,
+			),
+		);
+	});
+	const current = Array.from({ length: points }, () => ANOMALY_BASELINE);
+	if (spike !== undefined) {
+		current.fill(spike, points - ANOMALY_SPIKE_POINTS);
+	}
+	series.push(
+		...gaugeSeries(
+			metricName,
+			labels,
+			current,
+			now - ANOMALY_SPAN_MINUTES * MINUTE_MS,
+		),
+	);
+	await postToSeeder(page, '/telemetry/metrics', series);
 }
 
 /**
