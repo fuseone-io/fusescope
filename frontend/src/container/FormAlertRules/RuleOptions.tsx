@@ -221,6 +221,7 @@ function RuleOptions({
 		<InlineSelect
 			getPopupContainer={popupContainer}
 			defaultValue={3}
+			data-testid="alert-anomaly-deviation-select"
 			style={{ minWidth: '120px' }}
 			value={alertDef.condition.target}
 			onChange={(value: number | unknown): void => {
@@ -243,6 +244,7 @@ function RuleOptions({
 		<InlineSelect
 			getPopupContainer={popupContainer}
 			defaultValue={defaultSeasonality}
+			data-testid="alert-anomaly-seasonality-select"
 			style={{ minWidth: '120px' }}
 			value={alertDef.condition.seasonality}
 			onChange={onChangeSeasonality}
