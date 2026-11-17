@@ -21,35 +21,34 @@ Code was read on `main` at `2f5775806` (v0.166.0) on 2026-11-17.
 
 - **Service RED data.** The Services module builds query-builder v5 trace queries
   over `signoz_index_v3`, scoped to `isRoot OR isEntryPoint`, grouped by
-  `service.name`, and already aggregates `p99(duration_nano)`, `count()` and
-  `countIf(status_code = 2)`. The `use_span_metrics` feature is disabled by
-  default; Watchdog therefore reads traces, not span metrics.
-- **A signal-independent scorer.** `anomaly.Score` predicts each timestamp with
-  the median of its seasonal peers and scales residuals by `1.4826 × MAD`. Scores
-  saturate at ±100. A prediction needs at least two matching seasons, while a
-  series needs at least ten valid residuals to estimate dispersion.
+  `service.name`, and aggregates `p99(duration_nano)`, `count()` and
+  `countIf(status_code = 2)`. `use_span_metrics` is disabled by default, so
+  Watchdog reads traces, not span metrics.
+- **A signal-independent scorer.** `anomaly.Score` predicts each timestamp with the
+  median of its seasonal peers and scales residuals by `1.4826 × MAD`. Scores
+  saturate at ±100. A prediction needs two matching seasons and a series needs ten
+  valid residuals. It iterates only the series present in the current window: a
+  series absent from the current window is never scored.
 - **A bounded evaluator.** `anomalyquerier.Evaluator` shares a process-wide
-  semaphore and enforces `max_series` and `max_points`. Its public `Evaluate`
-  path, however, discovers a target through `anomaly.FindTarget`, which currently
-  accepts only a metrics builder with one aggregation.
+  semaphore and enforces `max_series` per window and `max_points` in total. Its
+  public `Evaluate` discovers a target through `anomaly.FindTarget`, which accepts
+  only a metrics builder with one aggregation.
 - **Exception groups.** `distributed_signoz_error_index_v2` groups exceptions by
-  `groupID = md5(service || type || message)`. Its default retention is 15 days,
-  and `ListErrors` already returns `min(timestamp)` and `max(timestamp)` per group.
+  `groupID = md5(service || type || message)`, keeps 15 days by default, and
+  `ListErrors` already returns `min(timestamp)` and `max(timestamp)` per group.
 - **Background-service conventions.** Long-running work implements
-  `factory.Service`, owns a ticker and stop context, and enumerates only the
+  `factory.Service`, owns a ticker and stop context, and enumerates the
   organizations returned by `organization.Getter.ListByOwnedKeyRange`. The early
-  return in `pkg/query-service/rules/manager.go` is a known counterexample: one
-  empty organization must not stop processing later organizations.
+  return in `pkg/query-service/rules/manager.go` is a counterexample: one empty
+  organization must not stop later organizations.
 - **A lease-shaped precedent.** Migration 142 created `archive_lease`. The generic
-  `runUnderLease` implementation is not on `main`; ADR 0006 already says it must
-  become a shared package.
+  `runUnderLease` is not on `main`; ADR 0006 says it must become a shared package.
 - **Alert delivery.** `alertmanager.PutAlerts` accepts generated alerts and
-  `SetNotificationConfig` can route a stable `ruleId` through organization
-  policies with `UsePolicy`.
-- **UI building blocks.** Services and the service overview use the new
-  shadcn/Tailwind stack. `StatusBadge`, `SideSheet`, and the anomaly-series helpers
-  already exist. The uPlot anomaly band is still private to
-  `AnomalyAlertEvaluationView`.
+  `SetNotificationConfig` routes a stable `ruleId` through organization policies
+  with `UsePolicy`.
+- **UI building blocks.** Services and the service overview use the shadcn/Tailwind
+  stack. `StatusBadge`, `SideSheet` and the anomaly-series helpers exist. The uPlot
+  anomaly band is private to `AnomalyAlertEvaluationView`.
 
 ### Prior art and clean-room boundary
 
@@ -61,376 +60,395 @@ Only public product documentation and statistical literature inform this design:
   [overview](https://docs.datadoghq.com/watchdog/),
   [alert coverage](https://docs.datadoghq.com/watchdog/alerts/), and
   [service page](https://docs.datadoghq.com/tracing/services/service_page/).
-- Monoscope's public documentation describes automatically discovered anomalies,
-  an ongoing-anomalies view, and changes/errors alongside request, latency and error
-  analytics:
-  [getting started](https://monoscope.tech/docs/onboarding/) and
+- Monoscope's public documentation describes automatically discovered anomalies, an
+  ongoing-anomalies view, and changes/errors alongside request, latency and error
+  analytics: [getting started](https://monoscope.tech/docs/onboarding/) and
   [dashboard](https://monoscope.tech/docs/dashboard/dashboard-pages/dashboard/).
-- Hochenbaum, Vallis and Kejariwal describe seasonal decomposition with robust
-  median and MAD statistics in
+- Hochenbaum, Vallis and Kejariwal describe seasonal decomposition with robust median
+  and MAD statistics in
   [Automatic Anomaly Detection in the Cloud Via Statistical Learning](https://arxiv.org/abs/1704.07706).
 
 No Datadog implementation is available or needed. Monoscope is AGPL-3.0, so no
 Monoscope source code is read, copied, translated or linked. SigNoz `ee/` and
-`cmd/enterprise/` are proprietary and are also outside the boundary, including
-their history. Implementation work is clean-room from this ADR, FuseScope's MIT
-code, the public sources above and general statistical literature.
+`cmd/enterprise/` are proprietary and outside the boundary, including their history.
+Implementation is clean-room from this ADR, FuseScope's MIT code, the public sources
+above and general statistical literature.
 
 ## Goals
 
-- Detect material RED regressions for every observed service without per-service
-  rule configuration.
+- Detect material RED regressions, including traffic that drops to zero, for every
+  observed service without per-service configuration.
 - Detect a newly observed exception group for an established service.
-- Keep cost bounded per organization and share anomaly-query admission limits with
-  user-created anomaly alerts.
-- Persist an issue that can be investigated, acknowledged, muted and resolved,
-  instead of emitting an unstructured stream of alerts.
+- Bound cost per organization, share admission with user anomaly alerts, and keep
+  every organization evaluated even when some are slow.
+- Persist issues that can be investigated, acknowledged, muted and resolved.
 - Show service health in the Issues page, Services list, Home and service overview.
-- Reuse existing notification channels and organization routing policies, with
-  notifications off until an administrator enables them per detector.
-- Work identically with SQLite and PostgreSQL metastores and with multiple backend
-  replicas.
+- Reuse notification channels and routing policies, off until an administrator
+  enables them per detector.
+- Work identically with SQLite and PostgreSQL and with multiple backend replicas.
 
 Non-goals for the first wave: new-operation detection, deployment correlation,
-general log-pattern detection, root-cause analysis, per-organization sensitivity,
+log-pattern detection, root-cause analysis, per-organization sensitivity,
 span-metrics support, a new notification channel, or an ML training service.
 
 ## Decisions
 
-### 1. First-wave detectors
+### 1. Cycle and windows
 
-Watchdog has four fixed detector names. Names are persisted and are API values, so
-they do not change after release.
+The scheduler ticks every five minutes. A tick evaluates the window ending at
+`end = floor_5m(now - 2m)` and starting at `end - 15m`: three five-minute buckets.
+The two-minute lag lets trace ingestion settle. Baselines are the same window shifted
+by `k × 24h`, for `k` from 1 to 4. `end` identifies an evaluation, so retries and
+lease failover evaluate the same window.
 
-| Detector | Series per service | Trigger | Absolute gate |
-|---|---|---|---|
-| `error_rate` | `countIf(status_code = 2) / count()` | score ≥ 4 above baseline and rate ≥ 1% | at least 50 requests and 10 errors in the 15-minute window |
-| `latency_p99` | `p99(duration_nano)` | score ≥ 4 above baseline and p99 ≥ 1.2 × prediction | at least 50 requests in the window |
-| `throughput_drop` | `count()` | score ≤ -4 and traffic ≤ 50% of prediction | predicted traffic at least 100 requests in the window |
-| `new_exception` | exception `groupID` | the group's first observation in the seven-day detection horizon is in the current window | service has at least 24 hours of history |
+### 2. Stable per-organization cohort
 
-The three RED detectors read only root or entry-point spans and group by the
-materialized `service.name`. A missing or empty service name is ignored. The error
-detector requests error and total counts as two aggregations in the same trace
-query, constructs a ratio series in Go, and passes that series to `anomaly.Score`.
-The latency request includes a count aggregation for its volume gate. This avoids a
-formula language in the evaluator.
+The cohort is the set of services evaluated in one cycle for one organization. It is
+fixed across the five windows and shared by the three RED detectors.
 
-The current window has three complete five-minute buckets. A RED issue opens when
-at least one bucket crosses the score and relative threshold and the aggregate
-15-minute volume gate also passes. Evidence records the triggering bucket. Partial,
-invalid, insufficient-baseline and missing-baseline outcomes never open or resolve
-an issue; they are no-data evaluations, not clean evaluations.
+1. **Active services.** Every service with an active RED issue (`open`,
+   `acknowledged` or `muted`) is in the cohort, with or without a baseline. An active
+   service without an eligible baseline evaluates as no-data.
+2. **Discovery.** For each baseline window `k`, one grouped trace query returns the
+   three RED aggregations per service, ordered by `count()` descending and limited to
+   `max_series`, the same per-response limit the evaluator enforces. The union of the
+   four responses offers up to `4 × max_series` candidates. A service's predicted
+   volume is the median of its `count()` across seasons.
+3. **New candidates.** Candidates fill the cohort up to `max_series` services, active
+   services included, ordered by predicted volume. A candidate needs an eligible
+   baseline: the scorer needs ten residuals and the window has three buckets, so at
+   least 10 of the 12 baseline buckets must have a value, which in practice means all
+   four seasons. Current-window volume is never a selection criterion, so a service
+   whose traffic fell stays selectable.
+4. **Batches.** The cohort is evaluated in batches of at most `max_series` services.
+   If active services alone exceed `max_series`, the excess forms extra batches; an
+   active service is never dropped. The overflow emits a warning and
+   `fusescope.watchdog.active_overflow`.
+5. **Excluded services.** A service outside the cohort is not evaluated; for an
+   existing issue that cycle is no-data.
 
-The scorer remains the one implementation of seasonal prediction. Watchdog uses a
-daily period and four earlier seasons. Its existing floors both apply: prediction
-at a timestamp needs two seasons, and scale estimation needs ten residuals. With a
-15-minute window and five-minute step, a complete run normally needs all four
-seasons to provide the latter. A flat baseline still uses the scorer's bounded flat
-score.
+`max_series` counts distinct services (label sets) per response, not the three
+aggregation series of each service.
 
-Thresholds are constants, documented next to detector tests. They are not exposed
-as settings in the first wave. Absolute gates are deliberately layered over the
-robust score so a statistically large movement in low-volume data does not become
-an issue.
+Cost per organization and cycle, in query-range calls:
 
-`new_exception` performs one bounded grouped read over a seven-day lookback. It
-selects groups whose `min(timestamp)` is in the current window; "new" therefore
-means new within that detection horizon, not forever. It uses the existing 15-day
-exception table and never reads raw spans to reconstruct groups. The first
-evaluation for an organization after a scheduler start is warm-up only. It records
-an in-memory watermark for that lease session but opens no exception issue,
-preventing startup from turning already-present groups into a burst of issues. A
-restart or lease failover conservatively warms the organization again and may miss
-one window; it cannot create a false issue from the hand-off. An exception issue
-never auto-resolves; a user acknowledges or resolves it.
-
-The first release stores severity but emits `warning` for every first-wave issue.
-A calibrated `critical` mapping can be added without changing fingerprints or the
-API.
-
-### 2. Evaluation windows and bounded queries
-
-The scheduler ticks every five minutes. For a tick at time `now`, the evaluation
-end is `floor_5m(now - 2m)` and the start is 15 minutes earlier. The two-minute lag
-lets trace ingestion settle, and the rounded boundary makes retries and lease
-failover identify the same window.
-
-Each RED detector makes one grouped query shape per organization, not one query per
-service. The evaluator executes that shape for the current window and for four
-daily `timeShift` baselines: five query-range calls per detector and organization.
-Detectors run serially within an organization. Different organizations are also
-visited serially in the first release so query cost is predictable.
-
-`anomalyquerier.Evaluator` gains a low-level method conceptually shaped as:
-
-```go
-EvaluateSeries(
-    ctx context.Context,
-    orgID valuer.UUID,
-    build func(shift time.Duration) *querybuildertypes.QueryRangeRequest,
-    opts SeriesOptions,
-) (*SeriesEvaluation, error)
+```text
+4   discovery (the four baseline windows; they are also the RED baselines)
++ 1 per batch (the current window, filtered to that batch)
++ 4 per batch that contains active services absent from discovery
+    (baselines filtered to those services)
++ 1 new_exception
 ```
 
-It admits once with `Wait`, runs the current and four baseline requests, aligns
-shifted timestamps to the current timeline, accounts for every materialized point,
-and enforces the same `max_series` and `max_points` configuration as `Evaluate`.
-It returns raw current and baseline series plus query metadata and warnings; it
-does not choose a detector or call `anomaly.Score`. The existing public `Evaluate`
-method and its metrics-builder validation stay unchanged.
+The common case, one batch and no active service missing from discovery, is six
+calls. Verification inspects `system.query_log` against this formula.
 
-Requests order services by current-window volume and use `max_series` as top-N.
-The implementation requests one overflow sentinel when the query path supports it,
-trims before scoring, and emits a warning and metric when more services exist.
-Baseline windows use the selected current service names as a stable filter, so a
-different historical top-N cannot silently replace the services being evaluated.
-If the query backend cannot return the overflow sentinel and stable set in one
-round trip, the detector may use one bounded discovery query; it must not issue a
-query per service. A selected service absent from enough seasons produces
-`missing_baseline`, not an anomaly.
+### 3. First-wave detectors
 
-Each detector gets `min(1 minute, evaluation interval)` to complete. Timeout,
-query error and limit overflow are logged and metered for that detector and do not
-stop the next detector or organization.
+Detector names are persisted API values and do not change after release.
 
-### 3. Persisted issues and settings
+| Detector | Series per service | Anomalous when | Eligible evaluation requires |
+|---|---|---|---|
+| `error_rate` | `countIf(status_code = 2) / count()` per bucket | a bucket has score ≥ 4 above baseline and rate ≥ 1% | ≥ 50 requests and ≥ 10 errors in the window; at least 2 of 3 buckets with outcome `scored` or `flat_baseline` |
+| `latency_p99` | `p99(duration_nano)` | a bucket has score ≥ 4 above baseline and p99 ≥ 1.2 × prediction | ≥ 50 requests in the window; at least 2 of 3 buckets scored |
+| `throughput_drop` | `count()` | a bucket has score ≤ -4 and volume ≤ 50% of prediction | predicted volume ≥ 100 requests in the window; at least 2 of 3 buckets scored |
+| `new_exception` | exception `groupID` | the group is first seen after the organization's exception cursor | the service has at least 24 hours of history; the organization is past warm-up |
 
-Migration 149 creates `watchdog_issue` and `watchdog_setting` on SQLite and
+- **Zero traffic, `throughput_drop` only.** For every cohort service, each current
+  bucket with no data, whether the whole service or an intermediate bucket, is filled
+  with `0` before scoring. Only buckets wholly inside the lagged window are filled.
+  Baselines never receive synthetic zeros; absence there stays `missing_baseline`.
+- **Error rate and latency.** A missing current bucket is no-data. No rate or latency
+  is invented.
+- **Ratio.** The error detector reads error and total counts as two aggregations of
+  the same query and builds the ratio series in Go before calling `anomaly.Score`.
+  No formula language is added to the evaluator.
+- **Thresholds** are constants documented next to the detector tests and calibrated
+  on demo traffic before the detector PR. Every first-wave issue is `warning`;
+  `critical` is reserved.
+- **Daily seasonality** with four seasons, as in anomaly alerts. A flat baseline uses
+  the scorer's bounded flat score.
+
+#### `new_exception` cursor
+
+The 15-minute windows advance five minutes and overlap, so the detector keeps an
+in-memory cursor per organization for the lease session:
+
+```text
+cursor = (firstSeen, groupID)
+```
+
+- One grouped read over a seven-day lookback (within the 15-day table) returns groups
+  with `firstSeen ≤ end` that sort after the cursor lexicographically:
+  `firstSeen > cursor.firstSeen OR (firstSeen = cursor.firstSeen AND groupID > cursor.groupID)`.
+- Results are ordered by `firstSeen, groupID`, at most 100 groups plus one sentinel.
+- Groups are processed in order. The cursor advances after each item processed
+  successfully: the issue was persisted or idempotently updated, or the group was
+  definitively discarded by the 24-hour history gate.
+- The cursor stops before an item whose processing or persistence fails; the batch
+  stops there and the next cycle resumes from the cursor. A failed query does not
+  move it.
+- Without overflow or failure the cursor moves to `(end, max)`. With overflow the
+  detector emits a warning and `fusescope.watchdog.exception_overflow`, and the rest
+  is processed in following cycles.
+- **Warm-up.** The first evaluation of an organization in a lease session sets
+  `cursor = (end, max)` and opens no issue, so already-present groups do not become a
+  burst of issues. A restart or failover warms again and may miss one window; it
+  cannot create a false issue.
+- **History gate.** A service has 24 hours of history when it appears in at least one
+  discovery baseline (`k ≥ 1`). No extra query is needed. A service absent from
+  discovery is treated as having no history.
+- An exception issue never auto-resolves.
+
+### 4. Shared evaluation limits
+
+`anomalyquerier` gains a low-level session; the public `Evaluate` is unchanged:
+
+```go
+s, err := evaluator.Admit(ctx, anomalyquerier.Wait) // one semaphore slot per organization and cycle
+defer s.Close()
+resp, err := s.Run(ctx, orgID, req)                  // per-window max_series, cumulative max_points
+```
+
+`Run` enforces `max_series` on each response and `max_points` on the session total,
+and aligns shifted timestamps to the current timeline. Detectors build their series
+(the error ratio, synthetic zeros) and call `anomaly.Score`. The semaphore is the one
+anomaly rules and previews already use.
+
+### 5. Fairness between organizations
+
+- **Cycle deadline:** four minutes from the tick. When it passes, the cycle stops and
+  the remaining organizations wait for the next cycle.
+- **Round-robin cursor:** in memory for the lease session. The next cycle starts at
+  the organization after the last one started, so every organization is visited in
+  successive cycles even when no cycle completes. Failover restarts it.
+- **Concurrency:** at most two organizations in parallel, each holding one session.
+- **Per-organization budget:** `min(60s, time left in the cycle)`, shared by that
+  organization's detectors.
+- **Metrics:** `fusescope.watchdog.orgs{result=evaluated|skipped_deadline|error}` and
+  `fusescope.watchdog.cycle_duration`.
+
+An organization failure uses `continue`, never `return`.
+
+### 6. Issues and lifecycle
+
+Migration 150 creates `watchdog_issue` and `watchdog_setting` on SQLite and
 PostgreSQL.
-
-`watchdog_issue` contains:
 
 | Column | Meaning |
 |---|---|
-| `id`, `org_id` | stable issue identity and tenant |
-| `detector`, `service`, `fingerprint` | detector scope; fingerprint is unique while active |
-| `status` | `open`, `acknowledged`, `resolved`, or `muted` |
-| `severity` | `warning` initially; `critical` is reserved |
-| `first_seen`, `last_seen`, `resolved_at`, `muted_until` | user-visible lifecycle |
-| `peak_score` | most extreme absolute score seen; null for a new exception |
-| `clean_evaluations`, `last_evaluated_at` | idempotent three-window resolution state |
-| `evidence` | versioned JSON with query, window, values, prediction, band and score |
-| `created_at`, `updated_at` | audit timestamps |
-
-The evidence object has a `version` from its first release. It stores only the
-three current buckets, their aligned prediction/bounds, detector inputs, query
-specification and warnings; it does not duplicate four days of baseline points.
+| `id`, `org_id` | identity and tenant |
+| `detector`, `service`, `fingerprint` | scope; fingerprint unique while active |
+| `status` | `open`, `acknowledged`, `resolved` or `muted` |
+| `severity` | `warning`; `critical` reserved |
+| `first_seen`, `last_seen`, `resolved_at`, `muted_until` | lifecycle |
+| `peak_score` | most extreme absolute score; null for `new_exception` |
+| `clean_evaluations`, `last_evaluated_at` | idempotent resolution state |
+| `evidence` | versioned JSON: the three current buckets, aligned prediction and band, score, query and warnings; never the baseline points |
+| `created_at`, `updated_at` | audit |
 
 The fingerprint is `detector + NUL + service`; `new_exception` appends
-`NUL + groupID`. A partial unique index on `(org_id, fingerprint)` covers active
-statuses (`open`, `acknowledged`, `muted`). A transition and the corresponding
-window watermark update happen in one SQL transaction.
+`NUL + groupID`. A partial unique index on `(org_id, fingerprint)` covers the active
+statuses. A transition and `last_evaluated_at` are written in one transaction.
 
-Lifecycle rules are:
+Each evaluation of an issue is one of:
 
-1. The first anomalous window inserts an `open` issue.
-2. A continuing anomaly updates `last_seen`, evidence and peak score, resets the
-   clean count, and preserves an explicit acknowledgement.
-3. A clean evaluation increments `clean_evaluations` once per distinct evaluation
-   end. Three consecutive clean evaluations resolve a RED issue and set
-   `resolved_at`. No-data and failed evaluations neither increment nor reset it.
-4. A recurrence within one hour updates and reopens the most recent resolved issue;
-   a later recurrence creates a new id. This prevents short flaps without merging
-   separate incidents indefinitely.
-5. Muting requires a future `muted_until`. While muted, detections update the
-   evidence but do not reopen or notify. Once the time passes, an anomalous
-   evaluation changes it to `open`; three clean evaluations may resolve it.
-6. `new_exception` follows only user transitions after opening and never rule 3.
+- **anomalous:** eligible and triggers;
+- **clean:** eligible and does not trigger;
+- **no-data:** outside the cohort, too few scored buckets, insufficient or missing
+  baseline, below the volume gate, timeout, error, or organization skipped by the
+  deadline.
 
-`watchdog_setting` has `(org_id, detector)` as its primary key plus `enabled`,
-`notify`, `created_at` and `updated_at`. A missing row means `enabled=true` and
-`notify=false`. The store validates detector names; rows cannot create arbitrary
-detectors. Disabling a detector stops evaluations and does not resolve or delete
-its existing issues.
+Rules:
 
-Resolved issues are retained for 90 days and then deleted in bounded batches by
-the Watchdog service. Active issues and settings are never removed by retention.
+1. An anomalous evaluation without an active issue creates an `open` issue.
+2. An anomalous evaluation with an active issue updates `last_seen`, evidence and peak
+   score, resets `clean_evaluations` and keeps an explicit acknowledgement.
+3. A clean evaluation increments `clean_evaluations` once per distinct `end`. Three
+   consecutive clean evaluations resolve a RED issue.
+4. No-data neither increments nor resets the counter.
+5. A recurrence within one hour of resolution reopens the same issue; later, a new
+   issue is created.
+6. `muted` requires a future `muted_until`. Until then no evaluation changes the
+   status or notifies: anomalous updates evidence and peak score and resets
+   `clean_evaluations`; clean leaves the counter unchanged; no-data changes nothing.
+   At the first evaluation after `muted_until`: anomalous sets `open` and notifies
+   when enabled; clean increments the counter and sets `open`, resolving after three
+   by rule 3; no-data sets `open` without notifying. No issue stays muted forever.
+7. `new_exception` changes state only by user action after opening.
 
-### 4. Generic SQL lease and runtime
+Resolved issues are deleted in bounded batches after 90 days. Active issues and
+settings are never removed by retention.
 
-Migration 150 creates the generic table `lease(name, holder, epoch, expires_at)`.
-`pkg/lease` acquires and renews a named lease transactionally using database time,
-not a process clock. Acquisition increments the fencing epoch. The holder renews
-every quarter of the lease duration; a failed renewal, ownership mismatch or
-expired row cancels the callback context. Release is best-effort and conditional
-on holder and epoch.
+`watchdog_setting` has `(org_id, detector)` as key plus `enabled` (default true),
+`notify` (default false), `created_at` and `updated_at`. A missing row means the
+defaults; the store rejects unknown detector names. Disabling a detector stops its
+evaluations and does not resolve its issues. The global boolean feature `watchdog`
+(flagger) is the kill switch for the service, routes and UI, disabled by default until
+calibration is accepted.
 
-Watchdog is a `factory.Service` registered with the other backend services. It runs
-the scheduler under `watchdog/scheduler`, stops through context cancellation, and
-enumerates `ListByOwnedKeyRange` on every cycle. An organization failure uses
-`continue`, never `return`. The existing archive branch adopts `pkg/lease` when it
-merges; this work does not copy its unmerged `runUnderLease`.
+### 7. Generic SQL lease and runtime
 
-Issue writes are idempotent by fingerprint and evaluation end, which protects a
-commit racing with lease loss. Notification labels are stable, so retrying an
-Alertmanager update replaces the same alert rather than creating another logical
-alert.
+Migration 149 creates `lease(name, holder, epoch, expires_at)`. `pkg/lease` acquires
+and renews a named lease transactionally using database time. Acquisition increments
+the fencing epoch; the holder renews every quarter of the duration; a failed renewal,
+ownership mismatch or expiry cancels the callback context; release is conditional on
+holder and epoch. The archive branch adopts `pkg/lease` when it merges.
 
-The global boolean feature `watchdog` is the kill switch for the service, routes
-and UI. It is experimental and disabled by default until the demo calibration is
-accepted. Per-detector `enabled` settings apply only after the global flag.
+Watchdog is a `factory.Service` running the scheduler under the lease
+`watchdog/scheduler`, applying section 5. Issue writes are idempotent by fingerprint
+and `end`. Logs carry organization and detector, never evidence payloads or exception
+messages.
 
-Instrumentation is:
+Migrations follow PR order: 149 (lease) in the lease PR, 150 (Watchdog) in the schema
+PR.
 
-- `fusescope.watchdog.evaluations{detector,outcome}` counter;
-- `fusescope.watchdog.issues{detector,transition}` counter;
-- `fusescope.watchdog.duration{detector}` histogram;
-- structured warnings for top-N truncation and errors with organization and
-  detector, but no evidence payload or exception message in logs.
+### 8. Notifications are opt-in
 
-Migration numbers 149 and 150 are reserved as above. Although the lease PR can be
-reviewed first, migration 150 must not be released ahead of missing migration 149;
-the two may land in dependency order or in the same release train.
+No detector notifies while `notify=false`. When an administrator first enables it,
+the backend calls `SetNotificationConfig(org, "watchdog:<detector>", UsePolicy=true)`.
+Opening, reopening and resolving call `PutAlerts` with `ruleId =
+watchdog:<detector>`, labels `service`, `detector` and `issue_id`, and `generatorURL`
+`/issues?issue=<id>`. A muted issue does not notify; acknowledgement is not an
+Alertmanager resolution. A delivery failure does not roll back the transition; it is
+logged and metered. There is no outbox in the first wave.
 
-### 5. Notifications are opt-in
+### 9. API, authorization and contract sync
 
-No detector sends a notification while its setting has `notify=false`. When an
-administrator first enables notification for a detector, the backend calls
-`SetNotificationConfig(org, "watchdog:<detector>", UsePolicy=true)`. It uses no
-new receiver or channel type.
+OpenAPI tag `watchdog`:
 
-Opening/reopening and resolving an issue call `PutAlerts` with stable
-`ruleId = watchdog:<detector>`, labels `service`, `detector`, and `issue_id`, and a
-`generatorURL` to `/issues?issue=<id>`. Resolution updates the same alert identity
-with its end time. A muted issue does not notify. Acknowledgement is an issue
-workflow action, not an Alertmanager resolution.
+- `GET /api/v1/watchdog/issues`: paginated; `status`, `service`, `detector` and time
+  filters.
+- `GET /api/v1/watchdog/issues/{id}`.
+- `PATCH /api/v1/watchdog/issues/{id}`: `status` (`acknowledged`, `resolved`,
+  `muted`) and `mutedUntil`; `open` is refused.
+- `GET /api/v1/watchdog/services/status`: batch status for badges. Active means
+  `open`, `acknowledged` or `muted`. For each service with at least one active issue it
+  returns `service`, `highestSeverity`, `activeCount`, `detectors[]` (unique, sorted)
+  and `allMuted`. `services[]` accepts at most 200 names (400 above); without it the
+  response is paginated (`limit` ≤ 200 and a cursor). The UI sends the visible page's
+  services.
+- `GET /api/v1/watchdog/settings` and `PUT /api/v1/watchdog/settings/{detector}`.
 
-Failure to notify does not roll back an issue transition. It is logged and metered,
-and an evaluator retry remains idempotent because the alert identity is stable.
-The first wave has no notification outbox or exactly-once delivery guarantee; that
-is preferable to making detection unavailable when Alertmanager is unavailable.
+Viewers read issues, status and settings; editors acknowledge, resolve and mute;
+administrators change settings. Tenant scope always comes from the authenticated
+organization. The API PR regenerates the spec and client in separate commits and
+syncs `fusescope-mcp-server` (list, get and update issue tools), the Terraform
+provider (`fusescope_watchdog_setting`, or explicitly not affected) and the docs.
 
-### 6. API, authorization and contract sync
-
-The OpenAPI tag is `watchdog` and the routes are:
-
-- `GET /api/v1/watchdog/issues`, paginated, with `status`, `service`, `detector`
-  and time-range filters;
-- `GET /api/v1/watchdog/issues/{id}`;
-- `PATCH /api/v1/watchdog/issues/{id}` with `status` and `mutedUntil`;
-- `GET /api/v1/watchdog/settings`;
-- `PUT /api/v1/watchdog/settings/{detector}` with `enabled` and `notify`.
-
-Viewers list and read issues and settings. Editors may acknowledge, resolve and
-mute issues. Administrators may also change settings. Only detector code reopens
-an issue; PATCH cannot set `open`. Tenant scope comes from the authenticated
-organization, never a request field.
-
-The API PR regenerates the OpenAPI specification and frontend client in separate
-generated commits. The same contract is synchronized with read/get/update issue
-tools in `fusescope-mcp-server`. The Terraform provider gains
-`fusescope_watchdog_setting` if settings are intended as infrastructure state;
-otherwise its PR is explicitly marked not affected. FuseScope docs gain a
-Watchdog page in the same release train.
-
-### 7. Product surfaces
+### 10. Product surfaces
 
 Behind the `watchdog` flag:
 
-- `/issues` appears as **Issues** in the Respond sidebar group. Its list filters
-  by state, service, detector and time. A `SideSheet` shows the evidence series,
-  prediction and band, the evaluation window, links to filtered traces and
-  exceptions, and acknowledge, resolve and mute actions.
-- `ServiceNameCell` and Home use the same `StatusBadge` component when a service
-  has an active issue. The badge reflects the highest active severity and opens
-  the filtered issues view.
-- The service Overview adds an **Anomalies** panel beside `MonitorsPanel`, listing
-  active and recent issues for that service.
-- Settings adds one row per fixed detector, with **Detect** and **Notify** toggles.
-  Notify remains off when detection is first enabled.
-- `bandsPlugin`, its options and tooltip move from
-  `AnomalyAlertEvaluationView` to
-  `lib/uPlotLib/plugins/anomalyBands.ts`. Both anomaly alerts and issue detail use
-  it; pure series helpers stay in `lib/uPlotLib/utils/anomalySeries.ts`.
+- `/issues` as **Issues** in the Respond sidebar group: filters by state, service,
+  detector and time; a `SideSheet` with the evidence series, prediction and band,
+  links to filtered traces and exceptions, and acknowledge, resolve and mute.
+- `ServiceNameCell` (Services and Home) shows a `StatusBadge` from
+  `/watchdog/services/status` only: one call per page, never the paginated list or a
+  call per service. `allMuted` renders a muted badge.
+- The service Overview adds an **Anomalies** panel beside `MonitorsPanel`.
+- Settings adds one row per detector with **Detect** and **Notify** toggles.
+- `bandsPlugin`, its options and tooltip move to
+  `lib/uPlotLib/plugins/anomalyBands.ts`, shared by anomaly alerts and issue detail.
 
-The UI does not infer health from trace queries. It reads persisted issues so every
-surface agrees and page loads do not multiply detector cost.
+The UI reads persisted issues, so every surface agrees and page loads add no detector
+cost.
 
 ## Alternatives rejected
 
 | Alternative | Why not |
 |---|---|
-| Create an anomaly rule for every service and signal | It grows persisted rules with service cardinality, still needs lifecycle/configuration, and does not provide a first-class issue. |
-| Query span metrics | They are disabled by default and would make zero-configuration behavior depend on an optional pipeline. |
-| One query per service | Cost grows with cardinality; grouped trace queries already provide all required RED inputs. |
-| Extend the anomaly expression language with ratios first | Error count and request count can be fetched together and divided safely in Go; a formula language is a separate design. |
-| Run a scheduler in every replica | Duplicate issues and notifications are correctness problems, not merely extra work. A SQL lease works for SQLite and PostgreSQL. |
-| Notify by default | Zero-configuration detection must not unexpectedly page an organization. |
-| Reuse user alert rules as issues | Rule state lacks acknowledgement, muting, evidence retention, reopen suppression and exception-group identity. |
-| Read Monoscope or removed SigNoz enterprise code | Their licences and the repository clean-room rule prohibit it; public behavior is sufficient prior art. |
+| An anomaly rule per service and signal | Rules grow with service cardinality, still need configuration, and give no first-class issue. |
+| Span metrics | Disabled by default; zero-configuration behavior would depend on an optional pipeline. |
+| One query per service | Cost grows with cardinality; grouped trace queries carry every RED input. |
+| Top-N by current-window volume | Excludes exactly the services whose traffic dropped. |
+| A ratio formula in the evaluator first | Two counts from one query divided in Go are enough; a formula language is a separate design. |
+| A scheduler in every replica | Duplicate issues and notifications are correctness bugs. A SQL lease works on SQLite and PostgreSQL. |
+| Serial organizations with per-detector timeouts | One slow organization can starve the rest; the deadline and round-robin cursor bound it. |
+| Notify by default | Zero-configuration detection must not page an organization unexpectedly. |
+| User alert rules as issues | Rule state has no acknowledgement, muting, evidence, reopen suppression or exception identity. |
+| Reading Monoscope or removed SigNoz enterprise code | Licences and the clean-room rule forbid it; public behavior is enough prior art. |
 
 ## Delivery plan
 
-Every behavior-changing PR begins with a failing test. Generated OpenAPI and client
-changes are isolated in their own commits.
+Every behavior-changing PR begins with a failing test; generated OpenAPI and client
+changes are separate commits.
 
 | PR | Scope |
 |---|---|
-| 0 | This ADR: boundaries, detector semantics, limits, clean-room sources and open calibration questions. |
-| 1 | `feat(lease)`: `pkg/lease`, generic lease migration 150, SQLite/PostgreSQL expiry and lease-loss tests. |
-| 2 | `feat(watchdog)`: types, migration 149, store and pure lifecycle tests for open, update, resolve, reopen and mute. It lands before migration 150 is released. |
-| 3 | `feat(anomaly)`: raw `EvaluateSeries` path with shared admission and limits for trace queries; public `Evaluate` unchanged. |
-| 4 | `feat(watchdog)`: RED detectors and leased service; pytest seeded traces for error, latency and throughput changes. |
-| 5 | `feat(watchdog)`: `new_exception`, history gate and warm-up. |
-| 6 | `feat(watchdog)`: API, authorization, OpenAPI and opt-in Alertmanager notifications; MCP/Terraform/docs contract sync. |
-| 7 | `feat(frontend)`: Issues page, settings and shared anomaly-band plugin. |
-| 8 | `feat(frontend)`: Services/Home badges, service Overview panel and end-to-end coverage. |
-
-PR numbers describe review units, not permission to release migrations out of
-order. PRs 1 and 2 are coordinated so every released migration sequence is
-contiguous.
+| 0 | This ADR. |
+| 1 | `feat(lease)`: `pkg/lease`, migration 149, SQLite/PostgreSQL expiry and lease-loss tests. |
+| 2 | `feat(watchdog)`: types, migration 150, store and pure lifecycle (eligibility, no-data, mute) tests. |
+| 3 | `feat(anomaly)`: `Admit`/`Run` session with shared admission and limits for trace queries. |
+| 4 | `feat(watchdog)`: cohort, RED detectors, synthetic zeros, leased service with deadline and round-robin. |
+| 5 | `feat(watchdog)`: `new_exception` with cursor, history gate and warm-up. |
+| 6 | `feat(watchdog)`: API including `/services/status`, authorization, OpenAPI, opt-in notifications; MCP, Terraform and docs sync. |
+| 7 | `feat(frontend)`: Issues page, settings and shared band plugin. |
+| 8 | `feat(frontend)`: badges from `/services/status`, Overview panel, end-to-end coverage. |
 
 ## Verification and exit criteria
 
-- `go test -race` passes for `pkg/lease`, `pkg/modules/watchdog` and
-  `pkg/anomaly/...`; golangci-lint v2 is clean.
-- Lease tests run two holders against SQLite and PostgreSQL and prove only one
-  callback evaluates, expiry transfers ownership, and a lost holder's context is
-  cancelled.
-- Integration pytest runs on SQLite and PostgreSQL. It seeds four daily baselines
-  plus current traces for an error spike, p99 regression and throughput drop, and
-  an exception group. Each case opens exactly one issue; RED issues resolve only
-  after three distinct clean windows.
-- With default settings, WireMock receives no notification. With `notify=true`, it
-  receives opening and resolution updates carrying the stable rule id and issue
-  URL.
-- Limit tests prove top-N truncation warns, no per-service query is emitted, and a
-  missing baseline never opens or resolves an issue.
-- Jest and Storybook cover list/detail/loading/error/empty states, actions,
-  settings and the reusable band. Playwright covers an issue appearing in the
-  Issues page, Services badge and service panel.
-- After release, the demo shows issues for HotROD and the error generators.
-  `system.query_log` is inspected for calls and bytes per cycle to validate the
-  expected five windows per RED detector and organization.
+- `go test -race` for `pkg/lease`, `pkg/modules/watchdog` and `pkg/anomaly/...`;
+  golangci-lint v2 clean.
+- **Zero:** a cohort service with no current spans opens `throughput_drop`; a missing
+  intermediate bucket becomes 0 for throughput only; the same service opens neither
+  `error_rate` nor `latency_p99`; a missing baseline never becomes zero.
+- **Cohort:** an active service with zero current volume stays in the cohort; top-N
+  uses the baseline median, not the current window; a candidate with 9 of 12 baseline
+  buckets is excluded; an active service without a baseline is evaluated as no-data;
+  active services above `max_series` form extra batches with a warning; `max_series`
+  counts N services, not 3N series.
+- **Resolution:** three clean evaluations with distinct `end` resolve; the same `end`
+  counts once; timeout, deadline, exclusion and insufficient baseline neither
+  increment nor reset; an anomalous evaluation resets.
+- **Mute:** two clean evaluations before a mute plus an anomalous one during it do not
+  let the first clean evaluation after expiry resolve; at expiry, anomalous opens and
+  notifies, clean increments and opens, no-data opens silently.
+- **Exception cursor:** a group seen during warm-up opens nothing in the next,
+  overlapping cycle; 101 groups with the same `firstSeen` are processed over two
+  cycles without loss or duplication; a persistence failure mid-batch does not advance
+  the cursor past the previous item; an ineligible group at the start of an overflowing
+  batch is discarded and the eligible ones after it open issues; a failed query does
+  not move the cursor; a service absent from discovery opens no issue.
+- **Fairness:** with slow fake organizations the deadline cuts the cycle and the next
+  one starts at the following organization; every organization is visited over
+  successive cycles; concurrency never exceeds two sessions.
+- **Status:** several active detectors aggregate highest severity, count and
+  `detectors[]`; a service with only muted issues has `allMuted`; resolved services
+  are absent; 201 names return 400; the unfiltered response is paginated; the UI uses
+  one request per page.
+- **Lease:** two holders on SQLite and PostgreSQL; only one evaluates; expiry transfers
+  ownership; a lost holder's context is cancelled.
+- **Notifications:** with defaults WireMock receives nothing; with `notify=true` it
+  receives opening and resolution with the stable rule id and issue URL.
+- Integration pytest on SQLite and PostgreSQL seeds four daily baselines plus current
+  traces for an error spike, p99 regression, a drop including total silence, and a new
+  exception group: each opens exactly one issue, and RED issues resolve only after
+  three eligible clean windows.
+- Jest, Storybook and Playwright cover the Issues page, band, settings, badges and
+  panel.
+- After release, the demo shows issues for HotROD and the error generators, and
+  `system.query_log` matches the cost formula in section 2.
 
 ## Consequences
 
-- Services gain useful health signals without rule setup, while paging remains an
-  explicit administrator choice.
-- The metastore becomes the source of truth for anomaly workflow state. This adds
-  retention and reconciliation work but makes all UI and API surfaces consistent.
-- Query cost is bounded by organizations × detectors × five windows, not service
-  count. Large organizations see top-N coverage and an explicit warning rather
-  than an unbounded scan.
-- Daily seasonality reacts to recurring traffic patterns but cannot model weekly
-  behavior in the first release. New and sparse services intentionally return
-  no-data until their baseline is sufficient.
-- A generic lease becomes shared infrastructure. Its epoch and database-time
-  semantics must remain stable for archive and synthetics adopters.
-- Persisted detector names, fingerprints and evidence versions become contracts.
-  Thresholds do not: calibration may change them between releases and is recorded
-  in release notes.
+- Services gain health signals without rule setup; paging stays an explicit choice.
+- The metastore is the source of truth for anomaly workflow state, adding retention
+  work but keeping every surface consistent.
+- Query cost is bounded by organizations × batches, not service count, and every
+  organization is visited even under load.
+- Daily seasonality cannot model weekly patterns in the first release; new and sparse
+  services return no-data until their baseline is sufficient.
+- The generic lease becomes shared infrastructure; its epoch and database-time
+  semantics must stay stable for archive and synthetics.
+- Detector names, fingerprints and evidence versions are contracts; thresholds are
+  not and may change between releases with release notes.
 
 ## Open questions before detector implementation
 
-1. **Threshold calibration.** Validate score 4, 1%/10 errors, 1.2× latency and 50%
-   throughput drop on demo traffic before PR 4. If they produce material noise,
-   change the constants and this ADR before exposing organization-level tuning.
-2. **Resolved retention.** The proposal is 90 days. Confirm it against expected
-   issue volume and metastore size before the cleanup job ships.
-3. **Large organizations.** `max_series` is the first top-N. Measure the extra
-   stable-service discovery call, if needed, and bytes scanned in the demo; do not
-   introduce a second Watchdog-only cardinality setting without evidence.
-4. **Critical severity.** Calibrate a critical mapping separately. Until then all
-   automatic issues remain warnings rather than presenting an arbitrary severity.
+1. **Calibration.** Validate score 4, 1%/10 errors, 1.2× latency and 50% drop on demo
+   traffic before the detector PR; change the constants and this ADR if they are
+   noisy.
+2. **Retention.** Confirm 90 days for resolved issues against expected volume.
+3. **Critical severity.** Calibrate a critical mapping separately; until then every
+   automatic issue is a warning.
