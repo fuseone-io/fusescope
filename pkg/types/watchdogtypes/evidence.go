@@ -27,6 +27,12 @@ type Evidence struct {
 	Query    json.RawMessage  `json:"query,omitempty"`
 	Warnings []string         `json:"warnings" required:"true" nullable:"true"`
 	GroupID  string           `json:"groupId,omitempty"`
+	// ExceptionType is a new_exception group's type; its message is never
+	// stored.
+	ExceptionType string `json:"exceptionType,omitempty"`
+	// FirstSeen is a new_exception group's earliest occurrence in the
+	// lookback, in UTC.
+	FirstSeen *time.Time `json:"firstSeen,omitempty"`
 }
 
 // EvidenceBucket leaves a field nil where the bucket had no value or the
