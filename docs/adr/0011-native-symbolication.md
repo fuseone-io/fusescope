@@ -26,7 +26,9 @@ ELF debug files use artifact kind `debuginfo`, keyed by organization and GNU bui
 
 Mach-O debug files use kind `dsym`, keyed by organization, UUID and architecture for each slice. The shared artifact store handles their lifecycle. Existing source-map and R8 application-scoped identities retain their contracts.
 
-Extract identity and architecture from the uploaded contents and reject mismatches with claimed metadata. Missing or mismatched identity leaves a frame unresolved; never substitute a different release's file. A repeated upload with matching content is idempotent, while different content for the same verified identity is a conflict. Access and deduplication never cross organization boundaries.
+Extract identity and architecture from the uploaded contents and reject mismatches with claimed metadata. A build ID or UUID alone does not prove that an uploader owns a binary. Store candidates by content digest within each organization, binary identity and architecture; matching content is idempotent, and a different digest must not block a later genuine upload. Record the authenticated uploader, upload time and application/release context for each candidate. Access and deduplication never cross organization boundaries.
+
+Select candidates using the frame's application and release context. When the stripped binary is available, verify the debug file against its load-segment layout and available section hashes before admitting it as a verified match. An ambiguous or mismatched candidate leaves the frame unresolved; upload order never selects a winner. Organization administrators can replace the selected candidate or delete a specific digest, with an audit record.
 
 Native artifacts and their derived indexes count toward the organization's native-artifact quota and retention policy. There is no application ownership or cross-feature reference-counting scheme for shared ELF files.
 
@@ -46,7 +48,7 @@ The backend builds an immutable symbol index from each accepted artifact, stores
 
 Index/cache identity includes organization, format, binary identity, architecture, artifact digest and parser/index version. Upload, deletion and expiry invalidate the affected identity across backend replicas through shared artifact metadata/lookup state; reuse profiling's `debuginfo_lookup` coordination rather than maintaining a second RUM lookup service.
 
-Resolve batches at read time using Go's `debug/elf`, `debug/macho` and `debug/dwarf` where supported; profiling retains its `debug/gosym` adapter. Debuginfod remains governed by ADR 0008, outbound and off by default. RUM adds no independent external symbol or source fetcher.
+Build indexes at upload time using Go's `debug/elf`, `debug/macho` and `debug/dwarf` where supported; profiling retains its `debug/gosym` adapter. Reads use validated indexes and never parse uploaded files. RUM resolves frames on the error detail view only; error lists and group views use captured data and do not trigger index loads or symbol lookup. Debuginfod remains governed by ADR 0008, outbound and off by default. RUM adds no independent external symbol or source fetcher.
 
 ### 5. Enrich presentation without changing capture or grouping
 
@@ -57,6 +59,10 @@ Missing, malformed, unsupported or partially matching symbols leave original fra
 ### 6. Bound parsing and artifact lifecycle
 
 Use explicit, configurable upload, decoded-size, parsing time, memory and index limits with cancellation and atomic admission under the organization quota. Native limits must come from representative ELF and dSYM measurements rather than inheriting source-map defaults.
+
+Treat parser input as hostile. Validate header-declared ranges, counts and decoded sizes against the file size and configured limits before allocating; reject overflow, out-of-bounds sections and excessive expansion. Recover parser panics as failed uploads and fuzz the format/address adapters in CI. A goroutine cannot enforce an independent memory cap: inputs above the measured in-process admission limit must run in a subprocess with enforced memory/CPU limits and a deadline. If that isolation is unavailable, reject the upload. Failed parsing publishes neither an artifact candidate nor an index.
+
+Deleting shared native artifacts requires organization administrator authorization. Before deleting a digest or changing retention, show the applications known to reference the affected artifacts and warn that their historical frames may become unresolved. Retention and expiry remain organization-wide; maintain an audit record and invalidate every affected index and cached selection. Reference information supports this warning, not application ownership or reference-counted retention.
 
 Begin with individual ELF debug files and Mach-O DWARF files per slice; the uploader extracts dSYM bundle members. Archive intake requires a separate supported contract covering traversal, symlinks, duplicate entries, decompression limits and atomic failure. No archive parser or demangler dependency is selected here.
 
