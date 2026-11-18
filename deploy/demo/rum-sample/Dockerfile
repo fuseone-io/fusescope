@@ -1,4 +1,4 @@
-FROM node:22.23.4-alpine
+FROM node:22.23.5-alpine
 ARG FUSESCOPE_BROWSER_VERSION=next
 WORKDIR /app
 RUN npm pack "@fusescope/browser@${FUSESCOPE_BROWSER_VERSION}" \
