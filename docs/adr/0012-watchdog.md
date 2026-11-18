@@ -149,9 +149,9 @@ Detector names are persisted API values and do not change after release.
 
 | Detector | Series per service | Anomalous when | Eligible evaluation requires |
 |---|---|---|---|
-| `error_rate` | `countIf(status_code = 2) / count()` per bucket | a bucket has score ≥ 4 above baseline and rate ≥ 1% | ≥ 50 requests and ≥ 10 errors in the window; at least 2 of 3 buckets with outcome `scored` or `flat_baseline` |
-| `latency_p99` | `p99(duration_nano)` | a bucket has score ≥ 4 above baseline and p99 ≥ 1.2 × prediction | ≥ 50 requests in the window; at least 2 of 3 buckets scored |
-| `throughput_drop` | `count()` | a bucket has score ≤ -4 and volume ≤ 50% of prediction | predicted volume ≥ 100 requests in the window; at least 2 of 3 buckets scored |
+| `error_rate` | `countIf(status_code = 2) / count()` per bucket | 2 of 3 buckets have score ≥ 4 above baseline, rate ≥ 1% and rate ≥ 1.5 × prediction | ≥ 50 requests and ≥ 10 errors in the window; at least 2 of 3 buckets with outcome `scored` or `flat_baseline` |
+| `latency_p99` | `p99(duration_nano)` | 2 of 3 buckets have score ≥ 4 above baseline and p99 ≥ 1.5 × prediction | ≥ 50 requests in the window; at least 2 of 3 buckets with outcome `scored` or `flat_baseline` |
+| `throughput_drop` | `count()` | 2 of 3 buckets have score ≤ -4 and volume ≤ 50% of prediction | predicted volume ≥ 100 requests in the window; at least 2 of 3 buckets with outcome `scored` or `flat_baseline` |
 | `new_exception` | exception `groupID` | the group is first seen after the organization's exception cursor | the service has at least 24 hours of history; the organization is past warm-up |
 
 - **Zero traffic, `throughput_drop` only.** For every cohort service, each current
@@ -163,9 +163,23 @@ Detector names are persisted API values and do not change after release.
 - **Ratio.** The error detector reads error and total counts as two aggregations of
   the same query and builds the ratio series in Go before calling `anomaly.Score`.
   No formula language is added to the evaluator.
-- **Thresholds** are constants documented next to the detector tests and calibrated
-  on demo traffic before the detector PR. Every first-wave issue is `warning`;
-  `critical` is reserved.
+- **Persistence.** A bucket triggers only when it passes every gate of its row; the
+  window is anomalous when at least two of its three buckets trigger. A single-bucket
+  spike opens nothing.
+- **Thresholds** are constants documented next to the detector tests. Every
+  first-wave issue is `warning`; `critical` is reserved.
+- **Provisional calibration.** On 2026-11-18 the detectors ran offline over 168
+  windows of steady demo traffic with three seasons (the scorer's residual minimum
+  lowered to 9 for the run only). With single-bucket triggers, 1.2 × latency and no
+  error-rate ratio they opened 48 false issues in 14 hours: p99 over ~27 requests a
+  bucket is close to the maximum, and a constant 18.6% error rate has a near-zero
+  MAD. With the rows above they opened none, and still opened every injected
+  incident: 3% and 5% error rates on a clean service, 18% → 30% errors, p99 × 1.6 and
+  × 2, total silence, a 70% drop. Accepted losses: single-bucket spikes and 18% →
+  25% errors (1.34 ×). Calibration is repeated with four seasons once demo retention
+  allows it.
+- **Retention.** Four seasons need trace retention of at least `4 × 24h + window +
+  lag` (about 96h 17m), five days operationally. With less, every service is no-data.
 - **Daily seasonality** with four seasons, as in anomaly alerts. A flat baseline uses
   the scorer's bounded flat score.
 
@@ -287,7 +301,8 @@ settings are never removed by retention.
 `watchdog_setting` has `(org_id, detector)` as key plus `enabled` (default true),
 `notify` (default false), `created_at` and `updated_at`. A missing row means the
 defaults; the store rejects unknown detector names. Disabling a detector stops its
-evaluations and does not resolve its issues. The global boolean feature `watchdog`
+queries and does not resolve its issues; each cycle evaluates them as no-data, so an
+expired mute still reopens them. The global boolean feature `watchdog`
 (flagger) is the kill switch for the service, routes and UI, disabled by default until
 calibration is accepted.
 
@@ -450,9 +465,8 @@ changes are separate commits.
 
 ## Open questions before detector implementation
 
-1. **Calibration.** Validate score 4, 1%/10 errors, 1.2× latency and 50% drop on demo
-   traffic before the detector PR; change the constants and this ADR if they are
-   noisy.
+1. **Calibration.** Calibrated provisionally on three seasons of demo traffic (§3);
+   repeat with four seasons and adjust the constants if they are noisy.
 2. **Retention.** Confirm 90 days for resolved issues against expected volume.
 3. **Critical severity.** Calibrate a critical mapping separately; until then every
    automatic issue is a warning.
