@@ -247,8 +247,10 @@ PostgreSQL.
 | `evidence` | versioned JSON: the three current buckets, aligned prediction and band, score, query and warnings; never the baseline points |
 | `created_at`, `updated_at` | audit |
 
-The fingerprint is `detector + NUL + service`; `new_exception` appends
-`NUL + groupID`. A partial unique index on `(org_id, fingerprint)` covers the active
+The fingerprint is the hex SHA-256 of `detector + NUL + service`; `new_exception`
+appends `NUL + groupID` before hashing. PostgreSQL text cannot hold a NUL byte, and a
+fixed length suits the index. The fingerprint is not decoded: `service` has its own
+column and a `new_exception` evidence carries its `groupId`. A partial unique index on `(org_id, fingerprint)` covers the active
 statuses. A transition and `last_evaluated_at` are written in one transaction.
 
 Each evaluation of an issue is one of:
@@ -275,7 +277,9 @@ Rules:
    At the first evaluation after `muted_until`: anomalous sets `open` and notifies
    when enabled; clean increments the counter and sets `open`, resolving after three
    by rule 3; no-data sets `open` without notifying. No issue stays muted forever.
-7. `new_exception` changes state only by user action after opening.
+7. `new_exception` changes state only by user action after opening. It is never
+   evaluated again, so each cycle sets an active `new_exception` issue whose
+   `muted_until` has passed back to `open`, without notifying.
 
 Resolved issues are deleted in bounded batches after 90 days. Active issues and
 settings are never removed by retention.
