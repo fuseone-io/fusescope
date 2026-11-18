@@ -86,7 +86,7 @@ func NewEvaluator(providerSettings factory.ProviderSettings, q querier.Querier, 
 // Evaluate runs req, whose one anomaly function names the target, and scores the target.
 func (e *Evaluator) Evaluate(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, opts Options) (*Evaluation, error) {
 	evaluation, err := e.evaluate(ctx, orgID, req, opts)
-	e.evaluations.Add(ctx, 1, metric.WithAttributes(attribute.String("outcome", outcomeOf(ctx, err))))
+	e.evaluations.Add(ctx, 1, metric.WithAttributes(attribute.String("outcome", outcomeOf(ctx, err)), attribute.String("kind", "evaluate")))
 	if err == nil {
 		for reason, n := range evaluation.Outcomes {
 			e.points.Add(ctx, int64(n), metric.WithAttributes(attribute.String("reason", string(reason))))
@@ -242,10 +242,17 @@ func mergeBaselines(resp *qbtypes.QueryRangeResponse, baselines []*qbtypes.Query
 }
 
 func (e *Evaluator) checkWindow(series, points int) error {
+	if err := e.checkSeries(series); err != nil {
+		return err
+	}
+	return e.checkPoints(points)
+}
+
+func (e *Evaluator) checkSeries(series int) error {
 	if series > e.config.MaxSeries {
 		return errors.Newf(errors.TypePayloadTooLarge, ErrCodeLimitExceeded, "an anomaly window returned %d series, above the limit of %d", series, e.config.MaxSeries)
 	}
-	return e.checkPoints(points)
+	return nil
 }
 
 func (e *Evaluator) checkPoints(points int) error {
@@ -256,17 +263,28 @@ func (e *Evaluator) checkPoints(points int) error {
 }
 
 // currentRequest is req with the target's step fixed, its anomaly function dropped and the cache
-// off. Every query is deep-copied: the querier adjusts steps and resolves metadata in place.
+// off.
 func currentRequest(req *qbtypes.QueryRangeRequest, target *anomaly.Target) *qbtypes.QueryRangeRequest {
-	out := *req
+	out := copyRequest(req)
 	out.Start, out.End = target.Start, target.End
 	out.NoCache = true
+	out.CompositeQuery.Queries[target.QueryIndex].Spec = targetSpec(target, nil)
+	return out
+}
+
+// copyRequest deep-copies every query, the variables and the format options: the querier adjusts
+// steps and resolves metadata in place.
+func copyRequest(req *qbtypes.QueryRangeRequest) *qbtypes.QueryRangeRequest {
+	out := *req
 	out.Variables = maps.Clone(req.Variables)
+	if req.FormatOptions != nil {
+		options := *req.FormatOptions
+		out.FormatOptions = &options
+	}
 	out.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(req.CompositeQuery.Queries))
 	for i, envelope := range req.CompositeQuery.Queries {
 		out.CompositeQuery.Queries[i] = envelope.Copy()
 	}
-	out.CompositeQuery.Queries[target.QueryIndex].Spec = targetSpec(target, nil)
 	return &out
 }
 
