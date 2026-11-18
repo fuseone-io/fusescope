@@ -42,6 +42,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/tag"
 	"github.com/fuseone-io/fusescope/pkg/modules/tag/impltag"
 	"github.com/fuseone-io/fusescope/pkg/modules/user/impluser"
+	"github.com/fuseone-io/fusescope/pkg/modules/watchdog/implwatchdog"
 	"github.com/fuseone-io/fusescope/pkg/prometheus"
 	"github.com/fuseone-io/fusescope/pkg/querier"
 	"github.com/fuseone-io/fusescope/pkg/queryparser"
@@ -603,6 +604,11 @@ func New(
 		return nil, err
 	}
 
+	watchdogService, err := implwatchdog.NewService(providerSettings, flagger, sqlstore, orgGetter, anomalyEvaluator, implwatchdog.NewModule(implwatchdog.NewStore(sqlstore)), config.Anomaly.MaxSeries)
+	if err != nil {
+		return nil, err
+	}
+
 	registry, err := factory.NewRegistry(
 		ctx,
 		instrumentation.Logger(),
@@ -622,6 +628,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("spanmappergroup"), implspanmapper.NewService(providerSettings, spanMapperModule, orgGetter)),
 		factory.NewNamedService(factory.MustNewName("authdomain"), implauthdomain.NewService(providerSettings, authDomainReconciler, config.AuthDomain.ReconcileInterval)),
 		factory.NewNamedService(factory.MustNewName("rumapplication"), implrumapplication.NewService(providerSettings, modules.RUMApplication, config.RUM)),
+		factory.NewNamedService(factory.MustNewName("watchdog"), watchdogService),
 	)
 	if err != nil {
 		return nil, err
