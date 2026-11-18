@@ -13,6 +13,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/modules/organization"
 	"github.com/fuseone-io/fusescope/pkg/modules/watchdog"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
+	"github.com/fuseone-io/fusescope/pkg/telemetrystore"
 	"github.com/fuseone-io/fusescope/pkg/types/featuretypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
@@ -33,26 +34,28 @@ type service struct {
 	runner        *lease.Runner
 	module        watchdog.Module
 	orgGetter     organization.Getter
-	evaluate      evaluateFunc
+	newSession    func() evaluateFunc
 	retryInterval time.Duration
 	stopC         chan struct{}
 }
 
 // NewService runs Watchdog cycles in the one backend holding the
 // watchdog/scheduler lease, while the watchdog feature is enabled.
-func NewService(providerSettings factory.ProviderSettings, flagger flagger.Flagger, sqlStore sqlstore.SQLStore, orgGetter organization.Getter, evaluator *anomalyquerier.Evaluator, module watchdog.Module, maxSeries int) (watchdog.Service, error) {
+func NewService(providerSettings factory.ProviderSettings, flagger flagger.Flagger, sqlStore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, orgGetter organization.Getter, evaluator *anomalyquerier.Evaluator, module watchdog.Module, maxSeries int) (watchdog.Service, error) {
 	runner, err := lease.New(providerSettings, sqlStore, leaseDuration)
 	if err != nil {
 		return nil, err
 	}
-	org, err := newOrgEvaluator(providerSettings, evaluator, module, maxSeries)
+	org, err := newOrgEvaluator(providerSettings, evaluator, newTelemetryExceptionReader(telemetryStore), module, maxSeries)
 	if err != nil {
 		return nil, err
 	}
-	return newService(providerSettings, flagger, runner, module, orgGetter, org.evaluate), nil
+	return newService(providerSettings, flagger, runner, module, orgGetter, org.newSession), nil
 }
 
-func newService(providerSettings factory.ProviderSettings, flagger flagger.Flagger, runner *lease.Runner, module watchdog.Module, orgGetter organization.Getter, evaluate evaluateFunc) *service {
+// newService builds a scheduler on newSession's evaluation for each lease
+// session.
+func newService(providerSettings factory.ProviderSettings, flagger flagger.Flagger, runner *lease.Runner, module watchdog.Module, orgGetter organization.Getter, newSession func() evaluateFunc) *service {
 	return &service{
 		settings:      factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/watchdog/implwatchdog"),
 		providers:     providerSettings,
@@ -60,7 +63,7 @@ func newService(providerSettings factory.ProviderSettings, flagger flagger.Flagg
 		runner:        runner,
 		module:        module,
 		orgGetter:     orgGetter,
-		evaluate:      evaluate,
+		newSession:    newSession,
 		retryInterval: leaseDuration,
 		stopC:         make(chan struct{}),
 	}
@@ -103,7 +106,7 @@ func (service *service) Stop(_ context.Context) error {
 }
 
 func (service *service) lead(ctx context.Context, held lease.Lease) error {
-	scheduler, err := newScheduler(service.providers, service.orgGetter, service.evaluate)
+	scheduler, err := newScheduler(service.providers, service.orgGetter, service.newSession())
 	if err != nil {
 		return err
 	}

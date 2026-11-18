@@ -13,6 +13,7 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/anomaly"
 	"github.com/fuseone-io/fusescope/pkg/anomaly/anomalyquerier"
 	"github.com/fuseone-io/fusescope/pkg/errors"
+	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/instrumentation/instrumentationtest"
 	"github.com/fuseone-io/fusescope/pkg/querier/queriertest"
 	"github.com/fuseone-io/fusescope/pkg/sqlstore"
@@ -66,10 +67,11 @@ type call struct {
 // fakeQuerier answers RED requests from w, applying the services filter and
 // the top-N limit, and records every call.
 type fakeQuerier struct {
-	w     world
-	fail  func(call) bool
-	mu    sync.Mutex
-	calls []call
+	w          world
+	fail       func(call) bool
+	mu         sync.Mutex
+	calls      []call
+	exceptions fakeExceptions
 }
 
 func (f *fakeQuerier) queryRange(_ context.Context, _ valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
@@ -130,13 +132,16 @@ func (f *fakeQuerier) queryRange(_ context.Context, _ valuer.UUID, req *qbtypes.
 }
 
 func newTestOrgEvaluator(t *testing.T, sqlStore sqlstore.SQLStore, w world, maxSeries int) (*orgEvaluator, *fakeQuerier) {
+	return newTestOrgEvaluatorWithSettings(t, instrumentationtest.New().ToProviderSettings(), sqlStore, w, maxSeries)
+}
+
+func newTestOrgEvaluatorWithSettings(t *testing.T, settings factory.ProviderSettings, sqlStore sqlstore.SQLStore, w world, maxSeries int) (*orgEvaluator, *fakeQuerier) {
 	fake := &fakeQuerier{w: w}
 	mock := queriertest.NewMockQuerier()
 	mock.QueryRangeFunc = fake.queryRange
-	settings := instrumentationtest.New().ToProviderSettings()
 	evaluator, err := anomalyquerier.NewEvaluator(settings, mock, anomaly.Config{MaxConcurrent: 2, MaxSeries: maxSeries, MaxPoints: 1_000_000})
 	require.NoError(t, err)
-	org, err := newOrgEvaluator(settings, evaluator, NewModule(NewStore(sqlStore)), maxSeries)
+	org, err := newOrgEvaluator(settings, evaluator, &fake.exceptions, NewModule(NewStore(sqlStore)), maxSeries)
 	require.NoError(t, err)
 	return org, fake
 }
@@ -164,7 +169,7 @@ func TestOrgEvaluator_Cost(t *testing.T) {
 		batches   [][]any
 	}{
 		{
-			name: "OneBatch_NoMissingActive_FiveCalls",
+			name: "OneBatch_NoMissingActive_SixCalls",
 			world: func() world {
 				w := world{}
 				for _, service := range []string{"cart", "checkout", "frontend"} {
@@ -175,7 +180,7 @@ func TestOrgEvaluator_Cost(t *testing.T) {
 			},
 			active:    []string{"cart"},
 			maxSeries: 5,
-			calls:     4 + 1,
+			calls:     4 + 1 + 1,
 			batches:   [][]any{{"cart", "checkout", "frontend"}},
 		},
 		{
@@ -189,7 +194,7 @@ func TestOrgEvaluator_Cost(t *testing.T) {
 				return w
 			},
 			maxSeries: 3,
-			calls:     4 + 1,
+			calls:     4 + 1 + 1,
 			batches:   [][]any{{"cart", "checkout", "frontend"}},
 		},
 		{
@@ -201,7 +206,7 @@ func TestOrgEvaluator_Cost(t *testing.T) {
 			},
 			active:    []string{"a", "b", "c"},
 			maxSeries: 2,
-			calls:     4 + 2,
+			calls:     4 + 2 + 1,
 			batches:   [][]any{{"a", "b"}, {"c"}},
 		},
 		{
@@ -214,7 +219,7 @@ func TestOrgEvaluator_Cost(t *testing.T) {
 			},
 			active:    []string{"tail"},
 			maxSeries: 1,
-			calls:     4 + 1 + 4,
+			calls:     4 + 1 + 4 + 1,
 			batches:   [][]any{{"tail"}},
 		},
 	}
@@ -226,9 +231,9 @@ func TestOrgEvaluator_Cost(t *testing.T) {
 				}
 				org, fake := newTestOrgEvaluator(t, sqlStore, testCase.world(), testCase.maxSeries)
 
-				require.NoError(t, org.evaluate(context.Background(), testOrgID, evaluatedWindow))
+				require.NoError(t, org.evaluate(context.Background(), testOrgID, evaluatedWindow, warmed(evaluatedWindow)))
 
-				assert.Len(t, fake.calls, testCase.calls)
+				assert.Equal(t, testCase.calls, len(fake.calls)+len(fake.exceptions.cursors))
 				var batches [][]any
 				for _, c := range fake.calls {
 					if c.season == 0 {
@@ -249,7 +254,7 @@ func TestOrgEvaluator_ZeroTraffic(t *testing.T) {
 		w[0] = map[string]traffic{"gappy": {requests: [3]float64{-1, -1, 100}, rate: 0.02, p99: 1e6}}
 		org, _ := newTestOrgEvaluator(t, sqlStore, w, 10)
 
-		require.NoError(t, org.evaluate(context.Background(), testOrgID, evaluatedWindow))
+		require.NoError(t, org.evaluate(context.Background(), testOrgID, evaluatedWindow, newExceptionCursors()))
 
 		assert.Equal(t, map[string][]string{
 			"silent": {"throughput_drop"},
@@ -266,7 +271,7 @@ func TestOrgEvaluator_ActiveWithoutBaseline_NoData(t *testing.T) {
 		steadyNow(w, "other", 100)
 		org, fake := newTestOrgEvaluator(t, sqlStore, w, 10)
 
-		require.NoError(t, org.evaluate(context.Background(), testOrgID, evaluatedWindow))
+		require.NoError(t, org.evaluate(context.Background(), testOrgID, evaluatedWindow, newExceptionCursors()))
 
 		assert.Contains(t, fake.calls, call{services: []any{"gone", "other"}, limit: 2})
 		stored, err := NewStore(sqlStore).GetActiveIssue(context.Background(), testOrgID, issue.Fingerprint)
@@ -286,7 +291,7 @@ func TestOrgEvaluator_Settings(t *testing.T) {
 		seasons(w, "silent", 100)
 		org, _ := newTestOrgEvaluator(t, sqlStore, w, 10)
 
-		require.NoError(t, org.evaluate(context.Background(), testOrgID, evaluatedWindow))
+		require.NoError(t, org.evaluate(context.Background(), testOrgID, evaluatedWindow, newExceptionCursors()))
 
 		assert.Empty(t, activeDetectors(t, sqlStore))
 	})
@@ -302,7 +307,7 @@ func TestOrgEvaluator_DetectorsDisabled_NoQuery(t *testing.T) {
 		}
 		org, fake := newTestOrgEvaluator(t, sqlStore, world{}, 10)
 
-		require.NoError(t, org.evaluate(context.Background(), testOrgID, evaluatedWindow))
+		require.NoError(t, org.evaluate(context.Background(), testOrgID, evaluatedWindow, newExceptionCursors()))
 
 		assert.Empty(t, fake.calls)
 	})
@@ -339,7 +344,7 @@ func TestOrgEvaluator_DisabledDetector_ExpiredMuteReopens(t *testing.T) {
 				steadyNow(w, "other", 95)
 				org, fake := newTestOrgEvaluator(t, sqlStore, w, 10)
 
-				require.NoError(t, org.evaluate(ctx, testOrgID, evaluatedWindow))
+				require.NoError(t, org.evaluate(ctx, testOrgID, evaluatedWindow, newExceptionCursors()))
 
 				stored, err := s.GetActiveIssue(ctx, testOrgID, issue.Fingerprint)
 				require.NoError(t, err)
@@ -382,7 +387,7 @@ func TestOrgEvaluator_FailedQuery_ExpiredMuteReopens(t *testing.T) {
 				org, fake := newTestOrgEvaluator(t, sqlStore, w, 1)
 				fake.fail = testCase.fail
 
-				assert.Error(t, org.evaluate(ctx, testOrgID, evaluatedWindow))
+				assert.Error(t, org.evaluate(ctx, testOrgID, evaluatedWindow, newExceptionCursors()))
 				assert.True(t, slices.ContainsFunc(fake.calls, testCase.fail), "the failing query ran")
 
 				stored, err := s.GetActiveIssue(ctx, testOrgID, issue.Fingerprint)
