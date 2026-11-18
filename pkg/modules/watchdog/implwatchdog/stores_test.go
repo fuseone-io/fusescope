@@ -25,8 +25,8 @@ var (
 )
 
 // forEachStore runs test on SQLite and, when a PostgreSQL database is
-// configured, on PostgreSQL, each migrated with the Watchdog tables and two
-// organizations.
+// configured, on PostgreSQL, each migrated with the Watchdog and lease tables
+// and two organizations.
 func forEachStore(t *testing.T, test func(t *testing.T, store sqlstore.SQLStore)) {
 	stores := map[string]func(t *testing.T) (sqlstore.SQLStore, sqlschema.SQLSchema){
 		"sqlite": func(t *testing.T) (sqlstore.SQLStore, sqlschema.SQLSchema) {
@@ -59,6 +59,9 @@ func forEachStore(t *testing.T, test func(t *testing.T, store sqlstore.SQLStore)
 			migration, err := sqlmigration.NewAddWatchdogFactory(schema).New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
 			require.NoError(t, err)
 			require.NoError(t, migration.Up(ctx, db))
+			leaseMigration, err := sqlmigration.NewAddLeaseFactory(schema).New(ctx, factorytest.NewSettings(), sqlmigration.Config{})
+			require.NoError(t, err)
+			require.NoError(t, leaseMigration.Up(ctx, db))
 			test(t, store)
 		})
 	}

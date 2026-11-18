@@ -12,6 +12,7 @@ var (
 	FeatureEnableMetricsReduction = featuretypes.MustNewName("enable_metrics_reduction")
 	FeatureResolveSemconvFamilies = featuretypes.MustNewName("resolve_semconv_families")
 	FeatureUseTraceAttributesJSON = featuretypes.MustNewName("use_trace_attributes_json")
+	FeatureWatchdog               = featuretypes.MustNewName("watchdog")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -85,6 +86,14 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether trace queries read span attributes from the JSON columns",
+			DefaultVariant: featuretypes.MustNewName("disabled"),
+			Variants:       featuretypes.NewBooleanVariants(),
+		},
+		&featuretypes.Feature{
+			Name:           FeatureWatchdog,
+			Kind:           featuretypes.KindBoolean,
+			Stage:          featuretypes.StageExperimental,
+			Description:    "Controls whether Watchdog detects service anomalies",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
