@@ -38,7 +38,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "1.65.0",
+    "@playwright/test": "1.65.1",
     "@types/node": "^20.0.0",
     "dotenv": "^16.0.0",
     "eslint-plugin-playwright": "^2.12.2",
