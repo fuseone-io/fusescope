@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/fuseone-io/fusescope/pkg/factory"
 	"github.com/fuseone-io/fusescope/pkg/types/watchdogtypes"
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
@@ -23,4 +24,10 @@ type Module interface {
 	// DeleteExpiredIssues deletes, in bounded batches, the issues resolved
 	// longer than watchdogtypes.ResolvedIssueRetention before now.
 	DeleteExpiredIssues(ctx context.Context, now time.Time) (int64, error)
+}
+
+// Service evaluates the Watchdog detectors of every organization on a fixed
+// cycle.
+type Service interface {
+	factory.Service
 }
