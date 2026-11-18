@@ -334,6 +334,13 @@ func newSessionLogsQuery(scope telemetryScope, sessionID string) *sqlbuilder.Sel
 	sb.From(logTable)
 	sb.Where(scopeConditions(sb, logSignal, scope)...)
 	sb.Where(sb.E(sessionColumn, sessionID), sb.In(eventNameExpr, timelineEvents...))
+	sb.Where(sb.Or(
+		sb.NE(eventNameExpr, rumtypes.EventNameLegacyVital),
+		sb.And(
+			sb.E("lower("+attribute(rumtypes.AttributeAppVitalName)+")", rumtypes.TimelineVitalNameAppStart.StringValue()),
+			"mapContains(attributes_number, "+literal(rumtypes.AttributeAppVitalValue)+")",
+		),
+	))
 	sb.OrderBy("timestamp")
 	sb.Limit(maxTimelineRows + 1)
 	return sb

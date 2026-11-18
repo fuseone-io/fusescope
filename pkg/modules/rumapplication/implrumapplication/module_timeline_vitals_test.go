@@ -44,3 +44,25 @@ func TestAddSessionEventsAppStartCountsAsVital(t *testing.T) {
 	assert.Zero(t, session.Actions)
 	assert.Equal(t, rumtypes.TimelineEventKindVital, events[0].Kind)
 }
+
+func TestAppStartTimelineRatingFallback(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    float64
+		rating   string
+		expected rumtypes.VitalRating
+	}{
+		{name: "MissingRating_FastStart_Good", value: 2499, expected: rumtypes.VitalRatingGood},
+		{name: "MissingRating_DefaultBoundary_NeedsImprovement", value: 2500, expected: rumtypes.VitalRatingNeedsImprovement},
+		{name: "InvalidRating_PoorBoundary_Poor", value: 5000, rating: "typo", expected: rumtypes.VitalRatingPoor},
+		{name: "ValidWarmRating_Preserved", value: 2200, rating: "poor", expected: rumtypes.VitalRatingPoor},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			event := newLogTimelineEvent(&sessionLogRow{event: rumtypes.EventNameLegacyVital, vitalName: "app_start", vitalValue: testCase.value, vitalRating: testCase.rating})
+			require.NotNil(t, event)
+			require.NotNil(t, event.Vital)
+			assert.Equal(t, testCase.expected, event.Vital.Rating)
+		})
+	}
+}

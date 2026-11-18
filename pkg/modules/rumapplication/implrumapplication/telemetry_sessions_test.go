@@ -1,6 +1,7 @@
 package implrumapplication
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -68,4 +69,12 @@ func TestNewSessionLogsQueryIncludesAppVitalAttributes(t *testing.T) {
 	assert.Contains(t, sql, rumtypes.AttributeVitalName)
 	assert.Contains(t, sql, rumtypes.AttributeVitalValue)
 	assert.Contains(t, sql, rumtypes.AttributeVitalRating)
+}
+
+func TestSessionLogsFilterUnsupportedAppVitalsBeforeLimit(t *testing.T) {
+	sql, args := newSessionLogsQuery(telemetryScope{start: time.Unix(1000, 0), end: time.Unix(2000, 0)}, "capped-session").Build()
+	assert.Contains(t, sql, "lower(attributes_string['fusescope.rum.vital.name']) =")
+	assert.Contains(t, args, "app_start")
+	assert.Contains(t, sql, "mapContains(attributes_number, 'fusescope.rum.vital.value')")
+	assert.Less(t, strings.Index(sql, "mapContains("), strings.Index(sql, "LIMIT "))
 }

@@ -60,7 +60,7 @@ func newLogTimelineEvent(row *sessionLogRow) *rumtypes.TimelineEvent {
 			return nil
 		}
 		event.Kind = rumtypes.TimelineEventKindVital
-		event.Vital = &rumtypes.VitalEvent{Name: name, Value: row.vitalValue, Rating: rumtypes.VitalRating{String: valuer.NewString(row.vitalRating)}}
+		event.Vital = &rumtypes.VitalEvent{Name: name, Value: row.vitalValue, Rating: timelineVitalRating(row)}
 	case rumtypes.EventNameClick:
 		event.Kind = rumtypes.TimelineEventKindClick
 		event.Action = &rumtypes.ActionEvent{Type: row.actionType, Target: row.target}
@@ -69,6 +69,27 @@ func newLogTimelineEvent(row *sessionLogRow) *rumtypes.TimelineEvent {
 		event.Action = &rumtypes.ActionEvent{Type: row.actionType, Name: row.actionName, Target: row.target}
 	}
 	return event
+}
+
+// Missing or invalid app-start ratings use the SDK's default cold/unknown-start
+// thresholds. Valid SDK ratings retain the more specific warm/hot assessment.
+func timelineVitalRating(row *sessionLogRow) rumtypes.VitalRating {
+	rating := rumtypes.VitalRating{String: valuer.NewString(row.vitalRating)}
+	if row.event != rumtypes.EventNameLegacyVital {
+		return rating
+	}
+	switch rating {
+	case rumtypes.VitalRatingGood, rumtypes.VitalRatingNeedsImprovement, rumtypes.VitalRatingPoor:
+		return rating
+	}
+	switch {
+	case row.vitalValue >= 5000:
+		return rumtypes.VitalRatingPoor
+	case row.vitalValue >= 2500:
+		return rumtypes.VitalRatingNeedsImprovement
+	default:
+		return rumtypes.VitalRatingGood
+	}
 }
 
 // markBackends sets whether each request's trace reached a backend.
