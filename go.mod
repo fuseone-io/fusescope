@@ -54,7 +54,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/alertmanager v0.31.1
 	github.com/prometheus/client_golang v1.25.0
-	github.com/prometheus/common v0.73.1
+	github.com/prometheus/common v0.74.0
 	github.com/prometheus/prometheus v0.311.3
 	github.com/redis/go-redis/extra/redisotel/v9 v9.23.0
 	github.com/redis/go-redis/v9 v9.23.0
@@ -154,7 +154,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
-	github.com/pandatix/go-abnf v0.5.3 // indirect
+	github.com/pandatix/go-abnf v0.5.5 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.23.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/swaggest/refl v1.4.0 // indirect
@@ -182,7 +182,7 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.47.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.47.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v1.47.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.4 // indirect
+	go.yaml.in/yaml/v2 v2.4.5 // indirect
 	golang.org/x/arch v0.22.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098 // indirect
