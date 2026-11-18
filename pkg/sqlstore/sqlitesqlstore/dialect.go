@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/uptrace/bun"
@@ -508,4 +509,14 @@ func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun
 
 	_, err := bun.ExecContext(ctx, "PRAGMA foreign_keys = OFF")
 	return err
+}
+
+// SQLite's CURRENT_TIMESTAMP stops at the second; strftime's %f keeps the
+// milliseconds.
+func (dialect *dialect) CurrentTimestamp(ctx context.Context, bun bun.IDB) (time.Time, error) {
+	var now string
+	if err := bun.NewRaw("SELECT strftime('%Y-%m-%d %H:%M:%f', 'now')").Scan(ctx, &now); err != nil {
+		return time.Time{}, err
+	}
+	return time.ParseInLocation("2006-01-02 15:04:05.000", now, time.UTC)
 }

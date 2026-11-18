@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 	"slices"
+	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/uptrace/bun"
@@ -332,4 +333,13 @@ func foreignKeyReference(reference string) (string, bool) {
 
 func bunIdent(name string) bun.Ident {
 	return bun.Ident(name)
+}
+
+// clock_timestamp, unlike now(), is not frozen at the start of the transaction.
+func (dialect *dialect) CurrentTimestamp(ctx context.Context, bun bun.IDB) (time.Time, error) {
+	var now time.Time
+	if err := bun.NewRaw("SELECT clock_timestamp()").Scan(ctx, &now); err != nil {
+		return time.Time{}, err
+	}
+	return now.UTC(), nil
 }

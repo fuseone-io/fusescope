@@ -2,6 +2,7 @@ package sqlstoretest
 
 import (
 	"context"
+	"time"
 
 	"github.com/uptrace/bun"
 )
@@ -63,4 +64,8 @@ func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table inte
 
 func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error {
 	return nil
+}
+
+func (dialect *dialect) CurrentTimestamp(ctx context.Context, bun bun.IDB) (time.Time, error) {
+	return time.Now().UTC(), nil
 }
