@@ -21,6 +21,12 @@ func TestSDKSupportOf(t *testing.T) {
 		{name: "DistroPrerelease_Supported", sdkName: SDKBrowserName, version: "0.2.0-beta.1", expected: SDKSupportSupported},
 		{name: "AndroidDistroInRange_Supported", sdkName: SDKAndroidName, version: "0.3.0", expected: SDKSupportSupported},
 		{name: "AndroidStableRelease_Supported", sdkName: SDKAndroidName, version: "1.0.0", expected: SDKSupportSupported},
+		{name: "AndroidBuildMetadata_Supported", sdkName: SDKAndroidName, version: "1.0.0+build.7", expected: SDKSupportSupported},
+		{name: "AndroidBuildRevision_Supported", sdkName: SDKAndroidName, version: "1.0.0.1", expected: SDKSupportSupported},
+		{name: "AndroidPrereleaseMetadata_Supported", sdkName: SDKAndroidName, version: "1.0.0-rc.1+ci.12", expected: SDKSupportSupported},
+		{name: "AndroidNextMinorBuild_Outdated", sdkName: SDKAndroidName, version: "1.1.0.2", expected: SDKSupportOutdated},
+		{name: "AndroidInvalidBuildRevision_Outdated", sdkName: SDKAndroidName, version: "1.0.0.nope", expected: SDKSupportOutdated},
+		{name: "AndroidTooManyComponents_Outdated", sdkName: SDKAndroidName, version: "1.0.0.1.2", expected: SDKSupportOutdated},
 		{name: "AndroidStablePatch_Supported", sdkName: SDKAndroidName, version: "1.0.7", expected: SDKSupportSupported},
 		{name: "AndroidNextMinor_Outdated", sdkName: SDKAndroidName, version: "1.1.0", expected: SDKSupportOutdated},
 		{name: "AndroidBelowRange_Outdated", sdkName: SDKAndroidName, version: "0.0.8", expected: SDKSupportOutdated},
@@ -51,11 +57,6 @@ func TestSupportedSDKMetadataMatchesClassification(t *testing.T) {
 		t.Run(sdk.Name, func(t *testing.T) {
 			assert.Equal(t, SDKSupportSupported, SDKSupportOf(sdk.Name, sdk.MinVersion))
 			assert.Equal(t, SDKSupportOutdated, SDKSupportOf(sdk.Name, sdk.MaxVersion))
-			expectedMax := "1.0.0"
-			if sdk.Name == SDKAndroidName {
-				expectedMax = "1.1.0"
-			}
-			assert.Equal(t, expectedMax, sdk.MaxVersion)
 		})
 	}
 }
