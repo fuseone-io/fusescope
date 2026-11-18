@@ -116,7 +116,7 @@ func ApplyEvaluation(issue *Issue, evaluation Evaluation) (*Change, error) {
 	case issue == nil || issue.Status == StatusResolved:
 		return evaluation.applyToInactive(issue, fingerprint), nil
 	case issue.Detector == DetectorNewException:
-		return evaluation.unchanged(issue), nil
+		return evaluation.applyToException(issue), nil
 	case issue.isMutedAt(evaluation.Now):
 		return evaluation.applyWhileMuted(issue), nil
 	case issue.Status == StatusMuted:
@@ -198,6 +198,19 @@ func (evaluation Evaluation) applyAfterMute(issue *Issue) *Change {
 			return evaluation.changed(TransitionResolved, &next, true)
 		}
 	}
+	return evaluation.changed(TransitionUnmuted, &next, false)
+}
+
+// applyToException changes an active new_exception issue only when its mute
+// expired: it opens, without notifying.
+func (evaluation Evaluation) applyToException(issue *Issue) *Change {
+	if issue.Status != StatusMuted || issue.isMutedAt(evaluation.Now) {
+		return evaluation.unchanged(issue)
+	}
+	next := *issue
+	next.Status = StatusOpen
+	next.MutedUntil = nil
+	next.UpdatedAt = evaluation.Now
 	return evaluation.changed(TransitionUnmuted, &next, false)
 }
 

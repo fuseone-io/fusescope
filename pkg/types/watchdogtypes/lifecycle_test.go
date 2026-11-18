@@ -221,6 +221,27 @@ func TestApplyEvaluation(t *testing.T) {
 			transitions: []Transition{TransitionCreated, TransitionNone, TransitionNone, TransitionNone, TransitionNone, TransitionNone},
 			status:      StatusOpen,
 		},
+		{
+			name:        "NewException_WhileMuted_Unchanged",
+			detector:    DetectorNewException,
+			steps:       []step{anomalous(0), mute(30 * m), noData(10 * m), anomalous(15 * m)},
+			transitions: []Transition{TransitionCreated, TransitionNone, TransitionNone},
+			status:      StatusMuted,
+		},
+		{
+			name:        "NewException_MuteExpiry_NoData_OpensSilently",
+			detector:    DetectorNewException,
+			steps:       []step{anomalous(0), mute(30 * m), noData(35 * m)},
+			transitions: []Transition{TransitionCreated, TransitionUnmuted},
+			status:      StatusOpen,
+		},
+		{
+			name:        "NewException_MuteExpiry_Anomalous_OpensSilently",
+			detector:    DetectorNewException,
+			steps:       []step{anomalous(0), mute(30 * m), anomalous(35 * m)},
+			transitions: []Transition{TransitionCreated, TransitionUnmuted},
+			status:      StatusOpen,
+		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
