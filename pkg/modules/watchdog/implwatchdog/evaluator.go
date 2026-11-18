@@ -17,14 +17,16 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
-// orgEvaluator runs the RED detectors of one organization for one window,
-// under one anomaly session.
+// orgEvaluator runs the detectors of one organization for one window, under
+// one anomaly session.
 type orgEvaluator struct {
-	logger         *slog.Logger
-	evaluator      *anomalyquerier.Evaluator
-	module         watchdog.Module
-	maxSeries      int
-	activeOverflow metric.Int64Counter
+	logger            *slog.Logger
+	evaluator         *anomalyquerier.Evaluator
+	exceptionReader   exceptionReader
+	module            watchdog.Module
+	maxSeries         int
+	activeOverflow    metric.Int64Counter
+	exceptionOverflow metric.Int64Counter
 }
 
 // orgRun is one organization's evaluation of one window.
@@ -39,28 +41,46 @@ type orgRun struct {
 	// dormant are the active issues of disabled RED detectors.
 	dormant []*watchdogtypes.Issue
 	// evaluated holds the active issues an evaluation was applied to.
-	evaluated map[watchdogtypes.Detector]map[string]bool
+	evaluated         map[watchdogtypes.Detector]map[string]bool
+	cursors           *exceptionCursors
+	exceptionsEnabled bool
+	readExceptions    bool
+	mutedExceptions   []*watchdogtypes.Issue
 }
 
-func newOrgEvaluator(providerSettings factory.ProviderSettings, evaluator *anomalyquerier.Evaluator, module watchdog.Module, maxSeries int) (*orgEvaluator, error) {
+func newOrgEvaluator(providerSettings factory.ProviderSettings, evaluator *anomalyquerier.Evaluator, exceptionReader exceptionReader, module watchdog.Module, maxSeries int) (*orgEvaluator, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/fuseone-io/fusescope/pkg/modules/watchdog/implwatchdog")
 	activeOverflow, err := settings.Meter().Int64Counter("fusescope.watchdog.active_overflow", metric.WithDescription("Active services above max_series, evaluated in extra batches."))
 	if err != nil {
 		return nil, err
 	}
-	return &orgEvaluator{logger: settings.Logger(), evaluator: evaluator, module: module, maxSeries: maxSeries, activeOverflow: activeOverflow}, nil
+	exceptionOverflow, err := settings.Meter().Int64Counter("fusescope.watchdog.exception_overflow", metric.WithDescription("Cycles with more new exception groups than one batch."))
+	if err != nil {
+		return nil, err
+	}
+	return &orgEvaluator{logger: settings.Logger(), evaluator: evaluator, exceptionReader: exceptionReader, module: module, maxSeries: maxSeries, activeOverflow: activeOverflow, exceptionOverflow: exceptionOverflow}, nil
+}
+
+// newSession returns the evaluation of a lease session, which keeps the
+// new_exception cursors of its organizations.
+func (e *orgEvaluator) newSession() evaluateFunc {
+	cursors := newExceptionCursors()
+	return func(ctx context.Context, orgID valuer.UUID, window watchdogtypes.Window) error {
+		return e.evaluate(ctx, orgID, window, cursors)
+	}
 }
 
 // evaluate gives every active issue left unevaluated by a failed query
 // no-data, so an expired mute still reopens; the other batches still run
 // unless the context ends or the session's limits are exceeded.
-func (e *orgEvaluator) evaluate(ctx context.Context, orgID valuer.UUID, window watchdogtypes.Window) error {
-	run := &orgRun{orgEvaluator: e, orgID: orgID, window: window, evaluated: map[watchdogtypes.Detector]map[string]bool{}}
+func (e *orgEvaluator) evaluate(ctx context.Context, orgID valuer.UUID, window watchdogtypes.Window, cursors *exceptionCursors) error {
+	run := &orgRun{orgEvaluator: e, orgID: orgID, window: window, evaluated: map[watchdogtypes.Detector]map[string]bool{}, cursors: cursors}
 	if err := run.load(ctx); err != nil {
 		return err
 	}
-	failed := run.evaluateDormant(ctx)
-	if len(run.detectors) == 0 {
+	failed := errors.Join(run.evaluateDormant(ctx), run.evaluateMutedExceptions(ctx))
+	run.readExceptions = run.exceptionsDue()
+	if len(run.detectors) == 0 && !run.readExceptions {
 		return failed
 	}
 	failed = errors.Join(failed, run.evaluateCohort(ctx))
@@ -84,13 +104,19 @@ func (run *orgRun) evaluateCohort(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	var failed error
+	if run.readExceptions {
+		failed = run.evaluateExceptions(ctx, seasons)
+	}
+	if len(run.detectors) == 0 {
+		return failed
+	}
 	cohort := watchdogtypes.NewCohort(run.window, run.activeServices(), seasons, run.maxSeries)
 	if cohort.ActiveOverflow > 0 {
 		run.logger.WarnContext(ctx, "active watchdog services exceed max_series, evaluating extra batches", slog.String("org_id", run.orgID.StringValue()), slog.Int("overflow", cohort.ActiveOverflow), slog.Int("max_series", run.maxSeries))
 		run.activeOverflow.Add(ctx, int64(cohort.ActiveOverflow))
 	}
 
-	var failed error
 	for _, batch := range cohort.Batches {
 		err := run.evaluateBatch(ctx, batch, seasons)
 		if err != nil && (ctx.Err() != nil || errors.Ast(err, errors.TypePayloadTooLarge)) {
@@ -107,7 +133,10 @@ func (run *orgRun) load(ctx context.Context) error {
 		return err
 	}
 	for _, setting := range settings {
-		if setting.Enabled && setting.Detector.IsRED() {
+		switch {
+		case setting.Detector == watchdogtypes.DetectorNewException:
+			run.exceptionsEnabled = setting.Enabled
+		case setting.Enabled:
 			run.detectors = append(run.detectors, setting.Detector)
 		}
 	}
@@ -120,10 +149,14 @@ func (run *orgRun) load(ctx context.Context) error {
 		run.active[detector] = map[string]bool{}
 	}
 	for _, issue := range issues {
-		if services, ok := run.active[issue.Detector]; ok {
+		services, enabled := run.active[issue.Detector]
+		switch {
+		case enabled:
 			services[issue.Service] = true
-		} else if issue.Detector.IsRED() {
+		case issue.Detector.IsRED():
 			run.dormant = append(run.dormant, issue)
+		case issue.Status == watchdogtypes.StatusMuted:
+			run.mutedExceptions = append(run.mutedExceptions, issue)
 		}
 	}
 	return nil

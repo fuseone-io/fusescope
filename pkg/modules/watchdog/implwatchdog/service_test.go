@@ -38,8 +38,8 @@ func TestService(t *testing.T) {
 				getter := organizationtest.NewMockGetter(t)
 				getter.EXPECT().ListByOwnedKeyRange(mock.Anything).Return([]*types.Organization{{Identifiable: types.Identifiable{ID: testOrgID}}}, nil).Maybe()
 				evaluated := make(chan struct{}, 1)
-				var holders atomic.Int32
-				evaluate := func(ctx context.Context, orgID valuer.UUID, _ watchdogtypes.Window) error {
+				var holders, sessions atomic.Int32
+				var evaluate evaluateFunc = func(ctx context.Context, _ valuer.UUID, _ watchdogtypes.Window) error {
 					var holder string
 					assert.NoError(t, sqlStore.BunDB().NewSelect().Table("lease").Column("holder").Where("name = ?", leaseName).Scan(ctx, &holder))
 					if holder == runner.Holder() {
@@ -52,7 +52,7 @@ func TestService(t *testing.T) {
 					return nil
 				}
 				flagger := flaggertest.WithBooleanFlags(t, map[string]bool{"watchdog": testCase.enabled})
-				service := newService(settings, flagger, runner, NewModule(NewStore(sqlStore)), getter, evaluate)
+				service := newService(settings, flagger, runner, NewModule(NewStore(sqlStore)), getter, func() evaluateFunc { sessions.Add(1); return evaluate })
 				service.retryInterval = 10 * time.Millisecond
 
 				done := make(chan error, 1)
@@ -72,6 +72,7 @@ func TestService(t *testing.T) {
 				}
 				if testCase.evaluated {
 					assert.Equal(t, int32(1), holders.Load(), "evaluated while holding the lease")
+					assert.Equal(t, int32(1), sessions.Load(), "one session per lease")
 				}
 			})
 		})

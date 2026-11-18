@@ -604,7 +604,7 @@ func New(
 		return nil, err
 	}
 
-	watchdogService, err := implwatchdog.NewService(providerSettings, flagger, sqlstore, orgGetter, anomalyEvaluator, implwatchdog.NewModule(implwatchdog.NewStore(sqlstore)), config.Anomaly.MaxSeries)
+	watchdogService, err := implwatchdog.NewService(providerSettings, flagger, sqlstore, telemetrystore, orgGetter, anomalyEvaluator, implwatchdog.NewModule(implwatchdog.NewStore(sqlstore)), config.Anomaly.MaxSeries)
 	if err != nil {
 		return nil, err
 	}
