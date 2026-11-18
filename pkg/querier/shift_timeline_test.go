@@ -117,3 +117,56 @@ func TestTimeShiftResultsLandOnTheCurrentTimeline(t *testing.T) {
 		assert.NoError(t, store.Mock().ExpectationsWereMet())
 	})
 }
+
+type traceStatement struct{}
+
+func (traceStatement) Build(context.Context, valuer.UUID, uint64, uint64, qbtypes.RequestType, qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
+	return &qbtypes.Statement{Query: "SELECT ts, `service.name`, count FROM signoz_traces"}, nil
+}
+
+// Watchdog baselines are shifted trace queries grouped by service.
+func TestTimeShiftTraceResultsLandOnTheCurrentTimeline(t *testing.T) {
+	const shift = 24 * time.Hour
+	end := time.Now().Add(-72 * time.Hour).Truncate(5 * time.Minute)
+	start := end.Add(-15 * time.Minute)
+
+	store := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+	var rows [][]any
+	for ts := start; ts.Before(end); ts = ts.Add(5 * time.Minute) {
+		rows = append(rows, []any{ts.Add(-shift), "api", uint64(ts.Unix() / 60 % 1000)})
+	}
+	store.Mock().ExpectQuery("SELECT").WillReturnRows(cmock.NewRows([]cmock.ColumnType{{Name: "ts", Type: "DateTime"}, {Name: "service.name", Type: "String"}, {Name: "__result_0", Type: "UInt64"}}, rows))
+	q := New(instrumentationtest.New().ToProviderSettings(), store, telemetrytypestest.NewMockMetadataStore(), nil, traceStatement{}, nil, nil, nil, nil, nil, nil, createTestBucketCache(t), flaggertest.New(t), 0, 0)
+
+	resp, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), &qbtypes.QueryRangeRequest{
+		Start:       uint64(start.UnixMilli()),
+		End:         uint64(end.UnixMilli()),
+		RequestType: qbtypes.RequestTypeTimeSeries,
+		CompositeQuery: qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Name:         "A",
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 5 * time.Minute},
+				Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
+				GroupBy:      []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}},
+				Functions:    []qbtypes.Function{{Name: qbtypes.FunctionNameTimeShift, Args: []qbtypes.FunctionArg{{Value: int64(shift / time.Second)}}}},
+			},
+		}}},
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Data.Results, 1)
+	data := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
+	require.Len(t, data.Aggregations, 1)
+	require.Len(t, data.Aggregations[0].Series, 1)
+	got := map[int64]float64{}
+	for _, v := range data.Aggregations[0].Series[0].Values {
+		got[v.Timestamp] = v.Value
+	}
+	want := map[int64]float64{}
+	for ts := start; ts.Before(end); ts = ts.Add(5 * time.Minute) {
+		want[ts.UnixMilli()] = float64(ts.Unix() / 60 % 1000)
+	}
+	assert.Equal(t, want, got)
+	assert.NoError(t, store.Mock().ExpectationsWereMet())
+}
