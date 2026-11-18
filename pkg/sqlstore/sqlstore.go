@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/fuseone-io/fusescope/pkg/errors"
 	"github.com/uptrace/bun"
@@ -87,6 +88,10 @@ type SQLDialect interface {
 	// Toggles foreign key constraint for the given database. This makes sense only for sqlite. This cannot take a transaction as an argument and needs to take the db
 	// as an argument.
 	ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error
+
+	// CurrentTimestamp returns the database's clock, in UTC, for state that
+	// backends compare across hosts.
+	CurrentTimestamp(ctx context.Context, bun bun.IDB) (time.Time, error)
 }
 
 type SQLFormatter interface {
