@@ -9748,6 +9748,27 @@ export interface OnboardingtypesIngestionDTO {
 	 * @description Base URL for OTLP/HTTP exporters (OTEL_EXPORTER_OTLP_ENDPOINT); /v1/traces, /v1/metrics and /v1/logs are appended.
 	 */
 	otlpHttpEndpoint: string;
+	/**
+	 * @type string,null
+	 * @description global.rum_ingestion_url, when set.
+	 */
+	rumConfigUrl: string | null;
+	/**
+	 * @type boolean
+	 * @description True when no RUM URL is configured and the UI origin is only a guess.
+	 */
+	rumDerived: boolean;
+	/**
+	 * @type string
+	 * @description Base URL of the collector RUM listener. Empty when derived: clients should use their UI origin as an unverified reverse-proxy guess.
+	 */
+	rumEndpoint: string;
+	/**
+	 * @type string,null
+	 * @description Organization RUM URL override.
+	 */
+	rumOrganizationUrl: string | null;
+	rumSource: OnboardingtypesIngestionSourceDTO;
 	source: OnboardingtypesIngestionSourceDTO;
 }
 
@@ -9869,6 +9890,11 @@ export interface OnboardingtypesUpdatableIngestionDTO {
 	 * @description OTLP/HTTP base URL, e.g. https://otlp.example.com or http://collector:4318. Empty removes the override.
 	 */
 	ingestionUrl: string;
+	/**
+	 * @type string,null
+	 * @description Independent RUM base URL. Omit to preserve the override; empty removes it. A trailing /rum/v1 is normalized away.
+	 */
+	rumUrl?: string | null;
 }
 
 export interface PreferencetypesValueDTO {
