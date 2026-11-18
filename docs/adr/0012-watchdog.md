@@ -137,7 +137,8 @@ Cost per organization and cycle, in query-range calls:
 + 1 per batch (the current window, filtered to that batch)
 + 4 per batch that contains active services absent from discovery
     (baselines filtered to those services)
-+ 1 new_exception
++ 1 new_exception (omitted on warm-up: first cycle of a lease session, after
+    failover and after the detector is re-enabled)
 ```
 
 The common case, one batch and no active service missing from discovery, is six
@@ -209,6 +210,14 @@ cursor = (firstSeen, groupID)
   `cursor = (end, max)` and opens no issue, so already-present groups do not become a
   burst of issues. A restart or failover warms again and may miss one window; it
   cannot create a false issue.
+- **Late ingestion.** The cursor is a watermark: an occurrence ingested after its
+  window was read, with a timestamp at or before the cursor, is never seen, and a
+  group whose only occurrences arrive that late opens no issue. Overlapping RED
+  windows re-read late spans; the exception read does not. The two-minute lag bounds
+  the loss and it never creates a false issue.
+- **Evidence** holds the group ID, exception type and the group's earliest
+  occurrence in the lookback (`firstSeen`, UTC), never the message. The issue's
+  `first_seen` stays the window that detected it.
 - **History gate.** A service has 24 hours of history when it appears in at least one
   discovery baseline (`k ≥ 1`). No extra query is needed. A service absent from
   discovery is treated as having no history.
