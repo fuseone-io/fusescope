@@ -12,6 +12,13 @@ export type RumCollectorState = (typeof RUM_COLLECTOR_STATES)[number];
 
 export function rumIngestion(configured: boolean): OnboardingtypesIngestionDTO {
 	return {
+		rumEndpoint: configured ? 'https://rum.example.com' : '',
+		rumDerived: !configured,
+		rumSource: configured
+			? OnboardingtypesIngestionSourceDTO.config
+			: OnboardingtypesIngestionSourceDTO.derived,
+		rumOrganizationUrl: null,
+		rumConfigUrl: configured ? 'https://rum.example.com' : null,
 		otlpHttpEndpoint: configured
 			? 'https://ingest.example.com'
 			: 'http://localhost:4318',

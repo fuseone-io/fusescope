@@ -5,6 +5,8 @@ import type {
 } from 'api/generated/services/fuseScope.schemas';
 import SegmentedControl from 'components/PageTemplate/components/SegmentedControl';
 
+import { RumIngestionState } from '../hooks/useRumIngestion';
+import IngestionGate from './IngestionGate';
 import { SnippetInput } from '../types';
 import {
 	NPM_INSTALL_COMMAND,
@@ -16,7 +18,7 @@ import SectionHeading from './SectionHeading';
 import SnippetBlock from './SnippetBlock';
 
 interface WebInstallProps {
-	endpoint: string;
+	ingestion: RumIngestionState;
 	application: RumtypesApplicationDTO;
 	/** The key for the snippet: plaintext while known, else a placeholder. */
 	publicKey: string;
@@ -42,12 +44,13 @@ const SDK_ATTRIBUTES_URL =
 
 /** npm or script-tag setup of a web application. */
 function WebInstall({
-	endpoint,
+	ingestion,
 	application,
 	publicKey,
 	keyKnown,
 	bundle,
 }: WebInstallProps): JSX.Element {
+	const endpoint = ingestion.status === 'ready' ? ingestion.endpoint : '';
 	const [method, setMethod] = useState<Method>('npm');
 	const input = useMemo<SnippetInput>(
 		() => ({
@@ -90,14 +93,24 @@ function WebInstall({
 					<span className={HINT}>
 						Then, as early as possible in your app entry point:
 					</span>
-					<SnippetBlock
-						code={buildNpmSnippet(input)}
-						label="Copy snippet"
-						testId="rum-install-snippet"
-					/>
+					<IngestionGate state={ingestion} web>
+						<SnippetBlock
+							code={buildNpmSnippet(input)}
+							label="Copy snippet"
+							testId="rum-install-snippet"
+						/>
+					</IngestionGate>
 				</>
 			) : (
-				<ScriptTagInstall input={input} bundle={bundle} />
+				<>
+					<IngestionGate state={ingestion} web>
+						{null}
+					</IngestionGate>
+					<ScriptTagInstall
+						input={ingestion.status === 'ready' ? input : undefined}
+						bundle={bundle}
+					/>
+				</>
 			)}
 			{!keyKnown && (
 				<span className={HINT}>

@@ -16,11 +16,12 @@ var (
 )
 
 type Config struct {
-	ExternalURL    *url.URL   `mapstructure:"external_url"`
-	AllowedOrigins []*url.URL `mapstructure:"allowed_origins"`
-	IngestionURL   *url.URL   `mapstructure:"ingestion_url"`
-	MCPURL         *url.URL   `mapstructure:"mcp_url"`
-	AIAssistantURL *url.URL   `mapstructure:"ai_assistant_url"`
+	ExternalURL     *url.URL   `mapstructure:"external_url"`
+	AllowedOrigins  []*url.URL `mapstructure:"allowed_origins"`
+	IngestionURL    *url.URL   `mapstructure:"ingestion_url"`
+	RUMIngestionURL *url.URL   `mapstructure:"rum_ingestion_url"`
+	MCPURL          *url.URL   `mapstructure:"mcp_url"`
+	AIAssistantURL  *url.URL   `mapstructure:"ai_assistant_url"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {

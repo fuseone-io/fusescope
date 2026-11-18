@@ -208,6 +208,15 @@ func NewAvailablePreference() map[Name]Preference {
 			AllowedValues: []string{},
 			Value:         MustNewValue("", ValueTypeString),
 		},
+		NameRUMIngestionURL: {
+			Name:          NameRUMIngestionURL,
+			Description:   "RUM listener base URL shown in onboarding, overriding global.rum_ingestion_url.",
+			ValueType:     ValueTypeString,
+			DefaultValue:  MustNewValue("", ValueTypeString),
+			AllowedScopes: []Scope{ScopeOrg},
+			AllowedValues: []string{},
+			Value:         MustNewValue("", ValueTypeString),
+		},
 	}
 }
 

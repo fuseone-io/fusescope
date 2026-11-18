@@ -12,7 +12,7 @@ import {
 import SnippetBlock from './SnippetBlock';
 
 interface ScriptTagInstallProps {
-	input: SnippetInput;
+	input?: SnippetInput;
 	/** The bundle this server serves; unknown until the status loads. */
 	bundle?: RumtypesBundledSDKDTO;
 }

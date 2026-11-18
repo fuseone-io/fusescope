@@ -70,7 +70,9 @@ function mockServer(created: { body?: unknown }, app: object = APP): void {
 			res(
 				ctx.json(
 					ok({
-						otlpHttpEndpoint: 'https://ingest.example.com',
+						otlpHttpEndpoint: 'https://otlp.example.com',
+						rumEndpoint: 'https://ingest.example.com/rum/v1/',
+						rumDerived: false,
 						source: 'config',
 						derived: false,
 					}),
@@ -171,7 +173,9 @@ describe('RumApplicationSheet', () => {
 			allowedOrigins: [],
 			allowedPackageNames: ['com.example.shop'],
 		});
-		expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
+		await expect(
+			screen.findByTestId('rum-install-snippet'),
+		).resolves.toHaveTextContent(
 			'key = "rum_pub_h3vq7zk2mx5cn4lw6rtp2jdy5beart4w"',
 		);
 		expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
@@ -235,6 +239,8 @@ describe('RumApplicationSheet', () => {
 					ctx.json(
 						ok({
 							otlpHttpEndpoint: 'http://localhost:4318',
+							rumEndpoint: '',
+							rumDerived: true,
 							source: 'derived',
 							derived: true,
 						}),
@@ -250,9 +256,14 @@ describe('RumApplicationSheet', () => {
 			/>,
 		);
 		await expect(
-			screen.findByTestId('rum-ingestion-unconfigured'),
+			screen.findByTestId('rum-ingestion-derived'),
 		).resolves.toBeInTheDocument();
-		expect(screen.queryByTestId('rum-install-snippet')).not.toBeInTheDocument();
+		expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
+			"endpoint: 'http://localhost'",
+		);
+		expect(screen.getByTestId('rum-install-snippet')).not.toHaveTextContent(
+			'4318',
+		);
 	});
 
 	it('does not fall back to the backend when ingestion settings fail', async () => {
@@ -273,7 +284,60 @@ describe('RumApplicationSheet', () => {
 			screen.findByTestId('rum-ingestion-error'),
 		).resolves.toBeInTheDocument();
 		expect(screen.queryByTestId('rum-install-snippet')).not.toBeInTheDocument();
+		expect(screen.getByTestId('rum-install-command')).toBeInTheDocument();
+		await userEvent
+			.setup({ pointerEventsCheck: 0 })
+			.click(screen.getByTestId('rum-install-method-script'));
+		expect(screen.getByTestId('rum-install-script')).toHaveTextContent(
+			'/rum/v1/sdk/browser/',
+		);
+		expect(screen.getByTestId('rum-install-script')).not.toHaveTextContent(
+			'FuseScope.init',
+		);
 	});
+
+	it.each(['loading', 'error'])(
+		'keeps Android dependencies and R8 mappings visible during %s',
+		async (state) => {
+			mockServer(
+				{},
+				{
+					...APP,
+					platform: 'android',
+					allowedOrigins: [],
+					allowedPackageNames: ['com.example.app'],
+				},
+			);
+			server.use(
+				rest.get('http://localhost/api/v1/onboarding/ingestion', (_req, res, ctx) =>
+					state === 'loading'
+						? res(
+								ctx.delay(500),
+								ctx.json(
+									ok({ rumEndpoint: 'https://ready.example.com', rumDerived: false }),
+								),
+							)
+						: res(ctx.status(503)),
+				),
+			);
+			render(
+				<RumApplicationSheet
+					target={{ mode: 'edit', applicationId: 'app-1' }}
+					initialTab="install"
+					onClose={jest.fn()}
+				/>,
+			);
+			await screen.findByTestId(`rum-ingestion-${state}`);
+			expect(screen.getByTestId('rum-install-mapping')).toHaveTextContent(
+				'endpoint.set("http://localhost',
+			);
+			expect(screen.getByTestId('rum-install-gradle')).toBeInTheDocument();
+			expect(screen.queryByTestId('rum-install-snippet')).not.toBeInTheDocument();
+			if (state === 'loading') {
+				await screen.findByTestId('rum-install-snippet');
+			}
+		},
+	);
 
 	it('retries loading collector settings without using the backend as a fallback', async () => {
 		mockServer({});
@@ -284,7 +348,9 @@ describe('RumApplicationSheet', () => {
 					? res(
 							ctx.json(
 								ok({
-									otlpHttpEndpoint: 'https://recovered.example.com',
+									otlpHttpEndpoint: 'https://other-otlp.example.com',
+									rumEndpoint: 'https://recovered.example.com',
+									rumDerived: false,
 									derived: false,
 								}),
 							),

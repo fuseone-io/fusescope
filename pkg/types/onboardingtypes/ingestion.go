@@ -28,15 +28,20 @@ var (
 type IngestionSource struct{ valuer.String }
 
 type Ingestion struct {
-	OTLPHTTPEndpoint string           `json:"otlpHttpEndpoint" required:"true" description:"Base URL for OTLP/HTTP exporters (OTEL_EXPORTER_OTLP_ENDPOINT); /v1/traces, /v1/metrics and /v1/logs are appended."`
-	OTLPGRPCEndpoint string           `json:"otlpGrpcEndpoint" required:"true" description:"host:port for OTLP/gRPC exporters."`
-	OTLPGRPCInsecure bool             `json:"otlpGrpcInsecure" required:"true" description:"True when the gRPC endpoint is plaintext (tls.insecure in a collector exporter)."`
-	Source           IngestionSource  `json:"source" required:"true" description:"Where the endpoints come from: an admin's override, global.ingestion_url, or derived from the external URL."`
-	Derived          bool             `json:"derived" required:"true" description:"True when source is derived: nothing was configured and the endpoints are a guess on the default ports."`
-	AuthRequired     bool             `json:"authRequired" required:"true" description:"Whether exporters must send an ingestion key."`
-	OrganizationURL  *string          `json:"organizationUrl" required:"true" nullable:"true" description:"The URL an admin set, which overrides global.ingestion_url."`
-	ConfigURL        *string          `json:"configUrl" required:"true" nullable:"true" description:"global.ingestion_url, when set."`
-	Collector        *CollectorHealth `json:"collector" required:"true" nullable:"true" description:"Whether the backend reaches the collector it forwards RUM telemetry to. Null when the RUM gateway is disabled, as the backend knows no collector address then."`
+	RUMEndpoint        string           `json:"rumEndpoint" required:"true" description:"Base URL of the collector RUM listener. Empty when derived: clients should use their UI origin as an unverified reverse-proxy guess."`
+	RUMSource          IngestionSource  `json:"rumSource" required:"true" description:"Source of the independent RUM URL: organization, config or derived."`
+	RUMDerived         bool             `json:"rumDerived" required:"true" description:"True when no RUM URL is configured and the UI origin is only a guess."`
+	RUMOrganizationURL *string          `json:"rumOrganizationUrl" required:"true" nullable:"true" description:"Organization RUM URL override."`
+	RUMConfigURL       *string          `json:"rumConfigUrl" required:"true" nullable:"true" description:"global.rum_ingestion_url, when set."`
+	OTLPHTTPEndpoint   string           `json:"otlpHttpEndpoint" required:"true" description:"Base URL for OTLP/HTTP exporters (OTEL_EXPORTER_OTLP_ENDPOINT); /v1/traces, /v1/metrics and /v1/logs are appended."`
+	OTLPGRPCEndpoint   string           `json:"otlpGrpcEndpoint" required:"true" description:"host:port for OTLP/gRPC exporters."`
+	OTLPGRPCInsecure   bool             `json:"otlpGrpcInsecure" required:"true" description:"True when the gRPC endpoint is plaintext (tls.insecure in a collector exporter)."`
+	Source             IngestionSource  `json:"source" required:"true" description:"Where the endpoints come from: an admin's override, global.ingestion_url, or derived from the external URL."`
+	Derived            bool             `json:"derived" required:"true" description:"True when source is derived: nothing was configured and the endpoints are a guess on the default ports."`
+	AuthRequired       bool             `json:"authRequired" required:"true" description:"Whether exporters must send an ingestion key."`
+	OrganizationURL    *string          `json:"organizationUrl" required:"true" nullable:"true" description:"The URL an admin set, which overrides global.ingestion_url."`
+	ConfigURL          *string          `json:"configUrl" required:"true" nullable:"true" description:"global.ingestion_url, when set."`
+	Collector          *CollectorHealth `json:"collector" required:"true" nullable:"true" description:"Whether the backend reaches the collector it forwards RUM telemetry to. Null when the RUM gateway is disabled, as the backend knows no collector address then."`
 }
 
 type CollectorHealth struct {
@@ -45,7 +50,8 @@ type CollectorHealth struct {
 }
 
 type UpdatableIngestion struct {
-	IngestionURL string `json:"ingestionUrl" required:"true" description:"OTLP/HTTP base URL, e.g. https://otlp.example.com or http://collector:4318. Empty removes the override."`
+	RUMURL       *string `json:"rumUrl,omitempty" description:"Independent RUM base URL. Omit to preserve the override; empty removes it. A trailing /rum/v1 is normalized away."`
+	IngestionURL string  `json:"ingestionUrl" required:"true" description:"OTLP/HTTP base URL, e.g. https://otlp.example.com or http://collector:4318. Empty removes the override."`
 }
 
 func (IngestionSource) Enum() []any {
@@ -57,7 +63,7 @@ func (IngestionSource) Enum() []any {
 // the request host) on the default OTLP ports. An organization URL that does
 // not parse is ignored.
 func NewIngestion(organizationURL string, configURL *url.URL, externalURL *url.URL, requestHost string) *Ingestion {
-	ingestion := &Ingestion{AuthRequired: false}
+	ingestion := &Ingestion{AuthRequired: false, RUMSource: IngestionSourceDerived, RUMDerived: true}
 	if organizationURL != "" {
 		ingestion.OrganizationURL = &organizationURL
 	}

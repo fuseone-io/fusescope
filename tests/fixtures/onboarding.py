@@ -15,10 +15,10 @@ def get_ingestion(signoz: types.SigNoz, token: str) -> requests.Response:
     return requests.get(signoz.self.host_configs["8080"].get(ONBOARDING_INGESTION), headers={"Authorization": f"Bearer {token}"}, timeout=10)
 
 
-def update_ingestion(signoz: types.SigNoz, token: str, ingestion_url: str) -> requests.Response:
+def update_ingestion(signoz: types.SigNoz, token: str, ingestion_url: str, rum_url: str | None = None) -> requests.Response:
     return requests.put(
         signoz.self.host_configs["8080"].get(ONBOARDING_INGESTION),
-        json={"ingestionUrl": ingestion_url},
+        json={"ingestionUrl": ingestion_url, **({"rumUrl": rum_url} if rum_url is not None else {})},
         headers={"Authorization": f"Bearer {token}"},
         timeout=10,
     )

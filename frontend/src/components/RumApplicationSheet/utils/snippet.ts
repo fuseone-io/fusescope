@@ -114,11 +114,14 @@ export function scriptSource(
 
 /** The bundle's script tag, then the same `init()` as the npm snippet. */
 export function buildScriptSnippet(
-	input: SnippetInput,
+	input: SnippetInput | undefined,
 	src: string,
 	integrity: string,
 ): string {
 	// `</` inside the inline script would end it early.
+	if (!input) {
+		return `<script\n  src="${src}"\n  integrity="${integrity}"\n  crossorigin="anonymous"\n></script>\n`;
+	}
 	const body = initBody(input, '    ', SCRIPT_VERSION_COMMENT).replace(
 		/<\//g,
 		'<\\/',
