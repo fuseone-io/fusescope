@@ -282,6 +282,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddIntegrationAssetFactory(sqlschema),
 		sqlmigration.NewAddIntegrationAutoInstallFactory(sqlschema),
 		sqlmigration.NewAddLeaseFactory(sqlschema),
+		sqlmigration.NewAddWatchdogFactory(sqlschema),
 	)
 }
 
