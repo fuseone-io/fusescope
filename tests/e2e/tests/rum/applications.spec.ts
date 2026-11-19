@@ -17,7 +17,10 @@ test.beforeEach(async ({ authedPage: page }) => {
 			json: {
 				status: 'success',
 				data: {
-					otlpHttpEndpoint: 'https://ingest.example.com',
+					otlpHttpEndpoint: 'https://otlp.example.com',
+					rumEndpoint: 'https://rum.example.com/rum/v1/',
+					rumSource: 'config',
+					rumDerived: false,
 					source: 'config',
 					derived: false,
 				},
@@ -83,7 +86,10 @@ test('RUM-01 create an application, see its key once, then rotate it', async ({
 		`publicKey: '${body.data.key.key}'`,
 	);
 	await expect(page.getByTestId('rum-install-snippet')).toContainText(
-		"endpoint: 'https://ingest.example.com'",
+		"endpoint: 'https://rum.example.com'",
+	);
+	await expect(page.getByTestId('rum-install-snippet')).not.toContainText(
+		'https://otlp.example.com',
 	);
 	await expect(page.getByTestId('rum-setup-status')).toBeVisible();
 
