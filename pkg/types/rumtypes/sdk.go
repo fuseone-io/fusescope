@@ -7,14 +7,15 @@ import (
 	"github.com/fuseone-io/fusescope/pkg/valuer"
 )
 
-// The FuseScope distribution versions this server is tested with, the same
-// range for each: SupportedSDKMinVersion included, SupportedSDKMaxVersion
-// excluded. The name is the distribution's telemetry.distro.name.
+// The FuseScope distribution versions this server is tested with, with an
+// inclusive minimum and exclusive per-distribution maximum. The name is
+// the distribution's telemetry.distro.name.
 const (
-	SDKBrowserName         = "@fusescope/browser"
-	SDKAndroidName         = "io.fuseone.fusescope:android"
-	SupportedSDKMinVersion = "0.1.0"
-	SupportedSDKMaxVersion = "1.0.0"
+	SDKBrowserName                = "@fusescope/browser"
+	SDKAndroidName                = "io.fuseone.fusescope:android"
+	SupportedSDKMinVersion        = "0.1.0"
+	SupportedSDKMaxVersion        = "1.0.0"
+	SupportedAndroidSDKMaxVersion = "1.1.0"
 )
 
 var (
@@ -50,21 +51,24 @@ func (SDKSupport) Enum() []any {
 func NewSupportedSDKs() []SupportedSDK {
 	return []SupportedSDK{
 		{Name: SDKBrowserName, MinVersion: SupportedSDKMinVersion, MaxVersion: SupportedSDKMaxVersion},
-		{Name: SDKAndroidName, MinVersion: SupportedSDKMinVersion, MaxVersion: SupportedSDKMaxVersion},
+		{Name: SDKAndroidName, MinVersion: SupportedSDKMinVersion, MaxVersion: SupportedAndroidSDKMaxVersion},
 	}
 }
 
 func SDKSupportOf(name string, version string) SDKSupport {
-	switch name {
-	case "":
+	if name == "" {
 		return SDKSupportUnknown
-	case SDKBrowserName, SDKAndroidName:
+	}
+	for _, sdk := range NewSupportedSDKs() {
+		if sdk.Name != name {
+			continue
+		}
 		current, ok := parseVersion(version)
 		if !ok {
 			return SDKSupportOutdated
 		}
-		minimum, _ := parseVersion(SupportedSDKMinVersion)
-		maximum, _ := parseVersion(SupportedSDKMaxVersion)
+		minimum, _ := parseVersion(sdk.MinVersion)
+		maximum, _ := parseVersion(sdk.MaxVersion)
 		if compareVersions(current, minimum) >= 0 && compareVersions(current, maximum) < 0 {
 			return SDKSupportSupported
 		}
@@ -74,10 +78,13 @@ func SDKSupportOf(name string, version string) SDKSupport {
 }
 
 func parseVersion(version string) ([3]int, bool) {
-	core, _, _ := strings.Cut(strings.TrimPrefix(version, "v"), "-")
+	core := strings.TrimPrefix(version, "v")
+	if suffix := strings.IndexAny(core, "-+"); suffix >= 0 {
+		core = core[:suffix]
+	}
 	parts := strings.Split(core, ".")
 	parsed := [3]int{}
-	if len(parts) != len(parsed) {
+	if len(parts) != len(parsed) && len(parts) != len(parsed)+1 {
 		return parsed, false
 	}
 	for i, part := range parts {
@@ -85,7 +92,10 @@ func parseVersion(version string) ([3]int, bool) {
 		if err != nil || number < 0 {
 			return parsed, false
 		}
-		parsed[i] = number
+		// A fourth numeric component is a build revision, not a compatibility boundary.
+		if i < len(parsed) {
+			parsed[i] = number
+		}
 	}
 	return parsed, true
 }
