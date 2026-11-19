@@ -1,6 +1,7 @@
 package implrumapplication
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -57,4 +58,23 @@ func TestNewSessionsQueryUserFilter(t *testing.T) {
 func TestSessionUserExpression(t *testing.T) {
 	sql, _ := newSessionAttributesQuery(telemetryScope{start: time.Unix(1000, 0), end: time.Unix(2000, 0)}, []string{"s1"}).Build()
 	assert.Contains(t, sql, "if(attributes_string['user.id'] != '', attributes_string['user.id'], attributes_string['user.hash'])")
+}
+
+func TestNewSessionLogsQueryIncludesAppVitalAttributes(t *testing.T) {
+	sql, args := newSessionLogsQuery(telemetryScope{start: time.Unix(1000, 0), end: time.Unix(2000, 0)}, "android-session").Build()
+	assert.Contains(t, args, rumtypes.EventNameLegacyVital)
+	for _, attribute := range []string{"fusescope.rum.vital.name", "fusescope.rum.vital.value", "fusescope.rum.vital.rating"} {
+		assert.Contains(t, sql, attribute)
+	}
+	assert.Contains(t, sql, rumtypes.AttributeVitalName)
+	assert.Contains(t, sql, rumtypes.AttributeVitalValue)
+	assert.Contains(t, sql, rumtypes.AttributeVitalRating)
+}
+
+func TestSessionLogsFilterUnsupportedAppVitalsBeforeLimit(t *testing.T) {
+	sql, args := newSessionLogsQuery(telemetryScope{start: time.Unix(1000, 0), end: time.Unix(2000, 0)}, "capped-session").Build()
+	assert.Contains(t, sql, "lower(attributes_string['fusescope.rum.vital.name']) =")
+	assert.Contains(t, args, "app_start")
+	assert.Contains(t, sql, "mapContains(attributes_number, 'fusescope.rum.vital.value')")
+	assert.Less(t, strings.Index(sql, "mapContains("), strings.Index(sql, "LIMIT "))
 }

@@ -1,3 +1,8 @@
+import {
+	RumtypesTimelineEventKindDTO,
+	RumtypesTimelineVitalNameDTO,
+	RumtypesVitalRatingDTO,
+} from 'api/generated/services/fuseScope.schemas';
 import userEvent from '@testing-library/user-event';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -61,6 +66,44 @@ describe('SessionTimeline', () => {
 		).searchParams.get('compositeQuery');
 		expect(query).toContain(`session.id = '${SESSION}'`);
 		expect(screen.queryByTestId('rum-session-truncated')).not.toBeInTheDocument();
+	});
+
+	it('renders app start before the first view and keeps it in the vitals filter', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const data = rumSession(false);
+		data.vitals += 1;
+		data.leadingEvents = [
+			{
+				kind: RumtypesTimelineEventKindDTO.vital,
+				timestamp: data.startedAt,
+				route: '',
+				vital: {
+					name: RumtypesTimelineVitalNameDTO.app_start,
+					value: 137,
+					rating: RumtypesVitalRatingDTO.good,
+				},
+			},
+		];
+		server.use(
+			rest.get(
+				'*/api/v1/rum/applications/app-1/sessions/:sessionId',
+				(_req, res, ctx) => res(ctx.json(ok(data))),
+			),
+		);
+		renderPage(PATH);
+		await screen.findByTestId('rum-session-id');
+		const events = screen.getAllByTestId('rum-session-event');
+		expect(events[0]).toHaveTextContent('App start 137 ms');
+		expect(events[0]).toHaveTextContent('Good');
+		await user.click(screen.getByTestId('rum-session-kind-vitals'));
+		expect(screen.getAllByTestId('rum-session-event')[0]).toHaveTextContent(
+			'App start 137 ms',
+		);
+		expect(
+			screen
+				.getAllByTestId('rum-session-event')
+				.every((row) => row.getAttribute('data-kind') === 'vital'),
+		).toBe(true);
 	});
 
 	it('filters events by kind and expands every view', async () => {
