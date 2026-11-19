@@ -8,6 +8,7 @@ import { USER_ROLES } from 'types/roles';
 
 import { useIngestion } from '../../hooks/useIngestion';
 import CopyField from '../CopyField/CopyField';
+import RumIngestionEndpoint from './RumIngestionEndpoint';
 import IngestionUrlEditor from './IngestionUrlEditor';
 
 function FieldLabel({ children }: { children: ReactNode }): JSX.Element {
@@ -90,6 +91,7 @@ function IngestionEndpoints({
 						</CopyField>
 					)}
 				</div>
+				<RumIngestionEndpoint ingestion={ingestion} isAdmin={isAdmin} />
 				{showAuth && (
 					<div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-1">
 						<FieldLabel>Authentication</FieldLabel>

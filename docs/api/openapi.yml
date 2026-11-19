@@ -7951,9 +7951,32 @@ components:
           description: Base URL for OTLP/HTTP exporters (OTEL_EXPORTER_OTLP_ENDPOINT);
             /v1/traces, /v1/metrics and /v1/logs are appended.
           type: string
+        rumConfigUrl:
+          description: global.rum_ingestion_url, when set.
+          nullable: true
+          type: string
+        rumDerived:
+          description: True when no RUM URL is configured and the UI origin is only
+            a guess.
+          type: boolean
+        rumEndpoint:
+          description: 'Base URL of the collector RUM listener. Empty when derived:
+            clients should use their UI origin as an unverified reverse-proxy guess.'
+          type: string
+        rumOrganizationUrl:
+          description: Organization RUM URL override.
+          nullable: true
+          type: string
+        rumSource:
+          $ref: '#/components/schemas/OnboardingtypesIngestionSource'
         source:
           $ref: '#/components/schemas/OnboardingtypesIngestionSource'
       required:
+      - rumEndpoint
+      - rumSource
+      - rumDerived
+      - rumOrganizationUrl
+      - rumConfigUrl
       - otlpHttpEndpoint
       - otlpGrpcEndpoint
       - otlpGrpcInsecure
@@ -8082,6 +8105,11 @@ components:
         ingestionUrl:
           description: OTLP/HTTP base URL, e.g. https://otlp.example.com or http://collector:4318.
             Empty removes the override.
+          type: string
+        rumUrl:
+          description: Independent RUM base URL. Omit to preserve the override; empty
+            removes it. A trailing /rum/v1 is normalized away.
+          nullable: true
           type: string
       required:
       - ingestionUrl

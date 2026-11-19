@@ -63,6 +63,12 @@ func (module *module) GetIngestion(ctx context.Context, orgID valuer.UUID, reque
 	organizationURL, _ := stored.Value.GoValue().(string)
 
 	ingestion := onboardingtypes.NewIngestion(organizationURL, module.globalConfig.IngestionURL, module.globalConfig.ExternalURL, requestHost)
+	rumStored, err := module.preference.GetByOrg(ctx, orgID, preferencetypes.NameRUMIngestionURL)
+	if err != nil {
+		return nil, err
+	}
+	rumURL, _ := rumStored.Value.GoValue().(string)
+	ingestion.SetRUMEndpoint(rumURL, module.globalConfig.RUMIngestionURL)
 	if module.collector != nil {
 		ingestion.Collector = module.collector.Check(ctx)
 	}
@@ -76,8 +82,20 @@ func (module *module) UpdateIngestion(ctx context.Context, orgID valuer.UUID, re
 		return nil, err
 	}
 
+	var rumURL string
+	if updatable.RUMURL != nil {
+		rumURL, err = onboardingtypes.NormalizeRUMURL(*updatable.RUMURL)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if err := module.preference.UpdateByOrg(ctx, orgID, preferencetypes.NameIngestionURL, normalized); err != nil {
 		return nil, err
+	}
+	if updatable.RUMURL != nil {
+		if err := module.preference.UpdateByOrg(ctx, orgID, preferencetypes.NameRUMIngestionURL, rumURL); err != nil {
+			return nil, err
+		}
 	}
 	module.logger.InfoContext(ctx, "ingestion url updated", slog.String("org_id", orgID.StringValue()), slog.Bool("cleared", normalized == ""))
 

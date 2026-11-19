@@ -8,11 +8,14 @@ import {
 	mappingGradleSnippet,
 } from 'lib/rum/androidSetup';
 
-import { sdkEndpoint } from '../utils/endpoint';
+import { managementEndpoint } from '../utils/endpoint';
+import { RumIngestionState } from '../hooks/useRumIngestion';
+import IngestionGate from './IngestionGate';
 import SectionHeading from './SectionHeading';
 import SnippetBlock from './SnippetBlock';
 
 interface AndroidInstallProps {
+	ingestion: RumIngestionState;
 	application: RumtypesApplicationDTO;
 	/** The key for the snippet: plaintext while known, else a placeholder. */
 	publicKey: string;
@@ -24,11 +27,12 @@ const MONO = 'tw:font-mono';
 
 /** Gradle setup, the init call and the mapping upload of an Android application. */
 function AndroidInstall({
+	ingestion,
 	application,
 	publicKey,
 	keyKnown,
 }: AndroidInstallProps): JSX.Element {
-	const endpoint = sdkEndpoint();
+	const endpoint = ingestion.status === 'ready' ? ingestion.endpoint : '';
 	const init = useMemo(
 		() =>
 			buildAndroidInitSnippet({
@@ -43,7 +47,7 @@ function AndroidInstall({
 		[application, publicKey, endpoint],
 	);
 	const mapping = mappingGradleSnippet({
-		url: endpoint,
+		url: managementEndpoint(),
 		applicationId: application.id,
 		release: '',
 	});
@@ -79,11 +83,17 @@ function AndroidInstall({
 			<span className={HINT}>
 				Then start it in <span className={MONO}>Application.onCreate</span>:
 			</span>
-			<SnippetBlock
-				code={init}
-				label="Copy snippet"
-				testId="rum-install-snippet"
-			/>
+			<IngestionGate state={ingestion}>
+				<SnippetBlock
+					code={init}
+					label="Copy snippet"
+					testId="rum-install-snippet"
+				/>
+			</IngestionGate>
+			<span className={HINT}>
+				Use HTTPS with a certificate trusted by the Android device; keep certificate
+				and hostname verification enabled.
+			</span>
 			{!keyKnown && (
 				<span className={HINT}>
 					Keys are stored hashed: replace <span className={MONO}>{publicKey}</span>{' '}

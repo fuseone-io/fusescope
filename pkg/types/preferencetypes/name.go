@@ -25,6 +25,7 @@ var (
 	NameSpanPercentileResourceAttributes        = Name{valuer.NewString("span_percentile_resource_attributes")}
 	NameLogDetailsPinnedAttributes              = Name{valuer.NewString("log_details_pinned_attributes")}
 	NameIngestionURL                            = Name{valuer.NewString("ingestion_url")}
+	NameRUMIngestionURL                         = Name{valuer.NewString("rum_ingestion_url")}
 )
 
 type Name struct{ valuer.String }
@@ -49,6 +50,7 @@ func NewName(name string) (Name, error) {
 			NameSpanPercentileResourceAttributes.StringValue(),
 			NameLogDetailsPinnedAttributes.StringValue(),
 			NameIngestionURL.StringValue(),
+			NameRUMIngestionURL.StringValue(),
 		},
 		name,
 	)

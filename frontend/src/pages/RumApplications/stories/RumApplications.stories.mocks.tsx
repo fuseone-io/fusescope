@@ -4,6 +4,7 @@
  */
 
 import { rest } from 'msw';
+import { RumtypesPlatformDTO } from 'api/generated/services/fuseScope.schemas';
 
 import {
 	choiceControl,
@@ -11,6 +12,11 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import {
+	RUM_COLLECTOR_STATES,
+	rumIngestion,
+} from '@/storybook/msw/__story_mockdata__/rumIngestion';
+import type { RumCollectorState } from '@/storybook/msw/__story_mockdata__/rumIngestion';
 import {
 	RUM_APPLICATIONS,
 	rumApplication,
@@ -35,6 +41,13 @@ const ok = (data: unknown): Record<string, unknown> => ({
 
 export const rumApplicationsMocks = defineStoryMocks({
 	controls: {
+		collectorEndpoint: choiceControl<RumCollectorState>('Collector URL', {
+			group: 'Frontend · setup',
+			description:
+				'Configured SDK ingest URL, missing configuration, loading or failed settings request.',
+			value: 'configured',
+			options: [...RUM_COLLECTOR_STATES],
+		}),
 		applications: countControl('Applications', {
 			group: LIST,
 			description:
@@ -61,69 +74,94 @@ export const rumApplicationsMocks = defineStoryMocks({
 			value: false,
 		}),
 	},
-	handlers: (values, response) => [
-		rest.get(
-			APPS,
-			response.json(() => ok(RUM_APPLICATIONS.slice(0, values.applications))),
-		),
-		rest.post(
-			APPS,
-			response.json(() =>
-				ok({
-					...rumApplication({
+	handlers: (values, response) => {
+		let createdApplication = rumApplication({
+			id: 'app-new',
+			name: 'web-shop-next',
+			firstSeenAt: null,
+		});
+		return [
+			rest.get('http://localhost/api/v1/onboarding/ingestion', (_req, res, ctx) =>
+				values.collectorEndpoint === 'error'
+					? res(ctx.status(503))
+					: res(
+							ctx.delay(values.collectorEndpoint === 'loading' ? 'infinite' : 0),
+							ctx.json(ok(rumIngestion(values.collectorEndpoint !== 'unconfigured'))),
+						),
+			),
+			rest.get(
+				APPS,
+				response.json(() => ok(RUM_APPLICATIONS.slice(0, values.applications))),
+			),
+			rest.post(
+				APPS,
+				response.json(async (req) => {
+					const body: unknown = await req.json();
+					const android =
+						typeof body === 'object' &&
+						body !== null &&
+						'platform' in body &&
+						body.platform === 'android';
+					createdApplication = rumApplication({
 						id: 'app-new',
 						name: 'web-shop-next',
 						firstSeenAt: null,
-					}),
-					key: { ...rumApplicationKeys(false)[0], ...NEW_KEY, key: NEW_KEY_VALUE },
+						platform: android ? RumtypesPlatformDTO.android : RumtypesPlatformDTO.web,
+					});
+					return ok({
+						...createdApplication,
+						key: { ...rumApplicationKeys(false)[0], ...NEW_KEY, key: NEW_KEY_VALUE },
+					});
 				}),
 			),
-		),
-		rest.get(`${APPS}/:id/status`, (_req, res, ctx) =>
-			res(ctx.json(ok(rumApplicationStatus(values.setupStatus === 'receiving')))),
-		),
-		rest.get(`${APPS}/:id/keys`, (req, res, ctx) =>
-			res(
-				ctx.json(
-					ok(
-						req.params.id === 'app-new'
-							? [{ ...rumApplicationKeys(false)[0], ...NEW_KEY }]
-							: rumApplicationKeys(values.rotating),
+			rest.get(`${APPS}/:id/status`, (_req, res, ctx) =>
+				res(ctx.json(ok(rumApplicationStatus(values.setupStatus === 'receiving')))),
+			),
+			rest.get(`${APPS}/:id/keys`, (req, res, ctx) =>
+				res(
+					ctx.json(
+						ok(
+							req.params.id === 'app-new'
+								? [{ ...rumApplicationKeys(false)[0], ...NEW_KEY }]
+								: rumApplicationKeys(values.rotating),
+						),
 					),
 				),
 			),
-		),
-		rest.post(`${APPS}/:id/keys/:keyId/rotate`, (_req, res, ctx) =>
-			res(
-				ctx.status(201),
-				ctx.json(
-					ok({
-						...rumApplicationKeys(false)[0],
-						id: 'key-rotated',
-						last4: '4fgu',
-						key: 'rum_pub_qm2vx3lkt4nrw6ybzq7pd5hej2ca4fgu',
-					}),
-				),
-			),
-		),
-		rest.get(`${APPS}/:id`, (req, res, ctx) =>
-			res(
-				ctx.json(
-					ok(
-						RUM_APPLICATIONS.find((app) => app.id === req.params.id) ??
-							rumApplication({ id: String(req.params.id), name: 'web-shop-next' }),
+			rest.post(`${APPS}/:id/keys/:keyId/rotate`, (_req, res, ctx) =>
+				res(
+					ctx.status(201),
+					ctx.json(
+						ok({
+							...rumApplicationKeys(false)[0],
+							id: 'key-rotated',
+							last4: '4fgu',
+							key: 'rum_pub_qm2vx3lkt4nrw6ybzq7pd5hej2ca4fgu',
+						}),
 					),
 				),
 			),
-		),
-		rest.put(`${APPS}/:id`, async (req, res, ctx) =>
-			res(ctx.json(ok({ ...rumApplication({}), ...(await req.json()) }))),
-		),
-		rest.post(
-			'http://localhost/api/v5/query_range',
-			response.json(async (req) =>
-				rumQueryRangeResponse(await req.json(), !values.telemetry),
+			rest.get(`${APPS}/:id`, (req, res, ctx) =>
+				res(
+					ctx.json(
+						ok(
+							(req.params.id === 'app-new'
+								? createdApplication
+								: RUM_APPLICATIONS.find((app) => app.id === req.params.id)) ??
+								rumApplication({ id: String(req.params.id), name: 'web-shop-next' }),
+						),
+					),
+				),
 			),
-		),
-	],
+			rest.put(`${APPS}/:id`, async (req, res, ctx) =>
+				res(ctx.json(ok({ ...rumApplication({}), ...(await req.json()) }))),
+			),
+			rest.post(
+				'http://localhost/api/v5/query_range',
+				response.json(async (req) =>
+					rumQueryRangeResponse(await req.json(), !values.telemetry),
+				),
+			),
+		];
+	},
 });

@@ -107,3 +107,36 @@ def test_viewer_reads_but_cannot_update_ingestion(
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
 
     assert get_ingestion(signoz, admin_token).json()["data"]["organizationUrl"] is None
+
+
+def test_rum_url_is_independent_and_preserved_by_older_clients(
+    signoz: types.SigNoz,
+    signoz_derived: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    configured = get_ingestion(signoz, token).json()["data"]
+    assert configured["rumEndpoint"] == "https://rum.fusescope.test"
+    assert configured["rumSource"] == "config"
+    assert configured["rumDerived"] is False
+    derived = get_ingestion(signoz_derived, token).json()["data"]
+    assert derived["rumEndpoint"] == ""
+    assert derived["rumDerived"] is True
+    try:
+        response = update_ingestion(signoz, token, "https://otlp.separate.test", rum_url="https://mobile.test/prefix/rum/v1/")
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["rumEndpoint"] == "https://mobile.test/prefix"
+        assert response.json()["data"]["otlpHttpEndpoint"] == "https://otlp.separate.test"
+        assert get_ingestion(signoz_derived, token).json()["data"]["rumSource"] == "organization"
+        response = update_ingestion(signoz, token, "https://otlp.changed.test")
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["rumEndpoint"] == "https://mobile.test/prefix"
+        response = update_ingestion(signoz, token, "https://must-not-persist.test", rum_url="https://user:secret@rum.test")
+        assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+        assert get_ingestion(signoz, token).json()["data"]["otlpHttpEndpoint"] == "https://otlp.changed.test"
+    finally:
+        response = update_ingestion(signoz, token, "", rum_url="")
+        assert response.status_code == HTTPStatus.OK, response.text
+    assert get_ingestion(signoz, token).json()["data"]["rumSource"] == "config"
+    assert get_ingestion(signoz_derived, token).json()["data"]["rumDerived"] is True

@@ -29,6 +29,7 @@ def signoz_onboarding(  # pylint: disable=too-many-arguments,too-many-positional
         cache_key="signoz_onboarding",
         env_overrides=lambda: {
             "SIGNOZ_GLOBAL_INGESTION__URL": "https://ingest.fusescope.test",
+            "SIGNOZ_GLOBAL_RUM__INGESTION__URL": "https://rum.fusescope.test/rum/v1/",
             "SIGNOZ_ONBOARDING_COLLECTOR__ENDPOINT": otel_collector.container_configs["4318"].base(),
         },
     )

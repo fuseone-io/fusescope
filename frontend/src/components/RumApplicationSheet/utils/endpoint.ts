@@ -1,7 +1,7 @@
 import { ENVIRONMENT } from 'constants/env';
 import { getBaseUrl } from 'utils/basePath';
 
-/** The FuseScope base URL the SDK sends to: the API's, else this UI's. */
-export function sdkEndpoint(): string {
+/** API and self-hosted bundle URL; ingest uses the configured collector URL. */
+export function managementEndpoint(): string {
 	return (ENVIRONMENT.baseURL || getBaseUrl()).replace(/\/+$/, '');
 }

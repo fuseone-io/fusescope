@@ -7,6 +7,7 @@ import { Button } from 'components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
 import { RevealedKey } from '../hooks/useApplicationSheet';
+import { useRumIngestion } from '../hooks/useRumIngestion';
 import AndroidInstall from './AndroidInstall';
 import KeyOnceBanner from './KeyOnceBanner';
 import SetupStatus from './SetupStatus';
@@ -33,6 +34,7 @@ function InstallTab({
 	onBack,
 	onDone,
 }: InstallTabProps): JSX.Element {
+	const ingestion = useRumIngestion();
 	return (
 		<div
 			className="tw:flex tw:min-h-0 tw:flex-1 tw:flex-col"
@@ -47,12 +49,14 @@ function InstallTab({
 				)}
 				{application.platform === RumtypesPlatformDTO.android ? (
 					<AndroidInstall
+						ingestion={ingestion}
 						application={application}
 						publicKey={publicKey}
 						keyKnown={Boolean(revealed)}
 					/>
 				) : (
 					<WebInstall
+						ingestion={ingestion}
 						application={application}
 						publicKey={publicKey}
 						keyKnown={Boolean(revealed)}

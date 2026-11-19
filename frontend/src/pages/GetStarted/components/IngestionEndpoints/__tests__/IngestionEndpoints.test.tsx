@@ -83,6 +83,33 @@ describe('IngestionEndpoints', () => {
 		expect(screen.queryByTestId('ingestion-edit')).not.toBeInTheDocument();
 	});
 
+	it('sets a separate RUM URL without copying the OTLP endpoint', async () => {
+		const bodies: unknown[] = [];
+		serve(
+			ingestion({ rumEndpoint: 'https://rum.example.com', rumDerived: false }),
+		);
+		server.use(
+			rest.put(INGESTION_URL, async (req, res, ctx) => {
+				bodies.push(await req.json());
+				return res(ctx.json(ingestion()));
+			}),
+		);
+		const user = userEvent.setup();
+		render(<IngestionEndpoints />, undefined, { role: 'ADMIN' });
+		await user.click(await screen.findByTestId('rum-ingestion-edit'));
+		await user.clear(screen.getByTestId('rum-ingestion-url-input'));
+		await user.type(
+			screen.getByTestId('rum-ingestion-url-input'),
+			'https://mobile.example.net/rum/v1',
+		);
+		await user.click(screen.getByTestId('rum-ingestion-url-save'));
+		await waitFor(() =>
+			expect(bodies).toStrictEqual([
+				{ ingestionUrl: '', rumUrl: 'https://mobile.example.net/rum/v1' },
+			]),
+		);
+	});
+
 	it('lets an admin set the ingestion URL inline', async () => {
 		const bodies: unknown[] = [];
 		serve(ingestion());

@@ -66,6 +66,19 @@ const ok = (data: unknown) => ({ status: 'success', data });
 
 function mockServer(created: { body?: unknown }, app: object = APP): void {
 	server.use(
+		rest.get('http://localhost/api/v1/onboarding/ingestion', (_req, res, ctx) =>
+			res(
+				ctx.json(
+					ok({
+						otlpHttpEndpoint: 'https://otlp.example.com',
+						rumEndpoint: 'https://ingest.example.com/rum/v1/',
+						rumDerived: false,
+						source: 'config',
+						derived: false,
+					}),
+				),
+			),
+		),
 		rest.post(APPS_URL, async (req, res, ctx) => {
 			created.body = await req.json();
 			return res(
@@ -113,6 +126,9 @@ describe('RumApplicationSheet', () => {
 			allowedOrigins: ['https://shop.example.com'],
 			sampleRate: 1,
 		});
+		await expect(
+			screen.findByTestId('rum-install-snippet'),
+		).resolves.toHaveTextContent("endpoint: 'https://ingest.example.com'");
 		expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
 			"publicKey: 'rum_pub_h3vq7zk2mx5cn4lw6rtp2jdy5beart4w'",
 		);
@@ -149,7 +165,7 @@ describe('RumApplicationSheet', () => {
 		await expect(
 			screen.findByTestId('rum-install-gradle'),
 		).resolves.toHaveTextContent(
-			'implementation("io.fuseone.fusescope:android:0.1.0-beta.2")',
+			'implementation("io.fuseone.fusescope:android:0.1.0-beta.3")',
 		);
 		expect(created.body).toMatchObject({
 			name: 'shop-android',
@@ -157,8 +173,16 @@ describe('RumApplicationSheet', () => {
 			allowedOrigins: [],
 			allowedPackageNames: ['com.example.shop'],
 		});
-		expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
+		await expect(
+			screen.findByTestId('rum-install-snippet'),
+		).resolves.toHaveTextContent(
 			'key = "rum_pub_h3vq7zk2mx5cn4lw6rtp2jdy5beart4w"',
+		);
+		expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
+			'endpoint = "https://ingest.example.com"',
+		);
+		expect(screen.getByTestId('rum-install-mapping')).toHaveTextContent(
+			/endpoint.set\("http:\/\/localhost[^"]*"\)/,
 		);
 		expect(screen.getByTestId('rum-install-mapping')).toHaveTextContent(
 			'applicationId.set("app-1")',
@@ -184,6 +208,7 @@ describe('RumApplicationSheet', () => {
 		expect(snippet).toHaveTextContent(
 			'integrity="sha384-W9beoX1Dd3K5Qeu+f2RfXYn3RF/Z5NSY/TUye/4XmIr7RUnT23UwZSqyiY3UWDAs"',
 		);
+		expect(snippet).toHaveTextContent("endpoint: 'https://ingest.example.com'");
 		expect(snippet).toHaveTextContent('crossorigin="anonymous"');
 		expect(snippet).toHaveTextContent("FuseScope.init({ applicationId: 'app-1',");
 		expect(screen.getByTestId('rum-install-script-copy')).toBeInTheDocument();
@@ -204,6 +229,149 @@ describe('RumApplicationSheet', () => {
 		await user.click(screen.getByTestId('rum-install-method-npm'));
 		expect(screen.getByTestId('rum-install-command')).toBeInTheDocument();
 		expect(screen.queryByTestId('rum-install-script')).not.toBeInTheDocument();
+	});
+
+	it('does not advertise a guessed OTLP port as a RUM endpoint', async () => {
+		mockServer({});
+		server.use(
+			rest.get('http://localhost/api/v1/onboarding/ingestion', (_req, res, ctx) =>
+				res(
+					ctx.json(
+						ok({
+							otlpHttpEndpoint: 'http://localhost:4318',
+							rumEndpoint: '',
+							rumDerived: true,
+							source: 'derived',
+							derived: true,
+						}),
+					),
+				),
+			),
+		);
+		render(
+			<RumApplicationSheet
+				target={{ mode: 'edit', applicationId: 'app-1' }}
+				initialTab="install"
+				onClose={jest.fn()}
+			/>,
+		);
+		await expect(
+			screen.findByTestId('rum-ingestion-derived'),
+		).resolves.toBeInTheDocument();
+		expect(screen.getByTestId('rum-install-snippet')).toHaveTextContent(
+			"endpoint: 'http://localhost'",
+		);
+		expect(screen.getByTestId('rum-install-snippet')).not.toHaveTextContent(
+			'4318',
+		);
+	});
+
+	it('does not fall back to the backend when ingestion settings fail', async () => {
+		mockServer({});
+		server.use(
+			rest.get('http://localhost/api/v1/onboarding/ingestion', (_req, res, ctx) =>
+				res(ctx.status(503)),
+			),
+		);
+		render(
+			<RumApplicationSheet
+				target={{ mode: 'edit', applicationId: 'app-1' }}
+				initialTab="install"
+				onClose={jest.fn()}
+			/>,
+		);
+		await expect(
+			screen.findByTestId('rum-ingestion-error'),
+		).resolves.toBeInTheDocument();
+		expect(screen.queryByTestId('rum-install-snippet')).not.toBeInTheDocument();
+		expect(screen.getByTestId('rum-install-command')).toBeInTheDocument();
+		await userEvent
+			.setup({ pointerEventsCheck: 0 })
+			.click(screen.getByTestId('rum-install-method-script'));
+		expect(screen.getByTestId('rum-install-script')).toHaveTextContent(
+			'/rum/v1/sdk/browser/',
+		);
+		expect(screen.getByTestId('rum-install-script')).not.toHaveTextContent(
+			'FuseScope.init',
+		);
+	});
+
+	it.each(['loading', 'error'])(
+		'keeps Android dependencies and R8 mappings visible during %s',
+		async (state) => {
+			mockServer(
+				{},
+				{
+					...APP,
+					platform: 'android',
+					allowedOrigins: [],
+					allowedPackageNames: ['com.example.app'],
+				},
+			);
+			server.use(
+				rest.get('http://localhost/api/v1/onboarding/ingestion', (_req, res, ctx) =>
+					state === 'loading'
+						? res(
+								ctx.delay(500),
+								ctx.json(
+									ok({ rumEndpoint: 'https://ready.example.com', rumDerived: false }),
+								),
+							)
+						: res(ctx.status(503)),
+				),
+			);
+			render(
+				<RumApplicationSheet
+					target={{ mode: 'edit', applicationId: 'app-1' }}
+					initialTab="install"
+					onClose={jest.fn()}
+				/>,
+			);
+			await screen.findByTestId(`rum-ingestion-${state}`);
+			expect(screen.getByTestId('rum-install-mapping')).toHaveTextContent(
+				'endpoint.set("http://localhost',
+			);
+			expect(screen.getByTestId('rum-install-gradle')).toBeInTheDocument();
+			expect(screen.queryByTestId('rum-install-snippet')).not.toBeInTheDocument();
+			if (state === 'loading') {
+				await screen.findByTestId('rum-install-snippet');
+			}
+		},
+	);
+
+	it('retries loading collector settings without using the backend as a fallback', async () => {
+		mockServer({});
+		let available = false;
+		server.use(
+			rest.get('http://localhost/api/v1/onboarding/ingestion', (_req, res, ctx) =>
+				available
+					? res(
+							ctx.json(
+								ok({
+									otlpHttpEndpoint: 'https://other-otlp.example.com',
+									rumEndpoint: 'https://recovered.example.com',
+									rumDerived: false,
+									derived: false,
+								}),
+							),
+						)
+					: res(ctx.status(503)),
+			),
+		);
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(
+			<RumApplicationSheet
+				target={{ mode: 'edit', applicationId: 'app-1' }}
+				initialTab="install"
+				onClose={jest.fn()}
+			/>,
+		);
+		await screen.findByTestId('rum-ingestion-error');
+		available = true;
+		await user.click(screen.getByTestId('rum-ingestion-retry'));
+		await expect(
+			screen.findByTestId('rum-install-snippet'),
+		).resolves.toHaveTextContent("endpoint: 'https://recovered.example.com'");
 	});
 
 	it('offers no origin to add for an Android application', async () => {
