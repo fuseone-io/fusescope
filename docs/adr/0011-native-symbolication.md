@@ -1,7 +1,7 @@
 # 0011 · Shared native symbolication
 
 - Status: **Proposed** (2026-11-05).
-- Issues: [RUM roadmap #182](https://github.com/fuseone-io/fusescope/issues/182), [Android native #188](https://github.com/fuseone-io/fusescope/issues/188), [iOS dSYM #191](https://github.com/fuseone-io/fusescope/issues/191).
+- Issues: [RUM roadmap #182](https://github.com/fuseone-io/fusescope/issues/182), [Android symbolication #441](https://github.com/fuseone-io/fusescope/issues/441), [iOS dSYM #191](https://github.com/fuseone-io/fusescope/issues/191). Android level-1 capture was delivered under [#188](https://github.com/fuseone-io/fusescope/issues/188).
 - Deciders: FuseOne maintainers.
 - Amends on acceptance: [ADR 0003](0003-real-user-monitoring.md), decision 6 and Android phase-3 decisions.
 - Related: [ADR 0010](0010-single-ingress.md), proposed [ADR 0008 / PR #214](https://github.com/fuseone-io/fusescope/pull/214), [artifact ingress #234](https://github.com/fuseone-io/fusescope/issues/234), [profiling #215](https://github.com/fuseone-io/fusescope/issues/215).
