@@ -1,6 +1,6 @@
 # 0003 · Real User Monitoring (RUM)
 
-- Status: accepted (2026-10-21; open decisions resolved as recommended); amended 2026-10-21 with the phase 0 spike, reproducible from [`0003-experiments/`](0003-experiments/); decisions 3, 4 and 6 amended by [ADR 0010](0010-single-ingress.md) (accepted)
+- Status: accepted (2026-10-21; open decisions resolved as recommended); amended 2026-10-21 with the phase 0 spike, reproducible from [`0003-experiments/`](0003-experiments/); decisions 3, 4 and 6 amended by [ADR 0010](0010-single-ingress.md) (accepted); decision 6 and Android phase-3 decisions amended by [ADR 0011](0011-native-symbolication.md) (accepted 2026-11-19)
 - Deciders: FuseOne maintainers. SDKs, ingestion, auth and storage span several PRs and repos.
 
 ## Context
@@ -128,6 +128,8 @@ This is a new auth model, separate from user sessions, API keys and service acco
 
 > Amended by [ADR 0010](0010-single-ingress.md): CI uploads go through the collector's `artifactreceiver` with a secret key limited to `artifacts`, which streams them to the backend's internal intake. Storage and read-time symbolication stay in the backend.
 
+> Amended by [ADR 0011](0011-native-symbolication.md): Android native and iOS symbols share organization-scoped artifact candidates, upload-time parsing/indexing and bounded symbol lookup. Digest/context selection, parser isolation and shared deletion safeguards follow that decision; RUM symbol resolution is limited to error detail views.
+
 - Customers upload artifacts per application and release: browser source maps, Android R8/ProGuard mappings, iOS dSYMs.
 - Artifacts are uploaded through an API or CLI, and through bundler and Gradle plugins later.
 - Stack traces are symbolicated **at read time** in the backend. Stored telemetry stays raw.
@@ -178,6 +180,8 @@ Each phase ships behind a feature flag and ends with docs and an e2e test.
 ## Phase 3 decisions (Android)
 
 Settled 2026-10-25, while building phase 3.
+
+> Amended by [ADR 0011](0011-native-symbolication.md) (2026-11-19): level-2 native symbol upload and ELF/DWARF resolution are approved as shared foundations with iOS dSYM and profiling. Level-1 capture/grouping remains unchanged; implementation and integrated acceptance are tracked in [#441](https://github.com/fuseone-io/fusescope/issues/441) and [#191](https://github.com/fuseone-io/fusescope/issues/191).
 
 - **One repo per native platform:** `fuseone-io/fusescope-sdk-android` now, `fusescope-sdk-ios` for phase 4. JS stays in the `fusescope-sdk` monorepo.
 - **Java and Kotlin first.** Uncaught exceptions, ANRs and app start ship in phase 3. The native-crash follow-up (#188, level 1) recovers `ApplicationExitInfo` on the next consented launch: exit metadata on API 30+, and bounded protobuf tombstone code frames on API 31+. It preserves the original session, release and sampling decision, exports source `native`, and groups by application library, relative program counter and build ID. No in-process signal handler is installed. Memory dumps, registers and log buffers are excluded. Native frames do not use R8 mappings; symbol-file uploads and ELF/DWARF symbolication remain deferred to level 2.
