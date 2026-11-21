@@ -1,0 +1,257 @@
+{
+  "toolchain": [
+    "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "GNU objcopy (GNU Binutils for Ubuntu) 2.42",
+    "go version go1.26.10 linux/amd64",
+    "Linux 7.2.6-76070206-generic x86_64 GNU/Linux"
+  ],
+  "limits": {
+    "per_worker_cpu_seconds": 5,
+    "per_worker_virtual_bytes": 4294967296,
+    "batch_wall_seconds": 10,
+    "gomemlimit": "256MiB",
+    "rss_sampling_ms": 2
+  },
+  "fixtures": [
+    {
+      "template_probe": {
+        "linkage_name": "_Z12native_extraILi42EEii",
+        "dwarf_name": "native_extra<42>",
+        "file": "large-native.cpp",
+        "line": 1
+      },
+      "fixture": "cpp-o0.so",
+      "sha256": "641675080f8e891969372d8e687e17bc66b0e434ad398c87c36055923abec784",
+      "file_bytes": 3575912,
+      "uncompressed_file_bytes": 3575912,
+      "whole_file_expansion_ratio": 1.0,
+      "concurrency": [
+        {
+          "width": 1,
+          "rounds": 5,
+          "wall_ns_median": 54446835,
+          "sampled_peak_aggregate_rss_kib": 25308,
+          "inspect_ns_median": 40573764,
+          "allocated_bytes_median": 41292456,
+          "index_json_bytes": 3329167,
+          "functions": 10001,
+          "line_ranges": 40003,
+          "identity": "cd4f82218f3d99814169d4ab0ebd059d1bc25deb",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        },
+        {
+          "width": 2,
+          "rounds": 5,
+          "wall_ns_median": 56515231,
+          "sampled_peak_aggregate_rss_kib": 47552,
+          "inspect_ns_median": 41516134,
+          "allocated_bytes_median": 41292312,
+          "index_json_bytes": 3329167,
+          "functions": 10001,
+          "line_ranges": 40003,
+          "identity": "cd4f82218f3d99814169d4ab0ebd059d1bc25deb",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        },
+        {
+          "width": 4,
+          "rounds": 5,
+          "wall_ns_median": 54799169,
+          "sampled_peak_aggregate_rss_kib": 86428,
+          "inspect_ns_median": 38923166,
+          "allocated_bytes_median": 41292272,
+          "index_json_bytes": 3329167,
+          "functions": 10001,
+          "line_ranges": 40003,
+          "identity": "cd4f82218f3d99814169d4ab0ebd059d1bc25deb",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "template_probe": {
+        "linkage_name": "_Z12native_extraILi42EEii",
+        "dwarf_name": "native_extra<42>",
+        "file": "large-native.cpp",
+        "line": 1
+      },
+      "fixture": "cpp-o0-zlib.so",
+      "sha256": "3209839b0b9e1fffa67b4cf42f664e256f15c84f38f7654dda1160615df3b3e6",
+      "file_bytes": 2139280,
+      "uncompressed_file_bytes": 3575912,
+      "whole_file_expansion_ratio": 1.6715493063086646,
+      "concurrency": [
+        {
+          "width": 1,
+          "rounds": 5,
+          "wall_ns_median": 52053263,
+          "sampled_peak_aggregate_rss_kib": 24912,
+          "inspect_ns_median": 42284174,
+          "allocated_bytes_median": 41572088,
+          "index_json_bytes": 3329167,
+          "functions": 10001,
+          "line_ranges": 40003,
+          "identity": "cd4f82218f3d99814169d4ab0ebd059d1bc25deb",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        },
+        {
+          "width": 2,
+          "rounds": 5,
+          "wall_ns_median": 50779838,
+          "sampled_peak_aggregate_rss_kib": 43784,
+          "inspect_ns_median": 39817271,
+          "allocated_bytes_median": 41572528,
+          "index_json_bytes": 3329167,
+          "functions": 10001,
+          "line_ranges": 40003,
+          "identity": "cd4f82218f3d99814169d4ab0ebd059d1bc25deb",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        },
+        {
+          "width": 4,
+          "rounds": 5,
+          "wall_ns_median": 59016924,
+          "sampled_peak_aggregate_rss_kib": 88704,
+          "inspect_ns_median": 44815525,
+          "allocated_bytes_median": 41572728,
+          "index_json_bytes": 3329167,
+          "functions": 10001,
+          "line_ranges": 40003,
+          "identity": "cd4f82218f3d99814169d4ab0ebd059d1bc25deb",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "template_probe": {
+        "linkage_name": "_Z12native_extraILi42EEii",
+        "dwarf_name": "native_extra<42>",
+        "file": "large-native.cpp",
+        "line": 1
+      },
+      "fixture": "cpp-o2.so",
+      "sha256": "34017158d78eabf56880051e0f1848e6e9b78810c5b1f59e2609f83aec0512ff",
+      "file_bytes": 3501080,
+      "uncompressed_file_bytes": 3501080,
+      "whole_file_expansion_ratio": 1.0,
+      "concurrency": [
+        {
+          "width": 1,
+          "rounds": 5,
+          "wall_ns_median": 42671005,
+          "sampled_peak_aggregate_rss_kib": 22532,
+          "inspect_ns_median": 31702942,
+          "allocated_bytes_median": 39214672,
+          "index_json_bytes": 2669167,
+          "functions": 10001,
+          "line_ranges": 30003,
+          "identity": "cb8ffae294bee346cd80f04baf9cfb47ea8447ab",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        },
+        {
+          "width": 2,
+          "rounds": 5,
+          "wall_ns_median": 44608092,
+          "sampled_peak_aggregate_rss_kib": 40112,
+          "inspect_ns_median": 31354493,
+          "allocated_bytes_median": 39214816,
+          "index_json_bytes": 2669167,
+          "functions": 10001,
+          "line_ranges": 30003,
+          "identity": "cb8ffae294bee346cd80f04baf9cfb47ea8447ab",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        },
+        {
+          "width": 4,
+          "rounds": 5,
+          "wall_ns_median": 48650076,
+          "sampled_peak_aggregate_rss_kib": 82900,
+          "inspect_ns_median": 34708958,
+          "allocated_bytes_median": 39215040,
+          "index_json_bytes": 2669167,
+          "functions": 10001,
+          "line_ranges": 30003,
+          "identity": "cb8ffae294bee346cd80f04baf9cfb47ea8447ab",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "template_probe": {
+        "linkage_name": "_Z12native_extraILi42EEii",
+        "dwarf_name": "native_extra<42>",
+        "file": "large-native.cpp",
+        "line": 1
+      },
+      "fixture": "cpp-o2-zlib.so",
+      "sha256": "a73d0b28027f6d7e932de979a63a7816b8144051e04ec1122a10fa46b4805bbf",
+      "file_bytes": 1914328,
+      "uncompressed_file_bytes": 3501080,
+      "whole_file_expansion_ratio": 1.8288819888754697,
+      "concurrency": [
+        {
+          "width": 1,
+          "rounds": 5,
+          "wall_ns_median": 47759704,
+          "sampled_peak_aggregate_rss_kib": 21604,
+          "inspect_ns_median": 38111685,
+          "allocated_bytes_median": 39546968,
+          "index_json_bytes": 2669167,
+          "functions": 10001,
+          "line_ranges": 30003,
+          "identity": "cb8ffae294bee346cd80f04baf9cfb47ea8447ab",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        },
+        {
+          "width": 2,
+          "rounds": 5,
+          "wall_ns_median": 48347125,
+          "sampled_peak_aggregate_rss_kib": 43464,
+          "inspect_ns_median": 39289354,
+          "allocated_bytes_median": 39552000,
+          "index_json_bytes": 2669167,
+          "functions": 10001,
+          "line_ranges": 30003,
+          "identity": "cb8ffae294bee346cd80f04baf9cfb47ea8447ab",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        },
+        {
+          "width": 4,
+          "rounds": 5,
+          "wall_ns_median": 55085489,
+          "sampled_peak_aggregate_rss_kib": 79936,
+          "inspect_ns_median": 41299976,
+          "allocated_bytes_median": 39552176,
+          "index_json_bytes": 2669167,
+          "functions": 10001,
+          "line_ranges": 30003,
+          "identity": "cb8ffae294bee346cd80f04baf9cfb47ea8447ab",
+          "function": "native_leaf",
+          "file": "large-native.cpp",
+          "line": 10
+        }
+      ]
+    }
+  ]
+}

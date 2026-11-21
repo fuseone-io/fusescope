@@ -120,6 +120,52 @@ The dedicated `native-symbol-spike` workflow runs race tests and this bounded
 fuzz smoke with the repository's existing authorization gate. CI does not
 assert local performance timings.
 
+## C++ compression and concurrent-worker extension
+
+The owned [C++ source](testdata/native.cpp) generates 10,000 explicit template
+instantiations plus `native_leaf`, built with GCC 13.3.0 at `-O0`/`-O2`, DWARF 5,
+with plain and zlib variants. Each artifact is inspected in five batches at each
+width (1, 2, 4 independent processes), for 140 successful worker inspections,
+plus four template-name probes. Index dimensions, function/file/line and build ID
+must agree across workers and compressed/uncompressed variants of each build.
+
+```sh
+bash docs/adr/0011-experiments/generate-cpp.sh /tmp/native-symbol-cpp
+python3 docs/adr/0011-experiments/measure-workers.py /tmp/native-symbol-cpp > /tmp/native-symbol-cpp/results.json
+```
+
+| Fixture | File bytes | JSON index bytes | Allocated MiB, width 1 | Sampled aggregate RSS MiB, widths 1 / 2 / 4 |
+|---|---:|---:|---:|---:|
+| cpp-o0.so | 3,575,912 | 3,329,167 | 39.38 | 24.71 / 46.44 / 84.40 |
+| cpp-o0-zlib.so | 2,139,280 | 3,329,167 | 39.65 | 24.33 / 42.76 / 86.62 |
+| cpp-o2.so | 3,501,080 | 2,669,167 | 37.40 | 22.00 / 39.17 / 80.96 |
+| cpp-o2-zlib.so | 1,914,328 | 2,669,167 | 37.71 | 21.10 / 42.45 / 78.06 |
+
+Exact hashes, toolchain, timings, counts and template probes are recorded in
+[cpp-results.json](cpp-results.json). All builds have 10,001 indexed functions;
+`-O0` has 40,003 line ranges and `-O2` has 30,003. The whole-file expansion ratios
+for zlib are 1.67x (`-O0`) and 1.83x (`-O2`); these include ELF metadata/alignment,
+so they are not exact decoded-debug-section ratios or an expansion ceiling.
+
+RSS is sampled from Linux `/proc/<pid>/status` every approximately 2 ms and
+summed across the currently running parser processes. The table is an observed
+aggregate maximum, which can miss short peaks; it is not a sum of independent
+per-process maxima or a hard RSS limit. Batches launch up to the requested width
+without a synchronization barrier. Each worker retains the existing 5-second
+CPU / 4-GiB virtual-address-space limits and soft `GOMEMLIMIT=256MiB`; a batch
+has a 10-second wall deadline and cleans up remaining workers on any failure.
+Wall times include process launch, reading and sampling overhead. Performance
+numbers are evidence from this host, not CI thresholds or production quotas.
+
+The template probe resolves `_Z12native_extraILi42EEii` to the existing DWARF
+name `native_extra<42>` and a source line in both optimization modes. This does
+not implement general C++ demangling: the index still reads `DW_AT_name`.
+`native_leaf` includes an always-inline call at `-O2`, but this experiment only
+checks the outer function and a line; it does not establish inline-stack
+fidelity, abstract-origin resolution or Swift name support. No fixture binary
+is executed. The authorized CI job reproduces the measurements and uploads
+JSON/toolchain evidence; it does not assert host-specific timing or RSS values.
+
 ## Supported evidence and remaining P1 work
 
 - Tested: little-endian ELF64 x86_64 and ELF32 x86, DWARF 4/5, standard ELF zlib compression,
@@ -134,9 +180,9 @@ assert local performance timings.
   UUID matching, multi-slice extraction, ASLR and real iOS crash acceptance
   remain required. Linux fixtures do not close F/G.
 - Before closing P1 or setting production admission, measure representative
-  large Android/NDK C++ and Xcode dSYM artifacts, expansion ratios, concurrent
-  workers and inline-heavy inputs; choose a production index/name strategy and
-  explicit supported-format matrix. Retain rejection/fuzz tests when moving
+  large Android/NDK C++ and Xcode dSYM artifacts and inline-heavy inputs;
+  extend these host-GCC compression/concurrency measurements to those toolchains;
+  choose a production index/name strategy and explicit supported-format matrix. Retain rejection/fuzz tests when moving
   supported adapters into the shared implementation.
 - Candidate digest/context verification, stripped-binary validation,
   organization isolation, quotas, admin deletion warnings, index lifecycle,

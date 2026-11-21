@@ -60,3 +60,15 @@ jobs:
           GOMEMLIMIT=256MiB GOMAXPROCS=2 timeout -s KILL 30s prlimit --as=8589934592 --cpu=20 -- \
             "$RUNNER_TEMP/native-symbol-test" -test.run='^$' -test.fuzz=FuzzPreflight \
             -test.fuzztime=10s -test.parallel=2 -test.fuzzcachedir="$RUNNER_TEMP/native-symbol-fuzz"
+      - name: C++ compression and isolated concurrent workers
+        run: |
+          bash docs/adr/0011-experiments/generate-cpp.sh "$RUNNER_TEMP/native-symbol-cpp"
+          python3 docs/adr/0011-experiments/measure-workers.py "$RUNNER_TEMP/native-symbol-cpp" > "$RUNNER_TEMP/native-symbol-cpp/results.json"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-symbol-cpp-measurements
+          path: |
+            ${{ runner.temp }}/native-symbol-cpp/results.json
+            ${{ runner.temp }}/native-symbol-cpp/toolchain.txt
+          if-no-files-found: error
+          retention-days: 14
