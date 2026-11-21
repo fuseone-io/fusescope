@@ -1,0 +1,74 @@
+name: native-symbol-spike
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - docs/adr/0011-experiments/**
+      - .github/workflows/native-symbol-spike.yaml
+  pull_request_target:
+    types: [labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authorize:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+      issues: read
+      pull-requests: read
+    outputs:
+      run: ${{ steps.authorize.outputs.run }}
+      sha: ${{ steps.authorize.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.head.sha || github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
+      - id: authorize
+        uses: ./.github/actions/authorize
+        with:
+          relevant: true
+          triggers: safe-to-test
+          untrusted-requires: safe-to-test
+  fixtures-and-fuzz:
+    needs: authorize
+    if: needs.authorize.outputs.run == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.authorize.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Owned fixtures and address regressions
+        run: |
+          command -v gcc
+          command -v objcopy
+          go test -race ./docs/adr/0011-experiments -count=1
+      - name: Bounded fuzz smoke
+        run: |
+          go test -c -fuzz=FuzzPreflight -o "$RUNNER_TEMP/native-symbol-test" ./docs/adr/0011-experiments
+          cd docs/adr/0011-experiments
+          GOMEMLIMIT=256MiB GOMAXPROCS=2 timeout -s KILL 30s prlimit --as=8589934592 --cpu=20 -- \
+            "$RUNNER_TEMP/native-symbol-test" -test.run='^$' -test.fuzz=FuzzPreflight \
+            -test.fuzztime=10s -test.parallel=2 -test.fuzzcachedir="$RUNNER_TEMP/native-symbol-fuzz"
+      - name: C++ compression and isolated concurrent workers
+        run: |
+          bash docs/adr/0011-experiments/generate-cpp.sh "$RUNNER_TEMP/native-symbol-cpp"
+          python3 docs/adr/0011-experiments/measure-workers.py "$RUNNER_TEMP/native-symbol-cpp" > "$RUNNER_TEMP/native-symbol-cpp/results.json"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-symbol-cpp-measurements
+          path: |
+            ${{ runner.temp }}/native-symbol-cpp/results.json
+            ${{ runner.temp }}/native-symbol-cpp/toolchain.txt
+          if-no-files-found: error
+          retention-days: 14
