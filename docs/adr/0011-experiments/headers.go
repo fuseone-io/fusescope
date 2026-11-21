@@ -35,44 +35,40 @@ func preflight(data []byte, budget limits) (string, error) {
 	case "\xcf\xfa\xed\xfe":
 		return "macho", checkMachO(data, budget)
 	default:
-		return "", reject("unsupported format: only little-endian ELF64 and thin Mach-O64")
+		return "", reject("unsupported format: only little-endian ELF32/ELF64 and thin Mach-O64")
 	}
 }
 
 func checkELF(data []byte, budget limits) error {
-	if len(data) < 64 || data[4] != 2 || data[5] != 1 {
-		return reject("unsupported or truncated ELF64 header")
+	layout, err := elfLayoutFor(data)
+	if err != nil {
+		return err
 	}
-	order := binary.LittleEndian
 	length := uint64(len(data))
-	shoff, phoff := order.Uint64(data[40:48]), order.Uint64(data[32:40])
-	shnum, phnum := int(order.Uint16(data[60:62])), int(order.Uint16(data[56:58]))
-	if shnum == 0 || shnum > budget.MaxHeaders || phnum > budget.MaxHeaders || order.Uint16(data[58:60]) != 64 || (phnum > 0 && order.Uint16(data[54:56]) != 56) {
+	shoff, phoff := layout.word(data[layout.shoff:]), layout.word(data[layout.phoff:])
+	order := binary.LittleEndian
+	shnum, phnum := int(order.Uint16(data[layout.shnum:])), int(order.Uint16(data[layout.phnum:]))
+	if shnum == 0 || shnum > budget.MaxHeaders || phnum > budget.MaxHeaders || uint64(order.Uint16(data[layout.shnum-2:])) != layout.sectionSize || (phnum > 0 && uint64(order.Uint16(data[layout.phnum-2:])) != layout.programSize) {
 		return reject("unsupported ELF header count/entry size, including extended numbering")
 	}
-	if !within(shoff, uint64(shnum)*64, length) || !within(phoff, uint64(phnum)*56, length) {
+	if !within(shoff, uint64(shnum)*layout.sectionSize, length) || !within(phoff, uint64(phnum)*layout.programSize, length) {
 		return reject("ELF headers exceed file size")
 	}
 	var decoded uint64
 	for i := 0; i < shnum; i++ {
-		header := data[shoff+uint64(i)*64 : shoff+uint64(i+1)*64]
-		kind, flags := order.Uint32(header[4:8]), order.Uint64(header[8:16])
-		offset, size := order.Uint64(header[24:32]), order.Uint64(header[32:40])
-		if kind == 8 {
-			if size > budget.MaxDecoded || decoded > budget.MaxDecoded-size {
-				return reject("ELF zero-fill section budget exceeded")
+		header := data[shoff+uint64(i)*layout.sectionSize : shoff+uint64(i+1)*layout.sectionSize]
+		kind, flags := order.Uint32(header[4:8]), layout.word(header[8:])
+		offset, size := layout.word(header[layout.sectionOffset:]), layout.word(header[layout.sectionOffset+layout.wordSize:])
+		if kind != 8 {
+			if !within(offset, size, length) {
+				return reject("ELF section exceeds file size")
 			}
-			decoded += size
-			continue
-		} // SHT_NOBITS occupies memory, not file bytes.
-		if !within(offset, size, length) {
-			return reject("ELF section exceeds file size")
-		}
-		if flags&0x800 != 0 {
-			if size < 24 || order.Uint32(data[offset:offset+4]) != 1 {
-				return reject("only ELF zlib compression is tested")
+			if flags&0x800 != 0 {
+				if size < layout.compressionSize || order.Uint32(data[offset:offset+4]) != 1 {
+					return reject("only ELF zlib compression is tested")
+				}
+				size = layout.word(data[offset+layout.wordSize:])
 			}
-			size = order.Uint64(data[offset+8 : offset+16])
 		}
 		if size > budget.MaxDecoded || decoded > budget.MaxDecoded-size {
 			return reject("decoded section budget exceeded")
@@ -80,8 +76,8 @@ func checkELF(data []byte, budget limits) error {
 		decoded += size
 	}
 	for i := 0; i < phnum; i++ {
-		header := data[phoff+uint64(i)*56 : phoff+uint64(i+1)*56]
-		offset, size := order.Uint64(header[8:16]), order.Uint64(header[32:40])
+		header := data[phoff+uint64(i)*layout.programSize : phoff+uint64(i+1)*layout.programSize]
+		offset, size := layout.word(header[layout.programOffset:]), layout.word(header[layout.programFileSize:])
 		if size > 0 && !within(offset, size, length) {
 			return reject("ELF segment exceeds file size")
 		}

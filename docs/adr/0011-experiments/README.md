@@ -43,6 +43,12 @@ Tests discover identities from the contents rather than hardcoding them. The
 recorded results include SHA-256 for the exact measured artifacts; regenerating
 with a different toolchain or checkout path need not produce the same hashes.
 
+The ELF32 regression fixture is compiled with `gcc -m32 -c` and linked with
+`ld -m elf_i386 -shared`, without a 32-bit libc dependency. It verifies relative
+PCs, file-offset mapping, build IDs and zlib DWARF lookup, plus decoded-size and
+truncated-header rejection. This is x86 evidence, not Android ARM/NDK evidence;
+the initial measurement table below predates this extension.
+
 ## Initial measurements, recorded 2026-11-20
 
 Linux x86_64, Go 1.26.10, GCC 13.3.0, binutils 2.42. Five independent processes
@@ -116,11 +122,11 @@ assert local performance timings.
 
 ## Supported evidence and remaining P1 work
 
-- Tested: little-endian ELF64 x86_64, DWARF 4/5, standard ELF zlib compression,
+- Tested: little-endian ELF64 x86_64 and ELF32 x86, DWARF 4/5, standard ELF zlib compression,
   separate debug files, GNU build IDs; thin Mach-O64 ARM64 with embedded Go
   DWARF and UUID; identity/ABI mismatch, slide underflow, truncated metadata,
   symbol count/size bombs and missing debug information.
-- Not established: ELF32, NDK-produced ARM64 debug files, big-endian inputs,
+- Not established: NDK-produced ARM32/ARM64 debug files, big-endian inputs,
   fat Mach-O extraction, legacy GNU `.zdebug`, zstd, C++/Swift demangling,
   optimized/inline-frame fidelity or supplementary/split DWARF. Unsupported
   envelopes in the prototype are rejected, not advertised as production support.

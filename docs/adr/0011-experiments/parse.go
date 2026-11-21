@@ -82,6 +82,8 @@ func readELF(input []byte, query request, output *result) (*dwarf.Data, error) {
 	switch file.Machine {
 	case elf.EM_X86_64:
 		output.Arch = "x86_64"
+	case elf.EM_386:
+		output.Arch = "x86"
 	case elf.EM_AARCH64:
 		output.Arch = "arm64"
 	default:
