@@ -40,7 +40,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/huandu/go-sqlbuilder v1.39.1
-	github.com/jackc/pgx/v5 v5.12.0
+	github.com/jackc/pgx/v5 v5.13.0
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12
 	github.com/knadh/koanf v1.5.0
 	github.com/knadh/koanf/v2 v2.4.1
@@ -86,21 +86,21 @@ require (
 	go.opentelemetry.io/otel/trace v1.47.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.28.0
-	golang.org/x/crypto v0.58.0
+	golang.org/x/crypto v0.59.0
 	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba
 	golang.org/x/mod v0.42.0
 	golang.org/x/net v0.62.0
 	golang.org/x/oauth2 v0.38.0
 	golang.org/x/sync v0.25.0
-	golang.org/x/term v0.47.0
-	golang.org/x/text v0.43.0
+	golang.org/x/term v0.48.0
+	golang.org/x/text v0.44.0
 	gonum.org/v1/gonum v0.17.0
 	google.golang.org/api v0.311.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.37.2
-	modernc.org/sqlite v1.62.0
+	modernc.org/sqlite v1.63.0
 )
 
 require (
@@ -200,7 +200,7 @@ require (
 	cloud.google.com/go/auth v0.24.1-0.20261001053825-dbc26066f70a // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.3.1 // indirect
 	cloud.google.com/go/compute/metadata v0.10.0 // indirect
-	github.com/ClickHouse/ch-go v0.75.0
+	github.com/ClickHouse/ch-go v0.76.0
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Yiling-J/theine-go v0.6.2 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b
@@ -265,7 +265,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/klauspost/compress v1.20.3 // indirect
+	github.com/klauspost/compress v1.20.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -349,7 +349,7 @@ require (
 	go.uber.org/atomic v1.12.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261012220534-4341edf3f941 // indirect
